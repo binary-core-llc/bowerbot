@@ -30,7 +30,8 @@
     "sketchfab": {
       "enabled": false,
       "config": {
-        "token": "YOUR_SKETCHFAB_TOKEN"
+        "token": "YOUR_SKETCHFAB_TOKEN",
+        "download_dir": "./assets/sketchfab"
       }
     },
     "textures": {

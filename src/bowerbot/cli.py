@@ -412,7 +412,10 @@ def onboard() -> None:
             ),
             "sketchfab": SkillConfig(
                 enabled=bool(sketchfab_token),
-                config={"token": sketchfab_token} if sketchfab_token else {},
+                config={
+                    "token": sketchfab_token,
+                    "download_dir": "./assets/sketchfab",
+                } if sketchfab_token else {},
             ),
         },
     )

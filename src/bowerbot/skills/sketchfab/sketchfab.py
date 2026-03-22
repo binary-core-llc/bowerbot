@@ -38,9 +38,12 @@ class SketchfabSkill(Skill):
     def __init__(
         self,
         token: str = "",
-        download_dir: str = "./assets/sketchfab",
+        download_dir: str | None = None,
         **kwargs: Any,
     ) -> None:
+        if not download_dir:
+            msg = "Sketchfab skill requires 'download_dir' in config."
+            raise ValueError(msg)
         self.token = token
         self.download_dir = Path(download_dir)
 

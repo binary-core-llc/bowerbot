@@ -93,7 +93,8 @@ Projects are persistent. Close the session, come back later, and continue where 
 ## ✨ Features
 
 - 📦 **OpenUSD native** : references, defaultPrim, metersPerUnit, upAxis, all correct out of the box
-- 🔌 **Pluggable skills** : Sketchfab, local asset cache, and easy to add more
+- 🔌 **Pluggable skills** : Sketchfab, local assets, textures, and easy to add more
+- 💡 **Native USD lighting** : create sun, dome, point, area, disk, and tube lights
 - 🧩 **Automatic unit handling** : assets in cm, mm, or inches are scaled correctly at reference time
 - 📐 **Geometry-aware placement** : uses bounding boxes to place objects on surfaces
 - 🗣️ **Conversational assembly** : guide scene construction through natural language
@@ -204,7 +205,7 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 
 ### Writing a Skill
 
-Create a folder in `src/bower_bot/skills/` with:
+Create a folder in `src/bowerbot/skills/` with:
 
 ```
 my_provider/
@@ -239,15 +240,14 @@ All settings live in `~/.bowerbot/config.json`:
     "default_room_bounds": [10.0, 3.0, 8.0]
   },
   "skills": {
-    "local": {
-      "enabled": true,
-      "config": { "paths": ["./assets"] }
-    },
+    "local": { "enabled": true },
     "sketchfab": {
       "enabled": true,
       "config": { "token": "your-sketchfab-token" }
-    }
+    },
+    "textures": { "enabled": true }
   },
+  "assets_dir": "./assets",
   "projects_dir": "./scenes"
 }
 ```
@@ -295,22 +295,24 @@ BowerBot automatically handles transient API errors:
 ## 🏗️ Architecture
 
 ```
-src/bower_bot/
+src/bowerbot/
   project.py              # Project management (create/load/resume)
   agent.py                # AgentRuntime, LLM tool-calling loop
   cli.py                  # Click CLI
   config.py               # Settings from ~/.bowerbot/config.json
+  token_manager.py        # Context compression and summarization
   engine/
-    stage_writer.py       # All USD/pxr operations (create, place, rename, remove)
+    stage_writer.py       # All USD/pxr operations (create, place, light, rename, remove)
     scene_graph.py        # Spatial math (grids, walls, collisions)
     validator.py          # USD validation (defaultPrim, metersPerUnit, upAxis, refs)
     packager.py           # USDZ packaging
   skills/
-    base.py               # Skill interface + SKILL.md loading
+    base.py               # Skill interface, assets_dir, SKILL.md loading
     registry.py           # Tool discovery, routing, and prompt collection
-    assembly/             # Scene building tools + SKILL.md
-    local/                # Local asset search + SKILL.md
+    assembly/             # Scene building + lighting tools + SKILL.md
+    local/                # Local 3D asset search + SKILL.md
     sketchfab/            # Sketchfab API + SKILL.md
+    textures/             # Texture and HDRI search + SKILL.md
   schemas/
     models.py             # Pydantic data models
   gateway/                # Future: FastAPI + MCP server
@@ -323,6 +325,7 @@ Design principles:
 - **SKILL.md per skill** : modular prompts, only injected when the skill is active
 - **Project-based** : one folder per scene, resumable across sessions
 - **One config file** : `~/.bowerbot/config.json`, no `.env`
+- **Centralized assets** : one `assets_dir` for all skills, no scattered path config
 
 ---
 
@@ -356,13 +359,16 @@ Every scene BowerBot produces follows these rules:
 - [x] CLI (chat, new, open, list, build, skills, info, onboard)
 - [x] Sketchfab skill (search user's own models, USDZ download)
 - [x] Local asset cache skill
-- [x] Assembly skill (9 tools: create, place, move, grid, list, rename, remove, validate, package)
+- [x] Assembly skill (10 tools: create, place, move, light, grid, list, rename, remove, validate, package)
 - [x] SKILL.md system (modular prompts per skill)
 - [x] Project-based workflow with persistence
 - [x] Multi-LLM support (OpenAI, Anthropic via litellm)
 - [x] Automatic unit conversion (cm/mm/inches to meters)
 - [x] Geometry-aware surface placement
 - [x] Onboarding wizard
+- [x] Native USD lighting (6 light types via UsdLux)
+- [x] Textures skill (HDRI and material map search)
+- [x] Centralized assets_dir (one root for all skills)
 - [ ] Scene templates : JSON-driven scene assembly with asset resolution
 - [ ] DCC exporter : tool to export scene layout as BowerBot JSON
 - [x] Error recovery : validator errors fed back to LLM for auto-retry

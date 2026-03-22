@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     llm: LLMSettings = Field(default_factory=LLMSettings)
     scene_defaults: SceneDefaults = Field(default_factory=SceneDefaults)
     skills: dict[str, SkillConfig] = Field(default_factory=dict)
+    assets_dir: Path = Path("./assets")
     projects_dir: Path = Path("./scenes")
 
     model_config = {"env_prefix": "BOWERBOT_", "env_nested_delimiter": "__"}
@@ -97,6 +98,7 @@ def save_settings(settings: Settings) -> None:
     ensure_home()
 
     data = settings.model_dump(mode="json")
+    data["assets_dir"] = str(data["assets_dir"])
     data["projects_dir"] = str(data["projects_dir"])
 
     GLOBAL_CONFIG_PATH.write_text(

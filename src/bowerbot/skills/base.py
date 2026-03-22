@@ -53,10 +53,42 @@ class ToolResult:
 
 
 class Skill(ABC):
-    """Base class for all BowerBot skills."""
+    """Base class for all BowerBot skills.
+
+    The registry sets ``assets_dir`` on every skill after construction.
+    Provider skills that download files should declare ``cache_subdir``
+    (e.g. ``"cache/sketchfab"``) — their downloads go to
+    ``assets_dir / cache_subdir``.  Search skills use ``assets_dir``
+    directly to scan the full asset tree.
+    """
 
     name: str
     category: SkillCategory
+    cache_subdir: str = ""
+
+    _assets_dir: Path | None = None
+
+    @property
+    def assets_dir(self) -> Path:
+        """Root asset directory, set by the registry."""
+        if self._assets_dir is None:
+            msg = "assets_dir not set. Skill must be registered through SkillRegistry."
+            raise RuntimeError(msg)
+        return self._assets_dir
+
+    @assets_dir.setter
+    def assets_dir(self, value: Path) -> None:
+        self._assets_dir = value
+
+    @property
+    def cache_dir(self) -> Path:
+        """Download directory for provider skills (assets_dir / cache_subdir)."""
+        if not self.cache_subdir:
+            msg = f"Skill '{self.name}' has no cache_subdir defined."
+            raise RuntimeError(msg)
+        path = self.assets_dir / self.cache_subdir
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     @abstractmethod
     def get_tools(self) -> list[Tool]:

@@ -8,6 +8,7 @@ their configuration, and provides a unified tool list and skill
 prompts to the AgentRuntime.
 """
 
+from pathlib import Path
 from typing import Any
 
 from bowerbot.config import Settings
@@ -20,8 +21,10 @@ class SkillRegistry:
     def __init__(self) -> None:
         self._skills: dict[str, Skill] = {}
 
-    def register(self, skill: Skill) -> None:
-        """Register a skill instance."""
+    def register(self, skill: Skill, assets_dir: Path | None = None) -> None:
+        """Register a skill instance and set its assets_dir."""
+        if assets_dir is not None:
+            skill.assets_dir = assets_dir
         if skill.validate_config():
             self._skills[skill.name] = skill
 
@@ -31,6 +34,8 @@ class SkillRegistry:
         from bowerbot.skills.local import LocalSkill
         from bowerbot.skills.sketchfab import SketchfabSkill
         from bowerbot.skills.textures import TexturesSkill
+
+        assets_dir = Path(settings.assets_dir)
 
         builtin_skills: dict[str, type[Skill]] = {
             "local": LocalSkill,
@@ -44,13 +49,13 @@ class SkillRegistry:
             if skill_name in builtin_skills:
                 skill_cls = builtin_skills[skill_name]
                 skill = skill_cls(**skill_config.config)
-                self.register(skill)
+                self.register(skill, assets_dir=assets_dir)
 
         # Assembly skill is always registered
         assembly = AssemblySkill(
             scene_defaults=settings.scene_defaults,
         )
-        self.register(assembly)
+        self.register(assembly, assets_dir=assets_dir)
 
     def get_all_tools(self) -> list[dict[str, Any]]:
         """Get all tools from all enabled skills in LLM schema format."""

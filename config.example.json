@@ -20,29 +20,18 @@
   },
   "skills": {
     "local": {
-      "enabled": true,
-      "config": {
-        "paths": [
-          "./assets"
-        ]
-      }
+      "enabled": true
     },
     "sketchfab": {
       "enabled": false,
       "config": {
-        "token": "YOUR_SKETCHFAB_TOKEN",
-        "download_dir": "./assets/sketchfab"
+        "token": "YOUR_SKETCHFAB_TOKEN"
       }
     },
     "textures": {
-      "enabled": true,
-      "config": {
-        "paths": [
-          "./assets",
-          "./textures"
-        ]
-      }
+      "enabled": true
     }
   },
+  "assets_dir": "./assets",
   "projects_dir": "./scenes"
 }

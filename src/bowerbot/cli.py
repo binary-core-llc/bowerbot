@@ -391,11 +391,12 @@ def onboard() -> None:
     console.print("\n[sf]Sketchfab Integration[/]")
     sketchfab_token = console.input("  Sketchfab API token (optional): ").strip()
 
-    console.print("\n[sf]Asset Paths[/]")
-    local_paths_input = console.input("  Local asset directories [./assets]: ").strip()
-    local_paths = [p.strip() for p in local_paths_input.split(",") if p.strip()] or ["./assets"]
+    console.print("\n[sf]Asset Directory[/]")
+    assets_dir = console.input("  Asset directory [./assets]: ").strip() or "./assets"
 
-    from bowerbot.config import LLMSettings, SceneDefaults, Settings, SkillConfig
+    from bowerbot.config import (
+        LLMSettings, SceneDefaults, Settings, SkillConfig,
+    )
 
     settings = Settings(
         llm=LLMSettings(
@@ -406,18 +407,14 @@ def onboard() -> None:
         ),
         scene_defaults=SceneDefaults(),
         skills={
-            "local": SkillConfig(
-                enabled=True,
-                config={"paths": local_paths},
-            ),
+            "local": SkillConfig(enabled=True),
+            "textures": SkillConfig(enabled=True),
             "sketchfab": SkillConfig(
                 enabled=bool(sketchfab_token),
-                config={
-                    "token": sketchfab_token,
-                    "download_dir": "./assets/sketchfab",
-                } if sketchfab_token else {},
+                config={"token": sketchfab_token} if sketchfab_token else {},
             ),
         },
+        assets_dir=assets_dir,
     )
 
     save_settings(settings)

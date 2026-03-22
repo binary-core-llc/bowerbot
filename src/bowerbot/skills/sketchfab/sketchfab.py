@@ -11,7 +11,6 @@ assets to Sketchfab and BowerBot pulls them down for scene assembly.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 import httpx
@@ -35,17 +34,10 @@ class SketchfabSkill(Skill):
     name = "sketchfab"
     category = SkillCategory.ASSET_PROVIDER
 
-    def __init__(
-        self,
-        token: str = "",
-        download_dir: str | None = None,
-        **kwargs: Any,
-    ) -> None:
-        if not download_dir:
-            msg = "Sketchfab skill requires 'download_dir' in config."
-            raise ValueError(msg)
+    cache_subdir = "cache/sketchfab"
+
+    def __init__(self, token: str = "", **kwargs: Any) -> None:
         self.token = token
-        self.download_dir = Path(download_dir)
 
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Token {self.token}"}
@@ -63,7 +55,10 @@ class SketchfabSkill(Skill):
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "Search keyword to find models in your library.",
+                            "description": (
+                                "Search keyword to find models "
+                                "in your library."
+                            ),
                         },
                         "max_results": {
                             "type": "integer",
@@ -107,7 +102,10 @@ class SketchfabSkill(Skill):
                         },
                         "name": {
                             "type": "string",
-                            "description": "Human-readable name for the downloaded file.",
+                            "description": (
+                                "Human-readable name for the "
+                                "downloaded file."
+                            ),
                         },
                     },
                     "required": ["uid", "name"],
@@ -203,8 +201,7 @@ class SketchfabSkill(Skill):
             logger.info(f"Downloading USDZ ({file_size} bytes) for {name}")
 
             # Step 3: Download
-            self.download_dir.mkdir(parents=True, exist_ok=True)
-            final_path = self.download_dir / f"{safe_name}.usdz"
+            final_path = self.cache_dir / f"{safe_name}.usdz"
 
             resp = await client.get(download_url, timeout=120.0)
             resp.raise_for_status()

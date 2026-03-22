@@ -19,7 +19,7 @@ class LocalSkill(Skill):
     name = "local"
     category = SkillCategory.ASSET_PROVIDER
 
-    SUPPORTED_EXTENSIONS = {f".{f.value}" for f in AssetFormat}
+    SUPPORTED_EXTENSIONS = {f.value for f in AssetFormat}
 
     def get_tools(self) -> list[Tool]:
         return [

@@ -14,10 +14,10 @@ from pydantic import BaseModel, Field
 class AssetFormat(str, Enum):
     """Supported 3D asset formats."""
 
-    USD = "usd"
-    USDA = "usda"
-    USDC = "usdc"
-    USDZ = "usdz"
+    USD = ".usd"
+    USDA = ".usda"
+    USDC = ".usdc"
+    USDZ = ".usdz"
 
 
 # ── Texture Schemas ───────────────────────────────────────────

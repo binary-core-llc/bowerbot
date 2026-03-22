@@ -12,6 +12,13 @@ jobs:
       - name: Validate branch name
         run: |
           BRANCH="${{ github.head_ref }}"
+
+          # Allow release-please automated branches
+          if [[ "$BRANCH" =~ ^release-please-- ]]; then
+            echo "✅ Release Please branch '$BRANCH' — skipping name check"
+            exit 0
+          fi
+
           PATTERN="^(feat|fix|docs|refactor|test|chore)/.+$"
 
           if [[ ! "$BRANCH" =~ $PATTERN ]]; then

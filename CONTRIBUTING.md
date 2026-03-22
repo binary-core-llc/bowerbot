@@ -87,12 +87,12 @@ The type prefix must match one of the conventional commit types (`feat`, `fix`, 
 
 1. Create a branch from `main` using the naming convention above
 2. Make your changes — commit however you like on your branch
-3. Open a PR to `main`
-4. **Squash merge** — the squash commit message should use conventional format (e.g., `feat: add PolyHaven skill`)
+3. Open a PR to `main` — **the PR title must use conventional format** (e.g., `feat: add PolyHaven skill`)
+4. All PRs are squash merged. The PR title becomes the commit message on `main`
 5. Release Please reads that commit and handles versioning automatically
 
 ```
-feat/my-feature → PR → squash merge "feat: ..." → main → Release Please
+feat/my-feature → PR titled "feat: ..." → squash merge → main → Release Please
 ```
 
 ### PR checklist

@@ -6,11 +6,14 @@
 from bowerbot.schemas.models import (
     AssetFormat,
     AssetMetadata,
+    HDRIFormat,
+    ImageFormat,
     LightParams,
     LightType,
     PlacementCategory,
     SceneObject,
     Severity,
+    TextureCategory,
     ValidationIssue,
     ValidationResult,
 )
@@ -18,11 +21,14 @@ from bowerbot.schemas.models import (
 __all__ = [
     "AssetFormat",
     "AssetMetadata",
+    "HDRIFormat",
+    "ImageFormat",
     "LightParams",
     "LightType",
     "PlacementCategory",
     "SceneObject",
     "Severity",
+    "TextureCategory",
     "ValidationIssue",
     "ValidationResult",
 ]

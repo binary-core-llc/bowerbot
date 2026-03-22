@@ -181,7 +181,7 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 
 ### Built-in Skills
 
-**Assembly** (always active) : 9 tools for USD scene building
+**Assembly** (always active) : 10 tools for USD scene building
 
 | Tool | Description |
 |------|-------------|
@@ -192,12 +192,15 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 | `list_scene` | Show current scene with positions and bounding boxes |
 | `rename_prim` | Move/rename objects in the hierarchy |
 | `remove_prim` | Delete objects from the scene |
+| `create_light` | Add native USD lights (sun, dome, point, area, disk, tube) |
 | `validate_scene` | Check for USD errors |
 | `package_scene` | Bundle as `.usdz` |
 
 **Local** : Searches previously downloaded assets on disk. Supports `.usd`, `.usda`, `.usdc`, `.usdz`.
 
 **Sketchfab** : Searches and downloads models from your own Sketchfab account. Downloads in USDZ format only. These are your curated assets, not the public marketplace.
+
+**Textures** : Searches local directories for texture files. Finds HDRIs (`.hdr`, `.exr`) for dome lights and material maps (`.png`, `.jpg`, `.tif`) for surfaces.
 
 ### Writing a Skill
 

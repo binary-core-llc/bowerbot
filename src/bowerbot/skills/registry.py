@@ -30,10 +30,12 @@ class SkillRegistry:
         from bowerbot.skills.assembly import AssemblySkill
         from bowerbot.skills.local import LocalSkill
         from bowerbot.skills.sketchfab import SketchfabSkill
+        from bowerbot.skills.textures import TexturesSkill
 
         builtin_skills: dict[str, type[Skill]] = {
             "local": LocalSkill,
             "sketchfab": SketchfabSkill,
+            "textures": TexturesSkill,
         }
 
         for skill_name, skill_config in settings.skills.items():

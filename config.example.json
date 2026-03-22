@@ -32,6 +32,15 @@
       "config": {
         "token": "YOUR_SKETCHFAB_TOKEN"
       }
+    },
+    "textures": {
+      "enabled": true,
+      "config": {
+        "paths": [
+          "./assets",
+          "./textures"
+        ]
+      }
     }
   },
   "projects_dir": "./scenes"

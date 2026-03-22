@@ -20,6 +20,49 @@ class AssetFormat(str, Enum):
     USDZ = "usdz"
 
 
+# ── Texture Schemas ───────────────────────────────────────────
+
+
+class HDRIFormat(str, Enum):
+    """HDRI / environment map formats."""
+
+    HDR = ".hdr"
+    HDRI = ".hdri"
+    EXR = ".exr"
+
+
+class ImageFormat(str, Enum):
+    """Material texture image formats."""
+
+    PNG = ".png"
+    JPG = ".jpg"
+    JPEG = ".jpeg"
+    TIF = ".tif"
+    TIFF = ".tiff"
+    TGA = ".tga"
+    BMP = ".bmp"
+
+
+class TextureCategory(str, Enum):
+    """Texture search categories."""
+
+    HDRI = "hdri"
+    MATERIAL = "material"
+    ALL = "all"
+
+    def extensions(self) -> set[str]:
+        """Return the file extensions for this category."""
+        hdri = {f.value for f in HDRIFormat}
+        image = {f.value for f in ImageFormat}
+        match self:
+            case TextureCategory.HDRI:
+                return hdri
+            case TextureCategory.MATERIAL:
+                return image
+            case _:
+                return hdri | image
+
+
 class AssetMetadata(BaseModel):
     """Metadata for a 3D asset sourced from any skill."""
 

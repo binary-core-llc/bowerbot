@@ -43,6 +43,26 @@ When arranging multiple objects on the same surface, also check
 each object's own bounds to ensure they do not overlap or hang
 off the edge.
 
+## Lighting
+
+Use `create_light` to add native USD lights when the user asks for lighting.
+These are real lights that renderers understand (shadows, exposure, color).
+Only add lights when explicitly requested.
+
+### Light types
+- **DistantLight** — sun/directional. Position doesn't matter, only rotation.
+  Use `rotate_x` to control sun angle (e.g., -45 for afternoon). Set `angle: 0.53` for realistic sun disk.
+- **DomeLight** — environment/HDRI. Set `texture` to an HDRI file path. Intensity typically 1.0.
+- **SphereLight** — point/omni. Good for lamps, bulbs. Radius 0.05-0.1.
+- **RectLight** — rectangular area. Good for ceiling panels, windows. Width/height 0.5-2.0.
+- **DiskLight** — circular area. Good for recessed downlights. Radius 0.1-0.3.
+- **CylinderLight** — tube. Good for fluorescent fixtures. Radius 0.02, length 1.2.
+
+### Defaults
+- Intensity: 1000 for interior lights, 500 for DistantLight, 1.0 for DomeLight
+- Color: warm white = (1.0, 0.9, 0.8), cool white = (0.9, 0.95, 1.0), daylight = (1.0, 1.0, 1.0)
+- Lights always go in `/Scene/Lighting`
+
 ## Room Defaults
 - Width: 10m (X axis)
 - Height: 3m (Y axis)

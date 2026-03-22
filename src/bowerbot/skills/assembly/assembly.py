@@ -23,7 +23,7 @@ from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
-from bowerbot.schemas import AssetMetadata, SceneObject
+from bowerbot.schemas import AssetMetadata, LightParams, LightType, SceneObject
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -295,6 +295,107 @@ class AssemblySkill(Skill):
                     "required": ["prim_path"],
                 },
             ),
+            Tool(
+                name="create_light",
+                description=(
+                    "Create a USD light in the scene. Lights are native USD prims "
+                    "(not asset references). They go in /Scene/Lighting."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "light_type": {
+                            "type": "string",
+                            "enum": [t.value for t in LightType],
+                            "description": (
+                                "Type of light. DistantLight = sun/directional, "
+                                "DomeLight = environment/HDRI, SphereLight = point, "
+                                "RectLight = area, DiskLight = round area, "
+                                "CylinderLight = tube."
+                            ),
+                        },
+                        "light_name": {
+                            "type": "string",
+                            "description": "Human-readable name (e.g. 'Key_Light', 'Sun').",
+                        },
+                        "intensity": {
+                            "type": "number",
+                            "description": "Light intensity. Default: 1000 for most lights, 1.0 for DomeLight.",
+                            "default": 1000.0,
+                        },
+                        "color_r": {
+                            "type": "number",
+                            "description": "Red channel (0-1). Default: 1.0.",
+                            "default": 1.0,
+                        },
+                        "color_g": {
+                            "type": "number",
+                            "description": "Green channel (0-1). Default: 1.0.",
+                            "default": 1.0,
+                        },
+                        "color_b": {
+                            "type": "number",
+                            "description": "Blue channel (0-1). Default: 1.0.",
+                            "default": 1.0,
+                        },
+                        "translate_x": {
+                            "type": "number",
+                            "description": "X position in meters.",
+                            "default": 0.0,
+                        },
+                        "translate_y": {
+                            "type": "number",
+                            "description": "Y position in meters.",
+                            "default": 0.0,
+                        },
+                        "translate_z": {
+                            "type": "number",
+                            "description": "Z position in meters.",
+                            "default": 0.0,
+                        },
+                        "rotate_x": {
+                            "type": "number",
+                            "description": "Rotation around X axis in degrees.",
+                            "default": 0.0,
+                        },
+                        "rotate_y": {
+                            "type": "number",
+                            "description": "Rotation around Y axis in degrees.",
+                            "default": 0.0,
+                        },
+                        "rotate_z": {
+                            "type": "number",
+                            "description": "Rotation around Z axis in degrees.",
+                            "default": 0.0,
+                        },
+                        "angle": {
+                            "type": "number",
+                            "description": "DistantLight only: angular size in degrees. 0.53 = realistic sun.",
+                        },
+                        "texture": {
+                            "type": "string",
+                            "description": "DomeLight only: path to HDRI texture file.",
+                        },
+                        "radius": {
+                            "type": "number",
+                            "description": "SphereLight/DiskLight/CylinderLight: light radius in meters.",
+                        },
+                        "width": {
+                            "type": "number",
+                            "description": "RectLight only: width in meters.",
+                        },
+                        "height": {
+                            "type": "number",
+                            "description": "RectLight only: height in meters.",
+                        },
+                        "length": {
+                            "type": "number",
+                            "description": "CylinderLight only: length in meters.",
+                        },
+                    },
+                    "required": ["light_type", "light_name"],
+                },
+            ),
         ]
 
     async def execute(self, tool_name: str, params: dict[str, Any]) -> ToolResult:
@@ -318,6 +419,8 @@ class AssemblySkill(Skill):
                     return self._move_asset(params)
                 case "remove_prim":
                     return self._remove_prim(params)
+                case "create_light":
+                    return self._create_light(params)
                 case _:
                     return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
         except Exception as e:
@@ -528,6 +631,91 @@ class AssemblySkill(Skill):
             data={
                 "prim_path": prim_path,
                 "message": f"Removed {prim_path}",
+            },
+        )
+
+    def _copy_to_assets(self, file_path: str | None, subfolder: str = "") -> str | None:
+        """Copy a file to the project assets dir and return a relative path.
+
+        Used for any file that needs to live alongside the USD stage
+        (HDRI textures, material maps, etc.).
+        """
+        if file_path is None:
+            return None
+
+        source = Path(file_path)
+        if not source.exists():
+            return file_path
+
+        assets_dir = self._resolve_assets_dir()
+        if subfolder:
+            target_dir = assets_dir / subfolder
+            target_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            target_dir = assets_dir
+
+        local_copy = target_dir / source.name
+
+        if not local_copy.exists():
+            shutil.copy2(source, local_copy)
+
+        relative = f"assets/{subfolder}/{source.name}" if subfolder else f"assets/{source.name}"
+        return relative
+
+    def _create_light(self, params: dict[str, Any]) -> ToolResult:
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+
+        light_type = LightType(params["light_type"])
+        light_name = params["light_name"]
+
+        self._object_count += 1
+        safe_name = "".join(c for c in light_name if c.isalnum() or c == "_").strip()
+        prim_path = f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
+
+        tx = float(params.get("translate_x", 0.0))
+        ty = float(params.get("translate_y", 0.0))
+        tz = float(params.get("translate_z", 0.0))
+
+        light_params = LightParams(
+            prim_path=prim_path,
+            light_type=light_type,
+            intensity=float(params.get("intensity", 1000.0)),
+            color=(
+                float(params.get("color_r", 1.0)),
+                float(params.get("color_g", 1.0)),
+                float(params.get("color_b", 1.0)),
+            ),
+            translate=(tx, ty, tz),
+            rotate=(
+                float(params.get("rotate_x", 0.0)),
+                float(params.get("rotate_y", 0.0)),
+                float(params.get("rotate_z", 0.0)),
+            ),
+            angle=params.get("angle"),
+            texture=self._copy_to_assets(params.get("texture"), subfolder="textures"),
+            radius=params.get("radius"),
+            width=params.get("width"),
+            height=params.get("height"),
+            length=params.get("length"),
+        )
+
+        self.writer.create_light(light_params)
+        self.writer.save()
+        self._update_project_meta()
+
+        logger.info(f"Created {light_type.value} at {prim_path}")
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": prim_path,
+                "light_type": light_type.value,
+                "position": {"x": tx, "y": ty, "z": tz},
+                "intensity": light_params.intensity,
+                "message": f"Created {light_type.value} at {prim_path}",
             },
         )
 

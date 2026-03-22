@@ -6,6 +6,8 @@
 from bowerbot.schemas.models import (
     AssetFormat,
     AssetMetadata,
+    LightParams,
+    LightType,
     PlacementCategory,
     SceneObject,
     Severity,
@@ -16,6 +18,8 @@ from bowerbot.schemas.models import (
 __all__ = [
     "AssetFormat",
     "AssetMetadata",
+    "LightParams",
+    "LightType",
     "PlacementCategory",
     "SceneObject",
     "Severity",

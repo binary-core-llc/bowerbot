@@ -10,9 +10,9 @@ setting transforms, managing composition arcs.
 import os
 from pathlib import Path
 
-from pxr import Gf, Kind, Sdf, Usd, UsdGeom
+from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdLux
 
-from bowerbot.schemas import SceneObject
+from bowerbot.schemas import LightParams, LightType, SceneObject
 
 
 class StageWriter:
@@ -131,6 +131,54 @@ class StageWriter:
                     Gf.Vec3f(sx, sy, sz),
                 )
 
+    # Mapping from LightType to UsdLux class and supported extra attributes.
+    _LIGHT_CLASSES: dict = {
+        LightType.DISTANT: UsdLux.DistantLight,
+        LightType.DOME: UsdLux.DomeLight,
+        LightType.SPHERE: UsdLux.SphereLight,
+        LightType.RECT: UsdLux.RectLight,
+        LightType.DISK: UsdLux.DiskLight,
+        LightType.CYLINDER: UsdLux.CylinderLight,
+    }
+
+    def create_light(self, light: LightParams) -> None:
+        """Create a USD light prim in the stage."""
+        if self._stage is None:
+            msg = "No stage open. Call create_stage() first."
+            raise RuntimeError(msg)
+
+        light_cls = self._LIGHT_CLASSES[light.light_type]
+        light_prim = light_cls.Define(self._stage, light.prim_path)
+
+        # Common attributes
+        light_prim.CreateIntensityAttr(light.intensity)
+        light_prim.CreateColorAttr(Gf.Vec3f(*light.color))
+
+        # Type-specific attributes
+        attr_map = {
+            "angle": "CreateAngleAttr",
+            "texture": "CreateTextureFileAttr",
+            "radius": "CreateRadiusAttr",
+            "width": "CreateWidthAttr",
+            "height": "CreateHeightAttr",
+            "length": "CreateLengthAttr",
+        }
+        for field_name, create_method in attr_map.items():
+            value = getattr(light, field_name, None)
+            if value is not None and hasattr(light_prim, create_method):
+                getattr(light_prim, create_method)().Set(value)
+
+        # Set transform
+        xformable = UsdGeom.Xformable(light_prim)
+        xformable.ClearXformOpOrder()
+
+        tx, ty, tz = light.translate
+        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
+
+        rx, ry, rz = light.rotate
+        if any(v != 0.0 for v in (rx, ry, rz)):
+            xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
+
     def set_transform(
         self,
         prim_path: str,
@@ -176,7 +224,7 @@ class StageWriter:
             msg = "No stage open."
             raise RuntimeError(msg)
         self._stage.Save()
-    
+
     def list_prims(self) -> list[dict]:
         """List all placed objects (prims with references) in the stage."""
 
@@ -191,7 +239,9 @@ class StageWriter:
         objects = []
         for prim in self._stage.Traverse():
             refs = prim.GetMetadata("references")
-            if refs is None:
+            is_light = prim.HasAPI(UsdLux.LightAPI)
+
+            if refs is None and not is_light:
                 continue
 
             position = None
@@ -204,6 +254,27 @@ class StageWriter:
                     "y": round(t[1], 2),
                     "z": round(t[2], 2),
                 }
+
+            if is_light:
+                # Light prims have no geometry bounds — report type and attributes
+                light_data = {
+                    "prim_path": str(prim.GetPath()),
+                    "light_type": prim.GetTypeName(),
+                    "position": position,
+                }
+                intensity_attr = prim.GetAttribute("inputs:intensity")
+                if intensity_attr:
+                    light_data["intensity"] = intensity_attr.Get()
+                color_attr = prim.GetAttribute("inputs:color")
+                if color_attr:
+                    c = color_attr.Get()
+                    light_data["color"] = {
+                        "r": round(c[0], 3),
+                        "g": round(c[1], 3),
+                        "b": round(c[2], 3),
+                    }
+                objects.append(light_data)
+                continue
 
             # Compute world-space bounding box so the LLM
             # can read surface heights from the geometry.

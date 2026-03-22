@@ -57,6 +57,38 @@ class SceneObject(BaseModel):
     category: PlacementCategory = PlacementCategory.FLOOR
 
 
+# ── Light Schemas ─────────────────────────────────────────────
+
+
+class LightType(str, Enum):
+    """Supported USD light types."""
+
+    DISTANT = "DistantLight"
+    DOME = "DomeLight"
+    SPHERE = "SphereLight"
+    RECT = "RectLight"
+    DISK = "DiskLight"
+    CYLINDER = "CylinderLight"
+
+
+class LightParams(BaseModel):
+    """Parameters for creating a USD light."""
+
+    prim_path: str
+    light_type: LightType
+    intensity: float = 1000.0
+    color: tuple[float, float, float] = (1.0, 1.0, 1.0)
+    translate: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    rotate: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    # Type-specific (only relevant ones used per light type)
+    angle: float | None = None  # DistantLight
+    texture: str | None = None  # DomeLight HDRI path
+    radius: float | None = None  # SphereLight, DiskLight, CylinderLight
+    width: float | None = None  # RectLight
+    height: float | None = None  # RectLight
+    length: float | None = None  # CylinderLight
+
+
 # ── Validation Schemas ─────────────────────────────────────────
 
 

@@ -27,7 +27,7 @@ Instead of relying on appearance, the bowerbird **collects, curates, and arrange
 **BowerBot brings that same idea to 3D pipelines.**
 
 BowerBot is an **AI-assisted OpenUSD scene assembly tool**. It helps you go from an empty scene to a structured, usable layout in seconds by:
-- finding assets
+- finding assets from any connected source (Sketchfab, local disk, company DAM, or any custom provider)
 - placing them with spatial awareness
 - organizing them into a valid USD stage
 
@@ -93,7 +93,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 ## ✨ Features
 
 - 📦 **OpenUSD native** : references, defaultPrim, metersPerUnit, upAxis, all correct out of the box
-- 🔌 **Pluggable skills** : Sketchfab, local assets, textures, and easy to add more
+- 🔌 **Pluggable skills** : connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
 - 💡 **Native USD lighting** : create sun, dome, point, area, disk, and tube lights
 - 🧩 **Automatic unit handling** : assets in cm, mm, or inches are scaled correctly at reference time
 - 📐 **Geometry-aware placement** : uses bounding boxes to place objects on surfaces
@@ -197,11 +197,13 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 | `validate_scene` | Check for USD errors |
 | `package_scene` | Bundle as `.usdz` |
 
-**Local** : Searches previously downloaded assets on disk. Supports `.usd`, `.usda`, `.usdc`, `.usdz`.
+**Local** : Searches the asset directory for 3D files on disk (`.usd`, `.usda`, `.usdc`, `.usdz`). Automatically finds assets downloaded by any provider.
 
-**Sketchfab** : Searches and downloads models from your own Sketchfab account. Downloads in USDZ format only. These are your curated assets, not the public marketplace.
+**Sketchfab** : Searches and downloads models from your own Sketchfab account in USDZ format. These are your curated assets, not the public marketplace.
 
-**Textures** : Searches local directories for texture files. Finds HDRIs (`.hdr`, `.exr`) for dome lights and material maps (`.png`, `.jpg`, `.tif`) for surfaces.
+**Textures** : Searches the asset directory for texture files. Finds HDRIs (`.hdr`, `.exr`) for dome lights and material maps (`.png`, `.jpg`, `.tif`) for surfaces.
+
+More providers are planned (PolyHaven, Fab, CGTrader, Objaverse), and you can write your own skill for any asset source — see [Writing a Skill](#writing-a-skill) below.
 
 ### Writing a Skill
 

@@ -46,10 +46,22 @@ class LLMSettings(BaseSettings):
 
 
 class SkillConfig(BaseSettings):
-    """Configuration for a single skill."""
+    """Configuration for a single skill.
+
+    The ``config`` dict holds skill-specific settings (e.g. API tokens).
+    Skills that only need ``assets_dir`` (set by the registry) don't
+    need any config — the field is omitted from the saved JSON.
+    """
 
     enabled: bool = False
     config: dict[str, Any] = Field(default_factory=dict)
+
+    def to_json(self) -> dict[str, Any]:
+        """Serialize for config.json, omitting empty config."""
+        data: dict[str, Any] = {"enabled": self.enabled}
+        if self.config:
+            data["config"] = self.config
+        return data
 
 
 class SceneDefaults(BaseSettings):
@@ -94,12 +106,36 @@ def load_settings() -> Settings:
 
 
 def save_settings(settings: Settings) -> None:
-    """Save settings to ~/.bowerbot/config.json."""
+    """Save settings to ~/.bowerbot/config.json.
+
+    Writes only user-facing fields. Internal defaults
+    (token management tuning, error recovery tuning) are
+    omitted — they take effect from code defaults and can
+    be added manually by advanced users.
+    """
     ensure_home()
 
-    data = settings.model_dump(mode="json")
-    data["assets_dir"] = str(data["assets_dir"])
-    data["projects_dir"] = str(data["projects_dir"])
+    data: dict[str, Any] = {
+        "llm": {
+            "model": settings.llm.model,
+            "api_key": settings.llm.api_key,
+            "temperature": settings.llm.temperature,
+            "max_tokens": settings.llm.max_tokens,
+        },
+        "scene_defaults": {
+            "meters_per_unit": settings.scene_defaults.meters_per_unit,
+            "up_axis": settings.scene_defaults.up_axis,
+            "default_room_bounds": list(
+                settings.scene_defaults.default_room_bounds,
+            ),
+        },
+        "skills": {
+            name: skill.to_json()
+            for name, skill in settings.skills.items()
+        },
+        "assets_dir": str(settings.assets_dir),
+        "projects_dir": str(settings.projects_dir),
+    }
 
     GLOBAL_CONFIG_PATH.write_text(
         json.dumps(data, indent=2) + "\n",

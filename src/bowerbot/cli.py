@@ -388,11 +388,24 @@ def onboard() -> None:
     model = console.input("  Model [gpt-4o]: ").strip() or "gpt-4o"
     api_key = console.input("  API key: ").strip()
 
+    if not api_key:
+        console.print(
+            "[yellow]Warning:[/] No API key provided. "
+            "BowerBot won't work without one.\n"
+            "You can add it later in "
+            "~/.bowerbot/config.json"
+        )
+
     console.print("\n[sf]Sketchfab Integration[/]")
-    sketchfab_token = console.input("  Sketchfab API token (optional): ").strip()
+    sketchfab_token = console.input(
+        "  Sketchfab API token (optional): ",
+    ).strip()
 
     console.print("\n[sf]Asset Directory[/]")
-    assets_dir = console.input("  Asset directory [./assets]: ").strip() or "./assets"
+    assets_dir = (
+        console.input("  Asset directory [./assets]: ").strip()
+        or "./assets"
+    )
 
     from bowerbot.config import (
         LLMSettings, SceneDefaults, Settings, SkillConfig,

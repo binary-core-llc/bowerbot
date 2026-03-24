@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/binary-core-llc/bowerbot/compare/v1.0.1...v1.0.2) (2026-03-24)
+
+
+### Bug Fixes
+
+* release please pyproject version ([#15](https://github.com/binary-core-llc/bowerbot/issues/15)) ([49876d6](https://github.com/binary-core-llc/bowerbot/commit/49876d62e4f3140c3e8368838da9b8af33a4b57c))
+
 ## [1.0.1](https://github.com/binary-core-llc/bowerbot/compare/v1.0.0...v1.0.1) (2026-03-24)
 
 

@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[oc]
+.pytest_cache/
 build/
 dist/
 wheels/

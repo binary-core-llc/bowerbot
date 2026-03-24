@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/binary-core-llc/bowerbot/compare/v1.0.0...v1.0.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* clean onboard config output and add API key validation ([#13](https://github.com/binary-core-llc/bowerbot/issues/13)) ([d8cb3a8](https://github.com/binary-core-llc/bowerbot/commit/d8cb3a8cf2be8243416ecd91bfdf9450cb984c9c))
+
 ## 1.0.0 (2026-03-22)
 
 

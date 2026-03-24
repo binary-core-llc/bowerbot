@@ -1,9 +1,13 @@
 {
   "packages": {
     ".": {
-      "release-type": "simple",
+      "release-type": "python",
       "extra-files": [
-        "pyproject.toml"
+        {
+          "type": "toml",
+          "path": "pyproject.toml",
+          "jsonpath": "$.project.version"
+        }
       ]
     }
   }

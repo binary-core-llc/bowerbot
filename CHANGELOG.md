@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/binary-core-llc/bowerbot/compare/v1.0.2...v1.0.3) (2026-03-24)
+
+
+### Bug Fixes
+
+* sync pyproject.toml and uv.lock version to 1.0.2 ([#18](https://github.com/binary-core-llc/bowerbot/issues/18)) ([8c7ae25](https://github.com/binary-core-llc/bowerbot/commit/8c7ae252de81a23aae4ce499d4bafc8825e3548d))
+
 ## [1.0.2](https://github.com/binary-core-llc/bowerbot/compare/v1.0.1...v1.0.2) (2026-03-24)
 
 

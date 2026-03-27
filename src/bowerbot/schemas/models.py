@@ -140,17 +140,6 @@ class LightParams(BaseModel):
     length: float | None = None  # CylinderLight
 
 
-# ── Material Schemas ──────────────────────────────────────────
-
-
-class MaterialBinding(BaseModel):
-    """A material and the prims bound to it."""
-
-    material_prim_path: str  # e.g. "/mtl/wood_varnished"
-    material_name: str  # e.g. "wood_varnished"
-    bound_prims: list[str] = Field(default_factory=list)
-
-
 # ── Validation Schemas ─────────────────────────────────────────
 
 

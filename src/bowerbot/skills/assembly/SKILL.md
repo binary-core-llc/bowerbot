@@ -11,7 +11,13 @@ You have tools to create and manipulate OpenUSD scenes.
 4. Use `compute_grid_layout` to plan evenly spaced arrangements
 5. Use `list_scene` to show the user what's currently in the scene
 6. Use `rename_prim` or `remove_prim` when the user wants to reorganize
-7. ALWAYS call `validate_scene` before packaging
+7. After removing assets from the scene, tell the user that the asset
+   folder still exists in the project's assets directory. Ask if they
+   want to delete it. Explain that each project currently has one
+   scene file — so deleting the asset folder only affects this project.
+   However, if the user has manually added other USD files in the
+   project that reference those assets, deleting could break them.
+8. ALWAYS call `validate_scene` before packaging
 8. Call `package_scene` to produce the final .usdz
 
 ## USD Rules

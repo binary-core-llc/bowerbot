@@ -511,15 +511,24 @@ class AssemblySkill(Skill):
             Tool(
                 name="list_project_assets",
                 description=(
-                    "List all asset folders in the current "
+                    "List asset folders in the current "
                     "project's assets directory. Shows which "
                     "ones are referenced in the scene and "
                     "which are unused. Use this to find "
-                    "asset folders that can be cleaned up."
+                    "asset folders that can be cleaned up. "
+                    "Optionally filter by name."
                 ),
                 parameters={
                     "type": "object",
-                    "properties": {},
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": (
+                                "Optional keyword to filter "
+                                "by asset name."
+                            ),
+                        },
+                    },
                 },
             ),
             Tool(
@@ -580,7 +589,7 @@ class AssemblySkill(Skill):
                 case "list_prim_children":
                     return self._list_prim_children(params)
                 case "list_project_assets":
-                    return self._list_project_assets()
+                    return self._list_project_assets(params)
                 case "delete_project_asset":
                     return self._delete_project_asset(params)
                 case _:
@@ -1252,7 +1261,9 @@ class AssemblySkill(Skill):
 
         return None, None
 
-    def _list_project_assets(self) -> ToolResult:
+    def _list_project_assets(
+        self, params: dict[str, Any],
+    ) -> ToolResult:
         if self._project is None:
             return ToolResult(
                 success=False,
@@ -1287,27 +1298,23 @@ class AssemblySkill(Skill):
                         if ref.assetPath:
                             referenced.add(ref.assetPath)
 
-        # List all asset folders and files
+        # List asset folders and files, optionally filtered
+        query = params.get("query", "")
+        query_lower = query.lower() if query else ""
+
         results = []
         for entry in sorted(assets_dir.iterdir()):
-            if entry.is_dir():
-                in_scene = any(
-                    entry.name in r for r in referenced
-                )
-                results.append({
-                    "name": entry.name,
-                    "type": "folder",
-                    "in_scene": in_scene,
-                })
-            elif entry.is_file():
-                in_scene = any(
-                    entry.name in r for r in referenced
-                )
-                results.append({
-                    "name": entry.name,
-                    "type": "file",
-                    "in_scene": in_scene,
-                })
+            if query_lower and query_lower not in entry.name.lower():
+                continue
+
+            in_scene = any(
+                entry.name in r for r in referenced
+            )
+            results.append({
+                "name": entry.name,
+                "type": "folder" if entry.is_dir() else "file",
+                "in_scene": in_scene,
+            })
 
         unused = [a for a in results if not a["in_scene"]]
 

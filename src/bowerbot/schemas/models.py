@@ -20,6 +20,14 @@ class AssetFormat(str, Enum):
     USDZ = ".usdz"
 
 
+class AssetCategory(str, Enum):
+    """Classification of a USD asset following ASWF conventions."""
+
+    GEO = "geo"          # geometry layer
+    MTL = "mtl"          # materials + bindings layer
+    PACKAGE = "package"  # ASWF-compliant asset folder (root + geo + mtl)
+
+
 # ── Texture Schemas ───────────────────────────────────────────
 
 

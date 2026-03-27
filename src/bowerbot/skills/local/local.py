@@ -3,9 +3,8 @@
 
 """Local filesystem skill — searches for USD assets on disk.
 
-Classifies each file as geometry, material, or look by inspecting
-the USD contents. This lets the LLM choose the right tool
-(place_asset, bind_material, or apply_look) without guessing.
+Detects ASWF-compliant asset folders (folder with matching root file)
+and classifies loose files as geo or mtl by inspecting USD contents.
 """
 
 import logging
@@ -14,35 +13,37 @@ from typing import Any
 
 from pxr import Sdf, Usd, UsdShade
 
-from bowerbot.schemas import AssetFormat
+from bowerbot.schemas import AssetCategory, AssetFormat
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
 
 logger = logging.getLogger(__name__)
 
+# Extensions that indicate a USD root file
+_USD_EXTENSIONS = {f.value for f in AssetFormat}
+
 
 class LocalSkill(Skill):
-    """Searches the assets directory for USD files.
+    """Searches the assets directory for USD assets.
 
-    Recursively scans the shared assets_dir for USD-family files
-    and classifies each as geometry, material, or look.
+    Detects ASWF asset folders as single "package" entries and
+    classifies loose files as geo or mtl.
     No config needed — the assets_dir is set by the registry.
     """
 
     name = "local"
     category = SkillCategory.ASSET_PROVIDER
 
-    SUPPORTED_EXTENSIONS = {f.value for f in AssetFormat}
-
     def get_tools(self) -> list[Tool]:
+        categories = [c.value for c in AssetCategory] + ["all"]
         return [
             Tool(
                 name="search_assets",
                 description=(
                     "Search local directories for USD assets by keyword. "
-                    "Returns results classified as 'geometry', 'material', "
-                    "or 'look'. Use the category to decide the right tool: "
-                    "place_asset for geometry, bind_material for materials, "
-                    "apply_look for look files."
+                    "Returns results classified as 'geo' (geometry), "
+                    "'mtl' (materials), or 'package' (ASWF asset folder). "
+                    "Use the category to decide the right tool: "
+                    "place_asset for geo/package, bind_material for mtl."
                 ),
                 parameters={
                     "type": "object",
@@ -51,17 +52,17 @@ class LocalSkill(Skill):
                             "type": "string",
                             "description": (
                                 "Search keyword to match "
-                                "against filenames."
+                                "against asset names."
                             ),
                         },
                         "category": {
                             "type": "string",
-                            "enum": ["all", "geometry", "material", "look"],
+                            "enum": categories,
                             "description": (
                                 "Filter by asset category. "
-                                "'geometry' = 3D meshes, "
-                                "'material' = material definitions, "
-                                "'look' = look files with bindings, "
+                                "'geo' = geometry, "
+                                "'mtl' = material definitions, "
+                                "'package' = ASWF asset folders, "
                                 "'all' = everything."
                             ),
                             "default": "all",
@@ -74,15 +75,14 @@ class LocalSkill(Skill):
                 name="list_assets",
                 description=(
                     "List all available USD assets in local directories. "
-                    "Each result includes a category: geometry, material, "
-                    "or look."
+                    "Each result includes a category: geo, mtl, or package."
                 ),
                 parameters={
                     "type": "object",
                     "properties": {
                         "category": {
                             "type": "string",
-                            "enum": ["all", "geometry", "material", "look"],
+                            "enum": categories,
                             "description": "Filter by asset category.",
                             "default": "all",
                         },
@@ -111,74 +111,146 @@ class LocalSkill(Skill):
         except Exception as e:
             return ToolResult(success=False, error=str(e))
 
+    # ── Asset Folder Detection ───────────────────────────────────
+
+    @staticmethod
+    def _find_asset_folders(root: Path) -> dict[Path, Path]:
+        """Detect ASWF asset folders under root.
+
+        An asset folder is a directory that contains a USD file
+        with the same name as the directory.
+
+        Returns a dict mapping folder path → root file path.
+        """
+        packages: dict[Path, Path] = {}
+        if not root.exists():
+            return packages
+
+        for entry in root.iterdir():
+            if not entry.is_dir():
+                continue
+            # Skip known non-asset dirs
+            if entry.name in ("cache", "maps", "materials"):
+                continue
+            root_file = LocalSkill._get_root_file(entry)
+            if root_file is not None:
+                packages[entry] = root_file
+
+        return packages
+
+    @staticmethod
+    def _get_root_file(folder: Path) -> Path | None:
+        """Return the ASWF root file if folder is an asset package."""
+        for ext in (".usd", ".usda", ".usdc"):
+            candidate = folder / f"{folder.name}{ext}"
+            if candidate.exists():
+                return candidate
+        return None
+
+    @staticmethod
+    def _is_inside_package(
+        file_path: Path, package_dirs: set[Path],
+    ) -> bool:
+        """Check if a file lives inside a detected asset folder."""
+        for pkg_dir in package_dirs:
+            if pkg_dir in file_path.parents:
+                return True
+        return False
+
+    # ── Classification ───────────────────────────────────────────
+
     @staticmethod
     def _classify(file_path: Path) -> str:
-        """Classify a USD file as 'geometry', 'material', or 'look'.
+        """Classify a loose USD file as 'geo' or 'mtl'.
 
-        - **material**: contains UsdShade.Material prims
-        - **look**: has sublayers (composes geometry + materials)
-        - **geometry**: everything else (meshes, xforms)
+        - **mtl**: contains UsdShade.Material prims
+        - **geo**: everything else (meshes, xforms)
         """
         try:
-            layer = Sdf.Layer.FindOrOpen(str(file_path))
-            if layer is None:
-                return "geometry"
-
-            # Look files have sublayers that compose other files
-            if layer.subLayerPaths:
-                return "look"
-
             # Material files define Material prims
             stage = Usd.Stage.Open(str(file_path))
             if stage is not None:
                 for prim in stage.Traverse():
                     if prim.IsA(UsdShade.Material):
-                        return "material"
+                        return AssetCategory.MTL.value
         except Exception:
             logger.debug(
-                "Could not classify %s, defaulting to geometry",
+                "Could not classify %s, defaulting to geo",
                 file_path,
                 exc_info=True,
             )
 
-        return "geometry"
+        return AssetCategory.GEO.value
 
-    def _format_result(self, file_path: Path) -> dict[str, str]:
-        """Format a single USD file with classification."""
-        return {
-            "name": file_path.stem,
-            "path": str(file_path),
-            "format": file_path.suffix,
-            "category": self._classify(file_path),
-        }
+    # ── Scanning ─────────────────────────────────────────────────
+
+    def _scan(
+        self, query: str | None = None, category: str = "all",
+    ) -> list[dict[str, str]]:
+        """Scan assets_dir for packages and loose files.
+
+        If query is provided, filters by keyword match on asset name.
+        If category is not 'all', filters by category.
+        """
+        root = self.assets_dir
+        if not root.exists():
+            return []
+
+        results: list[dict[str, str]] = []
+
+        # 1. Detect ASWF asset folders first
+        packages = self._find_asset_folders(root)
+        package_dirs = set(packages.keys())
+
+        for pkg_dir, root_file in packages.items():
+            name = pkg_dir.name
+            if query and query.lower() not in name.lower():
+                continue
+
+            entry = {
+                "name": name,
+                "path": str(root_file),
+                "format": root_file.suffix,
+                "category": AssetCategory.PACKAGE.value,
+            }
+            if category == "all" or category == entry["category"]:
+                results.append(entry)
+
+        # 2. Scan loose files (skip anything inside asset folders)
+        for f in root.rglob("*"):
+            if not f.is_file():
+                continue
+            if f.suffix.lower() not in _USD_EXTENSIONS:
+                continue
+            if self._is_inside_package(f, package_dirs):
+                continue
+
+            name = f.stem
+            if query and query.lower() not in name.lower():
+                continue
+
+            entry = {
+                "name": name,
+                "path": str(f),
+                "format": f.suffix,
+                "category": self._classify(f),
+            }
+            if category == "all" or category == entry["category"]:
+                results.append(entry)
+
+        return results
 
     def _search(self, query: str, category: str) -> ToolResult:
-        query_lower = query.lower()
-        results = []
-        root = self.assets_dir
-        if not root.exists():
-            return ToolResult(success=True, data=results)
-        for f in root.rglob("*"):
-            if (
-                f.suffix.lower() in self.SUPPORTED_EXTENSIONS
-                and query_lower in f.stem.lower()
-            ):
-                entry = self._format_result(f)
-                if category == "all" or entry["category"] == category:
-                    results.append(entry)
-        return ToolResult(success=True, data=results)
+        return ToolResult(
+            success=True,
+            data=self._scan(query=query, category=category),
+        )
 
     def _list_all(self, category: str) -> ToolResult:
-        results = []
-        root = self.assets_dir
-        if not root.exists():
-            return ToolResult(success=True, data=results)
-        for f in root.rglob("*"):
-            if f.suffix.lower() in self.SUPPORTED_EXTENSIONS:
-                entry = self._format_result(f)
-                if category == "all" or entry["category"] == category:
-                    results.append(entry)
-        return ToolResult(success=True, data=results)
+        return ToolResult(
+            success=True,
+            data=self._scan(category=category),
+        )
 
     def validate_config(self) -> bool:
         return True

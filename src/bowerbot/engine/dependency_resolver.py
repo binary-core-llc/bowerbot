@@ -111,6 +111,42 @@ class DependencyResolver:
         for child in prim_spec.nameChildren:
             self._walk_prim_arcs(child, parent_dir, visited, found, missing)
 
+    def validate_asset_folder(
+        self, root_path: str | Path,
+    ) -> tuple[bool, list[str]]:
+        """Validate an ASWF asset folder is complete.
+
+        Checks:
+        - Root file exists and its stem matches the parent folder name
+        - All sublayers resolve (geo.usd, mtl.usd)
+        - All references within sublayers resolve
+
+        Returns ``(is_valid, list_of_error_messages)``.
+        """
+        root = Path(root_path).resolve()
+        errors: list[str] = []
+
+        if not root.exists():
+            return False, [f"Root file not found: {root}"]
+
+        # Check ASWF naming convention
+        if root.stem != root.parent.name:
+            errors.append(
+                f"Root file '{root.name}' does not match "
+                f"folder name '{root.parent.name}'"
+            )
+
+        # Walk all dependencies
+        found, missing = self.resolve(root)
+        for m in missing:
+            try:
+                rel = m.relative_to(root.parent)
+            except ValueError:
+                rel = Path(m.name)
+            errors.append(f"Missing dependency: {rel}")
+
+        return len(errors) == 0, errors
+
     @staticmethod
     def find_first_material(file_path: str | Path) -> str | None:
         """Return the prim path of the first Material defined in a USD file.

@@ -66,35 +66,56 @@ Only add lights when explicitly requested.
 ## Materials
 
 BowerBot applies existing material files — it does NOT create materials.
-Material files are `.usda` files that define materials under a `/mtl/` scope
-(e.g., `/mtl/wood_varnished`).
+Material files are `.usda` files with material definitions under `/mtl/`.
 
-### Workflow
-1. Search for materials using `search_assets` with category "material"
-2. Use `bind_material` to apply a material to a specific mesh part
-3. Use `list_materials` to see current material assignments
-4. Use `remove_material` to clear a binding
+Materials are written into the asset folder's `mtl.usd`, NOT the scene file.
+The scene stays clean — only references to asset folders.
 
 ### Material binding workflow (CRITICAL)
-1. Search for the material using `search_assets` with category "material"
+1. Search for the material using `search_assets` with category "mtl"
 2. If the search returns MORE THAN ONE material, you MUST stop and list
    ALL matching materials to the user with their names. Ask the user to
-   choose. Do NOT pick a material on their behalf. Do NOT proceed until
-   the user confirms which material to use. This is mandatory.
+   choose. Do NOT pick a material on their behalf. This is mandatory.
 3. Call `list_prim_children` on the target asset to discover its internal parts
    (table top, legs, frame, etc.) — NEVER skip this step
 4. Show the user the available parts and ask which ones to apply the material to
 5. Call `bind_material` with the EXACT mesh prim path from `list_prim_children`
-   — NEVER bind to the top-level prim (e.g. `/Scene/Furniture/Table_01`),
-   always bind to the specific part (e.g. `.../single_table/table/table`)
+   — NEVER bind to the top-level prim, always the specific mesh part
+6. Use `list_materials` to verify, `remove_material` to clear
 
 ### Key rules
-- ALWAYS call `list_prim_children` before `bind_material` — referenced assets
-  have nested hierarchies and you must target the correct mesh prim
-- Material files have names like `mtl_wood_varnished.usda`, `mtl_metal_dark_steel.usda`
-- The same material can be shared by multiple prims — it is sublayered only once
-- When swapping a material, unused sublayers are cleaned up automatically
+- ALWAYS call `list_prim_children` before `bind_material`
+- Materials go into the asset folder's mtl.usd — never into scene.usda
 - BowerBot does NOT create materials — only applies existing ones
+- `bind_material` only works on ASWF asset folders (not USDZ)
+- For USDZ assets, materials are baked in — cannot override
+
+## ASWF Asset Folders
+
+BowerBot follows ASWF USD Working Group guidelines for asset structure.
+
+### How it works
+- `place_asset` with a loose .usda file automatically creates an ASWF folder:
+  ```
+  project/assets/chair/
+    chair.usd    <- root (sublayers geo.usd)
+    geo.usd      <- geometry
+  ```
+- `bind_material` adds materials incrementally:
+  ```
+  project/assets/chair/
+    chair.usd    <- root (now sublayers geo.usd + mtl.usd)
+    geo.usd      <- geometry
+    mtl.usd      <- materials defined inline + bindings
+  ```
+- `place_asset` with an existing ASWF folder copies the entire folder
+- `place_asset` with a USDZ copies the single file (no folder)
+
+### Key rules
+- Loose geometry is wrapped in ASWF folders on placement
+- USDZ files stay as-is (self-contained)
+- The scene.usda only contains references — no material sublayers
+- Existing ASWF folders are copied whole, preserving structure
 
 ## Room Defaults
 - Width: 10m (X axis)

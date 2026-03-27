@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from bowerbot.project import Project
 
 from bowerbot.config import SceneDefaults
+from bowerbot.engine.asset_assembler import AssetAssembler
 from bowerbot.engine.dependency_resolver import DependencyResolver
 from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
@@ -57,6 +58,7 @@ class AssemblySkill(Skill):
         )
         self.packager = Packager()
         self.resolver = DependencyResolver()
+        self.assembler = AssetAssembler()
 
         self._project = None
         self._stage_path: Path | None = None
@@ -577,13 +579,29 @@ class AssemblySkill(Skill):
 
         # Copy asset to project assets dir
         assets_dir = self._resolve_assets_dir()
-        local_copy = assets_dir / asset_path.name
 
-        if not local_copy.exists():
-            shutil.copy2(asset_path, local_copy)
-
-        # Use path relative to the stage file
-        relative_path = f"assets/{asset_path.name}"
+        if self._is_asset_folder_root(asset_path):
+            # ASWF asset folder — copy entire folder
+            relative_path = self._copy_asset_folder(
+                asset_path, assets_dir,
+            )
+        elif asset_path.suffix.lower() == ".usdz":
+            # USDZ — self-contained, copy as single file
+            local_copy = assets_dir / asset_path.name
+            if not local_copy.exists():
+                shutil.copy2(asset_path, local_copy)
+            relative_path = f"assets/{asset_path.name}"
+        else:
+            # Loose geometry — create ASWF folder
+            folder_name = asset_path.stem
+            root_file = self.assembler.create_asset_folder(
+                output_dir=assets_dir,
+                asset_name=folder_name,
+                geometry_file=asset_path,
+            )
+            relative_path = (
+                f"assets/{folder_name}/{root_file.name}"
+            )
 
         scene_object = SceneObject(
             prim_path=prim_path,
@@ -868,13 +886,6 @@ class AssemblySkill(Skill):
                 error="No stage to package. Call create_stage first.",
             )
 
-        # Final cleanup — remove unused material sublayers before packaging
-        if self.writer.stage is not None:
-            removed = self.writer.cleanup_unused_material_sublayers()
-            if removed:
-                self.writer.save()
-                logger.info(f"Cleaned up {removed} unused material sublayer(s) before packaging")
-
         output_path = self._stage_path.with_suffix(".usdz")
         result_path = self.packager.package(self._stage_path, output_path)
 
@@ -906,48 +917,56 @@ class AssemblySkill(Skill):
                 error=f"Material file not found: {material_file}",
             )
 
-        # Copy material to project assets/materials/
-        assets_dir = self._resolve_assets_dir()
-        materials_dir = assets_dir / "materials"
-        materials_dir.mkdir(parents=True, exist_ok=True)
-        local_copy = materials_dir / material_file.name
+        # Find which asset folder this prim belongs to
+        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(
+            prim_path,
+        )
+        if asset_dir is None or ref_prim_path is None:
+            return ToolResult(
+                success=False,
+                error=(
+                    f"Cannot find ASWF asset folder for {prim_path}. "
+                    "Material binding only works on assets placed "
+                    "as ASWF folders (not USDZ)."
+                ),
+            )
 
-        if not local_copy.exists():
-            shutil.copy2(material_file, local_copy)
+        # Convert scene path to asset-local path by stripping
+        # everything up to the reference prim
+        asset_local_path = prim_path
+        if prim_path.startswith(ref_prim_path):
+            asset_local_path = prim_path[len(ref_prim_path):]
+            if not asset_local_path:
+                asset_local_path = "/"
 
-        # Add as sublayer (relative to stage file)
-        relative_path = f"assets/materials/{material_file.name}"
-        self.writer.add_material_sublayer(relative_path)
-
-        # Discover material prim path if not provided
-        if not material_prim_path:
-            material_prim_path = self.resolver.find_first_material(material_file)
-            if not material_prim_path:
-                return ToolResult(
-                    success=False,
-                    error=f"No Material prim found in {material_file.name}",
-                )
-
-        # Save and reopen to pick up the new sublayer composition
-        self.writer.save()
-        self.writer.open_stage(self._stage_path)
-
-        # Bind the material to the prim
+        # Add material into the asset folder's mtl.usd
         try:
-            self.writer.bind_material(prim_path, material_prim_path)
-        except ValueError as e:
+            material_prim_path = self.assembler.add_material(
+                asset_dir=asset_dir,
+                material_file=material_file,
+                prim_path=asset_local_path,
+                material_prim_path=material_prim_path,
+            )
+        except (ValueError, RuntimeError) as e:
             return ToolResult(success=False, error=str(e))
 
-        self.writer.save()
+        # Reopen scene stage to pick up the updated composition
+        self.writer.open_stage(self._stage_path)
 
-        logger.info(f"Bound {material_prim_path} to {prim_path}")
+        logger.info(
+            f"Bound {material_prim_path} to {prim_path} "
+            f"in {asset_dir.name}/"
+        )
         return ToolResult(
             success=True,
             data={
                 "prim_path": prim_path,
                 "material": material_prim_path,
-                "material_file": relative_path,
-                "message": f"Bound {material_prim_path} to {prim_path}",
+                "asset_folder": asset_dir.name,
+                "message": (
+                    f"Bound {material_prim_path} to {prim_path} "
+                    f"in {asset_dir.name}/mtl.usd"
+                ),
             },
         )
 
@@ -960,26 +979,35 @@ class AssemblySkill(Skill):
 
         prim_path = params["prim_path"]
 
-        try:
-            self.writer.clear_material_bindings(prim_path)
-        except ValueError as e:
-            return ToolResult(success=False, error=str(e))
+        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(
+            prim_path,
+        )
+        if asset_dir is None or ref_prim_path is None:
+            return ToolResult(
+                success=False,
+                error=f"Cannot find ASWF asset folder for {prim_path}.",
+            )
 
-        # Clean up any sublayers that are now unused
-        removed = self.writer.cleanup_unused_material_sublayers()
-        self.writer.save()
+        asset_local_path = prim_path
+        if prim_path.startswith(ref_prim_path):
+            asset_local_path = prim_path[len(ref_prim_path):]
+            if not asset_local_path:
+                asset_local_path = "/"
 
-        msg = f"Removed material binding from {prim_path}"
-        if removed:
-            msg += f" and cleaned up {removed} unused material sublayer(s)"
+        self.assembler.remove_material_binding(
+            asset_dir, asset_local_path,
+        )
 
-        logger.info(msg)
+        # Reopen scene stage to pick up changes
+        self.writer.open_stage(self._stage_path)
+
+        logger.info(f"Removed material from {prim_path}")
         return ToolResult(
             success=True,
             data={
                 "prim_path": prim_path,
-                "sublayers_removed": removed,
-                "message": msg,
+                "asset_folder": asset_dir.name,
+                "message": f"Removed material binding from {prim_path}",
             },
         )
 
@@ -990,13 +1018,26 @@ class AssemblySkill(Skill):
                 error="No stage open. Call create_stage first.",
             )
 
-        materials = self.writer.list_materials()
+        # Collect materials from all ASWF asset folders
+        assets_dir = self._resolve_assets_dir()
+        all_materials: list[dict] = []
+
+        for entry in assets_dir.iterdir():
+            if not entry.is_dir():
+                continue
+            mtl_path = entry / "mtl.usd"
+            if mtl_path.exists():
+                materials = self.assembler.list_materials(entry)
+                for mat in materials:
+                    mat["asset_folder"] = entry.name
+                all_materials.extend(materials)
+
         return ToolResult(
             success=True,
             data={
-                "material_count": len(materials),
-                "materials": materials,
-                "message": f"Scene has {len(materials)} material(s).",
+                "material_count": len(all_materials),
+                "materials": all_materials,
+                "message": f"Scene has {len(all_materials)} material(s).",
             },
         )
 
@@ -1033,6 +1074,91 @@ class AssemblySkill(Skill):
                 ),
             },
         )
+
+    # ── ASWF Asset Folder Operations ───────────────────────────────
+
+    @staticmethod
+    def _is_asset_folder_root(asset_path: Path) -> bool:
+        """Check if asset_path is the root file of an ASWF asset folder.
+
+        An ASWF root file has the same stem as its parent directory
+        (e.g. ``single_table/single_table.usd``).
+        """
+        return (
+            asset_path.stem == asset_path.parent.name
+            and asset_path.suffix.lower() in {".usd", ".usda", ".usdc"}
+        )
+
+    @staticmethod
+    def _copy_asset_folder(
+        root_file: Path, assets_dir: Path,
+    ) -> str:
+        """Copy an entire ASWF asset folder to the project assets dir.
+
+        Returns the relative path from the stage file to the root file.
+        """
+        source_dir = root_file.parent
+        folder_name = source_dir.name
+        dest_dir = assets_dir / folder_name
+
+        if not dest_dir.exists():
+            shutil.copytree(source_dir, dest_dir)
+
+        return f"assets/{folder_name}/{root_file.name}"
+
+    def _resolve_asset_dir_for_prim(
+        self, prim_path: str,
+    ) -> tuple[Path | None, str | None]:
+        """Find the ASWF asset folder for a given prim path.
+
+        Walks the prim hierarchy to find the reference, then returns
+        the asset folder path and the prim path where the reference
+        lives. The caller can use the reference prim path to convert
+        scene paths to asset-local paths.
+
+        Returns:
+            (asset_dir, ref_prim_path) or (None, None) if not found.
+        """
+        if self.writer.stage is None:
+            return None, None
+
+        stage = self.writer.stage
+        path_parts = prim_path.strip("/").split("/")
+
+        for i in range(len(path_parts), 0, -1):
+            check_path = "/" + "/".join(path_parts[:i])
+            prim = stage.GetPrimAtPath(check_path)
+            if not prim.IsValid():
+                continue
+
+            refs = prim.GetMetadata("references")
+            if refs is None:
+                continue
+
+            for ref_list in (
+                refs.prependedItems,
+                refs.appendedItems,
+                refs.explicitItems,
+            ):
+                if not ref_list:
+                    continue
+                for ref in ref_list:
+                    asset_path = ref.assetPath
+                    if not asset_path:
+                        continue
+
+                    stage_dir = Path(
+                        stage.GetRootLayer().realPath,
+                    ).parent
+                    resolved = (stage_dir / asset_path).resolve()
+
+                    if resolved.exists() and resolved.parent.is_dir():
+                        folder = resolved.parent
+                        for ext in (".usd", ".usda", ".usdc"):
+                            if resolved.name == f"{folder.name}{ext}":
+                                return folder, check_path
+
+        return None, None
 
     def validate_config(self) -> bool:
         """Assembly skill is always valid — no external config needed."""

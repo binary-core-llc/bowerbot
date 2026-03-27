@@ -8,7 +8,7 @@ by category so you know which tool to use.
 - When the user asks for assets without specifying a source
 - When you want to check if an asset was already downloaded
 - Before searching cloud providers — local is faster and free
-- When the user asks to apply materials or look files
+- When the user asks to apply materials
 
 ## Supported Formats
 USD-family files: .usd, .usda, .usdc, .usdz
@@ -19,17 +19,31 @@ Every result includes a `category` field:
 
 | Category | What it is | Which tool to use |
 |----------|-----------|-------------------|
-| `geometry` | 3D meshes, models | `place_asset` |
-| `material` | Material definitions (under `/mtl/`) | `bind_material` |
-| `look` | Look files (geometry + materials + bindings) | `apply_look` |
+| `package` | ASWF asset folder (geo + mtl + textures) | `place_asset` |
+| `geo` | Geometry (3D meshes, models) | `place_asset` |
+| `mtl` | Material definitions (under `/mtl/`) | `bind_material` |
+
+### ASWF Asset Folders
+An asset folder follows the ASWF USD Working Group standard:
+```
+single_table/
+  single_table.usd   <- root file (same name as folder)
+  geo.usd            <- geometry
+  mtl.usd            <- materials + bindings
+  maps/              <- textures
+```
+
+These are detected automatically and returned as a single `package` entry.
+Internal files (geo.usd, mtl.usd) are NOT listed separately.
+When placing a package, `place_asset` copies the entire folder.
 
 Use the `category` filter parameter to narrow results:
-- `search_assets("wood", category="material")` — find wood materials
-- `search_assets("table", category="look")` — find table look files
-- `list_assets(category="material")` — list all materials
+- `search_assets("table", category="package")` — find asset packages
+- `search_assets("wood", category="mtl")` — find material files
+- `list_assets(category="package")` — list all asset packages
 
 ## Behavior
-- Searches by keyword matching against filenames
-- Classifies each file by inspecting its USD contents
+- Detects ASWF asset folders first, then scans loose files
+- Classifies each loose file by inspecting its USD contents
 - Includes assets downloaded by any cloud provider (Sketchfab, etc.)
 - Use the `category` field to pick the right tool — never guess

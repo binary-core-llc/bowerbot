@@ -4,6 +4,7 @@
 """BowerBot data schemas."""
 
 from bowerbot.schemas.models import (
+    AssetCategory,
     AssetFormat,
     AssetMetadata,
     HDRIFormat,
@@ -20,6 +21,7 @@ from bowerbot.schemas.models import (
 )
 
 __all__ = [
+    "AssetCategory",
     "AssetFormat",
     "AssetMetadata",
     "HDRIFormat",

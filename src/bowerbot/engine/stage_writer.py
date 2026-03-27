@@ -87,8 +87,18 @@ class StageWriter:
         return None
 
     def add_reference(self, scene_object: SceneObject) -> None:
-        """Add a referenced asset to the stage at the given prim path."""
+        """Add a referenced asset to the stage at the given prim path.
 
+        Uses a wrapper prim pattern to keep BowerBot's positioning
+        separate from the referenced geometry's own transforms:
+
+          /Scene/Furniture/Table_01  (wrapper: translate + scale)
+            /Scene/Furniture/Table_01/asset  (reference: geometry's own ops)
+
+        This ensures DCC export transforms (Maya pivots, rotations)
+        are preserved untouched inside the reference while BowerBot
+        controls positioning through the parent wrapper.
+        """
         if self._stage is None:
             msg = "No stage open. Call create_stage() first."
             raise RuntimeError(msg)
@@ -101,15 +111,11 @@ class StageWriter:
         # Compute unit conversion before adding the reference
         unit_scale = self._compute_unit_scale(asset_path)
 
-        # Define the prim and add reference
-        prim = self._stage.DefinePrim(
+        # Create wrapper prim with BowerBot's transform
+        wrapper = self._stage.DefinePrim(
             scene_object.prim_path, "Xform",
         )
-        prim.GetReferences().AddReference(asset_path)
-
-        # Set transform
-        xformable = UsdGeom.Xformable(prim)
-        xformable.ClearXformOpOrder()
+        xformable = UsdGeom.Xformable(wrapper)
 
         tx, ty, tz = scene_object.translate
         xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
@@ -118,8 +124,6 @@ class StageWriter:
         if any(v != 0.0 for v in (rx, ry, rz)):
             xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
 
-        # Apply unit-conversion scale when the asset uses
-        # different units than the scene (e.g. cm → m).
         if abs(unit_scale - 1.0) > 1e-6:
             xformable.AddScaleOp().Set(
                 Gf.Vec3f(unit_scale, unit_scale, unit_scale),
@@ -130,6 +134,13 @@ class StageWriter:
                 xformable.AddScaleOp().Set(
                     Gf.Vec3f(sx, sy, sz),
                 )
+
+        # Create child prim with the reference — geometry's own
+        # xformOps live here, untouched by the wrapper's ops
+        asset_prim = self._stage.DefinePrim(
+            f"{scene_object.prim_path}/asset", "Xform",
+        )
+        asset_prim.GetReferences().AddReference(asset_path)
 
     # Mapping from LightType to UsdLux class and supported extra attributes.
     _LIGHT_CLASSES: dict = {
@@ -187,10 +198,10 @@ class StageWriter:
     ) -> None:
         """Update the transform on an existing prim.
 
-        Preserves any unit-conversion scale that was applied when
-        the asset was first referenced.
+        Only modifies the translate, rotate, and scale ops that
+        BowerBot authored. Preserves any unit-conversion scale.
+        Does not touch the referenced geometry's own transforms.
         """
-
         if self._stage is None:
             msg = "No stage open."
             raise RuntimeError(msg)
@@ -202,21 +213,27 @@ class StageWriter:
 
         xformable = UsdGeom.Xformable(prim)
 
-        # Capture the existing scale before clearing ops
-        existing_scale = self._read_existing_scale(xformable)
-
-        xformable.ClearXformOpOrder()
-
+        # Update existing ops in-place rather than clearing
         tx, ty, tz = translate
-        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-
         rx, ry, rz = rotate
-        if any(v != 0.0 for v in (rx, ry, rz)):
-            xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
 
-        # Re-apply the scale so unit conversion is preserved
-        if existing_scale is not None:
-            xformable.AddScaleOp().Set(existing_scale)
+        found_translate = False
+        found_rotate = False
+
+        for op in xformable.GetOrderedXformOps():
+            if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
+                if op.GetOpName() == "xformOp:translate":
+                    op.Set(Gf.Vec3d(tx, ty, tz))
+                    found_translate = True
+            elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
+                op.Set(Gf.Vec3f(rx, ry, rz))
+                found_rotate = True
+
+        # If ops don't exist yet (shouldn't happen), add them
+        if not found_translate:
+            xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
+        if not found_rotate and any(v != 0.0 for v in (rx, ry, rz)):
+            xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
 
     def save(self) -> None:
         """Save the current stage to disk."""

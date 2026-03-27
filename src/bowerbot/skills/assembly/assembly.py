@@ -158,11 +158,32 @@ class AssemblySkill(Skill):
                         },
                         "rotate_y": {
                             "type": "number",
-                            "description": "Rotation around Y axis in degrees. 0 = facing forward.",
+                            "description": (
+                                "Rotation around Y axis in "
+                                "degrees. 0 = facing forward."
+                            ),
                             "default": 0.0,
                         },
+                        "fix_root_prim": {
+                            "type": "boolean",
+                            "description": (
+                                "If true, automatically wraps "
+                                "a non-Xform root prim under "
+                                "an Xform to comply with ASWF "
+                                "guidelines. Only use when the "
+                                "user confirms they want the fix."
+                            ),
+                            "default": False,
+                        },
                     },
-                    "required": ["asset_file_path", "asset_name", "group", "translate_x", "translate_y", "translate_z"],
+                    "required": [
+                        "asset_file_path",
+                        "asset_name",
+                        "group",
+                        "translate_x",
+                        "translate_y",
+                        "translate_z",
+                    ],
                 },
             ),
             Tool(
@@ -592,7 +613,36 @@ class AssemblySkill(Skill):
                 shutil.copy2(asset_path, local_copy)
             relative_path = f"assets/{asset_path.name}"
         else:
-            # Loose geometry — create ASWF folder
+            # Loose geometry — check ASWF compliance
+            bad_type = self.assembler.check_root_prim_type(
+                asset_path,
+            )
+            fix_root = params.get("fix_root_prim", False)
+
+            if bad_type and not fix_root:
+                return ToolResult(
+                    success=False,
+                    error=(
+                        f"Asset '{asset_path.name}' has a "
+                        f"{bad_type} as its root prim instead "
+                        f"of an Xform. Per ASWF USD guidelines, "
+                        f"the root prim should be an Xform with "
+                        f"geometry as children. Ask the user if "
+                        f"they want to fix this automatically, "
+                        f"then call place_asset again with "
+                        f"fix_root_prim set to true."
+                    ),
+                )
+
+            if bad_type and fix_root:
+                self.assembler.wrap_root_prim(asset_path)
+                logger.info(
+                    "Wrapped %s root prim in Xform for "
+                    "ASWF compliance",
+                    asset_path.name,
+                )
+
+            # Create ASWF folder
             folder_name = asset_path.stem
             root_file = self.assembler.create_asset_folder(
                 output_dir=assets_dir,

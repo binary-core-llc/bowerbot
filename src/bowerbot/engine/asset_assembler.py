@@ -278,6 +278,78 @@ class AssetAssembler:
             for mat_path, bound_prims in materials.items()
         ]
 
+    @staticmethod
+    def check_root_prim_type(geometry_file: Path) -> str | None:
+        """Check if the geometry file's root prim follows ASWF guidelines.
+
+        Returns None if the root prim is an Xform (correct).
+        Returns the actual type name if it's not (e.g. "Mesh").
+        """
+        layer = Sdf.Layer.FindOrOpen(str(geometry_file))
+        if layer is None or not layer.defaultPrim:
+            return None
+
+        root_spec = layer.GetPrimAtPath(
+            Sdf.Path(f"/{layer.defaultPrim}"),
+        )
+        if root_spec is None:
+            return None
+
+        if root_spec.typeName in ("Xform", ""):
+            return None
+
+        return root_spec.typeName
+
+    @staticmethod
+    def wrap_root_prim(geometry_file: Path) -> None:
+        """Wrap a non-Xform root prim under an Xform parent in place.
+
+        Rewrites the file so the root prim becomes an Xform with the
+        original geometry as a child. For example, if the file has
+        ``/plate`` as a Mesh, it becomes ``/plate`` (Xform) with
+        ``/plate/mesh`` (Mesh) as a child.
+
+        This makes the asset ASWF-compliant.
+        """
+        source_layer = Sdf.Layer.FindOrOpen(str(geometry_file))
+        if source_layer is None:
+            return
+
+        default_prim_name = source_layer.defaultPrim
+        if not default_prim_name:
+            return
+
+        root_path = Sdf.Path(f"/{default_prim_name}")
+        root_spec = source_layer.GetPrimAtPath(root_path)
+        if root_spec is None or root_spec.typeName in ("Xform", ""):
+            return
+
+        # Create a temp layer with the wrapped structure
+        import tempfile
+        with tempfile.NamedTemporaryFile(
+            suffix=".usda", delete=False,
+        ) as tmp:
+            tmp_path = tmp.name
+
+        dest_layer = Sdf.Layer.CreateNew(tmp_path)
+
+        # Create Xform wrapper
+        Sdf.CreatePrimInLayer(dest_layer, root_path)
+        wrapper = dest_layer.GetPrimAtPath(root_path)
+        wrapper.specifier = Sdf.SpecifierDef
+        wrapper.typeName = "Xform"
+
+        # Copy original prim as child /asset_name/mesh
+        child_path = Sdf.Path(f"/{default_prim_name}/mesh")
+        Sdf.CopySpec(source_layer, root_path, dest_layer, child_path)
+
+        dest_layer.defaultPrim = default_prim_name
+        dest_layer.Save()
+
+        # Replace the original file
+        import shutil
+        shutil.move(tmp_path, str(geometry_file))
+
     # ── Internal Helpers ─────────────────────────────────────────
 
     @staticmethod

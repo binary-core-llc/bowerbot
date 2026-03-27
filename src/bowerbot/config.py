@@ -28,7 +28,7 @@ GLOBAL_CONFIG_PATH = BOWERBOT_HOME / "config.json"
 class LLMSettings(BaseSettings):
     """LLM provider configuration."""
 
-    model: str = "gpt-4o"
+    model: str = "gpt-4.1"
     api_key: str = ""
     temperature: float = 0.1
     max_tokens: int = 4096

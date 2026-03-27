@@ -93,6 +93,8 @@ Projects are persistent. Close the session, come back later, and continue where 
 ## ✨ Features
 
 - 📦 **OpenUSD native** : references, defaultPrim, metersPerUnit, upAxis, all correct out of the box
+- 🏗️ **[ASWF](https://www.aswf.io/) USD asset folders** : automatically assembles assets into [ASWF-compliant folder structure](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) (root + geo.usda + mtl.usda). [ASWF](https://www.aswf.io/) (Academy Software Foundation) hosts the [USD Working Group](https://wiki.aswf.io/display/WGUSD) that defines asset structure standards used across the industry. It works alongside the [Alliance for OpenUSD (AOUSD)](https://aousd.org/) — the joint effort by Pixar, Apple, NVIDIA, and others driving the core OpenUSD specification.
+- 🎨 **Material binding** : apply materials to specific mesh parts, defined inline in asset folder mtl.usda
 - 🔌 **Pluggable skills** : connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
 - 💡 **Native USD lighting** : create sun, dome, point, area, disk, and tube lights
 - 🧩 **Automatic unit handling** : assets in cm, mm, or inches are scaled correctly at reference time
@@ -104,6 +106,76 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 📦 **USDZ packaging** : export for Apple Vision Pro, Omniverse, or any USD viewer
 - 🏗️ **Onboarding wizard** : zero-config setup in 60 seconds
 - 🎯 **SKILL.md system** : modular prompts, each skill teaches the LLM how to use it
+
+---
+
+## 🔄 How It Works
+
+BowerBot is conversational — you tell it what you want and it uses the right tools to build your scene. Behind the scenes, it manages asset discovery, USD composition, materials, lighting, and more.
+
+### Asset Discovery
+
+BowerBot searches for assets across all connected sources, prioritizing what's already available:
+
+1. **Local assets first** — BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers.
+
+2. **Cloud providers if needed** — If the asset isn't found locally, BowerBot searches connected providers like Sketchfab, and downloads the asset to your local directory. Future skills will add support for PolyHaven, Fab, CGTrader, Objaverse, and custom company DAMs.
+
+3. **All downloads are cached locally** — Once an asset is downloaded from any source, it lives in your `assets_dir` and is available for all future projects without re-downloading.
+
+### Scene Assembly
+
+When you ask BowerBot to place an asset, it handles the USD composition correctly depending on the source:
+
+- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports) — BowerBot wraps it in an [ASWF USD Working Group](https://www.aswf.io/) compliant folder structure: `asset_name/asset_name.usda` (root) + `geo.usda`. This follows the [ASWF asset structure guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) used by major studios.
+
+- **USDZ files** (from Sketchfab, DAMs, etc.) — Placed as-is since they're already self-contained packages with geometry and materials bundled.
+
+- **Existing ASWF folders** — Copied whole into the project, preserving the folder structure.
+
+### Material Workflow
+
+When you apply materials to an asset, BowerBot writes them into the asset folder's `mtl.usda` — not into the scene file. The scene stays clean with only references:
+
+```
+You: Apply wood material to the table top
+BowerBot: [searches local assets for "wood" materials]
+         [discovers mesh parts: table top, legs, frame]
+         [writes material definition + binding into assets/table/mtl.usda]
+         Bound /table/mtl/wood_varnished to table top
+```
+
+The result is a production-ready asset folder:
+```
+assets/single_table/
+  single_table.usda   <- root (references geo + mtl)
+  geo.usda            <- geometry (untouched from source)
+  mtl.usda            <- materials inline + bindings
+```
+
+### Scene Output
+
+The scene file (`scene.usda`) contains only references and lights — no material data, no geometry copies, no sublayers. Clean and readable:
+
+```usda
+def Xform "Scene" (kind = "assembly") {
+    def Xform "Furniture" {
+        def Xform "Table_01" {
+            xformOp:translate = (5, 0, 4)
+            xformOp:scale = (0.01, 0.01, 0.01)
+            def Xform "asset" (
+                references = @assets/single_table/single_table.usda@
+            ) { }
+        }
+    }
+    def Xform "Lighting" {
+        def DistantLight "Sun_01" { ... }
+        def DomeLight "Environment_01" { ... }
+    }
+}
+```
+
+Open it in Maya, Omniverse, usdview, or any USD-compatible tool to refine.
 
 ---
 
@@ -152,13 +224,18 @@ BowerBot uses a project-based workflow. Each project is a self-contained folder:
 
 ```
 scenes/coffee_shop/
-  project.json        # Metadata: name, created, updated, object count
-  scene.usda          # The USD stage
-  scene.usdz          # Packaged output
-  assets/             # Assets used by this project
-    mug.usdz
-    table.usdz
+  project.json            # Metadata: name, created, updated, object count
+  scene.usda              # The USD stage (references only — clean and readable)
+  scene.usdz              # Packaged output (for Apple Vision Pro, Omniverse, etc.)
+  assets/                 # Assets used by this project
+    single_table/         # ASWF asset folder (auto-created when placing loose geometry)
+      single_table.usda   #   Root file (references geo.usda + mtl.usda)
+      geo.usda            #   Geometry layer (copied from source)
+      mtl.usda            #   Materials defined inline + bindings
+    CafeTable.usdz        # Self-contained asset (from Sketchfab, DAM, etc.)
 ```
+
+When you place a loose geometry file from your local assets (`.usd`, `.usda`, `.usdc`), BowerBot automatically wraps it in an [ASWF-compliant](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) asset folder. When you apply materials, they're written inline into `mtl.usda`. USDZ files (from Sketchfab, DAMs, etc.) are placed as-is since they're already self-contained.
 
 Projects are resumable:
 
@@ -182,22 +259,26 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 
 ### Built-in Skills
 
-**Assembly** (always active) : 10 tools for USD scene building
+**Assembly** (always active) : 15 tools for USD scene building
 
 | Tool | Description |
 |------|-------------|
 | `create_stage` | Initialize a new USD scene with standard hierarchy |
-| `place_asset` | Add an asset with position, rotation, and auto unit conversion |
+| `place_asset` | Add an asset (auto-creates ASWF folder for loose geometry) |
 | `move_asset` | Reposition an existing object without creating duplicates |
 | `compute_grid_layout` | Calculate evenly spaced positions |
 | `list_scene` | Show current scene with positions and bounding boxes |
 | `rename_prim` | Move/rename objects in the hierarchy |
 | `remove_prim` | Delete objects from the scene |
 | `create_light` | Add native USD lights (sun, dome, point, area, disk, tube) |
+| `bind_material` | Apply a material to a specific mesh part (writes into asset mtl.usda) |
+| `remove_material` | Clear material binding from a prim |
+| `list_materials` | Show all materials and their bindings |
+| `list_prim_children` | Discover mesh parts inside a referenced asset |
 | `validate_scene` | Check for USD errors |
 | `package_scene` | Bundle as `.usdz` |
 
-**Local** : Searches the asset directory for 3D files on disk (`.usd`, `.usda`, `.usdc`, `.usdz`). Automatically finds assets downloaded by any provider.
+**Local** : Searches the asset directory for USD files on disk. Detects ASWF asset folders as single packages and classifies loose files as geometry (`geo`) or material (`mtl`).
 
 **Sketchfab** : Searches and downloads models from your own Sketchfab account in USDZ format. These are your curated assets, not the public marketplace.
 
@@ -227,7 +308,7 @@ All settings live in `~/.bowerbot/config.json`:
 ```json
 {
   "llm": {
-    "model": "gpt-4o",
+    "model": "gpt-4.1",
     "api_key": "sk-...",
     "temperature": 0.1,
     "max_tokens": 4096,
@@ -257,10 +338,21 @@ All settings live in `~/.bowerbot/config.json`:
 Switch models by changing one line:
 
 ```json
-{ "model": "gpt-4o" }
+{ "model": "gpt-4.1" }
 { "model": "anthropic/claude-sonnet-4-20250514" }
 { "model": "deepseek/deepseek-chat" }
 ```
+
+### Tested Models
+
+| Model | Tool Calling | Instruction Following | Recommended |
+|-------|-------------|----------------------|-------------|
+| `gpt-4.1` | Excellent | Excellent | **Yes** (default) |
+| `gpt-4.1-mini` | Good | Good | Yes (budget) |
+| `gpt-4o` | Poor | Poor | No — skips tool calls, ignores SKILL.md |
+| `anthropic/claude-sonnet-4-20250514` | Excellent | Excellent | Yes |
+
+BowerBot relies heavily on tool calling and SKILL.md instructions. Models that don't follow tool-calling patterns reliably will produce poor results.
 
 ### Token Management
 
@@ -304,9 +396,11 @@ src/bowerbot/
   config.py               # Settings from ~/.bowerbot/config.json
   token_manager.py        # Context compression and summarization
   engine/
-    stage_writer.py       # All USD/pxr operations (create, place, light, rename, remove)
+    stage_writer.py       # USD scene operations (create, place, light, rename, remove)
+    asset_assembler.py    # ASWF asset folder creation and material management
+    dependency_resolver.py # USD file dependency tree walker
     scene_graph.py        # Spatial math (grids, walls, collisions)
-    validator.py          # USD validation (defaultPrim, metersPerUnit, upAxis, refs)
+    validator.py          # USD validation (defaultPrim, metersPerUnit, upAxis, refs, materials)
     packager.py           # USDZ packaging
   skills/
     base.py               # Skill interface, assets_dir, SKILL.md loading
@@ -333,14 +427,21 @@ Design principles:
 
 ## 📐 USD Compliance
 
-Every scene BowerBot produces follows these rules:
+Every scene BowerBot produces follows [OpenUSD](https://openusd.org) best practices and the [ASWF USD Working Group asset structure guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md):
 
-- `metersPerUnit = 1.0`
-- `upAxis = "Y"`
-- Assets added as USD references (not copies)
-- `defaultPrim` always set
+**Scene level:**
+- `metersPerUnit = 1.0`, `upAxis = "Y"`, `defaultPrim` always set
 - Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Props`
-- Validated before packaging
+- Scene file contains only references — no material sublayers or inline data
+- Wrapper prim pattern: scene-level transforms (position, rotation, scale) are separate from asset-internal transforms
+- Validated before packaging (defaultPrim, units, upAxis, references, sublayers, material bindings)
+
+**Asset level ([ASWF](https://www.aswf.io/) compliant):**
+- Loose geometry is automatically wrapped in ASWF asset folders on placement
+- Folder structure: `asset_name/asset_name.usda` (root) + `geo.usda` + `mtl.usda`
+- Root file uses references (not sublayers) per ASWF guidelines for predictable opinion strength
+- Materials are defined inline in `mtl.usda` — no loose material files scattered in the folder
+- DCC export transforms (Maya pivots, rotations) are preserved untouched inside the reference
 - Automatic unit conversion for assets with different `metersPerUnit`
 
 ---
@@ -357,28 +458,14 @@ Every scene BowerBot produces follows these rules:
 
 ## 🗺️ Roadmap
 
-- [x] Core USD engine (StageWriter, Validator, Packager)
-- [x] CLI (chat, new, open, list, build, skills, info, onboard)
-- [x] Sketchfab skill (search user's own models, USDZ download)
-- [x] Local asset cache skill
-- [x] Assembly skill (10 tools: create, place, move, light, grid, list, rename, remove, validate, package)
-- [x] SKILL.md system (modular prompts per skill)
-- [x] Project-based workflow with persistence
-- [x] Multi-LLM support (OpenAI, Anthropic via litellm)
-- [x] Automatic unit conversion (cm/mm/inches to meters)
-- [x] Geometry-aware surface placement
-- [x] Onboarding wizard
-- [x] Native USD lighting (6 light types via UsdLux)
-- [x] Textures skill (HDRI and material map search)
-- [x] Centralized assets_dir (one root for all skills)
-- [ ] Scene templates : JSON-driven scene assembly with asset resolution
-- [ ] DCC exporter : tool to export scene layout as BowerBot JSON
-- [x] Error recovery : validator errors fed back to LLM for auto-retry
-- [x] Token management : conversation summarization for long sessions
-- [ ] More skills : Fab, PolyHaven, Objaverse, CGTrader
-- [ ] MCP Gateway : FastAPI server for web UI and external AI clients
-- [ ] Web UI : chat panel + live 3D viewport
-- [ ] BowerHub : community skill registry
+What's next for BowerBot — contributions welcome:
+
+- [ ] **Scene templates** — JSON-driven scene assembly with asset resolution
+- [ ] **DCC exporter** — Maya/Houdini tool to export scene layout as BowerBot JSON
+- [ ] **More asset providers** — Fab, PolyHaven, Objaverse, CGTrader skills
+- [ ] **MCP Gateway** — FastAPI server for web UI and external AI clients
+- [ ] **Web UI** — chat panel + live 3D viewport
+- [ ] **BowerHub** — community skill registry
 
 ---
 

@@ -509,6 +509,20 @@ class AssemblySkill(Skill):
                 },
             ),
             Tool(
+                name="list_project_assets",
+                description=(
+                    "List all asset folders in the current "
+                    "project's assets directory. Shows which "
+                    "ones are referenced in the scene and "
+                    "which are unused. Use this to find "
+                    "asset folders that can be cleaned up."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
+            Tool(
                 name="delete_project_asset",
                 description=(
                     "Delete an asset folder from the project's "
@@ -565,6 +579,8 @@ class AssemblySkill(Skill):
                     return self._remove_material(params)
                 case "list_prim_children":
                     return self._list_prim_children(params)
+                case "list_project_assets":
+                    return self._list_project_assets()
                 case "delete_project_asset":
                     return self._delete_project_asset(params)
                 case _:
@@ -1235,6 +1251,78 @@ class AssemblySkill(Skill):
                                 return folder, check_path
 
         return None, None
+
+    def _list_project_assets(self) -> ToolResult:
+        if self._project is None:
+            return ToolResult(
+                success=False,
+                error="No project open.",
+            )
+
+        assets_dir = self._resolve_assets_dir()
+        if not assets_dir.exists():
+            return ToolResult(
+                success=True,
+                data={
+                    "assets": [],
+                    "message": "No assets directory found.",
+                },
+            )
+
+        # Collect referenced asset paths from the scene
+        referenced: set[str] = set()
+        if self.writer.stage is not None:
+            for prim in self.writer.stage.Traverse():
+                refs = prim.GetMetadata("references")
+                if refs is None:
+                    continue
+                for ref_list in (
+                    refs.prependedItems,
+                    refs.appendedItems,
+                    refs.explicitItems,
+                ):
+                    if not ref_list:
+                        continue
+                    for ref in ref_list:
+                        if ref.assetPath:
+                            referenced.add(ref.assetPath)
+
+        # List all asset folders and files
+        results = []
+        for entry in sorted(assets_dir.iterdir()):
+            if entry.is_dir():
+                in_scene = any(
+                    entry.name in r for r in referenced
+                )
+                results.append({
+                    "name": entry.name,
+                    "type": "folder",
+                    "in_scene": in_scene,
+                })
+            elif entry.is_file():
+                in_scene = any(
+                    entry.name in r for r in referenced
+                )
+                results.append({
+                    "name": entry.name,
+                    "type": "file",
+                    "in_scene": in_scene,
+                })
+
+        unused = [a for a in results if not a["in_scene"]]
+
+        return ToolResult(
+            success=True,
+            data={
+                "total": len(results),
+                "unused_count": len(unused),
+                "assets": results,
+                "message": (
+                    f"Project has {len(results)} asset(s), "
+                    f"{len(unused)} unused."
+                ),
+            },
+        )
 
     def _delete_project_asset(
         self, params: dict[str, Any],

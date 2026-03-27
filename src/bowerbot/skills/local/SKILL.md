@@ -4,7 +4,15 @@
 You have tools to search USD assets on disk. Each result is classified
 by category so you know which tool to use.
 
+## CRITICAL RULE
+NEVER tell the user an asset does not exist without calling
+`search_assets` or `list_assets` first. You MUST always search
+before answering questions about asset availability. If the first
+search returns no results, try broader keywords or `list_assets`
+to show everything available.
+
 ## When to Use
+- When the user asks "what do I have", "do I have a table", etc.
 - When the user asks for assets without specifying a source
 - When you want to check if an asset was already downloaded
 - Before searching cloud providers — local is faster and free

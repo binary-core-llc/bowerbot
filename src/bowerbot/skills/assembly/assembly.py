@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from bowerbot.project import Project
 
 from bowerbot.config import SceneDefaults
+from bowerbot.engine.dependency_resolver import DependencyResolver
 from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
@@ -55,6 +56,7 @@ class AssemblySkill(Skill):
             up_axis=defaults.up_axis,
         )
         self.packager = Packager()
+        self.resolver = DependencyResolver()
 
         self._project = None
         self._stage_path: Path | None = None
@@ -396,6 +398,93 @@ class AssemblySkill(Skill):
                     "required": ["light_type", "light_name"],
                 },
             ),
+            Tool(
+                name="bind_material",
+                description=(
+                    "Bind a material to a prim. Copies the material file to "
+                    "project assets, adds it as a sublayer, and binds it to "
+                    "the target prim. Use this for individual material assignments."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Prim path of the geometry to apply the material to "
+                                "(e.g. '/Scene/Furniture/Table_01')."
+                            ),
+                        },
+                        "material_file": {
+                            "type": "string",
+                            "description": "Local file path to the material .usda file.",
+                        },
+                        "material_prim_path": {
+                            "type": "string",
+                            "description": (
+                                "USD prim path of the material inside the file "
+                                "(e.g. '/mtl/wood_varnished'). If omitted, the "
+                                "first Material prim found is used."
+                            ),
+                        },
+                    },
+                    "required": ["prim_path", "material_file"],
+                },
+            ),
+            Tool(
+                name="list_materials",
+                description=(
+                    "List all materials in the scene and which prims they are "
+                    "bound to. Use this to show current material assignments."
+                ),
+                parameters={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="remove_material",
+                description=(
+                    "Remove material binding from a prim. Clears the "
+                    "material assignment and removes any unused material "
+                    "sublayers from the scene. Use list_prim_children "
+                    "first to find the exact mesh prim path."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Prim path to remove the material from "
+                                "(e.g. '.../single_table/table/table'). "
+                                "Use list_prim_children to find the exact path."
+                            ),
+                        },
+                    },
+                    "required": ["prim_path"],
+                },
+            ),
+            Tool(
+                name="list_prim_children",
+                description=(
+                    "List all geometry parts inside a referenced asset. "
+                    "Use this BEFORE bind_material to discover the internal "
+                    "parts (table top, legs, frame, etc.) so you can target "
+                    "the exact mesh for material binding. Returns each part's "
+                    "name, type, and current material."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Prim path of the asset to inspect "
+                                "(e.g. '/Scene/Furniture/Table_01')."
+                            ),
+                        },
+                    },
+                    "required": ["prim_path"],
+                },
+            ),
         ]
 
     async def execute(self, tool_name: str, params: dict[str, Any]) -> ToolResult:
@@ -421,6 +510,14 @@ class AssemblySkill(Skill):
                     return self._remove_prim(params)
                 case "create_light":
                     return self._create_light(params)
+                case "bind_material":
+                    return self._bind_material(params)
+                case "list_materials":
+                    return self._list_materials()
+                case "remove_material":
+                    return self._remove_material(params)
+                case "list_prim_children":
+                    return self._list_prim_children(params)
                 case _:
                     return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
         except Exception as e:
@@ -771,6 +868,13 @@ class AssemblySkill(Skill):
                 error="No stage to package. Call create_stage first.",
             )
 
+        # Final cleanup — remove unused material sublayers before packaging
+        if self.writer.stage is not None:
+            removed = self.writer.cleanup_unused_material_sublayers()
+            if removed:
+                self.writer.save()
+                logger.info(f"Cleaned up {removed} unused material sublayer(s) before packaging")
+
         output_path = self._stage_path.with_suffix(".usdz")
         result_path = self.packager.package(self._stage_path, output_path)
 
@@ -780,6 +884,153 @@ class AssemblySkill(Skill):
             data={
                 "usdz_path": str(result_path),
                 "message": f"Scene packaged to {result_path}",
+            },
+        )
+
+    # ── Material Operations ────────────────────────────────────────
+
+    def _bind_material(self, params: dict[str, Any]) -> ToolResult:
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+
+        prim_path = params["prim_path"]
+        material_file = Path(params["material_file"])
+        material_prim_path = params.get("material_prim_path")
+
+        if not material_file.exists():
+            return ToolResult(
+                success=False,
+                error=f"Material file not found: {material_file}",
+            )
+
+        # Copy material to project assets/materials/
+        assets_dir = self._resolve_assets_dir()
+        materials_dir = assets_dir / "materials"
+        materials_dir.mkdir(parents=True, exist_ok=True)
+        local_copy = materials_dir / material_file.name
+
+        if not local_copy.exists():
+            shutil.copy2(material_file, local_copy)
+
+        # Add as sublayer (relative to stage file)
+        relative_path = f"assets/materials/{material_file.name}"
+        self.writer.add_material_sublayer(relative_path)
+
+        # Discover material prim path if not provided
+        if not material_prim_path:
+            material_prim_path = self.resolver.find_first_material(material_file)
+            if not material_prim_path:
+                return ToolResult(
+                    success=False,
+                    error=f"No Material prim found in {material_file.name}",
+                )
+
+        # Save and reopen to pick up the new sublayer composition
+        self.writer.save()
+        self.writer.open_stage(self._stage_path)
+
+        # Bind the material to the prim
+        try:
+            self.writer.bind_material(prim_path, material_prim_path)
+        except ValueError as e:
+            return ToolResult(success=False, error=str(e))
+
+        self.writer.save()
+
+        logger.info(f"Bound {material_prim_path} to {prim_path}")
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": prim_path,
+                "material": material_prim_path,
+                "material_file": relative_path,
+                "message": f"Bound {material_prim_path} to {prim_path}",
+            },
+        )
+
+    def _remove_material(self, params: dict[str, Any]) -> ToolResult:
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+
+        prim_path = params["prim_path"]
+
+        try:
+            self.writer.clear_material_bindings(prim_path)
+        except ValueError as e:
+            return ToolResult(success=False, error=str(e))
+
+        # Clean up any sublayers that are now unused
+        removed = self.writer.cleanup_unused_material_sublayers()
+        self.writer.save()
+
+        msg = f"Removed material binding from {prim_path}"
+        if removed:
+            msg += f" and cleaned up {removed} unused material sublayer(s)"
+
+        logger.info(msg)
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": prim_path,
+                "sublayers_removed": removed,
+                "message": msg,
+            },
+        )
+
+    def _list_materials(self) -> ToolResult:
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+
+        materials = self.writer.list_materials()
+        return ToolResult(
+            success=True,
+            data={
+                "material_count": len(materials),
+                "materials": materials,
+                "message": f"Scene has {len(materials)} material(s).",
+            },
+        )
+
+    def _list_prim_children(self, params: dict[str, Any]) -> ToolResult:
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+
+        prim_path = params["prim_path"]
+        children = self.writer.list_prim_children(prim_path)
+
+        if not children:
+            return ToolResult(
+                success=True,
+                data={
+                    "prim_path": prim_path,
+                    "part_count": 0,
+                    "parts": [],
+                    "message": f"No geometry parts found under {prim_path}.",
+                },
+            )
+
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": prim_path,
+                "part_count": len(children),
+                "parts": children,
+                "message": (
+                    f"Found {len(children)} geometry part(s) under {prim_path}. "
+                    "Use the prim_path of a specific part with bind_material."
+                ),
             },
         )
 

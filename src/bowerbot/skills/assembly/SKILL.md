@@ -63,6 +63,39 @@ Only add lights when explicitly requested.
 - Color: warm white = (1.0, 0.9, 0.8), cool white = (0.9, 0.95, 1.0), daylight = (1.0, 1.0, 1.0)
 - Lights always go in `/Scene/Lighting`
 
+## Materials
+
+BowerBot applies existing material files — it does NOT create materials.
+Material files are `.usda` files that define materials under a `/mtl/` scope
+(e.g., `/mtl/wood_varnished`).
+
+### Workflow
+1. Search for materials using `search_assets` with category "material"
+2. Use `bind_material` to apply a material to a specific mesh part
+3. Use `list_materials` to see current material assignments
+4. Use `remove_material` to clear a binding
+
+### Material binding workflow (CRITICAL)
+1. Search for the material using `search_assets` with category "material"
+2. If the search returns MORE THAN ONE material, you MUST stop and list
+   ALL matching materials to the user with their names. Ask the user to
+   choose. Do NOT pick a material on their behalf. Do NOT proceed until
+   the user confirms which material to use. This is mandatory.
+3. Call `list_prim_children` on the target asset to discover its internal parts
+   (table top, legs, frame, etc.) — NEVER skip this step
+4. Show the user the available parts and ask which ones to apply the material to
+5. Call `bind_material` with the EXACT mesh prim path from `list_prim_children`
+   — NEVER bind to the top-level prim (e.g. `/Scene/Furniture/Table_01`),
+   always bind to the specific part (e.g. `.../single_table/table/table`)
+
+### Key rules
+- ALWAYS call `list_prim_children` before `bind_material` — referenced assets
+  have nested hierarchies and you must target the correct mesh prim
+- Material files have names like `mtl_wood_varnished.usda`, `mtl_metal_dark_steel.usda`
+- The same material can be shared by multiple prims — it is sublayered only once
+- When swapping a material, unused sublayers are cleaned up automatically
+- BowerBot does NOT create materials — only applies existing ones
+
 ## Room Defaults
 - Width: 10m (X axis)
 - Height: 3m (Y axis)

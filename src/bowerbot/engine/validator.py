@@ -8,7 +8,7 @@ overlapping objects, missing references, scale inconsistencies,
 missing defaultPrim, etc.
 """
 
-from pxr import Usd, UsdGeom
+from pxr import Usd, UsdGeom, UsdShade
 
 from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
 
@@ -41,6 +41,8 @@ class SceneValidator:
         issues.extend(self._check_meters_per_unit(stage))
         issues.extend(self._check_up_axis(stage))
         issues.extend(self._check_references(stage))
+        issues.extend(self._check_sublayers(stage))
+        issues.extend(self._check_material_bindings(stage))
 
         is_valid = not any(i.severity == Severity.ERROR for i in issues)
         return ValidationResult(is_valid=is_valid, issues=issues)
@@ -112,4 +114,45 @@ class SceneValidator:
                                     prim_path=str(prim.GetPath()),
                                 )
                             )
+        return issues
+
+    def _check_sublayers(self, stage) -> list[ValidationIssue]:  # noqa: ANN001
+        """All sublayers must resolve to existing files."""
+        from pathlib import Path as P
+
+        issues = []
+        root_layer = stage.GetRootLayer()
+        stage_dir = P(root_layer.realPath).parent
+
+        for sub_path in root_layer.subLayerPaths:
+            resolved = stage_dir / sub_path
+            if not resolved.exists():
+                issues.append(
+                    ValidationIssue(
+                        severity=Severity.ERROR,
+                        message=f"Unresolved sublayer: {sub_path}",
+                    )
+                )
+        return issues
+
+    def _check_material_bindings(self, stage) -> list[ValidationIssue]:  # noqa: ANN001
+        """Material bindings must resolve to valid Material prims."""
+        issues = []
+        for prim in stage.Traverse():
+            binding_rel = prim.GetRelationship("material:binding")
+            if not binding_rel or not binding_rel.HasAuthoredTargets():
+                continue
+
+            binding_api = UsdShade.MaterialBindingAPI(prim)
+            bound_mat, _ = binding_api.ComputeBoundMaterial()
+            if not bound_mat:
+                targets = binding_rel.GetTargets()
+                for target in targets:
+                    issues.append(
+                        ValidationIssue(
+                            severity=Severity.ERROR,
+                            message=f"Unresolved material binding: {target}",
+                            prim_path=str(prim.GetPath()),
+                        )
+                    )
         return issues

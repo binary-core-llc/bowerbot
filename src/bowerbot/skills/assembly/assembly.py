@@ -508,6 +508,30 @@ class AssemblySkill(Skill):
                     "required": ["prim_path"],
                 },
             ),
+            Tool(
+                name="delete_project_asset",
+                description=(
+                    "Delete an asset folder from the project's "
+                    "assets directory. Use this after removing "
+                    "an asset from the scene when the user "
+                    "confirms they want to delete the files too. "
+                    "Only deletes ASWF asset folders, not USDZ "
+                    "files or loose files."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "folder_name": {
+                            "type": "string",
+                            "description": (
+                                "Name of the asset folder to "
+                                "delete (e.g. 'single_table')."
+                            ),
+                        },
+                    },
+                    "required": ["folder_name"],
+                },
+            ),
         ]
 
     async def execute(self, tool_name: str, params: dict[str, Any]) -> ToolResult:
@@ -541,6 +565,8 @@ class AssemblySkill(Skill):
                     return self._remove_material(params)
                 case "list_prim_children":
                     return self._list_prim_children(params)
+                case "delete_project_asset":
+                    return self._delete_project_asset(params)
                 case _:
                     return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
         except Exception as e:
@@ -1209,6 +1235,73 @@ class AssemblySkill(Skill):
                                 return folder, check_path
 
         return None, None
+
+    def _delete_project_asset(
+        self, params: dict[str, Any],
+    ) -> ToolResult:
+        if self._project is None:
+            return ToolResult(
+                success=False,
+                error="No project open.",
+            )
+
+        folder_name = params["folder_name"]
+        assets_dir = self._resolve_assets_dir()
+        asset_folder = assets_dir / folder_name
+
+        if not asset_folder.exists():
+            return ToolResult(
+                success=False,
+                error=f"Asset folder not found: {folder_name}",
+            )
+
+        if not asset_folder.is_dir():
+            return ToolResult(
+                success=False,
+                error=(
+                    f"'{folder_name}' is not a folder. "
+                    "This tool only deletes ASWF asset folders."
+                ),
+            )
+
+        # Check if still referenced in the scene
+        if self.writer.stage is not None:
+            for prim in self.writer.stage.Traverse():
+                refs = prim.GetMetadata("references")
+                if refs is None:
+                    continue
+                for ref_list in (
+                    refs.prependedItems,
+                    refs.appendedItems,
+                    refs.explicitItems,
+                ):
+                    if not ref_list:
+                        continue
+                    for ref in ref_list:
+                        if folder_name in ref.assetPath:
+                            return ToolResult(
+                                success=False,
+                                error=(
+                                    f"Asset '{folder_name}' is "
+                                    f"still referenced in the "
+                                    f"scene. Remove it from the "
+                                    f"scene first."
+                                ),
+                            )
+
+        shutil.rmtree(asset_folder)
+        logger.info(f"Deleted project asset: {asset_folder}")
+
+        return ToolResult(
+            success=True,
+            data={
+                "folder": folder_name,
+                "message": (
+                    f"Deleted asset folder '{folder_name}' "
+                    f"from project assets."
+                ),
+            },
+        )
 
     def validate_config(self) -> bool:
         """Assembly skill is always valid — no external config needed."""

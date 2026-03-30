@@ -477,3 +477,129 @@ def test_is_asset_folder_root():
     assert not AssemblySkill._is_asset_folder_root(
         Path("/assets/table/geo.usd"),
     )
+
+
+# ── Asset-Level Lights ───────────────────────────────────────────
+
+
+def test_add_light_creates_lgt():
+    """add_light creates lgt.usda and updates root file."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "lamp")
+
+        assembler = AssetAssembler()
+        root = assembler.create_asset_folder(
+            output_dir, "lamp", geo,
+        )
+
+        assembler.add_light(
+            asset_dir=root.parent,
+            light_name="bulb",
+            light_type="SphereLight",
+            translate=(0.0, 0.5, 0.0),
+            intensity=500.0,
+            radius=0.05,
+        )
+
+        # lgt.usda should exist
+        assert (root.parent / "lgt.usda").exists()
+
+        # Root should reference lgt.usda
+        stage = Usd.Stage.Open(str(root))
+        default_prim = stage.GetDefaultPrim()
+        refs = default_prim.GetMetadata("references")
+        ref_paths = []
+        if refs:
+            for ref_list in (
+                refs.prependedItems,
+                refs.appendedItems,
+                refs.explicitItems,
+            ):
+                if ref_list:
+                    ref_paths.extend(r.assetPath for r in ref_list)
+        assert "./lgt.usda" in ref_paths
+
+        # Light should exist in composed stage
+        from pxr import UsdLux
+        found_light = False
+        for prim in stage.Traverse():
+            if prim.HasAPI(UsdLux.LightAPI):
+                found_light = True
+                assert "bulb" in prim.GetName()
+        assert found_light
+
+
+def test_add_multiple_lights():
+    """Multiple lights coexist in lgt.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "lamp")
+
+        assembler = AssetAssembler()
+        root = assembler.create_asset_folder(
+            output_dir, "lamp", geo,
+        )
+
+        assembler.add_light(
+            root.parent, "bulb", "SphereLight",
+            translate=(0.0, 0.5, 0.0), radius=0.05,
+        )
+        assembler.add_light(
+            root.parent, "glow", "DiskLight",
+            translate=(0.0, 0.3, 0.0), radius=0.1,
+        )
+
+        lights = assembler.list_lights(root.parent)
+        assert len(lights) == 2
+        names = {l["name"] for l in lights}
+        assert "bulb" in names
+        assert "glow" in names
+
+
+def test_remove_light():
+    """remove_light removes the light and cleans up lgt.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "lamp")
+
+        assembler = AssetAssembler()
+        root = assembler.create_asset_folder(
+            output_dir, "lamp", geo,
+        )
+
+        assembler.add_light(
+            root.parent, "bulb", "SphereLight",
+            translate=(0.0, 0.5, 0.0),
+        )
+        assembler.remove_light(root.parent, "bulb")
+
+        # lgt.usda should be deleted (no lights left)
+        assert not (root.parent / "lgt.usda").exists()
+
+        # Root should no longer reference lgt.usda
+        stage = Usd.Stage.Open(str(root))
+        default_prim = stage.GetDefaultPrim()
+        refs = default_prim.GetMetadata("references")
+        ref_paths = []
+        if refs:
+            for ref_list in (
+                refs.prependedItems,
+                refs.appendedItems,
+                refs.explicitItems,
+            ):
+                if ref_list:
+                    ref_paths.extend(r.assetPath for r in ref_list)
+        assert "./lgt.usda" not in ref_paths

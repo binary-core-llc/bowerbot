@@ -181,6 +181,68 @@ class StageWriter:
         if any(v != 0.0 for v in (rx, ry, rz)):
             xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
 
+    def update_light(
+        self,
+        prim_path: str,
+        intensity: float | None = None,
+        color: tuple[float, float, float] | None = None,
+        translate: tuple[float, float, float] | None = None,
+        rotate: tuple[float, float, float] | None = None,
+        **extra_attrs: float | None,
+    ) -> None:
+        """Update an existing scene-level light's attributes.
+
+        Only modifies parameters that are provided (not None).
+        """
+        if self._stage is None:
+            msg = "No stage open."
+            raise RuntimeError(msg)
+
+        prim = self._stage.GetPrimAtPath(prim_path)
+        if not prim.IsValid():
+            msg = f"Prim not found: {prim_path}"
+            raise ValueError(msg)
+
+        if intensity is not None:
+            attr = prim.GetAttribute("inputs:intensity")
+            if attr:
+                attr.Set(intensity)
+
+        if color is not None:
+            attr = prim.GetAttribute("inputs:color")
+            if attr:
+                attr.Set(Gf.Vec3f(*color))
+
+        for attr_name, usd_attr in {
+            "radius": "inputs:radius",
+            "angle": "inputs:angle",
+            "width": "inputs:width",
+            "height": "inputs:height",
+            "length": "inputs:length",
+        }.items():
+            value = extra_attrs.get(attr_name)
+            if value is not None:
+                attr = prim.GetAttribute(usd_attr)
+                if attr:
+                    attr.Set(float(value))
+
+        if translate is not None:
+            xformable = UsdGeom.Xformable(prim)
+            for op in xformable.GetOrderedXformOps():
+                if op.GetOpName() == "xformOp:translate":
+                    op.Set(Gf.Vec3d(*translate))
+                    break
+
+        if rotate is not None:
+            xformable = UsdGeom.Xformable(prim)
+            for op in xformable.GetOrderedXformOps():
+                if (
+                    op.GetOpType()
+                    == UsdGeom.XformOp.TypeRotateXYZ
+                ):
+                    op.Set(Gf.Vec3f(*rotate))
+                    break
+
     def set_transform(
         self,
         prim_path: str,

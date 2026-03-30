@@ -25,7 +25,23 @@ class AssetCategory(str, Enum):
 
     GEO = "geo"          # geometry layer
     MTL = "mtl"          # materials + bindings layer
-    PACKAGE = "package"  # ASWF-compliant asset folder (root + geo + mtl)
+    LGT = "lgt"          # lighting layer
+    PACKAGE = "package"  # ASWF-compliant asset folder
+
+
+class ASWFLayerNames:
+    """ASWF USD Working Group standard layer file names.
+
+    Centralized here so no hardcoded strings are scattered
+    across the codebase. Used by AssetAssembler and LocalSkill.
+
+    Reference: https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md
+    """
+
+    GEO = "geo.usda"
+    MTL = "mtl.usda"
+    LGT = "lgt.usda"
+    MAPS = "maps"
 
 
 # ── Texture Schemas ───────────────────────────────────────────

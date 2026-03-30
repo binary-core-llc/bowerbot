@@ -25,7 +25,7 @@ from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
-from bowerbot.schemas import AssetMetadata, LightParams, LightType, SceneObject
+from bowerbot.schemas import ASWFLayerNames, AssetMetadata, LightParams, LightType, SceneObject
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -323,12 +323,28 @@ class AssemblySkill(Skill):
             Tool(
                 name="create_light",
                 description=(
-                    "Create a USD light in the scene. Lights are native USD prims "
-                    "(not asset references). They go in /Scene/Lighting."
+                    "Create a USD light. By default creates a "
+                    "scene-level light in /Scene/Lighting. If "
+                    "asset_prim_path is provided, creates an "
+                    "asset-level light in that asset's lgt.usda "
+                    "(e.g. a lamp's bulb light). For asset lights, "
+                    "use offset_y instead of translate — BowerBot "
+                    "computes the position from the geometry bounds."
                 ),
                 parameters={
                     "type": "object",
                     "properties": {
+                        "asset_prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Optional: prim path of an asset "
+                                "in the scene to attach the light "
+                                "to. If provided, the light is "
+                                "created in the asset's lgt.usda. "
+                                "If omitted, the light is created "
+                                "as a scene-level light."
+                            ),
+                        },
                         "light_type": {
                             "type": "string",
                             "enum": [t.value for t in LightType],
@@ -419,6 +435,92 @@ class AssemblySkill(Skill):
                         },
                     },
                     "required": ["light_type", "light_name"],
+                },
+            ),
+            Tool(
+                name="update_light",
+                description=(
+                    "Update an existing light's parameters. "
+                    "Works for both scene-level and asset-level "
+                    "lights. Only modifies values you provide — "
+                    "everything else stays the same. Use this "
+                    "instead of creating a new light when the "
+                    "user wants to adjust intensity, color, "
+                    "size, or position."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Full prim path of the light "
+                                "to update (scene or asset). "
+                                "Use list_scene to find it."
+                            ),
+                        },
+                        "intensity": {
+                            "type": "number",
+                            "description": "New intensity.",
+                        },
+                        "color_r": {
+                            "type": "number",
+                            "description": "New red (0-1).",
+                        },
+                        "color_g": {
+                            "type": "number",
+                            "description": "New green (0-1).",
+                        },
+                        "color_b": {
+                            "type": "number",
+                            "description": "New blue (0-1).",
+                        },
+                        "translate_x": {
+                            "type": "number",
+                            "description": "New X position.",
+                        },
+                        "translate_y": {
+                            "type": "number",
+                            "description": "New Y position.",
+                        },
+                        "translate_z": {
+                            "type": "number",
+                            "description": "New Z position.",
+                        },
+                        "radius": {
+                            "type": "number",
+                            "description": "New radius.",
+                        },
+                        "angle": {
+                            "type": "number",
+                            "description": "New angle.",
+                        },
+                        "width": {
+                            "type": "number",
+                            "description": "New width.",
+                        },
+                        "height": {
+                            "type": "number",
+                            "description": "New height.",
+                        },
+                        "length": {
+                            "type": "number",
+                            "description": "New length.",
+                        },
+                        "rotate_x": {
+                            "type": "number",
+                            "description": "New X rotation.",
+                        },
+                        "rotate_y": {
+                            "type": "number",
+                            "description": "New Y rotation.",
+                        },
+                        "rotate_z": {
+                            "type": "number",
+                            "description": "New Z rotation.",
+                        },
+                    },
+                    "required": ["prim_path"],
                 },
             ),
             Tool(
@@ -580,6 +682,8 @@ class AssemblySkill(Skill):
                     return self._remove_prim(params)
                 case "create_light":
                     return self._create_light(params)
+                case "update_light":
+                    return self._update_light(params)
                 case "bind_material":
                     return self._bind_material(params)
                 case "list_materials":
@@ -887,14 +991,141 @@ class AssemblySkill(Skill):
 
         light_type = LightType(params["light_type"])
         light_name = params["light_name"]
-
-        self._object_count += 1
-        safe_name = "".join(c for c in light_name if c.isalnum() or c == "_").strip()
-        prim_path = f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
+        asset_prim_path = params.get("asset_prim_path")
 
         tx = float(params.get("translate_x", 0.0))
         ty = float(params.get("translate_y", 0.0))
         tz = float(params.get("translate_z", 0.0))
+
+        # Asset-level light — write into asset folder's lgt.usda
+        if asset_prim_path:
+            asset_dir, ref_prim_path = (
+                self._resolve_asset_dir_for_prim(asset_prim_path)
+            )
+            if asset_dir is None or ref_prim_path is None:
+                return ToolResult(
+                    success=False,
+                    error=(
+                        f"Cannot find ASWF asset folder for "
+                        f"{asset_prim_path}. Asset-level lights "
+                        f"only work on ASWF folder assets."
+                    ),
+                )
+
+            # Translate values are offsets from the asset's
+            # bounding box surfaces. BowerBot computes the
+            # final position from the geometry bounds:
+            #   +Y → above top surface
+            #   -Y → below bottom surface
+            #   +X → right of right face
+            #   -X → left of left face
+            #   +Z → front of front face
+            #   -Z → behind back face
+            # If no offset given, defaults to 0.5m above top.
+            bounds = self.assembler.get_geometry_bounds(
+                asset_dir,
+            )
+            if bounds:
+                # X and Z: center + offset
+                tx = bounds["center"]["x"] + tx
+                tz = bounds["center"]["z"] + tz
+
+                # Y: offset from top (positive) or bottom (negative)
+                if params.get("translate_y") is not None:
+                    if ty >= 0:
+                        ty = bounds["max"]["y"] + ty
+                    else:
+                        ty = bounds["min"]["y"] + ty
+                else:
+                    # Default: 0.5m above top
+                    ty = bounds["max"]["y"] + 0.5
+
+            # Handle HDRI texture for dome lights
+            texture = params.get("texture")
+            if texture:
+                maps_dir = asset_dir / ASWFLayerNames.MAPS
+                maps_dir.mkdir(exist_ok=True)
+                tex_path = Path(texture)
+                if tex_path.exists():
+                    dest = maps_dir / tex_path.name
+                    if not dest.exists():
+                        shutil.copy2(tex_path, dest)
+                    texture = (
+                        f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
+                    )
+
+            safe_name = "".join(
+                c for c in light_name
+                if c.isalnum() or c == "_"
+            ).strip()
+
+            try:
+                composed_path = self.assembler.add_light(
+                    asset_dir=asset_dir,
+                    light_name=safe_name,
+                    light_type=light_type.value,
+                    translate=(tx, ty, tz),
+                    rotate=(
+                        float(params.get("rotate_x", 0.0)),
+                        float(params.get("rotate_y", 0.0)),
+                        float(params.get("rotate_z", 0.0)),
+                    ),
+                    intensity=float(
+                        params.get("intensity", 1000.0),
+                    ),
+                    color=(
+                        float(params.get("color_r", 1.0)),
+                        float(params.get("color_g", 1.0)),
+                        float(params.get("color_b", 1.0)),
+                    ),
+                    angle=params.get("angle"),
+                    texture=texture,
+                    radius=params.get("radius"),
+                    width=params.get("width"),
+                    height=params.get("height"),
+                    length=params.get("length"),
+                )
+            except (ValueError, RuntimeError) as e:
+                return ToolResult(success=False, error=str(e))
+
+            # Reopen scene to pick up changes
+            self.writer.open_stage(self._stage_path)
+
+            logger.info(
+                f"Created asset light {light_type.value} "
+                f"in {asset_dir.name}/lgt.usda"
+            )
+            # Build full scene path for the LLM to use
+            # with update_light later
+            scene_light_path = (
+                f"{ref_prim_path}/{composed_path.lstrip('/')}"
+            )
+
+            return ToolResult(
+                success=True,
+                data={
+                    "prim_path": scene_light_path,
+                    "light_type": light_type.value,
+                    "asset_folder": asset_dir.name,
+                    "position": {"x": tx, "y": ty, "z": tz},
+                    "message": (
+                        f"Created {light_type.value} in "
+                        f"{asset_dir.name}/lgt.usda. "
+                        f"To update this light, use "
+                        f"prim_path: {scene_light_path}"
+                    ),
+                },
+            )
+
+        # Scene-level light — write into scene.usda
+        self._object_count += 1
+        safe_name = "".join(
+            c for c in light_name
+            if c.isalnum() or c == "_"
+        ).strip()
+        prim_path = (
+            f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
+        )
 
         light_params = LightParams(
             prim_path=prim_path,
@@ -912,7 +1143,9 @@ class AssemblySkill(Skill):
                 float(params.get("rotate_z", 0.0)),
             ),
             angle=params.get("angle"),
-            texture=self._copy_to_assets(params.get("texture"), subfolder="textures"),
+            texture=self._copy_to_assets(
+                params.get("texture"), subfolder="textures",
+            ),
             radius=params.get("radius"),
             width=params.get("width"),
             height=params.get("height"),
@@ -931,7 +1164,129 @@ class AssemblySkill(Skill):
                 "light_type": light_type.value,
                 "position": {"x": tx, "y": ty, "z": tz},
                 "intensity": light_params.intensity,
-                "message": f"Created {light_type.value} at {prim_path}",
+                "message": (
+                    f"Created {light_type.value} at {prim_path}"
+                ),
+            },
+        )
+
+    def _update_light(self, params: dict[str, Any]) -> ToolResult:
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+
+        prim_path = params["prim_path"]
+
+        # Check if this is an asset-level or scene-level light
+        asset_dir, _ = self._resolve_asset_dir_for_prim(
+            prim_path,
+        )
+
+        # Build common update params
+        translate = None
+        if any(
+            params.get(k) is not None
+            for k in ("translate_x", "translate_y", "translate_z")
+        ):
+            translate = (
+                float(params.get("translate_x", 0.0)),
+                float(params.get("translate_y", 0.0)),
+                float(params.get("translate_z", 0.0)),
+            )
+
+        color = None
+        if any(
+            params.get(k) is not None
+            for k in ("color_r", "color_g", "color_b")
+        ):
+            color = (
+                float(params.get("color_r", 1.0)),
+                float(params.get("color_g", 1.0)),
+                float(params.get("color_b", 1.0)),
+            )
+
+        intensity = params.get("intensity")
+        if intensity is not None:
+            intensity = float(intensity)
+
+        extra = {}
+        for key in (
+            "radius", "angle", "width", "height", "length",
+        ):
+            if params.get(key) is not None:
+                extra[key] = float(params[key])
+
+        if asset_dir is not None:
+            # Asset-level light — update via AssetAssembler
+            # Extract light name from prim path
+            light_name = prim_path.rstrip("/").split("/")[-1]
+
+            try:
+                self.assembler.update_light(
+                    asset_dir=asset_dir,
+                    light_name=light_name,
+                    translate=translate,
+                    intensity=intensity,
+                    color=color,
+                    **extra,
+                )
+            except (ValueError, RuntimeError) as e:
+                return ToolResult(
+                    success=False, error=str(e),
+                )
+
+            self.writer.open_stage(self._stage_path)
+
+            logger.info(
+                f"Updated asset light at {prim_path}"
+            )
+            return ToolResult(
+                success=True,
+                data={
+                    "prim_path": prim_path,
+                    "asset_folder": asset_dir.name,
+                    "message": (
+                        f"Updated asset light at {prim_path}"
+                    ),
+                },
+            )
+
+        # Scene-level light — update via StageWriter
+        rotate = None
+        if any(
+            params.get(k) is not None
+            for k in ("rotate_x", "rotate_y", "rotate_z")
+        ):
+            rotate = (
+                float(params.get("rotate_x", 0.0)),
+                float(params.get("rotate_y", 0.0)),
+                float(params.get("rotate_z", 0.0)),
+            )
+
+        try:
+            self.writer.update_light(
+                prim_path=prim_path,
+                intensity=intensity,
+                color=color,
+                translate=translate,
+                rotate=rotate,
+                **extra,
+            )
+        except (ValueError, RuntimeError) as e:
+            return ToolResult(success=False, error=str(e))
+
+        self.writer.save()
+
+        logger.info(f"Updated scene light at {prim_path}")
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": prim_path,
+                "message": (
+                    f"Updated scene light at {prim_path}"
+                ),
             },
         )
 
@@ -1212,10 +1567,8 @@ class AssemblySkill(Skill):
     ) -> tuple[Path | None, str | None]:
         """Find the ASWF asset folder for a given prim path.
 
-        Walks the prim hierarchy to find the reference, then returns
-        the asset folder path and the prim path where the reference
-        lives. The caller can use the reference prim path to convert
-        scene paths to asset-local paths.
+        Checks the prim itself, its children, and its ancestors
+        for a reference to an ASWF asset folder.
 
         Returns:
             (asset_dir, ref_prim_path) or (None, None) if not found.
@@ -1224,18 +1577,16 @@ class AssemblySkill(Skill):
             return None, None
 
         stage = self.writer.stage
-        path_parts = prim_path.strip("/").split("/")
+        stage_dir = Path(
+            stage.GetRootLayer().realPath,
+        ).parent
 
-        for i in range(len(path_parts), 0, -1):
-            check_path = "/" + "/".join(path_parts[:i])
-            prim = stage.GetPrimAtPath(check_path)
-            if not prim.IsValid():
-                continue
-
+        def _check_prim_refs(
+            prim,
+        ) -> tuple[Path | None, str | None]:
             refs = prim.GetMetadata("references")
             if refs is None:
-                continue
-
+                return None, None
             for ref_list in (
                 refs.prependedItems,
                 refs.appendedItems,
@@ -1244,20 +1595,51 @@ class AssemblySkill(Skill):
                 if not ref_list:
                     continue
                 for ref in ref_list:
-                    asset_path = ref.assetPath
-                    if not asset_path:
+                    if not ref.assetPath:
                         continue
-
-                    stage_dir = Path(
-                        stage.GetRootLayer().realPath,
-                    ).parent
-                    resolved = (stage_dir / asset_path).resolve()
-
-                    if resolved.exists() and resolved.parent.is_dir():
+                    resolved = (
+                        stage_dir / ref.assetPath
+                    ).resolve()
+                    if (
+                        resolved.exists()
+                        and resolved.parent.is_dir()
+                    ):
                         folder = resolved.parent
                         for ext in (".usd", ".usda", ".usdc"):
-                            if resolved.name == f"{folder.name}{ext}":
-                                return folder, check_path
+                            if resolved.name == (
+                                f"{folder.name}{ext}"
+                            ):
+                                return (
+                                    folder,
+                                    str(prim.GetPath()),
+                                )
+            return None, None
+
+        # Check the prim itself and its children first
+        target = stage.GetPrimAtPath(prim_path)
+        if target and target.IsValid():
+            result = _check_prim_refs(target)
+            if result[0] is not None:
+                return result
+            for child in target.GetChildren():
+                result = _check_prim_refs(child)
+                if result[0] is not None:
+                    return result
+
+        # Walk up ancestors
+        path_parts = prim_path.strip("/").split("/")
+        for i in range(len(path_parts) - 1, 0, -1):
+            check_path = "/" + "/".join(path_parts[:i])
+            prim = stage.GetPrimAtPath(check_path)
+            if not prim or not prim.IsValid():
+                continue
+            result = _check_prim_refs(prim)
+            if result[0] is not None:
+                return result
+            for child in prim.GetChildren():
+                result = _check_prim_refs(child)
+                if result[0] is not None:
+                    return result
 
         return None, None
 

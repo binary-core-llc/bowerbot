@@ -4,6 +4,7 @@
 """BowerBot data schemas."""
 
 from bowerbot.schemas.models import (
+    ASWFLayerNames,
     AssetCategory,
     AssetFormat,
     AssetMetadata,
@@ -20,6 +21,7 @@ from bowerbot.schemas.models import (
 )
 
 __all__ = [
+    "ASWFLayerNames",
     "AssetCategory",
     "AssetFormat",
     "AssetMetadata",

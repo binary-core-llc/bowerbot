@@ -51,23 +51,80 @@ off the edge.
 
 ## Lighting
 
-Use `create_light` to add native USD lights when the user asks for lighting.
-These are real lights that renderers understand (shadows, exposure, color).
-Only add lights when explicitly requested.
+Use `create_light` to add native USD lights. There are two levels:
+
+### Where does the light go?
+When the user asks to create a light, determine if it belongs to the
+**scene** or to a **specific asset**:
+- "add a sun" / "set up lighting" / "add an HDRI" → **scene light**
+- "add a bulb to the lamp" / "this lamp needs a light" → **asset light**
+- Ambiguous ("add a light") → ASK the user: "Should this be a scene
+  light (general illumination) or attached to a specific asset?"
+
+### Scene-level lights (default)
+Lights that belong to the scene — sun, environment, key/fill/rim.
+These go in `/Scene/Lighting` and are authored in `scene.usda`.
+Use these for general illumination and environment setup.
+
+### Asset-level lights
+Lights that belong to a specific asset — a lamp's bulb, a candle's
+flame, a neon sign's glow. These travel with the asset.
+Set `asset_prim_path` to the asset's prim path to create the light
+in the asset's `lgt.usda` file instead of the scene.
+
+CRITICAL: For asset lights, translate values are OFFSETS from the
+asset's bounding box surfaces, NOT absolute positions.
+BowerBot reads the geometry bounds and computes the final position:
+- translate_y = 1.0 → 1 meter above the top surface
+- translate_y = -0.5 → 0.5m below the bottom surface
+- translate_x = 0.5 → 0.5m to the right of the right face
+- translate_x = -0.5 → 0.5m to the left of the left face
+- If no translate is provided → defaults to 0.5m above top center
+
+Do NOT use scene world coordinates for asset lights.
+Values are in meters — BowerBot converts to asset units.
+
+Example: "add a point light to the desk lamp" → use `asset_prim_path`
+pointing to the lamp's prim in the scene.
 
 ### Light types
-- **DistantLight** — sun/directional. Position doesn't matter, only rotation.
-  Use `rotate_x` to control sun angle (e.g., -45 for afternoon). Set `angle: 0.53` for realistic sun disk.
-- **DomeLight** — environment/HDRI. Set `texture` to an HDRI file path. Intensity typically 1.0.
-- **SphereLight** — point/omni. Good for lamps, bulbs. Radius 0.05-0.1.
-- **RectLight** — rectangular area. Good for ceiling panels, windows. Width/height 0.5-2.0.
-- **DiskLight** — circular area. Good for recessed downlights. Radius 0.1-0.3.
-- **CylinderLight** — tube. Good for fluorescent fixtures. Radius 0.02, length 1.2.
+- **DistantLight** — sun/directional. Only rotation matters.
+  Use `rotate_x` for sun angle (-45 = afternoon). `angle: 0.53` = sun.
+- **DomeLight** — environment/HDRI. Set `texture` to HDRI path.
+  Intensity typically 1.0. No rotation needed.
+- **SphereLight** — point/omni. Emits in all directions. No rotation.
+  Radius 0.05-0.1 for lamps, bulbs.
+- **RectLight** — rectangular area. Default faces -Z direction.
+- **DiskLight** — circular area. Default faces -Z direction.
+- **CylinderLight** — tube. Radius 0.02, length 1.2.
+
+### Light rotation
+Directional lights (DiskLight, RectLight) default to facing -Z.
+Set rotation based on where the user wants the light to point:
+- Facing DOWN onto a surface below: `rotate_x: -90`
+- Facing UP from below: `rotate_x: 90`
+- Facing LEFT: `rotate_y: 90`
+- Facing RIGHT: `rotate_y: -90`
+- Facing FORWARD (+Z): `rotate_y: 180`
+Always choose rotation based on the user's description of what the
+light should illuminate. Ask the user if the direction is ambiguous.
+
+### Modifying lights
+When the user wants to adjust an existing light (intensity, color,
+size, position, rotation), use `update_light` — do NOT create a new
+light. `update_light` modifies the existing light in place.
+
+`update_light` works for BOTH scene-level and asset-level lights.
+Just provide the light's `prim_path` — use `list_scene` to find it.
+BowerBot automatically detects whether it's a scene or asset light.
+
+Only use `create_light` when adding a brand new light.
 
 ### Defaults
-- Intensity: 1000 for interior lights, 500 for DistantLight, 1.0 for DomeLight
-- Color: warm white = (1.0, 0.9, 0.8), cool white = (0.9, 0.95, 1.0), daylight = (1.0, 1.0, 1.0)
-- Lights always go in `/Scene/Lighting`
+- Intensity: 1000 for interior, 500 for Distant, 1.0 for Dome
+- Color: warm white (1.0, 0.9, 0.8), cool (0.9, 0.95, 1.0)
+- Scene lights go in `/Scene/Lighting`
+- Asset lights go in the asset's `lgt.usda` under `/{asset}/lgt/`
 
 ## Materials
 

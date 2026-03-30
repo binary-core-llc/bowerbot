@@ -6,7 +6,7 @@
 import tempfile
 from pathlib import Path
 
-from pxr import Usd, UsdGeom, UsdShade
+from pxr import Gf, Usd, UsdGeom, UsdLux, UsdShade
 
 from bowerbot.engine.asset_assembler import AssetAssembler
 from bowerbot.engine.dependency_resolver import DependencyResolver
@@ -603,3 +603,187 @@ def test_remove_light():
                 if ref_list:
                     ref_paths.extend(r.assetPath for r in ref_list)
         assert "./lgt.usda" not in ref_paths
+
+
+def test_disk_light_rotation_facing_down():
+    """DiskLight with rotate_x=-90 should face downward."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "table")
+
+        assembler = AssetAssembler()
+        root = assembler.create_asset_folder(
+            output_dir, "table", geo,
+        )
+
+        assembler.add_light(
+            asset_dir=root.parent,
+            light_name="downlight",
+            light_type="DiskLight",
+            translate=(0.0, 1.0, 0.0),
+            rotate=(-90.0, 0.0, 0.0),
+            intensity=1000.0,
+            radius=0.3,
+        )
+
+        # Open lgt.usda and verify rotation
+        lgt_path = root.parent / "lgt.usda"
+        assert lgt_path.exists()
+
+        stage = Usd.Stage.Open(str(lgt_path))
+        prim = stage.GetPrimAtPath("/table/lgt/downlight")
+        assert prim.IsValid()
+
+        xf = UsdGeom.Xformable(prim)
+        ops = xf.GetOrderedXformOps()
+        op_names = [op.GetOpName() for op in ops]
+        assert "xformOp:rotateXYZ" in op_names
+
+        for op in ops:
+            if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
+                rot = op.Get()
+                assert rot[0] == -90.0
+                assert rot[1] == 0.0
+                assert rot[2] == 0.0
+
+
+def test_rect_light_rotation_facing_right():
+    """RectLight with rotate_y=-90 should face right."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "wall")
+
+        assembler = AssetAssembler()
+        root = assembler.create_asset_folder(
+            output_dir, "wall", geo,
+        )
+
+        assembler.add_light(
+            asset_dir=root.parent,
+            light_name="sidelight",
+            light_type="RectLight",
+            translate=(0.5, 0.0, 0.0),
+            rotate=(0.0, -90.0, 0.0),
+            intensity=800.0,
+            width=0.5,
+            height=0.5,
+        )
+
+        lgt_path = root.parent / "lgt.usda"
+        stage = Usd.Stage.Open(str(lgt_path))
+        prim = stage.GetPrimAtPath("/wall/lgt/sidelight")
+        assert prim.IsValid()
+
+        xf = UsdGeom.Xformable(prim)
+        for op in xf.GetOrderedXformOps():
+            if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
+                rot = op.Get()
+                assert rot[1] == -90.0
+
+
+def test_update_light_position_offset():
+    """update_light should correctly update translate values."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "lamp")
+
+        assembler = AssetAssembler()
+        root = assembler.create_asset_folder(
+            output_dir, "lamp", geo,
+        )
+
+        # Create light at initial position
+        assembler.add_light(
+            asset_dir=root.parent,
+            light_name="spot",
+            light_type="DiskLight",
+            translate=(0.0, 1.0, 0.0),
+            rotate=(-90.0, 0.0, 0.0),
+            intensity=1000.0,
+        )
+
+        # Update position
+        assembler.update_light(
+            asset_dir=root.parent,
+            light_name="spot",
+            translate=(0.5, 2.0, -0.3),
+        )
+
+        lgt_path = root.parent / "lgt.usda"
+        stage = Usd.Stage.Open(str(lgt_path))
+        prim = stage.GetPrimAtPath("/lamp/lgt/spot")
+        assert prim.IsValid()
+
+        xf = UsdGeom.Xformable(prim)
+        for op in xf.GetOrderedXformOps():
+            if op.GetOpName() == "xformOp:translate":
+                pos = op.Get()
+                # Geometry is in cm (mpu=0.01), so values
+                # should be scaled by 1/0.01 = 100
+                assert pos[0] == 50.0  # 0.5 * 100
+                assert pos[1] == 200.0  # 2.0 * 100
+                assert pos[2] == -30.0  # -0.3 * 100
+                break
+        else:
+            raise AssertionError("No translate op found")
+
+
+def test_update_light_rotation():
+    """update_light should correctly update rotation values."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "lamp")
+
+        assembler = AssetAssembler()
+        root = assembler.create_asset_folder(
+            output_dir, "lamp", geo,
+        )
+
+        # Create light facing down
+        assembler.add_light(
+            asset_dir=root.parent,
+            light_name="spot",
+            light_type="DiskLight",
+            translate=(0.0, 1.0, 0.0),
+            rotate=(-90.0, 0.0, 0.0),
+            intensity=1000.0,
+        )
+
+        # Update rotation to face right
+        assembler.update_light(
+            asset_dir=root.parent,
+            light_name="spot",
+            rotate=(0.0, -90.0, 0.0),
+        )
+
+        lgt_path = root.parent / "lgt.usda"
+        stage = Usd.Stage.Open(str(lgt_path))
+        prim = stage.GetPrimAtPath("/lamp/lgt/spot")
+        assert prim.IsValid()
+
+        xf = UsdGeom.Xformable(prim)
+        for op in xf.GetOrderedXformOps():
+            if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
+                rot = op.Get()
+                assert rot[0] == 0.0
+                assert rot[1] == -90.0
+                assert rot[2] == 0.0
+                break
+        else:
+            raise AssertionError("No rotateXYZ op found")

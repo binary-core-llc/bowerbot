@@ -120,6 +120,24 @@ BowerBot automatically detects whether it's a scene or asset light.
 
 Only use `create_light` when adding a brand new light.
 
+### Removing lights
+Use `remove_light` to delete a light. Works for both scene-level
+and asset-level lights — provide the `prim_path`.
+
+### CRITICAL: Do NOT switch light levels
+If a light was created as an **asset light**, it MUST stay an asset
+light when the user asks to move, reposition, or adjust it. Use
+`update_light` to change its position/rotation — do NOT remove it
+and recreate as a scene light.
+
+Only switch from asset light to scene light (or vice versa) if the
+user **explicitly** asks for it (e.g. "make this a scene light
+instead").
+
+When the user says "move the light next to the table" and the light
+is an asset light, update its offset values — do NOT create a new
+scene light.
+
 ### Defaults
 - Intensity: 1000 for interior, 500 for Distant, 1.0 for Dome
 - Color: warm white (1.0, 0.9, 0.8), cool (0.9, 0.95, 1.0)

@@ -446,7 +446,9 @@ class AssemblySkill(Skill):
                     "everything else stays the same. Use this "
                     "instead of creating a new light when the "
                     "user wants to adjust intensity, color, "
-                    "size, or position."
+                    "size, position, or rotation. For asset "
+                    "lights, translate values are OFFSETS from "
+                    "bounds (same as create_light)."
                 ),
                 parameters={
                     "type": "object",
@@ -518,6 +520,28 @@ class AssemblySkill(Skill):
                         "rotate_z": {
                             "type": "number",
                             "description": "New Z rotation.",
+                        },
+                    },
+                    "required": ["prim_path"],
+                },
+            ),
+            Tool(
+                name="remove_light",
+                description=(
+                    "Remove a light from the scene. Works for both "
+                    "scene-level and asset-level lights. For asset "
+                    "lights, removes from the asset's lgt.usda."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Full prim path of the light "
+                                "to remove. Use list_scene to "
+                                "find it."
+                            ),
                         },
                     },
                     "required": ["prim_path"],
@@ -684,6 +708,8 @@ class AssemblySkill(Skill):
                     return self._create_light(params)
                 case "update_light":
                     return self._update_light(params)
+                case "remove_light":
+                    return self._remove_light(params)
                 case "bind_material":
                     return self._bind_material(params)
                 case "list_materials":
@@ -1218,16 +1244,47 @@ class AssemblySkill(Skill):
             if params.get(key) is not None:
                 extra[key] = float(params[key])
 
+        rotate = None
+        if any(
+            params.get(k) is not None
+            for k in ("rotate_x", "rotate_y", "rotate_z")
+        ):
+            rotate = (
+                float(params.get("rotate_x", 0.0)),
+                float(params.get("rotate_y", 0.0)),
+                float(params.get("rotate_z", 0.0)),
+            )
+
         if asset_dir is not None:
             # Asset-level light — update via AssetAssembler
             # Extract light name from prim path
             light_name = prim_path.rstrip("/").split("/")[-1]
+
+            # Apply bounds offsets for translate (same
+            # logic as _create_light)
+            if translate is not None:
+                tx, ty, tz = translate
+                bounds = self.assembler.get_geometry_bounds(
+                    asset_dir,
+                )
+                if bounds:
+                    tx = bounds["center"]["x"] + tx
+                    tz = bounds["center"]["z"] + tz
+                    if params.get("translate_y") is not None:
+                        if ty >= 0:
+                            ty = bounds["max"]["y"] + ty
+                        else:
+                            ty = bounds["min"]["y"] + ty
+                    else:
+                        ty = bounds["max"]["y"] + 0.5
+                translate = (tx, ty, tz)
 
             try:
                 self.assembler.update_light(
                     asset_dir=asset_dir,
                     light_name=light_name,
                     translate=translate,
+                    rotate=rotate,
                     intensity=intensity,
                     color=color,
                     **extra,
@@ -1254,16 +1311,6 @@ class AssemblySkill(Skill):
             )
 
         # Scene-level light — update via StageWriter
-        rotate = None
-        if any(
-            params.get(k) is not None
-            for k in ("rotate_x", "rotate_y", "rotate_z")
-        ):
-            rotate = (
-                float(params.get("rotate_x", 0.0)),
-                float(params.get("rotate_y", 0.0)),
-                float(params.get("rotate_z", 0.0)),
-            )
 
         try:
             self.writer.update_light(
@@ -1286,6 +1333,79 @@ class AssemblySkill(Skill):
                 "prim_path": prim_path,
                 "message": (
                     f"Updated scene light at {prim_path}"
+                ),
+            },
+        )
+
+    def _remove_light(
+        self, params: dict[str, Any],
+    ) -> ToolResult:
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+
+        prim_path = params["prim_path"]
+
+        # Check if this is an asset-level or scene-level light
+        asset_dir, _ = self._resolve_asset_dir_for_prim(
+            prim_path,
+        )
+
+        if asset_dir is not None:
+            # Asset-level light — remove via AssetAssembler
+            light_name = prim_path.rstrip("/").split("/")[-1]
+
+            try:
+                self.assembler.remove_light(
+                    asset_dir=asset_dir,
+                    light_name=light_name,
+                )
+            except (ValueError, RuntimeError) as e:
+                return ToolResult(
+                    success=False, error=str(e),
+                )
+
+            self.writer.open_stage(self._stage_path)
+
+            logger.info(
+                f"Removed asset light {light_name} "
+                f"from {asset_dir.name}"
+            )
+            return ToolResult(
+                success=True,
+                data={
+                    "prim_path": prim_path,
+                    "asset_folder": asset_dir.name,
+                    "message": (
+                        f"Removed light {light_name} "
+                        f"from {asset_dir.name}"
+                    ),
+                },
+            )
+
+        # Scene-level light — remove via StageWriter
+        try:
+            success = self.writer.remove_prim(prim_path)
+        except (RuntimeError, ValueError) as e:
+            return ToolResult(success=False, error=str(e))
+
+        if not success:
+            return ToolResult(
+                success=False,
+                error=f"Failed to remove light {prim_path}",
+            )
+
+        self.writer.save()
+
+        logger.info(f"Removed scene light at {prim_path}")
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": prim_path,
+                "message": (
+                    f"Removed light at {prim_path}"
                 ),
             },
         )

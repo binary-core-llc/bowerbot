@@ -1928,30 +1928,18 @@ class AssemblySkill(Skill):
                 ),
             )
 
-        # Check if still referenced in the scene
-        if self.writer.stage is not None:
-            for prim in self.writer.stage.Traverse():
-                refs = prim.GetMetadata("references")
-                if refs is None:
-                    continue
-                for ref_list in (
-                    refs.prependedItems,
-                    refs.appendedItems,
-                    refs.explicitItems,
-                ):
-                    if not ref_list:
-                        continue
-                    for ref in ref_list:
-                        if folder_name in ref.assetPath:
-                            return ToolResult(
-                                success=False,
-                                error=(
-                                    f"Asset '{folder_name}' is "
-                                    f"still referenced in the "
-                                    f"scene. Remove it from the "
-                                    f"scene first."
-                                ),
-                            )
+        # Scan all USD files in the project for references
+        referencing = self._find_asset_references(folder_name)
+        if referencing:
+            files_list = ", ".join(referencing)
+            return ToolResult(
+                success=False,
+                error=(
+                    f"Asset '{folder_name}' is still "
+                    f"referenced by: {files_list}. "
+                    f"Remove those references first."
+                ),
+            )
 
         shutil.rmtree(asset_folder)
         logger.info(f"Deleted project asset: {asset_folder}")
@@ -1966,6 +1954,71 @@ class AssemblySkill(Skill):
                 ),
             },
         )
+
+    def _find_asset_references(
+        self, folder_name: str,
+    ) -> list[str]:
+        """Scan all USD files in the project for references to an asset folder.
+
+        Returns a list of USD file paths that reference the asset.
+        """
+        if self._project is None:
+            return []
+
+        project_dir = self._project.path
+        asset_dir = self._resolve_assets_dir() / folder_name
+        referencing_files = []
+
+        for usd_file in project_dir.rglob("*"):
+            if usd_file.suffix not in (
+                ".usd", ".usda", ".usdc",
+            ):
+                continue
+
+            # Skip files inside the asset folder itself
+            try:
+                usd_file.relative_to(asset_dir)
+                continue
+            except ValueError:
+                pass
+
+            try:
+                stage = Usd.Stage.Open(str(usd_file))
+            except Exception:
+                continue
+
+            if stage is None:
+                continue
+
+            found = False
+            for prim in stage.Traverse():
+                refs = prim.GetMetadata("references")
+                if refs is None:
+                    continue
+                for ref_list in (
+                    refs.prependedItems,
+                    refs.appendedItems,
+                    refs.explicitItems,
+                ):
+                    if not ref_list:
+                        continue
+                    for ref in ref_list:
+                        if folder_name in ref.assetPath:
+                            referencing_files.append(
+                                str(
+                                    usd_file.relative_to(
+                                        project_dir,
+                                    )
+                                ),
+                            )
+                            found = True
+                            break
+                    if found:
+                        break
+                if found:
+                    break
+
+        return referencing_files
 
     def _find_texture_references(
         self, file_name: str,

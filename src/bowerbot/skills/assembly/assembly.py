@@ -681,6 +681,28 @@ class AssemblySkill(Skill):
                     "required": ["folder_name"],
                 },
             ),
+            Tool(
+                name="delete_project_texture",
+                description=(
+                    "Delete a texture file from the project's "
+                    "textures/ directory. Scans all USD files "
+                    "in the project to ensure the texture is "
+                    "not referenced elsewhere before deleting."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "file_name": {
+                            "type": "string",
+                            "description": (
+                                "Name of the texture file to "
+                                "delete (e.g. 'studio.exr')."
+                            ),
+                        },
+                    },
+                    "required": ["file_name"],
+                },
+            ),
         ]
 
     async def execute(self, tool_name: str, params: dict[str, Any]) -> ToolResult:
@@ -722,6 +744,8 @@ class AssemblySkill(Skill):
                     return self._list_project_assets(params)
                 case "delete_project_asset":
                     return self._delete_project_asset(params)
+                case "delete_project_texture":
+                    return self._delete_project_texture(params)
                 case _:
                     return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
         except Exception as e:
@@ -1008,6 +1032,31 @@ class AssemblySkill(Skill):
         relative = f"assets/{subfolder}/{source.name}" if subfolder else f"assets/{source.name}"
         return relative
 
+    def _copy_texture_to_project(
+        self, file_path: str | None,
+    ) -> str | None:
+        """Copy a texture to the project-level textures/ dir.
+
+        Used for scene-level textures like HDRI maps for
+        DomeLights. Returns a relative path from the scene file.
+        """
+        if file_path is None:
+            return None
+
+        source = Path(file_path)
+        if not source.exists():
+            return file_path
+
+        project_dir = self._resolve_output_dir()
+        tex_dir = project_dir / ASWFLayerNames.TEXTURES
+        tex_dir.mkdir(parents=True, exist_ok=True)
+
+        local_copy = tex_dir / source.name
+        if not local_copy.exists():
+            shutil.copy2(source, local_copy)
+
+        return f"./{ASWFLayerNames.TEXTURES}/{source.name}"
+
     def _create_light(self, params: dict[str, Any]) -> ToolResult:
         if self._stage_path is None or self.writer.stage is None:
             return ToolResult(
@@ -1169,8 +1218,8 @@ class AssemblySkill(Skill):
                 float(params.get("rotate_z", 0.0)),
             ),
             angle=params.get("angle"),
-            texture=self._copy_to_assets(
-                params.get("texture"), subfolder="textures",
+            texture=self._copy_texture_to_project(
+                params.get("texture"),
             ),
             radius=params.get("radius"),
             width=params.get("width"),
@@ -1385,7 +1434,21 @@ class AssemblySkill(Skill):
                 },
             )
 
-        # Scene-level light — remove via StageWriter
+        # Scene-level light — check for texture before removing
+        texture_file = None
+        prim = self.writer.stage.GetPrimAtPath(prim_path)
+        if prim and prim.IsValid():
+            tex_attr = prim.GetAttribute(
+                "inputs:texture:file",
+            )
+            if tex_attr and tex_attr.Get():
+                tex_val = tex_attr.Get()
+                texture_file = (
+                    tex_val.path
+                    if hasattr(tex_val, "path")
+                    else str(tex_val)
+                )
+
         try:
             success = self.writer.remove_prim(prim_path)
         except (RuntimeError, ValueError) as e:
@@ -1400,14 +1463,18 @@ class AssemblySkill(Skill):
         self.writer.save()
 
         logger.info(f"Removed scene light at {prim_path}")
+        result_data = {
+            "prim_path": prim_path,
+            "message": (
+                f"Removed light at {prim_path}"
+            ),
+        }
+        if texture_file:
+            result_data["texture_file"] = texture_file
+
         return ToolResult(
             success=True,
-            data={
-                "prim_path": prim_path,
-                "message": (
-                    f"Removed light at {prim_path}"
-                ),
-            },
+            data=result_data,
         )
 
     def _compute_grid_layout(self, params: dict[str, Any]) -> ToolResult:
@@ -1896,6 +1963,109 @@ class AssemblySkill(Skill):
                 "message": (
                     f"Deleted asset folder '{folder_name}' "
                     f"from project assets."
+                ),
+            },
+        )
+
+    def _find_texture_references(
+        self, file_name: str,
+    ) -> list[str]:
+        """Scan all USD files in the project for references to a texture.
+
+        Returns a list of USD file paths that reference the texture.
+        """
+        if self._project is None:
+            return []
+
+        project_dir = self._project.path
+        referencing_files = []
+
+        for usd_file in project_dir.rglob("*"):
+            if usd_file.suffix not in (
+                ".usd", ".usda", ".usdc",
+            ):
+                continue
+
+            try:
+                stage = Usd.Stage.Open(str(usd_file))
+            except Exception:
+                continue
+
+            if stage is None:
+                continue
+
+            for prim in stage.Traverse():
+                tex_attr = prim.GetAttribute(
+                    "inputs:texture:file",
+                )
+                if not tex_attr or not tex_attr.Get():
+                    continue
+                tex_val = tex_attr.Get()
+                tex_path = (
+                    tex_val.path
+                    if hasattr(tex_val, "path")
+                    else str(tex_val)
+                )
+                if file_name in tex_path:
+                    referencing_files.append(
+                        str(usd_file.relative_to(project_dir)),
+                    )
+                    break
+
+        return referencing_files
+
+    def _delete_project_texture(
+        self, params: dict[str, Any],
+    ) -> ToolResult:
+        if self._project is None:
+            return ToolResult(
+                success=False,
+                error="No project open.",
+            )
+
+        file_name = params["file_name"]
+        project_dir = self._project.path
+        tex_dir = project_dir / ASWFLayerNames.TEXTURES
+        tex_file = tex_dir / file_name
+
+        if not tex_file.exists():
+            return ToolResult(
+                success=False,
+                error=(
+                    f"Texture file not found: "
+                    f"{ASWFLayerNames.TEXTURES}/{file_name}"
+                ),
+            )
+
+        # Scan all USD files in the project for references
+        referencing = self._find_texture_references(file_name)
+        if referencing:
+            files_list = ", ".join(referencing)
+            return ToolResult(
+                success=False,
+                error=(
+                    f"Texture '{file_name}' is still "
+                    f"referenced by: {files_list}. "
+                    f"Remove those references first."
+                ),
+            )
+
+        tex_file.unlink()
+        logger.info(
+            f"Deleted project texture: {file_name}"
+        )
+
+        # Remove textures/ dir if empty
+        if tex_dir.exists() and not any(tex_dir.iterdir()):
+            tex_dir.rmdir()
+
+        return ToolResult(
+            success=True,
+            data={
+                "file": file_name,
+                "message": (
+                    f"Deleted texture '{file_name}' "
+                    f"from project textures."
                 ),
             },
         )

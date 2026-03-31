@@ -42,6 +42,7 @@ class ASWFLayerNames:
     MTL = "mtl.usda"
     LGT = "lgt.usda"
     MAPS = "maps"
+    TEXTURES = "textures"
 
 
 # ── Texture Schemas ───────────────────────────────────────────

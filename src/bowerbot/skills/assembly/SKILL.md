@@ -124,6 +124,13 @@ Only use `create_light` when adding a brand new light.
 Use `remove_light` to delete a light. Works for both scene-level
 and asset-level lights — provide the `prim_path`.
 
+If the result includes a `texture_file` field (DomeLight with HDRI),
+the texture file still exists in the project's `textures/` folder.
+Ask the user if they want to delete it. If they confirm, use
+`delete_project_texture` with the file name. BowerBot will scan all
+USD files in the project to ensure it is not referenced elsewhere
+before deleting.
+
 ### CRITICAL: Do NOT switch light levels
 If a light was created as an **asset light**, it MUST stay an asset
 light when the user asks to move, reposition, or adjust it. Use

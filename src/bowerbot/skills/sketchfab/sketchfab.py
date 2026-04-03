@@ -16,6 +16,7 @@ from typing import Any
 import httpx
 
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
+from bowerbot.utils.naming import safe_file_name
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +173,7 @@ class SketchfabSkill(Skill):
         uid = params["uid"]
         name = params["name"]
 
-        safe_name = "".join(c for c in name if c.isalnum() or c in "_-").strip()
+        safe_name = safe_file_name(name)
         if not safe_name:
             safe_name = uid
 

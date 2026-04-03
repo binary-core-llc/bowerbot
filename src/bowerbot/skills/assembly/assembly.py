@@ -20,13 +20,18 @@ if TYPE_CHECKING:
 
 from bowerbot.config import SceneDefaults
 from bowerbot.engine.asset_assembler import AssetAssembler
-from bowerbot.engine.dependency_resolver import DependencyResolver
 from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
 from bowerbot.schemas import ASWFLayerNames, AssetMetadata, LightParams, LightType, SceneObject
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
+from bowerbot.utils.naming import safe_file_name, safe_prim_name
+from bowerbot.utils.usd_utils import (
+    find_asset_references,
+    find_texture_references,
+    iter_prim_ref_paths,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +62,6 @@ class AssemblySkill(Skill):
             up_axis=defaults.up_axis,
         )
         self.packager = Packager()
-        self.resolver = DependencyResolver()
         self.assembler = AssetAssembler()
 
         self._project = None
@@ -753,7 +757,7 @@ class AssemblySkill(Skill):
 
     def _create_stage(self, params: dict[str, Any]) -> ToolResult:
         filename = params["filename"]
-        safe_name = "".join(c for c in filename if c.isalnum() or c in "_-").strip()
+        safe_name = safe_file_name(filename)
         if not safe_name:
             safe_name = "scene"
 
@@ -818,7 +822,7 @@ class AssemblySkill(Skill):
         ry = float(params.get("rotate_y", 0.0))
 
         self._object_count += 1
-        safe_asset_name = "".join(c for c in asset_name if c.isalnum() or c == "_").strip()
+        safe_asset_name = safe_prim_name(asset_name)
         prim_path = f"/Scene/{group}/{safe_asset_name}_{self._object_count:02d}"
 
         # Copy asset to project assets dir
@@ -1105,33 +1109,10 @@ class AssemblySkill(Skill):
                     ),
                 )
 
-            # Translate values are offsets from the asset's
-            # bounding box surfaces. BowerBot computes the
-            # final position from the geometry bounds:
-            #   +Y → above top surface
-            #   -Y → below bottom surface
-            #   +X → right of right face
-            #   -X → left of left face
-            #   +Z → front of front face
-            #   -Z → behind back face
-            # If no offset given, defaults to 0.5m above top.
-            bounds = self.assembler.get_geometry_bounds(
-                asset_dir,
+            tx, ty, tz = self._apply_bounds_offsets(
+                asset_dir, tx, ty, tz,
+                has_explicit_y=params.get("translate_y") is not None,
             )
-            if bounds:
-                # X and Z: center + offset
-                tx = bounds["center"]["x"] + tx
-                tz = bounds["center"]["z"] + tz
-
-                # Y: offset from top (positive) or bottom (negative)
-                if params.get("translate_y") is not None:
-                    if ty >= 0:
-                        ty = bounds["max"]["y"] + ty
-                    else:
-                        ty = bounds["min"]["y"] + ty
-                else:
-                    # Default: 0.5m above top
-                    ty = bounds["max"]["y"] + 0.5
 
             # Handle HDRI texture for dome lights
             texture = params.get("texture")
@@ -1147,10 +1128,7 @@ class AssemblySkill(Skill):
                         f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
                     )
 
-            safe_name = "".join(
-                c for c in light_name
-                if c.isalnum() or c == "_"
-            ).strip()
+            safe_name = safe_prim_name(light_name)
 
             try:
                 composed_path = self.assembler.add_light(
@@ -1212,10 +1190,7 @@ class AssemblySkill(Skill):
 
         # Scene-level light — write into scene.usda
         self._object_count += 1
-        safe_name = "".join(
-            c for c in light_name
-            if c.isalnum() or c == "_"
-        ).strip()
+        safe_name = safe_prim_name(light_name)
         prim_path = (
             f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
         )
@@ -1327,24 +1302,11 @@ class AssemblySkill(Skill):
             # Extract light name from prim path
             light_name = prim_path.rstrip("/").split("/")[-1]
 
-            # Apply bounds offsets for translate (same
-            # logic as _create_light)
             if translate is not None:
-                tx, ty, tz = translate
-                bounds = self.assembler.get_geometry_bounds(
-                    asset_dir,
+                translate = self._apply_bounds_offsets(
+                    asset_dir, *translate,
+                    has_explicit_y=params.get("translate_y") is not None,
                 )
-                if bounds:
-                    tx = bounds["center"]["x"] + tx
-                    tz = bounds["center"]["z"] + tz
-                    if params.get("translate_y") is not None:
-                        if ty >= 0:
-                            ty = bounds["max"]["y"] + ty
-                        else:
-                            ty = bounds["min"]["y"] + ty
-                    else:
-                        ty = bounds["max"]["y"] + 0.5
-                translate = (tx, ty, tz)
 
             try:
                 self.assembler.update_light(
@@ -1767,6 +1729,37 @@ class AssemblySkill(Skill):
 
         return f"assets/{folder_name}/{root_file.name}"
 
+    def _apply_bounds_offsets(
+        self,
+        asset_dir: Path,
+        tx: float,
+        ty: float,
+        tz: float,
+        has_explicit_y: bool,
+    ) -> tuple[float, float, float]:
+        """Convert bounds-relative offsets to absolute positions.
+
+        For asset-level lights, translate values are offsets from
+        the geometry's bounding box surfaces. This method computes
+        the final position from those offsets and the asset bounds.
+        """
+        bounds = self.assembler.get_geometry_bounds(asset_dir)
+        if not bounds:
+            return tx, ty, tz
+
+        tx = bounds["center"]["x"] + tx
+        tz = bounds["center"]["z"] + tz
+
+        if has_explicit_y:
+            if ty >= 0:
+                ty = bounds["max"]["y"] + ty
+            else:
+                ty = bounds["min"]["y"] + ty
+        else:
+            ty = bounds["max"]["y"] + 0.5
+
+        return tx, ty, tz
+
     def _resolve_asset_dir_for_prim(
         self, prim_path: str,
     ) -> tuple[Path | None, str | None]:
@@ -1789,35 +1782,23 @@ class AssemblySkill(Skill):
         def _check_prim_refs(
             prim,
         ) -> tuple[Path | None, str | None]:
-            refs = prim.GetMetadata("references")
-            if refs is None:
-                return None, None
-            for ref_list in (
-                refs.prependedItems,
-                refs.appendedItems,
-                refs.explicitItems,
-            ):
-                if not ref_list:
-                    continue
-                for ref in ref_list:
-                    if not ref.assetPath:
-                        continue
-                    resolved = (
-                        stage_dir / ref.assetPath
-                    ).resolve()
-                    if (
-                        resolved.exists()
-                        and resolved.parent.is_dir()
-                    ):
-                        folder = resolved.parent
-                        for ext in (".usd", ".usda", ".usdc"):
-                            if resolved.name == (
-                                f"{folder.name}{ext}"
-                            ):
-                                return (
-                                    folder,
-                                    str(prim.GetPath()),
-                                )
+            for asset_path in iter_prim_ref_paths(prim):
+                resolved = (
+                    stage_dir / asset_path
+                ).resolve()
+                if (
+                    resolved.exists()
+                    and resolved.parent.is_dir()
+                ):
+                    folder = resolved.parent
+                    for ext in (".usd", ".usda", ".usdc"):
+                        if resolved.name == (
+                            f"{folder.name}{ext}"
+                        ):
+                            return (
+                                folder,
+                                str(prim.GetPath()),
+                            )
             return None, None
 
         # Check the prim itself and its children first
@@ -1871,19 +1852,9 @@ class AssemblySkill(Skill):
         referenced: set[str] = set()
         if self.writer.stage is not None:
             for prim in self.writer.stage.Traverse():
-                refs = prim.GetMetadata("references")
-                if refs is None:
-                    continue
-                for ref_list in (
-                    refs.prependedItems,
-                    refs.appendedItems,
-                    refs.explicitItems,
-                ):
-                    if not ref_list:
-                        continue
-                    for ref in ref_list:
-                        if ref.assetPath:
-                            referenced.add(ref.assetPath)
+                referenced.update(
+                    iter_prim_ref_paths(prim),
+                )
 
         # List asset folders and files, optionally filtered
         query = params.get("query", "")
@@ -1947,7 +1918,11 @@ class AssemblySkill(Skill):
             )
 
         # Scan all USD files in the project for references
-        referencing = self._find_asset_references(folder_name)
+        referencing = find_asset_references(
+            self._project.path,
+            folder_name,
+            skip_dir=asset_folder,
+        )
         if referencing:
             files_list = ", ".join(referencing)
             return ToolResult(
@@ -1973,118 +1948,6 @@ class AssemblySkill(Skill):
             },
         )
 
-    def _find_asset_references(
-        self, folder_name: str,
-    ) -> list[str]:
-        """Scan all USD files in the project for references to an asset folder.
-
-        Returns a list of USD file paths that reference the asset.
-        """
-        if self._project is None:
-            return []
-
-        project_dir = self._project.path
-        asset_dir = self._resolve_assets_dir() / folder_name
-        referencing_files = []
-
-        for usd_file in project_dir.rglob("*"):
-            if usd_file.suffix not in (
-                ".usd", ".usda", ".usdc",
-            ):
-                continue
-
-            # Skip files inside the asset folder itself
-            try:
-                usd_file.relative_to(asset_dir)
-                continue
-            except ValueError:
-                pass
-
-            try:
-                stage = Usd.Stage.Open(str(usd_file))
-            except Exception:
-                continue
-
-            if stage is None:
-                continue
-
-            found = False
-            for prim in stage.Traverse():
-                refs = prim.GetMetadata("references")
-                if refs is None:
-                    continue
-                for ref_list in (
-                    refs.prependedItems,
-                    refs.appendedItems,
-                    refs.explicitItems,
-                ):
-                    if not ref_list:
-                        continue
-                    for ref in ref_list:
-                        if folder_name in ref.assetPath:
-                            referencing_files.append(
-                                str(
-                                    usd_file.relative_to(
-                                        project_dir,
-                                    )
-                                ),
-                            )
-                            found = True
-                            break
-                    if found:
-                        break
-                if found:
-                    break
-
-        return referencing_files
-
-    def _find_texture_references(
-        self, file_name: str,
-    ) -> list[str]:
-        """Scan all USD files in the project for references to a texture.
-
-        Returns a list of USD file paths that reference the texture.
-        """
-        if self._project is None:
-            return []
-
-        project_dir = self._project.path
-        referencing_files = []
-
-        for usd_file in project_dir.rglob("*"):
-            if usd_file.suffix not in (
-                ".usd", ".usda", ".usdc",
-            ):
-                continue
-
-            try:
-                stage = Usd.Stage.Open(str(usd_file))
-            except Exception:
-                continue
-
-            if stage is None:
-                continue
-
-            for prim in stage.Traverse():
-                tex_attr = prim.GetAttribute(
-                    "inputs:texture:file",
-                )
-                if not tex_attr or not tex_attr.Get():
-                    continue
-                tex_val = tex_attr.Get()
-                tex_path = (
-                    tex_val.path
-                    if hasattr(tex_val, "path")
-                    else str(tex_val)
-                )
-                if file_name in tex_path:
-                    referencing_files.append(
-                        str(usd_file.relative_to(project_dir)),
-                    )
-                    break
-
-        return referencing_files
-
     def _delete_project_texture(
         self, params: dict[str, Any],
     ) -> ToolResult:
@@ -2109,7 +1972,9 @@ class AssemblySkill(Skill):
             )
 
         # Scan all USD files in the project for references
-        referencing = self._find_texture_references(file_name)
+        referencing = find_texture_references(
+            self._project.path, file_name,
+        )
         if referencing:
             files_list = ", ".join(referencing)
             return ToolResult(

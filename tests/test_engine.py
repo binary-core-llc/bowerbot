@@ -45,10 +45,10 @@ def test_create_empty_stage():
         assert default_prim.IsValid(), "No defaultPrim set"
         assert str(default_prim.GetPath()) == "/Scene"
 
-        # Check hierarchy
-        for group in ["Architecture", "Furniture", "Products", "Lighting", "Props"]:
-            prim = stage.GetPrimAtPath(f"/Scene/{group}")
-            assert prim.IsValid(), f"Missing group: /Scene/{group}"
+        # Hierarchy is built on demand — no pre-created groups
+        # Verify the stage is clean (only root prim)
+        children = default_prim.GetChildren()
+        assert len(children) == 0, "Empty stage should have no child prims"
 
         print("✅ test_create_empty_stage PASSED")
 

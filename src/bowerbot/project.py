@@ -22,6 +22,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from bowerbot.engine.stage_writer import StageWriter
+from bowerbot.utils.naming import safe_project_name
 
 
 class ProjectMeta(BaseModel):
@@ -75,8 +76,7 @@ class Project:
     @staticmethod
     def create(projects_dir: Path, name: str) -> Project:
         """Create a new project directory and initialize it."""
-        safe_name = "".join(c for c in name if c.isalnum() or c in "_- ").strip()
-        safe_name = safe_name.replace(" ", "_").lower()
+        safe_name = safe_project_name(name)
         if not safe_name:
             safe_name = "untitled"
 

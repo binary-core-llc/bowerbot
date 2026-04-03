@@ -18,6 +18,7 @@ from rich.theme import Theme
 
 from bowerbot import __version__
 from bowerbot.config import load_settings
+from bowerbot.utils.naming import safe_project_name
 
 if TYPE_CHECKING:
     from bowerbot.config import Settings
@@ -274,8 +275,7 @@ def build(prompt: str) -> None:
         project = Project.create(projects_dir, project_name)
     except FileExistsError:
         # Load existing project
-        safe_name = project_name.lower().replace(" ", "_")
-        safe_name = "".join(c for c in safe_name if c.isalnum() or c in "_-")
+        safe_name = safe_project_name(project_name)
         project = Project.load(projects_dir / safe_name)
 
     console.print(f"[sf]BowerBot[/] Building scene...")

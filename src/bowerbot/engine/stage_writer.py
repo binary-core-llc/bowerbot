@@ -12,7 +12,8 @@ from pathlib import Path
 
 from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
-from bowerbot.schemas import LightParams, LightType, SceneObject
+from bowerbot.utils.usd_utils import LIGHT_CLASSES, iter_prim_ref_paths
+from bowerbot.schemas import LightParams, SceneObject
 
 
 class StageWriter:
@@ -136,23 +137,13 @@ class StageWriter:
         )
         asset_prim.GetReferences().AddReference(asset_path)
 
-    # Mapping from LightType to UsdLux class and supported extra attributes.
-    _LIGHT_CLASSES: dict = {
-        LightType.DISTANT: UsdLux.DistantLight,
-        LightType.DOME: UsdLux.DomeLight,
-        LightType.SPHERE: UsdLux.SphereLight,
-        LightType.RECT: UsdLux.RectLight,
-        LightType.DISK: UsdLux.DiskLight,
-        LightType.CYLINDER: UsdLux.CylinderLight,
-    }
-
     def create_light(self, light: LightParams) -> None:
         """Create a USD light prim in the stage."""
         if self._stage is None:
             msg = "No stage open. Call create_stage() first."
             raise RuntimeError(msg)
 
-        light_cls = self._LIGHT_CLASSES[light.light_type]
+        light_cls = LIGHT_CLASSES[light.light_type.value]
         light_prim = light_cls.Define(self._stage, light.prim_path)
 
         # Common attributes
@@ -370,16 +361,8 @@ class StageWriter:
                     },
                 }
 
-            asset_path = None
-            for ref_list in [
-                refs.prependedItems,
-                refs.appendedItems,
-                refs.explicitItems,
-            ]:
-                if ref_list:
-                    for ref in ref_list:
-                        asset_path = ref.assetPath
-                        break
+            ref_paths = iter_prim_ref_paths(prim)
+            asset_path = ref_paths[0] if ref_paths else None
 
             objects.append({
                 "prim_path": str(prim.GetPath()),

@@ -10,6 +10,7 @@ missing defaultPrim, etc.
 
 from pxr import Usd, UsdGeom, UsdShade
 
+from bowerbot.utils.usd_utils import iter_prim_ref_paths
 from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
 
 
@@ -96,24 +97,22 @@ class SceneValidator:
 
         issues = []
         for prim in stage.Traverse():
-            refs = prim.GetMetadata("references")
-            if refs is None:
-                continue
-            for ref_list_op in [refs.explicitItems, refs.prependedItems, refs.appendedItems]:
-                if ref_list_op is None:
-                    continue
-                for ref in ref_list_op:
-                    asset_path = ref.assetPath
-                    if asset_path and not Path(asset_path).exists():
-                        stage_dir = Path(stage.GetRootLayer().realPath).parent
-                        if not (stage_dir / asset_path).exists():
-                            issues.append(
-                                ValidationIssue(
-                                    severity=Severity.ERROR,
-                                    message=f"Unresolved reference: {asset_path}",
-                                    prim_path=str(prim.GetPath()),
-                                )
+            for asset_path in iter_prim_ref_paths(prim):
+                if not Path(asset_path).exists():
+                    stage_dir = Path(
+                        stage.GetRootLayer().realPath,
+                    ).parent
+                    if not (stage_dir / asset_path).exists():
+                        issues.append(
+                            ValidationIssue(
+                                severity=Severity.ERROR,
+                                message=(
+                                    f"Unresolved reference: "
+                                    f"{asset_path}"
+                                ),
+                                prim_path=str(prim.GetPath()),
                             )
+                        )
         return issues
 
     def _check_sublayers(self, stage) -> list[ValidationIssue]:  # noqa: ANN001

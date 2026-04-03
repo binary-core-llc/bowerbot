@@ -766,11 +766,30 @@ class AssemblySkill(Skill):
         else:
             self._stage_path = output_dir / f"{safe_name}.usda"
 
-        self._object_count = 0
-
+        # If the scene already exists, reopen it
         if self._stage_path.exists():
-            self._stage_path.unlink()
+            self.writer.open_stage(self._stage_path)
+            objects = self.writer.list_prims()
+            self._object_count = len(objects)
+            logger.info(
+                f"Reopened existing stage: "
+                f"{self._stage_path}"
+            )
+            return ToolResult(
+                success=True,
+                data={
+                    "stage_path": str(self._stage_path),
+                    "object_count": self._object_count,
+                    "message": (
+                        f"Stage already exists at "
+                        f"{self._stage_path} with "
+                        f"{self._object_count} object(s). "
+                        f"Reopened."
+                    ),
+                },
+            )
 
+        self._object_count = 0
         self.writer.create_stage(self._stage_path)
         self.writer.save()
         self._update_project_meta()

@@ -28,8 +28,18 @@ You have tools to create and manipulate OpenUSD scenes.
 - Every stage has a defaultPrim set automatically
 
 ## Scene Hierarchy
-Default groups: /Scene/Architecture, /Scene/Furniture, /Scene/Products, /Scene/Lighting, /Scene/Props
-The user may request a custom hierarchy — use `rename_prim` to reorganize after placement.
+Groups are created on demand when assets are placed — the scene
+starts empty with only the /Scene root prim. Use these standard
+group names when placing assets:
+- /Scene/Architecture, /Scene/Furniture, /Scene/Products,
+  /Scene/Lighting, /Scene/Props
+
+The user may request custom group names instead — use whatever
+they prefer. Use `rename_prim` to reorganize after placement.
+
+CRITICAL: When reporting the scene state to the user, use
+`list_scene` to check what actually exists — do NOT assume
+groups exist just because they are listed above.
 
 ## Spatial Reasoning
 - Tables, chairs, shelves → floor (Y = 0)

@@ -4,7 +4,9 @@
 You have tools to create and manipulate OpenUSD scenes.
 
 ## Workflow
-1. ALWAYS call `create_stage` first before placing any assets
+1. The scene is created automatically with the project — you do NOT
+   need to call `create_stage`. If the scene already exists, it is
+   reopened with its current contents.
 2. Place assets using `place_asset` with coordinates in meters
 3. Use `move_asset` to reposition an existing object (do NOT call
    `place_asset` again — that creates a duplicate)

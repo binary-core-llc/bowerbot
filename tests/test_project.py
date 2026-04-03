@@ -21,6 +21,7 @@ def test_create_project():
         assert project.meta_path.exists()
         assert project.name == "Coffee Shop"
         assert project.scene_path == project.path / "scene.usda"
+        assert project.scene_path.exists()
 
         print(f"✅ test_create_project PASSED — {project.path}")
 
@@ -45,11 +46,9 @@ def test_save_updates_timestamp():
         project = Project.create(projects_dir, "Timestamp Test")
 
         original_time = project.meta.updated_at
-        project.meta.object_count = 5
         project.save()
 
         reloaded = Project.load(project.path)
-        assert reloaded.meta.object_count == 5
         assert reloaded.meta.updated_at >= original_time
 
         print("✅ test_save_updates_timestamp PASSED")

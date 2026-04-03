@@ -21,6 +21,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from bowerbot.engine.stage_writer import StageWriter
+
 
 class ProjectMeta(BaseModel):
     """Metadata stored in project.json."""
@@ -29,14 +31,13 @@ class ProjectMeta(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     scene_file: str = "scene.usda"
-    object_count: int = 0
 
 
 class Project:
     """A BowerBot project — one folder, one scene.
 
     Handles creating, loading, saving, and providing paths.
-    Does NOT touch USD — that's the engine's job.
+    Delegates USD operations to the engine layer.
     """
 
     def __init__(self, path: Path, meta: ProjectMeta) -> None:
@@ -93,19 +94,37 @@ class Project:
         project = Project(path=project_path, meta=meta)
         project.save()
 
+        # Create empty scene file
+        StageWriter.create_empty_scene(project.scene_path)
+
         return project
 
     @staticmethod
     def load(project_path: Path) -> Project:
-        """Load an existing project from a directory."""
+        """Load an existing project from a directory.
+
+        Ensures the project's on-disk state is valid:
+        missing directories or scene files are recreated.
+        """
         meta_path = project_path / "project.json"
         if not meta_path.exists():
-            msg = f"Not a BowerBot project: {project_path} (no project.json)"
+            msg = (
+                f"Not a BowerBot project: "
+                f"{project_path} (no project.json)"
+            )
             raise FileNotFoundError(msg)
 
-        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+        raw = json.loads(
+            meta_path.read_text(encoding="utf-8"),
+        )
         meta = ProjectMeta(**raw)
-        return Project(path=project_path, meta=meta)
+        project = Project(path=project_path, meta=meta)
+
+        # Ensure project invariants
+        project.assets_dir.mkdir(parents=True, exist_ok=True)
+        StageWriter.create_empty_scene(project.scene_path)
+
+        return project
 
     @staticmethod
     def detect(directory: Path) -> Project | None:

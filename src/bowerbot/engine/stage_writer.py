@@ -27,29 +27,32 @@ class StageWriter:
         self.up_axis = up_axis
         self._stage = None
 
-    def create_stage(self, path: str | Path) -> None:
-        """Create a new USD stage with BowerBot defaults."""
+    @staticmethod
+    def create_empty_scene(path: str | Path) -> None:
+        """Create a minimal scene file with BowerBot defaults.
 
-        path = str(path)
-        self._stage = Usd.Stage.CreateNew(path)
+        Writes metersPerUnit, upAxis, and a root /Scene Xform.
+        Does not retain the stage — used for project initialization.
+        Skips creation if the file already exists.
+        """
+        path = Path(path)
+        if path.exists():
+            return
 
-        # Set stage metadata
-        UsdGeom.SetStageMetersPerUnit(self._stage, self.meters_per_unit)
-        UsdGeom.SetStageUpAxis(
-            self._stage,
-            UsdGeom.Tokens.y if self.up_axis == "Y" else UsdGeom.Tokens.z,
-        )
+        stage = Usd.Stage.CreateNew(str(path))
+        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
 
-        # Create root prim and set as default
-        root = self._stage.DefinePrim("/Scene", "Xform")
-        self._stage.SetDefaultPrim(root)
+        root = stage.DefinePrim("/Scene", "Xform")
+        stage.SetDefaultPrim(root)
         Usd.ModelAPI(root).SetKind(Kind.Tokens.assembly)
 
-        # Create standard hierarchy
-        for group in ["Architecture", "Furniture", "Products", "Lighting", "Props"]:
-            self._stage.DefinePrim(f"/Scene/{group}", "Xform")
+        stage.Save()
 
-        self._stage.Save()
+    def create_stage(self, path: str | Path) -> None:
+        """Create a new USD stage and keep it open for editing."""
+        self.create_empty_scene(path)
+        self._stage = Usd.Stage.Open(str(path))
 
     def _compute_unit_scale(self, asset_path: str) -> float:
         """Return the scale needed to convert asset units to scene units.

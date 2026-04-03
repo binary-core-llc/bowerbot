@@ -97,7 +97,6 @@ class AssemblySkill(Skill):
     def _update_project_meta(self) -> None:
         """Update project metadata if we're inside a project."""
         if self._project:
-            self._project.meta.object_count = self._object_count
             self._project.save()
 
     def get_tools(self) -> list[Tool]:

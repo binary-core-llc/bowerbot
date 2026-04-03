@@ -93,14 +93,12 @@ def list_projects() -> None:
 
     table = Table(title="BowerBot Projects")
     table.add_column("Name", style="bold green")
-    table.add_column("Objects", justify="right")
     table.add_column("Updated", style="dim")
     table.add_column("Path", style="dim")
 
     for p in projects:
         table.add_row(
             p.name,
-            str(p.meta.object_count),
             p.meta.updated_at[:10],
             str(p.path),
         )

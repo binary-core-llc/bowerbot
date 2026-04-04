@@ -99,10 +99,9 @@ def test_skill_registry():
         registry = SkillRegistry()
         registry.load_from_settings(settings)
 
-        # Only local should be loaded (sketchfab disabled)
-        assert registry.skill_count == 2, f"Expected 2 skills, got {registry.skill_count}"
+        # Only local should be loaded (sketchfab disabled, assembly moved to SceneBuilder)
+        assert registry.skill_count == 1, f"Expected 1 skill, got {registry.skill_count}"
         assert "local" in registry.enabled_skills
-        assert "assembly" in registry.enabled_skills
 
         # Check tools are exposed with skill prefix
         tools = registry.get_all_tools()

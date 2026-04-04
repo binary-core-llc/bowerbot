@@ -1,7 +1,8 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Test the AssemblySkill tools directly — no LLM involved."""
+"""Test the SceneBuilder tools directly — no LLM involved."""
+
 
 import asyncio
 import tempfile
@@ -10,7 +11,7 @@ from pathlib import Path
 from pxr import Usd, UsdGeom
 
 from bowerbot.project import Project
-from bowerbot.skills.assembly import AssemblySkill
+from bowerbot.scene_builder import SceneBuilder
 
 
 def create_test_asset(directory: Path, name: str) -> Path:
@@ -27,19 +28,19 @@ def create_test_asset(directory: Path, name: str) -> Path:
     return path
 
 
-def make_skill_with_project(tmp_path: Path, project_name: str = "test") -> tuple[AssemblySkill, Project]:
-    """Create an AssemblySkill bound to a temp project."""
+def make_builder_with_project(tmp_path: Path, project_name: str = "test") -> tuple[SceneBuilder, Project]:
+    """Create a SceneBuilder bound to a temp project."""
     project = Project.create(tmp_path, project_name)
-    skill = AssemblySkill()
-    skill.set_project(project)
-    return skill, project
+    builder = SceneBuilder()
+    builder.set_project(project)
+    return builder, project
 
 
 def test_create_stage():
     """Test 1: create_stage produces a valid USD file."""
     with tempfile.TemporaryDirectory() as tmp:
-        skill, project = make_skill_with_project(Path(tmp))
-        result = asyncio.run(skill.execute("create_stage", {"filename": "my_store"}))
+        skill, project = make_builder_with_project(Path(tmp))
+        result = asyncio.run(skill.execute_tool("create_stage", {"filename": "my_store"}))
 
         assert result.success, f"Failed: {result.error}"
         assert project.scene_path.exists(), "Stage file not on disk"
@@ -56,10 +57,10 @@ def test_place_asset():
         tmp_path = Path(tmp)
         asset_path = create_test_asset(tmp_path, "table")
 
-        skill, project = make_skill_with_project(tmp_path, "place_test")
-        asyncio.run(skill.execute("create_stage", {"filename": "test_scene"}))
+        skill, project = make_builder_with_project(tmp_path, "place_test")
+        asyncio.run(skill.execute_tool("create_stage", {"filename": "test_scene"}))
 
-        result = asyncio.run(skill.execute("place_asset", {
+        result = asyncio.run(skill.execute_tool("place_asset", {
             "asset_file_path": str(asset_path),
             "asset_name": "DisplayTable",
             "group": "Furniture",
@@ -94,8 +95,8 @@ def test_place_multiple_assets():
         table_path = create_test_asset(tmp_path, "table")
         chair_path = create_test_asset(tmp_path, "chair")
 
-        skill, project = make_skill_with_project(tmp_path, "multi_test")
-        asyncio.run(skill.execute("create_stage", {"filename": "multi_test"}))
+        skill, project = make_builder_with_project(tmp_path, "multi_test")
+        asyncio.run(skill.execute_tool("create_stage", {"filename": "multi_test"}))
 
         prim_paths = []
         for asset, name, x, z in [
@@ -104,7 +105,7 @@ def test_place_multiple_assets():
             (chair_path, "Chair", 3.0, 2.0),
             (chair_path, "Chair", 5.0, 2.0),
         ]:
-            result = asyncio.run(skill.execute("place_asset", {
+            result = asyncio.run(skill.execute_tool("place_asset", {
                 "asset_file_path": str(asset),
                 "asset_name": name,
                 "group": "Furniture",
@@ -122,8 +123,8 @@ def test_place_multiple_assets():
 
 def test_compute_grid_layout():
     """Test 4: Grid layout returns correct number of positions."""
-    skill = AssemblySkill()
-    result = asyncio.run(skill.execute("compute_grid_layout", {
+    builder = SceneBuilder()
+    result = asyncio.run(builder.execute_tool("compute_grid_layout", {
         "count": 6,
         "spacing": 2.5,
     }))
@@ -140,9 +141,9 @@ def test_validate_scene():
         tmp_path = Path(tmp)
         asset_path = create_test_asset(tmp_path, "item")
 
-        skill, project = make_skill_with_project(tmp_path, "valid_test")
-        asyncio.run(skill.execute("create_stage", {"filename": "valid_test"}))
-        asyncio.run(skill.execute("place_asset", {
+        skill, project = make_builder_with_project(tmp_path, "valid_test")
+        asyncio.run(skill.execute_tool("create_stage", {"filename": "valid_test"}))
+        asyncio.run(skill.execute_tool("place_asset", {
             "asset_file_path": str(asset_path),
             "asset_name": "Item",
             "group": "Props",
@@ -151,7 +152,7 @@ def test_validate_scene():
             "translate_z": 1.0,
         }))
 
-        result = asyncio.run(skill.execute("validate_scene", {}))
+        result = asyncio.run(skill.execute_tool("validate_scene", {}))
 
         assert result.success
         assert result.data["is_valid"], f"Validation failed: {result.data['issues']}"
@@ -165,9 +166,9 @@ def test_package_scene():
         tmp_path = Path(tmp)
         asset_path = create_test_asset(tmp_path, "item")
 
-        skill, project = make_skill_with_project(tmp_path, "package_test")
-        asyncio.run(skill.execute("create_stage", {"filename": "package_test"}))
-        asyncio.run(skill.execute("place_asset", {
+        skill, project = make_builder_with_project(tmp_path, "package_test")
+        asyncio.run(skill.execute_tool("create_stage", {"filename": "package_test"}))
+        asyncio.run(skill.execute_tool("place_asset", {
             "asset_file_path": str(asset_path),
             "asset_name": "Item",
             "group": "Props",
@@ -176,7 +177,7 @@ def test_package_scene():
             "translate_z": 1.0,
         }))
 
-        result = asyncio.run(skill.execute("package_scene", {}))
+        result = asyncio.run(skill.execute_tool("package_scene", {}))
 
         assert result.success, f"Failed: {result.error}"
         usdz_path = Path(result.data["usdz_path"])
@@ -194,11 +195,11 @@ def test_move_asset():
         mug_path = create_test_asset(tmp_path, "mug")
         table_path = create_test_asset(tmp_path, "table")
 
-        skill, project = make_skill_with_project(tmp_path, "move_test")
-        asyncio.run(skill.execute("create_stage", {"filename": "move_test"}))
+        skill, project = make_builder_with_project(tmp_path, "move_test")
+        asyncio.run(skill.execute_tool("create_stage", {"filename": "move_test"}))
 
         # Place table on floor
-        asyncio.run(skill.execute("place_asset", {
+        asyncio.run(skill.execute_tool("place_asset", {
             "asset_file_path": str(table_path),
             "asset_name": "Table",
             "group": "Furniture",
@@ -208,7 +209,7 @@ def test_move_asset():
         }))
 
         # Place mug on floor (wrong)
-        r = asyncio.run(skill.execute("place_asset", {
+        r = asyncio.run(skill.execute_tool("place_asset", {
             "asset_file_path": str(mug_path),
             "asset_name": "Mug",
             "group": "Products",
@@ -220,7 +221,7 @@ def test_move_asset():
         mug_prim_path = r.data["prim_path"]
 
         # Move mug onto table surface
-        r = asyncio.run(skill.execute("move_asset", {
+        r = asyncio.run(skill.execute_tool("move_asset", {
             "prim_path": mug_prim_path,
             "translate_x": 5.0,
             "translate_y": 0.75,
@@ -263,14 +264,14 @@ def test_unit_conversion():
         cube.GetSizeAttr().Set(80.0)  # 80 cm
         stage.Save()
 
-        skill, project = make_skill_with_project(
+        skill, project = make_builder_with_project(
             tmp_path, "unit_test",
         )
-        asyncio.run(skill.execute(
+        asyncio.run(skill.execute_tool(
             "create_stage", {"filename": "unit_test"},
         ))
 
-        r = asyncio.run(skill.execute("place_asset", {
+        r = asyncio.run(skill.execute_tool("place_asset", {
             "asset_file_path": str(cm_asset),
             "asset_name": "Table",
             "group": "Furniture",
@@ -281,7 +282,7 @@ def test_unit_conversion():
         assert r.success, f"Failed: {r.error}"
 
         # list_scene should report bounds in metres
-        r = asyncio.run(skill.execute("list_scene", {}))
+        r = asyncio.run(skill.execute_tool("list_scene", {}))
         assert r.success
         table_obj = r.data["objects"][0]
         bounds = table_obj["bounds"]
@@ -304,16 +305,16 @@ def test_full_pipeline():
         chair = create_test_asset(tmp_path, "chair")
         light = create_test_asset(tmp_path, "pendant")
 
-        skill, project = make_skill_with_project(tmp_path, "full_pipeline")
-        r = asyncio.run(skill.execute("create_stage", {"filename": "full_pipeline"}))
+        skill, project = make_builder_with_project(tmp_path, "full_pipeline")
+        r = asyncio.run(skill.execute_tool("create_stage", {"filename": "full_pipeline"}))
         assert r.success
 
-        r = asyncio.run(skill.execute("compute_grid_layout", {"count": 4, "spacing": 2.0}))
+        r = asyncio.run(skill.execute_tool("compute_grid_layout", {"count": 4, "spacing": 2.0}))
         assert r.success
         positions = r.data["positions"]
 
         for pos in positions:
-            r = asyncio.run(skill.execute("place_asset", {
+            r = asyncio.run(skill.execute_tool("place_asset", {
                 "asset_file_path": str(table),
                 "asset_name": "Table",
                 "group": "Furniture",
@@ -323,7 +324,7 @@ def test_full_pipeline():
             }))
             assert r.success
 
-        r = asyncio.run(skill.execute("place_asset", {
+        r = asyncio.run(skill.execute_tool("place_asset", {
             "asset_file_path": str(light),
             "asset_name": "CeilingLight",
             "group": "Lighting",
@@ -333,11 +334,11 @@ def test_full_pipeline():
         }))
         assert r.success
 
-        r = asyncio.run(skill.execute("validate_scene", {}))
+        r = asyncio.run(skill.execute_tool("validate_scene", {}))
         assert r.success
         assert r.data["is_valid"], f"Validation errors: {r.data['issues']}"
 
-        r = asyncio.run(skill.execute("package_scene", {}))
+        r = asyncio.run(skill.execute_tool("package_scene", {}))
         assert r.success
         usdz_path = Path(r.data["usdz_path"])
         assert usdz_path.exists()
@@ -356,4 +357,4 @@ if __name__ == "__main__":
     test_move_asset()
     test_unit_conversion()
     test_full_pipeline()
-    print("\n🎉 All assembly skill tests passed!")
+    print("\n🎉 All scene builder tests passed!")

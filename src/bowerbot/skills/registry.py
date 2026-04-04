@@ -1,12 +1,11 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""SkillRegistry — discovers and manages all available skills.
+"""SkillRegistry — discovers and manages extension skills.
 
-Skills are discovered from two sources:
-1. Python entry points (group: "bowerbot.skills") — both
-   built-in and pip-installed skills register this way.
-2. The assembly skill — always loaded as the core skill.
+Skills are discovered from Python entry points
+(group: "bowerbot.skills") — both built-in and pip-installed
+skills register this way.
 
 To register a skill via entry points, add to pyproject.toml:
 
@@ -23,7 +22,6 @@ from pathlib import Path
 from typing import Any
 
 from bowerbot.config import Settings
-from bowerbot.skills.assembly import AssemblySkill
 from bowerbot.skills.base import Skill, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -89,7 +87,6 @@ class SkillRegistry:
             if (
                 skill_config.enabled
                 and skill_name not in discovered_names
-                and skill_name != "assembly"
             ):
                 logger.warning(
                     "Skill '%s' is enabled in config but "
@@ -98,12 +95,6 @@ class SkillRegistry:
                     skill_name,
                     skill_name,
                 )
-
-        # Assembly skill is always registered
-        assembly = AssemblySkill(
-            scene_defaults=settings.scene_defaults,
-        )
-        self.register(assembly, assets_dir=assets_dir)
 
     def get_all_tools(self) -> list[dict[str, Any]]:
         """Get all tools from all enabled skills in LLM schema format."""

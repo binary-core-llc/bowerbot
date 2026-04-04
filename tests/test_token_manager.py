@@ -45,7 +45,7 @@ def build_history_with_tools(user_turns: int) -> list[dict]:
             "content": None,
             "tool_calls": [{
                 "id": f"call_{i}",
-                "function": {"name": "assembly__list_scene", "arguments": "{}"},
+                "function": {"name": "list_scene", "arguments": "{}"},
             }],
         })
         history.append({
@@ -334,15 +334,15 @@ def test_format_history_includes_tool_call_names():
             "role": "assistant",
             "content": None,
             "tool_calls": [
-                {"function": {"name": "assembly__place_asset"}},
-                {"function": {"name": "assembly__list_scene"}},
+                {"function": {"name": "place_asset"}},
+                {"function": {"name": "list_scene"}},
             ],
         },
     ]
 
     formatted = manager._format_history_for_summary(messages)
-    assert "assembly__place_asset" in formatted
-    assert "assembly__list_scene" in formatted
+    assert "place_asset" in formatted
+    assert "list_scene" in formatted
 
 
 # ─── TokenUsage ──────────────────────────────────────────────────

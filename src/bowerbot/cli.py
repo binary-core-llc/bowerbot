@@ -23,6 +23,7 @@ from bowerbot.utils.naming import safe_project_name
 if TYPE_CHECKING:
     from bowerbot.config import Settings
     from bowerbot.project import Project
+    from bowerbot.scene_builder import SceneBuilder
     from bowerbot.skills.registry import SkillRegistry
 
 theme = Theme({
@@ -33,19 +34,24 @@ theme = Theme({
 console = Console(theme=theme)
 
 
-def _build_registry(settings: Settings, project: Project | None = None) -> SkillRegistry:
-    """Build a SkillRegistry and optionally bind it to a project."""
+def _build_scene_builder(
+    settings: Settings, project: Project | None = None,
+) -> SceneBuilder:
+    """Create a SceneBuilder, optionally bound to a project."""
+    from bowerbot.scene_builder import SceneBuilder
+
+    builder = SceneBuilder(scene_defaults=settings.scene_defaults)
+    if project:
+        builder.set_project(project)
+    return builder
+
+
+def _build_registry(settings: Settings) -> SkillRegistry:
+    """Build a SkillRegistry with extension skills only."""
     from bowerbot.skills.registry import SkillRegistry
 
     registry = SkillRegistry()
     registry.load_from_settings(settings)
-
-    if project:
-        # Find the assembly skill and bind it to the project
-        assembly = registry._skills.get("assembly")
-        if assembly:
-            assembly.set_project(project)
-
     return registry
 
 
@@ -154,9 +160,9 @@ def chat() -> None:
 
 def _start_chat(settings: Settings, project: Project | None = None) -> None:
     """Start an interactive chat session, optionally inside a project."""
-    registry = _build_registry(settings, project=project)
+    builder = _build_scene_builder(settings, project=project)
+    registry = _build_registry(settings)
 
-    # Build status lines
     status = f"[sf]BowerBot[/] v{__version__} — Interactive Scene Builder\n"
     status += f"[info]Model:[/]  {settings.llm.model}\n"
     status += f"[info]Skills:[/] {', '.join(registry.enabled_skills)}\n"
@@ -165,9 +171,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
         status += f"[info]Project:[/] {project.name}\n"
         status += f"[info]Path:[/]    {project.path}\n"
         if project.scene_path.exists():
-            assembly = registry._skills.get("assembly")
-            count = assembly._object_count if assembly else 0
-            status += f"[info]Scene:[/]   {project.meta.scene_file} ({count} object(s))\n"
+            status += f"[info]Scene:[/]   {project.meta.scene_file} ({builder._object_count} object(s))\n"
     else:
         status += f"[info]Project:[/] none (use 'bowerbot new' to create one)\n"
 
@@ -177,24 +181,26 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
 
     from bowerbot.agent import AgentRuntime
 
-    agent = AgentRuntime(settings=settings, skill_registry=registry)
+    agent = AgentRuntime(
+        settings=settings,
+        scene_builder=builder,
+        skill_registry=registry,
+    )
 
     # If resuming a project with an existing scene, tell the agent
-    if project and project.scene_path.exists():
-        assembly = registry._skills.get("assembly")
-        if assembly and assembly._object_count > 0:
-            objects = assembly.writer.list_prims()
-            object_summary = "\n".join(
-                f"  - {o['prim_path']} (asset: {o['asset']}, position: {o['position']})"
-                for o in objects
-            )
-            context = (
-                f"You are resuming project '{project.name}'. "
-                f"The scene is already open at {project.scene_path} with "
-                f"{len(objects)} object(s):\n{object_summary}\n"
-                f"The stage is loaded and ready — you do NOT need to call create_stage."
-            )
-            agent.conversation_history.append({"role": "system", "content": context})
+    if project and project.scene_path.exists() and builder._object_count > 0:
+        objects = builder.writer.list_prims()
+        object_summary = "\n".join(
+            f"  - {o['prim_path']} (asset: {o['asset']}, position: {o['position']})"
+            for o in objects
+        )
+        context = (
+            f"You are resuming project '{project.name}'. "
+            f"The scene is already open at {project.scene_path} with "
+            f"{len(objects)} object(s):\n{object_summary}\n"
+            f"The stage is loaded and ready — you do NOT need to call create_stage."
+        )
+        agent.conversation_history.append({"role": "system", "content": context})
 
     asyncio.run(_chat_loop(agent, console))
 
@@ -284,12 +290,17 @@ def build(prompt: str) -> None:
     console.print(f"  Project:  {project.name}")
     console.print(f"  Path:     {project.path}")
 
-    registry = _build_registry(settings, project=project)
+    builder = _build_scene_builder(settings, project=project)
+    registry = _build_registry(settings)
     console.print(f"  Skills:   {registry.enabled_skills}")
 
     from bowerbot.agent import AgentRuntime
 
-    agent = AgentRuntime(settings=settings, skill_registry=registry)
+    agent = AgentRuntime(
+        settings=settings,
+        scene_builder=builder,
+        skill_registry=registry,
+    )
 
     try:
         response = asyncio.run(agent.process(prompt))
@@ -323,13 +334,21 @@ def skills() -> None:
     """List available and enabled skills."""
     settings = load_settings()
 
+    # Scene builder tools (always available)
+    builder = _build_scene_builder(settings)
+    scene_tools = builder.get_tool_names()
+    console.print(f"[sf]Scene builder:[/] {len(scene_tools)} tools")
+    for name in sorted(scene_tools):
+        console.print(f"    - {name}")
+
+    # Extension skills
     registry = _build_registry(settings)
 
     if registry.skill_count == 0:
-        console.print("[yellow]No skills enabled. Check config.json[/]")
+        console.print("\n[info]No extension skills enabled.[/]")
         return
 
-    console.print("[sf]Enabled skills:[/]")
+    console.print(f"\n[sf]Extension skills:[/]")
     for name in registry.enabled_skills:
         tools = [
             t["function"]["name"]

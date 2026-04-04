@@ -20,6 +20,7 @@ async def test_agent_with_local_assets():
 
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import Settings, LLMSettings, SkillConfig
+    from bowerbot.scene_builder import SceneBuilder
     from bowerbot.skills.registry import SkillRegistry
 
     # 1. Create test assets on disk
@@ -54,10 +55,15 @@ async def test_agent_with_local_assets():
         },
     )
 
+    builder = SceneBuilder(scene_defaults=settings.scene_defaults)
     registry = SkillRegistry()
     registry.load_from_settings(settings)
 
-    agent = AgentRuntime(settings=settings, skill_registry=registry)
+    agent = AgentRuntime(
+        settings=settings,
+        scene_builder=builder,
+        skill_registry=registry,
+    )
 
     print(f"  Skills loaded: {registry.enabled_skills}")
     print(f"  Tools available: {[t['function']['name'] for t in registry.get_all_tools()]}")

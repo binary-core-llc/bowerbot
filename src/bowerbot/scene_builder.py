@@ -1,11 +1,16 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Assembly skill — exposes USD scene assembly as tools for the LLM.
+"""SceneBuilder — adapter between the LLM tool-calling layer and the engine.
 
-This skill holds the state of the scene being built (the current USD stage)
-and provides tools to create, populate, validate, and package it.
-When a Project is set, all files go into the project directory.
+This is BowerBot's core product: it holds the state of the scene
+being built (the current USD stage) and provides tools to create,
+populate, validate, and package it.
+
+SceneBuilder is NOT a skill and NOT an engine module. Skills are
+extensions (asset providers, integrations). The engine is pure USD
+manipulation. SceneBuilder is the adapter that translates LLM tool
+calls into engine operations and wraps results for the agent.
 """
 
 from __future__ import annotations
@@ -25,7 +30,7 @@ from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
 from bowerbot.schemas import ASWFLayerNames, AssetMetadata, LightParams, LightType, SceneObject
-from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.utils.naming import safe_file_name, safe_prim_name
 from bowerbot.utils.usd_utils import (
     find_asset_references,
@@ -35,16 +40,239 @@ from bowerbot.utils.usd_utils import (
 
 logger = logging.getLogger(__name__)
 
+# Scene building instructions — merged into the agent's system prompt.
+SCENE_BUILDER_PROMPT = """\
+You have tools to create and manipulate OpenUSD scenes.
 
-class AssemblySkill(Skill):
-    """USD Assembly tools — the LLM calls these to build scenes.
+## Workflow
+1. The scene is created automatically with the project — you do NOT
+   need to call `create_stage`. If the scene already exists, it is
+   reopened with its current contents.
+2. Place assets using `place_asset` with coordinates in meters
+3. Use `move_asset` to reposition an existing object (do NOT call
+   `place_asset` again — that creates a duplicate)
+4. Use `compute_grid_layout` to plan evenly spaced arrangements
+5. Use `list_scene` to show the user what's currently in the scene
+6. Use `rename_prim` or `remove_prim` when the user wants to reorganize
+7. After removing assets from the scene, tell the user that the asset
+   folder still exists in the project's assets directory. Ask if they
+   want to delete it. If they confirm, use `delete_project_asset`.
+   BowerBot will scan all USD files in the project to ensure the
+   asset is not referenced elsewhere before deleting.
+8. ALWAYS call `validate_scene` before packaging
+8. Call `package_scene` to produce the final .usdz
 
-    Maintains a StageWriter instance across tool calls so the LLM
-    can create a stage, place assets into it, validate, and package.
+## USD Rules
+- metersPerUnit = 1.0 (always, no exceptions)
+- upAxis = "Y"
+- Assets are added as USD references (not copies)
+- Every stage has a defaultPrim set automatically
+
+## Scene Hierarchy
+Groups are created on demand when assets are placed — the scene
+starts empty with only the /Scene root prim. Use these standard
+group names when placing assets:
+- /Scene/Architecture, /Scene/Furniture, /Scene/Products,
+  /Scene/Lighting, /Scene/Props
+
+The user may request custom group names instead — use whatever
+they prefer. Use `rename_prim` to reorganize after placement.
+
+CRITICAL: When reporting the scene state to the user, use
+`list_scene` to check what actually exists — do NOT assume
+groups exist just because they are listed above.
+
+## Spatial Reasoning
+- Tables, chairs, shelves → floor (Y = 0)
+- Ceiling lights, pendants → ceiling (Y = room height, typically 2.7)
+- Wall-mounted items → against walls with 0.01m offset
+- Maintain minimum 1.2m walkways between furniture groups
+
+### Placing objects on surfaces
+Do NOT guess surface heights or positions. ALWAYS call `list_scene`
+first and use the `bounds` of the support object:
+- `translate_y` = support `bounds.max.y` (surface height)
+- `translate_x` must be between support `bounds.min.x` and
+  `bounds.max.x` (stay within the surface)
+- `translate_z` must be between support `bounds.min.z` and
+  `bounds.max.z` (stay within the surface)
+
+When arranging multiple objects on the same surface, also check
+each object's own bounds to ensure they do not overlap or hang
+off the edge.
+
+## Lighting
+
+Use `create_light` to add native USD lights. There are two levels:
+
+### Where does the light go?
+When the user asks to create a light, determine if it belongs to the
+**scene** or to a **specific asset**:
+- "add a sun" / "set up lighting" / "add an HDRI" → **scene light**
+- "add a bulb to the lamp" / "this lamp needs a light" → **asset light**
+- Ambiguous ("add a light") → ASK the user: "Should this be a scene
+  light (general illumination) or attached to a specific asset?"
+
+### Scene-level lights (default)
+Lights that belong to the scene — sun, environment, key/fill/rim.
+These go in `/Scene/Lighting` and are authored in `scene.usda`.
+Use these for general illumination and environment setup.
+
+### Asset-level lights
+Lights that belong to a specific asset — a lamp's bulb, a candle's
+flame, a neon sign's glow. These travel with the asset.
+Set `asset_prim_path` to the asset's prim path to create the light
+in the asset's `lgt.usda` file instead of the scene.
+
+CRITICAL: For asset lights, translate values are OFFSETS from the
+asset's bounding box surfaces, NOT absolute positions.
+BowerBot reads the geometry bounds and computes the final position:
+- translate_y = 1.0 → 1 meter above the top surface
+- translate_y = -0.5 → 0.5m below the bottom surface
+- translate_x = 0.5 → 0.5m to the right of the right face
+- translate_x = -0.5 → 0.5m to the left of the left face
+- If no translate is provided → defaults to 0.5m above top center
+
+Do NOT use scene world coordinates for asset lights.
+Values are in meters — BowerBot converts to asset units.
+
+Example: "add a point light to the desk lamp" → use `asset_prim_path`
+pointing to the lamp's prim in the scene.
+
+### Light types
+- **DistantLight** — sun/directional. Only rotation matters.
+  Use `rotate_x` for sun angle (-45 = afternoon). `angle: 0.53` = sun.
+- **DomeLight** — environment/HDRI. Set `texture` to HDRI path.
+  Intensity typically 1.0. No rotation needed.
+- **SphereLight** — point/omni. Emits in all directions. No rotation.
+  Radius 0.05-0.1 for lamps, bulbs.
+- **RectLight** — rectangular area. Default faces -Z direction.
+- **DiskLight** — circular area. Default faces -Z direction.
+- **CylinderLight** — tube. Radius 0.02, length 1.2.
+
+### Light rotation
+Directional lights (DiskLight, RectLight) default to facing -Z.
+Set rotation based on where the user wants the light to point:
+- Facing DOWN onto a surface below: `rotate_x: -90`
+- Facing UP from below: `rotate_x: 90`
+- Facing LEFT: `rotate_y: 90`
+- Facing RIGHT: `rotate_y: -90`
+- Facing FORWARD (+Z): `rotate_y: 180`
+Always choose rotation based on the user's description of what the
+light should illuminate. Ask the user if the direction is ambiguous.
+
+### Modifying lights
+When the user wants to adjust an existing light (intensity, color,
+size, position, rotation), use `update_light` — do NOT create a new
+light. `update_light` modifies the existing light in place.
+
+`update_light` works for BOTH scene-level and asset-level lights.
+Just provide the light's `prim_path` — use `list_scene` to find it.
+BowerBot automatically detects whether it's a scene or asset light.
+
+Only use `create_light` when adding a brand new light.
+
+### Removing lights
+Use `remove_light` to delete a light. Works for both scene-level
+and asset-level lights — provide the `prim_path`.
+
+If the result includes a `texture_file` field (DomeLight with HDRI),
+the texture file still exists in the project's `textures/` folder.
+Ask the user if they want to delete it. If they confirm, use
+`delete_project_texture` with the file name. BowerBot will scan all
+USD files in the project to ensure it is not referenced elsewhere
+before deleting.
+
+### CRITICAL: Do NOT switch light levels
+If a light was created as an **asset light**, it MUST stay an asset
+light when the user asks to move, reposition, or adjust it. Use
+`update_light` to change its position/rotation — do NOT remove it
+and recreate as a scene light.
+
+Only switch from asset light to scene light (or vice versa) if the
+user **explicitly** asks for it (e.g. "make this a scene light
+instead").
+
+When the user says "move the light next to the table" and the light
+is an asset light, update its offset values — do NOT create a new
+scene light.
+
+### Defaults
+- Intensity: 1000 for interior, 500 for Distant, 1.0 for Dome
+- Color: warm white (1.0, 0.9, 0.8), cool (0.9, 0.95, 1.0)
+- Scene lights go in `/Scene/Lighting`
+- Asset lights go in the asset's `lgt.usda` under `/{asset}/lgt/`
+
+## Materials
+
+BowerBot applies existing material files — it does NOT create materials.
+Material files are `.usda` files with material definitions under `/mtl/`.
+
+Materials are written into the asset folder's `mtl.usd`, NOT the scene file.
+The scene stays clean — only references to asset folders.
+
+### Material binding workflow (CRITICAL)
+1. Search for the material using `search_assets` with category "mtl"
+2. If the search returns MORE THAN ONE material, you MUST stop and list
+   ALL matching materials to the user with their names. Ask the user to
+   choose. Do NOT pick a material on their behalf. This is mandatory.
+3. Call `list_prim_children` on the target asset to discover its internal parts
+   (table top, legs, frame, etc.) — NEVER skip this step
+4. Show the user the available parts and ask which ones to apply the material to
+5. Call `bind_material` with the EXACT mesh prim path from `list_prim_children`
+   — NEVER bind to the top-level prim, always the specific mesh part
+6. Use `list_materials` to verify, `remove_material` to clear
+
+### Key rules
+- ALWAYS call `list_prim_children` before `bind_material`
+- Materials go into the asset folder's mtl.usd — never into scene.usda
+- BowerBot does NOT create materials — only applies existing ones
+- `bind_material` only works on ASWF asset folders (not USDZ)
+- For USDZ assets, materials are baked in — cannot override
+
+## ASWF Asset Folders
+
+BowerBot follows ASWF USD Working Group guidelines for asset structure.
+
+### How it works
+- `place_asset` with a loose .usda file automatically creates an ASWF folder:
+  ```
+  project/assets/chair/
+    chair.usd    <- root (sublayers geo.usd)
+    geo.usd      <- geometry
+  ```
+- `bind_material` adds materials incrementally:
+  ```
+  project/assets/chair/
+    chair.usd    <- root (now sublayers geo.usd + mtl.usd)
+    geo.usd      <- geometry
+    mtl.usd      <- materials defined inline + bindings
+  ```
+- `place_asset` with an existing ASWF folder copies the entire folder
+- `place_asset` with a USDZ copies the single file (no folder)
+
+### Key rules
+- Loose geometry is wrapped in ASWF folders on placement
+- USDZ files stay as-is (self-contained)
+- The scene.usda only contains references — no material sublayers
+- Existing ASWF folders are copied whole, preserving structure
+
+## Room Defaults
+- Width: 10m (X axis)
+- Height: 3m (Y axis)
+- Depth: 8m (Z axis)
+- Origin (0,0,0) is back-left corner at floor level
+- Center of room: (5.0, 0.0, 4.0)
+"""
+
+
+class SceneBuilder:
+    """Adapter between LLM tool calls and the USD engine.
+
+    Maintains engine instances (StageWriter, AssetAssembler, etc.)
+    across tool calls so the LLM can create a stage, place assets
+    into it, validate, and package.
     """
-
-    name = "assembly"
-    category = SkillCategory.DCC
 
     def __init__(
         self,
@@ -64,13 +292,13 @@ class AssemblySkill(Skill):
         self.packager = Packager()
         self.assembler = AssetAssembler()
 
-        self._project = None
+        self._project: Project | None = None
         self._stage_path: Path | None = None
         self._assets_dir: Path | None = None
         self._object_count: int = 0
 
     def set_project(self, project: Project) -> None:
-        """Bind this skill to a project. All output goes into the project folder."""
+        """Bind to a project. All output goes into the project folder."""
         self._project = project
         self._stage_path = project.scene_path
         self._assets_dir = project.assets_dir
@@ -78,32 +306,76 @@ class AssemblySkill(Skill):
         # If the scene file already exists, reopen it
         if self._stage_path.exists():
             self.writer.open_stage(self._stage_path)
-            # Count existing objects
             objects = self.writer.list_prims()
             self._object_count = len(objects)
             logger.info(f"Resumed project '{project.name}' with {self._object_count} object(s)")
 
-    def _resolve_output_dir(self) -> Path:
-        """Get the directory for output files."""
-        if self._project:
-            return self._project.path
-        msg = "No project set. Use 'bowerbot new' to create a project first."
-        raise RuntimeError(msg)
+    def get_prompt(self) -> str:
+        """Return scene building instructions for the system prompt."""
+        return SCENE_BUILDER_PROMPT
 
-    def _resolve_assets_dir(self) -> Path:
-        """Get the directory for asset files."""
-        if self._assets_dir:
-            self._assets_dir.mkdir(parents=True, exist_ok=True)
-            return self._assets_dir
-        msg = "No project set. Use 'bowerbot new' to create a project first."
-        raise RuntimeError(msg)
+    def get_tools(self) -> list[dict[str, Any]]:
+        """Return all tools in LLM function-calling schema format."""
+        return [tool.to_llm_schema() for tool in self._tool_definitions()]
 
-    def _update_project_meta(self) -> None:
-        """Update project metadata if we're inside a project."""
-        if self._project:
-            self._project.save()
+    def get_tool_names(self) -> set[str]:
+        """Return the set of tool names owned by this builder."""
+        return {t.name for t in self._tool_definitions()}
 
-    def get_tools(self) -> list[Tool]:
+    async def execute_tool(
+        self, tool_name: str, params: dict[str, Any],
+    ) -> ToolResult:
+        """Execute a tool by name with the given parameters."""
+        try:
+            match tool_name:
+                case "create_stage":
+                    return self._create_stage(params)
+                case "place_asset":
+                    return self._place_asset(params)
+                case "compute_grid_layout":
+                    return self._compute_grid_layout(params)
+                case "validate_scene":
+                    return self._validate_scene()
+                case "package_scene":
+                    return self._package_scene()
+                case "list_scene":
+                    return self._list_scene()
+                case "rename_prim":
+                    return self._rename_prim(params)
+                case "move_asset":
+                    return self._move_asset(params)
+                case "remove_prim":
+                    return self._remove_prim(params)
+                case "create_light":
+                    return self._create_light(params)
+                case "update_light":
+                    return self._update_light(params)
+                case "remove_light":
+                    return self._remove_light(params)
+                case "bind_material":
+                    return self._bind_material(params)
+                case "list_materials":
+                    return self._list_materials()
+                case "remove_material":
+                    return self._remove_material(params)
+                case "list_prim_children":
+                    return self._list_prim_children(params)
+                case "list_project_assets":
+                    return self._list_project_assets(params)
+                case "delete_project_asset":
+                    return self._delete_project_asset(params)
+                case "delete_project_texture":
+                    return self._delete_project_texture(params)
+                case _:
+                    return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
+        except Exception as e:
+            logger.exception(f"Scene builder tool error: {tool_name}")
+            return ToolResult(success=False, error=str(e))
+
+    # ── Tool Definitions ──────────────────────────────────────────
+
+    @staticmethod
+    def _tool_definitions() -> list[Tool]:
         return [
             Tool(
                 name="create_stage",
@@ -708,52 +980,26 @@ class AssemblySkill(Skill):
             ),
         ]
 
-    async def execute(self, tool_name: str, params: dict[str, Any]) -> ToolResult:
-        try:
-            match tool_name:
-                case "create_stage":
-                    return self._create_stage(params)
-                case "place_asset":
-                    return self._place_asset(params)
-                case "compute_grid_layout":
-                    return self._compute_grid_layout(params)
-                case "validate_scene":
-                    return self._validate_scene()
-                case "package_scene":
-                    return self._package_scene()
-                case "list_scene":
-                    return self._list_scene()
-                case "rename_prim":
-                    return self._rename_prim(params)
-                case "move_asset":
-                    return self._move_asset(params)
-                case "remove_prim":
-                    return self._remove_prim(params)
-                case "create_light":
-                    return self._create_light(params)
-                case "update_light":
-                    return self._update_light(params)
-                case "remove_light":
-                    return self._remove_light(params)
-                case "bind_material":
-                    return self._bind_material(params)
-                case "list_materials":
-                    return self._list_materials()
-                case "remove_material":
-                    return self._remove_material(params)
-                case "list_prim_children":
-                    return self._list_prim_children(params)
-                case "list_project_assets":
-                    return self._list_project_assets(params)
-                case "delete_project_asset":
-                    return self._delete_project_asset(params)
-                case "delete_project_texture":
-                    return self._delete_project_texture(params)
-                case _:
-                    return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
-        except Exception as e:
-            logger.exception(f"Assembly tool error: {tool_name}")
-            return ToolResult(success=False, error=str(e))
+    # ── Private Helpers ───────────────────────────────────────────
+
+    def _resolve_output_dir(self) -> Path:
+        if self._project:
+            return self._project.path
+        msg = "No project set. Use 'bowerbot new' to create a project first."
+        raise RuntimeError(msg)
+
+    def _resolve_assets_dir(self) -> Path:
+        if self._assets_dir:
+            self._assets_dir.mkdir(parents=True, exist_ok=True)
+            return self._assets_dir
+        msg = "No project set. Use 'bowerbot new' to create a project first."
+        raise RuntimeError(msg)
+
+    def _update_project_meta(self) -> None:
+        if self._project:
+            self._project.save()
+
+    # ── Tool Handlers ─────────────────────────────────────────────
 
     def _create_stage(self, params: dict[str, Any]) -> ToolResult:
         filename = params["filename"]
@@ -763,21 +1009,16 @@ class AssemblySkill(Skill):
 
         output_dir = self._resolve_output_dir()
 
-        # If inside a project, always use scene.usda
         if self._project:
             self._stage_path = self._project.scene_path
         else:
             self._stage_path = output_dir / f"{safe_name}.usda"
 
-        # If the scene already exists, reopen it
         if self._stage_path.exists():
             self.writer.open_stage(self._stage_path)
             objects = self.writer.list_prims()
             self._object_count = len(objects)
-            logger.info(
-                f"Reopened existing stage: "
-                f"{self._stage_path}"
-            )
+            logger.info(f"Reopened existing stage: {self._stage_path}")
             return ToolResult(
                 success=True,
                 data={
@@ -786,8 +1027,7 @@ class AssemblySkill(Skill):
                     "message": (
                         f"Stage already exists at "
                         f"{self._stage_path} with "
-                        f"{self._object_count} object(s). "
-                        f"Reopened."
+                        f"{self._object_count} object(s). Reopened."
                     ),
                 },
             )
@@ -825,25 +1065,17 @@ class AssemblySkill(Skill):
         safe_asset_name = safe_prim_name(asset_name)
         prim_path = f"/Scene/{group}/{safe_asset_name}_{self._object_count:02d}"
 
-        # Copy asset to project assets dir
         assets_dir = self._resolve_assets_dir()
 
         if self._is_asset_folder_root(asset_path):
-            # ASWF asset folder — copy entire folder
-            relative_path = self._copy_asset_folder(
-                asset_path, assets_dir,
-            )
+            relative_path = self._copy_asset_folder(asset_path, assets_dir)
         elif asset_path.suffix.lower() == ".usdz":
-            # USDZ — self-contained, copy as single file
             local_copy = assets_dir / asset_path.name
             if not local_copy.exists():
                 shutil.copy2(asset_path, local_copy)
             relative_path = f"assets/{asset_path.name}"
         else:
-            # Loose geometry — check ASWF compliance
-            bad_type = self.assembler.check_root_prim_type(
-                asset_path,
-            )
+            bad_type = self.assembler.check_root_prim_type(asset_path)
             fix_root = params.get("fix_root_prim", False)
 
             if bad_type and not fix_root:
@@ -864,21 +1096,17 @@ class AssemblySkill(Skill):
             if bad_type and fix_root:
                 self.assembler.wrap_root_prim(asset_path)
                 logger.info(
-                    "Wrapped %s root prim in Xform for "
-                    "ASWF compliance",
+                    "Wrapped %s root prim in Xform for ASWF compliance",
                     asset_path.name,
                 )
 
-            # Create ASWF folder
             folder_name = asset_path.stem
             root_file = self.assembler.create_asset_folder(
                 output_dir=assets_dir,
                 asset_name=folder_name,
                 geometry_file=asset_path,
             )
-            relative_path = (
-                f"assets/{folder_name}/{root_file.name}"
-            )
+            relative_path = f"assets/{folder_name}/{root_file.name}"
 
         scene_object = SceneObject(
             prim_path=prim_path,
@@ -932,17 +1160,14 @@ class AssemblySkill(Skill):
 
         self.writer.save()
 
-        logger.info(
-            f"Moved {prim_path} to ({tx}, {ty}, {tz})"
-        )
+        logger.info(f"Moved {prim_path} to ({tx}, {ty}, {tz})")
         return ToolResult(
             success=True,
             data={
                 "prim_path": prim_path,
                 "position": {"x": tx, "y": ty, "z": tz},
                 "rotation_y": ry,
-                "message": f"Moved {prim_path} to "
-                f"({tx}, {ty}, {tz})",
+                "message": f"Moved {prim_path} to ({tx}, {ty}, {tz})",
             },
         )
 
@@ -1027,11 +1252,6 @@ class AssemblySkill(Skill):
         )
 
     def _copy_to_assets(self, file_path: str | None, subfolder: str = "") -> str | None:
-        """Copy a file to the project assets dir and return a relative path.
-
-        Used for any file that needs to live alongside the USD stage
-        (HDRI textures, material maps, etc.).
-        """
         if file_path is None:
             return None
 
@@ -1047,21 +1267,13 @@ class AssemblySkill(Skill):
             target_dir = assets_dir
 
         local_copy = target_dir / source.name
-
         if not local_copy.exists():
             shutil.copy2(source, local_copy)
 
         relative = f"assets/{subfolder}/{source.name}" if subfolder else f"assets/{source.name}"
         return relative
 
-    def _copy_texture_to_project(
-        self, file_path: str | None,
-    ) -> str | None:
-        """Copy a texture to the project-level textures/ dir.
-
-        Used for scene-level textures like HDRI maps for
-        DomeLights. Returns a relative path from the scene file.
-        """
+    def _copy_texture_to_project(self, file_path: str | None) -> str | None:
         if file_path is None:
             return None
 
@@ -1094,11 +1306,9 @@ class AssemblySkill(Skill):
         ty = float(params.get("translate_y", 0.0))
         tz = float(params.get("translate_z", 0.0))
 
-        # Asset-level light — write into asset folder's lgt.usda
+        # Asset-level light
         if asset_prim_path:
-            asset_dir, ref_prim_path = (
-                self._resolve_asset_dir_for_prim(asset_prim_path)
-            )
+            asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(asset_prim_path)
             if asset_dir is None or ref_prim_path is None:
                 return ToolResult(
                     success=False,
@@ -1114,7 +1324,6 @@ class AssemblySkill(Skill):
                 has_explicit_y=params.get("translate_y") is not None,
             )
 
-            # Handle HDRI texture for dome lights
             texture = params.get("texture")
             if texture:
                 maps_dir = asset_dir / ASWFLayerNames.MAPS
@@ -1124,9 +1333,7 @@ class AssemblySkill(Skill):
                     dest = maps_dir / tex_path.name
                     if not dest.exists():
                         shutil.copy2(tex_path, dest)
-                    texture = (
-                        f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
-                    )
+                    texture = f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
 
             safe_name = safe_prim_name(light_name)
 
@@ -1141,9 +1348,7 @@ class AssemblySkill(Skill):
                         float(params.get("rotate_y", 0.0)),
                         float(params.get("rotate_z", 0.0)),
                     ),
-                    intensity=float(
-                        params.get("intensity", 1000.0),
-                    ),
+                    intensity=float(params.get("intensity", 1000.0)),
                     color=(
                         float(params.get("color_r", 1.0)),
                         float(params.get("color_g", 1.0)),
@@ -1159,18 +1364,12 @@ class AssemblySkill(Skill):
             except (ValueError, RuntimeError) as e:
                 return ToolResult(success=False, error=str(e))
 
-            # Reopen scene to pick up changes
             self.writer.open_stage(self._stage_path)
 
             logger.info(
-                f"Created asset light {light_type.value} "
-                f"in {asset_dir.name}/lgt.usda"
+                f"Created asset light {light_type.value} in {asset_dir.name}/lgt.usda"
             )
-            # Build full scene path for the LLM to use
-            # with update_light later
-            scene_light_path = (
-                f"{ref_prim_path}/{composed_path.lstrip('/')}"
-            )
+            scene_light_path = f"{ref_prim_path}/{composed_path.lstrip('/')}"
 
             return ToolResult(
                 success=True,
@@ -1188,12 +1387,10 @@ class AssemblySkill(Skill):
                 },
             )
 
-        # Scene-level light — write into scene.usda
+        # Scene-level light
         self._object_count += 1
         safe_name = safe_prim_name(light_name)
-        prim_path = (
-            f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
-        )
+        prim_path = f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
 
         light_params = LightParams(
             prim_path=prim_path,
@@ -1211,9 +1408,7 @@ class AssemblySkill(Skill):
                 float(params.get("rotate_z", 0.0)),
             ),
             angle=params.get("angle"),
-            texture=self._copy_texture_to_project(
-                params.get("texture"),
-            ),
+            texture=self._copy_texture_to_project(params.get("texture")),
             radius=params.get("radius"),
             width=params.get("width"),
             height=params.get("height"),
@@ -1232,9 +1427,7 @@ class AssemblySkill(Skill):
                 "light_type": light_type.value,
                 "position": {"x": tx, "y": ty, "z": tz},
                 "intensity": light_params.intensity,
-                "message": (
-                    f"Created {light_type.value} at {prim_path}"
-                ),
+                "message": f"Created {light_type.value} at {prim_path}",
             },
         )
 
@@ -1246,18 +1439,10 @@ class AssemblySkill(Skill):
             )
 
         prim_path = params["prim_path"]
+        asset_dir, _ = self._resolve_asset_dir_for_prim(prim_path)
 
-        # Check if this is an asset-level or scene-level light
-        asset_dir, _ = self._resolve_asset_dir_for_prim(
-            prim_path,
-        )
-
-        # Build common update params
         translate = None
-        if any(
-            params.get(k) is not None
-            for k in ("translate_x", "translate_y", "translate_z")
-        ):
+        if any(params.get(k) is not None for k in ("translate_x", "translate_y", "translate_z")):
             translate = (
                 float(params.get("translate_x", 0.0)),
                 float(params.get("translate_y", 0.0)),
@@ -1265,10 +1450,7 @@ class AssemblySkill(Skill):
             )
 
         color = None
-        if any(
-            params.get(k) is not None
-            for k in ("color_r", "color_g", "color_b")
-        ):
+        if any(params.get(k) is not None for k in ("color_r", "color_g", "color_b")):
             color = (
                 float(params.get("color_r", 1.0)),
                 float(params.get("color_g", 1.0)),
@@ -1280,17 +1462,12 @@ class AssemblySkill(Skill):
             intensity = float(intensity)
 
         extra = {}
-        for key in (
-            "radius", "angle", "width", "height", "length",
-        ):
+        for key in ("radius", "angle", "width", "height", "length"):
             if params.get(key) is not None:
                 extra[key] = float(params[key])
 
         rotate = None
-        if any(
-            params.get(k) is not None
-            for k in ("rotate_x", "rotate_y", "rotate_z")
-        ):
+        if any(params.get(k) is not None for k in ("rotate_x", "rotate_y", "rotate_z")):
             rotate = (
                 float(params.get("rotate_x", 0.0)),
                 float(params.get("rotate_y", 0.0)),
@@ -1298,8 +1475,6 @@ class AssemblySkill(Skill):
             )
 
         if asset_dir is not None:
-            # Asset-level light — update via AssetAssembler
-            # Extract light name from prim path
             light_name = prim_path.rstrip("/").split("/")[-1]
 
             if translate is not None:
@@ -1319,27 +1494,19 @@ class AssemblySkill(Skill):
                     **extra,
                 )
             except (ValueError, RuntimeError) as e:
-                return ToolResult(
-                    success=False, error=str(e),
-                )
+                return ToolResult(success=False, error=str(e))
 
             self.writer.open_stage(self._stage_path)
 
-            logger.info(
-                f"Updated asset light at {prim_path}"
-            )
+            logger.info(f"Updated asset light at {prim_path}")
             return ToolResult(
                 success=True,
                 data={
                     "prim_path": prim_path,
                     "asset_folder": asset_dir.name,
-                    "message": (
-                        f"Updated asset light at {prim_path}"
-                    ),
+                    "message": f"Updated asset light at {prim_path}",
                 },
             )
-
-        # Scene-level light — update via StageWriter
 
         try:
             self.writer.update_light(
@@ -1360,15 +1527,11 @@ class AssemblySkill(Skill):
             success=True,
             data={
                 "prim_path": prim_path,
-                "message": (
-                    f"Updated scene light at {prim_path}"
-                ),
+                "message": f"Updated scene light at {prim_path}",
             },
         )
 
-    def _remove_light(
-        self, params: dict[str, Any],
-    ) -> ToolResult:
+    def _remove_light(self, params: dict[str, Any]) -> ToolResult:
         if self._stage_path is None or self.writer.stage is None:
             return ToolResult(
                 success=False,
@@ -1376,14 +1539,9 @@ class AssemblySkill(Skill):
             )
 
         prim_path = params["prim_path"]
-
-        # Check if this is an asset-level or scene-level light
-        asset_dir, _ = self._resolve_asset_dir_for_prim(
-            prim_path,
-        )
+        asset_dir, _ = self._resolve_asset_dir_for_prim(prim_path)
 
         if asset_dir is not None:
-            # Asset-level light — remove via AssetAssembler
             light_name = prim_path.rstrip("/").split("/")[-1]
 
             try:
@@ -1392,25 +1550,17 @@ class AssemblySkill(Skill):
                     light_name=light_name,
                 )
             except (ValueError, RuntimeError) as e:
-                return ToolResult(
-                    success=False, error=str(e),
-                )
+                return ToolResult(success=False, error=str(e))
 
             self.writer.open_stage(self._stage_path)
 
-            logger.info(
-                f"Removed asset light {light_name} "
-                f"from {asset_dir.name}"
-            )
+            logger.info(f"Removed asset light {light_name} from {asset_dir.name}")
             return ToolResult(
                 success=True,
                 data={
                     "prim_path": prim_path,
                     "asset_folder": asset_dir.name,
-                    "message": (
-                        f"Removed light {light_name} "
-                        f"from {asset_dir.name}"
-                    ),
+                    "message": f"Removed light {light_name} from {asset_dir.name}",
                 },
             )
 
@@ -1418,16 +1568,10 @@ class AssemblySkill(Skill):
         texture_file = None
         prim = self.writer.stage.GetPrimAtPath(prim_path)
         if prim and prim.IsValid():
-            tex_attr = prim.GetAttribute(
-                "inputs:texture:file",
-            )
+            tex_attr = prim.GetAttribute("inputs:texture:file")
             if tex_attr and tex_attr.Get():
                 tex_val = tex_attr.Get()
-                texture_file = (
-                    tex_val.path
-                    if hasattr(tex_val, "path")
-                    else str(tex_val)
-                )
+                texture_file = tex_val.path if hasattr(tex_val, "path") else str(tex_val)
 
         try:
             success = self.writer.remove_prim(prim_path)
@@ -1443,19 +1587,14 @@ class AssemblySkill(Skill):
         self.writer.save()
 
         logger.info(f"Removed scene light at {prim_path}")
-        result_data = {
+        result_data: dict[str, Any] = {
             "prim_path": prim_path,
-            "message": (
-                f"Removed light at {prim_path}"
-            ),
+            "message": f"Removed light at {prim_path}",
         }
         if texture_file:
             result_data["texture_file"] = texture_file
 
-        return ToolResult(
-            success=True,
-            data=result_data,
-        )
+        return ToolResult(success=True, data=result_data)
 
     def _compute_grid_layout(self, params: dict[str, Any]) -> ToolResult:
         count = int(params["count"])
@@ -1540,10 +1679,7 @@ class AssemblySkill(Skill):
                 error=f"Material file not found: {material_file}",
             )
 
-        # Find which asset folder this prim belongs to
-        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(
-            prim_path,
-        )
+        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(prim_path)
         if asset_dir is None or ref_prim_path is None:
             return ToolResult(
                 success=False,
@@ -1554,15 +1690,12 @@ class AssemblySkill(Skill):
                 ),
             )
 
-        # Convert scene path to asset-local path by stripping
-        # everything up to the reference prim
         asset_local_path = prim_path
         if prim_path.startswith(ref_prim_path):
             asset_local_path = prim_path[len(ref_prim_path):]
             if not asset_local_path:
                 asset_local_path = "/"
 
-        # Add material into the asset folder's mtl.usd
         try:
             material_prim_path = self.assembler.add_material(
                 asset_dir=asset_dir,
@@ -1573,13 +1706,9 @@ class AssemblySkill(Skill):
         except (ValueError, RuntimeError) as e:
             return ToolResult(success=False, error=str(e))
 
-        # Reopen scene stage to pick up the updated composition
         self.writer.open_stage(self._stage_path)
 
-        logger.info(
-            f"Bound {material_prim_path} to {prim_path} "
-            f"in {asset_dir.name}/"
-        )
+        logger.info(f"Bound {material_prim_path} to {prim_path} in {asset_dir.name}/")
         return ToolResult(
             success=True,
             data={
@@ -1602,9 +1731,7 @@ class AssemblySkill(Skill):
 
         prim_path = params["prim_path"]
 
-        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(
-            prim_path,
-        )
+        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(prim_path)
         if asset_dir is None or ref_prim_path is None:
             return ToolResult(
                 success=False,
@@ -1617,11 +1744,7 @@ class AssemblySkill(Skill):
             if not asset_local_path:
                 asset_local_path = "/"
 
-        self.assembler.remove_material_binding(
-            asset_dir, asset_local_path,
-        )
-
-        # Reopen scene stage to pick up changes
+        self.assembler.remove_material_binding(asset_dir, asset_local_path)
         self.writer.open_stage(self._stage_path)
 
         logger.info(f"Removed material from {prim_path}")
@@ -1641,7 +1764,6 @@ class AssemblySkill(Skill):
                 error="No stage open. Call create_stage first.",
             )
 
-        # Collect materials from all ASWF asset folders
         assets_dir = self._resolve_assets_dir()
         all_materials: list[dict] = []
 
@@ -1702,24 +1824,13 @@ class AssemblySkill(Skill):
 
     @staticmethod
     def _is_asset_folder_root(asset_path: Path) -> bool:
-        """Check if asset_path is the root file of an ASWF asset folder.
-
-        An ASWF root file has the same stem as its parent directory
-        (e.g. ``single_table/single_table.usd``).
-        """
         return (
             asset_path.stem == asset_path.parent.name
             and asset_path.suffix.lower() in {".usd", ".usda", ".usdc"}
         )
 
     @staticmethod
-    def _copy_asset_folder(
-        root_file: Path, assets_dir: Path,
-    ) -> str:
-        """Copy an entire ASWF asset folder to the project assets dir.
-
-        Returns the relative path from the stage file to the root file.
-        """
+    def _copy_asset_folder(root_file: Path, assets_dir: Path) -> str:
         source_dir = root_file.parent
         folder_name = source_dir.name
         dest_dir = assets_dir / folder_name
@@ -1737,12 +1848,6 @@ class AssemblySkill(Skill):
         tz: float,
         has_explicit_y: bool,
     ) -> tuple[float, float, float]:
-        """Convert bounds-relative offsets to absolute positions.
-
-        For asset-level lights, translate values are offsets from
-        the geometry's bounding box surfaces. This method computes
-        the final position from those offsets and the asset bounds.
-        """
         bounds = self.assembler.get_geometry_bounds(asset_dir)
         if not bounds:
             return tx, ty, tz
@@ -1763,45 +1868,22 @@ class AssemblySkill(Skill):
     def _resolve_asset_dir_for_prim(
         self, prim_path: str,
     ) -> tuple[Path | None, str | None]:
-        """Find the ASWF asset folder for a given prim path.
-
-        Checks the prim itself, its children, and its ancestors
-        for a reference to an ASWF asset folder.
-
-        Returns:
-            (asset_dir, ref_prim_path) or (None, None) if not found.
-        """
         if self.writer.stage is None:
             return None, None
 
         stage = self.writer.stage
-        stage_dir = Path(
-            stage.GetRootLayer().realPath,
-        ).parent
+        stage_dir = Path(stage.GetRootLayer().realPath).parent
 
-        def _check_prim_refs(
-            prim,
-        ) -> tuple[Path | None, str | None]:
+        def _check_prim_refs(prim) -> tuple[Path | None, str | None]:
             for asset_path in iter_prim_ref_paths(prim):
-                resolved = (
-                    stage_dir / asset_path
-                ).resolve()
-                if (
-                    resolved.exists()
-                    and resolved.parent.is_dir()
-                ):
+                resolved = (stage_dir / asset_path).resolve()
+                if resolved.exists() and resolved.parent.is_dir():
                     folder = resolved.parent
                     for ext in (".usd", ".usda", ".usdc"):
-                        if resolved.name == (
-                            f"{folder.name}{ext}"
-                        ):
-                            return (
-                                folder,
-                                str(prim.GetPath()),
-                            )
+                        if resolved.name == f"{folder.name}{ext}":
+                            return folder, str(prim.GetPath())
             return None, None
 
-        # Check the prim itself and its children first
         target = stage.GetPrimAtPath(prim_path)
         if target and target.IsValid():
             result = _check_prim_refs(target)
@@ -1812,7 +1894,6 @@ class AssemblySkill(Skill):
                 if result[0] is not None:
                     return result
 
-        # Walk up ancestors
         path_parts = prim_path.strip("/").split("/")
         for i in range(len(path_parts) - 1, 0, -1):
             check_path = "/" + "/".join(path_parts[:i])
@@ -1829,34 +1910,24 @@ class AssemblySkill(Skill):
 
         return None, None
 
-    def _list_project_assets(
-        self, params: dict[str, Any],
-    ) -> ToolResult:
+    # ── Project Asset Management ──────────────────────────────────
+
+    def _list_project_assets(self, params: dict[str, Any]) -> ToolResult:
         if self._project is None:
-            return ToolResult(
-                success=False,
-                error="No project open.",
-            )
+            return ToolResult(success=False, error="No project open.")
 
         assets_dir = self._resolve_assets_dir()
         if not assets_dir.exists():
             return ToolResult(
                 success=True,
-                data={
-                    "assets": [],
-                    "message": "No assets directory found.",
-                },
+                data={"assets": [], "message": "No assets directory found."},
             )
 
-        # Collect referenced asset paths from the scene
         referenced: set[str] = set()
         if self.writer.stage is not None:
             for prim in self.writer.stage.Traverse():
-                referenced.update(
-                    iter_prim_ref_paths(prim),
-                )
+                referenced.update(iter_prim_ref_paths(prim))
 
-        # List asset folders and files, optionally filtered
         query = params.get("query", "")
         query_lower = query.lower() if query else ""
 
@@ -1864,10 +1935,7 @@ class AssemblySkill(Skill):
         for entry in sorted(assets_dir.iterdir()):
             if query_lower and query_lower not in entry.name.lower():
                 continue
-
-            in_scene = any(
-                entry.name in r for r in referenced
-            )
+            in_scene = any(entry.name in r for r in referenced)
             results.append({
                 "name": entry.name,
                 "type": "folder" if entry.is_dir() else "file",
@@ -1882,21 +1950,13 @@ class AssemblySkill(Skill):
                 "total": len(results),
                 "unused_count": len(unused),
                 "assets": results,
-                "message": (
-                    f"Project has {len(results)} asset(s), "
-                    f"{len(unused)} unused."
-                ),
+                "message": f"Project has {len(results)} asset(s), {len(unused)} unused.",
             },
         )
 
-    def _delete_project_asset(
-        self, params: dict[str, Any],
-    ) -> ToolResult:
+    def _delete_project_asset(self, params: dict[str, Any]) -> ToolResult:
         if self._project is None:
-            return ToolResult(
-                success=False,
-                error="No project open.",
-            )
+            return ToolResult(success=False, error="No project open.")
 
         folder_name = params["folder_name"]
         assets_dir = self._resolve_assets_dir()
@@ -1917,11 +1977,8 @@ class AssemblySkill(Skill):
                 ),
             )
 
-        # Scan all USD files in the project for references
         referencing = find_asset_references(
-            self._project.path,
-            folder_name,
-            skip_dir=asset_folder,
+            self._project.path, folder_name, skip_dir=asset_folder,
         )
         if referencing:
             files_list = ", ".join(referencing)
@@ -1941,21 +1998,13 @@ class AssemblySkill(Skill):
             success=True,
             data={
                 "folder": folder_name,
-                "message": (
-                    f"Deleted asset folder '{folder_name}' "
-                    f"from project assets."
-                ),
+                "message": f"Deleted asset folder '{folder_name}' from project assets.",
             },
         )
 
-    def _delete_project_texture(
-        self, params: dict[str, Any],
-    ) -> ToolResult:
+    def _delete_project_texture(self, params: dict[str, Any]) -> ToolResult:
         if self._project is None:
-            return ToolResult(
-                success=False,
-                error="No project open.",
-            )
+            return ToolResult(success=False, error="No project open.")
 
         file_name = params["file_name"]
         project_dir = self._project.path
@@ -1965,16 +2014,10 @@ class AssemblySkill(Skill):
         if not tex_file.exists():
             return ToolResult(
                 success=False,
-                error=(
-                    f"Texture file not found: "
-                    f"{ASWFLayerNames.TEXTURES}/{file_name}"
-                ),
+                error=f"Texture file not found: {ASWFLayerNames.TEXTURES}/{file_name}",
             )
 
-        # Scan all USD files in the project for references
-        referencing = find_texture_references(
-            self._project.path, file_name,
-        )
+        referencing = find_texture_references(self._project.path, file_name)
         if referencing:
             files_list = ", ".join(referencing)
             return ToolResult(
@@ -1987,11 +2030,8 @@ class AssemblySkill(Skill):
             )
 
         tex_file.unlink()
-        logger.info(
-            f"Deleted project texture: {file_name}"
-        )
+        logger.info(f"Deleted project texture: {file_name}")
 
-        # Remove textures/ dir if empty
         if tex_dir.exists() and not any(tex_dir.iterdir()):
             tex_dir.rmdir()
 
@@ -1999,13 +2039,6 @@ class AssemblySkill(Skill):
             success=True,
             data={
                 "file": file_name,
-                "message": (
-                    f"Deleted texture '{file_name}' "
-                    f"from project textures."
-                ),
+                "message": f"Deleted texture '{file_name}' from project textures.",
             },
         )
-
-    def validate_config(self) -> bool:
-        """Assembly skill is always valid — no external config needed."""
-        return True

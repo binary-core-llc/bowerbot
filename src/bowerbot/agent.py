@@ -18,12 +18,14 @@ from typing import Any
 import litellm
 
 from bowerbot.config import Settings
+from bowerbot.scene_builder import SceneBuilder
+from bowerbot.skills.base import ToolResult
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
 
-# Core system prompt — always present. Skill-specific prompts are appended.
+# Core system prompt — always present. Scene builder and skill prompts are appended.
 CORE_PROMPT = """\
 You are BowerBot, an expert 3D scene assembly agent that creates OpenUSD scenes
 from natural language descriptions.
@@ -45,28 +47,40 @@ class AgentRuntime:
     """Layer 1: The Architect."""
 
     settings: Settings
+    scene_builder: SceneBuilder
     skill_registry: SkillRegistry
     conversation_history: list[dict[str, Any]] = field(default_factory=list)
     _system_prompt: str = field(default="", init=False)
     _token_manager: TokenManager = field(init=False)
+    _scene_tool_names: set[str] = field(default_factory=set, init=False)
 
     def __post_init__(self) -> None:
-        """Build the full system prompt from core + active skill prompts."""
+        """Build the full system prompt from core + scene builder + skill prompts."""
+        parts = [CORE_PROMPT]
+
+        scene_prompt = self.scene_builder.get_prompt()
+        if scene_prompt:
+            parts.append(scene_prompt)
+
         skill_prompts = self.skill_registry.get_skill_prompts()
         if skill_prompts:
-            self._system_prompt = CORE_PROMPT + "\n\n" + skill_prompts
-        else:
-            self._system_prompt = CORE_PROMPT
+            parts.append(skill_prompts)
 
+        self._system_prompt = "\n\n".join(parts)
         self._token_manager = TokenManager(self.settings.llm)
+        self._scene_tool_names = self.scene_builder.get_tool_names()
 
-        logger.info(f"System prompt: {len(self._system_prompt)} chars from {self.skill_registry.skill_count} skill(s)")
+        logger.info(
+            "System prompt: %d chars from scene builder + %d skill(s)",
+            len(self._system_prompt),
+            self.skill_registry.skill_count,
+        )
 
     async def process(self, user_message: str) -> str:
         """Process a user message through the full tool-calling loop."""
         self.conversation_history.append({"role": "user", "content": user_message})
 
-        tools = self.skill_registry.get_all_tools()
+        tools = self.scene_builder.get_tools() + self.skill_registry.get_all_tools()
         validation_retries = 0
 
         for round_num in range(MAX_TOOL_ROUNDS):
@@ -107,7 +121,7 @@ class AgentRuntime:
 
                     logger.info(f"Executing tool: {func_name}({func_args})")
 
-                    result = await self.skill_registry.execute_tool(func_name, func_args)
+                    result = await self._dispatch_tool(func_name, func_args)
 
                     self.conversation_history.append({
                         "role": "tool",
@@ -117,7 +131,6 @@ class AgentRuntime:
                         ),
                     })
 
-                # Nudge the LLM to auto-fix validation errors
                 self._nudge_on_validation_errors(
                     message.tool_calls, validation_retries,
                 )
@@ -130,6 +143,14 @@ class AgentRuntime:
 
         return "Reached maximum tool-calling rounds. Please try a simpler request."
 
+    async def _dispatch_tool(
+        self, func_name: str, func_args: dict[str, Any],
+    ) -> ToolResult:
+        """Route a tool call to scene builder or skill registry."""
+        if func_name in self._scene_tool_names:
+            return await self.scene_builder.execute_tool(func_name, func_args)
+        return await self.skill_registry.execute_tool(func_name, func_args)
+
     def _nudge_on_validation_errors(
         self,
         tool_calls: list,
@@ -137,10 +158,9 @@ class AgentRuntime:
     ) -> None:
         """If validate_scene returned errors, nudge the LLM to fix them."""
         for tool_call in tool_calls:
-            if tool_call.function.name != "assembly__validate_scene":
+            if tool_call.function.name != "validate_scene":
                 continue
 
-            # Find the matching tool result
             for msg in reversed(self.conversation_history):
                 if msg.get("tool_call_id") == tool_call.id:
                     try:

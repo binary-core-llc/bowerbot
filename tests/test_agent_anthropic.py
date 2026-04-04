@@ -13,6 +13,7 @@ async def test_agent_anthropic():
     from pxr import Usd, UsdGeom
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import Settings, LLMSettings, SkillConfig
+    from bowerbot.scene_builder import SceneBuilder
     from bowerbot.skills.registry import SkillRegistry
 
     # Create test assets
@@ -38,9 +39,14 @@ async def test_agent_anthropic():
         },
     )
 
+    builder = SceneBuilder(scene_defaults=settings.scene_defaults)
     registry = SkillRegistry()
     registry.load_from_settings(settings)
-    agent = AgentRuntime(settings=settings, skill_registry=registry)
+    agent = AgentRuntime(
+        settings=settings,
+        scene_builder=builder,
+        skill_registry=registry,
+    )
 
     response = await agent.process("Find me a table in my local assets.")
 

@@ -18,6 +18,7 @@ async def test_full_scene_build():
 
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import Settings, LLMSettings, SkillConfig, SceneDefaults
+    from bowerbot.scene_builder import SceneBuilder
     from bowerbot.skills.registry import SkillRegistry
 
     # 1. Set up temp workspace
@@ -63,13 +64,18 @@ async def test_full_scene_build():
         output_dir=output_dir,
     )
 
+    builder = SceneBuilder(scene_defaults=settings.scene_defaults)
     registry = SkillRegistry()
     registry.load_from_settings(settings)
 
     print(f"  Skills: {registry.enabled_skills}")
     print(f"  Tools: {[t['function']['name'] for t in registry.get_all_tools()]}")
 
-    agent = AgentRuntime(settings=settings, skill_registry=registry)
+    agent = AgentRuntime(
+        settings=settings,
+        scene_builder=builder,
+        skill_registry=registry,
+    )
 
     # 4. Send the prompt
     prompt = (

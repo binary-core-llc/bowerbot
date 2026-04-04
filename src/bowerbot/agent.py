@@ -51,36 +51,45 @@ class AgentRuntime:
     skill_registry: SkillRegistry
     conversation_history: list[dict[str, Any]] = field(default_factory=list)
     _system_prompt: str = field(default="", init=False)
+    _tools: list[dict[str, Any]] = field(default_factory=list, init=False)
     _token_manager: TokenManager = field(init=False)
     _scene_tool_names: set[str] = field(default_factory=set, init=False)
 
     def __post_init__(self) -> None:
-        """Build the full system prompt from core + scene builder + skill prompts."""
-        parts = [CORE_PROMPT]
-
-        scene_prompt = self.scene_builder.get_prompt()
-        if scene_prompt:
-            parts.append(scene_prompt)
-
-        skill_prompts = self.skill_registry.get_skill_prompts()
-        if skill_prompts:
-            parts.append(skill_prompts)
-
-        self._system_prompt = "\n\n".join(parts)
+        """Build the system prompt and cache the tool list."""
+        self._system_prompt = self._build_system_prompt()
+        self._tools = self.scene_builder.get_tools() + self.skill_registry.get_all_tools()
         self._token_manager = TokenManager(self.settings.llm)
         self._scene_tool_names = self.scene_builder.get_tool_names()
 
         logger.info(
-            "System prompt: %d chars from scene builder + %d skill(s)",
+            "System prompt: %d chars, %d tools from scene builder + %d skill(s)",
             len(self._system_prompt),
+            len(self._tools),
             self.skill_registry.skill_count,
         )
+
+    def _build_system_prompt(self) -> str:
+        """Assemble the system prompt from core, scene builder, and skill sections."""
+        sections = [CORE_PROMPT]
+
+        scene_prompt = self.scene_builder.get_prompt()
+        if scene_prompt:
+            sections.append(
+                f"# Scene Building\n\n{scene_prompt}"
+            )
+
+        skill_prompts = self.skill_registry.get_skill_prompts()
+        if skill_prompts:
+            sections.append(
+                f"# Extension Skills\n\n{skill_prompts}"
+            )
+
+        return "\n\n---\n\n".join(sections)
 
     async def process(self, user_message: str) -> str:
         """Process a user message through the full tool-calling loop."""
         self.conversation_history.append({"role": "user", "content": user_message})
-
-        tools = self.scene_builder.get_tools() + self.skill_registry.get_all_tools()
         validation_retries = 0
 
         for round_num in range(MAX_TOOL_ROUNDS):
@@ -103,8 +112,8 @@ class AgentRuntime:
             if api_key:
                 kwargs["api_key"] = api_key
 
-            if tools:
-                kwargs["tools"] = tools
+            if self._tools:
+                kwargs["tools"] = self._tools
 
             response = await litellm.acompletion(**kwargs)
             choice = response.choices[0]

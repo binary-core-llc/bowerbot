@@ -18,25 +18,13 @@ from typing import Any
 import litellm
 
 from bowerbot.config import Settings
+from bowerbot.prompts import load_prompt
 from bowerbot.scene_builder import SceneBuilder
 from bowerbot.skills.base import ToolResult
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
-
-# Core system prompt — always present. Scene builder and skill prompts are appended.
-CORE_PROMPT = """\
-You are BowerBot, an expert 3D scene assembly agent that creates OpenUSD scenes
-from natural language descriptions.
-
-You help users build 3D scenes by searching for assets, placing them in a USD stage,
-and packaging the result. You follow the user's instructions — they decide what to
-search, where to place things, and how to organize the scene hierarchy.
-
-When the user gives you a task, use the available tools to accomplish it.
-Be specific about what you did and report results clearly.
-"""
 
 MAX_TOOL_ROUNDS = 10
 MAX_VALIDATION_RETRIES = 2
@@ -71,7 +59,7 @@ class AgentRuntime:
 
     def _build_system_prompt(self) -> str:
         """Assemble the system prompt from core, scene builder, and skill sections."""
-        sections = [CORE_PROMPT]
+        sections = [load_prompt("core")]
 
         scene_prompt = self.scene_builder.get_prompt()
         if scene_prompt:

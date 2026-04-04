@@ -43,7 +43,6 @@ from bowerbot.utils.usd_utils import (
 
 logger = logging.getLogger(__name__)
 
-_SCENE_BUILDER_PROMPT: str | None = None
 
 
 class SceneBuilder:
@@ -92,10 +91,7 @@ class SceneBuilder:
 
     def get_prompt(self) -> str:
         """Return scene building instructions for the system prompt."""
-        global _SCENE_BUILDER_PROMPT
-        if _SCENE_BUILDER_PROMPT is None:
-            _SCENE_BUILDER_PROMPT = load_prompt("scene_building")
-        return _SCENE_BUILDER_PROMPT
+        return load_prompt("scene_building")
 
     def get_tools(self) -> list[dict[str, Any]]:
         """Return all tools in LLM function-calling schema format."""

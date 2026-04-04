@@ -501,6 +501,112 @@ class AssetAssembler:
             if prim.HasAPI(UsdLux.LightAPI)
         ]
 
+    # ── Asset Preparation ───────────────────────────────────────
+
+    @staticmethod
+    def is_asset_folder_root(asset_path: Path) -> bool:
+        """Return True if *asset_path* is the root file of an ASWF folder.
+
+        An ASWF root file has the same stem as its parent directory
+        (e.g. ``single_table/single_table.usd``).
+        """
+        return (
+            asset_path.stem == asset_path.parent.name
+            and asset_path.suffix.lower() in {".usd", ".usda", ".usdc"}
+        )
+
+    @staticmethod
+    def copy_asset_folder(root_file: Path, dest_dir: Path) -> str:
+        """Copy an entire ASWF asset folder into *dest_dir*.
+
+        Skips the copy if the destination already exists.
+
+        Returns:
+            Relative path from the stage file to the copied root
+            (e.g. ``"assets/chair/chair.usd"``).
+        """
+        import shutil
+
+        source_dir = root_file.parent
+        folder_name = source_dir.name
+        target = dest_dir / folder_name
+
+        if not target.exists():
+            shutil.copytree(source_dir, target)
+
+        return f"assets/{folder_name}/{root_file.name}"
+
+    def prepare_asset(
+        self,
+        asset_path: Path,
+        assets_dir: Path,
+        fix_root_prim: bool = False,
+    ) -> str:
+        """Prepare an asset for scene placement.
+
+        Handles three asset formats:
+
+        * **ASWF folder root** — copies the entire folder.
+        * **USDZ** — copies the single file.
+        * **Loose geometry** — wraps in an ASWF folder
+          (optionally fixing a non-Xform root prim).
+
+        Args:
+            asset_path: Path to the source asset file.
+            assets_dir: Project assets directory to copy into.
+            fix_root_prim: When ``True``, automatically wrap a
+                non-Xform root prim under an Xform.
+
+        Returns:
+            Relative path string for the scene reference
+            (e.g. ``"assets/chair/chair.usd"``).
+
+        Raises:
+            ValueError: If the root prim is non-Xform and
+                *fix_root_prim* is ``False``.
+        """
+        import shutil
+
+        if self.is_asset_folder_root(asset_path):
+            return self.copy_asset_folder(asset_path, assets_dir)
+
+        if asset_path.suffix.lower() == ".usdz":
+            local_copy = assets_dir / asset_path.name
+            if not local_copy.exists():
+                shutil.copy2(asset_path, local_copy)
+            return f"assets/{asset_path.name}"
+
+        # Loose geometry — check ASWF root prim compliance
+        bad_type = self.check_root_prim_type(asset_path)
+
+        if bad_type and not fix_root_prim:
+            msg = (
+                f"Asset '{asset_path.name}' has a "
+                f"{bad_type} as its root prim instead "
+                f"of an Xform. Per ASWF USD guidelines, "
+                f"the root prim should be an Xform with "
+                f"geometry as children. Ask the user if "
+                f"they want to fix this automatically, "
+                f"then call place_asset again with "
+                f"fix_root_prim set to true."
+            )
+            raise ValueError(msg)
+
+        if bad_type:
+            self.wrap_root_prim(asset_path)
+            logger.info(
+                "Wrapped %s root prim in Xform for ASWF compliance",
+                asset_path.name,
+            )
+
+        folder_name = asset_path.stem
+        root_file = self.create_asset_folder(
+            output_dir=assets_dir,
+            asset_name=folder_name,
+            geometry_file=asset_path,
+        )
+        return f"assets/{folder_name}/{root_file.name}"
+
     # ── ASWF Compliance ──────────────────────────────────────────
 
     @staticmethod

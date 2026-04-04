@@ -50,6 +50,70 @@ def iter_prim_ref_paths(prim: Usd.Prim) -> list[str]:
     return paths
 
 
+def resolve_asset_dir_for_prim(
+    stage: Usd.Stage,
+    prim_path: str,
+) -> tuple[Path | None, str | None]:
+    """Find the ASWF asset folder backing a given prim path.
+
+    Walks the stage hierarchy checking the prim itself, its children,
+    and then its ancestors for a reference to an ASWF asset folder.
+
+    An ASWF folder is identified by a reference whose file name
+    matches its parent directory (e.g. ``chair/chair.usd``).
+
+    Args:
+        stage: The composed USD stage to search.
+        prim_path: Absolute prim path to resolve.
+
+    Returns:
+        ``(asset_dir, ref_prim_path)`` where *asset_dir* is the
+        resolved :class:`Path` to the ASWF folder and
+        *ref_prim_path* is the prim that holds the reference.
+        Returns ``(None, None)`` if no ASWF folder is found.
+    """
+    stage_dir = Path(stage.GetRootLayer().realPath).parent
+
+    def _check_prim_refs(prim: Usd.Prim) -> tuple[Path | None, str | None]:
+        for ref_path in iter_prim_ref_paths(prim):
+            resolved = (stage_dir / ref_path).resolve()
+            if not resolved.exists() or not resolved.parent.is_dir():
+                continue
+            folder = resolved.parent
+            for ext in (".usd", ".usda", ".usdc"):
+                if resolved.name == f"{folder.name}{ext}":
+                    return folder, str(prim.GetPath())
+        return None, None
+
+    # Check the target prim and its direct children
+    target = stage.GetPrimAtPath(prim_path)
+    if target and target.IsValid():
+        result = _check_prim_refs(target)
+        if result[0] is not None:
+            return result
+        for child in target.GetChildren():
+            result = _check_prim_refs(child)
+            if result[0] is not None:
+                return result
+
+    # Walk up ancestors
+    path_parts = prim_path.strip("/").split("/")
+    for i in range(len(path_parts) - 1, 0, -1):
+        check_path = "/" + "/".join(path_parts[:i])
+        prim = stage.GetPrimAtPath(check_path)
+        if not prim or not prim.IsValid():
+            continue
+        result = _check_prim_refs(prim)
+        if result[0] is not None:
+            return result
+        for child in prim.GetChildren():
+            result = _check_prim_refs(child)
+            if result[0] is not None:
+                return result
+
+    return None, None
+
+
 def find_asset_references(
     project_dir: Path,
     folder_name: str,

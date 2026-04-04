@@ -31,11 +31,13 @@ from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
 from bowerbot.schemas import ASWFLayerNames, AssetMetadata, LightParams, LightType, SceneObject
 from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.utils.file_utils import copy_texture_to_project
 from bowerbot.utils.naming import safe_file_name, safe_prim_name
 from bowerbot.utils.usd_utils import (
     find_asset_references,
     find_texture_references,
     iter_prim_ref_paths,
+    resolve_asset_dir_for_prim,
 )
 
 logger = logging.getLogger(__name__)
@@ -1067,46 +1069,14 @@ class SceneBuilder:
 
         assets_dir = self._resolve_assets_dir()
 
-        if self._is_asset_folder_root(asset_path):
-            relative_path = self._copy_asset_folder(asset_path, assets_dir)
-        elif asset_path.suffix.lower() == ".usdz":
-            local_copy = assets_dir / asset_path.name
-            if not local_copy.exists():
-                shutil.copy2(asset_path, local_copy)
-            relative_path = f"assets/{asset_path.name}"
-        else:
-            bad_type = self.assembler.check_root_prim_type(asset_path)
-            fix_root = params.get("fix_root_prim", False)
-
-            if bad_type and not fix_root:
-                return ToolResult(
-                    success=False,
-                    error=(
-                        f"Asset '{asset_path.name}' has a "
-                        f"{bad_type} as its root prim instead "
-                        f"of an Xform. Per ASWF USD guidelines, "
-                        f"the root prim should be an Xform with "
-                        f"geometry as children. Ask the user if "
-                        f"they want to fix this automatically, "
-                        f"then call place_asset again with "
-                        f"fix_root_prim set to true."
-                    ),
-                )
-
-            if bad_type and fix_root:
-                self.assembler.wrap_root_prim(asset_path)
-                logger.info(
-                    "Wrapped %s root prim in Xform for ASWF compliance",
-                    asset_path.name,
-                )
-
-            folder_name = asset_path.stem
-            root_file = self.assembler.create_asset_folder(
-                output_dir=assets_dir,
-                asset_name=folder_name,
-                geometry_file=asset_path,
+        try:
+            relative_path = self.assembler.prepare_asset(
+                asset_path, assets_dir,
+                fix_root_prim=params.get("fix_root_prim", False),
             )
-            relative_path = f"assets/{folder_name}/{root_file.name}"
+        except ValueError as e:
+            self._object_count -= 1
+            return ToolResult(success=False, error=str(e))
 
         scene_object = SceneObject(
             prim_path=prim_path,
@@ -1251,45 +1221,14 @@ class SceneBuilder:
             },
         )
 
-    def _copy_to_assets(self, file_path: str | None, subfolder: str = "") -> str | None:
+    def _prepare_scene_texture(self, file_path: str | None) -> str | None:
+        """Copy a texture to the project textures/ dir if it exists on disk."""
         if file_path is None:
             return None
-
         source = Path(file_path)
         if not source.exists():
             return file_path
-
-        assets_dir = self._resolve_assets_dir()
-        if subfolder:
-            target_dir = assets_dir / subfolder
-            target_dir.mkdir(parents=True, exist_ok=True)
-        else:
-            target_dir = assets_dir
-
-        local_copy = target_dir / source.name
-        if not local_copy.exists():
-            shutil.copy2(source, local_copy)
-
-        relative = f"assets/{subfolder}/{source.name}" if subfolder else f"assets/{source.name}"
-        return relative
-
-    def _copy_texture_to_project(self, file_path: str | None) -> str | None:
-        if file_path is None:
-            return None
-
-        source = Path(file_path)
-        if not source.exists():
-            return file_path
-
-        project_dir = self._resolve_output_dir()
-        tex_dir = project_dir / ASWFLayerNames.TEXTURES
-        tex_dir.mkdir(parents=True, exist_ok=True)
-
-        local_copy = tex_dir / source.name
-        if not local_copy.exists():
-            shutil.copy2(source, local_copy)
-
-        return f"./{ASWFLayerNames.TEXTURES}/{source.name}"
+        return copy_texture_to_project(source, self._resolve_output_dir())
 
     def _create_light(self, params: dict[str, Any]) -> ToolResult:
         if self._stage_path is None or self.writer.stage is None:
@@ -1308,7 +1247,7 @@ class SceneBuilder:
 
         # Asset-level light
         if asset_prim_path:
-            asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(asset_prim_path)
+            asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage,asset_prim_path)
             if asset_dir is None or ref_prim_path is None:
                 return ToolResult(
                     success=False,
@@ -1319,10 +1258,12 @@ class SceneBuilder:
                     ),
                 )
 
-            tx, ty, tz = self._apply_bounds_offsets(
-                asset_dir, tx, ty, tz,
-                has_explicit_y=params.get("translate_y") is not None,
-            )
+            bounds = self.assembler.get_geometry_bounds(asset_dir)
+            if bounds:
+                tx, ty, tz = SceneGraphBuilder.apply_bounds_offsets(
+                    bounds, tx, ty, tz,
+                    has_explicit_y=params.get("translate_y") is not None,
+                )
 
             texture = params.get("texture")
             if texture:
@@ -1408,7 +1349,7 @@ class SceneBuilder:
                 float(params.get("rotate_z", 0.0)),
             ),
             angle=params.get("angle"),
-            texture=self._copy_texture_to_project(params.get("texture")),
+            texture=self._prepare_scene_texture(params.get("texture")),
             radius=params.get("radius"),
             width=params.get("width"),
             height=params.get("height"),
@@ -1439,7 +1380,7 @@ class SceneBuilder:
             )
 
         prim_path = params["prim_path"]
-        asset_dir, _ = self._resolve_asset_dir_for_prim(prim_path)
+        asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
 
         translate = None
         if any(params.get(k) is not None for k in ("translate_x", "translate_y", "translate_z")):
@@ -1478,10 +1419,12 @@ class SceneBuilder:
             light_name = prim_path.rstrip("/").split("/")[-1]
 
             if translate is not None:
-                translate = self._apply_bounds_offsets(
-                    asset_dir, *translate,
-                    has_explicit_y=params.get("translate_y") is not None,
-                )
+                bounds = self.assembler.get_geometry_bounds(asset_dir)
+                if bounds:
+                    translate = SceneGraphBuilder.apply_bounds_offsets(
+                        bounds, *translate,
+                        has_explicit_y=params.get("translate_y") is not None,
+                    )
 
             try:
                 self.assembler.update_light(
@@ -1539,7 +1482,7 @@ class SceneBuilder:
             )
 
         prim_path = params["prim_path"]
-        asset_dir, _ = self._resolve_asset_dir_for_prim(prim_path)
+        asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
 
         if asset_dir is not None:
             light_name = prim_path.rstrip("/").split("/")[-1]
@@ -1679,7 +1622,7 @@ class SceneBuilder:
                 error=f"Material file not found: {material_file}",
             )
 
-        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(prim_path)
+        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
         if asset_dir is None or ref_prim_path is None:
             return ToolResult(
                 success=False,
@@ -1731,7 +1674,7 @@ class SceneBuilder:
 
         prim_path = params["prim_path"]
 
-        asset_dir, ref_prim_path = self._resolve_asset_dir_for_prim(prim_path)
+        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
         if asset_dir is None or ref_prim_path is None:
             return ToolResult(
                 success=False,
@@ -1819,96 +1762,6 @@ class SceneBuilder:
                 ),
             },
         )
-
-    # ── ASWF Asset Folder Operations ───────────────────────────────
-
-    @staticmethod
-    def _is_asset_folder_root(asset_path: Path) -> bool:
-        return (
-            asset_path.stem == asset_path.parent.name
-            and asset_path.suffix.lower() in {".usd", ".usda", ".usdc"}
-        )
-
-    @staticmethod
-    def _copy_asset_folder(root_file: Path, assets_dir: Path) -> str:
-        source_dir = root_file.parent
-        folder_name = source_dir.name
-        dest_dir = assets_dir / folder_name
-
-        if not dest_dir.exists():
-            shutil.copytree(source_dir, dest_dir)
-
-        return f"assets/{folder_name}/{root_file.name}"
-
-    def _apply_bounds_offsets(
-        self,
-        asset_dir: Path,
-        tx: float,
-        ty: float,
-        tz: float,
-        has_explicit_y: bool,
-    ) -> tuple[float, float, float]:
-        bounds = self.assembler.get_geometry_bounds(asset_dir)
-        if not bounds:
-            return tx, ty, tz
-
-        tx = bounds["center"]["x"] + tx
-        tz = bounds["center"]["z"] + tz
-
-        if has_explicit_y:
-            if ty >= 0:
-                ty = bounds["max"]["y"] + ty
-            else:
-                ty = bounds["min"]["y"] + ty
-        else:
-            ty = bounds["max"]["y"] + 0.5
-
-        return tx, ty, tz
-
-    def _resolve_asset_dir_for_prim(
-        self, prim_path: str,
-    ) -> tuple[Path | None, str | None]:
-        if self.writer.stage is None:
-            return None, None
-
-        stage = self.writer.stage
-        stage_dir = Path(stage.GetRootLayer().realPath).parent
-
-        def _check_prim_refs(prim) -> tuple[Path | None, str | None]:
-            for asset_path in iter_prim_ref_paths(prim):
-                resolved = (stage_dir / asset_path).resolve()
-                if resolved.exists() and resolved.parent.is_dir():
-                    folder = resolved.parent
-                    for ext in (".usd", ".usda", ".usdc"):
-                        if resolved.name == f"{folder.name}{ext}":
-                            return folder, str(prim.GetPath())
-            return None, None
-
-        target = stage.GetPrimAtPath(prim_path)
-        if target and target.IsValid():
-            result = _check_prim_refs(target)
-            if result[0] is not None:
-                return result
-            for child in target.GetChildren():
-                result = _check_prim_refs(child)
-                if result[0] is not None:
-                    return result
-
-        path_parts = prim_path.strip("/").split("/")
-        for i in range(len(path_parts) - 1, 0, -1):
-            check_path = "/" + "/".join(path_parts[:i])
-            prim = stage.GetPrimAtPath(check_path)
-            if not prim or not prim.IsValid():
-                continue
-            result = _check_prim_refs(prim)
-            if result[0] is not None:
-                return result
-            for child in prim.GetChildren():
-                result = _check_prim_refs(child)
-                if result[0] is not None:
-                    return result
-
-        return None, None
 
     # ── Project Asset Management ──────────────────────────────────
 

@@ -124,6 +124,47 @@ class SceneGraphBuilder:
 
         return placements
 
+    @staticmethod
+    def apply_bounds_offsets(
+        bounds: dict[str, dict[str, float]],
+        tx: float,
+        ty: float,
+        tz: float,
+        has_explicit_y: bool,
+    ) -> tuple[float, float, float]:
+        """Convert offset-from-bounds values to absolute positions.
+
+        For asset-level lights, translate values are offsets from the
+        geometry's bounding box surfaces. This computes the final
+        position from those offsets and the asset bounds.
+
+        Args:
+            bounds: Geometry bounds dict with ``min``, ``max``,
+                ``center`` keys, each containing ``x``, ``y``, ``z``.
+            tx: X offset from center.
+            ty: Y offset from top (positive) or bottom (negative)
+                surface. Ignored when *has_explicit_y* is ``False``
+                — defaults to 0.5m above the top surface.
+            tz: Z offset from center.
+            has_explicit_y: Whether the caller provided an explicit
+                Y value. When ``False``, defaults to 0.5m above top.
+
+        Returns:
+            Absolute ``(x, y, z)`` position tuple.
+        """
+        tx = bounds["center"]["x"] + tx
+        tz = bounds["center"]["z"] + tz
+
+        if has_explicit_y:
+            if ty >= 0:
+                ty = bounds["max"]["y"] + ty
+            else:
+                ty = bounds["min"]["y"] + ty
+        else:
+            ty = bounds["max"]["y"] + 0.5
+
+        return tx, ty, tz
+
     def check_collision(
         self,
         pos_a: tuple[float, float, float],

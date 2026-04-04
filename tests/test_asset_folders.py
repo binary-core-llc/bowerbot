@@ -462,19 +462,19 @@ def test_validate_asset_folder_missing_dep():
 
 
 def test_is_asset_folder_root():
-    """_is_asset_folder_root identifies ASWF root files."""
-    from bowerbot.scene_builder import SceneBuilder
+    """is_asset_folder_root identifies ASWF root files."""
+    from bowerbot.engine.asset_assembler import AssetAssembler
 
-    assert SceneBuilder._is_asset_folder_root(
+    assert AssetAssembler.is_asset_folder_root(
         Path("/assets/table/table.usd"),
     )
-    assert SceneBuilder._is_asset_folder_root(
+    assert AssetAssembler.is_asset_folder_root(
         Path("/assets/chair/chair.usda"),
     )
-    assert not SceneBuilder._is_asset_folder_root(
+    assert not AssetAssembler.is_asset_folder_root(
         Path("/assets/table.usdz"),
     )
-    assert not SceneBuilder._is_asset_folder_root(
+    assert not AssetAssembler.is_asset_folder_root(
         Path("/assets/table/geo.usd"),
     )
 

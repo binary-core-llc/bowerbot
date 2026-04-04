@@ -41,6 +41,11 @@ api = [
 [project.scripts]
 bowerbot = "bowerbot.cli:main"
 
+[project.entry-points."bowerbot.skills"]
+local = "bowerbot.skills.local:LocalSkill"
+sketchfab = "bowerbot.skills.sketchfab:SketchfabSkill"
+textures = "bowerbot.skills.textures:TexturesSkill"
+
 [build-system]
 requires = ["uv_build>=0.10.4,<0.11.0"]
 build-backend = "uv_build"

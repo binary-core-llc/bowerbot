@@ -1,18 +1,34 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""SkillRegistry — manages all available skills.
+"""SkillRegistry — discovers and manages all available skills.
 
-The registry loads skills based on the user's config, validates
-their configuration, and provides a unified tool list and skill
-prompts to the AgentRuntime.
+Skills are discovered from two sources:
+1. Python entry points (group: "bowerbot.skills") — both
+   built-in and pip-installed skills register this way.
+2. The assembly skill — always loaded as the core skill.
+
+To register a skill via entry points, add to pyproject.toml:
+
+    [project.entry-points."bowerbot.skills"]
+    my_skill = "my_package:MySkillClass"
+
+Then ``pip install my-package`` makes the skill available
+to BowerBot automatically.
 """
 
+import logging
+from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Any
 
 from bowerbot.config import Settings
+from bowerbot.skills.assembly import AssemblySkill
 from bowerbot.skills.base import Skill, ToolResult
+
+logger = logging.getLogger(__name__)
+
+ENTRY_POINT_GROUP = "bowerbot.skills"
 
 
 class SkillRegistry:
@@ -21,7 +37,9 @@ class SkillRegistry:
     def __init__(self) -> None:
         self._skills: dict[str, Skill] = {}
 
-    def register(self, skill: Skill, assets_dir: Path | None = None) -> None:
+    def register(
+        self, skill: Skill, assets_dir: Path | None = None,
+    ) -> None:
         """Register a skill instance and set its assets_dir."""
         if assets_dir is not None:
             skill.assets_dir = assets_dir
@@ -29,27 +47,57 @@ class SkillRegistry:
             self._skills[skill.name] = skill
 
     def load_from_settings(self, settings: Settings) -> None:
-        """Auto-discover and load skills based on settings."""
-        from bowerbot.skills.assembly import AssemblySkill
-        from bowerbot.skills.local import LocalSkill
-        from bowerbot.skills.sketchfab import SketchfabSkill
-        from bowerbot.skills.textures import TexturesSkill
+        """Discover and load all skills.
 
+        Loads skills from Python entry points and registers
+        the assembly core skill. Skills are only loaded if
+        enabled in the user's settings.
+        """
         assets_dir = Path(settings.assets_dir)
 
-        builtin_skills: dict[str, type[Skill]] = {
-            "local": LocalSkill,
-            "sketchfab": SketchfabSkill,
-            "textures": TexturesSkill,
-        }
+        # Discover skills from entry points
+        discovered = entry_points(group=ENTRY_POINT_GROUP)
+        for ep in discovered:
+            skill_name = ep.name
+            skill_config = settings.skills.get(skill_name)
 
-        for skill_name, skill_config in settings.skills.items():
-            if not skill_config.enabled:
+            if skill_config and not skill_config.enabled:
                 continue
-            if skill_name in builtin_skills:
-                skill_cls = builtin_skills[skill_name]
-                skill = skill_cls(**skill_config.config)
+
+            try:
+                skill_cls = ep.load()
+                config = (
+                    skill_config.config if skill_config else {}
+                )
+                skill = skill_cls(**config)
                 self.register(skill, assets_dir=assets_dir)
+                logger.info(
+                    "Loaded skill: %s (%s)",
+                    skill_name, ep.value,
+                )
+            except Exception:
+                logger.warning(
+                    "Failed to load skill: %s (%s)",
+                    skill_name,
+                    ep.value,
+                    exc_info=True,
+                )
+
+        # Warn about configured skills that weren't found
+        discovered_names = {ep.name for ep in discovered}
+        for skill_name, skill_config in settings.skills.items():
+            if (
+                skill_config.enabled
+                and skill_name not in discovered_names
+                and skill_name != "assembly"
+            ):
+                logger.warning(
+                    "Skill '%s' is enabled in config but "
+                    "not installed. Install it with: "
+                    "pip install bowerbot-skill-%s",
+                    skill_name,
+                    skill_name,
+                )
 
         # Assembly skill is always registered
         assembly = AssemblySkill(
@@ -63,33 +111,39 @@ class SkillRegistry:
         for skill_name, skill in self._skills.items():
             for tool in skill.get_tools():
                 schema = tool.to_llm_schema()
-                schema["function"]["name"] = f"{skill_name}__{tool.name}"
+                schema["function"]["name"] = (
+                    f"{skill_name}__{tool.name}"
+                )
                 tools.append(schema)
         return tools
 
     def get_skill_prompts(self) -> str:
-        """Collect SKILL.md content from all enabled skills.
-
-        Returns a combined string of all skill prompts,
-        only for skills that are currently active.
-        """
+        """Collect SKILL.md content from all enabled skills."""
         prompts = []
-        for skill_name, skill in self._skills.items():
+        for skill in self._skills.values():
             prompt = skill.get_skill_prompt()
             if prompt:
                 prompts.append(prompt)
         return "\n\n---\n\n".join(prompts)
 
-    async def execute_tool(self, qualified_name: str, params: dict[str, Any]) -> ToolResult:
+    async def execute_tool(
+        self, qualified_name: str, params: dict[str, Any],
+    ) -> ToolResult:
         """Execute a tool by its qualified name (skill__tool_name)."""
         parts = qualified_name.split("__", 1)
         if len(parts) != 2:
-            return ToolResult(success=False, error=f"Invalid tool name: {qualified_name}")
+            return ToolResult(
+                success=False,
+                error=f"Invalid tool name: {qualified_name}",
+            )
 
         skill_name, tool_name = parts
         skill = self._skills.get(skill_name)
         if skill is None:
-            return ToolResult(success=False, error=f"Skill not found: {skill_name}")
+            return ToolResult(
+                success=False,
+                error=f"Skill not found: {skill_name}",
+            )
 
         return await skill.execute(tool_name, params)
 

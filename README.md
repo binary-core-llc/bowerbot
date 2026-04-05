@@ -114,7 +114,6 @@ Projects are persistent. Close the session, come back later, and continue where 
 - ✅ **Scene validation** : ensures technical correctness before reaching your DCC
 - 📦 **USDZ packaging** : export for Apple Vision Pro, Omniverse, or any USD viewer
 - 🏗️ **Onboarding wizard** : zero-config setup in 60 seconds
-- 🎯 **SKILL.md system** : modular prompts, each skill teaches the LLM how to use it
 
 ---
 
@@ -218,10 +217,10 @@ The onboard wizard asks for your LLM API key and optional Sketchfab token. Every
 |---------|-------------|
 | `bowerbot new "name"` | Create a new project |
 | `bowerbot open name` | Open a project and start chatting |
-| `bowerbot list` | Show all projects with object counts |
+| `bowerbot list` | Show all projects |
 | `bowerbot chat` | Auto-detect project in current directory |
 | `bowerbot build "prompt"` | Single-shot build (auto-creates project) |
-| `bowerbot skills` | List enabled skills and their tools |
+| `bowerbot skills` | List scene builder tools and enabled skills |
 | `bowerbot info` | Show current configuration |
 | `bowerbot onboard` | First-time setup wizard |
 
@@ -266,9 +265,9 @@ BowerBot: Removed /Scene/Furniture/Table_03
 
 Skills are pluggable tools the agent uses. Each skill has a Python module for execution and a `SKILL.md` file that teaches the LLM when and how to use it.
 
-### Built-in Skills
+### Scene Builder Tools
 
-**Assembly** (always active) : 15 tools for USD scene building
+These are BowerBot's core tools — always available, not part of any skill:
 
 | Tool | Description |
 |------|-------------|
@@ -280,12 +279,21 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 | `rename_prim` | Move/rename objects in the hierarchy |
 | `remove_prim` | Delete objects from the scene |
 | `create_light` | Add native USD lights (sun, dome, point, area, disk, tube) |
+| `update_light` | Modify an existing light's properties |
+| `remove_light` | Delete a light from the scene or asset |
 | `bind_material` | Apply a material to a specific mesh part (writes into asset mtl.usda) |
 | `remove_material` | Clear material binding from a prim |
 | `list_materials` | Show all materials and their bindings |
 | `list_prim_children` | Discover mesh parts inside a referenced asset |
+| `list_project_assets` | Show asset folders with scene usage status |
+| `delete_project_asset` | Remove an asset folder (checks references first) |
+| `delete_project_texture` | Remove a texture file (checks references first) |
 | `validate_scene` | Check for USD errors |
 | `package_scene` | Bundle as `.usdz` |
+
+### Extension Skills
+
+Skills extend BowerBot with new asset sources and capabilities. Each skill has a Python module for execution and a `SKILL.md` file that teaches the LLM when and how to use it.
 
 **Local** : Searches the asset directory for USD files on disk. Detects ASWF asset folders as single packages and classifies loose files as geometry (`geo`) or material (`mtl`).
 
@@ -293,20 +301,7 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 
 **Textures** : Searches the asset directory for texture files. Finds HDRIs (`.hdr`, `.exr`) for dome lights and material maps (`.png`, `.jpg`, `.tif`) for surfaces.
 
-More providers are planned (PolyHaven, Fab, CGTrader, Objaverse), and you can write your own skill for any asset source — see [Writing a Skill](#writing-a-skill) below.
-
-### Writing a Skill
-
-Create a folder in `src/bowerbot/skills/` with:
-
-```
-my_provider/
-  __init__.py
-  my_provider.py      # Implements the Skill interface
-  SKILL.md            # Natural language instructions for the LLM
-```
-
-The `SKILL.md` is injected into the system prompt when the skill is active. It teaches the agent when and how to use your tools. See `skills/sketchfab/SKILL.md` for an example.
+More providers are planned (PolyHaven, Fab, CGTrader, Objaverse), and you can write your own skill for any asset source — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -399,38 +394,49 @@ BowerBot automatically handles transient API errors:
 
 ```
 src/bowerbot/
-  project.py              # Project management (create/load/resume)
-  agent.py                # AgentRuntime, LLM tool-calling loop
-  cli.py                  # Click CLI
-  config.py               # Settings from ~/.bowerbot/config.json
-  token_manager.py        # Context compression and summarization
-  engine/
-    stage_writer.py       # USD scene operations (create, place, light, rename, remove)
-    asset_assembler.py    # ASWF asset folder creation and material management
-    dependency_resolver.py # USD file dependency tree walker
-    scene_graph.py        # Spatial math (grids, walls, collisions)
-    validator.py          # USD validation (defaultPrim, metersPerUnit, upAxis, refs, materials)
-    packager.py           # USDZ packaging
-  skills/
-    base.py               # Skill interface, assets_dir, SKILL.md loading
-    registry.py           # Tool discovery, routing, and prompt collection
-    assembly/             # Scene building + lighting tools + SKILL.md
-    local/                # Local 3D asset search + SKILL.md
-    sketchfab/            # Sketchfab API + SKILL.md
-    textures/             # Texture and HDRI search + SKILL.md
-  schemas/
-    models.py             # Pydantic data models
-  gateway/                # Future: FastAPI + MCP server
+  agent.py                 # LLM tool-calling loop and prompt assembly
+  scene_builder.py         # Adapter: translates LLM tool calls into engine operations
+  cli.py                   # Click CLI
+  config.py                # Settings from ~/.bowerbot/config.json
+  project.py               # Project management (create/load/resume)
+  token_manager.py         # Context compression and summarization
+
+  prompts/                 # LLM instructions (markdown files, not code)
+    core.md                #   Agent identity and behavior
+    scene_building.md      #   Scene building rules and workflows
+
+  engine/                  # Pure USD operations (no LLM concepts)
+    stage_writer.py        #   Scene operations (create, place, light, rename, remove)
+    asset_assembler.py     #   ASWF asset folder creation, materials, lights, asset preparation
+    scene_graph.py         #   Spatial math (grids, walls, collisions, bounds offsets)
+    validator.py           #   USD validation (defaultPrim, metersPerUnit, upAxis, refs)
+    packager.py            #   USDZ packaging
+    dependency_resolver.py #   USD file dependency tree walker
+
+  skills/                  # Extension skills (asset providers, integrations)
+    base.py                #   Skill interface and ToolResult
+    registry.py            #   Entry point discovery and tool routing
+    local/                 #   Local filesystem asset search + SKILL.md
+    sketchfab/             #   Sketchfab API integration + SKILL.md
+    textures/              #   Texture and HDRI search + SKILL.md
+
+  schemas/                 # Pydantic data models
+  utils/                   # Shared utilities
+    usd_utils.py           #   USD introspection (ref paths, asset resolution, reference scanning)
+    file_utils.py          #   Filesystem operations (texture copying)
+    naming.py              #   Name sanitization for files, prims, and projects
+  gateway/                 # Future: FastAPI + MCP server
 ```
 
 Design principles:
 
-- **Skills never touch USD** : all `pxr` calls live exclusively in `engine/`
+- **Engine is pure USD** : all `pxr` calls live in `engine/` and `utils/usd_utils.py`
+- **SceneBuilder is the adapter** : translates LLM tool calls into engine operations, wraps results for the agent
+- **Skills are extensions** : asset providers and integrations, discovered via Python entry points
+- **Prompts are content** : stored as `.md` files, editable without touching Python
 - **User controls the workflow** : the agent follows instructions, not a hardcoded pipeline
-- **SKILL.md per skill** : modular prompts, only injected when the skill is active
 - **Project-based** : one folder per scene, resumable across sessions
 - **One config file** : `~/.bowerbot/config.json`, no `.env`
-- **Centralized assets** : one `assets_dir` for all skills, no scattered path config
 
 ---
 

@@ -74,6 +74,16 @@ feat/my-feature → PR titled "feat: ..." → squash merge → main → Release 
 
 Add `!` after the type for breaking changes (e.g., `feat!: redesign skill interface`) — this triggers a major bump (1.0.0 → 2.0.0).
 
+## Project Structure
+
+Understanding where things live helps you contribute effectively:
+
+- **`scene_builder.py`** — adapter between LLM tools and the engine. Core scene building tools live here.
+- **`engine/`** — pure USD operations. All `pxr` calls live here.
+- **`skills/`** — extension skills (asset providers, integrations).
+- **`prompts/`** — LLM instructions as `.md` files. Edit these to change agent behavior without touching Python.
+- **`utils/`** — shared utilities (USD introspection, file operations, naming).
+
 ## Writing a Skill
 
 The best way to contribute is writing a new **skill** for an asset provider you use — Sketchfab, PolyHaven, CGTrader, a company DAM, or any platform that serves 3D assets or textures.

@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.1](https://github.com/binary-core-llc/bowerbot/compare/v1.1.0...v1.1.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* cleanup stale tests and duplication ([#44](https://github.com/binary-core-llc/bowerbot/issues/44)) ([428222d](https://github.com/binary-core-llc/bowerbot/commit/428222dfba0cf5c5dc1c39a7c23c3d337ac49259))
+* hardcoded mtl.usd layer name and broken e2e test ([#48](https://github.com/binary-core-llc/bowerbot/issues/48)) ([307d3dc](https://github.com/binary-core-llc/bowerbot/commit/307d3dc626bd73609159ccea8458686541c4cc8f))
+* inline imports, unused imports, and pxr leaks in scene_builder ([#49](https://github.com/binary-core-llc/bowerbot/issues/49)) ([0f86da1](https://github.com/binary-core-llc/bowerbot/commit/0f86da1cbc04ccd083e9bd4f0d88549ec5aa2f4b))
+* narrow exception handling in list_projects and fix stale docstring ([#52](https://github.com/binary-core-llc/bowerbot/issues/52)) ([708bd9b](https://github.com/binary-core-llc/bowerbot/commit/708bd9b8eb7b939adaed92a220fcfcf13adfd4be))
+* remaining f-string logging and inline imports ([#51](https://github.com/binary-core-llc/bowerbot/issues/51)) ([c8330fe](https://github.com/binary-core-llc/bowerbot/commit/c8330fe8027eb97a865785434490908bb6448111))
+* remove unused Usd import and move inline tempfile import to top ([#50](https://github.com/binary-core-llc/bowerbot/issues/50)) ([2fb0b08](https://github.com/binary-core-llc/bowerbot/commit/2fb0b08823338f2d8d9547fe866c169446e8bcec))
+
+
+### Documentation
+
+* update README and CONTRIBUTING for post-refactor architecture ([#53](https://github.com/binary-core-llc/bowerbot/issues/53)) ([936ec81](https://github.com/binary-core-llc/bowerbot/commit/936ec811972fc030f65d3b89d3bd16dd0da34fe1))
+
 ## [1.1.0](https://github.com/binary-core-llc/bowerbot/compare/v1.0.3...v1.1.0) (2026-04-05)
 
 

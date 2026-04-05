@@ -396,7 +396,7 @@ def onboard() -> None:
     ensure_home()
 
     console.print("\n[sf]LLM Configuration[/]")
-    model = console.input("  Model [gpt-4o]: ").strip() or "gpt-4o"
+    model = console.input("  Model [gpt-4.1]: ").strip() or "gpt-4.1"
     api_key = console.input("  API key: ").strip()
 
     if not api_key:

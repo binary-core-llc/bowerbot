@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Test USD light creation in the engine and assembly skill."""
+"""Test USD light creation in the engine."""
 
 import tempfile
 from pathlib import Path

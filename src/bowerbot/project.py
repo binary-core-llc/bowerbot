@@ -16,6 +16,7 @@ to build and resume a scene:
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,6 +24,8 @@ from pydantic import BaseModel, Field
 
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.utils.naming import safe_project_name
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectMeta(BaseModel):
@@ -147,6 +150,7 @@ class Project:
             if child.is_dir() and (child / "project.json").exists():
                 try:
                     projects.append(Project.load(child))
-                except Exception:
+                except (json.JSONDecodeError, KeyError, ValueError) as e:
+                    logger.warning("Skipping corrupt project %s: %s", child.name, e)
                     continue
         return projects

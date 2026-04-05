@@ -3,6 +3,8 @@
 
 """SceneValidator — validates USD stages for correctness before export."""
 
+from pathlib import Path
+
 from pxr import Usd, UsdGeom, UsdShade
 
 from bowerbot.utils.usd_utils import get_prim_ref_paths
@@ -88,7 +90,6 @@ class SceneValidator:
 
     def _check_references(self, stage) -> list[ValidationIssue]:  # noqa: ANN001
         """All external references must resolve to existing files."""
-        from pathlib import Path
 
         issues = []
         for prim in stage.Traverse():
@@ -112,11 +113,9 @@ class SceneValidator:
 
     def _check_sublayers(self, stage) -> list[ValidationIssue]:  # noqa: ANN001
         """All sublayers must resolve to existing files."""
-        from pathlib import Path as P
-
         issues = []
         root_layer = stage.GetRootLayer()
-        stage_dir = P(root_layer.realPath).parent
+        stage_dir = Path(root_layer.realPath).parent
 
         for sub_path in root_layer.subLayerPaths:
             resolved = stage_dir / sub_path

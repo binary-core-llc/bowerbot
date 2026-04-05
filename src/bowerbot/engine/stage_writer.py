@@ -376,6 +376,28 @@ class StageWriter:
             "bounds": bounds,
         }
 
+    def get_all_ref_paths(self) -> set[str]:
+        """Collect all reference asset paths across the stage."""
+        if self._stage is None:
+            return set()
+        refs: set[str] = set()
+        for prim in self._stage.Traverse():
+            refs.update(get_prim_ref_paths(prim))
+        return refs
+
+    def get_light_texture(self, prim_path: str) -> str | None:
+        """Return the texture file path for a light prim, or None."""
+        if self._stage is None:
+            return None
+        prim = self._stage.GetPrimAtPath(prim_path)
+        if not prim or not prim.IsValid():
+            return None
+        tex_attr = prim.GetAttribute("inputs:texture:file")
+        if not tex_attr or not tex_attr.Get():
+            return None
+        tex_val = tex_attr.Get()
+        return tex_val.path if hasattr(tex_val, "path") else str(tex_val)
+
     def rename_prim(self, old_path: str, new_path: str) -> bool:
         """Move/rename a prim to a new path in the hierarchy."""
 

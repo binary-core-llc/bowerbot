@@ -23,6 +23,7 @@ Reference: https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guide
 from __future__ import annotations
 
 import logging
+import shutil
 from pathlib import Path
 
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux, UsdShade
@@ -521,7 +522,6 @@ class AssetAssembler:
             Relative path from the stage file to the copied root
             (e.g. ``"assets/chair/chair.usd"``).
         """
-        import shutil
 
         source_dir = root_file.parent
         folder_name = source_dir.name
@@ -561,7 +561,6 @@ class AssetAssembler:
             ValueError: If the root prim is non-Xform and
                 *fix_root_prim* is ``False``.
         """
-        import shutil
 
         if self.is_asset_folder_root(asset_path):
             return self.copy_asset_folder(asset_path, assets_dir)
@@ -633,7 +632,6 @@ class AssetAssembler:
         Rewrites the file so the root prim becomes an Xform with the
         original geometry as a child. This makes the asset ASWF-compliant.
         """
-        import shutil
         import tempfile
 
         source_layer = Sdf.Layer.FindOrOpen(str(geometry_file))

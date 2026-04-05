@@ -30,7 +30,6 @@ from bowerbot.utils.naming import safe_file_name, safe_prim_name
 from bowerbot.utils.usd_utils import (
     find_asset_references,
     find_texture_references,
-    get_prim_ref_paths,
     resolve_asset_dir_for_prim,
 )
 
@@ -1258,13 +1257,7 @@ class SceneBuilder:
             )
 
         # Scene-level light — check for texture before removing
-        texture_file = None
-        prim = self.writer.stage.GetPrimAtPath(prim_path)
-        if prim and prim.IsValid():
-            tex_attr = prim.GetAttribute("inputs:texture:file")
-            if tex_attr and tex_attr.Get():
-                tex_val = tex_attr.Get()
-                texture_file = tex_val.path if hasattr(tex_val, "path") else str(tex_val)
+        texture_file = self.writer.get_light_texture(prim_path)
 
         try:
             success = self.writer.remove_prim(prim_path)
@@ -1513,10 +1506,7 @@ class SceneBuilder:
                 data={"assets": [], "message": "No assets directory found."},
             )
 
-        referenced: set[str] = set()
-        if self.writer.stage is not None:
-            for prim in self.writer.stage.Traverse():
-                referenced.update(get_prim_ref_paths(prim))
+        referenced = self.writer.get_all_ref_paths()
 
         query = params.get("query", "")
         query_lower = query.lower() if query else ""

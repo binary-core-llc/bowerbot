@@ -6,15 +6,9 @@
 import tempfile
 from pathlib import Path
 
+from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
-from bowerbot.engine.scene_graph import SceneGraphBuilder, Placement
 from bowerbot.engine.validator import SceneValidator
-from bowerbot.schemas.models import (
-    AssetMetadata,
-    AssetFormat,
-    SceneObject,
-    PlacementCategory,
-)
 
 
 def test_create_empty_stage():

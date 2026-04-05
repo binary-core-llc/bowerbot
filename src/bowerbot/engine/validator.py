@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""SceneValidator — the 'Inspector' layer.
-
-Walks through a completed USD stage and checks for errors:
-overlapping objects, missing references, scale inconsistencies,
-missing defaultPrim, etc.
-"""
+"""SceneValidator — validates USD stages for correctness before export."""
 
 from pxr import Usd, UsdGeom, UsdShade
 

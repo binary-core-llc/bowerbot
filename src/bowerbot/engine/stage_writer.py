@@ -283,7 +283,6 @@ class StageWriter:
             xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
 
     def save(self) -> None:
-        """Save the current stage to disk."""
         if self._stage is None:
             msg = "No stage open."
             raise RuntimeError(msg)

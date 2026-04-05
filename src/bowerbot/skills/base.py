@@ -53,14 +53,7 @@ class ToolResult:
 
 
 class Skill(ABC):
-    """Base class for all BowerBot skills.
-
-    The registry sets ``assets_dir`` on every skill after construction.
-    Provider skills that download files should declare ``cache_subdir``
-    (e.g. ``"cache/sketchfab"``) — their downloads go to
-    ``assets_dir / cache_subdir``.  Search skills use ``assets_dir``
-    directly to scan the full asset tree.
-    """
+    """Base class for all BowerBot skills."""
 
     name: str
     category: SkillCategory

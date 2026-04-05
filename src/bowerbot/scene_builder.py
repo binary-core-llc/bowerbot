@@ -1,16 +1,10 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""SceneBuilder — adapter between the LLM tool-calling layer and the engine.
+"""SceneBuilder — adapter between LLM tool calls and the USD engine.
 
-This is BowerBot's core product: it holds the state of the scene
-being built (the current USD stage) and provides tools to create,
-populate, validate, and package it.
-
-SceneBuilder is NOT a skill and NOT an engine module. Skills are
-extensions (asset providers, integrations). The engine is pure USD
-manipulation. SceneBuilder is the adapter that translates LLM tool
-calls into engine operations and wraps results for the agent.
+Holds the state of the scene being built and translates tool calls
+into engine operations wrapped in ToolResult for the agent.
 """
 
 from __future__ import annotations
@@ -146,7 +140,6 @@ class SceneBuilder:
             logger.exception(f"Scene builder tool error: {tool_name}")
             return ToolResult(success=False, error=str(e))
 
-    # ── Tool Definitions ──────────────────────────────────────────
 
     @staticmethod
     def _tool_definitions() -> list[Tool]:
@@ -754,7 +747,6 @@ class SceneBuilder:
             ),
         ]
 
-    # ── Private Helpers ───────────────────────────────────────────
 
     def _resolve_output_dir(self) -> Path:
         if self._project:
@@ -773,7 +765,6 @@ class SceneBuilder:
         if self._project:
             self._project.save()
 
-    # ── Tool Handlers ─────────────────────────────────────────────
 
     def _create_stage(self, params: dict[str, Any]) -> ToolResult:
         filename = params["filename"]
@@ -1378,7 +1369,6 @@ class SceneBuilder:
             },
         )
 
-    # ── Material Operations ────────────────────────────────────────
 
     def _bind_material(self, params: dict[str, Any]) -> ToolResult:
         if self._stage_path is None or self.writer.stage is None:
@@ -1538,7 +1528,6 @@ class SceneBuilder:
             },
         )
 
-    # ── Project Asset Management ──────────────────────────────────
 
     def _list_project_assets(self, params: dict[str, Any]) -> ToolResult:
         if self._project is None:

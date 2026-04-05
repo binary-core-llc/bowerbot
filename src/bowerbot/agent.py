@@ -32,7 +32,7 @@ MAX_VALIDATION_RETRIES = 2
 
 @dataclass
 class AgentRuntime:
-    """Layer 1: The Architect."""
+    """Manages LLM interaction with tool-calling loops for scene assembly."""
 
     settings: Settings
     scene_builder: SceneBuilder

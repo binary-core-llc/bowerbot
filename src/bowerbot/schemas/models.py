@@ -8,7 +8,6 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 
-# ── Asset Schemas ──────────────────────────────────────────────
 
 
 class AssetFormat(str, Enum):
@@ -45,7 +44,6 @@ class ASWFLayerNames:
     TEXTURES = "textures"
 
 
-# ── Texture Schemas ───────────────────────────────────────────
 
 
 class HDRIFormat(str, Enum):
@@ -102,7 +100,6 @@ class AssetMetadata(BaseModel):
     license: str | None = None
 
 
-# ── Scene Graph Schemas ────────────────────────────────────────
 
 
 class PlacementCategory(str, Enum):
@@ -125,7 +122,6 @@ class SceneObject(BaseModel):
     category: PlacementCategory = PlacementCategory.FLOOR
 
 
-# ── Light Schemas ─────────────────────────────────────────────
 
 
 class LightType(str, Enum):
@@ -157,7 +153,6 @@ class LightParams(BaseModel):
     length: float | None = None  # CylinderLight
 
 
-# ── Validation Schemas ─────────────────────────────────────────
 
 
 class Severity(str, Enum):

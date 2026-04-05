@@ -61,7 +61,6 @@ def main() -> None:
     """BowerBot — AI-powered 3D scene assembly using OpenUSD."""
 
 
-# ── Project commands ──────────────────────────────────────────
 
 
 @main.command()
@@ -135,7 +134,6 @@ def open(name: str) -> None:
     _start_chat(settings, project)
 
 
-# ── Chat command ──────────────────────────────────────────────
 
 
 @main.command()
@@ -258,7 +256,6 @@ async def _chat_loop(agent, console: Console) -> None:
             console.print("[info]You can keep going or type 'reset' to start over.[/]")
 
 
-# ── Utility commands ──────────────────────────────────────────
 
 
 @main.command()

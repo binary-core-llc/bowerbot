@@ -1,11 +1,8 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""SceneGraphBuilder — the 'Engineer' layer.
-
-Converts the LLM's semantic layout decisions into exact coordinates.
-Pure deterministic math — no AI. The LLM says 'grid of 4 tables',
-this module computes the actual positions.
+"""SceneGraphBuilder — converts semantic layout decisions into
+exact spatial coordinates.
 """
 
 import math
@@ -23,11 +20,7 @@ class Placement:
 
 
 class SceneGraphBuilder:
-    """Computes spatial positions for objects in a scene.
-
-    All coordinate math is here. The LLM never outputs a float —
-    it describes relationships, and this class converts them to meters.
-    """
+    """Computes spatial positions and transforms for objects in a scene."""
 
     def __init__(
         self,

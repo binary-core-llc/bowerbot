@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Name sanitization utilities.
-
-Consistent rules for generating safe names across the codebase:
-- File/folder names: alphanumeric, underscores, hyphens
-- USD prim names: alphanumeric, underscores only (per USD spec)
-- Project names: same as file names, with spaces converted to underscores
-"""
+"""Name sanitization for files, prims, and projects."""
 
 
 def safe_file_name(name: str) -> str:

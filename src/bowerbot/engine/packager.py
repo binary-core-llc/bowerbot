@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Packager — bundles USD stages into .usdz archives.
-
-A .usdz file is a zero-compression ZIP containing the root .usdc
-and all referenced assets, ready for distribution.
-"""
+"""Packager — bundles USD stages into .usdz archives for distribution."""
 
 import logging
 import os

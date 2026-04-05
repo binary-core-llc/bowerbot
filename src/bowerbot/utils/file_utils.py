@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Filesystem utilities for project file management.
-
-Handles copying textures, assets, and other files into the
-correct project directory structure. No USD or pxr dependency.
-"""
+"""Filesystem utilities for project file management."""
 
 from __future__ import annotations
 

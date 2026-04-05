@@ -1,19 +1,8 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""SkillRegistry — discovers and manages extension skills.
-
-Skills are discovered from Python entry points
-(group: "bowerbot.skills") — both built-in and pip-installed
-skills register this way.
-
-To register a skill via entry points, add to pyproject.toml:
-
-    [project.entry-points."bowerbot.skills"]
-    my_skill = "my_package:MySkillClass"
-
-Then ``pip install my-package`` makes the skill available
-to BowerBot automatically.
+"""SkillRegistry — discovers and manages extension skills
+via Python entry points.
 """
 
 import logging

@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Prompt loading for the agent and scene builder.
-
-Prompts are stored as .md files alongside this module. They are
-content, not code — prompt engineers can edit them without touching
-Python, and diffs stay clean.
-"""
+"""Prompt loading from markdown files."""
 
 from __future__ import annotations
 

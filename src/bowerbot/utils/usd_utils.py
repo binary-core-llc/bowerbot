@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Shared USD utilities.
-
-Low-level helpers that multiple modules need. Keeps pxr
-usage centralized and avoids cross-module dependencies.
-"""
+"""Shared USD utilities to centralize pxr usage."""
 
 from __future__ import annotations
 

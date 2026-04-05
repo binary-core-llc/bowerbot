@@ -46,12 +46,7 @@ class LLMSettings(BaseSettings):
 
 
 class SkillConfig(BaseSettings):
-    """Configuration for a single skill.
-
-    The ``config`` dict holds skill-specific settings (e.g. API tokens).
-    Skills that only need ``assets_dir`` (set by the registry) don't
-    need any config — the field is omitted from the saved JSON.
-    """
+    """Configuration for a single skill."""
 
     enabled: bool = False
     config: dict[str, Any] = Field(default_factory=dict)

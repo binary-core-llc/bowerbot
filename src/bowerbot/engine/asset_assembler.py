@@ -40,7 +40,6 @@ class AssetAssembler:
     Skills call this through the engine layer — they never touch pxr.
     """
 
-    # ── Asset Folder Operations ──────────────────────────────────
 
     def create_asset_folder(
         self,
@@ -69,7 +68,6 @@ class AssetAssembler:
         logger.info("Created ASWF asset folder: %s", asset_dir)
         return root_path
 
-    # ── Material Operations ──────────────────────────────────────
 
     def add_material(
         self,
@@ -227,7 +225,6 @@ class AssetAssembler:
             for mat_path, bound_prims in materials.items()
         ]
 
-    # ── Geometry Operations ──────────────────────────────────────
 
     def get_geometry_bounds(
         self, asset_dir: Path,
@@ -285,7 +282,6 @@ class AssetAssembler:
             },
         }
 
-    # ── Light Operations ─────────────────────────────────────────
 
     def add_light(
         self,
@@ -501,7 +497,6 @@ class AssetAssembler:
             if prim.HasAPI(UsdLux.LightAPI)
         ]
 
-    # ── Asset Preparation ───────────────────────────────────────
 
     @staticmethod
     def is_asset_folder_root(asset_path: Path) -> bool:
@@ -607,7 +602,6 @@ class AssetAssembler:
         )
         return f"assets/{folder_name}/{root_file.name}"
 
-    # ── ASWF Compliance ──────────────────────────────────────────
 
     @staticmethod
     def check_root_prim_type(geometry_file: Path) -> str | None:
@@ -678,7 +672,6 @@ class AssetAssembler:
 
         shutil.move(tmp_path, str(geometry_file))
 
-    # ── Internal Helpers ─────────────────────────────────────────
 
     def _resolve_default_prim_name(
         self, asset_dir: Path,

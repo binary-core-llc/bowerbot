@@ -1,11 +1,8 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Dependency resolver — walks USD file dependency trees.
-
-Given a USD file, recursively discovers all sublayers, references,
-and payloads so the entire package can be copied with relative paths
-intact. Uses Sdf.Layer for fast reads without full stage composition.
+"""Dependency resolver — walks USD file dependency trees to collect
+all referenced assets.
 """
 
 from __future__ import annotations

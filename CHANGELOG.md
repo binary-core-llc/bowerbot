@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.0](https://github.com/binary-core-llc/bowerbot/compare/v1.0.3...v1.1.0) (2026-04-05)
+
+
+### Features
+
+* add asset-level lights with inverse transform and update support ([#29](https://github.com/binary-core-llc/bowerbot/issues/29)) ([73df87d](https://github.com/binary-core-llc/bowerbot/commit/73df87d45d46b8d21d8a1685602e6ad1ed8bc7ff))
+* add ASWF asset folder system with incremental assembly ([#23](https://github.com/binary-core-llc/bowerbot/issues/23)) ([27a5c36](https://github.com/binary-core-llc/bowerbot/commit/27a5c3604ebdd4e6a7102e195f0ee827969b16bc))
+* add material binding, asset classification, and dependency reso… ([#21](https://github.com/binary-core-llc/bowerbot/issues/21)) ([5718707](https://github.com/binary-core-llc/bowerbot/commit/5718707e86075f2f130a3ee06197aa2feb62c3ee))
+* discover skills via Python entry points instead of hardcoded im… ([#38](https://github.com/binary-core-llc/bowerbot/issues/38)) ([cd2cd24](https://github.com/binary-core-llc/bowerbot/commit/cd2cd2458bd912d49631addcd59b30c763f75e5c))
+* validate ASWF compliance on asset placement ([#27](https://github.com/binary-core-llc/bowerbot/issues/27)) ([f6bd75c](https://github.com/binary-core-llc/bowerbot/commit/f6bd75c3b9dd918e614ad7e8a3f5243fbc684018))
+
+
+### Bug Fixes
+
+* add remove_light tool and prevent asset-to-scene light switching ([#30](https://github.com/binary-core-llc/bowerbot/issues/30)) ([34e170d](https://github.com/binary-core-llc/bowerbot/commit/34e170d271245383460fd5542f3eb6e2fde86251))
+* enforce local asset search before answering availability ([#24](https://github.com/binary-core-llc/bowerbot/issues/24)) ([21796ff](https://github.com/binary-core-llc/bowerbot/commit/21796ff983dbd3c9d0b4c2f4c5fe30dbbb848340))
+* move scene-level HDRI textures to project-level textures/ folder ([#32](https://github.com/binary-core-llc/bowerbot/issues/32)) ([f002f6f](https://github.com/binary-core-llc/bowerbot/commit/f002f6f4f8c807e5069c577489541031940bfaaa))
+* recommend asset cleanup on remove ([#28](https://github.com/binary-core-llc/bowerbot/issues/28)) ([c9a1c96](https://github.com/binary-core-llc/bowerbot/commit/c9a1c9686f13a130460b3f532282949a395887f8))
+* reopen existing scene instead of crashing on create_stage ([#34](https://github.com/binary-core-llc/bowerbot/issues/34)) ([03e9f0d](https://github.com/binary-core-llc/bowerbot/commit/03e9f0d6596f6d00160901ebe98f0af7bff235a0))
+* scan all project USD files before deleting asset folders ([#33](https://github.com/binary-core-llc/bowerbot/issues/33)) ([d4b3065](https://github.com/binary-core-llc/bowerbot/commit/d4b30655f2393fb97567dc4714aafeda0d29ea10))
+* update SKILL.md to reflect on-demand hierarchy creation ([#37](https://github.com/binary-core-llc/bowerbot/issues/37)) ([5c5225a](https://github.com/binary-core-llc/bowerbot/commit/5c5225a49b0beb76b9c997cd50a9350524834efd))
+
 ## [1.0.3](https://github.com/binary-core-llc/bowerbot/compare/v1.0.2...v1.0.3) (2026-03-24)
 
 

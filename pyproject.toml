@@ -1,6 +1,6 @@
 [project]
 name = "bowerbot"
-version = "1.0.3"
+version = "1.1.0"
 description = "AI-powered 3D scene assembly from natural language using OpenUSD"
 readme = "README.md"
 requires-python = ">=3.12"

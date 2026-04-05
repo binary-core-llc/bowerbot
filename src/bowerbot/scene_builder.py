@@ -1407,7 +1407,7 @@ class SceneBuilder:
                 "asset_folder": asset_dir.name,
                 "message": (
                     f"Bound {material_prim_path} to {prim_path} "
-                    f"in {asset_dir.name}/mtl.usd"
+                    f"in {asset_dir.name}/{ASWFLayerNames.MTL}"
                 ),
             },
         )
@@ -1454,7 +1454,7 @@ class SceneBuilder:
         for entry in assets_dir.iterdir():
             if not entry.is_dir():
                 continue
-            mtl_path = entry / "mtl.usd"
+            mtl_path = entry / ASWFLayerNames.MTL
             if mtl_path.exists():
                 materials = self.assembler.list_materials(entry)
                 for mat in materials:

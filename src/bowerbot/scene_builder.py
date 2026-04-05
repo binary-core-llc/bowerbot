@@ -1059,7 +1059,7 @@ class SceneBuilder:
 
         scene_light_path = f"{ref_prim_path}/{composed_path.lstrip('/')}"
         logger.info(
-            f"Created asset light {light_type.value} in {asset_dir.name}/lgt.usda"
+            "Created asset light %s in %s/lgt.usda", light_type.value, asset_dir.name
         )
         return ToolResult(
             success=True,

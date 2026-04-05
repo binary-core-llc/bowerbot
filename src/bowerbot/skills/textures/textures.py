@@ -112,7 +112,7 @@ class TexturesSkill(Skill):
                     )
         except Exception as e:
             logger.debug(
-                f"Textures error: {tool_name}", exc_info=True,
+                "Textures error: %s", tool_name, exc_info=True,
             )
             return ToolResult(success=False, error=str(e))
 

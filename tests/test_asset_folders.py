@@ -4,6 +4,7 @@
 """Test ASWF asset folder detection, placement, and incremental assembly."""
 
 import tempfile
+import asyncio
 from pathlib import Path
 
 from pxr import Usd, UsdGeom, UsdLux, UsdShade
@@ -89,7 +90,6 @@ def test_detect_asset_folder():
         skill = LocalSkill()
         skill._assets_dir = assets_dir
 
-        import asyncio
         result = asyncio.run(skill.execute("list_assets", {}))
 
         assert result.success
@@ -115,7 +115,6 @@ def test_detect_mixed_assets():
         skill = LocalSkill()
         skill._assets_dir = assets_dir
 
-        import asyncio
         result = asyncio.run(skill.execute("list_assets", {}))
 
         assert result.success
@@ -136,7 +135,6 @@ def test_search_package_by_name():
         skill = LocalSkill()
         skill._assets_dir = assets_dir
 
-        import asyncio
         result = asyncio.run(skill.execute(
             "search_assets", {"query": "table"},
         ))
@@ -158,7 +156,6 @@ def test_search_filter_by_category():
         skill = LocalSkill()
         skill._assets_dir = assets_dir
 
-        import asyncio
         result = asyncio.run(skill.execute(
             "search_assets",
             {"query": "", "category": "package"},
@@ -525,7 +522,6 @@ def test_add_light_creates_lgt():
         assert "./lgt.usda" in ref_paths
 
         # Light should exist in composed stage
-        from pxr import UsdLux
         found_light = False
         for prim in stage.Traverse():
             if prim.HasAPI(UsdLux.LightAPI):

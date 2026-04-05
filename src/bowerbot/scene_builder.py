@@ -94,51 +94,47 @@ class SceneBuilder:
         self, tool_name: str, params: dict[str, Any],
     ) -> ToolResult:
         """Execute a tool by name with the given parameters."""
-        try:
-            match tool_name:
-                case "create_stage":
-                    return self._create_stage(params)
-                case "place_asset":
-                    return self._place_asset(params)
-                case "compute_grid_layout":
-                    return self._compute_grid_layout(params)
-                case "validate_scene":
-                    return self._validate_scene()
-                case "package_scene":
-                    return self._package_scene()
-                case "list_scene":
-                    return self._list_scene()
-                case "rename_prim":
-                    return self._rename_prim(params)
-                case "move_asset":
-                    return self._move_asset(params)
-                case "remove_prim":
-                    return self._remove_prim(params)
-                case "create_light":
-                    return self._create_light(params)
-                case "update_light":
-                    return self._update_light(params)
-                case "remove_light":
-                    return self._remove_light(params)
-                case "bind_material":
-                    return self._bind_material(params)
-                case "list_materials":
-                    return self._list_materials()
-                case "remove_material":
-                    return self._remove_material(params)
-                case "list_prim_children":
-                    return self._list_prim_children(params)
-                case "list_project_assets":
-                    return self._list_project_assets(params)
-                case "delete_project_asset":
-                    return self._delete_project_asset(params)
-                case "delete_project_texture":
-                    return self._delete_project_texture(params)
-                case _:
-                    return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
-        except Exception as e:
-            logger.exception(f"Scene builder tool error: {tool_name}")
-            return ToolResult(success=False, error=str(e))
+        match tool_name:
+            case "create_stage":
+                return self._create_stage(params)
+            case "place_asset":
+                return self._place_asset(params)
+            case "compute_grid_layout":
+                return self._compute_grid_layout(params)
+            case "validate_scene":
+                return self._validate_scene()
+            case "package_scene":
+                return self._package_scene()
+            case "list_scene":
+                return self._list_scene()
+            case "rename_prim":
+                return self._rename_prim(params)
+            case "move_asset":
+                return self._move_asset(params)
+            case "remove_prim":
+                return self._remove_prim(params)
+            case "create_light":
+                return self._create_light(params)
+            case "update_light":
+                return self._update_light(params)
+            case "remove_light":
+                return self._remove_light(params)
+            case "bind_material":
+                return self._bind_material(params)
+            case "list_materials":
+                return self._list_materials()
+            case "remove_material":
+                return self._remove_material(params)
+            case "list_prim_children":
+                return self._list_prim_children(params)
+            case "list_project_assets":
+                return self._list_project_assets(params)
+            case "delete_project_asset":
+                return self._delete_project_asset(params)
+            case "delete_project_texture":
+                return self._delete_project_texture(params)
+            case _:
+                return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
 
 
     @staticmethod

@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdShade
+from pxr import Sdf, Usd
 
 logger = logging.getLogger(__name__)
 
@@ -143,18 +143,3 @@ class DependencyResolver:
             errors.append(f"Missing dependency: {rel}")
 
         return len(errors) == 0, errors
-
-    @staticmethod
-    def find_first_material(file_path: str | Path) -> str | None:
-        """Return the prim path of the first Material defined in a USD file.
-
-        Opens the file as a stage to traverse the composed prim hierarchy.
-        Returns None if no Material prim is found.
-        """
-        stage = Usd.Stage.Open(str(file_path))
-        if stage is None:
-            return None
-        for prim in stage.Traverse():
-            if prim.IsA(UsdShade.Material):
-                return str(prim.GetPath())
-        return None

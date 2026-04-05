@@ -134,10 +134,12 @@ def test_resolver_handles_circular():
 
 
 def test_resolver_find_first_material():
-    """find_first_material returns the prim path of the first Material."""
+    """_find_first_material returns the prim path of the first Material."""
+    from bowerbot.engine.asset_assembler import AssetAssembler
+
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         mat = create_test_material(tmp_path, "wood")
 
-        result = DependencyResolver.find_first_material(mat)
+        result = AssetAssembler._find_first_material(mat)
         assert result == "/mtl/wood"

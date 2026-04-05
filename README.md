@@ -475,6 +475,7 @@ Every scene BowerBot produces follows [OpenUSD](https://openusd.org) best practi
 
 What's next for BowerBot — contributions welcome:
 
+- [ ] **USD Variant Sets** — ASWF-compliant variants on asset root prims (materials, geometry, lighting, configurations, and more)
 - [ ] **Scene templates** — JSON-driven scene assembly with asset resolution
 - [ ] **DCC exporter** — Maya/Houdini tool to export scene layout as BowerBot JSON
 - [ ] **More asset providers** — Fab, PolyHaven, Objaverse, CGTrader skills

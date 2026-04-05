@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from pxr import Sdf, Usd
+from pxr import Sdf
 
 logger = logging.getLogger(__name__)
 

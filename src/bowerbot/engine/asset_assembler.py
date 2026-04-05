@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import tempfile
 from pathlib import Path
 
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux, UsdShade
@@ -632,7 +633,6 @@ class AssetAssembler:
         Rewrites the file so the root prim becomes an Xform with the
         original geometry as a child. This makes the asset ASWF-compliant.
         """
-        import tempfile
 
         source_layer = Sdf.Layer.FindOrOpen(str(geometry_file))
         if source_layer is None:

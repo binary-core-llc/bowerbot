@@ -58,14 +58,11 @@ class AgentRuntime:
         )
 
     def _build_system_prompt(self) -> str:
-        """Assemble the system prompt from core, scene builder, and skill sections."""
-        sections = [load_prompt("core")]
-
-        scene_prompt = self.scene_builder.get_prompt()
-        if scene_prompt:
-            sections.append(
-                f"# Scene Building\n\n{scene_prompt}"
-            )
+        """Assemble the system prompt from core, scene building, and skill sections."""
+        sections = [
+            load_prompt("core"),
+            f"# Scene Building\n\n{load_prompt('scene_building')}",
+        ]
 
         skill_prompts = self.skill_registry.get_skill_prompts()
         if skill_prompts:
@@ -128,9 +125,10 @@ class AgentRuntime:
                         ),
                     })
 
-                self._nudge_on_validation_errors(
+                if self._nudge_on_validation_errors(
                     message.tool_calls, validation_retries,
-                )
+                ):
+                    validation_retries += 1
 
                 continue
 
@@ -152,8 +150,11 @@ class AgentRuntime:
         self,
         tool_calls: list,
         retries: int,
-    ) -> None:
-        """If validate_scene returned errors, nudge the LLM to fix them."""
+    ) -> bool:
+        """If validate_scene returned errors, nudge the LLM to fix them.
+
+        Returns ``True`` if a nudge was added to the conversation.
+        """
         for tool_call in tool_calls:
             if tool_call.function.name != "validate_scene":
                 continue
@@ -178,10 +179,13 @@ class AgentRuntime:
                             ),
                         })
                         logger.info(
-                            f"Validation retry nudge "
-                            f"({retries + 1}/{MAX_VALIDATION_RETRIES})"
+                            "Validation retry nudge (%d/%d)",
+                            retries + 1, MAX_VALIDATION_RETRIES,
                         )
+                        return True
                     break
+
+        return False
 
     def reset(self) -> None:
         """Clear conversation history for a new session."""

@@ -29,7 +29,6 @@ from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
-from bowerbot.prompts import load_prompt
 from bowerbot.schemas import ASWFLayerNames, AssetMetadata, LightParams, LightType, SceneObject
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.utils.file_utils import copy_texture_to_project
@@ -88,10 +87,6 @@ class SceneBuilder:
             objects = self.writer.list_prims()
             self._object_count = len(objects)
             logger.info(f"Resumed project '{project.name}' with {self._object_count} object(s)")
-
-    def get_prompt(self) -> str:
-        """Return scene building instructions for the system prompt."""
-        return load_prompt("scene_building")
 
     def get_tools(self) -> list[dict[str, Any]]:
         """Return all tools in LLM function-calling schema format."""
@@ -906,6 +901,7 @@ class SceneBuilder:
             return ToolResult(success=False, error=str(e))
 
         self.writer.save()
+        self._update_project_meta()
 
         logger.info(f"Moved {prim_path} to ({tx}, {ty}, {tz})")
         return ToolResult(
@@ -1024,7 +1020,7 @@ class SceneBuilder:
 
         # Asset-level light
         if asset_prim_path:
-            asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage,asset_prim_path)
+            asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage, asset_prim_path)
             if asset_dir is None or ref_prim_path is None:
                 return ToolResult(
                     success=False,
@@ -1157,7 +1153,7 @@ class SceneBuilder:
             )
 
         prim_path = params["prim_path"]
-        asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
+        asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage, prim_path)
 
         translate = None
         if any(params.get(k) is not None for k in ("translate_x", "translate_y", "translate_z")):
@@ -1241,6 +1237,7 @@ class SceneBuilder:
             return ToolResult(success=False, error=str(e))
 
         self.writer.save()
+        self._update_project_meta()
 
         logger.info(f"Updated scene light at {prim_path}")
         return ToolResult(
@@ -1259,7 +1256,7 @@ class SceneBuilder:
             )
 
         prim_path = params["prim_path"]
-        asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
+        asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage, prim_path)
 
         if asset_dir is not None:
             light_name = prim_path.rstrip("/").split("/")[-1]
@@ -1305,6 +1302,7 @@ class SceneBuilder:
             )
 
         self.writer.save()
+        self._update_project_meta()
 
         logger.info(f"Removed scene light at {prim_path}")
         result_data: dict[str, Any] = {
@@ -1399,7 +1397,7 @@ class SceneBuilder:
                 error=f"Material file not found: {material_file}",
             )
 
-        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
+        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage, prim_path)
         if asset_dir is None or ref_prim_path is None:
             return ToolResult(
                 success=False,
@@ -1451,7 +1449,7 @@ class SceneBuilder:
 
         prim_path = params["prim_path"]
 
-        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage,prim_path)
+        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage, prim_path)
         if asset_dir is None or ref_prim_path is None:
             return ToolResult(
                 success=False,

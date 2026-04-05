@@ -267,7 +267,7 @@ Skills are pluggable tools the agent uses. Each skill has a Python module for ex
 
 ### Scene Builder Tools
 
-These are BowerBot's core tools — always available, not part of any skill:
+BowerBot's core tools for building USD scenes:
 
 | Tool | Description |
 |------|-------------|

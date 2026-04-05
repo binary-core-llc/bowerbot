@@ -30,7 +30,7 @@ from bowerbot.utils.naming import safe_file_name, safe_prim_name
 from bowerbot.utils.usd_utils import (
     find_asset_references,
     find_texture_references,
-    iter_prim_ref_paths,
+    get_prim_ref_paths,
     resolve_asset_dir_for_prim,
 )
 
@@ -80,7 +80,7 @@ class SceneBuilder:
             self.writer.open_stage(self._stage_path)
             objects = self.writer.list_prims()
             self._object_count = len(objects)
-            logger.info(f"Resumed project '{project.name}' with {self._object_count} object(s)")
+            logger.info("Resumed project '%s' with %s object(s)", project.name, self._object_count)
 
     def get_tools(self) -> list[dict[str, Any]]:
         """Return all tools in LLM function-calling schema format."""
@@ -777,18 +777,14 @@ class SceneBuilder:
         if not safe_name:
             safe_name = "scene"
 
-        output_dir = self._resolve_output_dir()
-
-        if self._project:
-            self._stage_path = self._project.scene_path
-        else:
-            self._stage_path = output_dir / f"{safe_name}.usda"
+        self._resolve_output_dir()
+        self._stage_path = self._project.scene_path
 
         if self._stage_path.exists():
             self.writer.open_stage(self._stage_path)
             objects = self.writer.list_prims()
             self._object_count = len(objects)
-            logger.info(f"Reopened existing stage: {self._stage_path}")
+            logger.info("Reopened existing stage: %s", self._stage_path)
             return ToolResult(
                 success=True,
                 data={
@@ -807,7 +803,7 @@ class SceneBuilder:
         self.writer.save()
         self._update_project_meta()
 
-        logger.info(f"Created stage: {self._stage_path}")
+        logger.info("Created stage: %s", self._stage_path)
         return ToolResult(
             success=True,
             data={
@@ -859,7 +855,7 @@ class SceneBuilder:
         self.writer.save()
         self._update_project_meta()
 
-        logger.info(f"Placed {asset_name} at {prim_path} ({tx}, {ty}, {tz})")
+        logger.info("Placed %s at %s (%s, %s, %s)", asset_name, prim_path, tx, ty, tz)
         return ToolResult(
             success=True,
             data={
@@ -893,7 +889,7 @@ class SceneBuilder:
         self.writer.save()
         self._update_project_meta()
 
-        logger.info(f"Moved {prim_path} to ({tx}, {ty}, {tz})")
+        logger.info("Moved %s to (%s, %s, %s)", prim_path, tx, ty, tz)
         return ToolResult(
             success=True,
             data={
@@ -936,7 +932,7 @@ class SceneBuilder:
                 error=f"Failed to rename {old_path} to {new_path}",
             )
 
-        logger.info(f"Renamed {old_path} -> {new_path}")
+        logger.info("Renamed %s -> %s", old_path, new_path)
         return ToolResult(
             success=True,
             data={
@@ -966,7 +962,7 @@ class SceneBuilder:
         self._object_count = max(0, self._object_count - 1)
         self._update_project_meta()
 
-        logger.info(f"Removed {prim_path}")
+        logger.info("Removed %s", prim_path)
         return ToolResult(
             success=True,
             data={
@@ -1119,7 +1115,7 @@ class SceneBuilder:
         self.writer.save()
         self._update_project_meta()
 
-        logger.info(f"Created {light_type.value} at {prim_path}")
+        logger.info("Created %s at %s", light_type.value, prim_path)
         return ToolResult(
             success=True,
             data={
@@ -1197,7 +1193,7 @@ class SceneBuilder:
 
             self.writer.open_stage(self._stage_path)
 
-            logger.info(f"Updated asset light at {prim_path}")
+            logger.info("Updated asset light at %s", prim_path)
             return ToolResult(
                 success=True,
                 data={
@@ -1222,7 +1218,7 @@ class SceneBuilder:
         self.writer.save()
         self._update_project_meta()
 
-        logger.info(f"Updated scene light at {prim_path}")
+        logger.info("Updated scene light at %s", prim_path)
         return ToolResult(
             success=True,
             data={
@@ -1251,7 +1247,7 @@ class SceneBuilder:
 
             self.writer.open_stage(self._stage_path)
 
-            logger.info(f"Removed asset light {light_name} from {asset_dir.name}")
+            logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
             return ToolResult(
                 success=True,
                 data={
@@ -1284,7 +1280,7 @@ class SceneBuilder:
         self.writer.save()
         self._update_project_meta()
 
-        logger.info(f"Removed scene light at {prim_path}")
+        logger.info("Removed scene light at %s", prim_path)
         result_data: dict[str, Any] = {
             "prim_path": prim_path,
             "message": f"Removed light at {prim_path}",
@@ -1349,7 +1345,7 @@ class SceneBuilder:
         output_path = self._stage_path.with_suffix(".usdz")
         result_path = self.packager.package(self._stage_path, output_path)
 
-        logger.info(f"Packaged scene: {result_path}")
+        logger.info("Packaged scene: %s", result_path)
         return ToolResult(
             success=True,
             data={
@@ -1402,7 +1398,7 @@ class SceneBuilder:
 
         self.writer.open_stage(self._stage_path)
 
-        logger.info(f"Bound {material_prim_path} to {prim_path} in {asset_dir.name}/")
+        logger.info("Bound %s to %s in %s/", material_prim_path, prim_path, asset_dir.name)
         return ToolResult(
             success=True,
             data={
@@ -1438,7 +1434,7 @@ class SceneBuilder:
         self.assembler.remove_material_binding(asset_dir, asset_local_path)
         self.writer.open_stage(self._stage_path)
 
-        logger.info(f"Removed material from {prim_path}")
+        logger.info("Removed material from %s", prim_path)
         return ToolResult(
             success=True,
             data={
@@ -1520,7 +1516,7 @@ class SceneBuilder:
         referenced: set[str] = set()
         if self.writer.stage is not None:
             for prim in self.writer.stage.Traverse():
-                referenced.update(iter_prim_ref_paths(prim))
+                referenced.update(get_prim_ref_paths(prim))
 
         query = params.get("query", "")
         query_lower = query.lower() if query else ""
@@ -1586,7 +1582,7 @@ class SceneBuilder:
             )
 
         shutil.rmtree(asset_folder)
-        logger.info(f"Deleted project asset: {asset_folder}")
+        logger.info("Deleted project asset: %s", asset_folder)
 
         return ToolResult(
             success=True,
@@ -1624,7 +1620,7 @@ class SceneBuilder:
             )
 
         tex_file.unlink()
-        logger.info(f"Deleted project texture: {file_name}")
+        logger.info("Deleted project texture: %s", file_name)
 
         if tex_dir.exists() and not any(tex_dir.iterdir()):
             tex_dir.rmdir()

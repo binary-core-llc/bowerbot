@@ -46,5 +46,5 @@ class Packager:
             msg = f"Failed to package {stage_path} into {output_path}"
             raise RuntimeError(msg)
 
-        logger.info(f"Packaged {stage_path} -> {output_path}")
+        logger.info("Packaged %s -> %s", stage_path, output_path)
         return output_path

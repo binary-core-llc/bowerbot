@@ -5,7 +5,7 @@
 
 from pxr import Usd, UsdGeom, UsdShade
 
-from bowerbot.utils.usd_utils import iter_prim_ref_paths
+from bowerbot.utils.usd_utils import get_prim_ref_paths
 from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
 
 
@@ -92,7 +92,7 @@ class SceneValidator:
 
         issues = []
         for prim in stage.Traverse():
-            for asset_path in iter_prim_ref_paths(prim):
+            for asset_path in get_prim_ref_paths(prim):
                 if not Path(asset_path).exists():
                     stage_dir = Path(
                         stage.GetRootLayer().realPath,

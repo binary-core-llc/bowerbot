@@ -78,7 +78,7 @@ class AgentRuntime:
         validation_retries = 0
 
         for round_num in range(MAX_TOOL_ROUNDS):
-            logger.info(f"Agent loop round {round_num + 1}")
+            logger.info("Agent loop round %s", round_num + 1)
 
             messages, usage = await self._token_manager.prepare_messages(
                 self._system_prompt, self.conversation_history,
@@ -105,7 +105,7 @@ class AgentRuntime:
             message = choice.message
 
             if message.tool_calls:
-                logger.info(f"LLM requested {len(message.tool_calls)} tool call(s)")
+                logger.info("LLM requested %s tool call(s)", len(message.tool_calls))
 
                 self.conversation_history.append(message.model_dump())
 
@@ -113,7 +113,7 @@ class AgentRuntime:
                     func_name = tool_call.function.name
                     func_args = json.loads(tool_call.function.arguments)
 
-                    logger.info(f"Executing tool: {func_name}({func_args})")
+                    logger.info("Executing tool: %s(%s)", func_name, func_args)
 
                     result = await self._dispatch_tool(func_name, func_args)
 

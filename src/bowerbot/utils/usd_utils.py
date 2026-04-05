@@ -23,7 +23,7 @@ LIGHT_CLASSES: dict[str, type] = {
 }
 
 
-def iter_prim_ref_paths(prim: Usd.Prim) -> list[str]:
+def get_prim_ref_paths(prim: Usd.Prim) -> list[str]:
     """Return all reference asset paths from a prim.
 
     Reads the reference metadata (prepended, appended, explicit)
@@ -71,7 +71,7 @@ def resolve_asset_dir_for_prim(
     stage_dir = Path(stage.GetRootLayer().realPath).parent
 
     def _check_prim_refs(prim: Usd.Prim) -> tuple[Path | None, str | None]:
-        for ref_path in iter_prim_ref_paths(prim):
+        for ref_path in get_prim_ref_paths(prim):
             resolved = (stage_dir / ref_path).resolve()
             if not resolved.exists() or not resolved.parent.is_dir():
                 continue
@@ -149,7 +149,7 @@ def find_asset_references(
 
         found = False
         for prim in stage.Traverse():
-            for asset_path in iter_prim_ref_paths(prim):
+            for asset_path in get_prim_ref_paths(prim):
                 if folder_name in asset_path:
                     referencing_files.append(
                         str(

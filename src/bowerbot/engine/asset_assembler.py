@@ -28,7 +28,7 @@ from pathlib import Path
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
 from bowerbot.schemas import ASWFLayerNames
-from bowerbot.utils.usd_utils import LIGHT_CLASSES, iter_prim_ref_paths
+from bowerbot.utils.usd_utils import LIGHT_CLASSES, get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
 
@@ -823,7 +823,7 @@ class AssetAssembler:
         root_prim: Usd.Prim, asset_path: str,
     ) -> bool:
         """Check if a root prim already references a given asset."""
-        return asset_path in iter_prim_ref_paths(root_prim)
+        return asset_path in get_prim_ref_paths(root_prim)
 
     def _ensure_root_reference(
         self, asset_dir: Path, layer_file: str,

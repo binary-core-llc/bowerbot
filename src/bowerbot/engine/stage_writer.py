@@ -12,7 +12,7 @@ from pathlib import Path
 
 from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
-from bowerbot.utils.usd_utils import LIGHT_CLASSES, iter_prim_ref_paths
+from bowerbot.utils.usd_utils import LIGHT_CLASSES, get_prim_ref_paths
 from bowerbot.schemas import LightParams, SceneObject
 
 
@@ -356,11 +356,19 @@ class StageWriter:
         if not rng.IsEmpty():
             mn, mx = rng.GetMin(), rng.GetMax()
             bounds = {
-                "min": {"x": round(mn[0], 4), "y": round(mn[1], 4), "z": round(mn[2], 4)},
-                "max": {"x": round(mx[0], 4), "y": round(mx[1], 4), "z": round(mx[2], 4)},
+                "min": {
+                    "x": round(mn[0], 4),
+                    "y": round(mn[1], 4),
+                    "z": round(mn[2], 4),
+                },
+                "max": {
+                    "x": round(mx[0], 4),
+                    "y": round(mx[1], 4),
+                    "z": round(mx[2], 4),
+                },
             }
 
-        ref_paths = iter_prim_ref_paths(prim)
+        ref_paths = get_prim_ref_paths(prim)
         return {
             "prim_path": str(prim.GetPath()),
             "asset": ref_paths[0] if ref_paths else None,

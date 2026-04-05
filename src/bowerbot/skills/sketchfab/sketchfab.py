@@ -126,7 +126,7 @@ class SketchfabSkill(Skill):
                 case _:
                     return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
         except Exception as e:
-            logger.debug(f"Sketchfab error: {tool_name}", exc_info=True)
+            logger.debug("Sketchfab error: %s", tool_name, exc_info=True)
             return ToolResult(success=False, error=str(e))
 
     async def _search_my_models(self, params: dict[str, Any]) -> ToolResult:
@@ -199,7 +199,7 @@ class SketchfabSkill(Skill):
 
             download_url = download_info["usdz"]["url"]
             file_size = download_info["usdz"].get("size", 0)
-            logger.info(f"Downloading USDZ ({file_size} bytes) for {name}")
+            logger.info("Downloading USDZ (%s bytes) for %s", file_size, name)
 
             # Step 3: Download
             final_path = self.cache_dir / f"{safe_name}.usdz"
@@ -208,7 +208,7 @@ class SketchfabSkill(Skill):
             resp.raise_for_status()
             final_path.write_bytes(resp.content)
 
-        logger.info(f"Downloaded {name} to {final_path}")
+        logger.info("Downloaded %s to %s", name, final_path)
         return ToolResult(
             success=True,
             data={

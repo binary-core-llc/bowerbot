@@ -8,6 +8,10 @@ exact spatial coordinates.
 import math
 from dataclasses import dataclass
 
+# Default vertical offset (meters) above an asset's top surface
+# when placing a light with no explicit Y position.
+DEFAULT_LIGHT_Y_OFFSET = 0.5
+
 from bowerbot.schemas import PlacementCategory
 
 
@@ -154,7 +158,7 @@ class SceneGraphBuilder:
             else:
                 ty = bounds["min"]["y"] + ty
         else:
-            ty = bounds["max"]["y"] + 0.5
+            ty = bounds["max"]["y"] + DEFAULT_LIGHT_Y_OFFSET
 
         return tx, ty, tz
 

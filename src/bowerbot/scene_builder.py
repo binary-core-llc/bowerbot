@@ -744,6 +744,15 @@ class SceneBuilder:
         ]
 
 
+    def _require_stage(self) -> ToolResult | None:
+        """Return a ToolResult error if no stage is open, else None."""
+        if self._stage_path is None or self.writer.stage is None:
+            return ToolResult(
+                success=False,
+                error="No stage open. Call create_stage first.",
+            )
+        return None
+
     def _resolve_output_dir(self) -> Path:
         if self._project:
             return self._project.path
@@ -808,11 +817,8 @@ class SceneBuilder:
         )
 
     def _place_asset(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage created yet. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         asset_path = Path(params["asset_file_path"])
         asset_name = params["asset_name"]
@@ -866,11 +872,8 @@ class SceneBuilder:
         )
 
     def _move_asset(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         prim_path = params["prim_path"]
         tx = float(params["translate_x"])
@@ -902,11 +905,8 @@ class SceneBuilder:
         )
 
     def _list_scene(self) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         objects = self.writer.list_prims()
         return ToolResult(
@@ -919,11 +919,8 @@ class SceneBuilder:
         )
 
     def _rename_prim(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         old_path = params["old_path"]
         new_path = params["new_path"]
@@ -950,11 +947,8 @@ class SceneBuilder:
         )
 
     def _remove_prim(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         prim_path = params["prim_path"]
 
@@ -991,106 +985,111 @@ class SceneBuilder:
         return copy_texture_to_project(source, self._resolve_output_dir())
 
     def _create_light(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
+        if (err := self._require_stage()):
+            return err
+
+        if params.get("asset_prim_path"):
+            return self._create_asset_light(params)
+        return self._create_scene_light(params)
+
+    def _create_asset_light(self, params: dict[str, Any]) -> ToolResult:
+        asset_prim_path = params["asset_prim_path"]
+        light_type = LightType(params["light_type"])
+
+        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
+            self.writer.stage, asset_prim_path,
+        )
+        if asset_dir is None or ref_prim_path is None:
             return ToolResult(
                 success=False,
-                error="No stage open. Call create_stage first.",
+                error=(
+                    f"Cannot find ASWF asset folder for "
+                    f"{asset_prim_path}. Asset-level lights "
+                    f"only work on ASWF folder assets."
+                ),
             )
-
-        light_type = LightType(params["light_type"])
-        light_name = params["light_name"]
-        asset_prim_path = params.get("asset_prim_path")
 
         tx = float(params.get("translate_x", 0.0))
         ty = float(params.get("translate_y", 0.0))
         tz = float(params.get("translate_z", 0.0))
 
-        # Asset-level light
-        if asset_prim_path:
-            asset_dir, ref_prim_path = resolve_asset_dir_for_prim(self.writer.stage, asset_prim_path)
-            if asset_dir is None or ref_prim_path is None:
-                return ToolResult(
-                    success=False,
-                    error=(
-                        f"Cannot find ASWF asset folder for "
-                        f"{asset_prim_path}. Asset-level lights "
-                        f"only work on ASWF folder assets."
-                    ),
-                )
-
-            bounds = self.assembler.get_geometry_bounds(asset_dir)
-            if bounds:
-                tx, ty, tz = SceneGraphBuilder.apply_bounds_offsets(
-                    bounds, tx, ty, tz,
-                    has_explicit_y=params.get("translate_y") is not None,
-                )
-
-            texture = params.get("texture")
-            if texture:
-                maps_dir = asset_dir / ASWFLayerNames.MAPS
-                maps_dir.mkdir(exist_ok=True)
-                tex_path = Path(texture)
-                if tex_path.exists():
-                    dest = maps_dir / tex_path.name
-                    if not dest.exists():
-                        shutil.copy2(tex_path, dest)
-                    texture = f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
-
-            safe_name = safe_prim_name(light_name)
-
-            try:
-                composed_path = self.assembler.add_light(
-                    asset_dir=asset_dir,
-                    light_name=safe_name,
-                    light_type=light_type.value,
-                    translate=(tx, ty, tz),
-                    rotate=(
-                        float(params.get("rotate_x", 0.0)),
-                        float(params.get("rotate_y", 0.0)),
-                        float(params.get("rotate_z", 0.0)),
-                    ),
-                    intensity=float(params.get("intensity", 1000.0)),
-                    color=(
-                        float(params.get("color_r", 1.0)),
-                        float(params.get("color_g", 1.0)),
-                        float(params.get("color_b", 1.0)),
-                    ),
-                    angle=params.get("angle"),
-                    texture=texture,
-                    radius=params.get("radius"),
-                    width=params.get("width"),
-                    height=params.get("height"),
-                    length=params.get("length"),
-                )
-            except (ValueError, RuntimeError) as e:
-                return ToolResult(success=False, error=str(e))
-
-            self.writer.open_stage(self._stage_path)
-
-            logger.info(
-                f"Created asset light {light_type.value} in {asset_dir.name}/lgt.usda"
-            )
-            scene_light_path = f"{ref_prim_path}/{composed_path.lstrip('/')}"
-
-            return ToolResult(
-                success=True,
-                data={
-                    "prim_path": scene_light_path,
-                    "light_type": light_type.value,
-                    "asset_folder": asset_dir.name,
-                    "position": {"x": tx, "y": ty, "z": tz},
-                    "message": (
-                        f"Created {light_type.value} in "
-                        f"{asset_dir.name}/lgt.usda. "
-                        f"To update this light, use "
-                        f"prim_path: {scene_light_path}"
-                    ),
-                },
+        bounds = self.assembler.get_geometry_bounds(asset_dir)
+        if bounds:
+            tx, ty, tz = SceneGraphBuilder.apply_bounds_offsets(
+                bounds, tx, ty, tz,
+                has_explicit_y=params.get("translate_y") is not None,
             )
 
-        # Scene-level light
+        texture = params.get("texture")
+        if texture:
+            maps_dir = asset_dir / ASWFLayerNames.MAPS
+            maps_dir.mkdir(exist_ok=True)
+            tex_path = Path(texture)
+            if tex_path.exists():
+                dest = maps_dir / tex_path.name
+                if not dest.exists():
+                    shutil.copy2(tex_path, dest)
+                texture = f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
+
+        safe_name = safe_prim_name(params["light_name"])
+
+        try:
+            composed_path = self.assembler.add_light(
+                asset_dir=asset_dir,
+                light_name=safe_name,
+                light_type=light_type.value,
+                translate=(tx, ty, tz),
+                rotate=(
+                    float(params.get("rotate_x", 0.0)),
+                    float(params.get("rotate_y", 0.0)),
+                    float(params.get("rotate_z", 0.0)),
+                ),
+                intensity=float(params.get("intensity", 1000.0)),
+                color=(
+                    float(params.get("color_r", 1.0)),
+                    float(params.get("color_g", 1.0)),
+                    float(params.get("color_b", 1.0)),
+                ),
+                angle=params.get("angle"),
+                texture=texture,
+                radius=params.get("radius"),
+                width=params.get("width"),
+                height=params.get("height"),
+                length=params.get("length"),
+            )
+        except (ValueError, RuntimeError) as e:
+            return ToolResult(success=False, error=str(e))
+
+        self.writer.open_stage(self._stage_path)
+
+        scene_light_path = f"{ref_prim_path}/{composed_path.lstrip('/')}"
+        logger.info(
+            f"Created asset light {light_type.value} in {asset_dir.name}/lgt.usda"
+        )
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": scene_light_path,
+                "light_type": light_type.value,
+                "asset_folder": asset_dir.name,
+                "position": {"x": tx, "y": ty, "z": tz},
+                "message": (
+                    f"Created {light_type.value} in "
+                    f"{asset_dir.name}/lgt.usda. "
+                    f"To update this light, use "
+                    f"prim_path: {scene_light_path}"
+                ),
+            },
+        )
+
+    def _create_scene_light(self, params: dict[str, Any]) -> ToolResult:
+        light_type = LightType(params["light_type"])
+        tx = float(params.get("translate_x", 0.0))
+        ty = float(params.get("translate_y", 0.0))
+        tz = float(params.get("translate_z", 0.0))
+
         self._object_count += 1
-        safe_name = safe_prim_name(light_name)
+        safe_name = safe_prim_name(params["light_name"])
         prim_path = f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
 
         light_params = LightParams(
@@ -1133,11 +1132,8 @@ class SceneBuilder:
         )
 
     def _update_light(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         prim_path = params["prim_path"]
         asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage, prim_path)
@@ -1236,11 +1232,8 @@ class SceneBuilder:
         )
 
     def _remove_light(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         prim_path = params["prim_path"]
         asset_dir, _ = resolve_asset_dir_for_prim(self.writer.stage, prim_path)
@@ -1367,11 +1360,8 @@ class SceneBuilder:
 
 
     def _bind_material(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         prim_path = params["prim_path"]
         material_file = Path(params["material_file"])
@@ -1427,11 +1417,8 @@ class SceneBuilder:
         )
 
     def _remove_material(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         prim_path = params["prim_path"]
 
@@ -1462,11 +1449,8 @@ class SceneBuilder:
         )
 
     def _list_materials(self) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         assets_dir = self._resolve_assets_dir()
         all_materials: list[dict] = []
@@ -1491,11 +1475,8 @@ class SceneBuilder:
         )
 
     def _list_prim_children(self, params: dict[str, Any]) -> ToolResult:
-        if self._stage_path is None or self.writer.stage is None:
-            return ToolResult(
-                success=False,
-                error="No stage open. Call create_stage first.",
-            )
+        if (err := self._require_stage()):
+            return err
 
         prim_path = params["prim_path"]
         children = self.writer.list_prim_children(prim_path)

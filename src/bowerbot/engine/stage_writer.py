@@ -289,8 +289,7 @@ class StageWriter:
         self._stage.Save()
 
     def list_prims(self) -> list[dict]:
-        """List all placed objects (prims with references) in the stage."""
-
+        """List all placed objects and lights in the stage."""
         if self._stage is None:
             return []
 
@@ -299,78 +298,75 @@ class StageWriter:
             [UsdGeom.Tokens.default_],
         )
 
-        objects = []
+        results = []
         for prim in self._stage.Traverse():
-            refs = prim.GetMetadata("references")
             is_light = prim.HasAPI(UsdLux.LightAPI)
+            has_refs = prim.GetMetadata("references") is not None
 
-            if refs is None and not is_light:
+            if not has_refs and not is_light:
                 continue
 
-            position = None
-            xformable = UsdGeom.Xformable(prim)
-            if xformable:
-                local_xform = xformable.GetLocalTransformation()
-                t = local_xform.ExtractTranslation()
-                position = {
-                    "x": round(t[0], 2),
-                    "y": round(t[1], 2),
-                    "z": round(t[2], 2),
-                }
+            position = self._extract_position(prim)
 
             if is_light:
-                # Light prims have no geometry bounds — report type and attributes
-                light_data = {
-                    "prim_path": str(prim.GetPath()),
-                    "light_type": prim.GetTypeName(),
-                    "position": position,
-                }
-                intensity_attr = prim.GetAttribute("inputs:intensity")
-                if intensity_attr:
-                    light_data["intensity"] = intensity_attr.Get()
-                color_attr = prim.GetAttribute("inputs:color")
-                if color_attr:
-                    c = color_attr.Get()
-                    light_data["color"] = {
-                        "r": round(c[0], 3),
-                        "g": round(c[1], 3),
-                        "b": round(c[2], 3),
-                    }
-                objects.append(light_data)
-                continue
+                results.append(self._format_light_prim(prim, position))
+            else:
+                results.append(
+                    self._format_geometry_prim(prim, position, bbox_cache),
+                )
 
-            # Compute world-space bounding box so the LLM
-            # can read surface heights from the geometry.
-            bounds = None
-            world_bbox = bbox_cache.ComputeWorldBound(prim)
-            rng = world_bbox.ComputeAlignedRange()
-            if not rng.IsEmpty():
-                mn = rng.GetMin()
-                mx = rng.GetMax()
-                bounds = {
-                    "min": {
-                        "x": round(mn[0], 4),
-                        "y": round(mn[1], 4),
-                        "z": round(mn[2], 4),
-                    },
-                    "max": {
-                        "x": round(mx[0], 4),
-                        "y": round(mx[1], 4),
-                        "z": round(mx[2], 4),
-                    },
-                }
+        return results
 
-            ref_paths = iter_prim_ref_paths(prim)
-            asset_path = ref_paths[0] if ref_paths else None
+    @staticmethod
+    def _extract_position(prim: Usd.Prim) -> dict[str, float] | None:
+        xformable = UsdGeom.Xformable(prim)
+        if not xformable:
+            return None
+        t = xformable.GetLocalTransformation().ExtractTranslation()
+        return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
 
-            objects.append({
-                "prim_path": str(prim.GetPath()),
-                "asset": asset_path,
-                "position": position,
-                "bounds": bounds,
-            })
+    @staticmethod
+    def _format_light_prim(
+        prim: Usd.Prim, position: dict[str, float] | None,
+    ) -> dict:
+        data: dict = {
+            "prim_path": str(prim.GetPath()),
+            "light_type": prim.GetTypeName(),
+            "position": position,
+        }
+        intensity_attr = prim.GetAttribute("inputs:intensity")
+        if intensity_attr:
+            data["intensity"] = intensity_attr.Get()
+        color_attr = prim.GetAttribute("inputs:color")
+        if color_attr:
+            c = color_attr.Get()
+            data["color"] = {
+                "r": round(c[0], 3), "g": round(c[1], 3), "b": round(c[2], 3),
+            }
+        return data
 
-        return objects
+    @staticmethod
+    def _format_geometry_prim(
+        prim: Usd.Prim,
+        position: dict[str, float] | None,
+        bbox_cache: UsdGeom.BBoxCache,
+    ) -> dict:
+        bounds = None
+        rng = bbox_cache.ComputeWorldBound(prim).ComputeAlignedRange()
+        if not rng.IsEmpty():
+            mn, mx = rng.GetMin(), rng.GetMax()
+            bounds = {
+                "min": {"x": round(mn[0], 4), "y": round(mn[1], 4), "z": round(mn[2], 4)},
+                "max": {"x": round(mx[0], 4), "y": round(mx[1], 4), "z": round(mx[2], 4)},
+            }
+
+        ref_paths = iter_prim_ref_paths(prim)
+        return {
+            "prim_path": str(prim.GetPath()),
+            "asset": ref_paths[0] if ref_paths else None,
+            "position": position,
+            "bounds": bounds,
+        }
 
     def rename_prim(self, old_path: str, new_path: str) -> bool:
         """Move/rename a prim to a new path in the hierarchy."""

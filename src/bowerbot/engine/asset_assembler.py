@@ -342,10 +342,11 @@ class AssetAssembler:
             msg = f"Unknown light type: {light_type}"
             raise ValueError(msg)
 
-        light_prim = light_cls.Define(stage, light_prim_path)
-        light_prim.CreateIntensityAttr(intensity)
-        light_prim.CreateColorAttr(Gf.Vec3f(*color))
+        light_schema = light_cls.Define(stage, light_prim_path)
+        light_schema.CreateIntensityAttr(intensity)
+        light_schema.CreateColorAttr(Gf.Vec3f(*color))
 
+        light_prim = light_schema.GetPrim()
         self._set_light_extra_attrs(light_prim, extra_attrs)
 
         # Apply transform in asset units
@@ -746,26 +747,29 @@ class AssetAssembler:
                 Gf.Vec3f(*rotate),
             )
 
+    # Shared mapping from param names to USD attribute paths.
+    _LIGHT_EXTRA_ATTRS: dict[str, str] = {
+        "angle": "inputs:angle",
+        "texture": "inputs:texture:file",
+        "radius": "inputs:radius",
+        "width": "inputs:width",
+        "height": "inputs:height",
+        "length": "inputs:length",
+    }
+    _LIGHT_SPATIAL_ATTRS: set[str] = {"radius", "width", "height", "length"}
+
     @staticmethod
     def _set_light_extra_attrs(
         light_prim: Usd.Prim,
         extra_attrs: dict[str, float | str | None],
     ) -> None:
         """Set type-specific attributes on a newly created light."""
-        attr_map = {
-            "angle": "CreateAngleAttr",
-            "texture": "CreateTextureFileAttr",
-            "radius": "CreateRadiusAttr",
-            "width": "CreateWidthAttr",
-            "height": "CreateHeightAttr",
-            "length": "CreateLengthAttr",
-        }
-        for attr_name, create_method in attr_map.items():
+        for attr_name, usd_attr in AssetAssembler._LIGHT_EXTRA_ATTRS.items():
             value = extra_attrs.get(attr_name)
-            if value is not None and hasattr(
-                light_prim, create_method,
-            ):
-                getattr(light_prim, create_method)().Set(value)
+            if value is not None:
+                attr = light_prim.GetAttribute(usd_attr)
+                if attr:
+                    attr.Set(value)
 
     def _update_light_extra_attrs(
         self,
@@ -774,19 +778,10 @@ class AssetAssembler:
         extra_attrs: dict[str, float | str | None],
     ) -> None:
         """Update type-specific attributes on an existing light."""
-        spatial_attrs = {"radius", "width", "height", "length"}
-        attr_map = {
-            "angle": "inputs:angle",
-            "texture": "inputs:texture:file",
-            "radius": "inputs:radius",
-            "width": "inputs:width",
-            "height": "inputs:height",
-            "length": "inputs:length",
-        }
-        for attr_name, usd_attr in attr_map.items():
+        for attr_name, usd_attr in self._LIGHT_EXTRA_ATTRS.items():
             value = extra_attrs.get(attr_name)
             if value is not None:
-                if attr_name in spatial_attrs:
+                if attr_name in self._LIGHT_SPATIAL_ATTRS:
                     value = self._meters_to_asset_units(
                         asset_dir, float(value),
                     )

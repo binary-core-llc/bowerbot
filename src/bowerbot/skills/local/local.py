@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd, UsdShade
+from pxr import Usd, UsdShade
 
 from bowerbot.schemas import AssetCategory, AssetFormat
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult

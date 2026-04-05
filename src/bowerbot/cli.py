@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import click
 import litellm
@@ -17,14 +16,22 @@ from rich.table import Table
 from rich.theme import Theme
 
 from bowerbot import __version__
-from bowerbot.config import load_settings
+from bowerbot.agent import AgentRuntime
+from bowerbot.config import (
+    BOWERBOT_HOME,
+    GLOBAL_CONFIG_PATH,
+    LLMSettings,
+    SceneDefaults,
+    Settings,
+    SkillConfig,
+    ensure_home,
+    load_settings,
+    save_settings,
+)
+from bowerbot.project import Project
+from bowerbot.scene_builder import SceneBuilder
+from bowerbot.skills.registry import SkillRegistry
 from bowerbot.utils.naming import safe_project_name
-
-if TYPE_CHECKING:
-    from bowerbot.config import Settings
-    from bowerbot.project import Project
-    from bowerbot.scene_builder import SceneBuilder
-    from bowerbot.skills.registry import SkillRegistry
 
 theme = Theme({
     "sf": "bold green",
@@ -38,7 +45,6 @@ def _build_scene_builder(
     settings: Settings, project: Project | None = None,
 ) -> SceneBuilder:
     """Create a SceneBuilder, optionally bound to a project."""
-    from bowerbot.scene_builder import SceneBuilder
 
     builder = SceneBuilder(scene_defaults=settings.scene_defaults)
     if project:
@@ -48,7 +54,6 @@ def _build_scene_builder(
 
 def _build_registry(settings: Settings) -> SkillRegistry:
     """Build a SkillRegistry with extension skills only."""
-    from bowerbot.skills.registry import SkillRegistry
 
     registry = SkillRegistry()
     registry.load_from_settings(settings)
@@ -67,7 +72,6 @@ def main() -> None:
 @click.argument("name")
 def new(name: str) -> None:
     """Create a new BowerBot project."""
-    from bowerbot.project import Project
 
     settings = load_settings()
     projects_dir = Path(settings.projects_dir)
@@ -87,7 +91,6 @@ def new(name: str) -> None:
 @main.command(name="list")
 def list_projects() -> None:
     """List all BowerBot projects."""
-    from bowerbot.project import Project
 
     settings = load_settings()
     projects = Project.list_projects(Path(settings.projects_dir))
@@ -116,7 +119,6 @@ def list_projects() -> None:
 @click.argument("name")
 def open(name: str) -> None:
     """Open a project and start an interactive session."""
-    from bowerbot.project import Project
 
     settings = load_settings()
     projects_dir = Path(settings.projects_dir)
@@ -143,7 +145,6 @@ def chat() -> None:
     If run inside a project directory, auto-loads that project.
     Otherwise starts without a project (use 'new' to create one).
     """
-    from bowerbot.project import Project
 
     settings = load_settings()
 
@@ -177,7 +178,6 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
 
     console.print(Panel(status, title="[sf]BowerBot[/]", border_style="green"))
 
-    from bowerbot.agent import AgentRuntime
 
     agent = AgentRuntime(
         settings=settings,
@@ -262,7 +262,6 @@ async def _chat_loop(agent, console: Console) -> None:
 @click.argument("prompt")
 def build(prompt: str) -> None:
     """Build a USD scene from a single prompt (auto-creates a project)."""
-    from bowerbot.project import Project
 
     settings = load_settings()
 
@@ -291,7 +290,6 @@ def build(prompt: str) -> None:
     registry = _build_registry(settings)
     console.print(f"  Skills:   {registry.enabled_skills}")
 
-    from bowerbot.agent import AgentRuntime
 
     agent = AgentRuntime(
         settings=settings,
@@ -379,7 +377,6 @@ def info() -> None:
 @main.command()
 def onboard() -> None:
     """Set up BowerBot for first use."""
-    from bowerbot.config import GLOBAL_CONFIG_PATH, BOWERBOT_HOME, ensure_home, save_settings
 
     console.print(Panel(
         "[sf]BowerBot[/] — First Time Setup\n\n"
@@ -419,10 +416,6 @@ def onboard() -> None:
     assets_dir = (
         console.input("  Asset directory [./assets]: ").strip()
         or "./assets"
-    )
-
-    from bowerbot.config import (
-        LLMSettings, SceneDefaults, Settings, SkillConfig,
     )
 
     settings = Settings(

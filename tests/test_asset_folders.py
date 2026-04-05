@@ -6,7 +6,7 @@
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Usd, UsdGeom, UsdLux, UsdShade
+from pxr import Usd, UsdGeom, UsdLux, UsdShade
 
 from bowerbot.engine.asset_assembler import AssetAssembler
 from bowerbot.engine.dependency_resolver import DependencyResolver

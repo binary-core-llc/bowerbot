@@ -412,10 +412,14 @@ def onboard() -> None:
         "  Sketchfab API token (optional): ",
     ).strip()
 
-    console.print("\n[sf]Asset Directory[/]")
+    console.print("\n[sf]Directories[/]")
     assets_dir = (
         console.input("  Asset directory [./assets]: ").strip()
         or "./assets"
+    )
+    projects_dir = (
+        console.input("  Projects directory [./scenes]: ").strip()
+        or "./scenes"
     )
 
     settings = Settings(
@@ -435,6 +439,7 @@ def onboard() -> None:
             ),
         },
         assets_dir=assets_dir,
+        projects_dir=projects_dir,
     )
 
     save_settings(settings)

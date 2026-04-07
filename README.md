@@ -11,6 +11,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue)](https://www.python.org/)
 [![OpenUSD](https://img.shields.io/badge/OpenUSD-25.x-green)](https://openusd.org)
+[![YouTube](https://img.shields.io/badge/YouTube-Tutorials-red?logo=youtube)](https://www.youtube.com/playlist?list=PLhNtBS4KXazZk_LSZfMHlzmNQPqHc4CMb)
 [![Built by Binary Core LLC](https://img.shields.io/badge/Built%20by-Binary%20Core%20LLC-black)](https://binarycore.us)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -208,6 +209,12 @@ uv run bowerbot open coffee_shop
 ```
 
 The onboard wizard asks for your LLM API key and optional Sketchfab token. Everything is stored in `~/.bowerbot/config.json`. One file, one place, no `.env`.
+
+---
+
+## 📺 Tutorials
+
+New to BowerBot? Watch the **[tutorial playlist on YouTube](https://www.youtube.com/playlist?list=PLhNtBS4KXazZk_LSZfMHlzmNQPqHc4CMb)** for setup walkthroughs, scene building demos, and tips for working with USD pipelines.
 
 ---
 

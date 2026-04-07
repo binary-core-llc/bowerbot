@@ -697,25 +697,30 @@ class SceneBuilder:
             Tool(
                 name="delete_project_asset",
                 description=(
-                    "Delete an asset folder from the project's "
-                    "assets directory. Use this after removing "
-                    "an asset from the scene when the user "
-                    "confirms they want to delete the files too. "
-                    "Only deletes ASWF asset folders, not USDZ "
-                    "files or loose files."
+                    "Delete an asset from the project's assets "
+                    "directory. Works for both ASWF asset folders "
+                    "and standalone files (e.g. USDZ). Use this "
+                    "after removing an asset from the scene when "
+                    "the user confirms they want to delete the "
+                    "files too. BowerBot scans all USD files in "
+                    "the project to ensure the asset is not "
+                    "referenced elsewhere before deleting."
                 ),
                 parameters={
                     "type": "object",
                     "properties": {
-                        "folder_name": {
+                        "name": {
                             "type": "string",
                             "description": (
-                                "Name of the asset folder to "
-                                "delete (e.g. 'single_table')."
+                                "Name of the asset to delete. "
+                                "For ASWF folders, the folder "
+                                "name (e.g. 'single_table'). "
+                                "For files, the filename "
+                                "(e.g. 'cafe_table.usdz')."
                             ),
                         },
                     },
-                    "required": ["folder_name"],
+                    "required": ["name"],
                 },
             ),
             Tool(
@@ -1538,47 +1543,42 @@ class SceneBuilder:
         if self._project is None:
             return ToolResult(success=False, error="No project open.")
 
-        folder_name = params["folder_name"]
+        name = params["name"]
         assets_dir = self._resolve_assets_dir()
-        asset_folder = assets_dir / folder_name
+        asset_path = assets_dir / name
 
-        if not asset_folder.exists():
+        if not asset_path.exists():
             return ToolResult(
                 success=False,
-                error=f"Asset folder not found: {folder_name}",
+                error=f"Asset not found: {name}",
             )
 
-        if not asset_folder.is_dir():
-            return ToolResult(
-                success=False,
-                error=(
-                    f"'{folder_name}' is not a folder. "
-                    "This tool only deletes ASWF asset folders."
-                ),
-            )
-
+        skip_dir = asset_path if asset_path.is_dir() else None
         referencing = find_asset_references(
-            self._project.path, folder_name, skip_dir=asset_folder,
+            self._project.path, name, skip_dir=skip_dir,
         )
         if referencing:
             files_list = ", ".join(referencing)
             return ToolResult(
                 success=False,
                 error=(
-                    f"Asset '{folder_name}' is still "
+                    f"Asset '{name}' is still "
                     f"referenced by: {files_list}. "
                     f"Remove those references first."
                 ),
             )
 
-        shutil.rmtree(asset_folder)
-        logger.info("Deleted project asset: %s", asset_folder)
+        if asset_path.is_dir():
+            shutil.rmtree(asset_path)
+        else:
+            asset_path.unlink()
+        logger.info("Deleted project asset: %s", asset_path)
 
         return ToolResult(
             success=True,
             data={
-                "folder": folder_name,
-                "message": f"Deleted asset folder '{folder_name}' from project assets.",
+                "name": name,
+                "message": f"Deleted asset '{name}' from project assets.",
             },
         )
 

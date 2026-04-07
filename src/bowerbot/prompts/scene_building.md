@@ -11,8 +11,9 @@ You have tools to create and manipulate OpenUSD scenes.
 5. Use `list_scene` to show the user what's currently in the scene
 6. Use `rename_prim` or `remove_prim` when the user wants to reorganize
 7. After removing assets from the scene, tell the user that the asset
-   folder still exists in the project's assets directory. Ask if they
-   want to delete it. If they confirm, use `delete_project_asset`.
+   files still exist in the project's assets directory. Ask if they
+   want to delete them. If they confirm, use `delete_project_asset` —
+   it works for both ASWF asset folders and standalone files (USDZ).
    BowerBot will scan all USD files in the project to ensure the
    asset is not referenced elsewhere before deleting.
 8. ALWAYS call `validate_scene` before packaging

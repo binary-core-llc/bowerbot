@@ -10,12 +10,12 @@ through the SkillRegistry and exposes their tools to the LLM.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 
-class SkillCategory(str, Enum):
+class SkillCategory(StrEnum):
     """What kind of skill this is."""
 
     ASSET_PROVIDER = "asset_provider"

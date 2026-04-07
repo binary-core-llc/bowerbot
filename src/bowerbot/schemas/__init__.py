@@ -4,10 +4,10 @@
 """BowerBot data schemas."""
 
 from bowerbot.schemas.models import (
-    ASWFLayerNames,
     AssetCategory,
     AssetFormat,
     AssetMetadata,
+    ASWFLayerNames,
     HDRIFormat,
     ImageFormat,
     LightParams,

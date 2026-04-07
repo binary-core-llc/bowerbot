@@ -3,14 +3,12 @@
 
 """Data schemas used across BowerBot."""
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-
-
-class AssetFormat(str, Enum):
+class AssetFormat(StrEnum):
     """Supported 3D asset formats."""
 
     USD = ".usd"
@@ -19,7 +17,7 @@ class AssetFormat(str, Enum):
     USDZ = ".usdz"
 
 
-class AssetCategory(str, Enum):
+class AssetCategory(StrEnum):
     """Classification of a USD asset following ASWF conventions."""
 
     GEO = "geo"          # geometry layer
@@ -46,7 +44,7 @@ class ASWFLayerNames:
 
 
 
-class HDRIFormat(str, Enum):
+class HDRIFormat(StrEnum):
     """HDRI / environment map formats."""
 
     HDR = ".hdr"
@@ -54,7 +52,7 @@ class HDRIFormat(str, Enum):
     EXR = ".exr"
 
 
-class ImageFormat(str, Enum):
+class ImageFormat(StrEnum):
     """Material texture image formats."""
 
     PNG = ".png"
@@ -66,7 +64,7 @@ class ImageFormat(str, Enum):
     BMP = ".bmp"
 
 
-class TextureCategory(str, Enum):
+class TextureCategory(StrEnum):
     """Texture search categories."""
 
     HDRI = "hdri"
@@ -102,7 +100,7 @@ class AssetMetadata(BaseModel):
 
 
 
-class PlacementCategory(str, Enum):
+class PlacementCategory(StrEnum):
     """Where an object category gets placed by default."""
 
     FLOOR = "floor"  # Y = 0 (tables, chairs, shelves)
@@ -124,7 +122,7 @@ class SceneObject(BaseModel):
 
 
 
-class LightType(str, Enum):
+class LightType(StrEnum):
     """Supported USD light types."""
 
     DISTANT = "DistantLight"
@@ -155,7 +153,7 @@ class LightParams(BaseModel):
 
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """Validation issue severity."""
 
     ERROR = "error"

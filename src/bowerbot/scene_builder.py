@@ -23,7 +23,7 @@ from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
-from bowerbot.schemas import ASWFLayerNames, AssetMetadata, LightParams, LightType, SceneObject
+from bowerbot.schemas import AssetMetadata, ASWFLayerNames, LightParams, LightType, SceneObject
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.utils.file_utils import copy_texture_to_project
 from bowerbot.utils.naming import safe_file_name, safe_prim_name
@@ -152,7 +152,10 @@ class SceneBuilder:
                     "properties": {
                         "filename": {
                             "type": "string",
-                            "description": "Name for the scene file (without extension). Example: 'retail_store'",
+                            "description": (
+                                "Name for the scene file (without extension). "
+                                "Example: 'retail_store'"
+                            ),
                         },
                     },
                     "required": ["filename"],
@@ -187,7 +190,10 @@ class SceneBuilder:
                         },
                         "translate_y": {
                             "type": "number",
-                            "description": "Y position in meters. 0 = floor, 2.7 = typical ceiling.",
+                            "description": (
+                                "Y position in meters. "
+                                "0 = floor, 2.7 = typical ceiling."
+                            ),
                         },
                         "translate_z": {
                             "type": "number",
@@ -398,7 +404,10 @@ class SceneBuilder:
                         },
                         "intensity": {
                             "type": "number",
-                            "description": "Light intensity. Default: 1000 for most lights, 1.0 for DomeLight.",
+                            "description": (
+                                "Light intensity. "
+                                "Default: 1000 for most lights, 1.0 for DomeLight."
+                            ),
                             "default": 1000.0,
                         },
                         "color_r": {
@@ -448,7 +457,10 @@ class SceneBuilder:
                         },
                         "angle": {
                             "type": "number",
-                            "description": "DistantLight only: angular size in degrees. 0.53 = realistic sun.",
+                            "description": (
+                                "DistantLight only: angular size in degrees. "
+                                "0.53 = realistic sun."
+                            ),
                         },
                         "texture": {
                             "type": "string",
@@ -456,7 +468,10 @@ class SceneBuilder:
                         },
                         "radius": {
                             "type": "number",
-                            "description": "SphereLight/DiskLight/CylinderLight: light radius in meters.",
+                            "description": (
+                                "SphereLight/DiskLight/CylinderLight: "
+                                "light radius in meters."
+                            ),
                         },
                         "width": {
                             "type": "number",
@@ -1323,13 +1338,18 @@ class SceneBuilder:
             for i in result.issues
         ]
 
+        message = (
+            "Scene is valid!"
+            if result.is_valid
+            else f"Found {result.error_count} error(s)."
+        )
         return ToolResult(
             success=True,
             data={
                 "is_valid": result.is_valid,
                 "error_count": result.error_count,
                 "issues": issues,
-                "message": "Scene is valid!" if result.is_valid else f"Found {result.error_count} error(s).",
+                "message": message,
             },
         )
 

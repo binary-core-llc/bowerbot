@@ -81,9 +81,9 @@ def new(name: str) -> None:
         project = Project.create(projects_dir, name)
         console.print(f"[sf]✅ Created project:[/] {project.name}")
         console.print(f"   Path: {project.path}")
-        console.print(f"\n[info]Start working:[/]")
+        console.print("\n[info]Start working:[/]")
         console.print(f"   cd {project.path}")
-        console.print(f"   bowerbot chat")
+        console.print("   bowerbot chat")
     except FileExistsError:
         console.print(f"[red]Project already exists:[/] {name}")
 
@@ -170,14 +170,14 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
         status += f"[info]Project:[/] {project.name}\n"
         status += f"[info]Path:[/]    {project.path}\n"
         if project.scene_path.exists():
-            status += f"[info]Scene:[/]   {project.meta.scene_file} ({builder._object_count} object(s))\n"
+            count = builder._object_count
+            status += f"[info]Scene:[/]   {project.meta.scene_file} ({count} object(s))\n"
     else:
-        status += f"[info]Project:[/] none (use 'bowerbot new' to create one)\n"
+        status += "[info]Project:[/] none (use 'bowerbot new' to create one)\n"
 
-    status += f"\n[info]Commands: 'quit' to exit, 'reset' to start a new session[/]"
+    status += "\n[info]Commands: 'quit' to exit, 'reset' to start a new session[/]"
 
     console.print(Panel(status, title="[sf]BowerBot[/]", border_style="green"))
-
 
     agent = AgentRuntime(
         settings=settings,
@@ -280,7 +280,7 @@ def build(prompt: str) -> None:
         safe_name = safe_project_name(project_name)
         project = Project.load(projects_dir / safe_name)
 
-    console.print(f"[sf]BowerBot[/] Building scene...")
+    console.print("[sf]BowerBot[/] Building scene...")
     console.print(f"  Prompt:   {prompt}")
     console.print(f"  Model:    {settings.llm.model}")
     console.print(f"  Project:  {project.name}")
@@ -343,7 +343,7 @@ def skills() -> None:
         console.print("\n[info]No extension skills enabled.[/]")
         return
 
-    console.print(f"\n[sf]Extension skills:[/]")
+    console.print("\n[sf]Extension skills:[/]")
     for name in registry.enabled_skills:
         tools = [
             t["function"]["name"]

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -32,8 +32,8 @@ class ProjectMeta(BaseModel):
     """Metadata stored in project.json."""
 
     name: str
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     scene_file: str = "scene.usda"
 
 
@@ -70,7 +70,7 @@ class Project:
 
     def save(self) -> None:
         """Save project metadata to project.json."""
-        self.meta.updated_at = datetime.now(timezone.utc).isoformat()
+        self.meta.updated_at = datetime.now(UTC).isoformat()
         self.meta_path.write_text(
             json.dumps(self.meta.model_dump(), indent=2) + "\n",
             encoding="utf-8",

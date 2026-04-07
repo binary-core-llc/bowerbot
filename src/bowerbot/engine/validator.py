@@ -7,8 +7,8 @@ from pathlib import Path
 
 from pxr import Usd, UsdGeom, UsdShade
 
-from bowerbot.utils.usd_utils import get_prim_ref_paths
 from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
+from bowerbot.utils.usd_utils import get_prim_ref_paths
 
 
 class SceneValidator:

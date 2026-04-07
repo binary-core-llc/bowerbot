@@ -12,8 +12,8 @@ from pathlib import Path
 
 from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
-from bowerbot.utils.usd_utils import LIGHT_CLASSES, get_prim_ref_paths
 from bowerbot.schemas import LightParams, SceneObject
+from bowerbot.utils.usd_utils import LIGHT_CLASSES, get_prim_ref_paths
 
 
 class StageWriter:

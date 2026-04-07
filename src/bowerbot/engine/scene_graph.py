@@ -8,11 +8,11 @@ exact spatial coordinates.
 import math
 from dataclasses import dataclass
 
+from bowerbot.schemas import PlacementCategory
+
 # Default vertical offset (meters) above an asset's top surface
 # when placing a light with no explicit Y position.
 DEFAULT_LIGHT_Y_OFFSET = 0.5
-
-from bowerbot.schemas import PlacementCategory
 
 
 @dataclass

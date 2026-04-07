@@ -326,7 +326,8 @@ All settings live in `~/.bowerbot/config.json`:
     "context_window": null,
     "summarization_threshold": 0.75,
     "num_retries": 3,
-    "request_timeout": 120.0
+    "request_timeout": 120.0,
+    "max_tool_rounds": 25
   },
   "scene_defaults": {
     "meters_per_unit": 1.0,
@@ -381,6 +382,14 @@ Additional tuning options (usually don't need changing):
 | `tool_result_age_threshold` | `2` | User turns before old tool results are compressed. |
 | `min_keep_recent` | `6` | Minimum recent messages always kept verbatim. |
 | `summary_max_tokens` | `512` | Max tokens for the summarization LLM call. |
+
+### Tool-Calling Loop
+
+BowerBot runs a loop where the LLM requests tool calls, BowerBot executes them, and the results are fed back. Complex requests (e.g. binding materials to many mesh parts at once) can require many rounds.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `max_tool_rounds` | `25` | Maximum LLM ↔ tool exchange rounds per request. Increase if BowerBot stops with "Reached maximum tool-calling rounds" on legitimate workflows. |
 
 ### Error Recovery
 

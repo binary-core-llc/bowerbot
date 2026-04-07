@@ -44,6 +44,9 @@ class LLMSettings(BaseSettings):
     num_retries: int = 3  # retries for rate limits and transient errors
     request_timeout: float = 120.0  # seconds before a request times out
 
+    # Tool-calling loop
+    max_tool_rounds: int = 25  # max LLM <-> tool exchange rounds per request
+
 
 class SkillConfig(BaseSettings):
     """Configuration for a single skill."""

@@ -26,7 +26,6 @@ from bowerbot.token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
 
-MAX_TOOL_ROUNDS = 10
 MAX_VALIDATION_RETRIES = 2
 
 
@@ -77,7 +76,7 @@ class AgentRuntime:
         self.conversation_history.append({"role": "user", "content": user_message})
         validation_retries = 0
 
-        for round_num in range(MAX_TOOL_ROUNDS):
+        for round_num in range(self.settings.llm.max_tool_rounds):
             logger.info("Agent loop round %s", round_num + 1)
 
             messages, usage = await self._token_manager.prepare_messages(

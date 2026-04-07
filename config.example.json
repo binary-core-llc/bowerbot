@@ -7,7 +7,8 @@
     "context_window": null,
     "summarization_threshold": 0.75,
     "num_retries": 3,
-    "request_timeout": 120.0
+    "request_timeout": 120.0,
+    "max_tool_rounds": 25
   },
   "scene_defaults": {
     "meters_per_unit": 1.0,

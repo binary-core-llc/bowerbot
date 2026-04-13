@@ -670,28 +670,8 @@ class AssetAssembler:
                 shutil.copy2(asset_path, local_copy)
             return f"assets/{asset_path.name}"
 
-        # Loose geometry — check ASWF root prim compliance
-        bad_type = self.check_root_prim_type(asset_path)
-
-        if bad_type and not fix_root_prim:
-            msg = (
-                f"Asset '{asset_path.name}' has a "
-                f"{bad_type} as its root prim instead "
-                f"of an Xform. Per ASWF USD guidelines, "
-                f"the root prim should be an Xform with "
-                f"geometry as children. Ask the user if "
-                f"they want to fix this automatically, "
-                f"then call place_asset again with "
-                f"fix_root_prim set to true."
-            )
-            raise ValueError(msg)
-
-        if bad_type:
-            self.wrap_root_prim(asset_path)
-            logger.info(
-                "Wrapped %s root prim in Xform for ASWF compliance",
-                asset_path.name,
-            )
+        # Validate and repair ASWF compliance before creating the folder
+        self.ensure_aswf_compliance(asset_path, fix_root_prim=fix_root_prim)
 
         folder_name = asset_path.stem
         root_file = self.create_asset_folder(
@@ -702,36 +682,102 @@ class AssetAssembler:
         return f"assets/{folder_name}/{root_file.name}"
 
 
-    @staticmethod
-    def check_root_prim_type(geometry_file: Path) -> str | None:
-        """Check if the geometry file's root prim follows ASWF guidelines.
+    def ensure_aswf_compliance(
+        self,
+        geometry_file: Path,
+        fix_root_prim: bool = False,
+    ) -> None:
+        """Validate and repair a geometry file for ASWF compliance.
 
-        Returns None if the root prim is an Xform (correct).
-        Returns the actual type name if it's not (e.g. "Mesh").
+        Checks and fixes issues in order:
+
+        1. **No root prims** — raises ``ValueError``.
+        2. **Empty defaultPrim, single root prim** — auto-sets it
+           (unambiguous, silent fix).
+        3. **Empty defaultPrim, multiple root prims** — raises
+           ``ValueError`` (ambiguous, user must fix in DCC).
+        4. **defaultPrim points to nonexistent prim** — raises
+           ``ValueError``.
+        5. **Root prim is not an Xform** — wraps it if
+           *fix_root_prim* is ``True``, otherwise raises
+           ``ValueError``.
+
+        Args:
+            geometry_file: Path to the geometry USD file.
+            fix_root_prim: When ``True``, automatically wrap a
+                non-Xform root prim under an Xform.
+
+        Raises:
+            ValueError: If the file has issues that cannot be
+                auto-fixed.
         """
         layer = Sdf.Layer.FindOrOpen(str(geometry_file))
-        if layer is None or not layer.defaultPrim:
-            return None
+        if layer is None:
+            msg = f"Cannot open geometry file: {geometry_file.name}"
+            raise ValueError(msg)
 
+        root_prims = list(layer.rootPrims)
+
+        # 1. No root prims
+        if not root_prims:
+            msg = (
+                f"Asset '{geometry_file.name}' contains no geometry. "
+                f"Export it from your DCC with geometry under a root prim."
+            )
+            raise ValueError(msg)
+
+        # 2 & 3. Empty or missing defaultPrim
+        if not layer.defaultPrim:
+            if len(root_prims) == 1:
+                layer.defaultPrim = root_prims[0].name
+                layer.Save()
+                logger.info(
+                    "Auto-set defaultPrim to '%s' in %s",
+                    root_prims[0].name, geometry_file.name,
+                )
+            else:
+                prim_names = ", ".join(p.name for p in root_prims)
+                msg = (
+                    f"Asset '{geometry_file.name}' has multiple root "
+                    f"prims ({prim_names}) and no defaultPrim. "
+                    f"Export it from your DCC with a single root Xform."
+                )
+                raise ValueError(msg)
+
+        # 4. defaultPrim points to nonexistent prim
         root_spec = layer.GetPrimAtPath(
             Sdf.Path(f"/{layer.defaultPrim}"),
         )
         if root_spec is None:
-            return None
+            msg = (
+                f"Asset '{geometry_file.name}' has defaultPrim "
+                f"'{layer.defaultPrim}' but that prim does not exist."
+            )
+            raise ValueError(msg)
 
-        if root_spec.typeName in ("Xform", ""):
-            return None
-
-        return root_spec.typeName
+        # 5. Root prim type check
+        if root_spec.typeName not in ("Xform", ""):
+            if not fix_root_prim:
+                msg = (
+                    f"Asset '{geometry_file.name}' has a "
+                    f"{root_spec.typeName} as its root prim instead "
+                    f"of an Xform. Per ASWF USD guidelines, "
+                    f"the root prim should be an Xform with "
+                    f"geometry as children. Ask the user if "
+                    f"they want to fix this automatically, "
+                    f"then call place_asset again with "
+                    f"fix_root_prim set to true."
+                )
+                raise ValueError(msg)
+            self._wrap_root_prim(geometry_file)
+            logger.info(
+                "Wrapped %s root prim in Xform for ASWF compliance",
+                geometry_file.name,
+            )
 
     @staticmethod
-    def wrap_root_prim(geometry_file: Path) -> None:
-        """Wrap a non-Xform root prim under an Xform parent in place.
-
-        Rewrites the file so the root prim becomes an Xform with the
-        original geometry as a child. This makes the asset ASWF-compliant.
-        """
-
+    def _wrap_root_prim(geometry_file: Path) -> None:
+        """Wrap a non-Xform root prim under an Xform parent in place."""
         source_layer = Sdf.Layer.FindOrOpen(str(geometry_file))
         if source_layer is None:
             return
@@ -742,9 +788,7 @@ class AssetAssembler:
 
         root_path = Sdf.Path(f"/{default_prim_name}")
         root_spec = source_layer.GetPrimAtPath(root_path)
-        if root_spec is None or root_spec.typeName in (
-            "Xform", "",
-        ):
+        if root_spec is None or root_spec.typeName in ("Xform", ""):
             return
 
         with tempfile.NamedTemporaryFile(

@@ -162,29 +162,49 @@ scene light.
 
 ## Materials
 
-BowerBot applies existing material files — it does NOT create materials.
-Material files are `.usda` files with material definitions under `/mtl/`.
+BowerBot can apply existing material files AND create procedural
+materials from scratch. All materials are written into the asset
+folder's `mtl.usda` — never into the scene file.
 
-Materials are written into the asset folder's `mtl.usd`, NOT the scene file.
-The scene stays clean — only references to asset folders.
+### Two ways to apply materials
 
-### Material binding workflow (CRITICAL)
+**1. Existing material files** — use `bind_material`:
 1. Search for the material using `search_assets` with category "mtl"
 2. If the search returns MORE THAN ONE material, you MUST stop and list
    ALL matching materials to the user with their names. Ask the user to
    choose. Do NOT pick a material on their behalf. This is mandatory.
-3. Call `list_prim_children` on the target asset to discover its internal parts
-   (table top, legs, frame, etc.) — NEVER skip this step
-4. Show the user the available parts and ask which ones to apply the material to
-5. Call `bind_material` with the EXACT mesh prim path from `list_prim_children`
-   — NEVER bind to the top-level prim, always the specific mesh part
+3. Call `list_prim_children` on the target asset to discover its internal
+   parts (table top, legs, frame, etc.) — NEVER skip this step
+4. Show the user the available parts and ask which ones to apply the
+   material to
+5. Call `bind_material` with the EXACT mesh prim path from
+   `list_prim_children` — NEVER bind to the top-level prim, always
+   the specific mesh part
 6. Use `list_materials` to verify, `remove_material` to clear
 
+**2. Procedural materials** — use `create_material`:
+Use this when no existing material file matches what the user wants.
+Creates a MaterialX `ND_standard_surface_surfaceshader` material with
+base color, metalness, and roughness — no textures needed.
+
+1. Call `list_prim_children` to discover mesh parts — NEVER skip this
+2. Call `create_material` with the target prim path, a descriptive name,
+   and the desired parameters (color, metalness, roughness)
+3. Use `list_materials` to verify, `remove_material` to clear
+
+Common procedural materials:
+- Matte black: base_color (0.02, 0.02, 0.02), metalness 0, roughness 0.9
+- Brushed steel: base_color (0.6, 0.6, 0.6), metalness 1, roughness 0.4
+- Polished gold: base_color (1.0, 0.84, 0.0), metalness 1, roughness 0.1
+- White plastic: base_color (0.9, 0.9, 0.9), metalness 0, roughness 0.3
+- Dark wood: base_color (0.15, 0.08, 0.03), metalness 0, roughness 0.7
+- Red gloss: base_color (0.8, 0.05, 0.05), metalness 0, roughness 0.15
+- Glass: base_color (0.95, 0.95, 0.95), metalness 0, roughness 0.05, opacity 0.3
+
 ### Key rules
-- ALWAYS call `list_prim_children` before `bind_material`
-- Materials go into the asset folder's mtl.usd — never into scene.usda
-- BowerBot does NOT create materials — only applies existing ones
-- `bind_material` only works on ASWF asset folders (not USDZ)
+- ALWAYS call `list_prim_children` before `bind_material` or `create_material`
+- Materials go into the asset folder's mtl.usda — never into scene.usda
+- `bind_material` and `create_material` only work on ASWF asset folders (not USDZ)
 - For USDZ assets, materials are baked in — cannot override
 
 ## ASWF Asset Folders

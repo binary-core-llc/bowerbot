@@ -29,7 +29,7 @@ from pathlib import Path
 
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
-from bowerbot.schemas import ASWFLayerNames
+from bowerbot.schemas import ASWFLayerNames, MaterialXShaders
 from bowerbot.utils.usd_utils import LIGHT_CLASSES, get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
@@ -154,6 +154,104 @@ class AssetAssembler:
             composed_mat_path, prim_path, asset_dir.name,
         )
         return composed_mat_path
+
+    def create_procedural_material(
+        self,
+        asset_dir: Path,
+        material_name: str,
+        prim_path: str,
+        base_color: tuple[float, float, float] = (0.8, 0.8, 0.8),
+        metalness: float = 0.0,
+        roughness: float = 0.5,
+        opacity: float = 1.0,
+    ) -> str:
+        """Create a procedural MaterialX material and bind it to a prim.
+
+        Writes a ``ND_standard_surface_surfaceshader`` material
+        (no textures, parameter-driven only) into the asset's
+        ``mtl.usda`` and binds it to the target prim.
+
+        Args:
+            asset_dir: Path to the ASWF asset folder.
+            material_name: Name for the material (e.g. ``"matte_black"``).
+            prim_path: Asset-local prim path to bind the material to.
+            base_color: RGB color, each channel 0.0–1.0.
+            metalness: 0.0 = dielectric, 1.0 = metal.
+            roughness: 0.0 = mirror, 1.0 = fully rough.
+            opacity: 1.0 = opaque, 0.0 = transparent.
+
+        Returns:
+            The material prim path in the composed stage.
+        """
+        mtl_path = asset_dir / ASWFLayerNames.MTL
+        default_prim_name = self._resolve_default_prim_name(asset_dir)
+
+        if mtl_path.exists():
+            mtl_layer = Sdf.Layer.FindOrOpen(str(mtl_path))
+        else:
+            mtl_layer = Sdf.Layer.CreateNew(str(mtl_path))
+
+        self._ensure_layer_scope(
+            mtl_layer, default_prim_name, "mtl", "Scope",
+        )
+
+        mtl_layer.defaultPrim = default_prim_name
+        mtl_layer.Save()
+
+        # Author the MaterialX material
+        stage = Usd.Stage.Open(str(mtl_path))
+        if stage is None:
+            msg = f"Cannot open mtl layer: {mtl_path}"
+            raise RuntimeError(msg)
+
+        mat_prim_path = f"/{default_prim_name}/mtl/{material_name}"
+        shader_prim_path = (
+            f"{mat_prim_path}/{MaterialXShaders.STANDARD_SURFACE_PRIM}"
+        )
+
+        material = UsdShade.Material.Define(stage, mat_prim_path)
+        shader = UsdShade.Shader.Define(stage, shader_prim_path)
+
+        shader.CreateIdAttr(MaterialXShaders.STANDARD_SURFACE)
+        shader.CreateInput(
+            "base_color", Sdf.ValueTypeNames.Color3f,
+        ).Set(Gf.Vec3f(*base_color))
+        shader.CreateInput(
+            "metalness", Sdf.ValueTypeNames.Float,
+        ).Set(metalness)
+        shader.CreateInput(
+            "specular_roughness", Sdf.ValueTypeNames.Float,
+        ).Set(roughness)
+
+        if opacity < 1.0:
+            shader.CreateInput(
+                "opacity", Sdf.ValueTypeNames.Float,
+            ).Set(opacity)
+
+        surface_output = shader.CreateOutput(
+            "out", Sdf.ValueTypeNames.Token,
+        )
+        material.CreateSurfaceOutput(
+            MaterialXShaders.OUTPUT_QUALIFIER,
+        ).ConnectToSource(surface_output)
+
+        # Bind to the target prim
+        local_prim_path = self._to_layer_local_path(
+            prim_path, default_prim_name,
+        )
+        target_prim = stage.OverridePrim(local_prim_path)
+        binding_api = UsdShade.MaterialBindingAPI.Apply(target_prim)
+        binding_api.Bind(material)
+
+        stage.Save()
+
+        self._ensure_root_reference(asset_dir, ASWFLayerNames.MTL)
+
+        logger.info(
+            "Created procedural material %s -> %s in %s",
+            mat_prim_path, prim_path, asset_dir.name,
+        )
+        return mat_prim_path
 
     def remove_material_binding(
         self,

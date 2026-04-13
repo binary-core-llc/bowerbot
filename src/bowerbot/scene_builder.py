@@ -118,6 +118,8 @@ class SceneBuilder:
                 return self._update_light(params)
             case "remove_light":
                 return self._remove_light(params)
+            case "create_material":
+                return self._create_material(params)
             case "bind_material":
                 return self._bind_material(params)
             case "list_materials":
@@ -597,6 +599,77 @@ class SceneBuilder:
                         },
                     },
                     "required": ["prim_path"],
+                },
+            ),
+            Tool(
+                name="create_material",
+                description=(
+                    "Create a procedural MaterialX material and bind "
+                    "it to a prim. Use this when no existing material "
+                    "file matches what the user wants. Creates a "
+                    "ND_standard_surface_surfaceshader with base color, "
+                    "metalness, and roughness — no textures needed."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Prim path of the geometry to apply "
+                                "the material to. Use list_prim_children "
+                                "to find the exact mesh part."
+                            ),
+                        },
+                        "material_name": {
+                            "type": "string",
+                            "description": (
+                                "Name for the material "
+                                "(e.g. 'matte_black', 'brushed_steel')."
+                            ),
+                        },
+                        "base_color_r": {
+                            "type": "number",
+                            "description": "Red channel (0.0–1.0).",
+                            "default": 0.8,
+                        },
+                        "base_color_g": {
+                            "type": "number",
+                            "description": "Green channel (0.0–1.0).",
+                            "default": 0.8,
+                        },
+                        "base_color_b": {
+                            "type": "number",
+                            "description": "Blue channel (0.0–1.0).",
+                            "default": 0.8,
+                        },
+                        "metalness": {
+                            "type": "number",
+                            "description": (
+                                "0.0 = dielectric (plastic, wood), "
+                                "1.0 = metal (steel, gold)."
+                            ),
+                            "default": 0.0,
+                        },
+                        "roughness": {
+                            "type": "number",
+                            "description": (
+                                "0.0 = mirror/glossy, "
+                                "1.0 = fully rough/matte."
+                            ),
+                            "default": 0.5,
+                        },
+                        "opacity": {
+                            "type": "number",
+                            "description": (
+                                "1.0 = opaque, 0.0 = transparent. "
+                                "Only set below 1.0 for glass or "
+                                "translucent materials."
+                            ),
+                            "default": 1.0,
+                        },
+                    },
+                    "required": ["prim_path", "material_name"],
                 },
             ),
             Tool(
@@ -1372,6 +1445,71 @@ class SceneBuilder:
             },
         )
 
+
+    def _create_material(self, params: dict[str, Any]) -> ToolResult:
+        if (err := self._require_stage()):
+            return err
+
+        prim_path = params["prim_path"]
+        material_name = params["material_name"]
+
+        asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
+            self.writer.stage, prim_path,
+        )
+        if asset_dir is None or ref_prim_path is None:
+            return ToolResult(
+                success=False,
+                error=(
+                    f"Cannot find ASWF asset folder for {prim_path}. "
+                    "Procedural materials only work on assets placed "
+                    "as ASWF folders (not USDZ)."
+                ),
+            )
+
+        asset_local_path = prim_path
+        if prim_path.startswith(ref_prim_path):
+            asset_local_path = prim_path[len(ref_prim_path):]
+            if not asset_local_path:
+                asset_local_path = "/"
+
+        base_color = (
+            float(params.get("base_color_r", 0.8)),
+            float(params.get("base_color_g", 0.8)),
+            float(params.get("base_color_b", 0.8)),
+        )
+
+        try:
+            material_prim_path = self.assembler.create_procedural_material(
+                asset_dir=asset_dir,
+                material_name=material_name,
+                prim_path=asset_local_path,
+                base_color=base_color,
+                metalness=float(params.get("metalness", 0.0)),
+                roughness=float(params.get("roughness", 0.5)),
+                opacity=float(params.get("opacity", 1.0)),
+            )
+        except (ValueError, RuntimeError) as e:
+            return ToolResult(success=False, error=str(e))
+
+        self.writer.open_stage(self._stage_path)
+
+        logger.info(
+            "Created procedural material %s on %s in %s/",
+            material_prim_path, prim_path, asset_dir.name,
+        )
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": prim_path,
+                "material": material_prim_path,
+                "asset_folder": asset_dir.name,
+                "message": (
+                    f"Created procedural material '{material_name}' "
+                    f"and bound to {prim_path} "
+                    f"in {asset_dir.name}/{ASWFLayerNames.MTL}"
+                ),
+            },
+        )
 
     def _bind_material(self, params: dict[str, Any]) -> ToolResult:
         if (err := self._require_stage()):

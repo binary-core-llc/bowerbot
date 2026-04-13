@@ -157,6 +157,14 @@ def chat() -> None:
     _start_chat(settings, project)
 
 
+def _format_object_summary(obj: dict) -> str:
+    """Format a single scene object for the resume context message."""
+    path = obj["prim_path"]
+    pos = obj.get("position")
+    label = obj.get("asset") or obj.get("light_type") or obj.get("type", "unknown")
+    return f"  - {path} ({label}, position: {pos})"
+
+
 def _start_chat(settings: Settings, project: Project | None = None) -> None:
     """Start an interactive chat session, optionally inside a project."""
     builder = _build_scene_builder(settings, project=project)
@@ -189,8 +197,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
     if project and project.scene_path.exists() and builder._object_count > 0:
         objects = builder.writer.list_prims()
         object_summary = "\n".join(
-            f"  - {o['prim_path']} (asset: {o['asset']}, position: {o['position']})"
-            for o in objects
+            _format_object_summary(o) for o in objects
         )
         context = (
             f"You are resuming project '{project.name}'. "

@@ -452,18 +452,15 @@ class StageWriter:
         self._stage = Usd.Stage.Open(str(path))
 
     def list_prim_children(self, prim_path: str) -> list[dict]:
-        """Return all descendant prims of the given prim with their types.
+        """Return all geometry descendant prims with types, materials, and positions.
 
-        For each descendant, reports:
+        For each descendant that contains geometry, reports:
           - ``prim_path``: full USD path
           - ``name``: the prim's name (leaf)
           - ``type``: the USD type name (Mesh, Xform, Scope, etc.)
-          - ``has_geometry``: whether this prim or its children contain mesh data
+          - ``is_mesh``: whether this prim is directly a Mesh
           - ``current_material``: the currently bound material path, if any
-
-        This is used to discover the internal parts of a referenced asset
-        (e.g. table top, legs, frame) so the user can target specific
-        parts for material binding.
+          - ``bounds``: world-space bounding box (min/max) if computable
         """
         if self._stage is None:
             return []
@@ -472,15 +469,18 @@ class StageWriter:
         if not root_prim.IsValid():
             return []
 
+        bbox_cache = UsdGeom.BBoxCache(
+            Usd.TimeCode.Default(),
+            [UsdGeom.Tokens.default_],
+        )
+
         results = []
         for prim in Usd.PrimRange(root_prim):
-            # Skip the root prim itself
             if str(prim.GetPath()) == prim_path:
                 continue
 
             type_name = prim.GetTypeName()
 
-            # Check if this prim is a mesh or has mesh children
             is_mesh = type_name == "Mesh"
             has_geometry = is_mesh
             if not has_geometry:
@@ -489,22 +489,40 @@ class StageWriter:
                         has_geometry = True
                         break
 
-            # Get current material binding if any
+            if not has_geometry:
+                continue
+
             current_material = None
             binding_api = UsdShade.MaterialBindingAPI(prim)
             bound_mat, _ = binding_api.ComputeBoundMaterial()
             if bound_mat:
                 current_material = str(bound_mat.GetPath())
 
-            # Only include prims that are meshes or contain geometry
-            if has_geometry:
-                results.append({
-                    "prim_path": str(prim.GetPath()),
-                    "name": prim.GetName(),
-                    "type": type_name or "Xform",
-                    "is_mesh": is_mesh,
-                    "current_material": current_material,
-                })
+            bounds = None
+            rng = bbox_cache.ComputeWorldBound(prim).ComputeAlignedRange()
+            if not rng.IsEmpty():
+                mn, mx = rng.GetMin(), rng.GetMax()
+                bounds = {
+                    "min": {
+                        "x": round(mn[0], 4),
+                        "y": round(mn[1], 4),
+                        "z": round(mn[2], 4),
+                    },
+                    "max": {
+                        "x": round(mx[0], 4),
+                        "y": round(mx[1], 4),
+                        "z": round(mx[2], 4),
+                    },
+                }
+
+            results.append({
+                "prim_path": str(prim.GetPath()),
+                "name": prim.GetName(),
+                "type": type_name or "Xform",
+                "is_mesh": is_mesh,
+                "current_material": current_material,
+                "bounds": bounds,
+            })
 
         return results
 

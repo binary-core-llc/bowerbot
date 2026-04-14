@@ -23,7 +23,14 @@ from bowerbot.engine.packager import Packager
 from bowerbot.engine.scene_graph import SceneGraphBuilder
 from bowerbot.engine.stage_writer import StageWriter
 from bowerbot.engine.validator import SceneValidator
-from bowerbot.schemas import AssetMetadata, ASWFLayerNames, LightParams, LightType, SceneObject
+from bowerbot.schemas import (
+    AssetMetadata,
+    ASWFLayerNames,
+    LightParams,
+    LightType,
+    PositionMode,
+    SceneObject,
+)
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.utils.file_utils import copy_texture_to_project
 from bowerbot.utils.naming import safe_file_name, safe_prim_name
@@ -373,8 +380,10 @@ class SceneBuilder:
                     "asset_prim_path is provided, creates an "
                     "asset-level light in that asset's lgt.usda "
                     "(e.g. a lamp's bulb light). For asset lights, "
-                    "use offset_y instead of translate — BowerBot "
-                    "computes the position from the geometry bounds."
+                    "use position_mode to choose between absolute "
+                    "asset-local coordinates (e.g. from "
+                    "list_prim_children bounds) or bounds_offset "
+                    "(relative to the asset's surfaces)."
                 ),
                 parameters={
                     "type": "object",
@@ -389,6 +398,23 @@ class SceneBuilder:
                                 "If omitted, the light is created "
                                 "as a scene-level light."
                             ),
+                        },
+                        "position_mode": {
+                            "type": "string",
+                            "enum": [m.value for m in PositionMode],
+                            "description": (
+                                "Asset-level lights only. How to "
+                                "interpret translate values: "
+                                "'absolute' = asset-local "
+                                "coordinates used as-is (e.g. "
+                                "when you have exact positions "
+                                "from list_prim_children bounds); "
+                                "'bounds_offset' = offsets from "
+                                "the asset's bounding box "
+                                "surfaces (e.g. a bulb 0.5m "
+                                "above a lamp)."
+                            ),
+                            "default": PositionMode.BOUNDS_OFFSET.value,
                         },
                         "light_type": {
                             "type": "string",
@@ -501,8 +527,9 @@ class SceneBuilder:
                     "instead of creating a new light when the "
                     "user wants to adjust intensity, color, "
                     "size, position, or rotation. For asset "
-                    "lights, translate values are OFFSETS from "
-                    "bounds (same as create_light)."
+                    "lights, use position_mode to choose "
+                    "between absolute coordinates or "
+                    "bounds_offset (same as create_light)."
                 ),
                 parameters={
                     "type": "object",
@@ -514,6 +541,20 @@ class SceneBuilder:
                                 "to update (scene or asset). "
                                 "Use list_scene to find it."
                             ),
+                        },
+                        "position_mode": {
+                            "type": "string",
+                            "enum": [m.value for m in PositionMode],
+                            "description": (
+                                "Asset-level lights only. How to "
+                                "interpret translate values: "
+                                "'absolute' = asset-local "
+                                "coordinates used as-is; "
+                                "'bounds_offset' = offsets from "
+                                "the asset's bounding box "
+                                "surfaces."
+                            ),
+                            "default": PositionMode.BOUNDS_OFFSET.value,
                         },
                         "intensity": {
                             "type": "number",
@@ -1101,12 +1142,15 @@ class SceneBuilder:
         ty = float(params.get("translate_y", 0.0))
         tz = float(params.get("translate_z", 0.0))
 
-        bounds = self.assembler.get_geometry_bounds(asset_dir)
-        if bounds:
-            tx, ty, tz = SceneGraphBuilder.apply_bounds_offsets(
-                bounds, tx, ty, tz,
-                has_explicit_y=params.get("translate_y") is not None,
-            )
+        mode = PositionMode(
+            params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
+        )
+        tx, ty, tz = SceneGraphBuilder.resolve_asset_position(
+            mode,
+            self.assembler.get_geometry_bounds(asset_dir),
+            tx, ty, tz,
+            has_explicit_y=params.get("translate_y") is not None,
+        )
 
         texture = params.get("texture")
         if texture:
@@ -1263,12 +1307,17 @@ class SceneBuilder:
             light_name = prim_path.rstrip("/").split("/")[-1]
 
             if translate is not None:
-                bounds = self.assembler.get_geometry_bounds(asset_dir)
-                if bounds:
-                    translate = SceneGraphBuilder.apply_bounds_offsets(
-                        bounds, *translate,
-                        has_explicit_y=params.get("translate_y") is not None,
-                    )
+                mode = PositionMode(
+                    params.get(
+                        "position_mode", PositionMode.BOUNDS_OFFSET.value,
+                    ),
+                )
+                translate = SceneGraphBuilder.resolve_asset_position(
+                    mode,
+                    self.assembler.get_geometry_bounds(asset_dir),
+                    *translate,
+                    has_explicit_y=params.get("translate_y") is not None,
+                )
 
             try:
                 self.assembler.update_light(

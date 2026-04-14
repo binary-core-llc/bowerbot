@@ -118,6 +118,21 @@ class AssetMetadata(BaseModel):
 
 
 
+class PositionMode(StrEnum):
+    """Coordinate system used when placing a prim inside an asset.
+
+    * ``absolute`` — translate values are asset-local coordinates in the
+      asset's native units. Use when you know the exact position, e.g.
+      from a `list_prim_children` bounds reading or a precise layout.
+    * ``bounds_offset`` — translate values are offsets from the asset's
+      bounding box surfaces (center for X/Z, top/bottom for Y). Use
+      for "above/below/next to" placements like a bulb above a lamp.
+    """
+
+    ABSOLUTE = "absolute"
+    BOUNDS_OFFSET = "bounds_offset"
+
+
 class PlacementCategory(StrEnum):
     """Where an object category gets placed by default."""
 

@@ -77,24 +77,47 @@ Use these for general illumination and environment setup.
 
 ### Asset-level lights
 Lights that belong to a specific asset — a lamp's bulb, a candle's
-flame, a neon sign's glow. These travel with the asset.
-Set `asset_prim_path` to the asset's prim path to create the light
-in the asset's `lgt.usda` file instead of the scene.
+flame, recessed ceiling lights inside a building. These travel with
+the asset. Set `asset_prim_path` to the asset's prim path to create
+the light in the asset's `lgt.usda` file instead of the scene.
 
-CRITICAL: For asset lights, translate values are OFFSETS from the
-asset's bounding box surfaces, NOT absolute positions.
-BowerBot reads the geometry bounds and computes the final position:
+Asset lights support two coordinate modes via the `position_mode`
+parameter. Choose the one that matches what the user is asking for.
+
+#### `position_mode: "bounds_offset"` (default)
+Translate values are OFFSETS from the asset's bounding box surfaces.
+Use this for "above/below/next to" placements relative to the whole
+asset — e.g. a bulb above a desk lamp.
+
 - translate_y = 1.0 → 1 meter above the top surface
 - translate_y = -0.5 → 0.5m below the bottom surface
 - translate_x = 0.5 → 0.5m to the right of the right face
-- translate_x = -0.5 → 0.5m to the left of the left face
 - If no translate is provided → defaults to 0.5m above top center
 
-Do NOT use scene world coordinates for asset lights.
-Values are in meters — BowerBot converts to asset units.
+Example: "add a point light to the desk lamp" → `asset_prim_path`
+pointing to the lamp, `position_mode: "bounds_offset"` (or omit,
+it's the default), translate_y = 0.5.
 
-Example: "add a point light to the desk lamp" → use `asset_prim_path`
-pointing to the lamp's prim in the scene.
+#### `position_mode: "absolute"`
+Translate values are asset-local coordinates used as-is. Use this
+when you know the exact position — typically from reading
+`list_prim_children` bounds. Essential for placing lights at
+interior fixture positions inside containers like buildings.
+
+Workflow for interior fixtures:
+1. Call `list_prim_children` on the container asset
+2. For each fixture prim, read its `bounds` — the center is
+   `((min.x + max.x)/2, (min.y + max.y)/2, (min.z + max.z)/2)`
+3. Call `create_light` with `position_mode: "absolute"` and those
+   center coordinates as `translate_x/y/z`
+
+Example: "add lights at the recessed fixtures inside the building":
+- `list_prim_children` returns `building_recessed_light_1` with
+  bounds center at world-space coordinates, e.g. `(5.96, 4.27, -2.59)`
+- Call `create_light(asset_prim_path=..., position_mode="absolute",
+  translate_x=5.96, translate_y=4.27, translate_z=-2.59, ...)`
+
+Values are always in meters — BowerBot converts to asset units.
 
 ### Light types
 - **DistantLight** — sun/directional. Only rotation matters.

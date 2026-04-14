@@ -8,10 +8,10 @@ exact spatial coordinates.
 import math
 from dataclasses import dataclass
 
-from bowerbot.schemas import PlacementCategory
+from bowerbot.schemas import PlacementCategory, PositionMode
 
 # Default vertical offset (meters) above an asset's top surface
-# when placing a light with no explicit Y position.
+# when placing a prim with no explicit Y position in bounds_offset mode.
 DEFAULT_LIGHT_Y_OFFSET = 0.5
 
 
@@ -120,6 +120,43 @@ class SceneGraphBuilder:
             placements.append(Placement(translate=(x, 0.0, z), rotate=(0.0, ry, 0.0)))
 
         return placements
+
+    @staticmethod
+    def resolve_asset_position(
+        mode: PositionMode,
+        bounds: dict[str, dict[str, float]] | None,
+        tx: float,
+        ty: float,
+        tz: float,
+        has_explicit_y: bool,
+    ) -> tuple[float, float, float]:
+        """Resolve a translate value inside an asset to absolute coordinates.
+
+        Works for any prim type placed inside an asset — lights, cameras,
+        referenced sub-assets, or anything else.
+
+        Args:
+            mode: Coordinate system to interpret the translate values.
+            bounds: Asset geometry bounds dict with ``min``, ``max``,
+                ``center`` keys (only used for ``BOUNDS_OFFSET`` mode).
+                Can be ``None`` — in that case translate values pass
+                through unchanged.
+            tx: X translate value.
+            ty: Y translate value.
+            tz: Z translate value.
+            has_explicit_y: Whether the caller provided an explicit Y.
+                Only affects ``BOUNDS_OFFSET`` mode.
+
+        Returns:
+            Absolute ``(x, y, z)`` position tuple in the asset's
+            coordinate space.
+        """
+        if mode is PositionMode.ABSOLUTE or bounds is None:
+            return tx, ty, tz
+
+        return SceneGraphBuilder.apply_bounds_offsets(
+            bounds, tx, ty, tz, has_explicit_y,
+        )
 
     @staticmethod
     def apply_bounds_offsets(

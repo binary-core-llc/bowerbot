@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.2.0](https://github.com/binary-core-llc/bowerbot/compare/v1.1.1...v1.2.0) (2026-04-14)
+
+
+### Features
+
+* add bounds to list_prim_children results ([#66](https://github.com/binary-core-llc/bowerbot/issues/66)) ([30ec122](https://github.com/binary-core-llc/bowerbot/commit/30ec12284c3b65d41a3cf690372e47e169d5a18b))
+* add exposure parameter to USD lights ([#70](https://github.com/binary-core-llc/bowerbot/issues/70)) ([ea6a8a1](https://github.com/binary-core-llc/bowerbot/commit/ea6a8a10ec9af607f5c1c00b03d8795ef0ab9c33))
+* create procedural MaterialX materials from natural language ([#64](https://github.com/binary-core-llc/bowerbot/issues/64)) ([7cb6998](https://github.com/binary-core-llc/bowerbot/commit/7cb6998f4d1517726c4e46e8a1bd1dd76675b384))
+* make max_tool_rounds configurable via LLM settings ([#63](https://github.com/binary-core-llc/bowerbot/issues/63)) ([d4cf202](https://github.com/binary-core-llc/bowerbot/commit/d4cf202ca654d2ea9e1f37296da7498e23330836))
+* unified position_mode for any prim placed inside an asset ([#68](https://github.com/binary-core-llc/bowerbot/issues/68)) ([5594a72](https://github.com/binary-core-llc/bowerbot/commit/5594a729f3178a2214e945305ede19ce85c13824))
+
+
+### Bug Fixes
+
+* cli resume handles lights and any prim type in scene summary ([#67](https://github.com/binary-core-llc/bowerbot/issues/67)) ([f7eada4](https://github.com/binary-core-llc/bowerbot/commit/f7eada4db2b57a3e2a5a2a0ece87f629e2d2acc6))
+* delete_project_asset supports both ASWF folders and standalone f… ([#60](https://github.com/binary-core-llc/bowerbot/issues/60)) ([c5bf1d1](https://github.com/binary-core-llc/bowerbot/commit/c5bf1d1c73adf5c150abd1e66e2f96b7d2e99f87))
+* onboard wizard defaults to gpt-4.1 instead of gpt-4o ([#54](https://github.com/binary-core-llc/bowerbot/issues/54)) ([ee3c3ad](https://github.com/binary-core-llc/bowerbot/commit/ee3c3adc3eb5b0743ed50c42e32942c1ad1da87b))
+* onboard wizard now asks for projects directory ([#58](https://github.com/binary-core-llc/bowerbot/issues/58)) ([6058951](https://github.com/binary-core-llc/bowerbot/commit/605895113c2899c10611bf995b1e8b833e127890))
+* validate and repair ASWF compliance before asset placement ([#65](https://github.com/binary-core-llc/bowerbot/issues/65)) ([93bd388](https://github.com/binary-core-llc/bowerbot/commit/93bd3881f8c3d60939ae636d184ec132b1fc4b35))
+
+
+### Documentation
+
+* add USD variant sets to roadmap ([#56](https://github.com/binary-core-llc/bowerbot/issues/56)) ([3447dab](https://github.com/binary-core-llc/bowerbot/commit/3447dabb8ccc91ee26ecab6aff541a346d03b113))
+* add YouTube tutorials playlist to README ([#59](https://github.com/binary-core-llc/bowerbot/issues/59)) ([edf06f3](https://github.com/binary-core-llc/bowerbot/commit/edf06f31d1514360303779d31f886c8be189b2ac))
+
 ## [1.1.1](https://github.com/binary-core-llc/bowerbot/compare/v1.1.0...v1.1.1) (2026-04-05)
 
 

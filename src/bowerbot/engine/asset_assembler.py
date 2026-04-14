@@ -29,7 +29,12 @@ from pathlib import Path
 
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
-from bowerbot.schemas import ASWFLayerNames, MaterialXShaders
+from bowerbot.schemas import (
+    ASWFLayerNames,
+    LightParams,
+    MaterialXShaders,
+    ProceduralMaterialParams,
+)
 from bowerbot.utils.usd_utils import LIGHT_CLASSES, get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
@@ -158,12 +163,8 @@ class AssetAssembler:
     def create_procedural_material(
         self,
         asset_dir: Path,
-        material_name: str,
         prim_path: str,
-        base_color: tuple[float, float, float] = (0.8, 0.8, 0.8),
-        metalness: float = 0.0,
-        roughness: float = 0.5,
-        opacity: float = 1.0,
+        params: ProceduralMaterialParams,
     ) -> str:
         """Create a procedural MaterialX material and bind it to a prim.
 
@@ -173,12 +174,9 @@ class AssetAssembler:
 
         Args:
             asset_dir: Path to the ASWF asset folder.
-            material_name: Name for the material (e.g. ``"matte_black"``).
             prim_path: Asset-local prim path to bind the material to.
-            base_color: RGB color, each channel 0.0–1.0.
-            metalness: 0.0 = dielectric, 1.0 = metal.
-            roughness: 0.0 = mirror, 1.0 = fully rough.
-            opacity: 1.0 = opaque, 0.0 = transparent.
+            params: Material parameters (name, color, metalness,
+                roughness, opacity).
 
         Returns:
             The material prim path in the composed stage.
@@ -198,13 +196,12 @@ class AssetAssembler:
         mtl_layer.defaultPrim = default_prim_name
         mtl_layer.Save()
 
-        # Author the MaterialX material
         stage = Usd.Stage.Open(str(mtl_path))
         if stage is None:
             msg = f"Cannot open mtl layer: {mtl_path}"
             raise RuntimeError(msg)
 
-        mat_prim_path = f"/{default_prim_name}/mtl/{material_name}"
+        mat_prim_path = f"/{default_prim_name}/mtl/{params.material_name}"
         shader_prim_path = (
             f"{mat_prim_path}/{MaterialXShaders.STANDARD_SURFACE_PRIM}"
         )
@@ -215,18 +212,18 @@ class AssetAssembler:
         shader.CreateIdAttr(MaterialXShaders.STANDARD_SURFACE)
         shader.CreateInput(
             "base_color", Sdf.ValueTypeNames.Color3f,
-        ).Set(Gf.Vec3f(*base_color))
+        ).Set(Gf.Vec3f(*params.base_color))
         shader.CreateInput(
             "metalness", Sdf.ValueTypeNames.Float,
-        ).Set(metalness)
+        ).Set(params.metalness)
         shader.CreateInput(
             "specular_roughness", Sdf.ValueTypeNames.Float,
-        ).Set(roughness)
+        ).Set(params.roughness)
 
-        if opacity < 1.0:
+        if params.opacity < 1.0:
             shader.CreateInput(
                 "opacity", Sdf.ValueTypeNames.Float,
-            ).Set(opacity)
+            ).Set(params.opacity)
 
         surface_output = shader.CreateOutput(
             "out", Sdf.ValueTypeNames.Token,
@@ -235,7 +232,6 @@ class AssetAssembler:
             MaterialXShaders.OUTPUT_QUALIFIER,
         ).ConnectToSource(surface_output)
 
-        # Bind to the target prim
         local_prim_path = self._to_layer_local_path(
             prim_path, default_prim_name,
         )
@@ -387,82 +383,83 @@ class AssetAssembler:
         self,
         asset_dir: Path,
         light_name: str,
-        light_type: str,
-        translate: tuple[float, float, float] = (0.0, 0.0, 0.0),
-        rotate: tuple[float, float, float] = (0.0, 0.0, 0.0),
-        intensity: float = 1000.0,
-        color: tuple[float, float, float] = (1.0, 1.0, 1.0),
-        **extra_attrs: float | str | None,
+        light: LightParams,
     ) -> str:
         """Add a light to an asset folder's lgt.usda.
 
         Creates lgt.usda if it doesn't exist and updates the root
         file to reference it.
 
+        Args:
+            asset_dir: Path to the ASWF asset folder.
+            light_name: Name for the new light prim
+                (becomes part of the path under ``/{root}/lgt/``).
+            light: Light parameters.
+
         Returns:
             The light prim path in the composed stage.
         """
         lgt_path = asset_dir / ASWFLayerNames.LGT
-        default_prim_name = self._resolve_default_prim_name(
-            asset_dir,
-        )
+        default_prim_name = self._resolve_default_prim_name(asset_dir)
 
-        # Create or open lgt.usda with proper scope
         if lgt_path.exists():
             lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
         else:
             lgt_layer = Sdf.Layer.CreateNew(str(lgt_path))
             lgt_layer.defaultPrim = default_prim_name
 
-        lgt_scope_path = Sdf.Path(
-            f"/{default_prim_name}/lgt",
-        )
+        lgt_scope_path = Sdf.Path(f"/{default_prim_name}/lgt")
         self._ensure_layer_scope(
             lgt_layer, default_prim_name, "lgt", "Xform",
         )
         lgt_layer.Save()
 
-        # Cancel inherited geometry transform
         self._apply_inverse_transform(
             asset_dir, lgt_path, lgt_scope_path,
         )
 
-        # Create the light prim
         stage = Usd.Stage.Open(str(lgt_path))
         if stage is None:
             msg = f"Cannot open lgt layer: {lgt_path}"
             raise RuntimeError(msg)
 
-        light_prim_path = (
-            f"/{default_prim_name}/lgt/{light_name}"
-        )
+        light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
 
-        light_cls = LIGHT_CLASSES.get(light_type)
+        light_cls = LIGHT_CLASSES.get(light.light_type.value)
         if light_cls is None:
-            msg = f"Unknown light type: {light_type}"
+            msg = f"Unknown light type: {light.light_type.value}"
             raise ValueError(msg)
 
         light_schema = light_cls.Define(stage, light_prim_path)
-        light_schema.CreateIntensityAttr(intensity)
-        light_schema.CreateColorAttr(Gf.Vec3f(*color))
+        light_schema.CreateIntensityAttr(light.intensity)
+        light_schema.CreateColorAttr(Gf.Vec3f(*light.color))
 
         light_prim = light_schema.GetPrim()
-        self._set_light_extra_attrs(light_prim, extra_attrs)
+        self._set_light_extra_attrs(
+            light_prim,
+            {
+                "angle": light.angle,
+                "texture": light.texture,
+                "radius": light.radius,
+                "width": light.width,
+                "height": light.height,
+                "length": light.length,
+            },
+        )
 
-        # Apply transform in asset units
         unit_factor = self._unit_factor(asset_dir)
         xformable = UsdGeom.Xformable(light_prim)
         xformable.AddTranslateOp().Set(
             Gf.Vec3d(
-                translate[0] * unit_factor,
-                translate[1] * unit_factor,
-                translate[2] * unit_factor,
+                light.translate[0] * unit_factor,
+                light.translate[1] * unit_factor,
+                light.translate[2] * unit_factor,
             ),
         )
 
-        if any(v != 0.0 for v in rotate):
+        if any(v != 0.0 for v in light.rotate):
             xformable.AddRotateXYZOp().Set(
-                Gf.Vec3f(*rotate),
+                Gf.Vec3f(*light.rotate),
             )
 
         stage.Save()
@@ -471,9 +468,9 @@ class AssetAssembler:
 
         logger.info(
             "Added light %s (%s) to %s",
-            light_name, light_type, asset_dir.name,
+            light_name, light.light_type.value, asset_dir.name,
         )
-        return f"/{default_prim_name}/lgt/{light_name}"
+        return light_prim_path
 
     def update_light(
         self,
@@ -794,24 +791,28 @@ class AssetAssembler:
         with tempfile.NamedTemporaryFile(
             suffix=".usda", delete=False,
         ) as tmp:
-            tmp_path = tmp.name
+            tmp_path = Path(tmp.name)
 
-        dest_layer = Sdf.Layer.CreateNew(tmp_path)
+        try:
+            dest_layer = Sdf.Layer.CreateNew(str(tmp_path))
 
-        Sdf.CreatePrimInLayer(dest_layer, root_path)
-        wrapper = dest_layer.GetPrimAtPath(root_path)
-        wrapper.specifier = Sdf.SpecifierDef
-        wrapper.typeName = "Xform"
+            Sdf.CreatePrimInLayer(dest_layer, root_path)
+            wrapper = dest_layer.GetPrimAtPath(root_path)
+            wrapper.specifier = Sdf.SpecifierDef
+            wrapper.typeName = "Xform"
 
-        child_path = Sdf.Path(f"/{default_prim_name}/mesh")
-        Sdf.CopySpec(
-            source_layer, root_path, dest_layer, child_path,
-        )
+            child_path = Sdf.Path(f"/{default_prim_name}/mesh")
+            Sdf.CopySpec(
+                source_layer, root_path, dest_layer, child_path,
+            )
 
-        dest_layer.defaultPrim = default_prim_name
-        dest_layer.Save()
+            dest_layer.defaultPrim = default_prim_name
+            dest_layer.Save()
 
-        shutil.move(tmp_path, str(geometry_file))
+            shutil.move(str(tmp_path), str(geometry_file))
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
 
 
     def _resolve_default_prim_name(

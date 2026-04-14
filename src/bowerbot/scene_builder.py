@@ -29,6 +29,7 @@ from bowerbot.schemas import (
     LightParams,
     LightType,
     PositionMode,
+    ProceduralMaterialParams,
     SceneObject,
 )
 from bowerbot.skills.base import Tool, ToolResult
@@ -1165,29 +1166,33 @@ class SceneBuilder:
 
         safe_name = safe_prim_name(params["light_name"])
 
+        light = LightParams(
+            light_type=light_type,
+            intensity=float(params.get("intensity", 1000.0)),
+            color=(
+                float(params.get("color_r", 1.0)),
+                float(params.get("color_g", 1.0)),
+                float(params.get("color_b", 1.0)),
+            ),
+            translate=(tx, ty, tz),
+            rotate=(
+                float(params.get("rotate_x", 0.0)),
+                float(params.get("rotate_y", 0.0)),
+                float(params.get("rotate_z", 0.0)),
+            ),
+            angle=params.get("angle"),
+            texture=texture,
+            radius=params.get("radius"),
+            width=params.get("width"),
+            height=params.get("height"),
+            length=params.get("length"),
+        )
+
         try:
             composed_path = self.assembler.add_light(
                 asset_dir=asset_dir,
                 light_name=safe_name,
-                light_type=light_type.value,
-                translate=(tx, ty, tz),
-                rotate=(
-                    float(params.get("rotate_x", 0.0)),
-                    float(params.get("rotate_y", 0.0)),
-                    float(params.get("rotate_z", 0.0)),
-                ),
-                intensity=float(params.get("intensity", 1000.0)),
-                color=(
-                    float(params.get("color_r", 1.0)),
-                    float(params.get("color_g", 1.0)),
-                    float(params.get("color_b", 1.0)),
-                ),
-                angle=params.get("angle"),
-                texture=texture,
-                radius=params.get("radius"),
-                width=params.get("width"),
-                height=params.get("height"),
-                length=params.get("length"),
+                light=light,
             )
         except (ValueError, RuntimeError) as e:
             return ToolResult(success=False, error=str(e))
@@ -1225,7 +1230,6 @@ class SceneBuilder:
         prim_path = f"/Scene/Lighting/{safe_name}_{self._object_count:02d}"
 
         light_params = LightParams(
-            prim_path=prim_path,
             light_type=light_type,
             intensity=float(params.get("intensity", 1000.0)),
             color=(
@@ -1247,7 +1251,7 @@ class SceneBuilder:
             length=params.get("length"),
         )
 
-        self.writer.create_light(light_params)
+        self.writer.create_light(prim_path, light_params)
         self.writer.save()
         self._update_project_meta()
 
@@ -1521,21 +1525,23 @@ class SceneBuilder:
             if not asset_local_path:
                 asset_local_path = "/"
 
-        base_color = (
-            float(params.get("base_color_r", 0.8)),
-            float(params.get("base_color_g", 0.8)),
-            float(params.get("base_color_b", 0.8)),
+        material_params = ProceduralMaterialParams(
+            material_name=material_name,
+            base_color=(
+                float(params.get("base_color_r", 0.8)),
+                float(params.get("base_color_g", 0.8)),
+                float(params.get("base_color_b", 0.8)),
+            ),
+            metalness=float(params.get("metalness", 0.0)),
+            roughness=float(params.get("roughness", 0.5)),
+            opacity=float(params.get("opacity", 1.0)),
         )
 
         try:
             material_prim_path = self.assembler.create_procedural_material(
                 asset_dir=asset_dir,
-                material_name=material_name,
                 prim_path=asset_local_path,
-                base_color=base_color,
-                metalness=float(params.get("metalness", 0.0)),
-                roughness=float(params.get("roughness", 0.5)),
-                opacity=float(params.get("opacity", 1.0)),
+                params=material_params,
             )
         except (ValueError, RuntimeError) as e:
             return ToolResult(success=False, error=str(e))

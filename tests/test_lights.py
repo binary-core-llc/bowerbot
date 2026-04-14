@@ -21,14 +21,13 @@ def test_create_sphere_light():
         writer.create_stage(stage_path)
 
         light = LightParams(
-            prim_path="/Scene/Lighting/Key_Light_01",
             light_type=LightType.SPHERE,
             intensity=500.0,
             color=(1.0, 0.9, 0.8),
             translate=(5.0, 2.5, 4.0),
             radius=0.1,
         )
-        writer.create_light(light)
+        writer.create_light("/Scene/Lighting/Key_Light_01", light)
         writer.save()
 
         # Verify
@@ -53,13 +52,12 @@ def test_create_distant_light():
         writer.create_stage(stage_path)
 
         light = LightParams(
-            prim_path="/Scene/Lighting/Sun_01",
             light_type=LightType.DISTANT,
             intensity=500.0,
             rotate=(-45.0, 0.0, 0.0),
             angle=0.53,
         )
-        writer.create_light(light)
+        writer.create_light("/Scene/Lighting/Sun_01", light)
         writer.save()
 
         stage = Usd.Stage.Open(str(stage_path))
@@ -82,14 +80,13 @@ def test_create_rect_light():
         writer.create_stage(stage_path)
 
         light = LightParams(
-            prim_path="/Scene/Lighting/Ceiling_Panel_01",
             light_type=LightType.RECT,
             intensity=1000.0,
             translate=(5.0, 2.7, 4.0),
             width=1.5,
             height=0.8,
         )
-        writer.create_light(light)
+        writer.create_light("/Scene/Lighting/Ceiling_Panel_01", light)
         writer.save()
 
         stage = Usd.Stage.Open(str(stage_path))
@@ -112,13 +109,12 @@ def test_list_prims_includes_lights():
         writer.create_stage(stage_path)
 
         light = LightParams(
-            prim_path="/Scene/Lighting/Spot_01",
             light_type=LightType.SPHERE,
             intensity=800.0,
             color=(1.0, 0.95, 0.9),
             translate=(3.0, 2.0, 3.0),
         )
-        writer.create_light(light)
+        writer.create_light("/Scene/Lighting/Spot_01", light)
         writer.save()
 
         prims = writer.list_prims()
@@ -142,30 +138,36 @@ def test_create_multiple_light_types():
         writer.create_stage(stage_path)
 
         lights = [
-            LightParams(
-                prim_path="/Scene/Lighting/Sun",
-                light_type=LightType.DISTANT,
-                intensity=500.0,
+            (
+                "/Scene/Lighting/Sun",
+                LightParams(
+                    light_type=LightType.DISTANT,
+                    intensity=500.0,
+                ),
             ),
-            LightParams(
-                prim_path="/Scene/Lighting/Fill",
-                light_type=LightType.RECT,
-                intensity=1000.0,
-                width=2.0,
-                height=1.0,
-                translate=(5.0, 2.7, 4.0),
+            (
+                "/Scene/Lighting/Fill",
+                LightParams(
+                    light_type=LightType.RECT,
+                    intensity=1000.0,
+                    width=2.0,
+                    height=1.0,
+                    translate=(5.0, 2.7, 4.0),
+                ),
             ),
-            LightParams(
-                prim_path="/Scene/Lighting/Accent",
-                light_type=LightType.DISK,
-                intensity=600.0,
-                radius=0.2,
-                translate=(2.0, 2.5, 2.0),
+            (
+                "/Scene/Lighting/Accent",
+                LightParams(
+                    light_type=LightType.DISK,
+                    intensity=600.0,
+                    radius=0.2,
+                    translate=(2.0, 2.5, 2.0),
+                ),
             ),
         ]
 
-        for light in lights:
-            writer.create_light(light)
+        for prim_path, light in lights:
+            writer.create_light(prim_path, light)
         writer.save()
 
         prims = writer.list_prims()

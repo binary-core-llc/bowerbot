@@ -137,14 +137,14 @@ class StageWriter:
         )
         asset_prim.GetReferences().AddReference(asset_path)
 
-    def create_light(self, light: LightParams) -> None:
-        """Create a USD light prim in the stage."""
+    def create_light(self, prim_path: str, light: LightParams) -> None:
+        """Create a USD light prim in the stage at *prim_path*."""
         if self._stage is None:
             msg = "No stage open. Call create_stage() first."
             raise RuntimeError(msg)
 
         light_cls = LIGHT_CLASSES[light.light_type.value]
-        light_prim = light_cls.Define(self._stage, light.prim_path)
+        light_prim = light_cls.Define(self._stage, prim_path)
 
         # Common attributes
         light_prim.CreateIntensityAttr(light.intensity)

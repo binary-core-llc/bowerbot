@@ -109,11 +109,6 @@ class AssetMetadata(BaseModel):
     source_skill: str  # e.g. "sketchfab", "local", "cgtrader"
     source_id: str  # Skill-specific identifier (URL, SKU, file path)
     file_path: str | None = None  # Local path after download
-    format: AssetFormat = AssetFormat.USDZ
-    bbox_min: tuple[float, float, float] | None = None
-    bbox_max: tuple[float, float, float] | None = None
-    tags: list[str] = Field(default_factory=list)
-    license: str | None = None
 
 
 
@@ -167,9 +162,13 @@ class LightType(StrEnum):
 
 
 class LightParams(BaseModel):
-    """Parameters for creating a USD light."""
+    """Parameters describing a USD light.
 
-    prim_path: str
+    Contains only the light's own attributes. Placement context
+    (scene prim path or asset folder + light name) is passed
+    separately to the engine methods.
+    """
+
     light_type: LightType
     intensity: float = 1000.0
     color: tuple[float, float, float] = (1.0, 1.0, 1.0)

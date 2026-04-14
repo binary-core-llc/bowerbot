@@ -179,6 +179,10 @@ scene light.
 
 ### Defaults
 - Intensity: 1000 for interior, 500 for Distant, 1.0 for Dome
+- Exposure: power-of-2 multiplier on intensity (camera stops).
+  Final brightness = intensity × 2^exposure. +1 doubles, -1 halves.
+  Use when a user asks to make a light "brighter" or "dimmer" by
+  a relative amount. Default: 0.
 - Color: warm white (1.0, 0.9, 0.8), cool (0.9, 0.95, 1.0)
 - Scene lights go in `/Scene/Lighting`
 - Asset lights go in the asset's `lgt.usda` under `/{asset}/lgt/`

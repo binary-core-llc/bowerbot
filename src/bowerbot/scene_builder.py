@@ -439,6 +439,16 @@ class SceneBuilder:
                             ),
                             "default": 1000.0,
                         },
+                        "exposure": {
+                            "type": "number",
+                            "description": (
+                                "Power-of-2 multiplier on intensity "
+                                "(camera stops). Final brightness = "
+                                "intensity * 2^exposure. +1 doubles, "
+                                "-1 halves. Default: 0."
+                            ),
+                            "default": 0.0,
+                        },
                         "color_r": {
                             "type": "number",
                             "description": "Red channel (0-1). Default: 1.0.",
@@ -560,6 +570,13 @@ class SceneBuilder:
                         "intensity": {
                             "type": "number",
                             "description": "New intensity.",
+                        },
+                        "exposure": {
+                            "type": "number",
+                            "description": (
+                                "New exposure (power-of-2 "
+                                "multiplier on intensity)."
+                            ),
                         },
                         "color_r": {
                             "type": "number",
@@ -1169,6 +1186,7 @@ class SceneBuilder:
         light = LightParams(
             light_type=light_type,
             intensity=float(params.get("intensity", 1000.0)),
+            exposure=float(params.get("exposure", 0.0)),
             color=(
                 float(params.get("color_r", 1.0)),
                 float(params.get("color_g", 1.0)),
@@ -1232,6 +1250,7 @@ class SceneBuilder:
         light_params = LightParams(
             light_type=light_type,
             intensity=float(params.get("intensity", 1000.0)),
+            exposure=float(params.get("exposure", 0.0)),
             color=(
                 float(params.get("color_r", 1.0)),
                 float(params.get("color_g", 1.0)),
@@ -1294,6 +1313,10 @@ class SceneBuilder:
         if intensity is not None:
             intensity = float(intensity)
 
+        exposure = params.get("exposure")
+        if exposure is not None:
+            exposure = float(exposure)
+
         extra = {}
         for key in ("radius", "angle", "width", "height", "length"):
             if params.get(key) is not None:
@@ -1330,6 +1353,7 @@ class SceneBuilder:
                     translate=translate,
                     rotate=rotate,
                     intensity=intensity,
+                    exposure=exposure,
                     color=color,
                     **extra,
                 )
@@ -1352,6 +1376,7 @@ class SceneBuilder:
             self.writer.update_light(
                 prim_path=prim_path,
                 intensity=intensity,
+                exposure=exposure,
                 color=color,
                 translate=translate,
                 rotate=rotate,

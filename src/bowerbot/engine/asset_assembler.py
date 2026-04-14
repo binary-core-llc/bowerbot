@@ -432,6 +432,7 @@ class AssetAssembler:
 
         light_schema = light_cls.Define(stage, light_prim_path)
         light_schema.CreateIntensityAttr(light.intensity)
+        light_schema.CreateExposureAttr(light.exposure)
         light_schema.CreateColorAttr(Gf.Vec3f(*light.color))
 
         light_prim = light_schema.GetPrim()
@@ -479,6 +480,7 @@ class AssetAssembler:
         translate: tuple[float, float, float] | None = None,
         rotate: tuple[float, float, float] | None = None,
         intensity: float | None = None,
+        exposure: float | None = None,
         color: tuple[float, float, float] | None = None,
         **extra_attrs: float | str | None,
     ) -> None:
@@ -510,6 +512,9 @@ class AssetAssembler:
 
         if intensity is not None:
             prim.GetAttribute("inputs:intensity").Set(intensity)
+
+        if exposure is not None:
+            prim.GetAttribute("inputs:exposure").Set(exposure)
 
         if color is not None:
             prim.GetAttribute("inputs:color").Set(

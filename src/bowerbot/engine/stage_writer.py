@@ -148,6 +148,7 @@ class StageWriter:
 
         # Common attributes
         light_prim.CreateIntensityAttr(light.intensity)
+        light_prim.CreateExposureAttr(light.exposure)
         light_prim.CreateColorAttr(Gf.Vec3f(*light.color))
 
         # Type-specific attributes
@@ -179,6 +180,7 @@ class StageWriter:
         self,
         prim_path: str,
         intensity: float | None = None,
+        exposure: float | None = None,
         color: tuple[float, float, float] | None = None,
         translate: tuple[float, float, float] | None = None,
         rotate: tuple[float, float, float] | None = None,
@@ -201,6 +203,11 @@ class StageWriter:
             attr = prim.GetAttribute("inputs:intensity")
             if attr:
                 attr.Set(intensity)
+
+        if exposure is not None:
+            attr = prim.GetAttribute("inputs:exposure")
+            if attr:
+                attr.Set(exposure)
 
         if color is not None:
             attr = prim.GetAttribute("inputs:color")
@@ -337,6 +344,9 @@ class StageWriter:
         intensity_attr = prim.GetAttribute("inputs:intensity")
         if intensity_attr:
             data["intensity"] = intensity_attr.Get()
+        exposure_attr = prim.GetAttribute("inputs:exposure")
+        if exposure_attr:
+            data["exposure"] = exposure_attr.Get()
         color_attr = prim.GetAttribute("inputs:color")
         if color_attr:
             c = color_attr.Get()

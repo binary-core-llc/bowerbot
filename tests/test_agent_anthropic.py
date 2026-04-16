@@ -12,9 +12,9 @@ from pathlib import Path
 async def test_agent_anthropic():
     from pxr import Usd, UsdGeom
     from bowerbot.agent import AgentRuntime
-    from bowerbot.config import Settings, LLMSettings, SkillConfig
-    from bowerbot.scene_builder import SceneBuilder
+    from bowerbot.config import LLMSettings, Settings, SkillConfig
     from bowerbot.skills.registry import SkillRegistry
+    from bowerbot.state import SceneState
 
     # Create test assets
     tmp = tempfile.mkdtemp()
@@ -39,12 +39,12 @@ async def test_agent_anthropic():
         },
     )
 
-    builder = SceneBuilder(scene_defaults=settings.scene_defaults)
+    state = SceneState(scene_defaults=settings.scene_defaults)
     registry = SkillRegistry()
     registry.load_from_settings(settings)
     agent = AgentRuntime(
         settings=settings,
-        scene_builder=builder,
+        state=state,
         skill_registry=registry,
     )
 

@@ -8,10 +8,10 @@ from pathlib import Path
 
 from pxr import Usd, UsdGeom, UsdShade
 
-from bowerbot.engine.dependency_resolver import DependencyResolver
+from bowerbot.services import dependency_service
+from bowerbot.services.material_service import _find_first_material
 
-
-# ── Helpers ──────────────────────────────────────────────────────
+# ── Helpers ─────────────────
 
 
 def create_test_geometry(directory: Path, name: str) -> Path:
@@ -65,11 +65,11 @@ def create_test_look_file(
     return path
 
 
-# ── Dependency Resolver Tests ────────────────────────────────────
+# ── Dependency Resolver Tests ─
 
 
 def test_resolver_finds_sublayers():
-    """DependencyResolver finds all sublayered files."""
+    """dependency_service.resolve finds all sublayered files."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         mat_dir = tmp_path / "materials"
@@ -83,8 +83,7 @@ def test_resolver_finds_sublayers():
             ["materials/mtl_wood.usda", "materials/mtl_metal.usda"],
         )
 
-        resolver = DependencyResolver()
-        found, missing = resolver.resolve(look)
+        found, missing = dependency_service.resolve(look)
         dep_names = {d.name for d in found}
 
         assert "table_look.usda" in dep_names
@@ -96,7 +95,7 @@ def test_resolver_finds_sublayers():
 
 
 def test_resolver_handles_missing_file():
-    """DependencyResolver reports missing dependencies."""
+    """dependency_service.resolve reports missing dependencies."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         look = tmp_path / "look.usda"
@@ -105,8 +104,7 @@ def test_resolver_handles_missing_file():
             encoding="utf-8",
         )
 
-        resolver = DependencyResolver()
-        found, missing = resolver.resolve(look)
+        found, missing = dependency_service.resolve(look)
         assert len(found) == 1
         assert found[0].name == "look.usda"
         assert len(missing) == 1
@@ -114,7 +112,7 @@ def test_resolver_handles_missing_file():
 
 
 def test_resolver_handles_circular():
-    """DependencyResolver does not loop on circular sublayer references."""
+    """dependency_service.resolve does not loop on circular sublayers."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         a = tmp_path / "a.usda"
@@ -128,18 +126,14 @@ def test_resolver_handles_circular():
             encoding="utf-8",
         )
 
-        resolver = DependencyResolver()
-        found, missing = resolver.resolve(a)
+        found, _ = dependency_service.resolve(a)
         assert len(found) == 2
 
 
-def test_resolver_find_first_material():
-    """_find_first_material returns the prim path of the first Material."""
-    from bowerbot.engine.asset_assembler import AssetAssembler
-
+def test_find_first_material():
+    """material_service._find_first_material returns the prim path."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         mat = create_test_material(tmp_path, "wood")
 
-        result = AssetAssembler._find_first_material(mat)
-        assert result == "/mtl/wood"
+        assert _find_first_material(mat) == "/mtl/wood"

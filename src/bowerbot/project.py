@@ -22,7 +22,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from bowerbot.engine.stage_writer import StageWriter
+from bowerbot.services.stage_service import create_empty_scene
 from bowerbot.utils.naming import safe_project_name
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ class Project:
         project.save()
 
         # Create empty scene file
-        StageWriter.create_empty_scene(project.scene_path)
+        create_empty_scene(project.scene_path)
 
         return project
 
@@ -125,7 +125,7 @@ class Project:
 
         # Ensure project invariants
         project.assets_dir.mkdir(parents=True, exist_ok=True)
-        StageWriter.create_empty_scene(project.scene_path)
+        create_empty_scene(project.scene_path)
 
         return project
 

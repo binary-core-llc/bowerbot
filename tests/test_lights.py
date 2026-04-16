@@ -1,15 +1,15 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Test USD light creation in the engine."""
+"""Test scene-level USD light creation via stage_service."""
 
 import tempfile
 from pathlib import Path
 
 from pxr import Usd, UsdLux
 
-from bowerbot.engine.stage_writer import StageWriter
-from bowerbot.schemas.models import LightParams, LightType
+from bowerbot.schemas import LightParams, LightType
+from bowerbot.services import stage_service
 
 
 def test_create_sphere_light():
@@ -17,8 +17,7 @@ def test_create_sphere_light():
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        writer = StageWriter()
-        writer.create_stage(stage_path)
+        stage = stage_service.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.SPHERE,
@@ -27,12 +26,11 @@ def test_create_sphere_light():
             translate=(5.0, 2.5, 4.0),
             radius=0.1,
         )
-        writer.create_light("/Scene/Lighting/Key_Light_01", light)
-        writer.save()
+        stage_service.create_light(stage, "/Scene/Lighting/Key_Light_01", light)
+        stage_service.save(stage)
 
-        # Verify
-        stage = Usd.Stage.Open(str(stage_path))
-        prim = stage.GetPrimAtPath("/Scene/Lighting/Key_Light_01")
+        reopened = Usd.Stage.Open(str(stage_path))
+        prim = reopened.GetPrimAtPath("/Scene/Lighting/Key_Light_01")
         assert prim.IsValid(), "Light prim not found"
         assert prim.GetTypeName() == "SphereLight"
 
@@ -48,8 +46,7 @@ def test_create_distant_light():
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        writer = StageWriter()
-        writer.create_stage(stage_path)
+        stage = stage_service.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.DISTANT,
@@ -57,11 +54,11 @@ def test_create_distant_light():
             rotate=(-45.0, 0.0, 0.0),
             angle=0.53,
         )
-        writer.create_light("/Scene/Lighting/Sun_01", light)
-        writer.save()
+        stage_service.create_light(stage, "/Scene/Lighting/Sun_01", light)
+        stage_service.save(stage)
 
-        stage = Usd.Stage.Open(str(stage_path))
-        prim = stage.GetPrimAtPath("/Scene/Lighting/Sun_01")
+        reopened = Usd.Stage.Open(str(stage_path))
+        prim = reopened.GetPrimAtPath("/Scene/Lighting/Sun_01")
         assert prim.IsValid(), "DistantLight prim not found"
         assert prim.GetTypeName() == "DistantLight"
 
@@ -76,8 +73,7 @@ def test_create_rect_light():
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        writer = StageWriter()
-        writer.create_stage(stage_path)
+        stage = stage_service.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.RECT,
@@ -86,11 +82,11 @@ def test_create_rect_light():
             width=1.5,
             height=0.8,
         )
-        writer.create_light("/Scene/Lighting/Ceiling_Panel_01", light)
-        writer.save()
+        stage_service.create_light(stage, "/Scene/Lighting/Ceiling_Panel_01", light)
+        stage_service.save(stage)
 
-        stage = Usd.Stage.Open(str(stage_path))
-        prim = stage.GetPrimAtPath("/Scene/Lighting/Ceiling_Panel_01")
+        reopened = Usd.Stage.Open(str(stage_path))
+        prim = reopened.GetPrimAtPath("/Scene/Lighting/Ceiling_Panel_01")
         assert prim.IsValid()
 
         rect = UsdLux.RectLight(prim)
@@ -101,12 +97,11 @@ def test_create_rect_light():
 
 
 def test_list_prims_includes_lights():
-    """Verify list_prims returns lights with type and attributes."""
+    """stage_service.list_prims returns lights with type and attributes."""
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        writer = StageWriter()
-        writer.create_stage(stage_path)
+        stage = stage_service.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.SPHERE,
@@ -114,10 +109,10 @@ def test_list_prims_includes_lights():
             color=(1.0, 0.95, 0.9),
             translate=(3.0, 2.0, 3.0),
         )
-        writer.create_light("/Scene/Lighting/Spot_01", light)
-        writer.save()
+        stage_service.create_light(stage, "/Scene/Lighting/Spot_01", light)
+        stage_service.save(stage)
 
-        prims = writer.list_prims()
+        prims = stage_service.list_prims(stage)
         assert len(prims) == 1, f"Expected 1 prim, got {len(prims)}"
 
         light_entry = prims[0]
@@ -134,24 +129,19 @@ def test_create_multiple_light_types():
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        writer = StageWriter()
-        writer.create_stage(stage_path)
+        stage = stage_service.create_stage(stage_path)
 
         lights = [
             (
                 "/Scene/Lighting/Sun",
-                LightParams(
-                    light_type=LightType.DISTANT,
-                    intensity=500.0,
-                ),
+                LightParams(light_type=LightType.DISTANT, intensity=500.0),
             ),
             (
                 "/Scene/Lighting/Fill",
                 LightParams(
                     light_type=LightType.RECT,
                     intensity=1000.0,
-                    width=2.0,
-                    height=1.0,
+                    width=2.0, height=1.0,
                     translate=(5.0, 2.7, 4.0),
                 ),
             ),
@@ -167,10 +157,10 @@ def test_create_multiple_light_types():
         ]
 
         for prim_path, light in lights:
-            writer.create_light(prim_path, light)
-        writer.save()
+            stage_service.create_light(stage, prim_path, light)
+        stage_service.save(stage)
 
-        prims = writer.list_prims()
+        prims = stage_service.list_prims(stage)
         assert len(prims) == 3, f"Expected 3 lights, got {len(prims)}"
 
         types = {p["light_type"] for p in prims}

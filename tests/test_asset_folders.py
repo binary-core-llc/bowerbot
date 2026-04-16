@@ -9,18 +9,23 @@ from pathlib import Path
 
 from pxr import Usd, UsdGeom, UsdLux, UsdShade
 
-from bowerbot.engine.asset_assembler import AssetAssembler
-from bowerbot.engine.dependency_resolver import DependencyResolver
 from bowerbot.schemas import (
     ASWFLayerNames,
     LightParams,
     LightType,
     TransformParams,
 )
+from bowerbot.services import (
+    asset_service,
+    dependency_service,
+    light_service,
+    material_service,
+    nested_service,
+)
 from bowerbot.skills.local.local import LocalSkill
 
 
-# ── Helpers ──────────────────────────────────────────────────────
+# ── Helpers ─────────────────
 
 
 def create_geometry(directory: Path, name: str) -> Path:
@@ -83,7 +88,7 @@ def create_aswf_folder(parent_dir: Path, name: str) -> Path:
     return root_path
 
 
-# ── Asset Folder Detection (Local Skill) ─────────────────────────
+# ── Asset Folder Detection (Local Skill) ─
 
 
 def test_detect_asset_folder():
@@ -171,7 +176,7 @@ def test_search_filter_by_category():
         assert all(e["category"] == "package" for e in result.data)
 
 
-# ── AssetAssembler: Create Folder ────────────────────────────────
+# ── asset_service: Create Folder ─
 
 
 def test_create_asset_folder():
@@ -184,8 +189,7 @@ def test_create_asset_folder():
 
         geo = create_geometry(source_dir, "table")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir=output_dir,
             asset_name="table",
             geometry_file=geo,
@@ -211,7 +215,7 @@ def test_create_asset_folder():
         assert "./mtl.usda" not in ref_paths
 
 
-# ── AssetAssembler: Add Material ─────────────────────────────────
+# ── material_service: Add Material ─
 
 
 def test_add_material_creates_mtl():
@@ -225,12 +229,11 @@ def test_add_material_creates_mtl():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "table", geo,
         )
 
-        assembler.add_material(
+        material_service.add_material(
             asset_dir=root.parent,
             material_file=mat,
             prim_path="/table/top",
@@ -269,11 +272,10 @@ def test_add_material_with_binding():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "table", geo,
         )
-        assembler.add_material(
+        material_service.add_material(
             root.parent, mat, "/table/top", "/mtl/wood",
         )
 
@@ -300,14 +302,13 @@ def test_add_multiple_materials():
         mat_wood = create_material(source_dir, "wood")
         mat_metal = create_material(source_dir, "metal")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "table", geo,
         )
-        assembler.add_material(
+        material_service.add_material(
             root.parent, mat_wood, "/table/top", "/mtl/wood",
         )
-        assembler.add_material(
+        material_service.add_material(
             root.parent, mat_metal, "/table/legs", "/mtl/metal",
         )
 
@@ -342,12 +343,11 @@ def test_add_material_discovers_prim_path():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "table", geo,
         )
 
-        result_path = assembler.add_material(
+        result_path = material_service.add_material(
             asset_dir=root.parent,
             material_file=mat,
             prim_path="/table/top",
@@ -357,7 +357,7 @@ def test_add_material_discovers_prim_path():
         assert result_path == "/table/mtl/wood"
 
 
-# ── AssetAssembler: Remove Material ──────────────────────────────
+# ── material_service: Remove Material ─
 
 
 def test_remove_material_binding():
@@ -371,16 +371,15 @@ def test_remove_material_binding():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "table", geo,
         )
-        assembler.add_material(
+        material_service.add_material(
             root.parent, mat, "/table/top", "/mtl/wood",
         )
 
         # Remove the binding
-        assembler.remove_material_binding(root.parent, "/table/top")
+        material_service.remove_material_binding(root.parent, "/table/top")
 
         # mtl.usd should be deleted (no materials left)
         assert not (root.parent / "mtl.usda").exists()
@@ -398,7 +397,7 @@ def test_remove_material_binding():
         assert "./geo.usda" in ref_paths
 
 
-# ── AssetAssembler: List Materials ───────────────────────────────
+# ── material_service: List Materials ─
 
 
 def test_list_materials():
@@ -412,22 +411,21 @@ def test_list_materials():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "table", geo,
         )
-        assembler.add_material(
+        material_service.add_material(
             root.parent, mat, "/table/top", "/mtl/wood",
         )
 
-        materials = assembler.list_materials(root.parent)
+        materials = material_service.list_materials(root.parent)
         assert len(materials) >= 1
         wood = [m for m in materials if m["material_name"] == "wood"]
         assert len(wood) == 1
         assert "/table/top" in wood[0]["bound_prims"]
 
 
-# ── Dependency Resolver ──────────────────────────────────────────
+# ── dependency_service ─
 
 
 def test_validate_asset_folder_valid():
@@ -435,8 +433,7 @@ def test_validate_asset_folder_valid():
     with tempfile.TemporaryDirectory() as tmp:
         root_file = create_aswf_folder(Path(tmp), "single_table")
 
-        resolver = DependencyResolver()
-        is_valid, errors = resolver.validate_asset_folder(root_file)
+        is_valid, errors = dependency_service.validate_asset_folder(root_file)
 
         assert is_valid
         assert len(errors) == 0
@@ -454,35 +451,32 @@ def test_validate_asset_folder_missing_dep():
             encoding="utf-8",
         )
 
-        resolver = DependencyResolver()
-        is_valid, errors = resolver.validate_asset_folder(root_path)
+        is_valid, errors = dependency_service.validate_asset_folder(root_path)
 
         assert not is_valid
         assert any("geo.usd" in e for e in errors)
 
 
-# ── Placement Helper ─────────────────────────────────────────────
+# ── Placement Helper ─
 
 
 def test_is_asset_folder_root():
     """is_asset_folder_root identifies ASWF root files."""
-    from bowerbot.engine.asset_assembler import AssetAssembler
-
-    assert AssetAssembler.is_asset_folder_root(
+    assert asset_service.is_asset_folder_root(
         Path("/assets/table/table.usd"),
     )
-    assert AssetAssembler.is_asset_folder_root(
+    assert asset_service.is_asset_folder_root(
         Path("/assets/chair/chair.usda"),
     )
-    assert not AssetAssembler.is_asset_folder_root(
+    assert not asset_service.is_asset_folder_root(
         Path("/assets/table.usdz"),
     )
-    assert not AssetAssembler.is_asset_folder_root(
+    assert not asset_service.is_asset_folder_root(
         Path("/assets/table/geo.usd"),
     )
 
 
-# ── Asset-Level Lights ───────────────────────────────────────────
+# ── Asset-Level Lights (light_service) ─
 
 
 def test_add_light_creates_lgt():
@@ -495,12 +489,11 @@ def test_add_light_creates_lgt():
 
         geo = create_geometry(source_dir, "lamp")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
-        assembler.add_light(
+        light_service.add_light(
             asset_dir=root.parent,
             light_name="bulb",
             light=LightParams(
@@ -548,12 +541,11 @@ def test_add_multiple_lights():
 
         geo = create_geometry(source_dir, "lamp")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
-        assembler.add_light(
+        light_service.add_light(
             root.parent, "bulb",
             LightParams(
                 light_type=LightType.SPHERE,
@@ -561,7 +553,7 @@ def test_add_multiple_lights():
                 radius=0.05,
             ),
         )
-        assembler.add_light(
+        light_service.add_light(
             root.parent, "glow",
             LightParams(
                 light_type=LightType.DISK,
@@ -570,7 +562,7 @@ def test_add_multiple_lights():
             ),
         )
 
-        lights = assembler.list_lights(root.parent)
+        lights = light_service.list_lights(root.parent)
         assert len(lights) == 2
         names = {l["name"] for l in lights}
         assert "bulb" in names
@@ -587,19 +579,18 @@ def test_remove_light():
 
         geo = create_geometry(source_dir, "lamp")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
-        assembler.add_light(
+        light_service.add_light(
             root.parent, "bulb",
             LightParams(
                 light_type=LightType.SPHERE,
                 translate=(0.0, 0.5, 0.0),
             ),
         )
-        assembler.remove_light(root.parent, "bulb")
+        light_service.remove_light(root.parent, "bulb")
 
         # lgt.usda should be deleted (no lights left)
         assert not (root.parent / "lgt.usda").exists()
@@ -630,12 +621,11 @@ def test_disk_light_rotation_facing_down():
 
         geo = create_geometry(source_dir, "table")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "table", geo,
         )
 
-        assembler.add_light(
+        light_service.add_light(
             asset_dir=root.parent,
             light_name="downlight",
             light=LightParams(
@@ -678,12 +668,11 @@ def test_rect_light_rotation_facing_right():
 
         geo = create_geometry(source_dir, "wall")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "wall", geo,
         )
 
-        assembler.add_light(
+        light_service.add_light(
             asset_dir=root.parent,
             light_name="sidelight",
             light=LightParams(
@@ -718,13 +707,12 @@ def test_update_light_position_offset():
 
         geo = create_geometry(source_dir, "lamp")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
         # Create light at initial position
-        assembler.add_light(
+        light_service.add_light(
             asset_dir=root.parent,
             light_name="spot",
             light=LightParams(
@@ -736,7 +724,7 @@ def test_update_light_position_offset():
         )
 
         # Update position
-        assembler.update_light(
+        light_service.update_light(
             asset_dir=root.parent,
             light_name="spot",
             translate=(0.5, 2.0, -0.3),
@@ -771,13 +759,12 @@ def test_update_light_rotation():
 
         geo = create_geometry(source_dir, "lamp")
 
-        assembler = AssetAssembler()
-        root = assembler.create_asset_folder(
+        root = asset_service.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
         # Create light facing down
-        assembler.add_light(
+        light_service.add_light(
             asset_dir=root.parent,
             light_name="spot",
             light=LightParams(
@@ -789,7 +776,7 @@ def test_update_light_rotation():
         )
 
         # Update rotation to face right
-        assembler.update_light(
+        light_service.update_light(
             asset_dir=root.parent,
             light_name="spot",
             rotate=(0.0, -90.0, 0.0),
@@ -812,7 +799,7 @@ def test_update_light_rotation():
             raise AssertionError("No rotateXYZ op found")
 
 
-# ── Nested Asset Placement ───────────────────────────────────────
+# ── Nested Asset Placement (nested_service) ─
 
 
 def test_add_nested_asset_reference_creates_contents():
@@ -826,12 +813,11 @@ def test_add_nested_asset_reference_creates_contents():
         nested_root = create_aswf_folder(assets_dir, "counter_table")
         container_dir = container_root.parent
 
-        assembler = AssetAssembler()
         ref_asset_path = (
             f"../{nested_root.parent.name}/{nested_root.name}"
         )
 
-        prim_path = assembler.add_nested_asset_reference(
+        prim_path = nested_service.add_nested_asset_reference(
             container_dir=container_dir,
             group="Furniture",
             prim_name="Counter_01",
@@ -873,8 +859,7 @@ def test_nested_reference_composed_in_scene():
         nested_root = create_aswf_folder(assets_dir, "counter_table")
         container_dir = container_root.parent
 
-        assembler = AssetAssembler()
-        assembler.add_nested_asset_reference(
+        nested_service.add_nested_asset_reference(
             container_dir=container_dir,
             group="Furniture",
             prim_name="Counter_01",

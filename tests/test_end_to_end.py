@@ -19,8 +19,9 @@ async def test_full_scene_build():
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import LLMSettings, SceneDefaults, Settings, SkillConfig
     from bowerbot.project import Project
-    from bowerbot.scene_builder import SceneBuilder
+    from bowerbot.services import stage_service
     from bowerbot.skills.registry import SkillRegistry
+    from bowerbot.state import SceneState
 
     tmp = tempfile.mkdtemp()
     tmp_path = Path(tmp)
@@ -60,8 +61,12 @@ async def test_full_scene_build():
 
     project = Project.create(Path(settings.projects_dir), "e2e_test")
 
-    builder = SceneBuilder(scene_defaults=settings.scene_defaults)
-    builder.set_project(project)
+    state = SceneState(scene_defaults=settings.scene_defaults)
+    state.project = project
+    state.stage_path = project.scene_path
+    if project.scene_path.exists():
+        state.stage = stage_service.open_stage(project.scene_path)
+
     registry = SkillRegistry()
     registry.load_from_settings(settings)
 
@@ -69,7 +74,7 @@ async def test_full_scene_build():
 
     agent = AgentRuntime(
         settings=settings,
-        scene_builder=builder,
+        state=state,
         skill_registry=registry,
     )
 

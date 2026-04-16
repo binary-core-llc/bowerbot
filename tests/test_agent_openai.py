@@ -19,9 +19,9 @@ async def test_agent_with_local_assets():
     from pxr import Usd, UsdGeom
 
     from bowerbot.agent import AgentRuntime
-    from bowerbot.config import Settings, LLMSettings, SkillConfig
-    from bowerbot.scene_builder import SceneBuilder
+    from bowerbot.config import LLMSettings, Settings, SkillConfig
     from bowerbot.skills.registry import SkillRegistry
+    from bowerbot.state import SceneState
 
     # 1. Create test assets on disk
     tmp = tempfile.mkdtemp()
@@ -55,13 +55,13 @@ async def test_agent_with_local_assets():
         },
     )
 
-    builder = SceneBuilder(scene_defaults=settings.scene_defaults)
+    state = SceneState(scene_defaults=settings.scene_defaults)
     registry = SkillRegistry()
     registry.load_from_settings(settings)
 
     agent = AgentRuntime(
         settings=settings,
-        scene_builder=builder,
+        state=state,
         skill_registry=registry,
     )
 

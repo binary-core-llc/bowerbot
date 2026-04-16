@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/binary-core-llc/bowerbot/compare/v1.2.0...v1.3.0) (2026-04-16)
+
+
+### Features
+
+* place_asset_inside for nested asset references with full coordi… ([#71](https://github.com/binary-core-llc/bowerbot/issues/71)) ([c446b4b](https://github.com/binary-core-llc/bowerbot/commit/c446b4b8af8c8b2f968c03a2bc0cfa9432624b11))
+
 ## [1.2.0](https://github.com/binary-core-llc/bowerbot/compare/v1.1.1...v1.2.0) (2026-04-14)
 
 

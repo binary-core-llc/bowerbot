@@ -8,6 +8,8 @@ exact spatial coordinates.
 import math
 from dataclasses import dataclass
 
+from pxr import Gf
+
 from bowerbot.schemas import PlacementCategory, PositionMode
 
 # Default vertical offset (meters) above an asset's top surface
@@ -129,29 +131,46 @@ class SceneGraphBuilder:
         ty: float,
         tz: float,
         has_explicit_y: bool,
+        world_to_local_mat: Gf.Matrix4d | None = None,
+        asset_mpu: float = 1.0,
     ) -> tuple[float, float, float]:
-        """Resolve a translate value inside an asset to absolute coordinates.
+        """Resolve a translate value into asset-local meters.
 
-        Works for any prim type placed inside an asset — lights, cameras,
+        Works for any prim placed inside an asset — lights, cameras,
         referenced sub-assets, or anything else.
 
         Args:
             mode: Coordinate system to interpret the translate values.
-            bounds: Asset geometry bounds dict with ``min``, ``max``,
-                ``center`` keys (only used for ``BOUNDS_OFFSET`` mode).
-                Can be ``None`` — in that case translate values pass
-                through unchanged.
-            tx: X translate value.
-            ty: Y translate value.
-            tz: Z translate value.
+            bounds: Asset-local geometry bounds (meters), only used
+                for ``BOUNDS_OFFSET`` mode.
+            tx, ty, tz: Input translate values.
             has_explicit_y: Whether the caller provided an explicit Y.
                 Only affects ``BOUNDS_OFFSET`` mode.
+            world_to_local_mat: Inverse world transform of the
+                container's scene placement. When provided in
+                ``ABSOLUTE`` mode, converts world-space input to
+                asset-internal coordinates.
+            asset_mpu: Asset's metersPerUnit — used to convert
+                asset-internal coordinates back into meters after
+                applying ``world_to_local_mat``.
 
         Returns:
-            Absolute ``(x, y, z)`` position tuple in the asset's
-            coordinate space.
+            ``(x, y, z)`` translate tuple in asset-local meters,
+            ready to pass to the engine.
         """
-        if mode is PositionMode.ABSOLUTE or bounds is None:
+        if mode is PositionMode.ABSOLUTE:
+            if world_to_local_mat is None:
+                return tx, ty, tz
+            asset_internal = world_to_local_mat.Transform(
+                Gf.Vec3d(tx, ty, tz),
+            )
+            return (
+                asset_internal[0] * asset_mpu,
+                asset_internal[1] * asset_mpu,
+                asset_internal[2] * asset_mpu,
+            )
+
+        if bounds is None:
             return tx, ty, tz
 
         return SceneGraphBuilder.apply_bounds_offsets(

@@ -38,6 +38,7 @@ class ASWFLayerNames:
     GEO = "geo.usda"
     MTL = "mtl.usda"
     LGT = "lgt.usda"
+    CONTENTS = "contents.usda"  # Nested asset references placed inside this asset
     MAPS = "maps"
     TEXTURES = "textures"
 
@@ -109,6 +110,18 @@ class AssetMetadata(BaseModel):
     source_skill: str  # e.g. "sketchfab", "local", "cgtrader"
     source_id: str  # Skill-specific identifier (URL, SKU, file path)
     file_path: str | None = None  # Local path after download
+
+
+class TransformParams(BaseModel):
+    """A prim transform (translate + rotate + scale).
+
+    Reusable across any operation that places a prim — nested assets,
+    cameras, or other scene/asset objects.
+    """
+
+    translate: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    rotate: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
 
 
 

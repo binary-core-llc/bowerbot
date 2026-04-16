@@ -11,7 +11,12 @@ from pxr import Usd, UsdGeom, UsdLux, UsdShade
 
 from bowerbot.engine.asset_assembler import AssetAssembler
 from bowerbot.engine.dependency_resolver import DependencyResolver
-from bowerbot.schemas import LightParams, LightType
+from bowerbot.schemas import (
+    ASWFLayerNames,
+    LightParams,
+    LightType,
+    TransformParams,
+)
 from bowerbot.skills.local.local import LocalSkill
 
 
@@ -805,3 +810,96 @@ def test_update_light_rotation():
                 break
         else:
             raise AssertionError("No rotateXYZ op found")
+
+
+# ── Nested Asset Placement ───────────────────────────────────────
+
+
+def test_add_nested_asset_reference_creates_contents():
+    """add_nested_asset_reference writes a reference into contents.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "building")
+        nested_root = create_aswf_folder(assets_dir, "counter_table")
+        container_dir = container_root.parent
+
+        assembler = AssetAssembler()
+        ref_asset_path = (
+            f"../{nested_root.parent.name}/{nested_root.name}"
+        )
+
+        prim_path = assembler.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Furniture",
+            prim_name="Counter_01",
+            ref_asset_path=ref_asset_path,
+            transform=TransformParams(
+                translate=(1.0, 0.0, 2.0),
+                rotate=(0.0, 90.0, 0.0),
+            ),
+        )
+
+        # contents.usda exists and has the correct prim
+        contents_path = container_dir / ASWFLayerNames.CONTENTS
+        assert contents_path.exists()
+        assert prim_path.endswith("/contents/Furniture/Counter_01")
+
+        # Root file references contents.usda
+        stage = Usd.Stage.Open(str(container_root))
+        composed = stage.GetPrimAtPath(prim_path)
+        assert composed.IsValid(), (
+            f"Composed prim not found at {prim_path}"
+        )
+
+        # Transform is applied
+        xf = UsdGeom.Xformable(composed)
+        translate = xf.GetLocalTransformation().ExtractTranslation()
+        assert abs(translate[0] - 1.0) < 0.01
+        assert abs(translate[2] - 2.0) < 0.01
+
+
+def test_nested_reference_composed_in_scene():
+    """Nested reference resolves correctly when the container is
+    itself referenced by a scene."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "building")
+        nested_root = create_aswf_folder(assets_dir, "counter_table")
+        container_dir = container_root.parent
+
+        assembler = AssetAssembler()
+        assembler.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Furniture",
+            prim_name="Counter_01",
+            ref_asset_path=f"../{nested_root.parent.name}/{nested_root.name}",
+            transform=TransformParams(translate=(0.5, 0.0, 0.0)),
+        )
+
+        # Compose the container as if placed in a scene
+        scene_path = tmp_path / "scene.usda"
+        scene_stage = Usd.Stage.CreateNew(str(scene_path))
+        UsdGeom.SetStageMetersPerUnit(scene_stage, 1.0)
+        UsdGeom.SetStageUpAxis(scene_stage, UsdGeom.Tokens.y)
+        scene_root = scene_stage.DefinePrim("/Scene", "Xform")
+        scene_stage.SetDefaultPrim(scene_root)
+        building_prim = scene_stage.DefinePrim(
+            "/Scene/Building_01", "Xform",
+        )
+        rel = container_root.relative_to(tmp_path).as_posix()
+        building_prim.GetReferences().AddReference(f"./{rel}")
+        scene_stage.Save()
+
+        scene_stage = Usd.Stage.Open(str(scene_path))
+        nested_composed = scene_stage.GetPrimAtPath(
+            "/Scene/Building_01/contents/Furniture/Counter_01",
+        )
+        assert nested_composed.IsValid(), (
+            "Nested reference not resolved in scene composition"
+        )

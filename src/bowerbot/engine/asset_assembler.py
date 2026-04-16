@@ -34,6 +34,7 @@ from bowerbot.schemas import (
     LightParams,
     MaterialXShaders,
     ProceduralMaterialParams,
+    TransformParams,
 )
 from bowerbot.utils.usd_utils import LIGHT_CLASSES, get_prim_ref_paths
 
@@ -435,20 +436,35 @@ class AssetAssembler:
         light_schema.CreateExposureAttr(light.exposure)
         light_schema.CreateColorAttr(Gf.Vec3f(*light.color))
 
+        # Asset lights write into the asset's internal coordinate frame,
+        # so spatial attributes (radius, width, height, length) must be
+        # converted from meters to asset units.
+        unit_factor = self._unit_factor(asset_dir)
         light_prim = light_schema.GetPrim()
         self._set_light_extra_attrs(
             light_prim,
             {
                 "angle": light.angle,
                 "texture": light.texture,
-                "radius": light.radius,
-                "width": light.width,
-                "height": light.height,
-                "length": light.length,
+                "radius": (
+                    light.radius * unit_factor
+                    if light.radius is not None else None
+                ),
+                "width": (
+                    light.width * unit_factor
+                    if light.width is not None else None
+                ),
+                "height": (
+                    light.height * unit_factor
+                    if light.height is not None else None
+                ),
+                "length": (
+                    light.length * unit_factor
+                    if light.length is not None else None
+                ),
             },
         )
 
-        unit_factor = self._unit_factor(asset_dir)
         xformable = UsdGeom.Xformable(light_prim)
         xformable.AddTranslateOp().Set(
             Gf.Vec3d(
@@ -472,6 +488,121 @@ class AssetAssembler:
             light_name, light.light_type.value, asset_dir.name,
         )
         return light_prim_path
+
+    def add_nested_asset_reference(
+        self,
+        container_dir: Path,
+        group: str,
+        prim_name: str,
+        ref_asset_path: str,
+        transform: TransformParams,
+    ) -> str:
+        """Add a nested asset reference to a container's contents.usda.
+
+        Writes the reference into ``contents.usda`` inside the container
+        asset folder and updates the root file to reference it. The
+        nested asset lives wherever it normally lives (e.g.
+        ``project/assets/counter_table/``); only a reference arc is
+        written, using *ref_asset_path* (typically relative).
+
+        Args:
+            container_dir: ASWF asset folder that will contain the
+                nested reference.
+            group: Logical grouping under ``/{root}/contents/``
+                (e.g. ``"Furniture"``, ``"Props"``).
+            prim_name: Name of the new reference prim.
+            ref_asset_path: Reference target, relative to the
+                container folder when portable (e.g.
+                ``"../counter_table/counter_table.usda"``).
+            transform: Translation, rotation, and scale in the
+                container's coordinate space.
+
+        Returns:
+            The composed prim path in the container's root stage
+            (e.g. ``"/building/contents/Furniture/Counter_Table_01"``).
+        """
+        contents_path = container_dir / ASWFLayerNames.CONTENTS
+        default_prim_name = self._resolve_default_prim_name(container_dir)
+
+        if contents_path.exists():
+            contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
+        else:
+            contents_layer = Sdf.Layer.CreateNew(str(contents_path))
+            contents_layer.defaultPrim = default_prim_name
+
+        self._ensure_layer_scope(
+            contents_layer, default_prim_name, "contents", "Xform",
+        )
+
+        group_scope_path = Sdf.Path(
+            f"/{default_prim_name}/contents/{group}",
+        )
+        if not contents_layer.GetPrimAtPath(group_scope_path):
+            Sdf.CreatePrimInLayer(contents_layer, group_scope_path)
+            group_prim = contents_layer.GetPrimAtPath(group_scope_path)
+            group_prim.specifier = Sdf.SpecifierDef
+            group_prim.typeName = "Xform"
+
+        contents_layer.Save()
+
+        stage = Usd.Stage.Open(str(contents_path))
+        if stage is None:
+            msg = f"Cannot open contents layer: {contents_path}"
+            raise RuntimeError(msg)
+
+        ref_prim_path = (
+            f"/{default_prim_name}/contents/{group}/{prim_name}"
+        )
+        ref_prim = UsdGeom.Xform.Define(stage, ref_prim_path)
+        ref_prim.GetPrim().GetReferences().AddReference(ref_asset_path)
+
+        # Nested references are written in the container's internal
+        # coordinate frame. translate comes in as container-local
+        # meters; convert to the container's native units.
+        container_mpu = self.get_mpu(container_dir)
+        unit_factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
+
+        # Cross-unit compensation: if the referenced asset has a
+        # different mpu than the container, apply a scale so the
+        # asset appears at its correct physical size.
+        ref_full_path = (container_dir / ref_asset_path).resolve()
+        nested_mpu = (
+            self._read_asset_mpu_from_file(ref_full_path)
+            if ref_full_path.exists() else container_mpu
+        )
+        unit_compensation = (
+            nested_mpu / container_mpu if container_mpu > 0 else 1.0
+        )
+        final_scale = (
+            transform.scale[0] * unit_compensation,
+            transform.scale[1] * unit_compensation,
+            transform.scale[2] * unit_compensation,
+        )
+
+        xformable = UsdGeom.Xformable(ref_prim)
+        xformable.ClearXformOpOrder()
+        xformable.AddTranslateOp().Set(
+            Gf.Vec3d(
+                transform.translate[0] * unit_factor,
+                transform.translate[1] * unit_factor,
+                transform.translate[2] * unit_factor,
+            ),
+        )
+        if any(v != 0.0 for v in transform.rotate):
+            xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
+        if final_scale != (1.0, 1.0, 1.0):
+            xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+
+        stage.Save()
+
+        self._ensure_root_reference(container_dir, ASWFLayerNames.CONTENTS)
+
+        logger.info(
+            "Added nested asset %s -> %s in %s/%s",
+            prim_name, ref_asset_path, container_dir.name,
+            ASWFLayerNames.CONTENTS,
+        )
+        return ref_prim_path
 
     def update_light(
         self,
@@ -844,9 +975,18 @@ class AssetAssembler:
                 relative = "/"
         return f"/{default_prim_name}{relative}"
 
+    def get_mpu(self, asset_dir: Path) -> float:
+        """Return the asset's ``metersPerUnit``, reading from geo.usda.
+
+        Defaults to 1.0 when the asset has no geo layer or the value
+        cannot be read.
+        """
+        mpu, _ = self._read_stage_metadata_from_dir(asset_dir)
+        return mpu if mpu > 0 else 1.0
+
     def _unit_factor(self, asset_dir: Path) -> float:
         """Return the factor to convert meters to asset units."""
-        mpu, _ = self._read_stage_metadata_from_dir(asset_dir)
+        mpu = self.get_mpu(asset_dir)
         return 1.0 / mpu if mpu > 0 else 1.0
 
     def _meters_to_asset_units(
@@ -1131,6 +1271,12 @@ class AssetAssembler:
         if geo_path.exists():
             return AssetAssembler._read_stage_metadata(geo_path)
         return 1.0, "Y"
+
+    @staticmethod
+    def _read_asset_mpu_from_file(asset_file: Path) -> float:
+        """Read metersPerUnit from any USD file. Defaults to 1.0."""
+        mpu, _ = AssetAssembler._read_stage_metadata(asset_file)
+        return mpu if mpu > 0 else 1.0
 
     @staticmethod
     def _create_root_file(

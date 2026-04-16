@@ -408,6 +408,36 @@ class StageWriter:
         tex_val = tex_attr.Get()
         return tex_val.path if hasattr(tex_val, "path") else str(tex_val)
 
+    def get_container_world_inverse(
+        self, container_prim_path: str,
+    ) -> Gf.Matrix4d | None:
+        """Return the inverse world transform of a container's wrapper.
+
+        BowerBot places referenced assets under an Xform wrapper that
+        holds the scene-level translate/rotate/scale, with the reference
+        arc on an ``/asset`` child. The wrapper's inverse world matrix
+        is what callers need to convert world-space input coordinates
+        into the asset's internal coordinate frame.
+
+        Accepts either the wrapper prim path or the ``/asset`` child —
+        walks up one level from the latter.
+        """
+        if self._stage is None:
+            return None
+
+        prim = self._stage.GetPrimAtPath(container_prim_path)
+        if not prim or not prim.IsValid():
+            return None
+
+        wrapper = prim
+        if prim.GetName() == "asset":
+            parent = prim.GetParent()
+            if parent and parent.IsValid():
+                wrapper = parent
+
+        xform_cache = UsdGeom.XformCache()
+        return xform_cache.GetLocalToWorldTransform(wrapper).GetInverse()
+
     def rename_prim(self, old_path: str, new_path: str) -> bool:
         """Move/rename a prim to a new path in the hierarchy."""
 

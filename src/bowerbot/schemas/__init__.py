@@ -19,6 +19,7 @@ from bowerbot.schemas.models import (
     SceneObject,
     Severity,
     TextureCategory,
+    TransformParams,
     ValidationIssue,
     ValidationResult,
 )
@@ -39,6 +40,7 @@ __all__ = [
     "SceneObject",
     "Severity",
     "TextureCategory",
+    "TransformParams",
     "ValidationIssue",
     "ValidationResult",
 ]

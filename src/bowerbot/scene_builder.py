@@ -31,6 +31,7 @@ from bowerbot.schemas import (
     PositionMode,
     ProceduralMaterialParams,
     SceneObject,
+    TransformParams,
 )
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.utils.file_utils import copy_texture_to_project
@@ -106,6 +107,8 @@ class SceneBuilder:
                 return self._create_stage(params)
             case "place_asset":
                 return self._place_asset(params)
+            case "place_asset_inside":
+                return self._place_asset_inside(params)
             case "compute_grid_layout":
                 return self._compute_grid_layout(params)
             case "validate_scene":
@@ -232,6 +235,127 @@ class SceneBuilder:
                     "required": [
                         "asset_file_path",
                         "asset_name",
+                        "group",
+                        "translate_x",
+                        "translate_y",
+                        "translate_z",
+                    ],
+                },
+            ),
+            Tool(
+                name="place_asset_inside",
+                description=(
+                    "Place a 3D asset NESTED INSIDE another asset "
+                    "(the container). The asset becomes part of the "
+                    "container — if the container is duplicated or "
+                    "reused, the nested asset comes along. Use this "
+                    "for permanent fixtures (e.g. a built-in counter "
+                    "inside a building). For independent, moveable "
+                    "scene items, use place_asset instead. Translate "
+                    "values are in the container's coordinate space — "
+                    "use position_mode='absolute' with coordinates "
+                    "from list_prim_children bounds, or "
+                    "'bounds_offset' for offsets from the container's "
+                    "surfaces."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "asset_file_path": {
+                            "type": "string",
+                            "description": (
+                                "Local file path to the "
+                                ".usda/.usdc/.usdz asset."
+                            ),
+                        },
+                        "asset_name": {
+                            "type": "string",
+                            "description": (
+                                "Human-readable name for this "
+                                "asset instance."
+                            ),
+                        },
+                        "container_prim_path": {
+                            "type": "string",
+                            "description": (
+                                "Prim path of the ASWF container "
+                                "asset in the scene "
+                                "(e.g. '/Scene/Architecture/"
+                                "Building_01'). The nested asset "
+                                "will be written into this "
+                                "container's contents.usda."
+                            ),
+                        },
+                        "group": {
+                            "type": "string",
+                            "enum": [
+                                "Architecture", "Furniture",
+                                "Products", "Lighting", "Props",
+                            ],
+                            "description": (
+                                "Logical grouping inside the "
+                                "container's contents."
+                            ),
+                        },
+                        "translate_x": {
+                            "type": "number",
+                            "description": (
+                                "X position in meters "
+                                "(container-local)."
+                            ),
+                        },
+                        "translate_y": {
+                            "type": "number",
+                            "description": (
+                                "Y position in meters "
+                                "(container-local)."
+                            ),
+                        },
+                        "translate_z": {
+                            "type": "number",
+                            "description": (
+                                "Z position in meters "
+                                "(container-local)."
+                            ),
+                        },
+                        "rotate_y": {
+                            "type": "number",
+                            "description": (
+                                "Rotation around Y axis in "
+                                "degrees."
+                            ),
+                            "default": 0.0,
+                        },
+                        "position_mode": {
+                            "type": "string",
+                            "enum": [m.value for m in PositionMode],
+                            "description": (
+                                "How to interpret translate "
+                                "values: 'absolute' = world-space "
+                                "coordinates (as returned by "
+                                "list_scene / list_prim_children) "
+                                "— BowerBot converts to the "
+                                "container's internal coordinate "
+                                "frame; 'bounds_offset' = offsets "
+                                "from the container's bounding box "
+                                "surfaces."
+                            ),
+                            "default": PositionMode.ABSOLUTE.value,
+                        },
+                        "fix_root_prim": {
+                            "type": "boolean",
+                            "description": (
+                                "If true, auto-wraps non-Xform "
+                                "root prims in the asset being "
+                                "placed."
+                            ),
+                            "default": False,
+                        },
+                    },
+                    "required": [
+                        "asset_file_path",
+                        "asset_name",
+                        "container_prim_path",
                         "group",
                         "translate_x",
                         "translate_y",
@@ -406,10 +530,12 @@ class SceneBuilder:
                             "description": (
                                 "Asset-level lights only. How to "
                                 "interpret translate values: "
-                                "'absolute' = asset-local "
-                                "coordinates used as-is (e.g. "
-                                "when you have exact positions "
-                                "from list_prim_children bounds); "
+                                "'absolute' = world-space "
+                                "coordinates (as returned by "
+                                "list_scene / list_prim_children) "
+                                "— BowerBot converts to the "
+                                "asset's internal coordinate "
+                                "frame automatically; "
                                 "'bounds_offset' = offsets from "
                                 "the asset's bounding box "
                                 "surfaces (e.g. a bulb 0.5m "
@@ -559,8 +685,9 @@ class SceneBuilder:
                             "description": (
                                 "Asset-level lights only. How to "
                                 "interpret translate values: "
-                                "'absolute' = asset-local "
-                                "coordinates used as-is; "
+                                "'absolute' = world-space "
+                                "coordinates (BowerBot converts "
+                                "to asset-internal frame); "
                                 "'bounds_offset' = offsets from "
                                 "the asset's bounding box "
                                 "surfaces."
@@ -1018,6 +1145,118 @@ class SceneBuilder:
             },
         )
 
+    def _place_asset_inside(self, params: dict[str, Any]) -> ToolResult:
+        if (err := self._require_stage()):
+            return err
+
+        asset_path = Path(params["asset_file_path"])
+        asset_name = params["asset_name"]
+        container_prim_path = params["container_prim_path"]
+        group = params["group"]
+        tx = float(params["translate_x"])
+        ty = float(params["translate_y"])
+        tz = float(params["translate_z"])
+        ry = float(params.get("rotate_y", 0.0))
+
+        container_dir, _ = resolve_asset_dir_for_prim(
+            self.writer.stage, container_prim_path,
+        )
+        if container_dir is None:
+            return ToolResult(
+                success=False,
+                error=(
+                    f"Cannot find ASWF asset folder for "
+                    f"{container_prim_path}. Nested placement only "
+                    "works when the container is an ASWF folder asset "
+                    "(not a USDZ)."
+                ),
+            )
+
+        assets_dir = self._resolve_assets_dir()
+
+        try:
+            relative_asset_path = self.assembler.prepare_asset(
+                asset_path, assets_dir,
+                fix_root_prim=params.get("fix_root_prim", False),
+            )
+        except ValueError as e:
+            return ToolResult(success=False, error=str(e))
+
+        mode = PositionMode(
+            params.get("position_mode", PositionMode.ABSOLUTE.value),
+        )
+        tx, ty, tz = SceneGraphBuilder.resolve_asset_position(
+            mode,
+            self.assembler.get_geometry_bounds(container_dir),
+            tx, ty, tz,
+            has_explicit_y=params.get("translate_y") is not None,
+            world_to_local_mat=self.writer.get_container_world_inverse(
+                container_prim_path,
+            ),
+            asset_mpu=self.assembler.get_mpu(container_dir),
+        )
+
+        # Compute relative reference path from the container to the asset.
+        # relative_asset_path looks like "assets/counter_table/counter_table.usda";
+        # the container lives in "assets/<container_name>/" — so we go up one
+        # level and then into the target asset folder.
+        project_assets_dir = assets_dir
+        asset_full_path = (project_assets_dir.parent / relative_asset_path).resolve()
+        try:
+            ref_path = asset_full_path.relative_to(container_dir.resolve())
+            ref_asset_path = f"./{ref_path.as_posix()}"
+        except ValueError:
+            # Not a subpath — build a parent-relative path
+            ref_asset_path = (
+                "../" + asset_full_path.relative_to(
+                    container_dir.parent.resolve(),
+                ).as_posix()
+            )
+
+        self._object_count += 1
+        safe_asset_name = safe_prim_name(asset_name)
+        prim_name = f"{safe_asset_name}_{self._object_count:02d}"
+
+        try:
+            nested_prim_path = self.assembler.add_nested_asset_reference(
+                container_dir=container_dir,
+                group=group,
+                prim_name=prim_name,
+                ref_asset_path=ref_asset_path,
+                transform=TransformParams(
+                    translate=(tx, ty, tz),
+                    rotate=(0.0, ry, 0.0),
+                ),
+            )
+        except (ValueError, RuntimeError) as e:
+            self._object_count -= 1
+            return ToolResult(success=False, error=str(e))
+
+        self.writer.open_stage(self._stage_path)
+        self._update_project_meta()
+
+        composed_path = (
+            f"{container_prim_path}/asset{nested_prim_path}"
+        )
+        logger.info(
+            "Placed %s inside %s at %s",
+            asset_name, container_dir.name, nested_prim_path,
+        )
+        return ToolResult(
+            success=True,
+            data={
+                "prim_path": composed_path,
+                "asset": asset_name,
+                "container": container_dir.name,
+                "position": {"x": tx, "y": ty, "z": tz},
+                "rotation_y": ry,
+                "message": (
+                    f"Placed {asset_name} inside {container_dir.name} "
+                    f"at {composed_path}"
+                ),
+            },
+        )
+
     def _move_asset(self, params: dict[str, Any]) -> ToolResult:
         if (err := self._require_stage()):
             return err
@@ -1131,6 +1370,7 @@ class SceneBuilder:
             return file_path
         return copy_texture_to_project(source, self._resolve_output_dir())
 
+
     def _create_light(self, params: dict[str, Any]) -> ToolResult:
         if (err := self._require_stage()):
             return err
@@ -1168,6 +1408,10 @@ class SceneBuilder:
             self.assembler.get_geometry_bounds(asset_dir),
             tx, ty, tz,
             has_explicit_y=params.get("translate_y") is not None,
+            world_to_local_mat=self.writer.get_container_world_inverse(
+                asset_prim_path,
+            ),
+            asset_mpu=self.assembler.get_mpu(asset_dir),
         )
 
         texture = params.get("texture")
@@ -1344,6 +1588,10 @@ class SceneBuilder:
                     self.assembler.get_geometry_bounds(asset_dir),
                     *translate,
                     has_explicit_y=params.get("translate_y") is not None,
+                    world_to_local_mat=self.writer.get_container_world_inverse(
+                        prim_path,
+                    ),
+                    asset_mpu=self.assembler.get_mpu(asset_dir),
                 )
 
             try:

@@ -99,25 +99,39 @@ pointing to the lamp, `position_mode: "bounds_offset"` (or omit,
 it's the default), translate_y = 0.5.
 
 #### `position_mode: "absolute"`
-Translate values are asset-local coordinates used as-is. Use this
-when you know the exact position — typically from reading
-`list_prim_children` bounds. Essential for placing lights at
-interior fixture positions inside containers like buildings.
+Translate values are **world-space** coordinates — the same
+coordinates returned by `list_scene` and `list_prim_children`.
+BowerBot handles the conversion from world-space to the asset's
+internal coordinate frame automatically.
+
+Use this when you know the exact world-space position — typically
+from reading `list_prim_children` bounds. Works for placements
+that are inside, outside, above, below, or anywhere else relative
+to the container — the coordinate math is the same.
 
 Workflow for interior fixtures:
 1. Call `list_prim_children` on the container asset
-2. For each fixture prim, read its `bounds` — the center is
-   `((min.x + max.x)/2, (min.y + max.y)/2, (min.z + max.z)/2)`
-3. Call `create_light` with `position_mode: "absolute"` and those
+2. For each fixture prim, read its `bounds` (world-space meters)
+3. Compute the center: `((min.x + max.x)/2, ...)`
+4. Call `create_light` with `position_mode: "absolute"` and those
    center coordinates as `translate_x/y/z`
 
 Example: "add lights at the recessed fixtures inside the building":
 - `list_prim_children` returns `building_recessed_light_1` with
-  bounds center at world-space coordinates, e.g. `(5.96, 4.27, -2.59)`
-- Call `create_light(asset_prim_path=..., position_mode="absolute",
-  translate_x=5.96, translate_y=4.27, translate_z=-2.59, ...)`
+  bounds center at world-space coordinates, e.g.
+  `(10.96, 4.27, 1.42)` (after the building's scene placement)
+- Call `create_light(asset_prim_path=building, position_mode="absolute",
+  translate_x=10.96, translate_y=4.27, translate_z=1.42, ...)`
+- BowerBot writes the light to the building's `lgt.usda` at the
+  correct asset-internal position; when the scene is composed,
+  the light lands exactly where the fixture geometry is.
 
-Values are always in meters — BowerBot converts to asset units.
+The same workflow works for a lamp attached to the building but
+positioned outside (e.g. a porch light) — pass the desired
+world-space position and BowerBot places it correctly inside
+the building's asset folder.
+
+Values are always in meters.
 
 ### Light types
 - **DistantLight** — sun/directional. Only rotation matters.
@@ -233,6 +247,70 @@ Common procedural materials:
 - Materials go into the asset folder's mtl.usda — never into scene.usda
 - `bind_material` and `create_material` only work on ASWF asset folders (not USDZ)
 - For USDZ assets, materials are baked in — cannot override
+
+## Placing Assets: Scene-Level vs Nested
+
+BowerBot supports two ways to place an asset relative to another.
+The choice matters — it affects ownership, portability, and whether
+the thing travels with its container.
+
+### Scene-level placement (`place_asset`)
+
+The asset is placed as a sibling in the scene graph. It's independent —
+moving or removing the container doesn't affect it. Use for things
+that are arbitrary or per-layout.
+
+Examples: dining tables you rearrange, a rug placed in a room,
+decorative plants, any asset the user is likely to move individually.
+
+### Nested placement (`place_asset_inside`)
+
+The asset becomes part of the container's asset folder. If the
+container is duplicated or reused in another scene, the nested
+asset comes with it. Use for permanent fixtures.
+
+Examples: a built-in counter that defines a café, recessed light
+housings inside a building (as geometry), kitchen cabinets, anything
+the user would consider "part of" the container.
+
+### Choosing between them
+
+When the user's intent is **explicit**, follow it exactly:
+
+- "Put the table on the floor **as a scene-level asset**" → `place_asset`
+- "Put the table **inside the building** on the floor" → `place_asset_inside`
+- "**Nest** the counter inside the building" → `place_asset_inside`
+
+When the user's intent is **ambiguous**, use context clues:
+
+- "the counter" (singular, permanent-sounding) → lean toward nested
+- "a table" (singular, indefinite) → lean toward scene-level
+- "some tables and chairs" (plural, arrangement) → scene-level
+- "a built-in / recessed / embedded X" → nested
+- "put X inside Y" → explicit nesting
+
+If the sensible default is not obvious from context, **ASK the user**:
+"Should the counter be a fixture of the building (nested, travels
+with it) or an independent scene element?"
+
+### What BowerBot CANNOT do
+
+If the user asks to "extract" or "make scene-level" a prim that is
+**internal geometry** of a container asset (i.e. defined inside the
+asset's own `geo.usda`, not placed via `place_asset_inside`), you
+must refuse with a clear message:
+
+> "I can't move `<prim_name>` to scene level — it's internal geometry
+> of the `<container>` asset, baked into its `geo.usda`. To split it
+> out, you would need to re-export the asset from your DCC (Maya,
+> Houdini, Blender) with that part as a separate asset, then import
+> both into BowerBot. I can only move placements BowerBot created
+> (scene or nested references), not geometry inside the source asset."
+
+How to tell the difference: prims that appear as children of an asset
+(e.g. `building_recessed_light_1` inside a building) are almost
+always internal geometry. Prims placed via `place_asset_inside`
+appear under the container's `asset/contents/<Group>/` namespace.
 
 ## ASWF Asset Folders
 

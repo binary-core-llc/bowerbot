@@ -61,9 +61,9 @@ Think of it as:
 
 ### Pipeline Quality Built In
 
-BowerBot doesn't just place assets — it enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step. When an asset doesn't follow production guidelines (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`), BowerBot catches it **at assembly time** and tells you exactly what's wrong and how to fix it.
+BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. When an asset doesn't follow production guidelines (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`), BowerBot catches it **at assembly time** and tells you exactly what's wrong and how to fix it.
 
-This means problems that would normally surface weeks later in lighting, rendering, or review — broken references, unit mismatches, non-compliant asset structure — are caught **the moment the asset enters the scene**. Fix it once at the source, and every downstream department benefits.
+This means problems that would normally surface weeks later in lighting, rendering, or review (broken references, unit mismatches, non-compliant asset structure) are caught **the moment the asset enters the scene**. Fix it once at the source, and every downstream department benefits.
 
 > **"The cheapest bug to fix is the one you catch before it enters the pipeline."**
 
@@ -71,12 +71,12 @@ This means problems that would normally surface weeks later in lighting, renderi
 
 BowerBot targets any team assembling OpenUSD scenes, including:
 
-- 🏭 **Digital twin** — warehouses, retail floors, and factory scenes composed from vendor and internal assets
-- 🤖 **Robotics and simulation** — USD environments for Isaac Sim, Isaac Lab, and custom sim stacks
-- 🏛️ **Architecture and AEC** — bootstrapping interior and exterior USD scenes for visualization and design review
-- 🥽 **XR and spatial computing** — lightweight `.usdz` bundles for Vision Pro, Quest, and ARKit
-- 🎬 **VFX and animation** — shot-dressing and layout over ASWF-structured assets
-- 🛠️ **Pipeline TDs** — a scriptable, LLM-driven scene assembler extendable with custom skills
+- 🏭 **Digital twin**: warehouses, retail floors, and factory scenes composed from vendor and internal assets
+- 🤖 **Robotics and simulation**: USD environments for Isaac Sim, Isaac Lab, and custom sim stacks
+- 🏛️ **Architecture and AEC**: bootstrapping interior and exterior USD scenes for visualization and design review
+- 🥽 **XR and spatial computing**: lightweight `.usdz` bundles for Vision Pro, Quest, and ARKit
+- 🎬 **VFX and animation**: shot-dressing and layout over ASWF-structured assets
+- 🛠️ **Pipeline TDs**: a scriptable, LLM-driven scene assembler extendable with custom skills
 
 ---
 
@@ -96,7 +96,7 @@ BowerBot: Found espresso_cup.usdz. Table surface at Y=0.74.
          Placed at /Scene/Products/Espresso_Cup_01 (5.0, 0.74, 4.0)
 
 You: Move the cup to the left side of the table
-BowerBot: Moved to (4.7, 0.74, 4.0) — within table bounds.
+BowerBot: Moved to (4.7, 0.74, 4.0) (within table bounds).
 
 You: Validate and package
 BowerBot: All checks passed. Packaged to scenes/coffee_shop/scene.usdz
@@ -113,19 +113,19 @@ Projects are persistent. Close the session, come back later, and continue where 
 
 ## ✨ Features
 
-- 📦 **OpenUSD native** — references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box
-- 🏗️ **ASWF-compliant asset folders** — geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md)
-- 🎨 **Material binding** — apply MaterialX or existing `.usda` materials to specific mesh parts
-- 💡 **Native USD lighting** — sun, dome, point, area, disk, and tube lights at scene or asset level
-- 🧩 **Automatic unit handling** — assets in cm, mm, or inches are scaled correctly at reference time
-- 📐 **Geometry-aware placement** — bounding-box resolved positions for surface, above, below, or nested placements
-- 🔌 **Pluggable skills** — connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
-- 🗣️ **Conversational assembly** — guide scene construction through natural language
-- 🧠 **Multi-LLM support** — OpenAI, Anthropic, and any provider via [litellm](https://docs.litellm.ai/)
-- 📁 **Project-based workflow** — one folder per scene, resumable across sessions
-- ✅ **Scene validation** — `defaultPrim`, units, up-axis, reference resolution, and material binding checks
-- 📦 **USDZ packaging** — export for Apple Vision Pro, Omniverse, or any USD viewer
-- 🏗️ **Onboarding wizard** — zero-config setup in 60 seconds
+- 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box
+- 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md)
+- 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts
+- 💡 **Native USD lighting**: sun, dome, point, area, disk, and tube lights at scene or asset level
+- 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
+- 📐 **Geometry-aware placement**: bounding-box resolved positions for surface, above, below, or nested placements
+- 🔌 **Pluggable skills**: connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
+- 🗣️ **Conversational assembly**: guide scene construction through natural language
+- 🧠 **Multi-LLM support**: OpenAI, Anthropic, and any provider via [litellm](https://docs.litellm.ai/)
+- 📁 **Project-based workflow**: one folder per scene, resumable across sessions
+- ✅ **Scene validation**: `defaultPrim`, units, up-axis, reference resolution, and material binding checks
+- 📦 **USDZ packaging**: export for Apple Vision Pro, Omniverse, or any USD viewer
+- 🏗️ **Onboarding wizard**: zero-config setup in 60 seconds
 
 Built on [OpenUSD](https://openusd.org), the [ASWF USD Working Group](https://wiki.aswf.io/display/WGUSD) standards, and the [Alliance for OpenUSD (AOUSD)](https://aousd.org/) core spec driven by Pixar, Apple, NVIDIA, and others.
 
@@ -133,29 +133,29 @@ Built on [OpenUSD](https://openusd.org), the [ASWF USD Working Group](https://wi
 
 ## 🔄 How It Works
 
-BowerBot is conversational — you tell it what you want and it uses the right tools to build your scene. Behind the scenes, it manages asset discovery, USD composition, materials, lighting, and more.
+BowerBot is conversational: you tell it what you want and it uses the right tools to build your scene. Behind the scenes, it manages asset discovery, USD composition, materials, lighting, and more.
 
 ### Asset Discovery
 
 BowerBot searches for assets across all connected sources, prioritizing what's already available:
 
-1. **Local assets first** — BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers.
+1. **Local assets first**: BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers.
 
-2. **Cloud providers if needed** — If the asset isn't found locally, BowerBot searches connected providers like Sketchfab, and downloads the asset to your local directory. Future skills will add support for PolyHaven, Fab, CGTrader, Objaverse, and custom company DAMs.
+2. **Cloud providers if needed**: If the asset isn't found locally, BowerBot searches connected providers like Sketchfab, and downloads the asset to your local directory. Future skills will add support for PolyHaven, Fab, CGTrader, Objaverse, and custom company DAMs.
 
-3. **All downloads are cached locally** — Once an asset is downloaded from any source, it lives in your `assets_dir` and is available for all future projects without re-downloading.
+3. **All downloads are cached locally**: Once an asset is downloaded from any source, it lives in your `assets_dir` and is available for all future projects without re-downloading.
 
 ### Scene Assembly
 
 When you ask BowerBot to place an asset, it handles the USD composition correctly depending on the source:
 
-- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports) — wrapped in an ASWF asset folder at placement time, producing `asset_name/asset_name.usda` (root) + `geo.usda`.
-- **USDZ files** (from Sketchfab, DAMs, etc.) — placed as-is since they're already self-contained.
-- **Existing ASWF folders** — copied whole into the project, preserving their structure.
+- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports): wrapped in an ASWF asset folder at placement time, producing `asset_name/asset_name.usda` (root) + `geo.usda`.
+- **USDZ files** (from Sketchfab, DAMs, etc.): placed as-is since they're already self-contained.
+- **Existing ASWF folders**: copied whole into the project, preserving their structure.
 
 ### Material Workflow
 
-When you apply materials to an asset, BowerBot writes them into the asset folder's `mtl.usda` — not into the scene file. The scene stays clean with only references:
+When you apply materials to an asset, BowerBot writes them into the asset folder's `mtl.usda`, not the scene file. The scene stays clean with only references:
 
 ```
 You: Apply wood material to the table top
@@ -175,7 +175,7 @@ assets/single_table/
 
 ### Scene Output
 
-The scene file (`scene.usda`) contains only references and lights — no material data, no geometry copies, no sublayers. Clean and readable:
+The scene file (`scene.usda`) contains only references and lights: no material data, no geometry copies, no sublayers. Clean and readable:
 
 ```usda
 def Xform "Scene" (kind = "assembly") {
@@ -246,18 +246,18 @@ New to BowerBot? Watch the **[tutorial playlist on YouTube](https://www.youtube.
 
 ## 📁 Projects
 
-Each project is a self-contained folder — metadata, scene, assets, and packaged output in one place:
+Each project is a self-contained folder with metadata, scene, assets, and packaged output in one place:
 
 ```
 scenes/coffee_shop/
-  project.json    # Metadata: name, created, updated, object count
-  scene.usda      # The USD stage (references only — clean and readable)
+  project.json    # Metadata: name, created_at, updated_at, scene_file
+  scene.usda      # The USD stage (references only, clean and readable)
   scene.usdz      # Packaged output (Apple Vision Pro, Omniverse, etc.)
   assets/         # ASWF folders + self-contained USDZs used by this scene
   textures/       # Scene-level textures (HDRI maps for DomeLights, etc.)
 ```
 
-Projects are resumable — close the session, come back later, and continue where you left off:
+Projects are resumable. Close the session, come back later, and continue where you left off:
 
 ```
 $ bowerbot open coffee_shop
@@ -313,7 +313,7 @@ Skills extend BowerBot with new asset sources and capabilities. Each skill has a
 
 **Textures** : Searches the asset directory for texture files. Finds HDRIs (`.hdr`, `.exr`) for dome lights and material maps (`.png`, `.jpg`, `.tif`) for surfaces.
 
-More providers are planned (PolyHaven, Fab, CGTrader, Objaverse), and you can write your own skill for any asset source — see [CONTRIBUTING.md](CONTRIBUTING.md).
+More providers are planned (PolyHaven, Fab, CGTrader, Objaverse), and you can write your own skill for any asset source. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -366,7 +366,7 @@ Switch models by changing one line:
 |-------|-------------|----------------------|-------------|
 | `gpt-4.1` | Excellent | Excellent | **Yes** (default) |
 | `gpt-4.1-mini` | Good | Good | Yes (budget) |
-| `gpt-4o` | Poor | Poor | No — skips tool calls, ignores SKILL.md |
+| `gpt-4o` | Poor | Poor | No (skips tool calls, ignores SKILL.md) |
 | `anthropic/claude-sonnet-4-20250514` | Excellent | Excellent | Yes |
 
 BowerBot relies heavily on tool calling and SKILL.md instructions. Models that don't follow tool-calling patterns reliably will produce poor results.
@@ -421,7 +421,7 @@ src/bowerbot/
   cli.py              # Click CLI
   config.py           # Settings from ~/.bowerbot/config.json
   project.py          # Project lifecycle (create / load / resume)
-  state.py            # SceneState — the context threaded through every tool handler
+  state.py            # SceneState: the context threaded through every tool handler
   dispatcher.py       # Aggregates tool defs + routes tool calls to handlers
   token_manager.py    # Conversation compression and summarization
 
@@ -437,7 +437,7 @@ src/bowerbot/
     textures.py       #   HDRI / image / texture-category enums
     validation.py     #   Severity, ValidationIssue, ValidationResult
 
-  services/           # Pure-function business logic — all pxr usage lives here
+  services/           # Pure-function business logic (all pxr usage lives here)
     stage_service.py       #   Create / open / save stages, references, lights, transforms
     asset_service.py       #   ASWF folder creation, prepare_asset, compliance repair
     geometry_service.py    #   Bounds, unit conversion, grid / wall layouts, placement math
@@ -448,7 +448,7 @@ src/bowerbot/
     packaging_service.py   #   USDZ packaging
     dependency_service.py  #   USD file dependency tree walker
 
-  tools/              # LLM-facing API layer — tool defs + thin handlers
+  tools/              # LLM-facing API layer (tool defs + thin handlers)
     stage_tools.py         #   create_stage, list_scene, rename_prim, move_asset, ...
     asset_tools.py         #   place_asset, place_asset_inside, list / delete_project_*
     light_tools.py         #   create_light, update_light, remove_light
@@ -471,13 +471,13 @@ src/bowerbot/
 
 **Design principles**
 
-- **Services are pure functions** — they take primitives (`Usd.Stage`, `Path`, pydantic models) and return primitives; no classes, no hidden state
-- **State lives in one place** — `SceneState` holds the open stage, the project binding, and the object counter; tool handlers thread it into service calls
-- **Tools are thin** — each handler validates inputs, calls services, wraps the result in a `ToolResult`; zero domain logic
-- **All `pxr` is in `services/`** — the rest of the codebase never imports `pxr` directly
-- **Prompts are content** — editable `.md` files, not Python constants
-- **Skills are extensions** — new asset providers ship as Python packages discovered via entry points
-- **One config file** — `~/.bowerbot/config.json`, no `.env`
+- **Services are pure functions**: they take primitives (`Usd.Stage`, `Path`, pydantic models) and return primitives; no classes, no hidden state
+- **State lives in one place**: `SceneState` holds the open stage, the project binding, and the object counter; tool handlers thread it into service calls
+- **Tools are thin**: each handler validates inputs, calls services, wraps the result in a `ToolResult`; zero domain logic
+- **All `pxr` is in `services/`**: the rest of the codebase never imports `pxr` directly
+- **Prompts are content**: editable `.md` files, not Python constants
+- **Skills are extensions**: new asset providers ship as Python packages discovered via entry points
+- **One config file**: `~/.bowerbot/config.json`, no `.env`
 
 ---
 
@@ -488,12 +488,12 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 **Scene level**
 - `metersPerUnit = 1.0`, `upAxis = "Y"`, `defaultPrim` always set
 - Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Props`
-- References only — no inline geometry, no scattered material sublayers
+- References only: no inline geometry, no scattered material sublayers
 - Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched
 - Pre-packaging validator checks `defaultPrim`, units, up-axis, reference resolution, and material bindings
 
 **Asset level**
-- References (not sublayers) per ASWF guidelines — predictable opinion strength
+- References (not sublayers) per ASWF guidelines, for predictable opinion strength
 - Materials inline in `mtl.usda`, lights inline in `lgt.usda`, nested references in `contents.usda`
 - Automatic `metersPerUnit` conversion across composition boundaries
 
@@ -501,15 +501,15 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 
 ## 🗺️ Roadmap
 
-What's next for BowerBot — contributions welcome:
+What's next for BowerBot. Contributions welcome:
 
-- [ ] **USD Variant Sets** — ASWF-compliant variants on asset root prims (materials, geometry, lighting, configurations, and more)
-- [ ] **Scene templates** — JSON-driven scene assembly with asset resolution
-- [ ] **DCC exporter** — Maya/Houdini tool to export scene layout as BowerBot JSON
-- [ ] **More asset providers** — Fab, PolyHaven, Objaverse, CGTrader skills
-- [ ] **MCP Gateway** — FastAPI server for web UI and external AI clients
-- [ ] **Web UI** — chat panel + live 3D viewport
-- [ ] **BowerHub** — community skill registry
+- [ ] **USD Variant Sets**: ASWF-compliant variants on asset root prims (materials, geometry, lighting, configurations, and more)
+- [ ] **Scene templates**: JSON-driven scene assembly with asset resolution
+- [ ] **DCC exporter**: Maya/Houdini tool to export scene layout as BowerBot JSON
+- [ ] **More asset providers**: Fab, PolyHaven, Objaverse, CGTrader skills
+- [ ] **MCP Gateway**: FastAPI server for web UI and external AI clients
+- [ ] **Web UI**: chat panel + live 3D viewport
+- [ ] **BowerHub**: community skill registry
 
 ---
 

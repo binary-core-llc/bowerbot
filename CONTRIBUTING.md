@@ -28,7 +28,7 @@ chore/ci-setup
 
 ### 2. Make your changes
 
-Commit however you like on your branch — commit messages on feature branches don't matter. Only the PR title matters (see next step).
+Commit however you like on your branch; commit messages on feature branches don't matter. Only the PR title matters (see next step).
 
 ### 3. Open a PR
 
@@ -72,21 +72,24 @@ feat/my-feature → PR titled "feat: ..." → squash merge → main → Release 
 | `test` | Adding or updating tests | None |
 | `chore` | Build, CI, or tooling changes | None |
 
-Add `!` after the type for breaking changes (e.g., `feat!: redesign skill interface`) — this triggers a major bump (1.0.0 → 2.0.0).
+Add `!` after the type for breaking changes (e.g., `feat!: redesign skill interface`). This triggers a major bump (1.0.0 → 2.0.0).
 
 ## Project Structure
 
-Understanding where things live helps you contribute effectively:
+Understanding where things live helps you contribute effectively. BowerBot is organized FastAPI-style, so adding a feature is almost always a three-file change (schema + service + tool):
 
-- **`scene_builder.py`** — adapter between LLM tools and the engine. Core scene building tools live here.
-- **`engine/`** — pure USD operations. All `pxr` calls live here.
-- **`skills/`** — extension skills (asset providers, integrations).
-- **`prompts/`** — LLM instructions as `.md` files. Edit these to change agent behavior without touching Python.
-- **`utils/`** — shared utilities (USD introspection, file operations, naming).
+- **`schemas/`**: pydantic models and enums, grouped by domain.
+- **`services/`**: pure-function business logic. All `pxr` calls live here.
+- **`tools/`**: LLM-facing tool definitions and thin handlers that call services.
+- **`state.py`**: `SceneState` dataclass threaded through every tool handler.
+- **`dispatcher.py`**: tool registry and router.
+- **`skills/`**: extension skills (asset providers, integrations).
+- **`prompts/`**: LLM instructions as `.md` files. Edit these to change agent behavior without touching Python.
+- **`utils/`**: shared utilities (USD introspection, file operations, naming).
 
 ## Writing a Skill
 
-The best way to contribute is writing a new **skill** for an asset provider you use — Sketchfab, PolyHaven, CGTrader, a company DAM, or any platform that serves 3D assets or textures.
+The best way to contribute is writing a new **skill** for an asset provider you use: Sketchfab, PolyHaven, CGTrader, a company DAM, or any platform that serves 3D assets or textures.
 
 Each skill is a folder in `src/bowerbot/skills/` with:
 
@@ -101,17 +104,17 @@ See `skills/sketchfab/` for a provider skill example and `skills/textures/` for 
 
 ### Key rules
 
-- **Skills never touch USD** — all `pxr` calls live in `engine/`
-- **One SKILL.md per skill** — it's injected into the system prompt when active
-- **Return ToolResult** — always return `ToolResult(success=True/False, ...)` from `execute()`
-- **Use `self.assets_dir`** — all skills receive a centralized asset directory from the registry. Provider skills declare a `cache_subdir` for downloads (e.g., `cache/polyhaven`). Search skills scan the full tree.
-- **No hardcoded paths** — paths come from the system, not from skill config
+- **Skills never touch USD**: all `pxr` calls live in `services/`
+- **One SKILL.md per skill**: it's injected into the system prompt when active
+- **Return ToolResult**: always return `ToolResult(success=True/False, ...)` from `execute()`
+- **Use `self.assets_dir`**: all skills receive a centralized asset directory from the registry. Provider skills declare a `cache_subdir` for downloads (e.g., `cache/polyhaven`). Search skills scan the full tree.
+- **No hardcoded paths**: paths come from the system, not from skill config
 
 ## Code Style
 
 - Python 3.12+
 - Type hints on all public methods
-- No `.env` files — all config goes through `~/.bowerbot/config.json`
+- No `.env` files; all config goes through `~/.bowerbot/config.json`
 - Keep imports at the top of the file, not inside methods
 
 ## Running Tests

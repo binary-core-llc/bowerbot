@@ -356,7 +356,7 @@ Switch models by changing one line:
 
 ```json
 { "model": "gpt-4.1" }
-{ "model": "anthropic/claude-sonnet-4-20250514" }
+{ "model": "anthropic/claude-sonnet-4-6" }
 { "model": "deepseek/deepseek-chat" }
 ```
 
@@ -367,7 +367,7 @@ Switch models by changing one line:
 | `gpt-4.1` | Excellent | Excellent | **Yes** (default) |
 | `gpt-4.1-mini` | Good | Good | Yes (budget) |
 | `gpt-4o` | Poor | Poor | No (skips tool calls, ignores SKILL.md) |
-| `anthropic/claude-sonnet-4-20250514` | Excellent | Excellent | Yes |
+| `anthropic/claude-sonnet-4-6` | Excellent | Excellent | Yes |
 
 BowerBot relies heavily on tool calling and SKILL.md instructions. Models that don't follow tool-calling patterns reliably will produce poor results.
 

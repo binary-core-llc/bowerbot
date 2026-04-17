@@ -27,7 +27,7 @@ async def test_anthropic():
     import litellm
 
     response = await litellm.acompletion(
-        model="anthropic/claude-sonnet-4-20250514",
+        model="anthropic/claude-sonnet-4-6",
         messages=[{"role": "user", "content": "Say 'hello' and nothing else."}],
         max_tokens=10,
     )

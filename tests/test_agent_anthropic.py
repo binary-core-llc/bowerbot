@@ -30,7 +30,7 @@ async def test_agent_anthropic():
 
     settings = Settings(
         llm=LLMSettings(
-            model="anthropic/claude-sonnet-4-20250514",
+            model="anthropic/claude-sonnet-4-6",
             temperature=0.1,
             max_tokens=1024,
         ),

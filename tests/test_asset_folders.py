@@ -425,6 +425,88 @@ def test_list_materials():
         assert "/table/top" in wood[0]["bound_prims"]
 
 
+def test_cleanup_unused_materials_removes_unbound():
+    """cleanup_unused_materials deletes defined-but-unbound material prims."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "table")
+        wood = create_material(source_dir, "wood")
+        metal = create_material(source_dir, "metal")
+
+        root = asset_service.create_asset_folder(output_dir, "table", geo)
+
+        # Bind wood to the top; leave metal and an extra unbound material.
+        material_service.add_material(
+            root.parent, wood, "/table/top", "/mtl/wood",
+        )
+        # Copy metal definition in too, but never bind it.
+        material_service.add_material(
+            root.parent, metal, "/table/top", "/mtl/metal",
+        )
+        # Rebind top to wood so metal becomes unbound.
+        material_service.add_material(
+            root.parent, wood, "/table/top", "/mtl/wood",
+        )
+
+        mtl_stage = Usd.Stage.Open(str(root.parent / "mtl.usda"))
+        before = {
+            p.GetName() for p in mtl_stage.TraverseAll() if p.IsA(UsdShade.Material)
+        }
+        assert "wood" in before
+        assert "metal" in before
+
+        removed = material_service.cleanup_unused_materials(root.parent)
+        assert removed == ["metal"]
+
+        mtl_stage = Usd.Stage.Open(str(root.parent / "mtl.usda"))
+        after = {
+            p.GetName() for p in mtl_stage.TraverseAll() if p.IsA(UsdShade.Material)
+        }
+        assert after == {"wood"}
+
+
+def test_cleanup_unused_materials_no_mtl_layer():
+    """cleanup_unused_materials returns [] when mtl.usda doesn't exist."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "table")
+        root = asset_service.create_asset_folder(output_dir, "table", geo)
+
+        assert not (root.parent / "mtl.usda").exists()
+        assert material_service.cleanup_unused_materials(root.parent) == []
+
+
+def test_cleanup_unused_materials_drops_empty_layer():
+    """When every material is unbound, the layer is deleted and root refs rebuild."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+
+        geo = create_geometry(source_dir, "table")
+        wood = create_material(source_dir, "wood")
+
+        root = asset_service.create_asset_folder(output_dir, "table", geo)
+        material_service.add_material(
+            root.parent, wood, "/table/top", "/mtl/wood",
+        )
+        material_service.remove_material_binding(root.parent, "/table/top")
+
+        # remove_material_binding already triggered cleanup; follow-up should
+        # be a no-op and mtl.usda should be gone.
+        assert not (root.parent / "mtl.usda").exists()
+        assert material_service.cleanup_unused_materials(root.parent) == []
+
+
 # ── dependency_service ─
 
 

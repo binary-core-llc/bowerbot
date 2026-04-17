@@ -199,6 +199,79 @@ def list_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
     )
 
 
+def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Delete material definitions from ``mtl.usda`` that no prim binds to.
+
+    Scoped to one asset when ``asset_prim_path`` is given, otherwise
+    sweeps every ASWF asset folder in the project.
+    """
+    if (err := require_stage(state)):
+        return err
+
+    asset_prim_path = params.get("asset_prim_path")
+
+    if asset_prim_path:
+        asset_dir, _ = resolve_asset_dir_for_prim(state.stage, asset_prim_path)
+        if asset_dir is None:
+            return ToolResult(
+                success=False,
+                error=(
+                    f"Cannot find ASWF asset folder for {asset_prim_path}. "
+                    "Cleanup only works on ASWF folder assets."
+                ),
+            )
+
+        removed = material_service.cleanup_unused_materials(asset_dir)
+        state.stage = stage_service.open_stage(state.stage_path)
+
+        logger.info(
+            "Cleaned %d unused material(s) from %s", len(removed), asset_dir.name,
+        )
+        return ToolResult(
+            success=True,
+            data={
+                "asset_folder": asset_dir.name,
+                "removed_count": len(removed),
+                "removed": removed,
+                "message": (
+                    f"Removed {len(removed)} unused material(s) from "
+                    f"{asset_dir.name}."
+                ),
+            },
+        )
+
+    assets_dir = resolve_assets_dir(state)
+    per_folder: list[dict[str, Any]] = []
+    total = 0
+    for entry in sorted(assets_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        if not (entry / ASWFLayerNames.MTL).exists():
+            continue
+        removed = material_service.cleanup_unused_materials(entry)
+        if removed:
+            per_folder.append({"asset_folder": entry.name, "removed": removed})
+            total += len(removed)
+
+    state.stage = stage_service.open_stage(state.stage_path)
+
+    logger.info(
+        "Cleaned %d unused material(s) across %d asset folder(s)",
+        total, len(per_folder),
+    )
+    return ToolResult(
+        success=True,
+        data={
+            "total_removed": total,
+            "per_folder": per_folder,
+            "message": (
+                f"Removed {total} unused material(s) across "
+                f"{len(per_folder)} asset folder(s)."
+            ),
+        },
+    )
+
+
 def _to_asset_local(prim_path: str, ref_prim_path: str) -> str:
     """Strip the scene-side reference prefix to get an asset-local path."""
     if prim_path.startswith(ref_prim_path):
@@ -340,6 +413,31 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
+    Tool(
+        name="cleanup_unused_materials",
+        description=(
+            "Delete material definitions from an asset's mtl.usda that no "
+            "prim binds to. Use this when the user asks to clean up, prune, "
+            "or remove unused / orphaned / leftover materials. If "
+            "asset_prim_path is provided, cleans only that asset's folder; "
+            "if omitted, sweeps every ASWF asset folder in the project. "
+            "Returns the list of removed material names."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "asset_prim_path": {
+                    "type": "string",
+                    "description": (
+                        "Optional: prim path of an asset in the scene "
+                        "(e.g. '/Scene/Architecture/Building_01'). If "
+                        "omitted, every ASWF asset folder in the project "
+                        "is cleaned."
+                    ),
+                },
+            },
+        },
+    ),
 ]
 
 
@@ -348,4 +446,5 @@ HANDLERS = {
     "bind_material": bind_material,
     "list_materials": list_materials,
     "remove_material": remove_material,
+    "cleanup_unused_materials": cleanup_unused_materials,
 }

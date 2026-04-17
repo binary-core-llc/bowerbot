@@ -194,7 +194,7 @@ def remove_material_binding(asset_dir: Path, prim_path: str) -> None:
         UsdShade.MaterialBindingAPI(prim).UnbindAllBindings()
 
     stage.Save()
-    _cleanup_unused_materials(mtl_path, asset_dir)
+    cleanup_unused_materials(asset_dir)
 
 
 def list_materials(asset_dir: Path) -> list[dict]:
@@ -244,33 +244,50 @@ def _find_first_material(file_path: Path) -> str | None:
     return None
 
 
-def _cleanup_unused_materials(mtl_path: Path, asset_dir: Path) -> None:
-    """Remove unused material definitions from ``mtl.usda``.
+def cleanup_unused_materials(asset_dir: Path) -> list[str]:
+    """Remove unbound material definitions from an asset's ``mtl.usda``.
 
-    When the layer becomes empty, deletes the file and rebuilds
-    root references.
+    Resolves bindings through the composed root stage so binding opinions
+    authored on ``over`` prims in ``mtl.usda`` count. Every ``Material``
+    prim in ``mtl.usda`` that no prim binds to is deleted. When the layer
+    becomes empty, it is removed and the root references are rebuilt.
+
+    Returns the sorted list of removed material names (empty if
+    ``mtl.usda`` is missing or no unused materials were found).
     """
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    mtl_path = asset_dir / ASWFLayerNames.MTL
+    if not mtl_path.exists():
+        return []
 
-    stage = Usd.Stage.Open(str(mtl_path))
-    if stage is None:
-        return
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return []
+
+    root_stage = Usd.Stage.Open(str(root_file))
+    if root_stage is None:
+        return []
 
     bound_materials: set[str] = set()
-    for prim in stage.Traverse():
+    for prim in root_stage.Traverse():
         bound_mat, _ = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()
         if bound_mat:
             bound_materials.add(str(bound_mat.GetPath()))
 
-    mtl_layer = stage.GetRootLayer()
+    mtl_layer = Sdf.Layer.FindOrOpen(str(mtl_path))
+    if mtl_layer is None:
+        return []
+
+    default_prim_name = resolve_default_prim_name(asset_dir)
     mtl_scope_path = Sdf.Path(f"/{default_prim_name}/mtl")
     mtl_scope = mtl_layer.GetPrimAtPath(mtl_scope_path)
+    removed: list[str] = []
     if mtl_scope:
         to_remove = [
             child.path for child in mtl_scope.nameChildren
             if str(child.path) not in bound_materials
         ]
         for path in to_remove:
+            removed.append(path.name)
             edit = Sdf.BatchNamespaceEdit()
             edit.Add(path, Sdf.Path.emptyPath)
             mtl_layer.Apply(edit)
@@ -280,3 +297,10 @@ def _cleanup_unused_materials(mtl_path: Path, asset_dir: Path) -> None:
     remove_empty_layer(
         mtl_path, asset_dir, lambda p: p.IsA(UsdShade.Material),
     )
+
+    if removed:
+        logger.info(
+            "Cleaned %d unused material(s) from %s",
+            len(removed), asset_dir.name,
+        )
+    return sorted(removed)

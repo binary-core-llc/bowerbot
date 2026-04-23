@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/binary-core-llc/bowerbot/compare/v1.3.0...v1.4.0) (2026-04-23)
+
+
+### Features
+
+* cleanup_unused_materials tool to prune orphaned material defs ([#74](https://github.com/binary-core-llc/bowerbot/issues/74)) ([e42dc07](https://github.com/binary-core-llc/bowerbot/commit/e42dc079bd24850473b052875e330c6f9eb9e658))
+* self-contained asset folder intake with localization ([#78](https://github.com/binary-core-llc/bowerbot/issues/78)) ([dcd707b](https://github.com/binary-core-llc/bowerbot/commit/dcd707b1c3a0c768c94e2a15ae1642f41f9103cc))
+
+
+### Documentation
+
+* complete Scene Builder Tools table with all 22 tools ([#77](https://github.com/binary-core-llc/bowerbot/issues/77)) ([d44ea98](https://github.com/binary-core-llc/bowerbot/commit/d44ea98e613b56924727aefcfd76809db0932fe8))
+
 ## [1.3.0](https://github.com/binary-core-llc/bowerbot/compare/v1.2.0...v1.3.0) (2026-04-16)
 
 

@@ -13,6 +13,7 @@ from typing import Any
 from bowerbot.schemas import (
     ASWFLayerNames,
     AssetMetadata,
+    IntakeReport,
     PositionMode,
     SceneObject,
     TransformParams,
@@ -59,11 +60,11 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
     assets_dir = resolve_assets_dir(state)
     try:
-        relative_path = asset_service.prepare_asset(
+        report = asset_service.prepare_asset(
             asset_path, assets_dir,
             fix_root_prim=params.get("fix_root_prim", False),
         )
-    except ValueError as e:
+    except (ValueError, RuntimeError) as e:
         state.object_count -= 1
         return ToolResult(success=False, error=str(e))
 
@@ -73,7 +74,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
             name=asset_name,
             source_skill="local",
             source_id=str(asset_path),
-            file_path=relative_path,
+            file_path=report.scene_ref_path,
         ),
         translate=(tx, ty, tz),
         rotate=(0.0, ry, 0.0),
@@ -91,7 +92,8 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
             "asset": asset_name,
             "position": {"x": tx, "y": ty, "z": tz},
             "rotation_y": ry,
-            "message": f"Placed {asset_name} at {prim_path}",
+            "intake": _intake_summary(report),
+            "message": _placement_message(asset_name, prim_path, report),
         },
     )
 
@@ -125,11 +127,11 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
     assets_dir = resolve_assets_dir(state)
     try:
-        relative_asset_path = asset_service.prepare_asset(
+        report = asset_service.prepare_asset(
             asset_path, assets_dir,
             fix_root_prim=params.get("fix_root_prim", False),
         )
-    except ValueError as e:
+    except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
 
     mode = PositionMode(
@@ -147,7 +149,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
     )
 
     ref_asset_path = _compute_ref_asset_path(
-        relative_asset_path, assets_dir, container_dir,
+        report.scene_ref_path, assets_dir, container_dir,
     )
 
     state.object_count += 1
@@ -185,6 +187,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
             "container": container_dir.name,
             "position": {"x": tx, "y": ty, "z": tz},
             "rotation_y": ry,
+            "intake": _intake_summary(report),
             "message": (
                 f"Placed {asset_name} inside {container_dir.name} "
                 f"at {composed_path}"
@@ -333,6 +336,40 @@ def _compute_ref_asset_path(
                 container_dir.parent.resolve(),
             ).as_posix()
         )
+
+
+def _intake_summary(report: IntakeReport) -> dict[str, Any]:
+    """Condense an intake report into fields surfaced to the LLM."""
+    return {
+        "asset_folder": report.asset_folder_name,
+        "root_canonical_name": report.root_canonical_name,
+        "was_renamed": report.was_renamed,
+        "root_original_name": (
+            report.root_original_name if report.was_renamed else None
+        ),
+        "files_copied": report.files_copied,
+        "localized_layers": report.localized_layers,
+        "localized_assets": report.localized_assets,
+        "warnings": report.warnings,
+    }
+
+
+def _placement_message(
+    asset_name: str, prim_path: str, report: IntakeReport,
+) -> str:
+    """Format a placement message that narrates intake normalization."""
+    parts = [f"Placed {asset_name} at {prim_path}."]
+    if report.was_renamed:
+        parts.append(
+            f"Normalized on intake: {report.root_original_name} -> "
+            f"{report.root_canonical_name} (ASWF convention).",
+        )
+    localized = len(report.localized_layers) + len(report.localized_assets)
+    if localized:
+        parts.append(
+            f"Localized {localized} external dependency/ies into the asset folder.",
+        )
+    return " ".join(parts)
 
 
 TOOLS: list[Tool] = [

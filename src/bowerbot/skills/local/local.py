@@ -13,7 +13,8 @@ from typing import Any
 
 from pxr import Usd, UsdShade
 
-from bowerbot.schemas import AssetCategory, AssetFormat
+from bowerbot.schemas import AssetCategory, AssetFormat, DetectionOutcome
+from bowerbot.services.intake_service import detect_folder_root
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -115,10 +116,12 @@ class LocalSkill(Skill):
 
     @staticmethod
     def _find_asset_folders(root: Path) -> dict[Path, Path]:
-        """Detect ASWF asset folders under root.
+        """Detect asset folders under *root* via composition-aware detection.
 
-        An asset folder is a directory that contains a USD file
-        with the same name as the directory.
+        A folder is treated as a package when ``detect_folder_root``
+        returns an unambiguous root, whether or not the root filename
+        matches the folder name. Ambiguous or empty folders are skipped
+        and their USD files fall through to the loose-file pass.
 
         Returns a dict mapping folder path → root file path.
         """
@@ -129,23 +132,13 @@ class LocalSkill(Skill):
         for entry in root.iterdir():
             if not entry.is_dir():
                 continue
-            # Skip known non-asset dirs
             if entry.name in ("cache", "maps", "materials"):
                 continue
-            root_file = LocalSkill._get_root_file(entry)
-            if root_file is not None:
-                packages[entry] = root_file
+            detection = detect_folder_root(entry)
+            if detection.outcome is DetectionOutcome.UNAMBIGUOUS and detection.root:
+                packages[entry] = Path(detection.root)
 
         return packages
-
-    @staticmethod
-    def _get_root_file(folder: Path) -> Path | None:
-        """Return the ASWF root file if folder is an asset package."""
-        for ext in (".usd", ".usda", ".usdc"):
-            candidate = folder / f"{folder.name}{ext}"
-            if candidate.exists():
-                return candidate
-        return None
 
     @staticmethod
     def _is_inside_package(
@@ -204,7 +197,11 @@ class LocalSkill(Skill):
 
         for pkg_dir, root_file in packages.items():
             name = pkg_dir.name
-            if query and query.lower() not in name.lower():
+            # Match against the folder name (authoritative) and the root
+            # filename stem (so non-canonical layouts are still findable
+            # by either label).
+            haystack = (name.lower(), root_file.stem.lower())
+            if query and not any(query.lower() in h for h in haystack):
                 continue
 
             entry = {

@@ -24,7 +24,8 @@ from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom
 
-from bowerbot.schemas import ASWFLayerNames
+from bowerbot.schemas import ASWFLayerNames, DetectionOutcome, IntakeReport
+from bowerbot.services import intake_service
 from bowerbot.utils.usd_utils import get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
@@ -35,28 +36,21 @@ def prepare_asset(
     assets_dir: Path,
     *,
     fix_root_prim: bool = False,
-) -> str:
-    """Prepare an asset for scene placement and return its scene-relative path.
+) -> IntakeReport:
+    """Bring an asset into the project and return an :class:`IntakeReport`.
 
-    Handles three asset formats:
-
-    * **ASWF folder root** — copies the entire folder.
-    * **USDZ** — copies the single file.
-    * **Loose geometry** — wraps in an ASWF folder (optionally fixing
-      a non-Xform root prim).
-
-    Raises:
-        ValueError: If the root prim is non-Xform and *fix_root_prim*
-            is ``False``, or if the asset has unfixable ASWF issues.
+    Routes USDZ as-is, delegates folders with a detectable root to
+    :func:`intake_service.intake_folder`, and wraps loose files in a
+    fresh ASWF folder named after the file stem.
     """
-    if is_asset_folder_root(asset_path):
-        return copy_asset_folder(asset_path, assets_dir)
-
     if asset_path.suffix.lower() == ".usdz":
-        local_copy = assets_dir / asset_path.name
-        if not local_copy.exists():
-            shutil.copy2(asset_path, local_copy)
-        return f"assets/{asset_path.name}"
+        return _intake_usdz(asset_path, assets_dir)
+
+    parent = asset_path.parent.resolve()
+    if parent != assets_dir.resolve() and parent.is_dir():
+        detection = intake_service.detect_folder_root(parent)
+        if detection.outcome is DetectionOutcome.UNAMBIGUOUS:
+            return intake_service.intake_folder(parent, assets_dir)
 
     ensure_aswf_compliance(asset_path, fix_root_prim=fix_root_prim)
 
@@ -66,7 +60,31 @@ def prepare_asset(
         asset_name=folder_name,
         geometry_file=asset_path,
     )
-    return f"assets/{folder_name}/{root_file.name}"
+    return IntakeReport(
+        scene_ref_path=f"assets/{folder_name}/{root_file.name}",
+        asset_folder_name=folder_name,
+        root_original_name=asset_path.name,
+        root_canonical_name=root_file.name,
+        was_renamed=asset_path.name != root_file.name,
+        files_copied=1,
+    )
+
+
+def _intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
+    """Copy a USDZ into *assets_dir* as-is."""
+    local_copy = assets_dir / asset_path.name
+    copied = 0
+    if not local_copy.exists():
+        shutil.copy2(asset_path, local_copy)
+        copied = 1
+    return IntakeReport(
+        scene_ref_path=f"assets/{asset_path.name}",
+        asset_folder_name=asset_path.stem,
+        root_original_name=asset_path.name,
+        root_canonical_name=asset_path.name,
+        was_renamed=False,
+        files_copied=copied,
+    )
 
 
 def is_asset_folder_root(asset_path: Path) -> bool:

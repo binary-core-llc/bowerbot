@@ -61,7 +61,7 @@ Think of it as:
 
 ### Pipeline Quality Built In
 
-BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. When an asset doesn't follow production guidelines (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`), BowerBot catches it **at assembly time** and tells you exactly what's wrong and how to fix it.
+BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (non-canonical folder names, external dependencies) are auto-normalized on intake so the project copy is always self-contained. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
 
 This means problems that would normally surface weeks later in lighting, rendering, or review (broken references, unit mismatches, non-compliant asset structure) are caught **the moment the asset enters the scene**. Fix it once at the source, and every downstream department benefits.
 
@@ -115,6 +115,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 
 - 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box
 - 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md)
+- 🧳 **Self-contained intake**: non-canonical source folders are detected via USD composition, canonicalized (`root.usd` → `<folder>.usda`), and external dependencies (textures, sublayers) are localized into the asset folder so the project copy is always portable
 - 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts
 - 💡 **Native USD lighting**: sun, dome, point, area, disk, and tube lights at scene or asset level
 - 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
@@ -147,11 +148,13 @@ BowerBot searches for assets across all connected sources, prioritizing what's a
 
 ### Scene Assembly
 
-When you ask BowerBot to place an asset, it handles the USD composition correctly depending on the source:
+When you ask BowerBot to place an asset, it routes by what the source looks like and always produces a self-contained ASWF folder in the project:
 
-- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports): wrapped in an ASWF asset folder at placement time, producing `asset_name/asset_name.usda` (root) + `geo.usda`.
+- **Folder with a detectable root** (canonical `wall/wall.usda`, or non-canonical `wall/root.usd` + `wall/geo.usd` + `wall/mtl.usd`): the root is identified via USD composition (the file no sibling depends on), the folder is copied into the project, the root is canonicalized to `<folder>.usda`, sibling references are rewritten, and any externally-referenced textures or layers are localized into the folder so the output is portable.
+- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports): wrapped in a fresh ASWF folder named after the file stem, producing `<stem>/<stem>.usda` + `geo.usda`.
 - **USDZ files** (from Sketchfab, DAMs, etc.): placed as-is since they're already self-contained.
-- **Existing ASWF folders**: copied whole into the project, preserving their structure.
+
+When an asset can't be safely intaken (missing external dependencies, or a folder with multiple independent USDs and no clear root), BowerBot refuses with a message naming the conflict instead of guessing.
 
 ### Material Workflow
 
@@ -310,7 +313,7 @@ BowerBot's core tools for building USD scenes:
 
 Skills extend BowerBot with new asset sources and capabilities. Each skill has a Python module for execution and a `SKILL.md` file that teaches the LLM when and how to use it.
 
-**Local** : Searches the asset directory for USD files on disk. Detects ASWF asset folders as single packages and classifies loose files as geometry (`geo`) or material (`mtl`).
+**Local** : Searches the asset directory for USD files on disk. Uses USD composition to identify asset folders even when the root filename doesn't match the folder name, and surfaces them as single packages. Search matches both the folder name and the root file stem. Loose files are classified as geometry (`geo`) or material (`mtl`).
 
 **Sketchfab** : Searches and downloads models from your own Sketchfab account in USDZ format. These are your curated assets, not the public marketplace.
 

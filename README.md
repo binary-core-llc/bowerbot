@@ -285,6 +285,7 @@ BowerBot's core tools for building USD scenes:
 |------|-------------|
 | `create_stage` | Initialize a new USD scene with standard hierarchy |
 | `place_asset` | Add an asset (auto-creates ASWF folder for loose geometry) |
+| `place_asset_inside` | Nest an asset inside an ASWF container's `contents.usda` |
 | `move_asset` | Reposition an existing object without creating duplicates |
 | `compute_grid_layout` | Calculate evenly spaced positions |
 | `list_scene` | Show current scene with positions and bounding boxes |
@@ -293,9 +294,11 @@ BowerBot's core tools for building USD scenes:
 | `create_light` | Add native USD lights (sun, dome, point, area, disk, tube) |
 | `update_light` | Modify an existing light's properties |
 | `remove_light` | Delete a light from the scene or asset |
+| `create_material` | Author a procedural MaterialX material and bind it to a prim |
 | `bind_material` | Apply a material to a specific mesh part (writes into asset mtl.usda) |
 | `remove_material` | Clear material binding from a prim |
 | `list_materials` | Show all materials and their bindings |
+| `cleanup_unused_materials` | Prune material definitions no prim binds to (per asset or project-wide) |
 | `list_prim_children` | Discover mesh parts inside a referenced asset |
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (checks references first) |

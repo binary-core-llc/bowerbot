@@ -306,6 +306,8 @@ BowerBot's core tools for building USD scenes:
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (checks references first) |
 | `delete_project_texture` | Remove a texture file (checks references first) |
+| `search_assets` | Find USD assets in the user's library by keyword (geo, mtl, package) |
+| `list_assets` | List every USD asset in the user's library, classified by category |
 | `search_textures` | Find HDRIs and material maps in the asset library by keyword |
 | `list_textures` | List every HDRI and material map in the asset library |
 | `validate_scene` | Check for USD errors |
@@ -314,8 +316,6 @@ BowerBot's core tools for building USD scenes:
 ### Extension Skills
 
 Skills extend BowerBot with **external** asset providers (cloud APIs, vendor DAMs). Each skill ships as a Python module discovered via entry point, with a `SKILL.md` that teaches the LLM when and how to use it.
-
-**Local** : Searches the asset directory for USD files on disk. Uses USD composition to identify asset folders even when the root filename doesn't match the folder name, and surfaces them as single packages. Search matches both the folder name and the root file stem. Loose files are classified as geometry (`geo`) or material (`mtl`).
 
 **Sketchfab** : Searches and downloads models from your own Sketchfab account in USDZ format. These are your curated assets, not the public marketplace.
 
@@ -446,10 +446,13 @@ src/bowerbot/
   services/           # Pure-function business logic (all pxr usage lives here)
     stage_service.py       #   Create / open / save stages, references, lights, transforms
     asset_service.py       #   ASWF folder creation, prepare_asset, compliance repair
+    intake_service.py      #   Detect + intake source folders into the project
+    library_service.py     #   Discover assets in the user's library; find_package_for
     geometry_service.py    #   Bounds, unit conversion, grid / wall layouts, placement math
     light_service.py       #   Add / update / remove lights inside asset folders
     material_service.py    #   add_material, create_procedural_material, bindings, cleanup
     nested_service.py      #   Nested asset references via contents.usda
+    texture_service.py     #   Find HDRIs and material maps in the library
     validation_service.py  #   Stage validation (defaultPrim, units, refs, bindings)
     packaging_service.py   #   USDZ packaging
     dependency_service.py  #   USD file dependency tree walker
@@ -457,6 +460,7 @@ src/bowerbot/
   tools/              # LLM-facing API layer (tool defs + thin handlers)
     stage_tools.py         #   create_stage, list_scene, rename_prim, move_asset, ...
     asset_tools.py         #   place_asset, place_asset_inside, list / delete_project_*
+    library_tools.py       #   search_assets, list_assets
     light_tools.py         #   create_light, update_light, remove_light
     material_tools.py      #   create_material, bind_material, list / remove_material
     texture_tools.py       #   search_textures, list_textures
@@ -465,7 +469,6 @@ src/bowerbot/
   skills/             # External asset providers (cloud APIs, vendor DAMs)
     base.py                #   Skill interface + ToolResult
     registry.py            #   Entry-point discovery and tool routing
-    local/                 #   Local filesystem asset search + SKILL.md
     sketchfab/             #   Sketchfab API integration + SKILL.md
     textures/              #   Texture and HDRI search + SKILL.md
 

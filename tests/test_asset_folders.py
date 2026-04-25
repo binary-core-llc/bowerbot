@@ -22,7 +22,6 @@ from bowerbot.services import (
     material_service,
     nested_service,
 )
-from bowerbot.skills.local.local import LocalSkill
 
 
 # ── Helpers ─────────────────
@@ -86,94 +85,6 @@ def create_aswf_folder(parent_dir: Path, name: str) -> Path:
     root_stage.Save()
 
     return root_path
-
-
-# ── Asset Folder Detection (Local Skill) ─
-
-
-def test_detect_asset_folder():
-    """Local skill detects an ASWF folder as a single 'package' asset."""
-    with tempfile.TemporaryDirectory() as tmp:
-        assets_dir = Path(tmp) / "assets"
-        assets_dir.mkdir()
-        create_aswf_folder(assets_dir, "single_table")
-
-        skill = LocalSkill()
-        skill._assets_dir = assets_dir
-
-        result = asyncio.run(skill.execute("list_assets", {}))
-
-        assert result.success
-        names = {e["name"] for e in result.data}
-        categories = {e["category"] for e in result.data}
-
-        assert "single_table" in names
-        assert "package" in categories
-        assert "geo" not in names
-        assert "mtl" not in names
-
-
-def test_detect_mixed_assets():
-    """Asset folders and loose files coexist correctly."""
-    with tempfile.TemporaryDirectory() as tmp:
-        assets_dir = Path(tmp) / "assets"
-        assets_dir.mkdir()
-
-        create_aswf_folder(assets_dir, "single_table")
-        create_geometry(assets_dir, "loose_chair")
-        create_material(assets_dir, "wood")
-
-        skill = LocalSkill()
-        skill._assets_dir = assets_dir
-
-        result = asyncio.run(skill.execute("list_assets", {}))
-
-        assert result.success
-        names = {e["name"] for e in result.data}
-        assert "single_table" in names
-        assert "loose_chair" in names
-        assert "mtl_wood" in names
-        assert len(result.data) == 3
-
-
-def test_search_package_by_name():
-    """search_assets finds packages by keyword."""
-    with tempfile.TemporaryDirectory() as tmp:
-        assets_dir = Path(tmp) / "assets"
-        assets_dir.mkdir()
-        create_aswf_folder(assets_dir, "single_table")
-
-        skill = LocalSkill()
-        skill._assets_dir = assets_dir
-
-        result = asyncio.run(skill.execute(
-            "search_assets", {"query": "table"},
-        ))
-
-        assert result.success
-        assert len(result.data) == 1
-        assert result.data[0]["category"] == "package"
-
-
-def test_search_filter_by_category():
-    """search_assets with category filter works."""
-    with tempfile.TemporaryDirectory() as tmp:
-        assets_dir = Path(tmp) / "assets"
-        assets_dir.mkdir()
-
-        create_aswf_folder(assets_dir, "single_table")
-        create_geometry(assets_dir, "chair")
-
-        skill = LocalSkill()
-        skill._assets_dir = assets_dir
-
-        result = asyncio.run(skill.execute(
-            "search_assets",
-            {"query": "", "category": "package"},
-        ))
-
-        assert result.success
-        assert all(e["category"] == "package" for e in result.data)
 
 
 # ── asset_service: Create Folder ─
@@ -537,25 +448,6 @@ def test_validate_asset_folder_missing_dep():
 
         assert not is_valid
         assert any("geo.usd" in e for e in errors)
-
-
-# ── Placement Helper ─
-
-
-def test_is_asset_folder_root():
-    """is_asset_folder_root identifies ASWF root files."""
-    assert asset_service.is_asset_folder_root(
-        Path("/assets/table/table.usd"),
-    )
-    assert asset_service.is_asset_folder_root(
-        Path("/assets/chair/chair.usda"),
-    )
-    assert not asset_service.is_asset_folder_root(
-        Path("/assets/table.usdz"),
-    )
-    assert not asset_service.is_asset_folder_root(
-        Path("/assets/table/geo.usd"),
-    )
 
 
 # ── Asset-Level Lights (light_service) ─

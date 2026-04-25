@@ -11,36 +11,31 @@ from bowerbot.schemas import AssetCategory
 from bowerbot.services import library_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
+from bowerbot.tools._helpers import require_library_dir
 
 _CATEGORY_VALUES: list[str] = [c.value for c in AssetCategory] + ["all"]
 
 
 def search_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Search the user's asset library for USDs matching a query."""
-    if state.library_dir is None:
-        return ToolResult(
-            success=False,
-            error="No asset library configured. Set 'assets_dir' in config.json.",
-        )
-    results = library_service.search_assets(
-        state.library_dir,
-        params.get("query", ""),
-        params.get("category", "all"),
-    )
-    return ToolResult(success=True, data=results)
+    if (err := require_library_dir(state)):
+        return err
+    try:
+        data = library_service.search_assets(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def list_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every USD asset in the user's library, optionally filtered."""
-    if state.library_dir is None:
-        return ToolResult(
-            success=False,
-            error="No asset library configured. Set 'assets_dir' in config.json.",
-        )
-    results = library_service.list_assets(
-        state.library_dir, params.get("category", "all"),
-    )
-    return ToolResult(success=True, data=results)
+    if (err := require_library_dir(state)):
+        return err
+    try:
+        data = library_service.list_assets(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 TOOLS: list[Tool] = [

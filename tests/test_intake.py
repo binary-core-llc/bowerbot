@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for intake_service: detection and self-contained folder intake."""
+"""Tests for asset folder detection + self-contained folder intake."""
 
 import tempfile
 from pathlib import Path
@@ -10,7 +10,7 @@ import pytest
 from pxr import Sdf, Usd, UsdGeom, UsdShade, UsdUtils
 
 from bowerbot.schemas import DetectionOutcome
-from bowerbot.services import intake_service
+from bowerbot.utils import asset_folder_utils, asset_intake_utils
 
 
 # ── Helpers ──
@@ -74,7 +74,7 @@ def test_detect_canonical_folder():
         folder.mkdir()
         _write_geo(folder / "table.usda", "table")
 
-        detection = intake_service.detect_folder_root(folder)
+        detection = asset_folder_utils.detect_folder_root(folder)
         assert detection.outcome is DetectionOutcome.UNAMBIGUOUS
         assert Path(detection.root).name == "table.usda"
 
@@ -85,7 +85,7 @@ def test_detect_single_file_non_canonical():
         folder.mkdir()
         _write_geo(folder / "something_else.usda", "table")
 
-        detection = intake_service.detect_folder_root(folder)
+        detection = asset_folder_utils.detect_folder_root(folder)
         assert detection.outcome is DetectionOutcome.UNAMBIGUOUS
         assert Path(detection.root).name == "something_else.usda"
 
@@ -97,7 +97,7 @@ def test_detect_dep_graph_identifies_root():
         _write_geo(folder / "geo.usda", "root")
         _write_root_referencing(folder / "root.usda", ["./geo.usda"])
 
-        detection = intake_service.detect_folder_root(folder)
+        detection = asset_folder_utils.detect_folder_root(folder)
         assert detection.outcome is DetectionOutcome.UNAMBIGUOUS
         assert Path(detection.root).name == "root.usda"
 
@@ -109,7 +109,7 @@ def test_detect_ambiguous_independent_files():
         _write_geo(folder / "alpha.usda", "alpha")
         _write_geo(folder / "beta.usda", "beta")
 
-        detection = intake_service.detect_folder_root(folder)
+        detection = asset_folder_utils.detect_folder_root(folder)
         assert detection.outcome is DetectionOutcome.AMBIGUOUS
         assert len(detection.candidates) == 2
 
@@ -119,7 +119,7 @@ def test_detect_empty_folder():
         folder = Path(tmp) / "empty"
         folder.mkdir()
 
-        detection = intake_service.detect_folder_root(folder)
+        detection = asset_folder_utils.detect_folder_root(folder)
         assert detection.outcome is DetectionOutcome.EMPTY
 
 
@@ -134,7 +134,7 @@ def test_intake_canonical_is_fast_path():
         project_assets = Path(tmp) / "project_assets"
         project_assets.mkdir()
 
-        report = intake_service.intake_folder(src, project_assets)
+        report = asset_intake_utils.intake_folder(src, project_assets)
 
         assert report.scene_ref_path == "assets/table/table.usda"
         assert not report.was_renamed
@@ -153,7 +153,7 @@ def test_intake_non_canonical_canonicalizes_root():
         project_assets = Path(tmp) / "project_assets"
         project_assets.mkdir()
 
-        report = intake_service.intake_folder(src, project_assets)
+        report = asset_intake_utils.intake_folder(src, project_assets)
 
         assert report.was_renamed
         assert report.root_original_name == "root.usda"
@@ -190,7 +190,7 @@ def test_intake_localizes_external_texture():
         project_assets = tmp / "project_assets"
         project_assets.mkdir()
 
-        report = intake_service.intake_folder(src, project_assets)
+        report = asset_intake_utils.intake_folder(src, project_assets)
 
         assert len(report.localized_assets) == 1
         assert (project_assets / "wall" / "textures" / "diffuse.png").exists()
@@ -229,7 +229,7 @@ def test_intake_rejects_missing_external_reference():
         project_assets.mkdir()
 
         with pytest.raises(ValueError, match="did not resolve"):
-            intake_service.intake_folder(src, project_assets)
+            asset_intake_utils.intake_folder(src, project_assets)
 
         # Rollback must leave no half-created folder behind.
         assert not (project_assets / "wall").exists()
@@ -245,4 +245,4 @@ def test_intake_ambiguous_folder_raises():
         project_assets.mkdir()
 
         with pytest.raises(ValueError, match="multiple independent"):
-            intake_service.intake_folder(src, project_assets)
+            asset_intake_utils.intake_folder(src, project_assets)

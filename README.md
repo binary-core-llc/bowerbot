@@ -419,7 +419,14 @@ BowerBot automatically handles transient API errors:
 
 ## 🏗️ Architecture
 
-BowerBot is organized FastAPI-style: **schemas** describe data, **services** contain business logic, **tools** are the API surface the LLM sees. Adding a feature is always a three-file change.
+BowerBot is organized FastAPI-style:
+
+- **schemas/** describe data (pydantic models + enums)
+- **utils/** are pure-function primitives (no `SceneState`, no orchestration)
+- **services/** are state-aware orchestrators, one function per tool, signature `(state, params)`, calls utils and other services freely, raises on errors
+- **tools/** are the LLM-facing surface, thin adapters that guard preconditions, call ONE service, wrap the result in `ToolResult`
+
+Adding a feature is the same three-file change every time: schema, service, tool.
 
 ```
 src/bowerbot/
@@ -443,26 +450,22 @@ src/bowerbot/
     textures.py       #   HDRI / image / texture-category enums
     validation.py     #   Severity, ValidationIssue, ValidationResult
 
-  services/           # Pure-function business logic (all pxr usage lives here)
-    stage_service.py       #   Create / open / save stages, references, lights, transforms
-    asset_service.py       #   ASWF folder creation, prepare_asset, compliance repair
-    intake_service.py      #   Detect + intake source folders into the project
-    library_service.py     #   Discover assets in the user's library; find_package_for
-    geometry_service.py    #   Bounds, unit conversion, grid / wall layouts, placement math
-    light_service.py       #   Add / update / remove lights inside asset folders
-    material_service.py    #   add_material, create_procedural_material, bindings, cleanup
-    nested_service.py      #   Nested asset references via contents.usda
-    texture_service.py     #   Find HDRIs and material maps in the library
-    validation_service.py  #   Stage validation (defaultPrim, units, refs, bindings)
-    packaging_service.py   #   USDZ packaging
-    dependency_service.py  #   USD file dependency tree walker
+  services/           # State-aware orchestrators, one per tools module
+    stage_service.py       #   create_stage, list_scene, rename_prim, move_asset, ...
+    asset_service.py       #   place_asset, place_asset_inside, list/delete_project_*
+    library_service.py     #   list_assets, search_assets, find_package_for
+    light_service.py       #   create_light, update_light, remove_light
+    material_service.py    #   create_material, bind_material, list/remove/cleanup
+    texture_service.py     #   list_textures, search_textures
+    validation_service.py  #   validate_scene, package_scene
 
   tools/              # LLM-facing API layer (tool defs + thin handlers)
+    _helpers.py            #   Precondition guards (require_stage / project / library)
     stage_tools.py         #   create_stage, list_scene, rename_prim, move_asset, ...
-    asset_tools.py         #   place_asset, place_asset_inside, list / delete_project_*
+    asset_tools.py         #   place_asset, place_asset_inside, list/delete_project_*
     library_tools.py       #   search_assets, list_assets
     light_tools.py         #   create_light, update_light, remove_light
-    material_tools.py      #   create_material, bind_material, list / remove_material
+    material_tools.py      #   create_material, bind_material, list/remove_material
     texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
 
@@ -470,24 +473,36 @@ src/bowerbot/
     base.py                #   Skill interface + ToolResult
     registry.py            #   Entry-point discovery and tool routing
     sketchfab/             #   Sketchfab API integration + SKILL.md
-    textures/              #   Texture and HDRI search + SKILL.md
 
-  utils/              # Small, shared helpers
-    usd_utils.py           #   USD introspection (ref paths, asset resolution)
-    file_utils.py          #   Texture copying
-    naming.py              #   Name sanitization for files, prims, projects
+  utils/              # Pure-function primitives shared by services
+    stage_utils.py           #   Stage create/open/save, references, transforms, prims,
+                             #   ref-path scanning, LIGHT_CLASSES
+    asset_intake_utils.py    #   intake_folder, intake_usdz, create_asset_folder, ASWF
+    asset_folder_utils.py    #   ASWF folder primitives (detect root, layer scopes,
+                             #   resolve_asset_dir_for_prim)
+    library_utils.py         #   scan_library, find_package_for
+    light_utils.py           #   light_in_folder primitives, HDRI staging
+    material_utils.py        #   material_in_folder primitives, find_first_material
+    texture_utils.py         #   find_textures, copy_texture_to_project
+    validation_utils.py      #   validate_stage, package_to_usdz
+    geometry_utils.py        #   Bounds, unit conversion, layout math
+    dependency_utils.py      #   USD dependency tree walker
+    naming_utils.py          #   Name sanitization for files, prims, projects
   gateway/            # Future: FastAPI + MCP server
 ```
 
 **Design principles**
 
-- **Services are pure functions**: they take primitives (`Usd.Stage`, `Path`, pydantic models) and return primitives; no classes, no hidden state
-- **State lives in one place**: `SceneState` holds the open stage, the project binding, and the object counter; tool handlers thread it into service calls
-- **Tools are thin**: each handler validates inputs, calls services, wraps the result in a `ToolResult`; zero domain logic
-- **All `pxr` is in `services/`**: the rest of the codebase never imports `pxr` directly
-- **Prompts are content**: editable `.md` files, not Python constants
-- **Skills are extensions**: new asset providers ship as Python packages discovered via entry points
-- **One config file**: `~/.bowerbot/config.json`, no `.env`
+- **One tools module, one service**: every service module backs exactly one tool surface, with one orchestrator per tool. Shared primitives live in `utils/`, called freely by any service.
+- **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums) and a small set of state objects (`SceneState`, `Project`).
+- **Tools are thin**: guard preconditions, call ONE service, wrap in `ToolResult`. No business logic, no util calls, no cross-service routing.
+- **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
+- **Utils are pure primitives**: no `SceneState`, no other services. Composable building blocks.
+- **State lives in one place**: `SceneState` holds the open stage, the project binding, the asset library path, and the object counter; tool handlers thread it into service calls.
+- **All `pxr` is in `services/` and `utils/`**: the rest of the codebase never imports `pxr` directly.
+- **Prompts are content**: editable `.md` files, not Python constants.
+- **Skills are external integrations**: new asset providers ship as Python packages discovered via entry points.
+- **One config file**: `~/.bowerbot/config.json`, no `.env`.
 
 ---
 

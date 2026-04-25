@@ -4,7 +4,6 @@
 """Test ASWF asset folder detection, placement, and incremental assembly."""
 
 import tempfile
-import asyncio
 from pathlib import Path
 
 from pxr import Usd, UsdGeom, UsdLux, UsdShade
@@ -15,12 +14,11 @@ from bowerbot.schemas import (
     LightType,
     TransformParams,
 )
-from bowerbot.services import (
-    asset_service,
-    dependency_service,
-    light_service,
-    material_service,
-    nested_service,
+from bowerbot.utils import (
+    asset_intake_utils,
+    dependency_utils,
+    light_utils,
+    material_utils,
 )
 
 
@@ -100,7 +98,7 @@ def test_create_asset_folder():
 
         geo = create_geometry(source_dir, "table")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir=output_dir,
             asset_name="table",
             geometry_file=geo,
@@ -140,11 +138,11 @@ def test_add_material_creates_mtl():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "table", geo,
         )
 
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             asset_dir=root.parent,
             material_file=mat,
             prim_path="/table/top",
@@ -183,10 +181,10 @@ def test_add_material_with_binding():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "table", geo,
         )
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, mat, "/table/top", "/mtl/wood",
         )
 
@@ -213,13 +211,13 @@ def test_add_multiple_materials():
         mat_wood = create_material(source_dir, "wood")
         mat_metal = create_material(source_dir, "metal")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "table", geo,
         )
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, mat_wood, "/table/top", "/mtl/wood",
         )
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, mat_metal, "/table/legs", "/mtl/metal",
         )
 
@@ -254,11 +252,11 @@ def test_add_material_discovers_prim_path():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "table", geo,
         )
 
-        result_path = material_service.add_material(
+        result_path = material_utils.add_material_to_folder(
             asset_dir=root.parent,
             material_file=mat,
             prim_path="/table/top",
@@ -282,15 +280,15 @@ def test_remove_material_binding():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "table", geo,
         )
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, mat, "/table/top", "/mtl/wood",
         )
 
         # Remove the binding
-        material_service.remove_material_binding(root.parent, "/table/top")
+        material_utils.remove_material_binding_from_folder(root.parent, "/table/top")
 
         # mtl.usd should be deleted (no materials left)
         assert not (root.parent / "mtl.usda").exists()
@@ -322,14 +320,14 @@ def test_list_materials():
         geo = create_geometry(source_dir, "table")
         mat = create_material(source_dir, "wood")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "table", geo,
         )
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, mat, "/table/top", "/mtl/wood",
         )
 
-        materials = material_service.list_materials(root.parent)
+        materials = material_utils.list_materials_in_folder(root.parent)
         assert len(materials) >= 1
         wood = [m for m in materials if m["material_name"] == "wood"]
         assert len(wood) == 1
@@ -348,18 +346,18 @@ def test_cleanup_unused_materials_removes_unbound():
         wood = create_material(source_dir, "wood")
         metal = create_material(source_dir, "metal")
 
-        root = asset_service.create_asset_folder(output_dir, "table", geo)
+        root = asset_intake_utils.create_asset_folder(output_dir, "table", geo)
 
         # Bind wood to the top; leave metal and an extra unbound material.
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, wood, "/table/top", "/mtl/wood",
         )
         # Copy metal definition in too, but never bind it.
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, metal, "/table/top", "/mtl/metal",
         )
         # Rebind top to wood so metal becomes unbound.
-        material_service.add_material(
+        material_utils.add_material_to_folder(
             root.parent, wood, "/table/top", "/mtl/wood",
         )
 
@@ -370,7 +368,7 @@ def test_cleanup_unused_materials_removes_unbound():
         assert "wood" in before
         assert "metal" in before
 
-        removed = material_service.cleanup_unused_materials(root.parent)
+        removed = material_utils.cleanup_unused_in_folder(root.parent)
         assert removed == ["metal"]
 
         mtl_stage = Usd.Stage.Open(str(root.parent / "mtl.usda"))
@@ -389,10 +387,10 @@ def test_cleanup_unused_materials_no_mtl_layer():
         output_dir.mkdir()
 
         geo = create_geometry(source_dir, "table")
-        root = asset_service.create_asset_folder(output_dir, "table", geo)
+        root = asset_intake_utils.create_asset_folder(output_dir, "table", geo)
 
         assert not (root.parent / "mtl.usda").exists()
-        assert material_service.cleanup_unused_materials(root.parent) == []
+        assert material_utils.cleanup_unused_in_folder(root.parent) == []
 
 
 def test_cleanup_unused_materials_drops_empty_layer():
@@ -406,19 +404,19 @@ def test_cleanup_unused_materials_drops_empty_layer():
         geo = create_geometry(source_dir, "table")
         wood = create_material(source_dir, "wood")
 
-        root = asset_service.create_asset_folder(output_dir, "table", geo)
-        material_service.add_material(
+        root = asset_intake_utils.create_asset_folder(output_dir, "table", geo)
+        material_utils.add_material_to_folder(
             root.parent, wood, "/table/top", "/mtl/wood",
         )
-        material_service.remove_material_binding(root.parent, "/table/top")
+        material_utils.remove_material_binding_from_folder(root.parent, "/table/top")
 
         # remove_material_binding already triggered cleanup; follow-up should
         # be a no-op and mtl.usda should be gone.
         assert not (root.parent / "mtl.usda").exists()
-        assert material_service.cleanup_unused_materials(root.parent) == []
+        assert material_utils.cleanup_unused_in_folder(root.parent) == []
 
 
-# ── dependency_service ─
+# ── dependency_utils ─
 
 
 def test_validate_asset_folder_valid():
@@ -426,7 +424,7 @@ def test_validate_asset_folder_valid():
     with tempfile.TemporaryDirectory() as tmp:
         root_file = create_aswf_folder(Path(tmp), "single_table")
 
-        is_valid, errors = dependency_service.validate_asset_folder(root_file)
+        is_valid, errors = dependency_utils.validate_asset_folder(root_file)
 
         assert is_valid
         assert len(errors) == 0
@@ -444,7 +442,7 @@ def test_validate_asset_folder_missing_dep():
             encoding="utf-8",
         )
 
-        is_valid, errors = dependency_service.validate_asset_folder(root_path)
+        is_valid, errors = dependency_utils.validate_asset_folder(root_path)
 
         assert not is_valid
         assert any("geo.usd" in e for e in errors)
@@ -463,11 +461,11 @@ def test_add_light_creates_lgt():
 
         geo = create_geometry(source_dir, "lamp")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             asset_dir=root.parent,
             light_name="bulb",
             light=LightParams(
@@ -515,11 +513,11 @@ def test_add_multiple_lights():
 
         geo = create_geometry(source_dir, "lamp")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             root.parent, "bulb",
             LightParams(
                 light_type=LightType.SPHERE,
@@ -527,7 +525,7 @@ def test_add_multiple_lights():
                 radius=0.05,
             ),
         )
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             root.parent, "glow",
             LightParams(
                 light_type=LightType.DISK,
@@ -536,7 +534,7 @@ def test_add_multiple_lights():
             ),
         )
 
-        lights = light_service.list_lights(root.parent)
+        lights = light_utils.list_lights_in_folder(root.parent)
         assert len(lights) == 2
         names = {l["name"] for l in lights}
         assert "bulb" in names
@@ -553,18 +551,18 @@ def test_remove_light():
 
         geo = create_geometry(source_dir, "lamp")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             root.parent, "bulb",
             LightParams(
                 light_type=LightType.SPHERE,
                 translate=(0.0, 0.5, 0.0),
             ),
         )
-        light_service.remove_light(root.parent, "bulb")
+        light_utils.remove_light_from_folder(root.parent, "bulb")
 
         # lgt.usda should be deleted (no lights left)
         assert not (root.parent / "lgt.usda").exists()
@@ -595,11 +593,11 @@ def test_disk_light_rotation_facing_down():
 
         geo = create_geometry(source_dir, "table")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "table", geo,
         )
 
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             asset_dir=root.parent,
             light_name="downlight",
             light=LightParams(
@@ -642,11 +640,11 @@ def test_rect_light_rotation_facing_right():
 
         geo = create_geometry(source_dir, "wall")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "wall", geo,
         )
 
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             asset_dir=root.parent,
             light_name="sidelight",
             light=LightParams(
@@ -681,12 +679,12 @@ def test_update_light_position_offset():
 
         geo = create_geometry(source_dir, "lamp")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
         # Create light at initial position
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             asset_dir=root.parent,
             light_name="spot",
             light=LightParams(
@@ -698,7 +696,7 @@ def test_update_light_position_offset():
         )
 
         # Update position
-        light_service.update_light(
+        light_utils.update_light_in_folder(
             asset_dir=root.parent,
             light_name="spot",
             translate=(0.5, 2.0, -0.3),
@@ -733,12 +731,12 @@ def test_update_light_rotation():
 
         geo = create_geometry(source_dir, "lamp")
 
-        root = asset_service.create_asset_folder(
+        root = asset_intake_utils.create_asset_folder(
             output_dir, "lamp", geo,
         )
 
         # Create light facing down
-        light_service.add_light(
+        light_utils.add_light_to_folder(
             asset_dir=root.parent,
             light_name="spot",
             light=LightParams(
@@ -750,7 +748,7 @@ def test_update_light_rotation():
         )
 
         # Update rotation to face right
-        light_service.update_light(
+        light_utils.update_light_in_folder(
             asset_dir=root.parent,
             light_name="spot",
             rotate=(0.0, -90.0, 0.0),
@@ -773,7 +771,7 @@ def test_update_light_rotation():
             raise AssertionError("No rotateXYZ op found")
 
 
-# ── Nested Asset Placement (nested_service) ─
+# ── Nested Asset Placement (asset_service) ─
 
 
 def test_add_nested_asset_reference_creates_contents():
@@ -791,7 +789,7 @@ def test_add_nested_asset_reference_creates_contents():
             f"../{nested_root.parent.name}/{nested_root.name}"
         )
 
-        prim_path = nested_service.add_nested_asset_reference(
+        prim_path = asset_intake_utils.add_nested_asset_reference(
             container_dir=container_dir,
             group="Furniture",
             prim_name="Counter_01",
@@ -833,7 +831,7 @@ def test_nested_reference_composed_in_scene():
         nested_root = create_aswf_folder(assets_dir, "counter_table")
         container_dir = container_root.parent
 
-        nested_service.add_nested_asset_reference(
+        asset_intake_utils.add_nested_asset_reference(
             container_dir=container_dir,
             group="Furniture",
             prim_name="Counter_01",

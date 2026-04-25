@@ -10,9 +10,10 @@ from pathlib import Path
 from pxr import Usd, UsdGeom, UsdShade
 
 from bowerbot.config import SceneDefaults
-from bowerbot.services import asset_service, library_service
+from bowerbot.services import asset_service
 from bowerbot.state import SceneState
 from bowerbot.tools import library_tools
+from bowerbot.utils import library_utils
 
 
 # ── Helpers ──
@@ -71,7 +72,7 @@ def test_list_assets_finds_packages_and_loose_files():
         # Loose material
         _write_material(library / "wood_mtl.usda")
 
-        results = library_service.list_assets(library)
+        results = library_utils.scan_library(library)
         names = sorted(r["name"] for r in results)
         assert names == ["chair", "table", "wood_mtl"]
 
@@ -89,11 +90,11 @@ def test_search_assets_matches_folder_or_root_stem():
         _write_root_with_sublayer(library / "wall" / "root.usda", "./geo.usda")
 
         # Folder name match
-        by_folder = library_service.search_assets(library, "wall")
+        by_folder = library_utils.scan_library(library, query="wall")
         assert [r["name"] for r in by_folder] == ["wall"]
 
         # Root stem match (non-canonical filename)
-        by_stem = library_service.search_assets(library, "root")
+        by_stem = library_utils.scan_library(library, query="root")
         assert [r["name"] for r in by_stem] == ["wall"]
 
 
@@ -103,10 +104,10 @@ def test_list_assets_filters_by_category():
         _write_geo(library / "thing.usda", "thing")
         _write_material(library / "wood.usda")
 
-        geo_only = library_service.list_assets(library, category="geo")
+        geo_only = library_utils.scan_library(library, category="geo")
         assert [r["name"] for r in geo_only] == ["thing"]
 
-        mtl_only = library_service.list_assets(library, category="mtl")
+        mtl_only = library_utils.scan_library(library, category="mtl")
         assert [r["name"] for r in mtl_only] == ["wood"]
 
 
@@ -120,7 +121,7 @@ def test_find_package_for_canonical_package():
         root = library / "table" / "table.usda"
         _write_geo(root, "table")
 
-        assert library_service.find_package_for(root, library) == library / "table"
+        assert library_utils.find_package_for(root, library) == library / "table"
 
 
 def test_find_package_for_non_canonical_root():
@@ -131,7 +132,7 @@ def test_find_package_for_non_canonical_root():
         root = library / "wall" / "root.usda"
         _write_root_with_sublayer(root, "./geo.usda")
 
-        assert library_service.find_package_for(root, library) == library / "wall"
+        assert library_utils.find_package_for(root, library) == library / "wall"
 
 
 def test_find_package_for_loose_file_at_library_root_returns_none():
@@ -141,7 +142,7 @@ def test_find_package_for_loose_file_at_library_root_returns_none():
         loose = library / "table.usda"
         _write_geo(loose, "table")
 
-        assert library_service.find_package_for(loose, library) is None
+        assert library_utils.find_package_for(loose, library) is None
 
 
 def test_find_package_for_outside_library_returns_none():
@@ -153,7 +154,7 @@ def test_find_package_for_outside_library_returns_none():
         outside = elsewhere / "thing.usda"
         _write_geo(outside, "thing")
 
-        assert library_service.find_package_for(outside, library) is None
+        assert library_utils.find_package_for(outside, library) is None
 
 
 # ── prepare_asset routing (the bug we're fixing) ──

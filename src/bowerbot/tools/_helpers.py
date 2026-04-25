@@ -1,11 +1,9 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Shared helpers for tool handlers."""
+"""Shared precondition guards for tool handlers."""
 
 from __future__ import annotations
-
-from pathlib import Path
 
 from bowerbot.skills.base import ToolResult
 from bowerbot.state import SceneState
@@ -28,18 +26,11 @@ def require_project(state: SceneState) -> ToolResult | None:
     return None
 
 
-def resolve_assets_dir(state: SceneState) -> Path:
-    """Return the project's assets directory, creating it on demand."""
-    if state.assets_dir is None:
-        msg = "No project set. Use 'bowerbot new' to create a project first."
-        raise RuntimeError(msg)
-    state.assets_dir.mkdir(parents=True, exist_ok=True)
-    return state.assets_dir
-
-
-def resolve_project_dir(state: SceneState) -> Path:
-    """Return the project's root directory, or raise if unset."""
-    if state.project_dir is None:
-        msg = "No project set. Use 'bowerbot new' to create a project first."
-        raise RuntimeError(msg)
-    return state.project_dir
+def require_library_dir(state: SceneState) -> ToolResult | None:
+    """Return an error ToolResult if no library is configured, else ``None``."""
+    if state.library_dir is None:
+        return ToolResult(
+            success=False,
+            error="No asset library configured. Set 'assets_dir' in config.json.",
+        )
+    return None

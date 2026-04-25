@@ -20,8 +20,10 @@ You have tools for finding texture files in the user's asset library.
 4. Pass the returned `path` to the appropriate tool:
    - HDRI files → `create_light` with `light_type: DomeLight` and the
      `texture` parameter
-   - Material textures will be consumed by upcoming material-binding
-     tools
+   - Material maps (diffuse / normal / roughness / etc.) are inputs to
+     materials. To apply a look, use `bind_material` for an existing
+     material `.usd` / `.usda` / `.usdc` file from the library, or
+     `create_material` for a procedural MaterialX material.
 
 ## Notes
 - Textures live in the user's asset library (`assets_dir` from

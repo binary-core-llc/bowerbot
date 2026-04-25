@@ -11,36 +11,31 @@ from bowerbot.schemas import TextureCategory
 from bowerbot.services import texture_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
+from bowerbot.tools._helpers import require_library_dir
 
 _CATEGORY_VALUES: list[str] = [c.value for c in TextureCategory]
 
 
 def search_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Search the user's asset library for textures matching a query."""
-    if state.library_dir is None:
-        return ToolResult(
-            success=False,
-            error="No asset library configured. Set 'assets_dir' in config.json.",
-        )
-
-    category = TextureCategory(params.get("category", "all"))
-    results = texture_service.search_textures(
-        state.library_dir, params.get("query", ""), category,
-    )
-    return ToolResult(success=True, data=results)
+    if (err := require_library_dir(state)):
+        return err
+    try:
+        data = texture_service.search_textures(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def list_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every texture in the user's asset library, optionally filtered."""
-    if state.library_dir is None:
-        return ToolResult(
-            success=False,
-            error="No asset library configured. Set 'assets_dir' in config.json.",
-        )
-
-    category = TextureCategory(params.get("category", "all"))
-    results = texture_service.list_textures(state.library_dir, category)
-    return ToolResult(success=True, data=results)
+    if (err := require_library_dir(state)):
+        return err
+    try:
+        data = texture_service.list_textures(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 TOOLS: list[Tool] = [

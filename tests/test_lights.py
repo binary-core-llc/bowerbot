@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Test scene-level USD light creation via stage_service."""
+"""Test scene-level USD light creation via stage_utils."""
 
 import tempfile
 from pathlib import Path
@@ -9,7 +9,7 @@ from pathlib import Path
 from pxr import Usd, UsdLux
 
 from bowerbot.schemas import LightParams, LightType
-from bowerbot.services import stage_service
+from bowerbot.utils import stage_utils as stage_service
 
 
 def test_create_sphere_light():
@@ -27,7 +27,7 @@ def test_create_sphere_light():
             radius=0.1,
         )
         stage_service.create_light(stage, "/Scene/Lighting/Key_Light_01", light)
-        stage_service.save(stage)
+        stage_service.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
         prim = reopened.GetPrimAtPath("/Scene/Lighting/Key_Light_01")
@@ -55,7 +55,7 @@ def test_create_distant_light():
             angle=0.53,
         )
         stage_service.create_light(stage, "/Scene/Lighting/Sun_01", light)
-        stage_service.save(stage)
+        stage_service.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
         prim = reopened.GetPrimAtPath("/Scene/Lighting/Sun_01")
@@ -83,7 +83,7 @@ def test_create_rect_light():
             height=0.8,
         )
         stage_service.create_light(stage, "/Scene/Lighting/Ceiling_Panel_01", light)
-        stage_service.save(stage)
+        stage_service.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
         prim = reopened.GetPrimAtPath("/Scene/Lighting/Ceiling_Panel_01")
@@ -110,7 +110,7 @@ def test_list_prims_includes_lights():
             translate=(3.0, 2.0, 3.0),
         )
         stage_service.create_light(stage, "/Scene/Lighting/Spot_01", light)
-        stage_service.save(stage)
+        stage_service.save_stage(stage)
 
         prims = stage_service.list_prims(stage)
         assert len(prims) == 1, f"Expected 1 prim, got {len(prims)}"
@@ -158,7 +158,7 @@ def test_create_multiple_light_types():
 
         for prim_path, light in lights:
             stage_service.create_light(stage, prim_path, light)
-        stage_service.save(stage)
+        stage_service.save_stage(stage)
 
         prims = stage_service.list_prims(stage)
         assert len(prims) == 3, f"Expected 3 lights, got {len(prims)}"

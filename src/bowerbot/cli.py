@@ -32,7 +32,7 @@ from bowerbot.project import Project
 from bowerbot.services import stage_service
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
-from bowerbot.utils.naming import safe_project_name
+from bowerbot.utils.naming_utils import safe_project_name
 
 theme = Theme({
     "sf": "bold green",

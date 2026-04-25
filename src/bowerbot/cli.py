@@ -46,7 +46,10 @@ def _build_state(
     settings: Settings, project: Project | None = None,
 ) -> SceneState:
     """Build a SceneState, optionally binding it to *project*."""
-    state = SceneState(scene_defaults=settings.scene_defaults)
+    state = SceneState(
+        scene_defaults=settings.scene_defaults,
+        library_dir=Path(settings.assets_dir),
+    )
     if project is None:
         return state
 
@@ -413,7 +416,6 @@ def onboard() -> None:
         scene_defaults=SceneDefaults(),
         skills={
             "local": SkillConfig(enabled=True),
-            "textures": SkillConfig(enabled=True),
             "sketchfab": SkillConfig(
                 enabled=bool(sketchfab_token),
                 config={"token": sketchfab_token} if sketchfab_token else {},

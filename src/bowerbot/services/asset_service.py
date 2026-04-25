@@ -24,8 +24,8 @@ from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom
 
-from bowerbot.schemas import ASWFLayerNames, DetectionOutcome, IntakeReport
-from bowerbot.services import intake_service
+from bowerbot.schemas import ASWFLayerNames, IntakeReport
+from bowerbot.services import intake_service, library_service
 from bowerbot.utils.usd_utils import get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
@@ -35,22 +35,26 @@ def prepare_asset(
     asset_path: Path,
     assets_dir: Path,
     *,
+    library_dir: Path | None = None,
     fix_root_prim: bool = False,
 ) -> IntakeReport:
     """Bring an asset into the project and return an :class:`IntakeReport`.
 
-    Routes USDZ as-is, delegates folders with a detectable root to
-    :func:`intake_service.intake_folder`, and wraps loose files in a
+    Routes USDZ as-is, delegates files that belong to a library package
+    to :func:`intake_service.intake_folder`, and wraps loose files in a
     fresh ASWF folder named after the file stem.
+
+    *library_dir* is the user's asset library. When provided, it lets
+    BowerBot tell apart files that live in a real package folder from
+    files that sit loose at the library root.
     """
     if asset_path.suffix.lower() == ".usdz":
         return _intake_usdz(asset_path, assets_dir)
 
-    parent = asset_path.parent.resolve()
-    if parent != assets_dir.resolve() and parent.is_dir():
-        detection = intake_service.detect_folder_root(parent)
-        if detection.outcome is DetectionOutcome.UNAMBIGUOUS:
-            return intake_service.intake_folder(parent, assets_dir)
+    if library_dir is not None:
+        package_dir = library_service.find_package_for(asset_path, library_dir)
+        if package_dir is not None:
+            return intake_service.intake_folder(package_dir, assets_dir)
 
     ensure_aswf_compliance(asset_path, fix_root_prim=fix_root_prim)
 
@@ -84,18 +88,6 @@ def _intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
         root_canonical_name=asset_path.name,
         was_renamed=False,
         files_copied=copied,
-    )
-
-
-def is_asset_folder_root(asset_path: Path) -> bool:
-    """Return True if *asset_path* is the root file of an ASWF folder.
-
-    An ASWF root file has the same stem as its parent directory
-    (e.g. ``single_table/single_table.usd``).
-    """
-    return (
-        asset_path.stem == asset_path.parent.name
-        and asset_path.suffix.lower() in {".usd", ".usda", ".usdc"}
     )
 
 

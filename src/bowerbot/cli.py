@@ -415,7 +415,6 @@ def onboard() -> None:
         ),
         scene_defaults=SceneDefaults(),
         skills={
-            "local": SkillConfig(enabled=True),
             "sketchfab": SkillConfig(
                 enabled=bool(sketchfab_token),
                 config={"token": sketchfab_token} if sketchfab_token else {},

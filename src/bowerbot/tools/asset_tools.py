@@ -62,6 +62,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     try:
         report = asset_service.prepare_asset(
             asset_path, assets_dir,
+            library_dir=state.library_dir,
             fix_root_prim=params.get("fix_root_prim", False),
         )
     except (ValueError, RuntimeError) as e:
@@ -129,6 +130,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
     try:
         report = asset_service.prepare_asset(
             asset_path, assets_dir,
+            library_dir=state.library_dir,
             fix_root_prim=params.get("fix_root_prim", False),
         )
     except (ValueError, RuntimeError) as e:

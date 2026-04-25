@@ -20,6 +20,7 @@ from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 from bowerbot.tools import (
     asset_tools,
+    library_tools,
     light_tools,
     material_tools,
     stage_tools,
@@ -35,6 +36,7 @@ def _collect_tools() -> list[Tool]:
     tools: list[Tool] = []
     tools.extend(stage_tools.TOOLS)
     tools.extend(asset_tools.TOOLS)
+    tools.extend(library_tools.TOOLS)
     tools.extend(light_tools.TOOLS)
     tools.extend(material_tools.TOOLS)
     tools.extend(texture_tools.TOOLS)
@@ -46,7 +48,7 @@ def _collect_handlers() -> dict[str, ToolHandler]:
     """Flatten every tool module's ``HANDLERS`` dict into one registry."""
     handlers: dict[str, ToolHandler] = {}
     for module in (
-        stage_tools, asset_tools, light_tools,
+        stage_tools, asset_tools, library_tools, light_tools,
         material_tools, texture_tools, validation_tools,
     ):
         handlers.update(module.HANDLERS)

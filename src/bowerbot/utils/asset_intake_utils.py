@@ -1,0 +1,583 @@
+# Copyright 2026 Binary Core LLC
+# SPDX-License-Identifier: Apache-2.0
+
+"""Asset intake primitives — bring source folders into the project.
+
+USD-write side of the asset domain: folder copy + canonicalize +
+localize external dependencies, plus loose-file ASWF folder creation
+and ASWF compliance repair, plus nested asset reference authoring.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+import shutil
+import tempfile
+from collections.abc import Iterable
+from pathlib import Path
+
+from pxr import Gf, Sdf, Usd, UsdGeom, UsdUtils
+
+from bowerbot.schemas import (
+    ASWFLayerNames,
+    DetectionOutcome,
+    IntakeReport,
+    TransformParams,
+)
+from bowerbot.utils.asset_folder_utils import (
+    detect_folder_root,
+    ensure_layer_scope,
+    ensure_root_reference,
+    read_asset_mpu_from_file,
+    read_stage_metadata,
+    resolve_default_prim_name,
+)
+from bowerbot.utils.geometry_utils import get_mpu
+
+logger = logging.getLogger(__name__)
+
+
+# ── Folder intake ──
+
+
+def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport:
+    """Copy *source_folder* into *project_assets_dir* as a self-contained asset.
+
+    Every transitive dependency (including shader texture paths) is
+    localized so the output folder is portable. The root is canonicalized
+    to ``<folder>.usda`` and sibling references are rewritten.
+    """
+    detection = detect_folder_root(source_folder)
+    if detection.outcome is DetectionOutcome.EMPTY:
+        msg = f"No USD files found in {source_folder}"
+        raise ValueError(msg)
+    if detection.outcome is DetectionOutcome.AMBIGUOUS:
+        names = ", ".join(Path(c).name for c in detection.candidates)
+        msg = (
+            f"Folder {source_folder.name} has multiple independent USD files "
+            f"with no cross-references ({names}). ASWF expects a single root. "
+            f"Rename one to '{source_folder.name}.usda' or place the files "
+            f"individually."
+        )
+        raise ValueError(msg)
+
+    source_folder = source_folder.resolve()
+    project_assets_dir = project_assets_dir.resolve()
+    source_root = Path(detection.root)  # type: ignore[arg-type]
+    target_folder = project_assets_dir / source_folder.name
+
+    if target_folder.exists():
+        return _reuse_existing_target(target_folder, source_root)
+
+    layers, assets, unresolved = UsdUtils.ComputeAllDependencies(str(source_root))
+    if unresolved:
+        pretty = ", ".join(str(p) for p in unresolved)
+        msg = (
+            f"Cannot intake {source_folder.name}: {len(unresolved)} "
+            f"dependency path(s) did not resolve on disk ({pretty})."
+        )
+        raise ValueError(msg)
+
+    path_map, layer_targets, localized_layer_sources, localized_asset_sources = (
+        _plan_copies(
+            source_folder=source_folder,
+            target_folder=target_folder,
+            layer_sources=[Path(lyr.realPath).resolve() for lyr in layers],
+            asset_sources=[Path(a).resolve() for a in assets],
+        )
+    )
+
+    target_folder.mkdir(parents=True, exist_ok=False)
+    files_copied = 0
+    try:
+        for src, dst in path_map.items():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            files_copied += 1
+
+        _rewrite_asset_paths(layer_targets, path_map)
+
+        canonical_root = target_folder / f"{target_folder.name}.usda"
+        copied_root = path_map[source_root.resolve()]
+        was_renamed = _canonicalize_root(
+            copied_root=copied_root,
+            canonical_root=canonical_root,
+            sibling_layer_targets=[p for p in layer_targets if p != copied_root],
+        )
+
+        warnings = _validate_self_contained(canonical_root, target_folder)
+    except Exception:
+        shutil.rmtree(target_folder, ignore_errors=True)
+        raise
+
+    logger.info(
+        "Intaked %s -> %s (%d file(s), %d localized)",
+        source_folder.name, target_folder.name,
+        files_copied, len(localized_layer_sources) + len(localized_asset_sources),
+    )
+    return IntakeReport(
+        scene_ref_path=f"assets/{target_folder.name}/{canonical_root.name}",
+        asset_folder_name=target_folder.name,
+        root_original_name=source_root.name,
+        root_canonical_name=canonical_root.name,
+        was_renamed=was_renamed,
+        files_copied=files_copied,
+        localized_layers=localized_layer_sources,
+        localized_assets=localized_asset_sources,
+        warnings=warnings,
+    )
+
+
+def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
+    """Copy a USDZ into *assets_dir* as-is."""
+    local_copy = assets_dir / asset_path.name
+    copied = 0
+    if not local_copy.exists():
+        shutil.copy2(asset_path, local_copy)
+        copied = 1
+    return IntakeReport(
+        scene_ref_path=f"assets/{asset_path.name}",
+        asset_folder_name=asset_path.stem,
+        root_original_name=asset_path.name,
+        root_canonical_name=asset_path.name,
+        was_renamed=False,
+        files_copied=copied,
+    )
+
+
+# ── Loose-file wrapping ──
+
+
+def create_asset_folder(
+    output_dir: Path,
+    asset_name: str,
+    geometry_file: Path,
+) -> Path:
+    """Create an ASWF asset folder with root + ``geo.usda``."""
+    asset_dir = output_dir / asset_name
+    asset_dir.mkdir(parents=True, exist_ok=True)
+
+    mpu, up = read_stage_metadata(geometry_file)
+
+    geo_path = asset_dir / ASWFLayerNames.GEO
+    if not geo_path.exists():
+        _create_geo_layer(geo_path, geometry_file)
+
+    root_path = asset_dir / f"{asset_name}.usda"
+    if not root_path.exists():
+        _create_root_file(root_path, mpu, up)
+
+    logger.info("Created ASWF asset folder: %s", asset_dir)
+    return root_path
+
+
+def ensure_aswf_compliance(
+    geometry_file: Path,
+    *,
+    fix_root_prim: bool = False,
+) -> None:
+    """Validate and (optionally) repair a geometry file for ASWF compliance."""
+    layer = Sdf.Layer.FindOrOpen(str(geometry_file))
+    if layer is None:
+        msg = f"Cannot open geometry file: {geometry_file.name}"
+        raise ValueError(msg)
+
+    root_prims = list(layer.rootPrims)
+
+    if not root_prims:
+        msg = (
+            f"Asset '{geometry_file.name}' contains no geometry. "
+            f"Export it from your DCC with geometry under a root prim."
+        )
+        raise ValueError(msg)
+
+    if not layer.defaultPrim:
+        if len(root_prims) == 1:
+            layer.defaultPrim = root_prims[0].name
+            layer.Save()
+            logger.info(
+                "Auto-set defaultPrim to '%s' in %s",
+                root_prims[0].name, geometry_file.name,
+            )
+        else:
+            prim_names = ", ".join(p.name for p in root_prims)
+            msg = (
+                f"Asset '{geometry_file.name}' has multiple root prims "
+                f"({prim_names}) and no defaultPrim. Export it from your "
+                f"DCC with a single root Xform."
+            )
+            raise ValueError(msg)
+
+    root_spec = layer.GetPrimAtPath(Sdf.Path(f"/{layer.defaultPrim}"))
+    if root_spec is None:
+        msg = (
+            f"Asset '{geometry_file.name}' has defaultPrim "
+            f"'{layer.defaultPrim}' but that prim does not exist."
+        )
+        raise ValueError(msg)
+
+    if root_spec.typeName not in ("Xform", ""):
+        if not fix_root_prim:
+            msg = (
+                f"Asset '{geometry_file.name}' has a {root_spec.typeName} "
+                f"as its root prim instead of an Xform. Per ASWF USD "
+                f"guidelines, the root prim should be an Xform with "
+                f"geometry as children. Ask the user if they want to "
+                f"fix this automatically, then call place_asset again "
+                f"with fix_root_prim set to true."
+            )
+            raise ValueError(msg)
+        _wrap_root_prim(geometry_file)
+        logger.info(
+            "Wrapped %s root prim in Xform for ASWF compliance",
+            geometry_file.name,
+        )
+
+
+# ── Nested references ──
+
+
+def add_nested_asset_reference(
+    container_dir: Path,
+    group: str,
+    prim_name: str,
+    ref_asset_path: str,
+    transform: TransformParams,
+) -> str:
+    """Author a nested asset reference inside a container's ``contents.usda``."""
+    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    default_prim_name = resolve_default_prim_name(container_dir)
+
+    if contents_path.exists():
+        contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
+    else:
+        contents_layer = Sdf.Layer.CreateNew(str(contents_path))
+        contents_layer.defaultPrim = default_prim_name
+
+    ensure_layer_scope(contents_layer, default_prim_name, "contents", "Xform")
+    _ensure_group_scope(contents_layer, default_prim_name, group)
+    contents_layer.Save()
+
+    stage = Usd.Stage.Open(str(contents_path))
+    if stage is None:
+        msg = f"Cannot open contents layer: {contents_path}"
+        raise RuntimeError(msg)
+
+    ref_prim_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
+    ref_prim = UsdGeom.Xform.Define(stage, ref_prim_path)
+    ref_prim.GetPrim().GetReferences().AddReference(ref_asset_path)
+
+    container_mpu = get_mpu(container_dir)
+    factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
+
+    ref_full_path = (container_dir / ref_asset_path).resolve()
+    nested_mpu = (
+        read_asset_mpu_from_file(ref_full_path)
+        if ref_full_path.exists() else container_mpu
+    )
+    compensation = (
+        nested_mpu / container_mpu if container_mpu > 0 else 1.0
+    )
+    final_scale = (
+        transform.scale[0] * compensation,
+        transform.scale[1] * compensation,
+        transform.scale[2] * compensation,
+    )
+
+    xformable = UsdGeom.Xformable(ref_prim)
+    xformable.ClearXformOpOrder()
+    xformable.AddTranslateOp().Set(
+        Gf.Vec3d(
+            transform.translate[0] * factor,
+            transform.translate[1] * factor,
+            transform.translate[2] * factor,
+        ),
+    )
+    if any(v != 0.0 for v in transform.rotate):
+        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
+    if final_scale != (1.0, 1.0, 1.0):
+        xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+
+    stage.Save()
+    ensure_root_reference(container_dir, ASWFLayerNames.CONTENTS)
+
+    logger.info(
+        "Added nested asset %s -> %s in %s/%s",
+        prim_name, ref_asset_path, container_dir.name, ASWFLayerNames.CONTENTS,
+    )
+    return ref_prim_path
+
+
+# ── Internal: intake helpers ──
+
+
+def _reuse_existing_target(target_folder: Path, source_root: Path) -> IntakeReport:
+    """Build an IntakeReport for a target folder that already exists."""
+    canonical = target_folder / f"{target_folder.name}.usda"
+    if not canonical.exists():
+        msg = (
+            f"Target folder {target_folder} exists but has no canonical "
+            f"root '{canonical.name}'. Delete it and retry."
+        )
+        raise RuntimeError(msg)
+    return IntakeReport(
+        scene_ref_path=f"assets/{target_folder.name}/{canonical.name}",
+        asset_folder_name=target_folder.name,
+        root_original_name=source_root.name,
+        root_canonical_name=canonical.name,
+        was_renamed=source_root.name != canonical.name,
+        files_copied=0,
+        warnings=["target folder already existed; source was not re-copied"],
+    )
+
+
+def _plan_copies(
+    source_folder: Path,
+    target_folder: Path,
+    layer_sources: Iterable[Path],
+    asset_sources: Iterable[Path],
+) -> tuple[dict[Path, Path], list[Path], list[str], list[str]]:
+    """Return ``(path_map, layer_targets, localized_layers, localized_assets)``."""
+    path_map: dict[Path, Path] = {}
+    layer_targets: list[Path] = []
+    localized_layer_sources: list[str] = []
+    localized_asset_sources: list[str] = []
+    used_targets: set[Path] = set()
+
+    for src in layer_sources:
+        if _is_inside(src, source_folder):
+            dst = target_folder / src.relative_to(source_folder)
+        else:
+            dst = target_folder / src.name
+            localized_layer_sources.append(str(src))
+        resolved = _dedupe(dst, used_targets)
+        used_targets.add(resolved)
+        path_map[src] = resolved
+        layer_targets.append(resolved)
+
+    for src in asset_sources:
+        if _is_inside(src, source_folder):
+            dst = target_folder / src.relative_to(source_folder)
+        else:
+            dst = target_folder / ASWFLayerNames.TEXTURES / src.name
+            localized_asset_sources.append(str(src))
+        resolved = _dedupe(dst, used_targets)
+        used_targets.add(resolved)
+        path_map[src] = resolved
+
+    return path_map, layer_targets, localized_layer_sources, localized_asset_sources
+
+
+def _is_inside(path: Path, folder: Path) -> bool:
+    """Return True if *path* is a descendant of *folder*."""
+    try:
+        path.relative_to(folder)
+    except ValueError:
+        return False
+    return True
+
+
+def _dedupe(candidate: Path, used: set[Path]) -> Path:
+    """Return *candidate*, or a ``stem_N.ext`` variant if already used."""
+    if candidate not in used:
+        return candidate
+    counter = 2
+    while True:
+        alt = candidate.with_name(f"{candidate.stem}_{counter}{candidate.suffix}")
+        if alt not in used:
+            return alt
+        counter += 1
+
+
+def _rewrite_asset_paths(
+    layer_targets: list[Path], path_map: dict[Path, Path],
+) -> None:
+    """Rewrite every asset path in *layer_targets* to point inside the target."""
+    resolved_map = {src.resolve(): dst.resolve() for src, dst in path_map.items()}
+
+    for layer_path in layer_targets:
+        layer = Sdf.Layer.FindOrOpen(str(layer_path))
+        if layer is None:
+            msg = f"Could not open copied layer for rewrite: {layer_path}"
+            raise RuntimeError(msg)
+
+        layer_dir = layer_path.parent.resolve()
+
+        def _rewrite(asset_path: str, _layer_dir: Path = layer_dir) -> str:
+            if not asset_path:
+                return asset_path
+            try:
+                resolved = (_layer_dir / asset_path).resolve()
+            except (OSError, ValueError):
+                return asset_path
+            target = resolved_map.get(resolved)
+            if target is None:
+                return asset_path
+            try:
+                relative = target.relative_to(_layer_dir)
+            except ValueError:
+                relative = Path(os.path.relpath(target, _layer_dir))
+            return "./" + relative.as_posix()
+
+        UsdUtils.ModifyAssetPaths(layer, _rewrite)
+        layer.Save()
+
+
+def _canonicalize_root(
+    copied_root: Path,
+    canonical_root: Path,
+    sibling_layer_targets: list[Path],
+) -> bool:
+    """Rename *copied_root* to *canonical_root* and update sibling refs."""
+    if copied_root.resolve() == canonical_root.resolve():
+        return False
+
+    shutil.move(str(copied_root), str(canonical_root))
+    old_name = copied_root.name
+    new_name = canonical_root.name
+
+    for sibling_path in sibling_layer_targets:
+        if not sibling_path.exists():
+            continue
+        layer = Sdf.Layer.FindOrOpen(str(sibling_path))
+        if layer is None:
+            continue
+
+        def _swap(asset_path: str, _old: str = old_name, _new: str = new_name) -> str:
+            if not asset_path or Path(asset_path).name != _old:
+                return asset_path
+            parent = Path(asset_path).parent
+            if str(parent) in (".", ""):
+                return f"./{_new}"
+            return (parent / _new).as_posix()
+
+        UsdUtils.ModifyAssetPaths(layer, _swap)
+        layer.Save()
+
+    return True
+
+
+def _validate_self_contained(
+    canonical_root: Path, target_folder: Path,
+) -> list[str]:
+    """Verify every dep of *canonical_root* resolves inside *target_folder*."""
+    layers, assets, unresolved = UsdUtils.ComputeAllDependencies(str(canonical_root))
+
+    if unresolved:
+        msg = (
+            f"Intake validation failed: {len(unresolved)} dependency "
+            f"path(s) became unresolved after localization."
+        )
+        raise RuntimeError(msg)
+
+    target_folder = target_folder.resolve()
+    leaks = [
+        str(Path(item).resolve())
+        for item in (*[lyr.realPath for lyr in layers], *assets)
+        if not _is_inside(Path(item).resolve(), target_folder)
+    ]
+    if leaks:
+        msg = (
+            f"Intake validation failed: {len(leaks)} dependency path(s) "
+            f"still point outside the asset folder after localization."
+        )
+        raise RuntimeError(msg)
+
+    return []
+
+
+# ── Internal: nested + folder-creation helpers ──
+
+
+def _ensure_group_scope(
+    layer: Sdf.Layer, default_prim_name: str, group: str,
+) -> None:
+    """Ensure ``/{root}/contents/{group}`` exists as an Xform."""
+    group_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
+    if layer.GetPrimAtPath(group_path):
+        return
+    Sdf.CreatePrimInLayer(layer, group_path)
+    group_prim = layer.GetPrimAtPath(group_path)
+    group_prim.specifier = Sdf.SpecifierDef
+    group_prim.typeName = "Xform"
+
+
+def _create_geo_layer(geo_dest: Path, geometry_source: Path) -> None:
+    """Copy geometry into ``geo.usda`` using Sdf layer copy."""
+    source_layer = Sdf.Layer.FindOrOpen(str(geometry_source))
+    if source_layer is None:
+        msg = f"Cannot open geometry source: {geometry_source}"
+        raise RuntimeError(msg)
+
+    dest_layer = Sdf.Layer.CreateNew(str(geo_dest))
+    for prim_spec in source_layer.rootPrims:
+        Sdf.CopySpec(
+            source_layer, prim_spec.path, dest_layer, prim_spec.path,
+        )
+    dest_layer.defaultPrim = source_layer.defaultPrim
+    dest_layer.Save()
+
+
+def _create_root_file(
+    root_path: Path,
+    meters_per_unit: float,
+    up_axis: str,
+) -> None:
+    """Write the root .usd that references ``geo.usda``."""
+    geo_path = root_path.parent / ASWFLayerNames.GEO
+    default_prim_name = root_path.parent.name
+    if geo_path.exists():
+        geo_layer = Sdf.Layer.FindOrOpen(str(geo_path))
+        if geo_layer and geo_layer.defaultPrim:
+            default_prim_name = geo_layer.defaultPrim
+
+    stage = Usd.Stage.CreateNew(str(root_path))
+    UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
+    UsdGeom.SetStageUpAxis(
+        stage, UsdGeom.Tokens.y if up_axis == "Y" else UsdGeom.Tokens.z,
+    )
+
+    root_prim = stage.DefinePrim(f"/{default_prim_name}", "Xform")
+    stage.SetDefaultPrim(root_prim)
+    root_prim.GetReferences().AddReference(f"./{ASWFLayerNames.GEO}")
+
+    stage.Save()
+
+
+def _wrap_root_prim(geometry_file: Path) -> None:
+    """Wrap a non-Xform root prim under an Xform parent in place."""
+    source_layer = Sdf.Layer.FindOrOpen(str(geometry_file))
+    if source_layer is None:
+        return
+
+    default_prim_name = source_layer.defaultPrim
+    if not default_prim_name:
+        return
+
+    root_path = Sdf.Path(f"/{default_prim_name}")
+    root_spec = source_layer.GetPrimAtPath(root_path)
+    if root_spec is None or root_spec.typeName in ("Xform", ""):
+        return
+
+    with tempfile.NamedTemporaryFile(suffix=".usda", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+
+    try:
+        dest_layer = Sdf.Layer.CreateNew(str(tmp_path))
+
+        Sdf.CreatePrimInLayer(dest_layer, root_path)
+        wrapper = dest_layer.GetPrimAtPath(root_path)
+        wrapper.specifier = Sdf.SpecifierDef
+        wrapper.typeName = "Xform"
+
+        child_path = Sdf.Path(f"/{default_prim_name}/mesh")
+        Sdf.CopySpec(source_layer, root_path, dest_layer, child_path)
+
+        dest_layer.defaultPrim = default_prim_name
+        dest_layer.Save()
+
+        shutil.move(str(tmp_path), str(geometry_file))
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()

@@ -1,145 +1,60 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Test the Skills layer: Local skill discovers and searches assets."""
+"""Test the skills layer wiring (registry + ToolResult routing)."""
 
 import asyncio
-import tempfile
-from pathlib import Path
 
-from bowerbot.skills.local import LocalSkill
-from bowerbot.skills.registry import SkillRegistry
 from bowerbot.config import Settings, SkillConfig
+from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
+from bowerbot.skills.registry import SkillRegistry
 
 
-def create_test_assets(directory: Path) -> None:
-    """Create a few dummy USD files to search through."""
-    from pxr import Usd, UsdGeom, Kind
+class _StubSkill(Skill):
+    """Minimal Skill implementation used to exercise the registry."""
 
-    for name in ["display_table", "wooden_chair", "pendant_light", "shelf_unit"]:
-        path = directory / f"{name}.usda"
-        stage = Usd.Stage.CreateNew(str(path))
-        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
-        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
-        root = stage.DefinePrim(f"/{name}", "Xform")
-        stage.SetDefaultPrim(root)
-        # Add a simple cube as placeholder geometry
-        cube = UsdGeom.Cube.Define(stage, f"/{name}/Mesh")
-        cube.GetSizeAttr().Set(1.0)
-        stage.Save()
+    name = "stub"
+    category = SkillCategory.ASSET_PROVIDER
 
+    def get_tools(self) -> list[Tool]:
+        return [Tool(name="ping", description="Returns pong.", parameters={})]
 
-def test_local_skill_search():
-    """LocalSkill finds assets by keyword."""
-    with tempfile.TemporaryDirectory() as tmp:
-        asset_dir = Path(tmp)
-        create_test_assets(asset_dir)
+    async def execute(self, tool_name: str, params: dict) -> ToolResult:
+        if tool_name == "ping":
+            return ToolResult(success=True, data="pong")
+        return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
 
-        skill = LocalSkill()
-        skill.assets_dir = asset_dir
-        assert skill.validate_config() is True
-
-        result = asyncio.run(skill.execute("search_assets", {"query": "table"}))
-        assert result.success, f"Search failed: {result.error}"
-        assert len(result.data) == 1, f"Expected 1 result, got {len(result.data)}"
-        assert result.data[0]["name"] == "display_table"
-
-        result = asyncio.run(skill.execute("search_assets", {"query": "chair"}))
-        assert result.success
-        assert len(result.data) == 1
-        assert result.data[0]["name"] == "wooden_chair"
-
-        result = asyncio.run(skill.execute("search_assets", {"query": "sofa"}))
-        assert result.success
-        assert len(result.data) == 0
-
-        print("✅ test_local_skill_search PASSED")
+    def validate_config(self) -> bool:
+        return True
 
 
-def test_local_skill_list_all():
-    """LocalSkill lists all available assets."""
-    with tempfile.TemporaryDirectory() as tmp:
-        asset_dir = Path(tmp)
-        create_test_assets(asset_dir)
+def test_registry_routes_tool_to_qualified_skill():
+    """SkillRegistry namespaces tools as ``<skill>__<tool>`` and routes correctly."""
+    registry = SkillRegistry()
+    registry.register(_StubSkill())
 
-        skill = LocalSkill()
-        skill.assets_dir = asset_dir
-        result = asyncio.run(skill.execute("list_assets", {}))
+    tools = registry.get_all_tools()
+    assert any(t["function"]["name"] == "stub__ping" for t in tools)
 
-        assert result.success
-        assert len(result.data) == 4, f"Expected 4 assets, got {len(result.data)}"
-
-        names = sorted([a["name"] for a in result.data])
-        assert names == ["display_table", "pendant_light", "shelf_unit", "wooden_chair"]
-
-        print("✅ test_local_skill_list_all PASSED")
-        print(f"   Found: {names}")
+    result = asyncio.run(registry.execute_tool("stub__ping", {}))
+    assert result.success
+    assert result.data == "pong"
 
 
-def test_skill_registry():
-    """SkillRegistry loads skills from settings and exposes tools."""
-    with tempfile.TemporaryDirectory() as tmp:
-        asset_dir = Path(tmp)
-        create_test_assets(asset_dir)
-
-        settings = Settings(
-            assets_dir=str(asset_dir),
-            skills={
-                "local": SkillConfig(enabled=True),
-                "sketchfab": SkillConfig(enabled=False),
-            },
-        )
-
-        registry = SkillRegistry()
-        registry.load_from_settings(settings)
-
-        assert "local" in registry.enabled_skills
-
-        tools = registry.get_all_tools()
-        tool_names = [t["function"]["name"] for t in tools]
-        assert "local__search_assets" in tool_names
-        assert "local__list_assets" in tool_names
-
-        print("✅ test_skill_registry PASSED")
-        print(f"   Enabled: {registry.enabled_skills}")
-        print(f"   Tools: {tool_names}")
+def test_registry_rejects_unknown_skill():
+    """Calls to unknown qualified names return a clear error."""
+    registry = SkillRegistry()
+    result = asyncio.run(registry.execute_tool("ghost__ping", {}))
+    assert not result.success
+    assert "Skill not found" in result.error
 
 
-def test_registry_execute_tool():
-    """SkillRegistry routes tool calls to the right skill."""
-    with tempfile.TemporaryDirectory() as tmp:
-        asset_dir = Path(tmp)
-        create_test_assets(asset_dir)
-
-        settings = Settings(
-            assets_dir=str(asset_dir),
-            skills={
-                "local": SkillConfig(enabled=True),
-            },
-        )
-
-        registry = SkillRegistry()
-        registry.load_from_settings(settings)
-
-        result = asyncio.run(
-            registry.execute_tool("local__search_assets", {"query": "light"})
-        )
-        assert result.success
-        assert len(result.data) == 1
-        assert result.data[0]["name"] == "pendant_light"
-
-        result = asyncio.run(
-            registry.execute_tool("fake__search", {"query": "test"})
-        )
-        assert not result.success
-        assert "Skill not found" in result.error
-
-        print("✅ test_registry_execute_tool PASSED")
-
-
-if __name__ == "__main__":
-    test_local_skill_search()
-    test_local_skill_list_all()
-    test_skill_registry()
-    test_registry_execute_tool()
-    print("\n🎉 All skills tests passed!")
+def test_registry_loads_no_skills_when_disabled():
+    """A registry with all skills disabled exposes no tools."""
+    settings = Settings(
+        skills={"sketchfab": SkillConfig(enabled=False)},
+    )
+    registry = SkillRegistry()
+    registry.load_from_settings(settings)
+    assert registry.skill_count == 0
+    assert registry.get_all_tools() == []

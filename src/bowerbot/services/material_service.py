@@ -1,306 +1,215 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Material service — manage materials inside ASWF asset folders.
-
-* **add_material** — copy an external material into ``mtl.usda`` and
-  bind it to a prim.
-* **create_procedural_material** — write a MaterialX
-  ``standard_surface`` directly into ``mtl.usda`` (no textures) and
-  bind it.
-* **remove_material_binding** — clear a binding and garbage-collect
-  unused definitions + the layer when empty.
-"""
+"""Material service — orchestrates material operations for the material tools."""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
-from pxr import Gf, Sdf, Usd, UsdShade
-
-from bowerbot.schemas import (
-    ASWFLayerNames,
-    MaterialXShaders,
-    ProceduralMaterialParams,
-)
-from bowerbot.services.asset_service import (
-    ensure_layer_scope,
-    ensure_root_reference,
-    find_root_file,
-    remove_empty_layer,
-    resolve_default_prim_name,
-    to_layer_local_path,
-)
+from bowerbot.schemas import ASWFLayerNames, ProceduralMaterialParams
+from bowerbot.state import SceneState
+from bowerbot.utils import material_utils, stage_utils
+from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
 
 logger = logging.getLogger(__name__)
 
 
-def add_material(
-    asset_dir: Path,
-    material_file: Path,
-    prim_path: str,
-    material_prim_path: str | None = None,
-) -> str:
-    """Copy a material into ``mtl.usda`` and bind it to *prim_path*.
+def create_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Author a procedural MaterialX material and bind it to a prim."""
+    prim_path = params["prim_path"]
+    material_name = params["material_name"]
 
-    Creates ``mtl.usda`` if it doesn't exist and updates the root
-    file to reference it.
-    """
-    mtl_path = asset_dir / ASWFLayerNames.MTL
+    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(state.stage, prim_path)
+    if asset_dir is None or ref_prim_path is None:
+        msg = (
+            f"Cannot find ASWF asset folder for {prim_path}. "
+            "Procedural materials only work on assets placed as ASWF "
+            "folders (not USDZ)."
+        )
+        raise ValueError(msg)
 
-    if not material_prim_path:
-        material_prim_path = _find_first_material(material_file)
-        if not material_prim_path:
-            msg = f"No Material prim found in {material_file.name}"
+    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
+    material_params = ProceduralMaterialParams(
+        material_name=material_name,
+        base_color=(
+            float(params.get("base_color_r", 0.8)),
+            float(params.get("base_color_g", 0.8)),
+            float(params.get("base_color_b", 0.8)),
+        ),
+        metalness=float(params.get("metalness", 0.0)),
+        roughness=float(params.get("roughness", 0.5)),
+        opacity=float(params.get("opacity", 1.0)),
+    )
+
+    material_prim_path = material_utils.create_procedural_material_in_folder(
+        asset_dir=asset_dir,
+        prim_path=asset_local_path,
+        params=material_params,
+    )
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    logger.info(
+        "Created procedural material %s on %s in %s/",
+        material_prim_path, prim_path, asset_dir.name,
+    )
+    return {
+        "prim_path": prim_path,
+        "material": material_prim_path,
+        "asset_folder": asset_dir.name,
+        "message": (
+            f"Created procedural material '{material_name}' and "
+            f"bound to {prim_path} in {asset_dir.name}/{ASWFLayerNames.MTL}"
+        ),
+    }
+
+
+def bind_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Copy a material from a file into the asset and bind it to a prim."""
+    prim_path = params["prim_path"]
+    material_file = Path(params["material_file"])
+    material_prim_path = params.get("material_prim_path")
+
+    if not material_file.exists():
+        msg = f"Material file not found: {material_file}"
+        raise ValueError(msg)
+
+    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(state.stage, prim_path)
+    if asset_dir is None or ref_prim_path is None:
+        msg = (
+            f"Cannot find ASWF asset folder for {prim_path}. "
+            "Material binding only works on assets placed as ASWF "
+            "folders (not USDZ)."
+        )
+        raise ValueError(msg)
+
+    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
+    material_prim_path = material_utils.add_material_to_folder(
+        asset_dir=asset_dir,
+        material_file=material_file,
+        prim_path=asset_local_path,
+        material_prim_path=material_prim_path,
+    )
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    logger.info(
+        "Bound %s to %s in %s/",
+        material_prim_path, prim_path, asset_dir.name,
+    )
+    return {
+        "prim_path": prim_path,
+        "material": material_prim_path,
+        "asset_folder": asset_dir.name,
+        "message": (
+            f"Bound {material_prim_path} to {prim_path} in "
+            f"{asset_dir.name}/{ASWFLayerNames.MTL}"
+        ),
+    }
+
+
+def remove_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Remove the material binding on a prim inside an ASWF asset."""
+    prim_path = params["prim_path"]
+    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(state.stage, prim_path)
+    if asset_dir is None or ref_prim_path is None:
+        msg = f"Cannot find ASWF asset folder for {prim_path}."
+        raise ValueError(msg)
+
+    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
+    material_utils.remove_material_binding_from_folder(asset_dir, asset_local_path)
+    state.stage = stage_utils.open_stage(state.stage_path)
+
+    logger.info("Removed material from %s", prim_path)
+    return {
+        "prim_path": prim_path,
+        "asset_folder": asset_dir.name,
+        "message": f"Removed material binding from {prim_path}",
+    }
+
+
+def list_materials(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """List every material across the project's asset folders."""
+    del params
+    assets_dir = state.resolve_assets_dir()
+    all_materials: list[dict] = []
+
+    for entry in assets_dir.iterdir():
+        if not entry.is_dir():
+            continue
+        if not (entry / ASWFLayerNames.MTL).exists():
+            continue
+        materials = material_utils.list_materials_in_folder(entry)
+        for mat in materials:
+            mat["asset_folder"] = entry.name
+        all_materials.extend(materials)
+
+    return {
+        "material_count": len(all_materials),
+        "materials": all_materials,
+        "message": f"Scene has {len(all_materials)} material(s).",
+    }
+
+
+def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Delete material definitions no prim binds to, per asset or project-wide."""
+    asset_prim_path = params.get("asset_prim_path")
+
+    if asset_prim_path:
+        asset_dir, _ = resolve_asset_dir_for_prim(state.stage, asset_prim_path)
+        if asset_dir is None:
+            msg = (
+                f"Cannot find ASWF asset folder for {asset_prim_path}. "
+                "Cleanup only works on ASWF folder assets."
+            )
             raise ValueError(msg)
 
-    mtl_layer = (
-        Sdf.Layer.FindOrOpen(str(mtl_path))
-        if mtl_path.exists()
-        else Sdf.Layer.CreateNew(str(mtl_path))
-    )
-
-    source_layer = Sdf.Layer.FindOrOpen(str(material_file))
-    if source_layer is None:
-        msg = f"Cannot open material file: {material_file}"
-        raise RuntimeError(msg)
-
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
-
-    mat_name = Sdf.Path(material_prim_path).name
-    dest_mat_path = Sdf.Path(f"/{default_prim_name}/mtl/{mat_name}")
-    Sdf.CopySpec(
-        source_layer, Sdf.Path(material_prim_path),
-        mtl_layer, dest_mat_path,
-    )
-
-    mtl_layer.defaultPrim = default_prim_name
-    mtl_layer.Save()
-
-    local_prim_path = to_layer_local_path(prim_path, default_prim_name)
-    composed_mat_path = f"/{default_prim_name}/mtl/{mat_name}"
-
-    stage = Usd.Stage.Open(str(mtl_path))
-    if stage is not None:
-        prim = stage.OverridePrim(local_prim_path)
-        mat_prim = stage.GetPrimAtPath(composed_mat_path)
-        if mat_prim.IsValid():
-            material = UsdShade.Material(mat_prim)
-            UsdShade.MaterialBindingAPI.Apply(prim).Bind(material)
-        stage.Save()
-
-    ensure_root_reference(asset_dir, ASWFLayerNames.MTL)
-
-    logger.info(
-        "Added material %s -> %s in %s",
-        composed_mat_path, prim_path, asset_dir.name,
-    )
-    return composed_mat_path
-
-
-def create_procedural_material(
-    asset_dir: Path,
-    prim_path: str,
-    params: ProceduralMaterialParams,
-) -> str:
-    """Create and bind a MaterialX ``standard_surface`` material.
-
-    Writes a parameter-only material (no textures) into the asset's
-    ``mtl.usda`` and binds it to *prim_path*.
-    """
-    mtl_path = asset_dir / ASWFLayerNames.MTL
-    default_prim_name = resolve_default_prim_name(asset_dir)
-
-    mtl_layer = (
-        Sdf.Layer.FindOrOpen(str(mtl_path))
-        if mtl_path.exists()
-        else Sdf.Layer.CreateNew(str(mtl_path))
-    )
-
-    ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
-    mtl_layer.defaultPrim = default_prim_name
-    mtl_layer.Save()
-
-    stage = Usd.Stage.Open(str(mtl_path))
-    if stage is None:
-        msg = f"Cannot open mtl layer: {mtl_path}"
-        raise RuntimeError(msg)
-
-    mat_prim_path = f"/{default_prim_name}/mtl/{params.material_name}"
-    shader_prim_path = (
-        f"{mat_prim_path}/{MaterialXShaders.STANDARD_SURFACE_PRIM}"
-    )
-
-    material = UsdShade.Material.Define(stage, mat_prim_path)
-    shader = UsdShade.Shader.Define(stage, shader_prim_path)
-
-    shader.CreateIdAttr(MaterialXShaders.STANDARD_SURFACE)
-    shader.CreateInput(
-        "base_color", Sdf.ValueTypeNames.Color3f,
-    ).Set(Gf.Vec3f(*params.base_color))
-    shader.CreateInput(
-        "metalness", Sdf.ValueTypeNames.Float,
-    ).Set(params.metalness)
-    shader.CreateInput(
-        "specular_roughness", Sdf.ValueTypeNames.Float,
-    ).Set(params.roughness)
-
-    if params.opacity < 1.0:
-        shader.CreateInput(
-            "opacity", Sdf.ValueTypeNames.Float,
-        ).Set(params.opacity)
-
-    surface_output = shader.CreateOutput(
-        "out", Sdf.ValueTypeNames.Token,
-    )
-    material.CreateSurfaceOutput(
-        MaterialXShaders.OUTPUT_QUALIFIER,
-    ).ConnectToSource(surface_output)
-
-    local_prim_path = to_layer_local_path(prim_path, default_prim_name)
-    target_prim = stage.OverridePrim(local_prim_path)
-    UsdShade.MaterialBindingAPI.Apply(target_prim).Bind(material)
-
-    stage.Save()
-    ensure_root_reference(asset_dir, ASWFLayerNames.MTL)
-
-    logger.info(
-        "Created procedural material %s -> %s in %s",
-        mat_prim_path, prim_path, asset_dir.name,
-    )
-    return mat_prim_path
-
-
-def remove_material_binding(asset_dir: Path, prim_path: str) -> None:
-    """Remove a material binding from an asset folder's ``mtl.usda``.
-
-    If no bindings remain, deletes the layer and rebuilds the root.
-    """
-    mtl_path = asset_dir / ASWFLayerNames.MTL
-    if not mtl_path.exists():
-        return
-
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    local_path = to_layer_local_path(prim_path, default_prim_name)
-
-    stage = Usd.Stage.Open(str(mtl_path))
-    if stage is None:
-        return
-
-    prim = stage.GetPrimAtPath(local_path)
-    if prim.IsValid():
-        UsdShade.MaterialBindingAPI(prim).UnbindAllBindings()
-
-    stage.Save()
-    cleanup_unused_materials(asset_dir)
-
-
-def list_materials(asset_dir: Path) -> list[dict]:
-    """List all materials and bindings in an asset folder."""
-    mtl_path = asset_dir / ASWFLayerNames.MTL
-    if not mtl_path.exists():
-        return []
-
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return []
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return []
-
-    materials: dict[str, list[str]] = {}
-    for prim in stage.Traverse():
-        if prim.IsA(UsdShade.Material):
-            materials[str(prim.GetPath())] = []
-
-    for prim in stage.Traverse():
-        bound_mat, _ = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()
-        if bound_mat:
-            mat_path = str(bound_mat.GetPath())
-            if mat_path in materials:
-                materials[mat_path].append(str(prim.GetPath()))
-
-    return [
-        {
-            "material_path": mat_path,
-            "material_name": Sdf.Path(mat_path).name,
-            "bound_prims": bound_prims,
-        }
-        for mat_path, bound_prims in materials.items()
-    ]
-
-
-def _find_first_material(file_path: Path) -> str | None:
-    """Return the prim path of the first Material in a USD file."""
-    stage = Usd.Stage.Open(str(file_path))
-    if stage is None:
-        return None
-    for prim in stage.Traverse():
-        if prim.IsA(UsdShade.Material):
-            return str(prim.GetPath())
-    return None
-
-
-def cleanup_unused_materials(asset_dir: Path) -> list[str]:
-    """Remove unbound material definitions from an asset's ``mtl.usda``.
-
-    Resolves bindings through the composed root stage so binding opinions
-    authored on ``over`` prims in ``mtl.usda`` count. Every ``Material``
-    prim in ``mtl.usda`` that no prim binds to is deleted. When the layer
-    becomes empty, it is removed and the root references are rebuilt.
-
-    Returns the sorted list of removed material names (empty if
-    ``mtl.usda`` is missing or no unused materials were found).
-    """
-    mtl_path = asset_dir / ASWFLayerNames.MTL
-    if not mtl_path.exists():
-        return []
-
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return []
-
-    root_stage = Usd.Stage.Open(str(root_file))
-    if root_stage is None:
-        return []
-
-    bound_materials: set[str] = set()
-    for prim in root_stage.Traverse():
-        bound_mat, _ = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()
-        if bound_mat:
-            bound_materials.add(str(bound_mat.GetPath()))
-
-    mtl_layer = Sdf.Layer.FindOrOpen(str(mtl_path))
-    if mtl_layer is None:
-        return []
-
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    mtl_scope_path = Sdf.Path(f"/{default_prim_name}/mtl")
-    mtl_scope = mtl_layer.GetPrimAtPath(mtl_scope_path)
-    removed: list[str] = []
-    if mtl_scope:
-        to_remove = [
-            child.path for child in mtl_scope.nameChildren
-            if str(child.path) not in bound_materials
-        ]
-        for path in to_remove:
-            removed.append(path.name)
-            edit = Sdf.BatchNamespaceEdit()
-            edit.Add(path, Sdf.Path.emptyPath)
-            mtl_layer.Apply(edit)
-
-    mtl_layer.Save()
-
-    remove_empty_layer(
-        mtl_path, asset_dir, lambda p: p.IsA(UsdShade.Material),
-    )
-
-    if removed:
+        removed = material_utils.cleanup_unused_in_folder(asset_dir)
+        state.stage = stage_utils.open_stage(state.stage_path)
         logger.info(
-            "Cleaned %d unused material(s) from %s",
-            len(removed), asset_dir.name,
+            "Cleaned %d unused material(s) from %s", len(removed), asset_dir.name,
         )
-    return sorted(removed)
+        return {
+            "asset_folder": asset_dir.name,
+            "removed_count": len(removed),
+            "removed": removed,
+            "message": (
+                f"Removed {len(removed)} unused material(s) from {asset_dir.name}."
+            ),
+        }
+
+    assets_dir = state.resolve_assets_dir()
+    per_folder: list[dict[str, Any]] = []
+    total = 0
+    for entry in sorted(assets_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        if not (entry / ASWFLayerNames.MTL).exists():
+            continue
+        removed = material_utils.cleanup_unused_in_folder(entry)
+        if removed:
+            per_folder.append({"asset_folder": entry.name, "removed": removed})
+            total += len(removed)
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    logger.info(
+        "Cleaned %d unused material(s) across %d asset folder(s)",
+        total, len(per_folder),
+    )
+    return {
+        "total_removed": total,
+        "per_folder": per_folder,
+        "message": (
+            f"Removed {total} unused material(s) across "
+            f"{len(per_folder)} asset folder(s)."
+        ),
+    }
+
+
+def _to_asset_local(prim_path: str, ref_prim_path: str) -> str:
+    """Strip the scene-side reference prefix to get an asset-local path."""
+    if prim_path.startswith(ref_prim_path):
+        remainder = prim_path[len(ref_prim_path):]
+        return remainder if remainder else "/"
+    return prim_path

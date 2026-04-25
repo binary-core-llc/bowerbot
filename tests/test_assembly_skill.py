@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pxr import Usd, UsdGeom
 
-from bowerbot.services import stage_service
+from bowerbot.utils import stage_utils
 from tests._helpers import exec_tool, make_state
 
 
@@ -227,7 +227,7 @@ def test_move_asset():
         t = xformable.GetLocalTransformation().ExtractTranslation()
         assert abs(t[1] - 0.75) < 0.01, f"Y should be 0.75, got {t[1]}"
 
-        objects = stage_service.list_prims(state.stage)
+        objects = stage_utils.list_prims(state.stage)
         mug_prims = [o for o in objects if "Mug" in o["prim_path"]]
         assert len(mug_prims) == 1, (
             f"Expected 1 mug prim, got {len(mug_prims)}: {mug_prims}"

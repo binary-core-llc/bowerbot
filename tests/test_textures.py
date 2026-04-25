@@ -9,9 +9,9 @@ from pathlib import Path
 
 from bowerbot.config import SceneDefaults
 from bowerbot.schemas import TextureCategory
-from bowerbot.services import texture_service
 from bowerbot.state import SceneState
 from bowerbot.tools import texture_tools
+from bowerbot.utils import texture_utils
 
 
 def _seed_library(library: Path) -> None:
@@ -32,7 +32,7 @@ def test_list_textures_all_categories():
         library = Path(tmp)
         _seed_library(library)
 
-        results = texture_service.list_textures(library, TextureCategory.ALL)
+        results = texture_utils.find_textures(library, TextureCategory.ALL)
         names = sorted(r["name"] for r in results)
         assert names == [
             "interior", "kitchen", "metal_normal",
@@ -45,7 +45,7 @@ def test_list_textures_hdri_only():
         library = Path(tmp)
         _seed_library(library)
 
-        results = texture_service.list_textures(library, TextureCategory.HDRI)
+        results = texture_utils.find_textures(library, TextureCategory.HDRI)
         names = sorted(r["name"] for r in results)
         assert names == ["interior", "kitchen", "studio"]
         assert all(r["category"] == "hdri" for r in results)
@@ -56,7 +56,7 @@ def test_list_textures_material_only():
         library = Path(tmp)
         _seed_library(library)
 
-        results = texture_service.list_textures(library, TextureCategory.MATERIAL)
+        results = texture_utils.find_textures(library, TextureCategory.MATERIAL)
         names = sorted(r["name"] for r in results)
         assert names == ["metal_normal", "tile_roughness", "wood_diffuse"]
         assert all(r["category"] == "material" for r in results)
@@ -67,15 +67,15 @@ def test_search_textures_matches_stem():
         library = Path(tmp)
         _seed_library(library)
 
-        results = texture_service.search_textures(
-            library, "wood", TextureCategory.ALL,
+        results = texture_utils.find_textures(
+            library, TextureCategory.ALL, query="wood",
         )
         assert [r["name"] for r in results] == ["wood_diffuse"]
 
 
 def test_search_textures_missing_library_returns_empty():
-    results = texture_service.search_textures(
-        Path("/does/not/exist"), "anything", TextureCategory.ALL,
+    results = texture_utils.find_textures(
+        Path("/does/not/exist"), TextureCategory.ALL, query="anything",
     )
     assert results == []
 

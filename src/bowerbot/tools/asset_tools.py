@@ -5,371 +5,68 @@
 
 from __future__ import annotations
 
-import logging
-import shutil
-from pathlib import Path
 from typing import Any
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-    AssetMetadata,
-    IntakeReport,
-    PositionMode,
-    SceneObject,
-    TransformParams,
-)
-from bowerbot.services import asset_service, nested_service, stage_service
-from bowerbot.services.geometry_service import (
-    get_geometry_bounds,
-    get_mpu,
-    resolve_asset_position,
-)
+from bowerbot.schemas import PositionMode
+from bowerbot.services import asset_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import (
-    require_project,
-    require_stage,
-    resolve_assets_dir,
-)
-from bowerbot.utils.naming import safe_prim_name
-from bowerbot.utils.usd_utils import (
-    find_asset_references,
-    find_texture_references,
-    resolve_asset_dir_for_prim,
-)
-
-logger = logging.getLogger(__name__)
+from bowerbot.tools._helpers import require_project, require_stage
 
 
 def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Add an asset reference to the scene at the given group/position."""
     if (err := require_stage(state)):
         return err
-
-    asset_path = Path(params["asset_file_path"])
-    asset_name = params["asset_name"]
-    group = params["group"]
-    tx = float(params["translate_x"])
-    ty = float(params["translate_y"])
-    tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
-
-    state.object_count += 1
-    safe_asset_name = safe_prim_name(asset_name)
-    prim_path = f"/Scene/{group}/{safe_asset_name}_{state.object_count:02d}"
-
-    assets_dir = resolve_assets_dir(state)
     try:
-        report = asset_service.prepare_asset(
-            asset_path, assets_dir,
-            fix_root_prim=params.get("fix_root_prim", False),
-        )
+        data = asset_service.place_asset(state, params)
     except (ValueError, RuntimeError) as e:
-        state.object_count -= 1
         return ToolResult(success=False, error=str(e))
-
-    scene_object = SceneObject(
-        prim_path=prim_path,
-        asset=AssetMetadata(
-            name=asset_name,
-            source_skill="local",
-            source_id=str(asset_path),
-            file_path=report.scene_ref_path,
-        ),
-        translate=(tx, ty, tz),
-        rotate=(0.0, ry, 0.0),
-    )
-
-    stage_service.add_reference(state.stage, scene_object)
-    stage_service.save(state.stage)
-    state.touch_project()
-
-    logger.info("Placed %s at %s (%s, %s, %s)", asset_name, prim_path, tx, ty, tz)
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": prim_path,
-            "asset": asset_name,
-            "position": {"x": tx, "y": ty, "z": tz},
-            "rotation_y": ry,
-            "intake": _intake_summary(report),
-            "message": _placement_message(asset_name, prim_path, report),
-        },
-    )
+    return ToolResult(success=True, data=data)
 
 
 def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Nest an asset inside an ASWF container asset's ``contents.usda``."""
+    """Nest an asset inside an ASWF container's ``contents.usda``."""
     if (err := require_stage(state)):
         return err
-
-    asset_path = Path(params["asset_file_path"])
-    asset_name = params["asset_name"]
-    container_prim_path = params["container_prim_path"]
-    group = params["group"]
-    tx = float(params["translate_x"])
-    ty = float(params["translate_y"])
-    tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
-
-    container_dir, _ = resolve_asset_dir_for_prim(
-        state.stage, container_prim_path,
-    )
-    if container_dir is None:
-        return ToolResult(
-            success=False,
-            error=(
-                f"Cannot find ASWF asset folder for {container_prim_path}. "
-                "Nested placement only works when the container is an "
-                "ASWF folder asset (not a USDZ)."
-            ),
-        )
-
-    assets_dir = resolve_assets_dir(state)
     try:
-        report = asset_service.prepare_asset(
-            asset_path, assets_dir,
-            fix_root_prim=params.get("fix_root_prim", False),
-        )
+        data = asset_service.place_asset_inside(state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
-
-    mode = PositionMode(
-        params.get("position_mode", PositionMode.ABSOLUTE.value),
-    )
-    tx, ty, tz = resolve_asset_position(
-        mode,
-        get_geometry_bounds(container_dir),
-        tx, ty, tz,
-        has_explicit_y=params.get("translate_y") is not None,
-        world_to_local_mat=stage_service.get_container_world_inverse(
-            state.stage, container_prim_path,
-        ),
-        asset_mpu=get_mpu(container_dir),
-    )
-
-    ref_asset_path = _compute_ref_asset_path(
-        report.scene_ref_path, assets_dir, container_dir,
-    )
-
-    state.object_count += 1
-    safe_asset_name = safe_prim_name(asset_name)
-    prim_name = f"{safe_asset_name}_{state.object_count:02d}"
-
-    try:
-        nested_prim_path = nested_service.add_nested_asset_reference(
-            container_dir=container_dir,
-            group=group,
-            prim_name=prim_name,
-            ref_asset_path=ref_asset_path,
-            transform=TransformParams(
-                translate=(tx, ty, tz),
-                rotate=(0.0, ry, 0.0),
-            ),
-        )
-    except (ValueError, RuntimeError) as e:
-        state.object_count -= 1
-        return ToolResult(success=False, error=str(e))
-
-    state.stage = stage_service.open_stage(state.stage_path)
-    state.touch_project()
-
-    composed_path = f"{container_prim_path}/asset{nested_prim_path}"
-    logger.info(
-        "Placed %s inside %s at %s",
-        asset_name, container_dir.name, nested_prim_path,
-    )
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": composed_path,
-            "asset": asset_name,
-            "container": container_dir.name,
-            "position": {"x": tx, "y": ty, "z": tz},
-            "rotation_y": ry,
-            "intake": _intake_summary(report),
-            "message": (
-                f"Placed {asset_name} inside {container_dir.name} "
-                f"at {composed_path}"
-            ),
-        },
-    )
+    return ToolResult(success=True, data=data)
 
 
 def list_project_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every asset in the project directory, with in-scene flags."""
     if (err := require_project(state)):
         return err
-
-    assets_dir = resolve_assets_dir(state)
-    if not assets_dir.exists():
-        return ToolResult(
-            success=True,
-            data={"assets": [], "message": "No assets directory found."},
-        )
-
-    referenced = stage_service.get_all_ref_paths(state.stage) if state.stage else set()
-    query = (params.get("query") or "").lower()
-
-    results: list[dict[str, Any]] = []
-    for entry in sorted(assets_dir.iterdir()):
-        if query and query not in entry.name.lower():
-            continue
-        results.append({
-            "name": entry.name,
-            "type": "folder" if entry.is_dir() else "file",
-            "in_scene": any(entry.name in r for r in referenced),
-        })
-
-    unused = [a for a in results if not a["in_scene"]]
-    return ToolResult(
-        success=True,
-        data={
-            "total": len(results),
-            "unused_count": len(unused),
-            "assets": results,
-            "message": f"Project has {len(results)} asset(s), {len(unused)} unused.",
-        },
-    )
+    try:
+        data = asset_service.list_project_assets(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def delete_project_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete an asset folder/file from the project, if unreferenced."""
     if (err := require_project(state)):
         return err
-
-    name = params["name"]
-    assets_dir = resolve_assets_dir(state)
-    asset_path = assets_dir / name
-
-    if not asset_path.exists():
-        return ToolResult(success=False, error=f"Asset not found: {name}")
-
-    skip_dir = asset_path if asset_path.is_dir() else None
-    referencing = find_asset_references(
-        state.project.path, name, skip_dir=skip_dir,
-    )
-    if referencing:
-        files_list = ", ".join(referencing)
-        return ToolResult(
-            success=False,
-            error=(
-                f"Asset '{name}' is still referenced by: {files_list}. "
-                f"Remove those references first."
-            ),
-        )
-
-    if asset_path.is_dir():
-        shutil.rmtree(asset_path)
-    else:
-        asset_path.unlink()
-    logger.info("Deleted project asset: %s", asset_path)
-
-    return ToolResult(
-        success=True,
-        data={
-            "name": name,
-            "message": f"Deleted asset '{name}' from project assets.",
-        },
-    )
+    try:
+        data = asset_service.delete_project_asset(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def delete_project_texture(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete a texture from the project's ``textures/`` dir, if unreferenced."""
     if (err := require_project(state)):
         return err
-
-    file_name = params["file_name"]
-    project_dir = state.project.path
-    tex_dir = project_dir / ASWFLayerNames.TEXTURES
-    tex_file = tex_dir / file_name
-
-    if not tex_file.exists():
-        return ToolResult(
-            success=False,
-            error=f"Texture file not found: {ASWFLayerNames.TEXTURES}/{file_name}",
-        )
-
-    referencing = find_texture_references(project_dir, file_name)
-    if referencing:
-        files_list = ", ".join(referencing)
-        return ToolResult(
-            success=False,
-            error=(
-                f"Texture '{file_name}' is still referenced by: {files_list}. "
-                f"Remove those references first."
-            ),
-        )
-
-    tex_file.unlink()
-    logger.info("Deleted project texture: %s", file_name)
-
-    if tex_dir.exists() and not any(tex_dir.iterdir()):
-        tex_dir.rmdir()
-
-    return ToolResult(
-        success=True,
-        data={
-            "file": file_name,
-            "message": f"Deleted texture '{file_name}' from project textures.",
-        },
-    )
-
-
-def _compute_ref_asset_path(
-    relative_asset_path: str,
-    assets_dir: Path,
-    container_dir: Path,
-) -> str:
-    """Compute the reference path from the container to the nested asset.
-
-    Prefers a container-relative path (e.g. ``./sub/asset.usda``); falls
-    back to ``../asset.usda`` when the asset lives as a sibling folder.
-    """
-    asset_full_path = (assets_dir.parent / relative_asset_path).resolve()
     try:
-        ref_path = asset_full_path.relative_to(container_dir.resolve())
-        return f"./{ref_path.as_posix()}"
-    except ValueError:
-        return (
-            "../" + asset_full_path.relative_to(
-                container_dir.parent.resolve(),
-            ).as_posix()
-        )
-
-
-def _intake_summary(report: IntakeReport) -> dict[str, Any]:
-    """Condense an intake report into fields surfaced to the LLM."""
-    return {
-        "asset_folder": report.asset_folder_name,
-        "root_canonical_name": report.root_canonical_name,
-        "was_renamed": report.was_renamed,
-        "root_original_name": (
-            report.root_original_name if report.was_renamed else None
-        ),
-        "files_copied": report.files_copied,
-        "localized_layers": report.localized_layers,
-        "localized_assets": report.localized_assets,
-        "warnings": report.warnings,
-    }
-
-
-def _placement_message(
-    asset_name: str, prim_path: str, report: IntakeReport,
-) -> str:
-    """Format a placement message that narrates intake normalization."""
-    parts = [f"Placed {asset_name} at {prim_path}."]
-    if report.was_renamed:
-        parts.append(
-            f"Normalized on intake: {report.root_original_name} -> "
-            f"{report.root_canonical_name} (ASWF convention).",
-        )
-    localized = len(report.localized_layers) + len(report.localized_assets)
-    if localized:
-        parts.append(
-            f"Localized {localized} external dependency/ies into the asset folder.",
-        )
-    return " ".join(parts)
+        data = asset_service.delete_project_texture(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 TOOLS: list[Tool] = [

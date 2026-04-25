@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/binary-core-llc/bowerbot/compare/v1.4.0...v1.4.1) (2026-04-25)
+
+
+### Documentation
+
+* align README with v1.4.0 intake behavior ([#79](https://github.com/binary-core-llc/bowerbot/issues/79)) ([754350a](https://github.com/binary-core-llc/bowerbot/commit/754350a6d1928fdde46ee790987c629fd32ff188))
+
 ## [1.4.0](https://github.com/binary-core-llc/bowerbot/compare/v1.3.0...v1.4.0) (2026-04-23)
 
 

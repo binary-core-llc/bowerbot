@@ -66,6 +66,7 @@ class AgentRuntime:
         sections = [
             load_prompt("core"),
             f"# Scene Building\n\n{load_prompt('scene_building')}",
+            f"# Textures\n\n{load_prompt('textures')}",
         ]
         skill_prompts = self.skill_registry.get_skill_prompts()
         if skill_prompts:

@@ -306,18 +306,18 @@ BowerBot's core tools for building USD scenes:
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (checks references first) |
 | `delete_project_texture` | Remove a texture file (checks references first) |
+| `search_textures` | Find HDRIs and material maps in the asset library by keyword |
+| `list_textures` | List every HDRI and material map in the asset library |
 | `validate_scene` | Check for USD errors |
 | `package_scene` | Bundle as `.usdz` |
 
 ### Extension Skills
 
-Skills extend BowerBot with new asset sources and capabilities. Each skill has a Python module for execution and a `SKILL.md` file that teaches the LLM when and how to use it.
+Skills extend BowerBot with **external** asset providers (cloud APIs, vendor DAMs). Each skill ships as a Python module discovered via entry point, with a `SKILL.md` that teaches the LLM when and how to use it.
 
 **Local** : Searches the asset directory for USD files on disk. Uses USD composition to identify asset folders even when the root filename doesn't match the folder name, and surfaces them as single packages. Search matches both the folder name and the root file stem. Loose files are classified as geometry (`geo`) or material (`mtl`).
 
 **Sketchfab** : Searches and downloads models from your own Sketchfab account in USDZ format. These are your curated assets, not the public marketplace.
-
-**Textures** : Searches the asset directory for texture files. Finds HDRIs (`.hdr`, `.exr`) for dome lights and material maps (`.png`, `.jpg`, `.tif`) for surfaces.
 
 More providers are planned (PolyHaven, Fab, CGTrader, Objaverse), and you can write your own skill for any asset source. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -459,9 +459,10 @@ src/bowerbot/
     asset_tools.py         #   place_asset, place_asset_inside, list / delete_project_*
     light_tools.py         #   create_light, update_light, remove_light
     material_tools.py      #   create_material, bind_material, list / remove_material
+    texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
 
-  skills/             # Pluggable extension skills (asset providers, integrations)
+  skills/             # External asset providers (cloud APIs, vendor DAMs)
     base.py                #   Skill interface + ToolResult
     registry.py            #   Entry-point discovery and tool routing
     local/                 #   Local filesystem asset search + SKILL.md

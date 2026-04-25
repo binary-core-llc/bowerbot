@@ -32,6 +32,7 @@ class SceneState:
     stage: Usd.Stage | None = None
     stage_path: Path | None = None
     object_count: int = 0
+    library_dir: Path | None = None  # user's shared asset library (settings.assets_dir)
 
     @property
     def assets_dir(self) -> Path | None:

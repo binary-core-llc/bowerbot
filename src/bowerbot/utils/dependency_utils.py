@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Dependency service — walk a USD file's dependency tree."""
+"""USD dependency walker — sublayers, references, payloads."""
 
 from __future__ import annotations
 
@@ -14,12 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 def resolve(root_path: str | Path) -> tuple[list[Path], list[Path]]:
-    """Return all files needed by *root_path*, including itself.
+    """Return ``(found, missing)`` absolute paths for *root_path*'s deps.
 
-    Walks sublayers, references, and payloads recursively. Guards
-    against cycles and missing files. Returns ``(found, missing)``
-    as absolute paths; callers can reconstruct relative layout by
-    comparing each path to ``root_path.parent``.
+    Walks sublayers, references, and payloads recursively, guarding
+    against cycles and missing files.
     """
     root = Path(root_path).resolve()
     if not root.exists():
@@ -33,14 +31,11 @@ def resolve(root_path: str | Path) -> tuple[list[Path], list[Path]]:
     return found, missing
 
 
-def validate_asset_folder(
-    root_path: str | Path,
-) -> tuple[bool, list[str]]:
+def validate_asset_folder(root_path: str | Path) -> tuple[bool, list[str]]:
     """Validate that an ASWF asset folder is complete.
 
-    Checks that the root file exists, its stem matches the folder
-    name, and every dependency (sublayers, references, payloads)
-    resolves to a real file on disk.
+    Checks the root file exists, its stem matches the folder name,
+    and every dependency resolves on disk.
     """
     root = Path(root_path).resolve()
     errors: list[str] = []

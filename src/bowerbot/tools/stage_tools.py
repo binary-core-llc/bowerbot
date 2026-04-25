@@ -5,228 +5,87 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from bowerbot.services import stage_service
-from bowerbot.services.geometry_service import suggest_grid_layout
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage, resolve_project_dir
-from bowerbot.utils.naming import safe_file_name
-
-logger = logging.getLogger(__name__)
+from bowerbot.tools._helpers import require_project, require_stage
 
 
 def create_stage(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Create (or reopen) the scene stage for the bound project."""
-    filename = params["filename"]
-    safe_name = safe_file_name(filename) or "scene"
-    logger.debug("create_stage filename=%s", safe_name)
-
-    project_dir = resolve_project_dir(state)
-    if state.project is None:
-        return ToolResult(success=False, error="No project open.")
-
-    state.stage_path = state.project.scene_path
-    if state.stage_path.exists():
-        state.stage = stage_service.open_stage(state.stage_path)
-        state.object_count = len(stage_service.list_prims(state.stage))
-        logger.info("Reopened existing stage: %s", state.stage_path)
-        return ToolResult(
-            success=True,
-            data={
-                "stage_path": str(state.stage_path),
-                "object_count": state.object_count,
-                "message": (
-                    f"Stage already exists at {state.stage_path} with "
-                    f"{state.object_count} object(s). Reopened."
-                ),
-            },
-        )
-
-    state.object_count = 0
-    state.stage = stage_service.create_stage(state.stage_path)
-    stage_service.save(state.stage)
-    state.touch_project()
-
-    logger.info("Created stage: %s (project dir %s)", state.stage_path, project_dir)
-    return ToolResult(
-        success=True,
-        data={
-            "stage_path": str(state.stage_path),
-            "message": (
-                f"Stage created at {state.stage_path} with standard hierarchy."
-            ),
-        },
-    )
+    """Create or reopen the project's scene file."""
+    if (err := require_project(state)):
+        return err
+    try:
+        data = stage_service.create_stage(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def list_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Return every placed object and light in the scene."""
-    del params
     if (err := require_stage(state)):
         return err
-
-    objects = stage_service.list_prims(state.stage)
-    return ToolResult(
-        success=True,
-        data={
-            "object_count": len(objects),
-            "objects": objects,
-            "message": f"Scene has {len(objects)} object(s).",
-        },
-    )
+    try:
+        data = stage_service.list_scene(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def rename_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Move/rename a prim to a new path in the scene hierarchy."""
     if (err := require_stage(state)):
         return err
-
-    old_path = params["old_path"]
-    new_path = params["new_path"]
-
     try:
-        success = stage_service.rename_prim(state.stage, old_path, new_path)
-    except (RuntimeError, ValueError) as e:
+        data = stage_service.rename_prim(state, params)
+    except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
-
-    if not success:
-        return ToolResult(
-            success=False, error=f"Failed to rename {old_path} to {new_path}",
-        )
-
-    state.stage = stage_service.open_stage(state.stage_path)
-    logger.info("Renamed %s -> %s", old_path, new_path)
-    return ToolResult(
-        success=True,
-        data={
-            "old_path": old_path,
-            "new_path": new_path,
-            "message": f"Renamed {old_path} -> {new_path}",
-        },
-    )
+    return ToolResult(success=True, data=data)
 
 
 def remove_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove an object from the scene by prim path."""
     if (err := require_stage(state)):
         return err
-
-    prim_path = params["prim_path"]
     try:
-        success = stage_service.remove_prim(state.stage, prim_path)
-    except (RuntimeError, ValueError) as e:
+        data = stage_service.remove_prim(state, params)
+    except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
-
-    if not success:
-        return ToolResult(
-            success=False, error=f"Failed to remove {prim_path}",
-        )
-
-    state.object_count = max(0, state.object_count - 1)
-    state.touch_project()
-    logger.info("Removed %s", prim_path)
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": prim_path,
-            "message": f"Removed {prim_path}",
-        },
-    )
+    return ToolResult(success=True, data=data)
 
 
 def move_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Move an existing prim to a new position/rotation."""
     if (err := require_stage(state)):
         return err
-
-    prim_path = params["prim_path"]
-    tx = float(params["translate_x"])
-    ty = float(params["translate_y"])
-    tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
-
     try:
-        stage_service.set_transform(
-            state.stage, prim_path,
-            translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
-        )
-    except (RuntimeError, ValueError) as e:
+        data = stage_service.move_asset(state, params)
+    except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
-
-    stage_service.save(state.stage)
-    state.touch_project()
-
-    logger.info("Moved %s to (%s, %s, %s)", prim_path, tx, ty, tz)
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": prim_path,
-            "position": {"x": tx, "y": ty, "z": tz},
-            "rotation_y": ry,
-            "message": f"Moved {prim_path} to ({tx}, {ty}, {tz})",
-        },
-    )
+    return ToolResult(success=True, data=data)
 
 
 def list_prim_children(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """List geometry parts under a prim path (useful before material binds)."""
+    """List geometry parts under a prim path."""
     if (err := require_stage(state)):
         return err
-
-    prim_path = params["prim_path"]
-    children = stage_service.list_prim_children(state.stage, prim_path)
-
-    if not children:
-        return ToolResult(
-            success=True,
-            data={
-                "prim_path": prim_path,
-                "part_count": 0,
-                "parts": [],
-                "message": f"No geometry parts found under {prim_path}.",
-            },
-        )
-
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": prim_path,
-            "part_count": len(children),
-            "parts": children,
-            "message": (
-                f"Found {len(children)} geometry part(s) under {prim_path}. "
-                "Use the prim_path of a specific part with bind_material."
-            ),
-        },
-    )
+    try:
+        data = stage_service.list_prim_children(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def compute_grid_layout(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Compute evenly spaced positions for N objects in a grid."""
-    count = int(params["count"])
-    spacing = float(params.get("spacing", 2.0))
-
-    placements = suggest_grid_layout(
-        count,
-        spacing=spacing,
-        room_bounds=state.scene_defaults.default_room_bounds,
-    )
-    positions = [
-        {"x": round(p.translate[0], 2), "z": round(p.translate[2], 2)}
-        for p in placements
-    ]
-    return ToolResult(
-        success=True,
-        data={
-            "count": count,
-            "spacing": spacing,
-            "positions": positions,
-            "message": f"Computed {count} positions in grid with {spacing}m spacing.",
-        },
-    )
+    try:
+        data = stage_service.compute_grid_layout(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 TOOLS: list[Tool] = [

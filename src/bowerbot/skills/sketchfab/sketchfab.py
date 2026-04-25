@@ -16,7 +16,7 @@ from typing import Any
 import httpx
 
 from bowerbot.skills.base import Skill, SkillCategory, Tool, ToolResult
-from bowerbot.utils.naming import safe_file_name
+from bowerbot.utils.naming_utils import safe_file_name
 
 logger = logging.getLogger(__name__)
 

@@ -320,15 +320,15 @@ BowerBot follows ASWF USD Working Group guidelines for asset structure.
 - `place_asset` with a loose .usda file automatically creates an ASWF folder:
   ```
   project/assets/chair/
-    chair.usd    <- root (sublayers geo.usd)
-    geo.usd      <- geometry
+    chair.usda   <- root (references geo.usda)
+    geo.usda     <- geometry
   ```
 - `bind_material` adds materials incrementally:
   ```
   project/assets/chair/
-    chair.usd    <- root (now sublayers geo.usd + mtl.usd)
-    geo.usd      <- geometry
-    mtl.usd      <- materials defined inline + bindings
+    chair.usda   <- root (references geo.usda + mtl.usda)
+    geo.usda     <- geometry
+    mtl.usda     <- materials defined inline + bindings
   ```
 - `place_asset` with an existing ASWF folder copies the entire folder
 - `place_asset` with a USDZ copies the single file (no folder)

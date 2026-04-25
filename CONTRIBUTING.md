@@ -76,16 +76,16 @@ Add `!` after the type for breaking changes (e.g., `feat!: redesign skill interf
 
 ## Project Structure
 
-Understanding where things live helps you contribute effectively. BowerBot is organized FastAPI-style, so adding a feature is almost always a three-file change (schema + service + tool):
+BowerBot is organized FastAPI-style. Adding a feature is a three-file change (schema, service, tool):
 
-- **`schemas/`**: pydantic models and enums, grouped by domain.
-- **`services/`**: pure-function business logic. All `pxr` calls live here.
-- **`tools/`**: LLM-facing tool definitions and thin handlers that call services.
-- **`state.py`**: `SceneState` dataclass threaded through every tool handler.
+- **`schemas/`**: pydantic models and enums.
+- **`utils/`**: pure-function primitives. The only place `pxr` is imported.
+- **`services/`**: orchestrators with signature `(state, params)`. One per tool. Call utils and other services, mutate state, raise on errors.
+- **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
+- **`state.py`**: `SceneState`, threaded through every tool handler.
 - **`dispatcher.py`**: tool registry and router.
 - **`skills/`**: extension skills (asset providers, integrations).
-- **`prompts/`**: LLM instructions as `.md` files. Edit these to change agent behavior without touching Python.
-- **`utils/`**: shared utilities (USD introspection, file operations, naming).
+- **`prompts/`**: LLM instructions as `.md` files.
 
 ## Writing a Skill
 
@@ -100,15 +100,15 @@ my_provider/
   SKILL.md            # Natural language instructions for the LLM
 ```
 
-See `skills/sketchfab/` for a provider skill example and `skills/textures/` for a local search skill example.
+See `skills/sketchfab/` for a complete provider skill example.
 
 ### Key rules
 
-- **Skills never touch USD**: all `pxr` calls live in `services/`
-- **One SKILL.md per skill**: it's injected into the system prompt when active
-- **Return ToolResult**: always return `ToolResult(success=True/False, ...)` from `execute()`
-- **Use `self.assets_dir`**: all skills receive a centralized asset directory from the registry. Provider skills declare a `cache_subdir` for downloads (e.g., `cache/polyhaven`). Search skills scan the full tree.
-- **No hardcoded paths**: paths come from the system, not from skill config
+- **Skills are isolated**: each skill is self-contained and free to use any library it needs, including `pxr`. Reuse of core `utils/` primitives is fine; do not call into core `services/`.
+- **One SKILL.md per skill**: it's injected into the system prompt when active.
+- **Return ToolResult**: always return `ToolResult(success=True/False, ...)` from `execute()`.
+- **Use `self.assets_dir`**: all skills receive a centralized asset directory from the registry. Provider skills declare a `cache_subdir` for downloads (e.g., `cache/polyhaven`).
+- **No hardcoded paths**: paths come from the system, not from skill config.
 
 ## Code Style
 

@@ -19,7 +19,7 @@ async def test_full_scene_build():
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import LLMSettings, SceneDefaults, Settings, SkillConfig
     from bowerbot.project import Project
-    from bowerbot.services import stage_service
+    from bowerbot.utils import stage_utils as stage_service
     from bowerbot.skills.registry import SkillRegistry
     from bowerbot.state import SceneState
 

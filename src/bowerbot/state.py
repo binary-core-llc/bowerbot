@@ -44,6 +44,21 @@ class SceneState:
         """Project root directory, or ``None`` if no project is bound."""
         return self.project.path if self.project else None
 
+    def resolve_assets_dir(self) -> Path:
+        """Return the project's assets directory, creating it on demand."""
+        if self.assets_dir is None:
+            msg = "No project set. Use 'bowerbot new' to create a project first."
+            raise RuntimeError(msg)
+        self.assets_dir.mkdir(parents=True, exist_ok=True)
+        return self.assets_dir
+
+    def resolve_project_dir(self) -> Path:
+        """Return the project's root directory, or raise if unset."""
+        if self.project_dir is None:
+            msg = "No project set. Use 'bowerbot new' to create a project first."
+            raise RuntimeError(msg)
+        return self.project_dir
+
     def touch_project(self) -> None:
         """Persist updated_at on the bound project, if any."""
         if self.project is not None:

@@ -1,283 +1,71 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Material tools — create, bind, list, and remove materials."""
+"""Material tools — create / bind / list / remove / cleanup materials."""
 
 from __future__ import annotations
 
-import logging
-from pathlib import Path
 from typing import Any
 
-from bowerbot.schemas import ASWFLayerNames, ProceduralMaterialParams
-from bowerbot.services import material_service, stage_service
+from bowerbot.services import material_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage, resolve_assets_dir
-from bowerbot.utils.usd_utils import resolve_asset_dir_for_prim
-
-logger = logging.getLogger(__name__)
+from bowerbot.tools._helpers import require_stage
 
 
 def create_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Create a procedural MaterialX material and bind it to a prim."""
+    """Author a procedural MaterialX material and bind it to a prim."""
     if (err := require_stage(state)):
         return err
-
-    prim_path = params["prim_path"]
-    material_name = params["material_name"]
-
-    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
-        state.stage, prim_path,
-    )
-    if asset_dir is None or ref_prim_path is None:
-        return ToolResult(
-            success=False,
-            error=(
-                f"Cannot find ASWF asset folder for {prim_path}. "
-                "Procedural materials only work on assets placed as ASWF "
-                "folders (not USDZ)."
-            ),
-        )
-
-    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
-
-    material_params = ProceduralMaterialParams(
-        material_name=material_name,
-        base_color=(
-            float(params.get("base_color_r", 0.8)),
-            float(params.get("base_color_g", 0.8)),
-            float(params.get("base_color_b", 0.8)),
-        ),
-        metalness=float(params.get("metalness", 0.0)),
-        roughness=float(params.get("roughness", 0.5)),
-        opacity=float(params.get("opacity", 1.0)),
-    )
-
     try:
-        material_prim_path = material_service.create_procedural_material(
-            asset_dir=asset_dir,
-            prim_path=asset_local_path,
-            params=material_params,
-        )
+        data = material_service.create_material(state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
-
-    state.stage = stage_service.open_stage(state.stage_path)
-    logger.info(
-        "Created procedural material %s on %s in %s/",
-        material_prim_path, prim_path, asset_dir.name,
-    )
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": prim_path,
-            "material": material_prim_path,
-            "asset_folder": asset_dir.name,
-            "message": (
-                f"Created procedural material '{material_name}' and "
-                f"bound to {prim_path} in {asset_dir.name}/{ASWFLayerNames.MTL}"
-            ),
-        },
-    )
+    return ToolResult(success=True, data=data)
 
 
 def bind_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Copy a material from a file into the asset and bind it to a prim."""
     if (err := require_stage(state)):
         return err
-
-    prim_path = params["prim_path"]
-    material_file = Path(params["material_file"])
-    material_prim_path = params.get("material_prim_path")
-
-    if not material_file.exists():
-        return ToolResult(
-            success=False, error=f"Material file not found: {material_file}",
-        )
-
-    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
-        state.stage, prim_path,
-    )
-    if asset_dir is None or ref_prim_path is None:
-        return ToolResult(
-            success=False,
-            error=(
-                f"Cannot find ASWF asset folder for {prim_path}. "
-                "Material binding only works on assets placed as ASWF "
-                "folders (not USDZ)."
-            ),
-        )
-
-    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
-
     try:
-        material_prim_path = material_service.add_material(
-            asset_dir=asset_dir,
-            material_file=material_file,
-            prim_path=asset_local_path,
-            material_prim_path=material_prim_path,
-        )
+        data = material_service.bind_material(state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
-
-    state.stage = stage_service.open_stage(state.stage_path)
-    logger.info(
-        "Bound %s to %s in %s/",
-        material_prim_path, prim_path, asset_dir.name,
-    )
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": prim_path,
-            "material": material_prim_path,
-            "asset_folder": asset_dir.name,
-            "message": (
-                f"Bound {material_prim_path} to {prim_path} in "
-                f"{asset_dir.name}/{ASWFLayerNames.MTL}"
-            ),
-        },
-    )
+    return ToolResult(success=True, data=data)
 
 
 def remove_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Remove the material binding on a prim inside an ASWF asset."""
+    """Remove a material binding from a prim inside an ASWF asset."""
     if (err := require_stage(state)):
         return err
-
-    prim_path = params["prim_path"]
-    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
-        state.stage, prim_path,
-    )
-    if asset_dir is None or ref_prim_path is None:
-        return ToolResult(
-            success=False,
-            error=f"Cannot find ASWF asset folder for {prim_path}.",
-        )
-
-    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
-    material_service.remove_material_binding(asset_dir, asset_local_path)
-    state.stage = stage_service.open_stage(state.stage_path)
-
-    logger.info("Removed material from %s", prim_path)
-    return ToolResult(
-        success=True,
-        data={
-            "prim_path": prim_path,
-            "asset_folder": asset_dir.name,
-            "message": f"Removed material binding from {prim_path}",
-        },
-    )
+    try:
+        data = material_service.remove_material(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def list_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every material across the project's asset folders."""
-    del params
     if (err := require_stage(state)):
         return err
-
-    assets_dir = resolve_assets_dir(state)
-    all_materials: list[dict] = []
-
-    for entry in assets_dir.iterdir():
-        if not entry.is_dir():
-            continue
-        if not (entry / ASWFLayerNames.MTL).exists():
-            continue
-        materials = material_service.list_materials(entry)
-        for mat in materials:
-            mat["asset_folder"] = entry.name
-        all_materials.extend(materials)
-
-    return ToolResult(
-        success=True,
-        data={
-            "material_count": len(all_materials),
-            "materials": all_materials,
-            "message": f"Scene has {len(all_materials)} material(s).",
-        },
-    )
+    try:
+        data = material_service.list_materials(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Delete material definitions from ``mtl.usda`` that no prim binds to.
-
-    Scoped to one asset when ``asset_prim_path`` is given, otherwise
-    sweeps every ASWF asset folder in the project.
-    """
+    """Delete material definitions no prim binds to."""
     if (err := require_stage(state)):
         return err
-
-    asset_prim_path = params.get("asset_prim_path")
-
-    if asset_prim_path:
-        asset_dir, _ = resolve_asset_dir_for_prim(state.stage, asset_prim_path)
-        if asset_dir is None:
-            return ToolResult(
-                success=False,
-                error=(
-                    f"Cannot find ASWF asset folder for {asset_prim_path}. "
-                    "Cleanup only works on ASWF folder assets."
-                ),
-            )
-
-        removed = material_service.cleanup_unused_materials(asset_dir)
-        state.stage = stage_service.open_stage(state.stage_path)
-
-        logger.info(
-            "Cleaned %d unused material(s) from %s", len(removed), asset_dir.name,
-        )
-        return ToolResult(
-            success=True,
-            data={
-                "asset_folder": asset_dir.name,
-                "removed_count": len(removed),
-                "removed": removed,
-                "message": (
-                    f"Removed {len(removed)} unused material(s) from "
-                    f"{asset_dir.name}."
-                ),
-            },
-        )
-
-    assets_dir = resolve_assets_dir(state)
-    per_folder: list[dict[str, Any]] = []
-    total = 0
-    for entry in sorted(assets_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-        if not (entry / ASWFLayerNames.MTL).exists():
-            continue
-        removed = material_service.cleanup_unused_materials(entry)
-        if removed:
-            per_folder.append({"asset_folder": entry.name, "removed": removed})
-            total += len(removed)
-
-    state.stage = stage_service.open_stage(state.stage_path)
-
-    logger.info(
-        "Cleaned %d unused material(s) across %d asset folder(s)",
-        total, len(per_folder),
-    )
-    return ToolResult(
-        success=True,
-        data={
-            "total_removed": total,
-            "per_folder": per_folder,
-            "message": (
-                f"Removed {total} unused material(s) across "
-                f"{len(per_folder)} asset folder(s)."
-            ),
-        },
-    )
-
-
-def _to_asset_local(prim_path: str, ref_prim_path: str) -> str:
-    """Strip the scene-side reference prefix to get an asset-local path."""
-    if prim_path.startswith(ref_prim_path):
-        remainder = prim_path[len(ref_prim_path):]
-        return remainder if remainder else "/"
-    return prim_path
+    try:
+        data = material_service.cleanup_unused_materials(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 TOOLS: list[Tool] = [

@@ -29,7 +29,7 @@ from bowerbot.config import (
     save_settings,
 )
 from bowerbot.project import Project
-from bowerbot.services import stage_service
+from bowerbot.utils import stage_utils
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
 from bowerbot.utils.naming_utils import safe_project_name
@@ -57,8 +57,8 @@ def _build_state(
     state.stage_path = project.scene_path
 
     if project.scene_path.exists():
-        state.stage = stage_service.open_stage(project.scene_path)
-        state.object_count = len(stage_service.list_prims(state.stage))
+        state.stage = stage_utils.open_stage(project.scene_path)
+        state.object_count = len(stage_utils.list_prims(state.stage))
     return state
 
 
@@ -185,7 +185,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
     )
 
     if project and project.scene_path.exists() and state.object_count > 0:
-        objects = stage_service.list_prims(state.stage)
+        objects = stage_utils.list_prims(state.stage)
         object_summary = "\n".join(
             _format_object_summary(o) for o in objects
         )

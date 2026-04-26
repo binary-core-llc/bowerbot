@@ -346,12 +346,10 @@ All settings live in `~/.bowerbot/config.json`:
     "default_room_bounds": [10.0, 3.0, 8.0]
   },
   "skills": {
-    "local": { "enabled": true },
     "sketchfab": {
       "enabled": true,
       "config": { "token": "your-sketchfab-token" }
-    },
-    "textures": { "enabled": true }
+    }
   },
   "assets_dir": "./assets",
   "projects_dir": "./scenes"

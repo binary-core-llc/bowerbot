@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.2](https://github.com/binary-core-llc/bowerbot/compare/v1.4.1...v1.4.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* route cli stage calls to stage_utils after refactor ([#87](https://github.com/binary-core-llc/bowerbot/issues/87)) ([746628d](https://github.com/binary-core-llc/bowerbot/commit/746628d0ca3867da5ecb0e30ded7694baa68b1fb))
+
+
+### Documentation
+
+* drop local and textures from README config skills block ([#84](https://github.com/binary-core-llc/bowerbot/issues/84)) ([5075b6e](https://github.com/binary-core-llc/bowerbot/commit/5075b6e86029bfd7bd83817f3b6618f151f643fa))
+
 ## [1.4.1](https://github.com/binary-core-llc/bowerbot/compare/v1.4.0...v1.4.1) (2026-04-25)
 
 

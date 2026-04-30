@@ -218,6 +218,7 @@ def update_light(
     color: tuple[float, float, float] | None = None,
     translate: tuple[float, float, float] | None = None,
     rotate: tuple[float, float, float] | None = None,
+    texture: str | None = None,
     **extra_attrs: float | None,
 ) -> None:
     """Update attributes of an existing scene-level light prim."""
@@ -232,6 +233,8 @@ def update_light(
         _set_attr(prim, "inputs:exposure", exposure)
     if color is not None:
         _set_attr(prim, "inputs:color", Gf.Vec3f(*color))
+    if texture is not None:
+        _set_attr(prim, "inputs:texture:file", Sdf.AssetPath(texture))
 
     for attr_name, usd_attr in _LIGHT_SPATIAL_ATTRS.items():
         value = extra_attrs.get(attr_name)

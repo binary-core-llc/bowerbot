@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/binary-core-llc/bowerbot/compare/v1.4.2...v1.4.3) (2026-04-30)
+
+
+### Bug Fixes
+
+* plumb texture through update_light for scene and asset lights ([#88](https://github.com/binary-core-llc/bowerbot/issues/88)) ([484bd56](https://github.com/binary-core-llc/bowerbot/commit/484bd5681eb64991b80356d3baf647461c2a2310))
+
 ## [1.4.2](https://github.com/binary-core-llc/bowerbot/compare/v1.4.1...v1.4.2) (2026-04-26)
 
 

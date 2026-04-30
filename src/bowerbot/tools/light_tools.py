@@ -248,6 +248,16 @@ TOOLS: list[Tool] = [
                 "rotate_x": {"type": "number", "description": "New X rotation."},
                 "rotate_y": {"type": "number", "description": "New Y rotation."},
                 "rotate_z": {"type": "number", "description": "New Z rotation."},
+                "texture": {
+                    "type": "string",
+                    "description": (
+                        "DomeLight only. Path to an HDRI file. Scene-level "
+                        "DomeLights have the file copied into "
+                        "<project>/textures/; asset-level DomeLights have "
+                        "it copied into the asset's maps/. The light's "
+                        "inputs:texture:file is set to the relative path."
+                    ),
+                },
             },
             "required": ["prim_path"],
         },

@@ -35,6 +35,7 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     color = _unpack_vec3(params, "color_r", "color_g", "color_b", default=1.0)
     intensity = _opt_float(params.get("intensity"))
     exposure = _opt_float(params.get("exposure"))
+    texture = params.get("texture")
     extras = {
         key: float(params[key])
         for key in ("radius", "angle", "width", "height", "length")
@@ -45,12 +46,14 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         return _update_asset_light(
             state, asset_dir, prim_path, params,
             translate=translate, rotate=rotate, color=color,
-            intensity=intensity, exposure=exposure, extras=extras,
+            intensity=intensity, exposure=exposure, texture=texture,
+            extras=extras,
         )
     return _update_scene_light(
         state, prim_path,
         translate=translate, rotate=rotate, color=color,
-        intensity=intensity, exposure=exposure, extras=extras,
+        intensity=intensity, exposure=exposure, texture=texture,
+        extras=extras,
     )
 
 
@@ -236,6 +239,7 @@ def _update_asset_light(
     color: tuple[float, float, float] | None,
     intensity: float | None,
     exposure: float | None,
+    texture: str | None,
     extras: dict[str, float],
 ) -> dict[str, Any]:
     """Update a light authored inside an asset folder."""
@@ -256,6 +260,11 @@ def _update_asset_light(
             asset_mpu=geometry_utils.get_mpu(asset_dir),
         )
 
+    extra_kwargs: dict[str, float | str] = {**extras}
+    staged_texture = light_utils.stage_asset_texture(asset_dir, texture)
+    if staged_texture is not None:
+        extra_kwargs["texture"] = staged_texture
+
     light_utils.update_light_in_folder(
         asset_dir=asset_dir,
         light_name=light_name,
@@ -264,7 +273,7 @@ def _update_asset_light(
         intensity=intensity,
         exposure=exposure,
         color=color,
-        **extras,
+        **extra_kwargs,
     )
 
     state.stage = stage_utils.open_stage(state.stage_path)
@@ -285,6 +294,7 @@ def _update_scene_light(
     color: tuple[float, float, float] | None,
     intensity: float | None,
     exposure: float | None,
+    texture: str | None,
     extras: dict[str, float],
 ) -> dict[str, Any]:
     """Update a scene-level light."""
@@ -296,6 +306,7 @@ def _update_scene_light(
         color=color,
         translate=translate,
         rotate=rotate,
+        texture=_stage_scene_texture(state, texture),
         **extras,
     )
     stage_utils.save_stage(state.stage)

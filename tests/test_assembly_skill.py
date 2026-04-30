@@ -327,6 +327,51 @@ def test_full_pipeline():
         print(f"   4 tables + 1 light -> {usdz_path.name} ({size} bytes)")
 
 
+def test_update_light_with_texture_copies_hdri_and_sets_attr():
+    """update_light with a DomeLight texture stages the HDRI and sets the attr."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        hdri = tmp_path / "studio.hdr"
+        hdri.write_bytes(b"fake-hdri-payload")
+
+        state, project = make_state(tmp_path, "dome_test")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "dome_test"}))
+
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "DomeLight",
+            "light_name": "Environment_Dome",
+            "intensity": 1.0,
+        }))
+        assert r.success, f"create_light failed: {r.error}"
+        prim_path = r.data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "update_light", {
+            "prim_path": prim_path,
+            "intensity": 2.5,
+            "exposure": 1.0,
+            "texture": str(hdri),
+        }))
+        assert r.success, f"update_light failed: {r.error}"
+
+        staged = project.path / "textures" / "studio.hdr"
+        assert staged.exists(), "HDRI not copied into project/textures/"
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath(prim_path)
+        assert prim.IsValid()
+        tex_attr = prim.GetAttribute("inputs:texture:file")
+        assert tex_attr and tex_attr.Get(), (
+            "inputs:texture:file not authored on the DomeLight"
+        )
+        tex_val = tex_attr.Get()
+        tex_path = tex_val.path if hasattr(tex_val, "path") else str(tex_val)
+        assert tex_path == "./textures/studio.hdr", (
+            f"Expected './textures/studio.hdr', got {tex_path!r}"
+        )
+        assert prim.GetAttribute("inputs:intensity").Get() == 2.5
+        assert prim.GetAttribute("inputs:exposure").Get() == 1.0
+
+
 if __name__ == "__main__":
     test_create_stage()
     test_place_asset()
@@ -337,4 +382,5 @@ if __name__ == "__main__":
     test_move_asset()
     test_unit_conversion()
     test_full_pipeline()
+    test_update_light_with_texture_copies_hdri_and_sets_attr()
     print("\nAll scene builder tests passed!")

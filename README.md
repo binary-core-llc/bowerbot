@@ -278,7 +278,7 @@ BowerBot: Removed /Scene/Furniture/Table_03
 
 ## 🔌 Skills
 
-Skills are pluggable tools the agent uses. Each skill has a Python module for execution and a `SKILL.md` file that teaches the LLM when and how to use it.
+Skills extend BowerBot with **external** asset providers, DCC connectors, and simulation runtimes. Each skill is a separate Python package, discovered at runtime through Python entry points (`bowerbot.skills`). To add a provider, you `pip install bowerbot-skill-<name>` and BowerBot picks it up automatically. The skill SDK lives in `bowerbot.skills`; skills themselves ship and version on their own.
 
 ### Scene Builder Tools
 
@@ -315,11 +315,12 @@ BowerBot's core tools for building USD scenes:
 
 ### Extension Skills
 
-Skills extend BowerBot with **external** asset providers (cloud APIs, vendor DAMs). Each skill ships as a Python module discovered via entry point, with a `SKILL.md` that teaches the LLM when and how to use it.
+Each skill ships as a separate pip package and is discovered at runtime via the `bowerbot.skills` entry-point group. A skill bundles its own Python module, a `SKILL.md` that teaches the LLM when and how to use it, and the four-folder layout BowerBot enforces (`schemas/`, `services/`, `tools/`, `utils/`).
 
-**Sketchfab** : Searches and downloads models from your own Sketchfab account in USDZ format. These are your curated assets, not the public marketplace.
+**Available:**
+- **Sketchfab** — searches and downloads models from your own Sketchfab account in USDZ format (your curated assets, not the public marketplace).
 
-More providers are planned (PolyHaven, Fab, CGTrader, Objaverse), and you can write your own skill for any asset source. See [CONTRIBUTING.md](CONTRIBUTING.md).
+More providers are planned (PolyHaven, Fab, CGTrader, Objaverse). You can write your own for any asset source, DCC, or simulation runtime. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contract and a worked `pyproject.toml` example.
 
 ---
 
@@ -467,10 +468,11 @@ src/bowerbot/
     texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
 
-  skills/             # External asset providers (cloud APIs, vendor DAMs)
-    base.py                #   Skill interface + ToolResult
+  skills/             # Skill SDK. The contract every skill implements.
+                      # Skills themselves ship as separate pip packages.
+    base.py                #   Skill, SkillContext, SkillConfigError,
+                           #   SkillCategory, Tool, ToolResult
     registry.py            #   Entry-point discovery and tool routing
-    sketchfab/             #   Sketchfab API integration + SKILL.md
 
   utils/              # Pure-function primitives shared by services
     stage_utils.py           #   Stage create/open/save, references, transforms, prims,
@@ -538,9 +540,9 @@ What's next for BowerBot. Contributions welcome:
 
 ## 🤝 Contributing
 
-BowerBot is open source and welcomes contributions. The best way to start is writing a new **skill** for an asset provider you use. See `skills/sketchfab/` for a complete example.
+BowerBot is open source and welcomes contributions. The best way to start is writing a new **skill** for an asset provider, DCC, or simulation runtime you use. Skills ship as separate pip packages discovered through the `bowerbot.skills` entry-point group.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the skill contract, the required FastAPI internal layout, and a worked `pyproject.toml` example for a stand-alone skill package.
 
 ---
 

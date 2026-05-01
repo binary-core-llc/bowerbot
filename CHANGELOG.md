@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.1](https://github.com/binary-core-llc/bowerbot/compare/v1.5.0...v1.5.1) (2026-05-01)
+
+
+### Documentation
+
+* add 'Verifying a skill is installed' section ([#95](https://github.com/binary-core-llc/bowerbot/issues/95)) ([87b8cad](https://github.com/binary-core-llc/bowerbot/commit/87b8cad2f37c34f6e83f47363a46e4271aa668c1))
+* restructure README flow, drop in-tree skill mode from CONTRIBUTING ([#96](https://github.com/binary-core-llc/bowerbot/issues/96)) ([50c3c46](https://github.com/binary-core-llc/bowerbot/commit/50c3c464039b4c08b1e943e3966f8d2960dc082b))
+* rewrite Quick Start, add skill install walkthrough, curate Skills ([#93](https://github.com/binary-core-llc/bowerbot/issues/93)) ([e68e3f1](https://github.com/binary-core-llc/bowerbot/commit/e68e3f16c2230945453583c1aaac851525b3c664))
+
 ## [1.5.0](https://github.com/binary-core-llc/bowerbot/compare/v1.4.3...v1.5.0) (2026-05-01)
 
 

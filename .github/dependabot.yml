@@ -31,6 +31,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Major version bumps are project decisions, not bot decisions.
+      # Read the changelog, plan a migration PR, run integration tests.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
 
@@ -53,6 +58,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Major version bumps for actions can carry breaking changes too
+      # (input renames, runtime changes). Treat them as deliberate.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "github-actions"

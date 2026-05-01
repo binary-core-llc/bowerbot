@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""BowerBot CLI — natural language 3D scene assembly."""
+"""BowerBot CLI: natural language 3D scene assembly."""
 
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ def _build_registry(settings: Settings) -> SkillRegistry:
 @click.group()
 @click.version_option()
 def main() -> None:
-    """BowerBot — AI-powered 3D scene assembly using OpenUSD."""
+    """BowerBot: AI-powered 3D scene assembly using OpenUSD."""
 
 
 @main.command()
@@ -84,7 +84,7 @@ def new(name: str) -> None:
 
     try:
         project = Project.create(projects_dir, name)
-        console.print(f"[sf]✅ Created project:[/] {project.name}")
+        console.print(f"[sf]Created project:[/] {project.name}")
         console.print(f"   Path: {project.path}")
         console.print("\n[info]Start working:[/]")
         console.print(f"   cd {project.path}")
@@ -127,7 +127,7 @@ def open(name: str) -> None:
         console.print(f"[red]Project not found:[/] {name}")
         console.print("[info]Available projects:[/]")
         for p in Project.list_projects(projects_dir):
-            console.print(f"  • {p.meta.name} ({p.path.name})")
+            console.print(f"  - {p.meta.name} ({p.path.name})")
         return
 
     project = Project.load(project_path)
@@ -161,7 +161,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
     state = _build_state(settings, project=project)
     registry = _build_registry(settings)
 
-    status = f"[sf]BowerBot[/] v{__version__} — Interactive Scene Builder\n"
+    status = f"[sf]BowerBot[/] v{__version__}: Interactive Scene Builder\n"
     status += f"[info]Model:[/]  {settings.llm.model}\n"
     status += f"[info]Skills:[/] {', '.join(registry.enabled_skills)}\n"
 
@@ -192,7 +192,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
             f"You are resuming project '{project.name}'. The scene is "
             f"already open at {project.scene_path} with "
             f"{len(objects)} object(s):\n{object_summary}\n"
-            f"The stage is loaded and ready — you do NOT need to call "
+            f"The stage is loaded and ready, you do NOT need to call "
             f"create_stage."
         )
         agent.conversation_history.append(
@@ -219,7 +219,7 @@ async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
             break
         if user_input.lower() == "reset":
             agent.reset()
-            console.print("[info]Session reset — starting fresh.[/]")
+            console.print("[info]Session reset, starting fresh.[/]")
             continue
 
         try:
@@ -236,7 +236,7 @@ async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
         except litellm.RateLimitError:
             console.print(
                 "\n[yellow]Rate limited.[/] "
-                "Retries exhausted — wait a moment and try again.",
+                "Retries exhausted. Wait a moment and try again.",
             )
         except litellm.APIConnectionError:
             console.print(
@@ -296,7 +296,7 @@ def build(prompt: str) -> None:
     except litellm.RateLimitError:
         console.print(
             "\n[yellow]Rate limited.[/] "
-            "Retries exhausted — wait a moment and try again.",
+            "Retries exhausted. Wait a moment and try again.",
         )
     except litellm.APIConnectionError:
         console.print(
@@ -334,7 +334,7 @@ def skills() -> None:
             for t in registry.get_all_tools()
             if t["function"]["name"].startswith(name)
         ]
-        console.print(f"  • {name} ({len(tools)} tools)")
+        console.print(f"  - {name} ({len(tools)} tools)")
         for tool_name in tools:
             console.print(f"      - {tool_name}")
 
@@ -350,7 +350,7 @@ def info() -> None:
     console.print(f"  Max tokens:      {settings.llm.max_tokens}")
     console.print(
         f"  API key:         "
-        f"{'✅ set' if settings.get_api_key() else '❌ missing'}",
+        f"{'[green]set[/]' if settings.get_api_key() else '[red]missing[/]'}",
     )
     console.print(f"  Projects dir:    {settings.projects_dir}")
     console.print(f"  Meters per unit: {settings.scene_defaults.meters_per_unit}")
@@ -365,7 +365,7 @@ def info() -> None:
 def onboard() -> None:
     """Set up BowerBot for first use."""
     console.print(Panel(
-        "[sf]BowerBot[/] — First Time Setup\n\n"
+        "[sf]BowerBot[/]: First Time Setup\n\n"
         "This will create your global configuration at:\n"
         f"  [info]{BOWERBOT_HOME}[/]",
         title="[sf]Setup[/]",

@@ -1535,15 +1535,15 @@ wheels = [
 
 [[package]]
 name = "rich"
-version = "14.3.3"
+version = "15.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/c6/f3b320c27991c46f43ee9d856302c70dc2d0fb2dba4842ff739d5f46b393/rich-14.3.3.tar.gz", hash = "sha256:b8daa0b9e4eef54dd8cf7c86c03713f53241884e814f4e2f5fb342fe520f639b", size = 230582, upload-time = "2026-02-19T17:23:12.474Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz", hash = "sha256:edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36", size = 230680, upload-time = "2026-04-12T08:24:00.75Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/25/b208c5683343959b670dc001595f2f3737e051da617f66c31f7c4fa93abc/rich-14.3.3-py3-none-any.whl", hash = "sha256:793431c1f8619afa7d3b52b2cdec859562b950ea0d4b6b505397612db8d5362d", size = 310458, upload-time = "2026-02-19T17:23:13.732Z" },
+    { url = "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl", hash = "sha256:33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb", size = 310654, upload-time = "2026-04-12T08:24:02.83Z" },
 ]
 
 [[package]]
@@ -1827,15 +1827,18 @@ wheels = [
 
 [[package]]
 name = "usd-core"
-version = "25.11"
+version = "26.5"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/a4/92db335084f0de14b5d4e1800b847057e3ef36bdbb211e5617f3d9940e92/usd_core-25.11-cp312-none-macosx_10_9_universal2.whl", hash = "sha256:bbf89d0671e0773b957a5a3a3e0178e13d4318d46fd8201fcf1d87e3d5501556", size = 38511379, upload-time = "2025-10-24T19:01:24.506Z" },
-    { url = "https://files.pythonhosted.org/packages/ed/f1/dbf18bee5b569a06119f0cde798daeef4837887594a0caf415eb1d75112a/usd_core-25.11-cp312-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c05c05150f6c4598e0738677f0b7c8f82ff9fc492d040ed78147eb1ad5ce8545", size = 27393145, upload-time = "2025-10-24T19:01:27.841Z" },
-    { url = "https://files.pythonhosted.org/packages/48/34/dd9883f27526288de19741100cb5b75f2725423367a999c055a677d1d88a/usd_core-25.11-cp312-none-win_amd64.whl", hash = "sha256:7bc5aaad20287bfc821e73e2ced99123e448e40ffd018acf99b09975eab4012d", size = 13061673, upload-time = "2025-10-24T19:01:30.396Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/c6/91f44f09b8a0436e99a57d9bb6d11fb38aec9defdc9a64b5e43abd61f2e8/usd_core-25.11-cp313-none-macosx_10_9_universal2.whl", hash = "sha256:c6871fd788f78ff3cb1c7999a4eb7ac23d943744bddfe07e0b47590b504e2d91", size = 38510628, upload-time = "2025-10-24T19:01:34.204Z" },
-    { url = "https://files.pythonhosted.org/packages/5a/49/e46c50175c68219f1535214176f0f899c8df7fc5b3ef89dc17b6c8c99718/usd_core-25.11-cp313-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cefc3517806a9f8e59e14616160cb61071aebd52ec29bd18d358addaab21ae29", size = 27393899, upload-time = "2025-10-24T19:01:37.251Z" },
-    { url = "https://files.pythonhosted.org/packages/74/36/a39933cfe372913588614c0e69e450f4d49067cc9c9ed5765cb230cc026d/usd_core-25.11-cp313-none-win_amd64.whl", hash = "sha256:cd7a873eff6a83f9c4a8b779ec392b53e960f2dc149a91a4f6900bd1aafc3e30", size = 13061641, upload-time = "2025-10-24T19:01:40.192Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/cc/04870cc3ae8e1b3a4e168efea47e389cfab6ab4f619005da2443a10390d4/usd_core-26.5-cp312-none-macosx_10_15_universal2.whl", hash = "sha256:a9df2864e84b83ffc9cc0f2777a49170180f84f2b679bcd014d72036a51d057c", size = 39775789, upload-time = "2026-04-24T20:17:43.025Z" },
+    { url = "https://files.pythonhosted.org/packages/77/62/963d3aba966539917d01e4a2169a1c07f7b3df087fc16ee39fc764214969/usd_core-26.5-cp312-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:caa2447252aeada8c158faacd4d448f29cf1617aeccef5bb954734b93c8f3f62", size = 28743527, upload-time = "2026-04-24T20:17:46.631Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/b0/645ae6e27a9768e570c1044efd6d2369c10c5c2412669314b3d6cd914803/usd_core-26.5-cp312-none-win_amd64.whl", hash = "sha256:6d887b010c756508d2e1f770626201f1f4ba5227c052c1135ba9c19932c4da8e", size = 13494028, upload-time = "2026-04-24T20:17:49.599Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/cd/128de2e16d597eb0868dde7cc837a908b28ec2a0d90d4697714b6770449b/usd_core-26.5-cp313-none-macosx_10_15_universal2.whl", hash = "sha256:ce5e90a6795b93d7e744694e5209ea2f1754f9d596e67a89f0cc3590e9fff578", size = 39776038, upload-time = "2026-04-24T20:17:52.535Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/10/88838fd371592cfc3d972547ab4361e2deef5891d89c22a509de0e6696ce/usd_core-26.5-cp313-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:dd4d3de388e6dfec91fa5ee9fa29800d43ebe86cbf7a10380ec02b15386fca67", size = 28743992, upload-time = "2026-04-24T20:17:55.995Z" },
+    { url = "https://files.pythonhosted.org/packages/62/05/da8f44024e0f947c13da3bdae0d4ac6c04cb86de92a6f1b9bf03e6bb8ae8/usd_core-26.5-cp313-none-win_amd64.whl", hash = "sha256:b077ea37dfeb15ca6b24ca33b65c2fe9b1656138e1fda74e4eae9793a149a7d5", size = 13494201, upload-time = "2026-04-24T20:17:59.015Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/57/01cc4e412feaad5aaee09d09ead2afbd5b4022e3d3b5461adcbf726ca3f8/usd_core-26.5-cp314-none-macosx_10_15_universal2.whl", hash = "sha256:5b0acd9a1d804cb73d58815365ccb141727f635f4e6764609fade3bf4ef5cbba", size = 39927684, upload-time = "2026-04-24T20:18:01.828Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/0d/5b87f5d7c3501bd5296b0bba7ba8a3eaf639ded53b9a17e910ee3363dfc0/usd_core-26.5-cp314-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:755c469ec762f3b69d87f5e8af8f8098e4c107bf4c15ce570a042ac2fc2dbb76", size = 28776483, upload-time = "2026-04-24T20:18:05.082Z" },
+    { url = "https://files.pythonhosted.org/packages/5a/48/d29a4649df00455174a5979fc8291021199bb2115d623378364b58055bb5/usd_core-26.5-cp314-none-win_amd64.whl", hash = "sha256:7654b5dfef6e7177849aa7e69962feb82a5312ad08469983214aae5821601296", size = 14043860, upload-time = "2026-04-24T20:18:07.896Z" },
 ]
 
 [[package]]

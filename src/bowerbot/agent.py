@@ -146,7 +146,9 @@ class AgentRuntime:
         """Route a tool call to the dispatcher or the skill registry."""
         if func_name in self._scene_tool_names:
             return await dispatcher.execute(self.state, func_name, func_args)
-        return await self.skill_registry.execute_tool(func_name, func_args)
+        return await self.skill_registry.execute_tool(
+            func_name, func_args, self.state,
+        )
 
     def _nudge_on_validation_errors(
         self, tool_calls: list, retries: int,

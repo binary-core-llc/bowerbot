@@ -84,31 +84,132 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 - **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
 - **`state.py`**: `SceneState`, threaded through every tool handler.
 - **`dispatcher.py`**: tool registry and router.
-- **`skills/`**: extension skills (asset providers, integrations).
+- **`skills/`**: the skill SDK (the `Skill` contract and the `SkillRegistry`). Skills themselves ship as separate pip packages and are discovered at runtime via entry points; they do not live in this directory.
 - **`prompts/`**: LLM instructions as `.md` files.
 
 ## Writing a Skill
 
-The best way to contribute is writing a new **skill** for an asset provider you use: Sketchfab, PolyHaven, CGTrader, a company DAM, or any platform that serves 3D assets or textures.
+The best way to contribute is writing a new **skill** for an asset provider, DCC, or simulation runtime: Sketchfab, PolyHaven, CGTrader, a company DAM, Isaac Sim, MuJoCo, anything that produces or consumes 3D content.
 
-Each skill is a folder in `src/bowerbot/skills/` with:
+### Skill layout (required)
+
+Every skill follows the same FastAPI shape as the core. Even small skills mirror this layout for consistency, predictability, and growth headroom.
 
 ```
 my_provider/
-  __init__.py
-  my_provider.py      # Implements the Skill interface
-  SKILL.md            # Natural language instructions for the LLM
+  __init__.py        # Re-exports the Skill class
+  skill.py           # Skill subclass. Tool registration + execute() dispatch only.
+  SKILL.md           # Natural language instructions for the LLM
+  schemas/           # Pydantic models / enums for this skill's data
+  services/          # Orchestrators. One module per tool. Take params (and ctx).
+  tools/             # Tool definitions list returned by get_tools()
+  utils/             # Pure-function primitives the services compose
 ```
 
-See `skills/sketchfab/` for a complete provider skill example.
+See `skills/sketchfab/` for a complete reference.
+
+### The Skill contract
+
+A skill subclasses `bowerbot.skills.Skill` and implements three methods:
+
+- `get_tools() -> list[Tool]` — declares what the LLM sees.
+- `execute(tool_name, params, ctx) -> ToolResult` — routes to a service.
+- `validate_config() -> None` — verifies the skill is properly configured. Raises `SkillConfigError` with an actionable message when something is missing or invalid.
+
+The `skill.py` file should be **a dispatcher**, not a place for logic. It maps a tool name to a service function and wraps the result. All real work lives in `services/` and `utils/`.
+
+### Layering inside a skill
+
+The same rules that govern the BowerBot core apply inside every skill:
+
+- `schemas/` holds pydantic models and enums. Data only.
+- `utils/` holds pure-function primitives. The only place `pxr` (or any heavy SDK) should be imported.
+- `services/` holds orchestrators called from `Skill.execute()`. Take `(params, ctx)`, call utils, raise on errors.
+- `tools/` holds the `Tool` definitions returned by `get_tools()`. Pure data, no logic.
+- `skill.py` holds the `Skill` subclass. Tool registration plus `execute()` dispatch only.
+
+### SkillContext
+
+Every `execute()` call receives a `SkillContext`. This is the only way a skill sees outside state:
+
+```python
+@dataclass(frozen=True)
+class SkillContext:
+    library_dir: Path           # User's curated library
+    cache_dir: Path | None      # This skill's download dir (library_dir / cache_subdir)
+    project_dir: Path | None    # Currently open project root, or None
+    scene_path: Path | None     # Currently open scene file, or None
+```
+
+Skills that need stage access call `Usd.Stage.Open(ctx.scene_path)` themselves. The context never exposes a live shared stage.
 
 ### Key rules
 
-- **Skills are isolated**: each skill is self-contained and free to use any library it needs, including `pxr`. Reuse of core `utils/` primitives is fine; do not call into core `services/`.
-- **One SKILL.md per skill**: it's injected into the system prompt when active.
+- **Skills are hyper-isolated**: a skill depends only on `bowerbot.skills` (the public contract), the standard library, and external packages it ships with. It does **not** import from `bowerbot.utils`, `bowerbot.services`, `bowerbot.state`, or any other core module. If a skill needs a primitive, it carries its own copy in its `utils/`.
+- **Entry-point name must match `Skill.name`**: the registry compares them and skips with an error if they differ. Pick one identifier and use it both in `pyproject.toml` and on the class.
+- **One SKILL.md per skill**: injected into the system prompt when the skill is active.
 - **Return ToolResult**: always return `ToolResult(success=True/False, ...)` from `execute()`.
-- **Use `self.assets_dir`**: all skills receive a centralized asset directory from the registry. Provider skills declare a `cache_subdir` for downloads (e.g., `cache/polyhaven`).
-- **No hardcoded paths**: paths come from the system, not from skill config.
+- **Raise `SkillConfigError`** from `validate_config()` when a required setting is missing or invalid. The registry logs the message and skips the skill so BowerBot keeps running. Do not return `True` / `False`; the contract is exception-based.
+- **Use `ctx.cache_dir` for downloads**: declare `cache_subdir` on the class (e.g. `"cache/polyhaven"`); the registry creates the dir and exposes it via `ctx.cache_dir`.
+- **Use `ctx.project_dir` and `ctx.scene_path` for scene-aware skills**: these are `None` when no project is open. Always handle that case.
+- **No hardcoded paths**: every path comes through `SkillContext` or tool params.
+
+### Public API and stability
+
+Skill authors import from `bowerbot.skills`:
+
+```python
+from bowerbot.skills import (
+    Skill,
+    SkillCategory,
+    SkillConfigError,
+    SkillContext,
+    Tool,
+    ToolResult,
+)
+```
+
+These six names are the public contract. They follow semver: breaking changes are reserved for major version bumps. External skill packages should pin a compatible bowerbot range in their own `pyproject.toml`:
+
+```toml
+dependencies = ["bowerbot>=1.5,<2"]
+```
+
+Anything under `bowerbot.skills.base` is an implementation detail. Import from `bowerbot.skills` instead.
+
+### Distributing a skill as a separate package
+
+Skills ship one of two ways:
+
+1. **In-tree** (built-in): live under `src/bowerbot/skills/<name>/` and register via the main `pyproject.toml` entry points. Used for first-party skills like `sketchfab`.
+2. **Separate pip package**: their own repo, their own `pyproject.toml`, distributed on PyPI. Used for community and third-party skills. Layout:
+
+```
+bowerbot-skill-polyhaven/
+  pyproject.toml
+  src/bowerbot_skill_polyhaven/
+    __init__.py
+    skill.py
+    SKILL.md
+    schemas/
+    services/
+    tools/
+    utils/
+  tests/
+```
+
+The package's `pyproject.toml` declares the entry point exactly like in-tree skills do:
+
+```toml
+[project]
+name = "bowerbot-skill-polyhaven"
+dependencies = ["bowerbot>=1.5,<2", "httpx"]
+
+[project.entry-points."bowerbot.skills"]
+polyhaven = "bowerbot_skill_polyhaven.skill:PolyhavenSkill"
+```
+
+After `pip install bowerbot-skill-polyhaven`, BowerBot's `SkillRegistry` discovers it automatically. No core code changes required.
 
 ## Code Style
 

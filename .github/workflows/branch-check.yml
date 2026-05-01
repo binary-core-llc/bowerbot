@@ -15,7 +15,13 @@ jobs:
 
           # Allow release-please automated branches
           if [[ "$BRANCH" =~ ^release-please-- ]]; then
-            echo "✅ Release Please branch '$BRANCH' — skipping name check"
+            echo "✅ Release Please branch '$BRANCH', skipping name check"
+            exit 0
+          fi
+
+          # Allow Dependabot automated branches
+          if [[ "$BRANCH" =~ ^dependabot/ ]]; then
+            echo "✅ Dependabot branch '$BRANCH', skipping name check"
             exit 0
           fi
 

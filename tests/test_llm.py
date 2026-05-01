@@ -6,6 +6,10 @@
 import asyncio
 import os
 
+import pytest
+
+pytestmark = pytest.mark.integration
+
 
 async def test_openai():
     """Test 1: OpenAI responds through litellm."""
@@ -84,7 +88,7 @@ async def test_tool_calling():
     args = json.loads(call.function.arguments)
     assert "query" in args, f"Missing 'query' in args: {args}"
 
-    print(f"✅ test_tool_calling PASSED")
+    print("✅ test_tool_calling PASSED")
     print(f"   Tool called: {call.function.name}")
     print(f"   Arguments: {args}")
 

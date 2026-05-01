@@ -21,7 +21,6 @@ from bowerbot.utils import (
     material_utils,
 )
 
-
 # ── Helpers ─────────────────
 
 
@@ -536,7 +535,7 @@ def test_add_multiple_lights():
 
         lights = light_utils.list_lights_in_folder(root.parent)
         assert len(lights) == 2
-        names = {l["name"] for l in lights}
+        names = {light["name"] for light in lights}
         assert "bulb" in names
         assert "glow" in names
 

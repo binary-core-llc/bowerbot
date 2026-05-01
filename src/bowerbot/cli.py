@@ -28,9 +28,9 @@ from bowerbot.config import (
     save_settings,
 )
 from bowerbot.project import Project
-from bowerbot.utils import stage_utils
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
+from bowerbot.utils import stage_utils
 from bowerbot.utils.naming_utils import safe_project_name
 
 theme = Theme({

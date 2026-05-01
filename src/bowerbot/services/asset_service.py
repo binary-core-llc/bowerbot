@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from bowerbot.schemas import (
-    ASWFLayerNames,
     AssetMetadata,
+    ASWFLayerNames,
     IntakeReport,
     PositionMode,
     SceneObject,

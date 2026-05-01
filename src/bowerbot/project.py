@@ -22,8 +22,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from bowerbot.utils.stage_utils import create_empty_scene
 from bowerbot.utils.naming_utils import safe_project_name
+from bowerbot.utils.stage_utils import create_empty_scene
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@
 import tempfile
 from pathlib import Path
 
-from bowerbot.project import Project, ProjectMeta
+from bowerbot.project import Project
 
 
 def test_create_project():

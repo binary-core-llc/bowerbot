@@ -104,7 +104,7 @@ BowerBot: All checks passed. Packaged to scenes/coffee_shop/scene.usdz
 
 Open the `.usda` in Maya, usdview, Omniverse, or any USD-compatible DCC to refine composition, lighting, and materials.
 
-BowerBot gets you to a clean, structured starting point—fast.
+BowerBot gets you to a clean, structured starting point quickly.
 From there, you take it to production quality.
 
 Projects are persistent. Close the session, come back later, and continue where you left off.
@@ -129,6 +129,108 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 🏗️ **Onboarding wizard**: zero-config setup in 60 seconds
 
 Built on [OpenUSD](https://openusd.org), the [ASWF USD Working Group](https://wiki.aswf.io/display/WGUSD) standards, and the [Alliance for OpenUSD (AOUSD)](https://aousd.org/) core spec driven by Pixar, Apple, NVIDIA, and others.
+
+---
+
+## 🚀 Quick Start
+
+### Install
+
+There are two paths for end users (pick whichever fits your environment), plus a separate path for contributors who want to modify BowerBot itself.
+
+#### End users, Option A: uv (recommended)
+
+[uv](https://docs.astral.sh/uv/) manages Python and isolated tool environments for you, so you do not need to install or pin Python yourself.
+
+```bash
+uv tool install bowerbot
+```
+
+#### End users, Option B: pip
+
+If you already maintain a Python 3.12+ environment, plain `pip` works:
+
+```bash
+pip install bowerbot
+```
+
+#### Contributors: developer install
+
+To modify BowerBot itself, clone the repo and let uv manage the dev environment:
+
+```bash
+git clone https://github.com/binary-core-llc/bowerbot.git
+cd bowerbot
+uv sync
+uv run bowerbot onboard
+```
+
+### First-time setup
+
+```bash
+bowerbot onboard
+```
+
+The wizard asks for your LLM API key, your asset library directory, and your projects directory, then writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
+
+### Create a project and start building
+
+```bash
+bowerbot new "Coffee Shop"
+bowerbot open coffee_shop
+```
+
+To plug in asset providers like Sketchfab, see [Skills](#-skills) below.
+
+---
+
+## 📺 Tutorials
+
+New to BowerBot? Watch the **[tutorial playlist on YouTube](https://www.youtube.com/playlist?list=PLhNtBS4KXazZk_LSZfMHlzmNQPqHc4CMb)** for setup walkthroughs, scene building demos, and tips for working with USD pipelines.
+
+---
+
+## 🛠️ CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `bowerbot new "name"` | Create a new project |
+| `bowerbot open name` | Open a project and start chatting |
+| `bowerbot list` | Show all projects |
+| `bowerbot chat` | Auto-detect project in current directory |
+| `bowerbot build "prompt"` | Single-shot build (auto-creates project) |
+| `bowerbot skills` | List scene builder tools and enabled skills |
+| `bowerbot info` | Show current configuration |
+| `bowerbot onboard` | First-time setup wizard |
+
+---
+
+## 📁 Projects
+
+Each project is a self-contained folder with metadata, scene, assets, and packaged output in one place:
+
+```
+scenes/coffee_shop/
+  project.json    # Metadata: name, created_at, updated_at, scene_file
+  scene.usda      # The USD stage (references only, clean and readable)
+  scene.usdz      # Packaged output (Apple Vision Pro, Omniverse, etc.)
+  assets/         # ASWF folders + self-contained USDZs used by this scene
+  textures/       # Scene-level textures (HDRI maps for DomeLights, etc.)
+```
+
+Projects are resumable. Close the session, come back later, and continue where you left off:
+
+```
+$ bowerbot open coffee_shop
+# Project: Coffee Shop
+# Scene: scene.usda (5 object(s))
+
+You: Show me the scene structure
+BowerBot: Scene has 5 objects...
+
+You: Remove Table_03
+BowerBot: Removed /Scene/Furniture/Table_03
+```
 
 ---
 
@@ -199,102 +301,6 @@ def Xform "Scene" (kind = "assembly") {
 ```
 
 Open it in Maya, Omniverse, usdview, or any USD-compatible tool to refine.
-
----
-
-## 🚀 Quick Start
-
-### Install
-
-The easiest path is [uv](https://docs.astral.sh/uv/), which manages Python and isolated tool environments for you:
-
-```bash
-uv tool install bowerbot
-```
-
-If you already maintain your own Python 3.12+ environment, plain `pip` works too:
-
-```bash
-pip install bowerbot
-```
-
-### First-time setup
-
-```bash
-bowerbot onboard
-```
-
-The wizard asks for your LLM API key, your asset library directory, and your projects directory, then writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
-
-### Create a project and start building
-
-```bash
-bowerbot new "Coffee Shop"
-bowerbot open coffee_shop
-```
-
-To plug in asset providers like Sketchfab, see [Skills](#-skills) below.
-
-### Developer install
-
-If you want to modify BowerBot itself, clone the repo and use uv to manage the dev environment:
-
-```bash
-git clone https://github.com/binary-core-llc/bowerbot.git
-cd bowerbot
-uv sync
-uv run bowerbot onboard
-```
-
----
-
-## 📺 Tutorials
-
-New to BowerBot? Watch the **[tutorial playlist on YouTube](https://www.youtube.com/playlist?list=PLhNtBS4KXazZk_LSZfMHlzmNQPqHc4CMb)** for setup walkthroughs, scene building demos, and tips for working with USD pipelines.
-
----
-
-## 🛠️ CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `bowerbot new "name"` | Create a new project |
-| `bowerbot open name` | Open a project and start chatting |
-| `bowerbot list` | Show all projects |
-| `bowerbot chat` | Auto-detect project in current directory |
-| `bowerbot build "prompt"` | Single-shot build (auto-creates project) |
-| `bowerbot skills` | List scene builder tools and enabled skills |
-| `bowerbot info` | Show current configuration |
-| `bowerbot onboard` | First-time setup wizard |
-
----
-
-## 📁 Projects
-
-Each project is a self-contained folder with metadata, scene, assets, and packaged output in one place:
-
-```
-scenes/coffee_shop/
-  project.json    # Metadata: name, created_at, updated_at, scene_file
-  scene.usda      # The USD stage (references only, clean and readable)
-  scene.usdz      # Packaged output (Apple Vision Pro, Omniverse, etc.)
-  assets/         # ASWF folders + self-contained USDZs used by this scene
-  textures/       # Scene-level textures (HDRI maps for DomeLights, etc.)
-```
-
-Projects are resumable. Close the session, come back later, and continue where you left off:
-
-```
-$ bowerbot open coffee_shop
-# Project: Coffee Shop
-# Scene: scene.usda (5 object(s))
-
-You: Show me the scene structure
-BowerBot: Scene has 5 objects...
-
-You: Remove Table_03
-BowerBot: Removed /Scene/Furniture/Table_03
-```
 
 ---
 
@@ -662,6 +668,8 @@ What's next for BowerBot. Contributions welcome:
 BowerBot is open source and welcomes contributions. The best way to start is writing a new **skill** for an asset provider, DCC, or simulation runtime you use. Skills ship as separate pip packages discovered through the `bowerbot.skills` entry-point group.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the skill contract, the required FastAPI internal layout, and a worked `pyproject.toml` example for a stand-alone skill package.
+
+For a complete reference, see [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab): a real first-party skill on PyPI, with the production layout, entry-point registration, validation, and release pipeline you can mirror for your own.
 
 ---
 

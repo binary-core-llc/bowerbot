@@ -89,32 +89,35 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 
 ## Writing a Skill
 
-The best way to contribute is writing a new **skill** for an asset provider, DCC, or simulation runtime: Sketchfab, PolyHaven, CGTrader, a company DAM, Isaac Sim, MuJoCo, anything that produces or consumes 3D content.
+The best way to contribute is writing a new **skill** for an asset provider, DCC connector, or simulation runtime: any service or tool that produces or consumes 3D content. Sketchfab is already covered by [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab), which doubles as the canonical reference implementation.
 
 ### Skill layout (required)
 
-Every skill follows the same FastAPI shape as the core. Even small skills mirror this layout for consistency, predictability, and growth headroom.
+Every skill ships as its own pip package and follows the same FastAPI shape as the core. Even small skills mirror this layout for consistency, predictability, and growth headroom.
 
 ```
-my_provider/
-  __init__.py        # Re-exports the Skill class
-  skill.py           # Skill subclass. Tool registration + execute() dispatch only.
-  SKILL.md           # Natural language instructions for the LLM
-  schemas/           # Pydantic models / enums for this skill's data
-  services/          # Orchestrators. One module per tool. Take params (and ctx).
-  tools/             # Tool definitions list returned by get_tools()
-  utils/             # Pure-function primitives the services compose
+bowerbot-skill-<name>/
+  pyproject.toml                 # Dependencies + entry-point registration
+  src/bowerbot_skill_<name>/
+    __init__.py                  # Re-exports the Skill class
+    skill.py                     # Skill subclass. Tool registration + execute() dispatch only.
+    SKILL.md                     # Natural language instructions for the LLM
+    schemas/                     # Pydantic models / enums for this skill's data
+    services/                    # Orchestrators. One module per tool. Take (params, ctx).
+    tools/                       # Tool definitions list returned by get_tools()
+    utils/                       # Pure-function primitives the services compose
+  tests/
 ```
 
-See `skills/sketchfab/` for a complete reference.
+See [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab) for a complete reference: a real first-party skill on PyPI, with the production layout, entry-point registration, `validate_config()`, and release pipeline you can mirror for your own.
 
 ### The Skill contract
 
 A skill subclasses `bowerbot.skills.Skill` and implements three methods:
 
-- `get_tools() -> list[Tool]` — declares what the LLM sees.
-- `execute(tool_name, params, ctx) -> ToolResult` — routes to a service.
-- `validate_config() -> None` — verifies the skill is properly configured. Raises `SkillConfigError` with an actionable message when something is missing or invalid.
+- `get_tools() -> list[Tool]`: declares what the LLM sees.
+- `execute(tool_name, params, ctx) -> ToolResult`: routes to a service.
+- `validate_config() -> None`: verifies the skill is properly configured. Raises `SkillConfigError` with an actionable message when something is missing or invalid.
 
 The `skill.py` file should be **a dispatcher**, not a place for logic. It maps a tool name to a service function and wraps the result. All real work lives in `services/` and `utils/`.
 
@@ -177,28 +180,11 @@ dependencies = ["bowerbot>=1.5,<2"]
 
 Anything under `bowerbot.skills.base` is an implementation detail. Import from `bowerbot.skills` instead.
 
-### Distributing a skill as a separate package
+### Packaging and publishing
 
-Skills ship one of two ways:
+Every skill ships as a standalone pip package. There is no in-tree mode. Even Binary Core's first-party skills live in their own repos and publish to PyPI under the `bowerbot-skill-*` namespace.
 
-1. **In-tree** (built-in): live under `src/bowerbot/skills/<name>/` and register via the main `pyproject.toml` entry points. Used for first-party skills like `sketchfab`.
-2. **Separate pip package**: their own repo, their own `pyproject.toml`, distributed on PyPI. Used for community and third-party skills. Layout:
-
-```
-bowerbot-skill-polyhaven/
-  pyproject.toml
-  src/bowerbot_skill_polyhaven/
-    __init__.py
-    skill.py
-    SKILL.md
-    schemas/
-    services/
-    tools/
-    utils/
-  tests/
-```
-
-The package's `pyproject.toml` declares the entry point exactly like in-tree skills do:
+The `pyproject.toml` declares the bowerbot dependency and registers the entry point:
 
 ```toml
 [project]
@@ -209,7 +195,11 @@ dependencies = ["bowerbot>=1.5,<2", "httpx"]
 polyhaven = "bowerbot_skill_polyhaven.skill:PolyhavenSkill"
 ```
 
-After `pip install bowerbot-skill-polyhaven`, BowerBot's `SkillRegistry` discovers it automatically. No core code changes required.
+The entry-point key (`polyhaven` above) must equal the `name` attribute on your `Skill` class and the key the user puts in `~/.bowerbot/config.json`. The `SkillRegistry` enforces this and skips skills where they disagree.
+
+Once `pip install bowerbot-skill-polyhaven` runs in the same Python environment as BowerBot, the registry discovers the skill automatically. No core code changes required.
+
+For the full production setup (PyPI Trusted Publisher OIDC, release-please, GitHub Actions), copy the [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab) repo as a template.
 
 ## Code Style
 

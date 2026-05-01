@@ -222,7 +222,7 @@ uv run bowerbot new "Coffee Shop"
 uv run bowerbot open coffee_shop
 ```
 
-The onboard wizard asks for your LLM API key and optional Sketchfab token. Everything is stored in `~/.bowerbot/config.json`. One file, one place, no `.env`.
+The onboard wizard asks for your LLM API key and the directories for your asset library and projects. Everything is stored in `~/.bowerbot/config.json`. Skills are extension packages you install separately; after `pip install bowerbot-skill-<name>`, add the skill's config to the `skills` block of `config.json`.
 
 ---
 
@@ -318,7 +318,7 @@ BowerBot's core tools for building USD scenes:
 Each skill ships as a separate pip package and is discovered at runtime via the `bowerbot.skills` entry-point group. A skill bundles its own Python module, a `SKILL.md` that teaches the LLM when and how to use it, and the four-folder layout BowerBot enforces (`schemas/`, `services/`, `tools/`, `utils/`).
 
 **Available:**
-- **Sketchfab** — searches and downloads models from your own Sketchfab account in USDZ format (your curated assets, not the public marketplace).
+- **[bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab)** — searches and downloads models from your own Sketchfab account in USDZ format (your curated assets, not the public marketplace). Install with `pip install bowerbot-skill-sketchfab`.
 
 More providers are planned (PolyHaven, Fab, CGTrader, Objaverse). You can write your own for any asset source, DCC, or simulation runtime. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contract and a worked `pyproject.toml` example.
 

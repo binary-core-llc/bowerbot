@@ -41,9 +41,6 @@ api = [
 [project.scripts]
 bowerbot = "bowerbot.cli:main"
 
-[project.entry-points."bowerbot.skills"]
-sketchfab = "bowerbot.skills.sketchfab:SketchfabSkill"
-
 [build-system]
 requires = ["uv_build>=0.10.4,<0.11.0"]
 build-backend = "uv_build"

@@ -23,7 +23,6 @@ from bowerbot.config import (
     LLMSettings,
     SceneDefaults,
     Settings,
-    SkillConfig,
     ensure_home,
     load_settings,
     save_settings,
@@ -393,11 +392,6 @@ def onboard() -> None:
             "You can add it later in ~/.bowerbot/config.json",
         )
 
-    console.print("\n[sf]Sketchfab Integration[/]")
-    sketchfab_token = console.input(
-        "  Sketchfab API token (optional): ",
-    ).strip()
-
     console.print("\n[sf]Directories[/]")
     assets_dir = (
         console.input("  Asset directory [./assets]: ").strip() or "./assets"
@@ -414,19 +408,19 @@ def onboard() -> None:
             max_tokens=4096,
         ),
         scene_defaults=SceneDefaults(),
-        skills={
-            "sketchfab": SkillConfig(
-                enabled=bool(sketchfab_token),
-                config={"token": sketchfab_token} if sketchfab_token else {},
-            ),
-        },
+        skills={},
         assets_dir=assets_dir,
         projects_dir=projects_dir,
     )
 
     save_settings(settings)
 
-    console.print(f"\n[sf]✅ Config saved to {GLOBAL_CONFIG_PATH}[/]")
+    console.print(f"\n[sf]Config saved to {GLOBAL_CONFIG_PATH}[/]")
+    console.print(
+        "\n[info]Skills are extension packages you install separately. "
+        "After installing one (e.g. [sf]pip install bowerbot-skill-sketchfab[/]), "
+        "add its config to your config.json under the [sf]skills[/] block.[/]",
+    )
     console.print("\n[info]You're ready to go! Try:[/]")
     console.print("  [sf]bowerbot new my_first_scene[/]")
     console.print("  [sf]bowerbot chat[/]")

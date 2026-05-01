@@ -55,6 +55,9 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: tests that require live credentials or external services (Sketchfab token, LLM API keys, network calls). Excluded from CI by default; run locally with `pytest -m integration`.",
+]
 
 [tool.mypy]
 python_version = "3.12"

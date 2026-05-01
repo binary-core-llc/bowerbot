@@ -8,9 +8,14 @@ import os
 import tempfile
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.integration
+
 
 async def test_agent_anthropic():
     from pxr import Usd, UsdGeom
+
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import LLMSettings, Settings, SkillConfig
     from bowerbot.skills.registry import SkillRegistry

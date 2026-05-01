@@ -1,11 +1,15 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Test the full agent loop: user prompt → LLM → tool calls → response."""
+"""Test the full agent loop: user prompt -> LLM -> tool calls -> response."""
 
 import asyncio
-import os
 import logging
+import os
+
+import pytest
+
+pytestmark = pytest.mark.integration
 
 # Show what the agent is doing
 logging.basicConfig(level=logging.INFO, format="  %(name)s: %(message)s")
@@ -74,10 +78,10 @@ async def test_agent_with_local_assets():
         "Search for a table and a chair in my local assets."
     )
 
-    print(f"\n  Agent response:\n  ---")
+    print("\n  Agent response:\n  ---")
     for line in response.split("\n"):
         print(f"  {line}")
-    print(f"  ---")
+    print("  ---")
 
     # 4. Verify the agent actually used tools and found assets
     # Check conversation history for tool calls

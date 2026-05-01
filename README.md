@@ -142,7 +142,7 @@ BowerBot searches for assets across all connected sources, prioritizing what's a
 
 1. **Local assets first**: BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers.
 
-2. **Cloud providers if needed**: If the asset isn't found locally, BowerBot searches connected providers like Sketchfab, and downloads the asset to your local directory. Future skills will add support for PolyHaven, Fab, CGTrader, Objaverse, and custom company DAMs.
+2. **Cloud providers if needed**: If the asset isn't found locally, BowerBot searches connected providers (any installed skill, e.g. Sketchfab) and downloads the asset to your local directory.
 
 3. **All downloads are cached locally**: Once an asset is downloaded from any source, it lives in your `assets_dir` and is available for all future projects without re-downloading.
 
@@ -204,25 +204,47 @@ Open it in Maya, Omniverse, usdview, or any USD-compatible tool to refine.
 
 ## 🚀 Quick Start
 
-Requires [uv](https://docs.astral.sh/uv/) (handles Python automatically).
+### Install
+
+The easiest path is [uv](https://docs.astral.sh/uv/), which manages Python and isolated tool environments for you:
 
 ```bash
-# Clone
-git clone https://github.com/binary-core-llc/bowerbot.git
-cd bowerbot
-
-# Install
-uv sync
-
-# First-time setup (creates ~/.bowerbot/config.json)
-uv run bowerbot onboard
-
-# Create a project and start building
-uv run bowerbot new "Coffee Shop"
-uv run bowerbot open coffee_shop
+uv tool install bowerbot
 ```
 
-The onboard wizard asks for your LLM API key and the directories for your asset library and projects. Everything is stored in `~/.bowerbot/config.json`. Skills are extension packages you install separately; after `pip install bowerbot-skill-<name>`, add the skill's config to the `skills` block of `config.json`.
+If you already maintain your own Python 3.12+ environment, plain `pip` works too:
+
+```bash
+pip install bowerbot
+```
+
+### First-time setup
+
+```bash
+bowerbot onboard
+```
+
+The wizard asks for your LLM API key, your asset library directory, and your projects directory, then writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
+
+### Create a project and start building
+
+```bash
+bowerbot new "Coffee Shop"
+bowerbot open coffee_shop
+```
+
+To plug in asset providers like Sketchfab, see [Skills](#-skills) below.
+
+### Developer install
+
+If you want to modify BowerBot itself, clone the repo and use uv to manage the dev environment:
+
+```bash
+git clone https://github.com/binary-core-llc/bowerbot.git
+cd bowerbot
+uv sync
+uv run bowerbot onboard
+```
 
 ---
 
@@ -278,7 +300,7 @@ BowerBot: Removed /Scene/Furniture/Table_03
 
 ## 🔌 Skills
 
-Skills extend BowerBot with **external** asset providers, DCC connectors, and simulation runtimes. Each skill is a separate Python package, discovered at runtime through Python entry points (`bowerbot.skills`). To add a provider, you `pip install bowerbot-skill-<name>` and BowerBot picks it up automatically. The skill SDK lives in `bowerbot.skills`; skills themselves ship and version on their own.
+Skills extend BowerBot with **external** asset providers, DCC connectors, and simulation runtimes. Each skill is a separate Python package, discovered at runtime through Python entry points (`bowerbot.skills`). The skill SDK lives in `bowerbot.skills`; skills themselves ship and version on their own. See [Installing a skill](#installing-a-skill) below for the walkthrough.
 
 ### Scene Builder Tools
 
@@ -315,18 +337,87 @@ BowerBot's core tools for building USD scenes:
 
 ### Extension Skills
 
-Each skill ships as a separate pip package and is discovered at runtime via the `bowerbot.skills` entry-point group. A skill bundles its own Python module, a `SKILL.md` that teaches the LLM when and how to use it, and the four-folder layout BowerBot enforces (`schemas/`, `services/`, `tools/`, `utils/`).
+#### First-party skills
 
-**Available:**
-- **[bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab)** — searches and downloads models from your own Sketchfab account in USDZ format (your curated assets, not the public marketplace). Install with `pip install bowerbot-skill-sketchfab`.
+Maintained by Binary Core LLC alongside the BowerBot core.
 
-More providers are planned (PolyHaven, Fab, CGTrader, Objaverse). You can write your own for any asset source, DCC, or simulation runtime. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contract and a worked `pyproject.toml` example.
+| Skill | Install | What it does |
+|-------|---------|--------------|
+| [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab) | `pip install bowerbot-skill-sketchfab` | Searches and downloads models from your own Sketchfab account in USDZ format. |
+
+#### Community skills
+
+Built by external contributors, published to PyPI under each author's namespace, and listed here for discoverability. To add yours, open a PR on this README adding a row to the table below. The skill must be open source, installable via `pip` from public PyPI, and follow the contract in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+| Skill | Author | Install | What it does |
+|-------|--------|---------|--------------|
+| _be the first_ | | | |
+
+When this list grows large enough to warrant tooling, it becomes the [BowerHub](#-roadmap) skill registry.
+
+#### Installing a skill
+
+Three steps. Sketchfab as the worked example.
+
+**1. Install the skill alongside BowerBot.** With uv, add it to the same tool environment:
+
+```bash
+uv tool install bowerbot --with bowerbot-skill-sketchfab
+```
+
+To add more skills later, rerun with every `--with` you want and `--reinstall`:
+
+```bash
+uv tool install bowerbot --with bowerbot-skill-sketchfab --with bowerbot-skill-polyhaven --reinstall
+```
+
+If you used plain `pip` to install BowerBot, install the skill in the same Python environment:
+
+```bash
+pip install bowerbot-skill-sketchfab
+```
+
+**2. Get any credentials the skill needs.** Sketchfab requires an API token from https://sketchfab.com/settings/password. Each skill's README documents what credentials (if any) it needs.
+
+**3. Add the skill's config block to `~/.bowerbot/config.json`:**
+
+```json
+"skills": {
+  "sketchfab": {
+    "enabled": true,
+    "config": { "token": "your-sketchfab-token" }
+  }
+}
+```
+
+That's it. BowerBot auto-discovers the skill via Python entry points the next time you run it. The exact shape of `config` is per-skill; consult the skill's README.
+
+#### Private and in-house skills
+
+Skills do not have to be public. Install from a private PyPI index, a git URL, or a local path:
+
+```bash
+# Private PyPI
+pip install bowerbot-skill-acme --index-url https://pypi.acme.internal/
+
+# Direct git URL (any host)
+pip install git+ssh://git@github.com/acme/bowerbot-skill-acme.git
+
+# Local path during development
+pip install -e /path/to/skill
+```
+
+Entry-point discovery works the same in all three cases.
+
+#### Trust
+
+A skill's `SKILL.md` is injected into the LLM's system prompt, and its tools run with the same access as core tools. Only install skills you trust. Open-source skills are auditable; closed-source skills should come from a vendor you have a relationship with. The first-party table above is the only set Binary Core has audited end-to-end.
 
 ---
 
 ## ⚙️ Configuration
 
-All settings live in `~/.bowerbot/config.json`:
+All settings live in `~/.bowerbot/config.json`. The `skills` block holds the config for any skill packages you've installed; the example below shows what it looks like once you've installed `bowerbot-skill-sketchfab` (see [Skills](#-skills)). A fresh install starts with `"skills": {}`.
 
 ```json
 {

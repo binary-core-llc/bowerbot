@@ -9,10 +9,10 @@ schema lives in.
 """
 
 from bowerbot.schemas.assets import (
-    ASWFLayerNames,
     AssetCategory,
     AssetFormat,
     AssetMetadata,
+    ASWFLayerNames,
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.lights import LightParams, LightType

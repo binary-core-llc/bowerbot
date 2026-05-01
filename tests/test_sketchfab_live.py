@@ -6,6 +6,10 @@
 import asyncio
 import logging
 
+import pytest
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.INFO, format="  %(name)s: %(message)s")
 
 
@@ -34,10 +38,10 @@ async def test_sketchfab_mug():
     print(f"\n  Prompt: {prompt}\n")
     response = await agent.process(prompt)
 
-    print(f"\n  === AGENT RESPONSE ===")
+    print("\n  === AGENT RESPONSE ===")
     for line in response.split("\n"):
         print(f"  {line}")
-    print(f"  ======================")
+    print("  ======================")
 
 
 if __name__ == "__main__":

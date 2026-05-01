@@ -12,7 +12,6 @@ from pxr import Sdf, Usd, UsdGeom, UsdShade, UsdUtils
 from bowerbot.schemas import DetectionOutcome
 from bowerbot.utils import asset_folder_utils, asset_intake_utils
 
-
 # ── Helpers ──
 
 

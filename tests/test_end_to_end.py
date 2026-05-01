@@ -9,6 +9,10 @@ import os
 import tempfile
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.INFO, format="  %(name)s: %(message)s")
 
 
@@ -19,9 +23,9 @@ async def test_full_scene_build():
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import LLMSettings, SceneDefaults, Settings, SkillConfig
     from bowerbot.project import Project
-    from bowerbot.utils import stage_utils as stage_service
     from bowerbot.skills.registry import SkillRegistry
     from bowerbot.state import SceneState
+    from bowerbot.utils import stage_utils as stage_service
 
     tmp = tempfile.mkdtemp()
     tmp_path = Path(tmp)
@@ -90,10 +94,10 @@ async def test_full_scene_build():
     print(f"\n  Prompt: {prompt}\n")
     response = await agent.process(prompt)
 
-    print(f"\n  === AGENT RESPONSE ===")
+    print("\n  === AGENT RESPONSE ===")
     for line in response.split("\n"):
         print(f"  {line}")
-    print(f"  ======================\n")
+    print("  ======================\n")
 
     usdz_files = list(project.path.rglob("*.usdz"))
     assert len(usdz_files) > 0, f"No .usdz files found in {project.path}"

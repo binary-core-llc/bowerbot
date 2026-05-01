@@ -22,14 +22,6 @@ from typing import Any
 
 
 class SkillConfigError(Exception):
-    """Raised by ``Skill.validate_config`` when a skill is misconfigured.
-
-    The message is logged by the registry and surfaced to the user so
-    they know exactly which setting is missing or invalid.
-    """
-
-
-class SkillConfigError(Exception):
     """Raised by :meth:`Skill.validate_config` when a skill is misconfigured.
 
     The registry catches it, logs the message, and skips the skill so

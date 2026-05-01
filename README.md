@@ -10,7 +10,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue)](https://www.python.org/)
-[![OpenUSD](https://img.shields.io/badge/OpenUSD-25.x-green)](https://openusd.org)
+[![OpenUSD](https://img.shields.io/badge/OpenUSD-26.x-green)](https://openusd.org)
 [![YouTube](https://img.shields.io/badge/YouTube-Tutorials-red?logo=youtube)](https://www.youtube.com/playlist?list=PLhNtBS4KXazZk_LSZfMHlzmNQPqHc4CMb)
 [![Built by Binary Core LLC](https://img.shields.io/badge/Built%20by-Binary%20Core%20LLC-black)](https://binarycore.us)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)

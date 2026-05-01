@@ -392,6 +392,34 @@ pip install bowerbot-skill-sketchfab
 
 That's it. BowerBot auto-discovers the skill via Python entry points the next time you run it. The exact shape of `config` is per-skill; consult the skill's README.
 
+#### Verifying a skill is installed
+
+Three commands, in increasing depth. All work on Windows, macOS, and Linux.
+
+**1. Ask BowerBot what it sees:**
+
+```bash
+bowerbot skills
+```
+
+Lists the core scene-builder tools plus every extension skill the registry has loaded successfully. If your skill shows under "Extension skills" with its tools, you are done.
+
+**2. If it does not appear, check the package is installed:**
+
+```bash
+pip show bowerbot-skill-sketchfab
+```
+
+If the package is installed, this prints its name, version, and location. If not, it prints `Package(s) not found` and exits non-zero. Install it (see [Installing a skill](#installing-a-skill) above). Replace `bowerbot-skill-sketchfab` with whichever skill you are checking.
+
+**3. If the package is installed but BowerBot still does not see it, inspect the entry-point registration directly:**
+
+```bash
+python -c "from importlib.metadata import entry_points; print('\n'.join(f'{ep.name} -> {ep.value}' for ep in entry_points(group='bowerbot.skills')))"
+```
+
+If your skill does not appear in this output despite being pip-installed, the skill's `pyproject.toml` is missing or broken. File an issue on the skill's repo. If the skill does appear here but `bowerbot skills` still does not show it, the gap is in your `~/.bowerbot/config.json`: the skill's block is missing, `enabled: false`, or the credentials fail `validate_config()`.
+
 #### Private and in-house skills
 
 Skills do not have to be public. Install from a private PyPI index, a git URL, or a local path:

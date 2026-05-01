@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/binary-core-llc/bowerbot/compare/v1.4.3...v1.5.0) (2026-05-01)
+
+
+### Features
+
+* extract sketchfab into bowerbot-skill-sketchfab + add PyPI publish ([#92](https://github.com/binary-core-llc/bowerbot/issues/92)) ([8a51488](https://github.com/binary-core-llc/bowerbot/commit/8a514888ae886dec4cf338c289d3bbefa84a313b))
+* stabilize skill contract for external pip-installable packages ([#90](https://github.com/binary-core-llc/bowerbot/issues/90)) ([36e92e6](https://github.com/binary-core-llc/bowerbot/commit/36e92e6ba484cd0acb143f6f8eb5c3be2aaf726f))
+
 ## [1.4.3](https://github.com/binary-core-llc/bowerbot/compare/v1.4.2...v1.4.3) (2026-04-30)
 
 

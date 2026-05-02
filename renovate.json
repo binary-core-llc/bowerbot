@@ -6,43 +6,51 @@
     ":semanticCommitScope(deps)",
     ":dependencyDashboard"
   ],
-  "schedule": ["before 6am on monday"],
-  "timezone": "Etc/UTC",
+  "configMigration": true,
+  "schedule": ["* 0-5 * * 1"],
+  "timezone": "UTC",
   "branchPrefix": "chore/renovate-",
   "minimumReleaseAge": "5 days",
+  "internalChecksFilter": "strict",
   "rangeStrategy": "update-lockfile",
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+  "prCreation": "not-pending",
+  "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["before 6am on monday"]
+    "schedule": ["* 0-5 * * 1"]
   },
   "vulnerabilityAlerts": {
     "enabled": true,
-    "labels": ["security"],
-    "minimumReleaseAge": "0 days",
-    "schedule": ["at any time"]
+    "addLabels": ["security"],
+    "minimumReleaseAge": "0 days"
   },
   "packageRules": [
     {
-      "matchManagers": ["pep621"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "python minor and patch",
-      "commitMessagePrefix": "chore(deps):"
-    },
-    {
-      "matchManagers": ["pep621"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
     {
-      "matchManagers": ["github-actions"],
+      "matchManagers": ["pyenv"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["project.dependencies", "project.optional-dependencies"],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "github actions",
-      "commitMessagePrefix": "chore(deps):"
+      "groupName": "python-runtime"
+    },
+    {
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["dependency-groups", "tool.uv.dev-dependencies", "build-system.requires"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "python-dev"
     },
     {
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "github-actions"
     }
   ]
 }

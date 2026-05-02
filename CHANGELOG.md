@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.5.4](https://github.com/binary-core-llc/bowerbot/compare/v1.5.3...v1.5.4) (2026-05-02)
+
+
+### Bug Fixes
+
+* detect external DCC edits to scene.usda before mutating ([#128](https://github.com/binary-core-llc/bowerbot/issues/128)) ([74fa793](https://github.com/binary-core-llc/bowerbot/commit/74fa793cf882608a7085a092b087aa28f8fd9591))
+
+
+### Documentation
+
+* align header tagline and fix three more consistency issues ([#126](https://github.com/binary-core-llc/bowerbot/issues/126)) ([b0a0d14](https://github.com/binary-core-llc/bowerbot/commit/b0a0d145db9d273e5c2224e10d9f8f3b44900c7a))
+* broaden audience framing without diluting positioning ([#124](https://github.com/binary-core-llc/bowerbot/issues/124)) ([1a91a2a](https://github.com/binary-core-llc/bowerbot/commit/1a91a2a76ee50fc35f3d505b03789061909a071f))
+* tighten README, swap demo block for YouTube playlist link ([#127](https://github.com/binary-core-llc/bowerbot/issues/127)) ([e9f0e14](https://github.com/binary-core-llc/bowerbot/commit/e9f0e141f0cfc11fb8aaa50d0c40915cf02e1810))
+
 ## [1.5.3](https://github.com/binary-core-llc/bowerbot/compare/v1.5.2...v1.5.3) (2026-05-02)
 
 

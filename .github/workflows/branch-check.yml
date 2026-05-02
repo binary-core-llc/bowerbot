@@ -21,12 +21,6 @@ jobs:
             exit 0
           fi
 
-          # Allow Dependabot automated branches
-          if [[ "$BRANCH" =~ ^dependabot/ ]]; then
-            echo "✅ Dependabot branch '$BRANCH', skipping name check"
-            exit 0
-          fi
-
           PATTERN="^(feat|fix|docs|refactor|test|chore)/.+$"
 
           if [[ ! "$BRANCH" =~ $PATTERN ]]; then

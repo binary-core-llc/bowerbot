@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.3](https://github.com/binary-core-llc/bowerbot/compare/v1.5.2...v1.5.3) (2026-05-02)
+
+
+### Bug Fixes
+
+* pin major version upper bounds on all dependencies ([#118](https://github.com/binary-core-llc/bowerbot/issues/118)) ([ec9a12a](https://github.com/binary-core-llc/bowerbot/commit/ec9a12a5f891e507ed484d95878f142d5c1cf4ed))
+
 ## [1.5.2](https://github.com/binary-core-llc/bowerbot/compare/v1.5.1...v1.5.2) (2026-05-01)
 
 

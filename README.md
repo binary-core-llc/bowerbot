@@ -4,7 +4,7 @@
 
 # BowerBot
 
-**AI-powered OpenUSD scene assembly.**
+**AI agent for OpenUSD scene assembly.**
 
 **From empty scene to structured OpenUSD stage in seconds.**
 
@@ -25,7 +25,7 @@ In the rainforests of Australia and New Guinea lives one of nature's most remark
 
 Instead of relying on appearance, the bowerbird **collects, curates, and arranges objects** from its environment into a carefully constructed 3D composition. Every object is chosen. Every placement is intentional.
 
-**BowerBot brings that same idea to 3D pipelines.**
+**BowerBot brings that same idea to OpenUSD.**
 
 BowerBot is an **AI agent for OpenUSD**, a conversational interface that helps any team using OpenUSD go from an empty scene to a structured, usable layout in seconds by:
 - finding assets from any connected source (Sketchfab, local disk, company DAM, or any custom provider)
@@ -63,7 +63,7 @@ Think of it as:
 
 BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (non-canonical folder names, external dependencies) are auto-normalized on intake so the project copy is always self-contained. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
 
-This means problems that would normally surface weeks later in lighting, rendering, or review (broken references, unit mismatches, non-compliant asset structure) are caught **the moment the asset enters the scene**. Fix it once at the source, and every downstream department benefits.
+This means problems that would normally surface weeks later in lighting, rendering, simulation, or review (broken references, unit mismatches, non-compliant asset structure) are caught **the moment the asset enters the scene**. Fix it once at the source, and every downstream department benefits.
 
 > **"The cheapest bug to fix is the one you catch before it enters the pipeline."**
 
@@ -316,7 +316,7 @@ def Xform "Scene" (kind = "assembly") {
 }
 ```
 
-Open it in Maya, Omniverse, usdview, or any USD-compatible tool to refine.
+Open it in Maya, usdview, Omniverse, Isaac Sim, or any USD-compatible tool to refine.
 
 ---
 

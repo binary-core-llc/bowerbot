@@ -58,6 +58,7 @@ def _build_state(
     if project.scene_path.exists():
         state.stage = stage_utils.open_stage(project.scene_path)
         state.object_count = len(stage_utils.list_prims(state.stage))
+        state.mark_saved()
     return state
 
 

@@ -153,6 +153,12 @@ New to BowerBot? Watch the **[tutorial playlist on YouTube](https://www.youtube.
 
 ---
 
+## 🩹 Troubleshooting
+
+Stuck on something? See **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** for common issues: working alongside a DCC, skill installation, CLI rendering on Windows, and LLM tool-calling pitfalls.
+
+---
+
 ## 🛠️ CLI Commands
 
 | Command | Description |

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.5](https://github.com/binary-core-llc/bowerbot/compare/v1.5.4...v1.5.5) (2026-05-02)
+
+
+### Bug Fixes
+
+* bind material to asset root when defaultPrim name matches local … ([#129](https://github.com/binary-core-llc/bowerbot/issues/129)) ([87e7062](https://github.com/binary-core-llc/bowerbot/commit/87e7062a0d70658445635e3bc21da19cbf021dc8))
+
 ## [1.5.4](https://github.com/binary-core-llc/bowerbot/compare/v1.5.3...v1.5.4) (2026-05-02)
 
 

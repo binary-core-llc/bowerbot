@@ -13,6 +13,7 @@ tool list to the LLM and route calls to the matching handler.
 from __future__ import annotations
 
 import inspect
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -27,6 +28,8 @@ from bowerbot.tools import (
     texture_tools,
     validation_tools,
 )
+
+logger = logging.getLogger(__name__)
 
 ToolHandler = Callable[[SceneState, dict[str, Any]], ToolResult | Awaitable[ToolResult]]
 
@@ -73,6 +76,14 @@ async def execute(
     state: SceneState, tool_name: str, params: dict[str, Any],
 ) -> ToolResult:
     """Route a tool call by name to its registered handler."""
+    if state.stage is not None and state.detect_external_changes():
+        logger.info(
+            "External edits detected in %s, reloading before %s",
+            state.stage_path, tool_name,
+        )
+        state.stage.Reload()
+        state.mark_saved()
+
     handler = HANDLERS.get(tool_name)
     if handler is None:
         return ToolResult(
@@ -81,4 +92,6 @@ async def execute(
     result = handler(state, params)
     if inspect.isawaitable(result):
         result = await result
+
+    state.mark_saved()
     return result

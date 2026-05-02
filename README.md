@@ -27,15 +27,15 @@ Instead of relying on appearance, the bowerbird **collects, curates, and arrange
 
 **BowerBot brings that same idea to 3D pipelines.**
 
-BowerBot is an **AI-assisted OpenUSD scene assembly tool**. It helps you go from an empty scene to a structured, usable layout in seconds by:
+BowerBot is an **AI agent for OpenUSD**, a conversational interface that helps any team using OpenUSD go from an empty scene to a structured, usable layout in seconds by:
 - finding assets from any connected source (Sketchfab, local disk, company DAM, or any custom provider)
 - placing them with spatial awareness
 - organizing them into a valid USD stage
 
-**It does not try to replace the artist.**
+**It does not try to replace your judgment.**
 It accelerates the part that is repetitive, mechanical, and time-consuming.
 
-You stay in control of composition, lighting, and final polish.
+You stay in control of composition, layout, and final decisions.
 BowerBot gets you there faster.
 
 ---
@@ -43,7 +43,7 @@ BowerBot gets you there faster.
 ## 🎯 What BowerBot Is (and Is Not)
 
 **BowerBot is:**
-- A scene bootstrapper for OpenUSD pipelines
+- A scene bootstrapper for any OpenUSD pipeline: VFX, AEC, simulation, spatial computing, digital twins, robotics, e-commerce 3D
 - A fast way to go from 0 → structured scene
 - A conversational interface for asset search, placement, and layout
 - A pipeline assistant that handles technical correctness (units, hierarchy, references)
@@ -102,7 +102,23 @@ You: Validate and package
 BowerBot: All checks passed. Packaged to scenes/coffee_shop/scene.usdz
 ```
 
-Open the `.usda` in Maya, usdview, Omniverse, or any USD-compatible DCC to refine composition, lighting, and materials.
+Or a different domain entirely:
+
+```
+$ bowerbot open warehouse_layout
+
+You: Search local assets for a pallet rack and place 8 in a row, 3m apart
+BowerBot: Found pallet_rack.usdz. Placed 8 instances at /Scene/Storage/PalletRack_01-08
+
+You: Add a forklift at the entrance and 20 pallets distributed across the racks
+BowerBot: Placed forklift at /Scene/Equipment/Forklift_01 (0, 0, 0)
+         Distributed 20 pallets across 8 racks. Bounds-checked.
+
+You: Validate and package
+BowerBot: All checks passed. Packaged to scenes/warehouse_layout/scene.usdz
+```
+
+Open the `.usda` in Maya, usdview, Omniverse, Isaac Sim, or any USD-compatible tool to refine composition, lighting, materials, or downstream pipeline steps.
 
 BowerBot gets you to a clean, structured starting point quickly.
 From there, you take it to production quality.

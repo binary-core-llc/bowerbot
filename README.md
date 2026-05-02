@@ -4,9 +4,9 @@
 
 # BowerBot
 
-**AI agent for OpenUSD scene assembly.**
+**AI agent for OpenUSD.**
 
-**From empty scene to structured OpenUSD stage in seconds.**
+**From empty scene to a production-ready OpenUSD stage.**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue)](https://www.python.org/)
@@ -27,27 +27,25 @@ Instead of relying on appearance, the bowerbird **collects, curates, and arrange
 
 **BowerBot brings that same idea to OpenUSD.**
 
-BowerBot is an **AI agent for OpenUSD**, a conversational interface that helps any team using OpenUSD go from an empty scene to a structured, usable layout in seconds by:
+BowerBot is an **AI agent for OpenUSD**, a conversational interface that helps any team using OpenUSD go from an empty scene to a production-ready stage by:
 - finding assets from any connected source (Sketchfab, local disk, company DAM, or any custom provider)
 - placing them with spatial awareness
-- organizing them into a valid USD stage
-
-**It does not try to replace your judgment.**
-It accelerates the part that is repetitive, mechanical, and time-consuming.
-
-You stay in control of composition, layout, and final decisions.
-BowerBot gets you there faster.
+- authoring materials inline in ASWF-compliant asset folders
+- setting up native USD lighting (sun, dome, point, area, disk, tube)
+- validating technical correctness (units, hierarchy, references, bindings)
+- packaging the result for any USD-compatible runtime
 
 ---
 
 ## 🎯 What BowerBot Is (and Is Not)
 
 **BowerBot is:**
-- A scene bootstrapper for any OpenUSD pipeline: VFX, AEC, simulation, spatial computing, digital twins, robotics, e-commerce 3D
-- A fast way to go from 0 → structured scene
-- A conversational interface for asset search, placement, and layout
-- A pipeline assistant that handles technical correctness (units, hierarchy, references)
+- A USD authoring agent for any OpenUSD pipeline: VFX, AEC, simulation, spatial computing, digital twins, robotics, e-commerce 3D
+- A conversational interface for the full authoring surface: assets, lighting, materials, validation, packaging
+- A fast way to go from 0 → production-ready scene
+- A pipeline assistant that handles technical correctness (units, hierarchy, references, bindings)
 - A pipeline guardian that catches asset issues **before** they reach production
+- Extensible by design: new asset sources, DCCs, and domains plug in as skills
 
 **BowerBot is NOT:**
 - A final scene generator
@@ -63,65 +61,15 @@ Think of it as:
 
 BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (non-canonical folder names, external dependencies) are auto-normalized on intake so the project copy is always self-contained. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
 
-This means problems that would normally surface weeks later in lighting, rendering, simulation, or review (broken references, unit mismatches, non-compliant asset structure) are caught **the moment the asset enters the scene**. Fix it once at the source, and every downstream department benefits.
-
 > **"The cheapest bug to fix is the one you catch before it enters the pipeline."**
-
-### Who It's For
-
-BowerBot targets any team assembling OpenUSD scenes, including:
-
-- 🏭 **Digital twin**: warehouses, retail floors, and factory scenes composed from vendor and internal assets
-- 🤖 **Robotics and simulation**: USD environments for Isaac Sim, Isaac Lab, and custom sim stacks
-- 🏛️ **Architecture and AEC**: bootstrapping interior and exterior USD scenes for visualization and design review
-- 🥽 **XR and spatial computing**: lightweight `.usdz` bundles for Vision Pro, Quest, and ARKit
-- 🎬 **VFX and animation**: shot-dressing and layout over ASWF-structured assets
-- 🛠️ **Pipeline TDs**: a scriptable, LLM-driven scene assembler extendable with custom skills
 
 ---
 
 ## ✨ What It Does
 
-```
-$ bowerbot open coffee_shop
+Watch BowerBot build real scenes end-to-end on the **[demo playlist on YouTube](https://www.youtube.com/playlist?list=PLhNtBS4KXaza-3Sn4ggJLH-6ujRZ3Iapd)**. Each video walks through a project across asset discovery, placement, materials, lighting, validation, and packaging.
 
-You: Search my Sketchfab for a round bistro table and download it
-BowerBot: Found "Round Bistro Table". Downloaded to assets/Round_Bistro_Table.usdz
-
-You: Place it at the center of the room
-BowerBot: Placed at /Scene/Furniture/Round_Bistro_Table_01 (5.0, 0.0, 4.0)
-
-You: Find an espresso cup in my local assets and place it on the table surface
-BowerBot: Found espresso_cup.usdz. Table surface at Y=0.74.
-         Placed at /Scene/Products/Espresso_Cup_01 (5.0, 0.74, 4.0)
-
-You: Move the cup to the left side of the table
-BowerBot: Moved to (4.7, 0.74, 4.0) (within table bounds).
-
-You: Validate and package
-BowerBot: All checks passed. Packaged to scenes/coffee_shop/scene.usdz
-```
-
-Or a different domain entirely:
-
-```
-$ bowerbot open warehouse_layout
-
-You: Search local assets for a pallet rack and place 8 in a row, 3m apart
-BowerBot: Found pallet_rack.usdz. Placed 8 instances at /Scene/Storage/PalletRack_01-08
-
-You: Add a forklift at the entrance and 20 pallets distributed across the racks
-BowerBot: Placed forklift at /Scene/Equipment/Forklift_01 (0, 0, 0)
-         Distributed 20 pallets across 8 racks. Bounds-checked.
-
-You: Validate and package
-BowerBot: All checks passed. Packaged to scenes/warehouse_layout/scene.usdz
-```
-
-Open the `.usda` in Maya, usdview, Omniverse, Isaac Sim, or any USD-compatible tool to refine composition, lighting, materials, or downstream pipeline steps.
-
-BowerBot gets you to a clean, structured starting point quickly.
-From there, you take it to production quality.
+Open the resulting `.usda` in Maya, usdview, Omniverse, Isaac Sim, or any USD-compatible tool to refine composition, lighting, materials, or downstream pipeline steps.
 
 Projects are persistent. Close the session, come back later, and continue where you left off.
 
@@ -137,7 +85,6 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
 - 📐 **Geometry-aware placement**: bounding-box resolved positions for surface, above, below, or nested placements
 - 🔌 **Pluggable skills**: connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
-- 🗣️ **Conversational assembly**: guide scene construction through natural language
 - 🧠 **Multi-LLM support**: OpenAI, Anthropic, and any provider via [litellm](https://docs.litellm.ai/)
 - 📁 **Project-based workflow**: one folder per scene, resumable across sessions
 - ✅ **Scene validation**: `defaultPrim`, units, up-axis, reference resolution, and material binding checks

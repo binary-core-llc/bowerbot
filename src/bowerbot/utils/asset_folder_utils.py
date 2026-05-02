@@ -101,14 +101,13 @@ def resolve_default_prim_name(asset_dir: Path) -> str:
 
 
 def to_layer_local_path(prim_path: str, default_prim_name: str) -> str:
-    """Convert a composed prim path to a layer-local path."""
+    """Convert a composed prim path to a layer-local path under defaultPrim."""
     prefix = f"/{default_prim_name}"
-    relative = prim_path
-    if prim_path.startswith(prefix):
-        relative = prim_path[len(prefix):]
-        if not relative:
-            relative = "/"
-    return f"/{default_prim_name}{relative}"
+    if prim_path in ("", "/", prefix):
+        return prefix
+    if prim_path.startswith(f"{prefix}/"):
+        return prim_path
+    return f"{prefix}{prim_path}"
 
 
 def ensure_layer_scope(

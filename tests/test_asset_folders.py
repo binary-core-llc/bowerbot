@@ -20,6 +20,7 @@ from bowerbot.utils import (
     light_utils,
     material_utils,
 )
+from bowerbot.utils.asset_folder_utils import to_layer_local_path
 
 # ── Helpers ─────────────────
 
@@ -859,3 +860,29 @@ def test_nested_reference_composed_in_scene():
         assert nested_composed.IsValid(), (
             "Nested reference not resolved in scene composition"
         )
+
+
+def test_to_layer_local_path_root_with_distinct_name():
+    assert to_layer_local_path("/", "Single_Plant") == "/Single_Plant"
+    assert to_layer_local_path("", "Single_Plant") == "/Single_Plant"
+    assert to_layer_local_path("/Single_Plant", "Single_Plant") == "/Single_Plant"
+
+
+def test_to_layer_local_path_root_when_name_collides_with_input():
+    assert to_layer_local_path("/plant", "plant") == "/plant"
+    assert to_layer_local_path("/", "plant") == "/plant"
+
+
+def test_to_layer_local_path_child_already_canonical():
+    assert to_layer_local_path("/plant/soil", "plant") == "/plant/soil"
+    assert to_layer_local_path(
+        "/Single_Plant/leaves", "Single_Plant",
+    ) == "/Single_Plant/leaves"
+
+
+def test_to_layer_local_path_relative_child_under_distinct_root():
+    assert to_layer_local_path("/leaves", "Single_Plant") == "/Single_Plant/leaves"
+
+
+def test_to_layer_local_path_child_named_same_as_root():
+    assert to_layer_local_path("/plant/plant", "plant") == "/plant/plant"

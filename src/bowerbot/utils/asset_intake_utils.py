@@ -393,6 +393,9 @@ def add_nested_asset_reference(
         nested_mpu / container_mpu if container_mpu > 0 else 1.0
     )
 
+    sx, sy, sz = transform.scale
+    final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
+
     xformable = UsdGeom.Xformable(wrapper)
     xformable.ClearXformOpOrder()
     xformable.AddTranslateOp().Set(
@@ -402,17 +405,8 @@ def add_nested_asset_reference(
             transform.translate[2] * factor,
         ),
     )
-    if any(v != 0.0 for v in transform.rotate):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
-
-    if abs(unit_scale - 1.0) > 1e-6:
-        xformable.AddScaleOp().Set(
-            Gf.Vec3f(unit_scale, unit_scale, unit_scale),
-        )
-    else:
-        sx, sy, sz = transform.scale
-        if any(v != 1.0 for v in (sx, sy, sz)):
-            xformable.AddScaleOp().Set(Gf.Vec3f(sx, sy, sz))
+    xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
+    xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
 
     asset_inner = stage.DefinePrim(f"{wrapper_path}/asset", "Xform")
     asset_inner.GetReferences().AddReference(ref_asset_path)
@@ -459,17 +453,16 @@ def update_nested_asset_transform(
         None,
     )
     existing_scale = (
-        existing_scale_op.Get() if existing_scale_op is not None else None
+        existing_scale_op.Get() if existing_scale_op is not None
+        else Gf.Vec3f(1.0, 1.0, 1.0)
     )
 
     xformable.ClearXformOpOrder()
     xformable.AddTranslateOp().Set(
         Gf.Vec3d(translate[0] * factor, translate[1] * factor, translate[2] * factor),
     )
-    if any(v != 0.0 for v in rotate):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
-    if existing_scale is not None:
-        xformable.AddScaleOp().Set(existing_scale)
+    xformable.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
+    xformable.AddScaleOp().Set(existing_scale)
 
     stage.Save()
     logger.info(

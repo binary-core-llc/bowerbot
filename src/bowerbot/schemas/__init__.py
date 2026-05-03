@@ -13,6 +13,7 @@ from bowerbot.schemas.assets import (
     AssetFormat,
     AssetMetadata,
     ASWFLayerNames,
+    SceneLayerNames,
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.lights import LightParams, LightType
@@ -47,6 +48,7 @@ __all__ = [
     "PositionMode",
     "PreviewSurfaceShader",
     "ProceduralMaterialParams",
+    "SceneLayerNames",
     "SceneObject",
     "Severity",
     "TextureCategory",

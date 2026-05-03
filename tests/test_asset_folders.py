@@ -168,6 +168,97 @@ def test_apply_aswf_root_metadata_preserves_existing_unless_forced():
         assert info["name"] == "asset"
 
 
+def test_create_stage_produces_layered_scene_and_layout_sublayer():
+    """create_stage creates scene.usda + scene_layout.usda; layout is sublayered."""
+    from bowerbot.schemas import SceneLayerNames
+    from bowerbot.utils import stage_utils
+    with tempfile.TemporaryDirectory() as tmp:
+        scene_path = Path(tmp) / "scene.usda"
+        layout_path = Path(tmp) / SceneLayerNames.SCENE_LAYOUT
+
+        stage_utils.create_stage(scene_path)
+
+        assert scene_path.exists()
+        assert layout_path.exists()
+
+        scene_text = scene_path.read_text(encoding="utf-8")
+        assert f"./{SceneLayerNames.SCENE_LAYOUT}" in scene_text
+
+        layout_stage = Usd.Stage.Open(str(layout_path))
+        scene_prim = layout_stage.GetPrimAtPath("/Scene")
+        assert scene_prim.IsValid()
+        assert Usd.ModelAPI(scene_prim).GetKind() == "assembly"
+
+
+def test_open_stage_routes_edits_to_scene_layout_sublayer():
+    """open_stage sets the edit target to scene_layout.usda when present."""
+    from bowerbot.schemas import SceneLayerNames
+    from bowerbot.utils import stage_utils
+    with tempfile.TemporaryDirectory() as tmp:
+        scene_path = Path(tmp) / "scene.usda"
+        layout_path = Path(tmp) / SceneLayerNames.SCENE_LAYOUT
+        stage_utils.create_stage(scene_path)
+
+        stage = stage_utils.open_stage(scene_path)
+        edit_target = stage.GetEditTarget()
+        assert edit_target.GetLayer().identifier.endswith(
+            SceneLayerNames.SCENE_LAYOUT,
+        )
+
+        stage.DefinePrim("/Scene/Furniture", "Xform")
+        stage.Save()
+
+        scene_layer = Sdf.Layer.FindOrOpen(str(scene_path))
+        layout_layer = Sdf.Layer.FindOrOpen(str(layout_path))
+        assert scene_layer.GetPrimAtPath(Sdf.Path("/Scene/Furniture")) is None
+        assert layout_layer.GetPrimAtPath(
+            Sdf.Path("/Scene/Furniture"),
+        ) is not None
+
+
+def test_open_stage_legacy_single_file_preserves_default_edit_target():
+    """Legacy scene.usda with no layout sublayer keeps edits on the root layer."""
+    from bowerbot.utils import stage_utils
+    with tempfile.TemporaryDirectory() as tmp:
+        scene_path = Path(tmp) / "scene.usda"
+        legacy = Usd.Stage.CreateNew(str(scene_path))
+        UsdGeom.SetStageMetersPerUnit(legacy, 1.0)
+        UsdGeom.SetStageUpAxis(legacy, UsdGeom.Tokens.y)
+        legacy.DefinePrim("/Scene", "Xform")
+        legacy.SetDefaultPrim(legacy.GetPrimAtPath("/Scene"))
+        legacy.Save()
+
+        stage = stage_utils.open_stage(scene_path)
+        identifier = Path(stage.GetEditTarget().GetLayer().identifier)
+        assert identifier == scene_path
+
+
+def test_add_nested_asset_reference_authors_canonical_xform_op_set():
+    """Nested-asset wrapper always gets translate + rotate + scale + xformOpOrder."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "pillow")
+        container_dir = container_root.parent
+
+        wrapper_path = asset_intake_utils.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Props",
+            prim_name="Pillow_01",
+            ref_asset_path=f"../{nested_root.parent.name}/{nested_root.name}",
+            transform=TransformParams(translate=(1.0, 0.0, 2.0)),
+        )
+
+        stage = Usd.Stage.Open(str(container_dir / ASWFLayerNames.CONTENTS))
+        wrapper_prim = stage.GetPrimAtPath(wrapper_path)
+        op_order = UsdGeom.Xformable(wrapper_prim).GetXformOpOrderAttr().Get()
+        assert list(op_order) == [
+            "xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale",
+        ]
+
+
 def test_run_usd_compliance_checker_returns_no_issues_for_clean_stage():
     """The modern UsdValidation framework reports zero errors on a clean stage."""
     from bowerbot.utils import validation_utils

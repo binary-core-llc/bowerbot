@@ -77,7 +77,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 
 ## ✨ Features
 
-- 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box
+- 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box; new projects ship with the canonical Pixar-style two-layer scene (`scene.usda` aggregator + `scene_layout.usda` sublayer) so per-instance DCC overrides land in the root layer where they belong while BowerBot's base placements stay clean in the sublayer
 - 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md)
 - 🧳 **Self-contained intake**: non-canonical source folders are detected via USD composition, canonicalized (`root.usd` → `<folder>.usda`), and external dependencies (textures, sublayers) are localized into the asset folder so the project copy is always portable
 - 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts; procedural materials author hybrid MaterialX + UsdPreviewSurface outputs so they render across studio renderers (Renderman, Arnold), Hydra Storm, Apple RealityKit / AR Quick Look, and Isaac Sim

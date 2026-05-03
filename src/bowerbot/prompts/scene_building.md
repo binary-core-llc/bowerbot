@@ -40,6 +40,28 @@ expectations the asset does not yet meet.
 - Assets are added as USD references (not copies)
 - Every stage has a defaultPrim set automatically
 
+## Layered scene structure
+
+New projects ship with two USD files:
+- `scene.usda` — thin aggregator. Contains only metadata + a sublayer
+  declaration pointing at `scene_layout.usda`. Stays clean.
+- `scene_layout.usda` — sublayered into scene.usda; this is where every
+  BowerBot tool that authors at scene level (place_asset, move_asset,
+  create_light, rename_prim, remove_prim) writes. BowerBot sets this
+  layer as the active edit target on every stage open.
+
+DCC users opening `scene.usda` (Omniverse, Maya-USD, Houdini Solaris)
+will, by default, author per-instance edits to the root layer
+(scene.usda); USD's strength order makes those overrides win over
+scene_layout.usda's base placements, which is exactly what production
+expects. Users wanting per-department or per-shot separation can add
+more sublayers (`scene_anim.usda`, `scene_sim.usda`, etc.) later.
+
+This matches the canonical ASWF / Pixar / Isaac Sim / Omniverse
+Digital Twin pattern. Legacy projects that pre-date the sublayer
+scaffolding keep working — `open_stage` only routes edits to
+scene_layout.usda when that sublayer actually exists.
+
 ## Scene Hierarchy
 Groups are created on demand when assets are placed — the scene
 starts empty with only the /Scene root prim. Use these standard

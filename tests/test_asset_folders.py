@@ -938,6 +938,86 @@ def test_remove_nested_asset_reference_is_idempotent_when_already_absent():
         assert removed is True
 
 
+def test_remove_nested_asset_reference_drops_empty_layer():
+    """When the last nested ref is removed, contents.usda + root ref disappear."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "accent_pillow")
+        container_dir = container_root.parent
+
+        ref_asset_path = (
+            f"../{nested_root.parent.name}/{nested_root.name}"
+        )
+        asset_intake_utils.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Props",
+            prim_name="Accent_Pillow_01",
+            ref_asset_path=ref_asset_path,
+            transform=TransformParams(),
+        )
+        contents_path = container_dir / ASWFLayerNames.CONTENTS
+        assert contents_path.exists()
+
+        asset_intake_utils.remove_nested_asset_reference(
+            container_dir, "Props", "Accent_Pillow_01",
+        )
+
+        assert not contents_path.exists(), (
+            "contents.usda should be removed when empty"
+        )
+
+        stage = Usd.Stage.Open(str(container_root))
+        ref_paths = []
+        default_prim = stage.GetDefaultPrim()
+        refs = default_prim.GetMetadata("references")
+        if refs:
+            for ref_list in (
+                refs.prependedItems, refs.appendedItems, refs.explicitItems,
+            ):
+                if ref_list:
+                    ref_paths.extend(r.assetPath for r in ref_list)
+        assert "./contents.usda" not in ref_paths
+
+
+def test_remove_nested_asset_reference_keeps_layer_when_other_refs_remain():
+    """Removing one nested ref while another exists preserves contents.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "accent_pillow")
+        container_dir = container_root.parent
+
+        ref_asset_path = (
+            f"../{nested_root.parent.name}/{nested_root.name}"
+        )
+        for prim_name in ("Pillow_01", "Pillow_02"):
+            asset_intake_utils.add_nested_asset_reference(
+                container_dir=container_dir,
+                group="Props",
+                prim_name=prim_name,
+                ref_asset_path=ref_asset_path,
+                transform=TransformParams(),
+            )
+        contents_path = container_dir / ASWFLayerNames.CONTENTS
+
+        asset_intake_utils.remove_nested_asset_reference(
+            container_dir, "Props", "Pillow_01",
+        )
+
+        assert contents_path.exists()
+        stage = Usd.Stage.Open(str(container_root))
+        assert stage.GetPrimAtPath(
+            "/sofa/contents/Props/Pillow_02",
+        ).IsValid()
+
+
 def test_remove_nested_asset_reference_idempotent_double_remove():
     """Calling remove twice for the same prim succeeds both times.
 

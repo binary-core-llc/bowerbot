@@ -31,6 +31,7 @@ from bowerbot.utils.asset_folder_utils import (
     ensure_root_reference,
     read_asset_mpu_from_file,
     read_stage_metadata,
+    remove_empty_layer,
     resolve_default_prim_name,
 )
 from bowerbot.utils.geometry_utils import get_mpu
@@ -318,6 +319,9 @@ def remove_nested_asset_reference(
 
     Idempotent: returns True whether the spec was deleted or was already
     absent. Returns False only on a real error (cannot open the layer).
+    Empty group scopes and an empty contents layer are cleaned up
+    automatically; the root file's reference to ``contents.usda`` is
+    rebuilt without the dropped layer.
     """
     contents_path = container_dir / ASWFLayerNames.CONTENTS
     if not contents_path.exists():
@@ -328,17 +332,29 @@ def remove_nested_asset_reference(
         return False
 
     default_prim_name = resolve_default_prim_name(container_dir)
-    parent_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
+    contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
+    parent_path = contents_scope_path.AppendChild(group)
     parent_spec = layer.GetPrimAtPath(parent_path)
-    if parent_spec is None or prim_name not in parent_spec.nameChildren:
-        return True
+    if parent_spec is not None and prim_name in parent_spec.nameChildren:
+        del parent_spec.nameChildren[prim_name]
+        logger.info(
+            "Removed nested asset %s from %s/%s",
+            prim_name, container_dir.name, ASWFLayerNames.CONTENTS,
+        )
 
-    del parent_spec.nameChildren[prim_name]
+    contents_spec = layer.GetPrimAtPath(contents_scope_path)
+    if contents_spec is not None:
+        empty_groups = [
+            child_name for child_name in list(contents_spec.nameChildren.keys())
+            if len(contents_spec.nameChildren[child_name].nameChildren) == 0
+        ]
+        for child_name in empty_groups:
+            del contents_spec.nameChildren[child_name]
+
     layer.Save()
 
-    logger.info(
-        "Removed nested asset %s from %s/%s",
-        prim_name, container_dir.name, ASWFLayerNames.CONTENTS,
+    remove_empty_layer(
+        contents_path, container_dir, lambda p: p.HasAuthoredReferences(),
     )
     return True
 

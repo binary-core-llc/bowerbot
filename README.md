@@ -619,6 +619,7 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 - Automatic `metersPerUnit` conversion across composition boundaries
 - Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or baked into vertex data with explicit user consent), so nested placements compose predictably
 - Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
+- Asset roots carry the canonical ASWF identity: `kind = "component"` for terminal assets and an `assetInfo` dictionary (`identifier`, `name`, `version`) so DCC outliners, asset browsers, and pipeline asset-management systems recognise BowerBot output as production-grade
 
 ---
 

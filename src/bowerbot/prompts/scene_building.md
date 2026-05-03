@@ -413,6 +413,23 @@ BowerBot follows ASWF USD Working Group guidelines for asset structure.
 - The scene.usda only contains references — no material sublayers
 - Existing ASWF folders are copied whole, preserving structure
 
+### Asset identity: Kind + assetInfo
+
+Every asset BowerBot intakes gets the canonical ASWF identity authored
+on its root prim:
+- `kind = "component"` — terminal published asset (DCC outliners,
+  Houdini Solaris, Omniverse Browser, Isaac Asset Library all use Kind
+  to identify the asset boundary)
+- `assetInfo` dictionary with `identifier` (relative path), `name`
+  (asset folder name), and `version` (default `"1.0"`) — read by every
+  asset-tracking pipeline (ftrack, ShotGrid, Omniverse Nucleus) for
+  dependency analysis
+
+When an existing folder asset is intaken, BowerBot **only fills in
+missing fields** to preserve any upstream metadata the user's DCC or
+asset-management system has already authored. BowerBot-created assets
+get the canonical defaults stamped on them.
+
 ### Identity-root-transforms requirement
 
 Production USD assets must have identity transforms on the root prim

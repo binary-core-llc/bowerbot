@@ -124,6 +124,70 @@ def test_create_asset_folder():
         assert "./mtl.usda" not in ref_paths
 
 
+def test_create_asset_folder_sets_kind_and_asset_info():
+    """create_asset_folder authors kind=component + assetInfo on the root."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+        geo = create_geometry(source_dir, "chair")
+
+        root = asset_intake_utils.create_asset_folder(
+            output_dir=output_dir, asset_name="chair", geometry_file=geo,
+        )
+
+        stage = Usd.Stage.Open(str(root))
+        default_prim = stage.GetDefaultPrim()
+        assert Usd.ModelAPI(default_prim).GetKind() == "component"
+
+        info = default_prim.GetAssetInfo()
+        assert info is not None
+        assert info["name"] == "chair"
+        assert info["version"] == "1.0"
+        assert info["identifier"].path == "./chair.usda"
+
+
+def test_apply_aswf_root_metadata_preserves_existing_unless_forced():
+    """apply_aswf_root_metadata respects upstream metadata when force=False."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "root.usda"
+        stage = Usd.Stage.CreateNew(str(path))
+        prim = stage.DefinePrim("/asset", "Xform")
+        stage.SetDefaultPrim(prim)
+        Usd.ModelAPI(prim).SetKind("assembly")
+        prim.SetAssetInfo({"version": "2.5.0"})
+
+        asset_intake_utils.apply_aswf_root_metadata(
+            prim, asset_name="asset", asset_identifier="./root.usda",
+        )
+
+        assert Usd.ModelAPI(prim).GetKind() == "assembly"
+        info = prim.GetAssetInfo()
+        assert info["version"] == "2.5.0"
+        assert info["name"] == "asset"
+
+
+def test_apply_aswf_root_metadata_overwrites_when_forced():
+    """force=True overwrites existing kind + assetInfo."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "root.usda"
+        stage = Usd.Stage.CreateNew(str(path))
+        prim = stage.DefinePrim("/asset", "Xform")
+        stage.SetDefaultPrim(prim)
+        Usd.ModelAPI(prim).SetKind("assembly")
+        prim.SetAssetInfo({"version": "2.5.0"})
+
+        asset_intake_utils.apply_aswf_root_metadata(
+            prim, asset_name="asset", asset_identifier="./root.usda",
+            force=True,
+        )
+
+        assert Usd.ModelAPI(prim).GetKind() == "component"
+        info = prim.GetAssetInfo()
+        assert info["version"] == "1.0"
+
+
 # ── material_service: Add Material ─
 
 

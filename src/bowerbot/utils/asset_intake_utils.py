@@ -107,6 +107,7 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
             sibling_layer_targets=[p for p in layer_targets if p != copied_root],
         )
 
+        _normalize_root_metadata(canonical_root, target_folder.name)
         warnings = _validate_self_contained(canonical_root, target_folder)
     except Exception:
         shutil.rmtree(target_folder, ignore_errors=True)
@@ -571,6 +572,7 @@ def _reuse_existing_target(target_folder: Path, source_root: Path) -> IntakeRepo
             f"root '{canonical.name}'. Delete it and retry."
         )
         raise RuntimeError(msg)
+    _normalize_root_metadata(canonical, target_folder.name)
     return IntakeReport(
         scene_ref_path=f"assets/{target_folder.name}/{canonical.name}",
         asset_folder_name=target_folder.name,
@@ -708,6 +710,23 @@ def _canonicalize_root(
     return True
 
 
+def _normalize_root_metadata(root_file: Path, asset_name: str) -> None:
+    """Ensure the intaken asset's root prim has Kind + assetInfo set."""
+    stage = Usd.Stage.Open(str(root_file))
+    if stage is None:
+        return
+    root_prim = stage.GetDefaultPrim()
+    if not root_prim or not root_prim.IsValid():
+        return
+
+    apply_aswf_root_metadata(
+        root_prim,
+        asset_name=asset_name,
+        asset_identifier=f"./{root_file.name}",
+    )
+    stage.Save()
+
+
 def _validate_self_contained(
     canonical_root: Path, target_folder: Path,
 ) -> list[str]:
@@ -792,7 +811,44 @@ def _create_root_file(
     stage.SetDefaultPrim(root_prim)
     root_prim.GetReferences().AddReference(f"./{ASWFLayerNames.GEO}")
 
+    apply_aswf_root_metadata(
+        root_prim,
+        asset_name=root_path.parent.name,
+        asset_identifier=f"./{root_path.name}",
+        force=True,
+    )
+
     stage.Save()
+
+
+def apply_aswf_root_metadata(
+    prim: Usd.Prim,
+    *,
+    asset_name: str,
+    asset_identifier: str,
+    kind: str = "component",
+    version: str = "1.0",
+    force: bool = False,
+) -> None:
+    """Apply ASWF-canonical Kind + assetInfo to an asset root prim.
+
+    When *force* is False, only fills missing fields, preserving any
+    metadata already authored upstream (DCC, asset-management system).
+    """
+    model_api = Usd.ModelAPI(prim)
+    if force or not model_api.GetKind():
+        model_api.SetKind(kind)
+
+    existing = prim.GetAssetInfo() or {}
+    info = dict(existing) if not force else {}
+    info.setdefault("identifier", Sdf.AssetPath(asset_identifier))
+    info.setdefault("name", asset_name)
+    info.setdefault("version", version)
+    if force:
+        info["identifier"] = Sdf.AssetPath(asset_identifier)
+        info["name"] = asset_name
+        info["version"] = version
+    prim.SetAssetInfo(info)
 
 
 def _wrap_root_prim(geometry_file: Path) -> None:

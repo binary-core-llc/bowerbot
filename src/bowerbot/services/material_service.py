@@ -31,6 +31,8 @@ def create_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
         )
         raise ValueError(msg)
 
+    _check_shared_modification(state, asset_dir, params, op_label="create_material")
+
     asset_local_path = _to_asset_local(prim_path, ref_prim_path)
     material_params = ProceduralMaterialParams(
         material_name=material_name,
@@ -84,6 +86,8 @@ def bind_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "folders (not USDZ)."
         )
         raise ValueError(msg)
+
+    _check_shared_modification(state, asset_dir, params, op_label="bind_material")
 
     asset_local_path = _to_asset_local(prim_path, ref_prim_path)
     material_prim_path = material_utils.add_material_to_folder(
@@ -213,3 +217,27 @@ def _to_asset_local(prim_path: str, ref_prim_path: str) -> str:
         remainder = prim_path[len(ref_prim_path):]
         return remainder if remainder else "/"
     return prim_path
+
+
+def _check_shared_modification(
+    state: SceneState, asset_dir: Path, params: dict[str, Any], *, op_label: str,
+) -> None:
+    """Refuse if *asset_dir* is referenced by 2+ scene instances and not confirmed."""
+    instance_count = stage_utils.count_scene_refs_to_asset_dir(
+        state.stage, asset_dir,
+    )
+    confirmed = bool(params.get("confirm_shared_modification", False))
+    if instance_count >= 2 and not confirmed:
+        msg = (
+            f"Asset folder '{asset_dir.name}/' is referenced by "
+            f"{instance_count} scene instances. {op_label} writes to the "
+            f"shared {ASWFLayerNames.MTL}, so the binding would apply to "
+            f"all {instance_count} instances. Two ways forward: "
+            f"(1) For per-instance materials (different material per "
+            f"instance), use place_asset to make each instance independent, "
+            f"then bind a material on each. "
+            f"(2) For deliberate shared modification (every instance "
+            f"should get this material), retry with "
+            f"confirm_shared_modification=true."
+        )
+        raise ValueError(msg)

@@ -133,6 +133,19 @@ TOOLS: list[Tool] = [
                     ),
                     "default": 1.0,
                 },
+                "confirm_shared_modification": {
+                    "type": "boolean",
+                    "description": (
+                        "Must be true to author a material into an asset "
+                        "folder that is referenced by 2+ scene instances. "
+                        "The material lives in the shared mtl.usda and "
+                        "applies to every instance. Default false: refuse "
+                        "with an error so the LLM can choose between "
+                        "place_asset (per-instance independent material) "
+                        "or this flag (deliberate shared material)."
+                    ),
+                    "default": False,
+                },
             },
             "required": ["prim_path", "material_name"],
         },
@@ -165,6 +178,19 @@ TOOLS: list[Tool] = [
                         "(e.g. '/mtl/wood_varnished'). If omitted, the "
                         "first Material prim found is used."
                     ),
+                },
+                "confirm_shared_modification": {
+                    "type": "boolean",
+                    "description": (
+                        "Must be true to bind a material into an asset "
+                        "folder that is referenced by 2+ scene instances. "
+                        "The binding lives in the shared mtl.usda and "
+                        "applies to every instance. Default false: refuse "
+                        "with an error so the LLM can choose between "
+                        "place_asset (per-instance independent binding) "
+                        "or this flag (deliberate shared binding)."
+                    ),
+                    "default": False,
                 },
             },
             "required": ["prim_path", "material_file"],

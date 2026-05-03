@@ -9,6 +9,7 @@ schema lives in.
 """
 
 from bowerbot.schemas.assets import (
+    AppleUSDZConstraints,
     AssetCategory,
     AssetFormat,
     AssetMetadata,
@@ -32,6 +33,7 @@ from bowerbot.schemas.transforms import (
 from bowerbot.schemas.validation import Severity, ValidationIssue, ValidationResult
 
 __all__ = [
+    "AppleUSDZConstraints",
     "ASWFLayerNames",
     "AssetCategory",
     "AssetFormat",

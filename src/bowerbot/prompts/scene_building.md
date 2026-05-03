@@ -25,7 +25,19 @@ You have tools to create and manipulate OpenUSD scenes.
    - warnings should be surfaced; some are advisory (UsdSkel /
      UsdLux / UsdPhysics schema-specific best practices) and may be
      acceptable depending on the user's pipeline
-9. Call `package_scene` to produce the final .usdz
+9. Call `package_scene` to produce the final .usdz. Before the call,
+   ASK the user where the .usdz will be consumed:
+   - **Apple consumer paths** (iOS Files / Safari / iMessage AR Quick
+     Look, macOS Quick Look, Vision Pro) → pass
+     `for_apple_ar_quick_look=true`. BowerBot validates the strict
+     Apple subset (PNG/JPEG textures, UsdPreviewSurface required, no
+     UDIM, etc.) and refuses to package on errors so the user does
+     not ship a file Apple consumers cannot render.
+   - **Anywhere else** (Omniverse, Isaac Sim, Unreal, Unity, web
+     viewers, Blender / Houdini / Maya import, generic USD pipelines)
+     → leave the flag off (default). The standard USDZ output is
+     full USD, no extra restrictions.
+   - **Unsure** → ask the user; do not assume.
 
 When `place_asset` or `place_asset_inside` returns an `intake` summary
 with non-empty `warnings`, those entries may include compliance issues

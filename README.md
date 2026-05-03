@@ -88,7 +88,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 🧠 **Multi-LLM support**: OpenAI, Anthropic, and any provider via [litellm](https://docs.litellm.ai/)
 - 📁 **Project-based workflow**: one folder per scene, resumable across sessions
 - ✅ **Scene validation**: `defaultPrim`, units, up-axis, reference resolution, and material binding checks plus USD's modern `UsdValidation` framework (the same validators behind `usdchecker`) run automatically on intake and on `validate_scene`
-- 📦 **USDZ packaging**: export for Apple Vision Pro, Omniverse, or any USD viewer
+- 📦 **USDZ packaging**: standard USDZ for Omniverse, Isaac Sim, Unreal, Unity, web viewers, and any USD consumer; opt-in Apple AR Quick Look strict-subset pre-validation when shipping to iOS Files / Safari / iMessage / macOS Quick Look / Vision Pro
 - 🏗️ **Onboarding wizard**: zero-config setup in 60 seconds
 
 Built on [OpenUSD](https://openusd.org), the [ASWF USD Working Group](https://wiki.aswf.io/display/WGUSD) standards, and the [Alliance for OpenUSD (AOUSD)](https://aousd.org/) core spec driven by Pixar, Apple, NVIDIA, and others.

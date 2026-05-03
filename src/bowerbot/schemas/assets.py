@@ -49,6 +49,17 @@ class SceneLayerNames:
     SCENE_LAYOUT = "scene_layout.usda"
 
 
+class AppleUSDZConstraints:
+    """Apple consumer USDZ subset (AR Quick Look on iOS Files/Safari/iMessage).
+
+    Targets the broadest Apple consumer path. visionOS and iOS 18+
+    RealityKit are permissive supersets (MaterialX, subdivision) but
+    the strict subset works everywhere.
+    """
+
+    TEXTURE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})
+
+
 class AssetMetadata(BaseModel):
     """Metadata for a 3D asset sourced from any skill."""
 

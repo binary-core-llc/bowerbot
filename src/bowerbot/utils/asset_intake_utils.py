@@ -320,8 +320,7 @@ def remove_nested_asset_reference(
     Idempotent: returns True whether the spec was deleted or was already
     absent. Returns False only on a real error (cannot open the layer).
     Empty group scopes and an empty contents layer are cleaned up
-    automatically; the root file's reference to ``contents.usda`` is
-    rebuilt without the dropped layer.
+    automatically via :func:`cleanup_unused_contents_in_folder`.
     """
     contents_path = container_dir / ASWFLayerNames.CONTENTS
     if not contents_path.exists():
@@ -332,17 +331,43 @@ def remove_nested_asset_reference(
         return False
 
     default_prim_name = resolve_default_prim_name(container_dir)
-    contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
-    parent_path = contents_scope_path.AppendChild(group)
+    parent_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
     parent_spec = layer.GetPrimAtPath(parent_path)
     if parent_spec is not None and prim_name in parent_spec.nameChildren:
         del parent_spec.nameChildren[prim_name]
+        layer.Save()
         logger.info(
             "Removed nested asset %s from %s/%s",
             prim_name, container_dir.name, ASWFLayerNames.CONTENTS,
         )
 
+    cleanup_unused_contents_in_folder(container_dir)
+    return True
+
+
+def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
+    """Drop empty group scopes in *container_dir*'s ``contents.usda``.
+
+    Mirrors :func:`bowerbot.utils.material_utils.cleanup_unused_in_folder`:
+    removes per-prim entries that no longer carry meaningful data, then
+    deletes the layer file when it has nothing left and rebuilds the
+    root references without it. For contents, "meaningful" means a
+    reference arc; empty group scopes (``Props``, ``Furniture``, etc.)
+    are the unused entries.
+    """
+    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    if not contents_path.exists():
+        return []
+
+    layer = Sdf.Layer.FindOrOpen(str(contents_path))
+    if layer is None:
+        return []
+
+    default_prim_name = resolve_default_prim_name(container_dir)
+    contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
     contents_spec = layer.GetPrimAtPath(contents_scope_path)
+
+    removed: list[str] = []
     if contents_spec is not None:
         empty_groups = [
             child_name for child_name in list(contents_spec.nameChildren.keys())
@@ -350,13 +375,20 @@ def remove_nested_asset_reference(
         ]
         for child_name in empty_groups:
             del contents_spec.nameChildren[child_name]
-
-    layer.Save()
+            removed.append(child_name)
+        if removed:
+            layer.Save()
 
     remove_empty_layer(
         contents_path, container_dir, lambda p: p.HasAuthoredReferences(),
     )
-    return True
+
+    if removed:
+        logger.info(
+            "Cleaned %d empty group(s) from %s/%s",
+            len(removed), container_dir.name, ASWFLayerNames.CONTENTS,
+        )
+    return removed
 
 
 # ── Internal: intake helpers ──

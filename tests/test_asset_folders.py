@@ -886,3 +886,117 @@ def test_to_layer_local_path_relative_child_under_distinct_root():
 
 def test_to_layer_local_path_child_named_same_as_root():
     assert to_layer_local_path("/plant/plant", "plant") == "/plant/plant"
+
+
+def test_remove_nested_asset_reference_removes_from_contents():
+    """remove_nested_asset_reference removes the prim spec from contents.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "accent_pillow")
+        container_dir = container_root.parent
+
+        ref_asset_path = (
+            f"../{nested_root.parent.name}/{nested_root.name}"
+        )
+
+        prim_path = asset_intake_utils.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Props",
+            prim_name="Accent_Pillow_01",
+            ref_asset_path=ref_asset_path,
+            transform=TransformParams(),
+        )
+
+        stage = Usd.Stage.Open(str(container_root))
+        assert stage.GetPrimAtPath(prim_path).IsValid()
+
+        removed = asset_intake_utils.remove_nested_asset_reference(
+            container_dir, "Props", "Accent_Pillow_01",
+        )
+        assert removed is True
+
+        stage = Usd.Stage.Open(str(container_root))
+        assert not stage.GetPrimAtPath(prim_path).IsValid()
+
+
+def test_remove_nested_asset_reference_is_idempotent_when_already_absent():
+    """Removing a non-existent prim is a no-op success (post-condition met)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        container_dir = container_root.parent
+
+        removed = asset_intake_utils.remove_nested_asset_reference(
+            container_dir, "Props", "Accent_Pillow_99",
+        )
+        assert removed is True
+
+
+def test_remove_nested_asset_reference_idempotent_double_remove():
+    """Calling remove twice for the same prim succeeds both times.
+
+    This is the shared-asset case: when 4 sofa instances reference the
+    same asset folder, removing 'sofa 1's pillows' removes them from
+    the shared contents.usda. The follow-up calls for 'sofa 2's
+    pillows' (same prim names) hit an already-absent state and must
+    not error.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "accent_pillow")
+        container_dir = container_root.parent
+
+        ref_asset_path = (
+            f"../{nested_root.parent.name}/{nested_root.name}"
+        )
+        asset_intake_utils.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Props",
+            prim_name="Accent_Pillow_01",
+            ref_asset_path=ref_asset_path,
+            transform=TransformParams(),
+        )
+
+        first = asset_intake_utils.remove_nested_asset_reference(
+            container_dir, "Props", "Accent_Pillow_01",
+        )
+        second = asset_intake_utils.remove_nested_asset_reference(
+            container_dir, "Props", "Accent_Pillow_01",
+        )
+        assert first is True
+        assert second is True
+
+
+def test_parse_nested_contents_path_recognises_nested():
+    from bowerbot.services.stage_service import _parse_nested_contents_path
+    result = _parse_nested_contents_path(
+        "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props/Accent_Pillow_01_45",
+    )
+    assert result == ("Props", "Accent_Pillow_01_45")
+
+
+def test_parse_nested_contents_path_rejects_top_level_wrapper():
+    from bowerbot.services.stage_service import _parse_nested_contents_path
+    assert _parse_nested_contents_path("/Scene/Furniture/Single_Sofa_04_44") is None
+    assert _parse_nested_contents_path(
+        "/Scene/Furniture/Single_Sofa_04_44/asset",
+    ) is None
+
+
+def test_parse_nested_contents_path_rejects_paths_too_deep_or_too_shallow():
+    from bowerbot.services.stage_service import _parse_nested_contents_path
+    assert _parse_nested_contents_path(
+        "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props",
+    ) is None
+    assert _parse_nested_contents_path(
+        "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props/Pillow_01/Mesh",
+    ) is None

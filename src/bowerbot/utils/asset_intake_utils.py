@@ -309,6 +309,40 @@ def add_nested_asset_reference(
     return ref_prim_path
 
 
+def remove_nested_asset_reference(
+    container_dir: Path,
+    group: str,
+    prim_name: str,
+) -> bool:
+    """Remove a nested asset reference from a container's ``contents.usda``.
+
+    Idempotent: returns True whether the spec was deleted or was already
+    absent. Returns False only on a real error (cannot open the layer).
+    """
+    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    if not contents_path.exists():
+        return True
+
+    layer = Sdf.Layer.FindOrOpen(str(contents_path))
+    if layer is None:
+        return False
+
+    default_prim_name = resolve_default_prim_name(container_dir)
+    parent_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
+    parent_spec = layer.GetPrimAtPath(parent_path)
+    if parent_spec is None or prim_name not in parent_spec.nameChildren:
+        return True
+
+    del parent_spec.nameChildren[prim_name]
+    layer.Save()
+
+    logger.info(
+        "Removed nested asset %s from %s/%s",
+        prim_name, container_dir.name, ASWFLayerNames.CONTENTS,
+    )
+    return True
+
+
 # ── Internal: intake helpers ──
 
 

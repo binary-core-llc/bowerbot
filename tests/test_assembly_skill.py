@@ -682,6 +682,88 @@ def test_freeze_asset_batch_freezes_every_dirty_asset():
         print("test_freeze_asset_batch_freezes_every_dirty_asset PASSED")
 
 
+def test_bind_material_blocks_shared_container_without_confirm():
+    """bind_material on an asset shared by 2+ scene instances refuses."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa_asset = create_test_asset(source_dir, "sofa")
+        material_path = source_dir / "wood.usda"
+        mtl_stage = Usd.Stage.CreateNew(str(material_path))
+        UsdGeom.SetStageMetersPerUnit(mtl_stage, 1.0)
+        UsdGeom.SetStageUpAxis(mtl_stage, UsdGeom.Tokens.y)
+        from pxr import UsdShade
+        scope = mtl_stage.DefinePrim("/mtl", "Scope")
+        mtl_stage.SetDefaultPrim(scope)
+        UsdShade.Material.Define(mtl_stage, "/mtl/wood")
+        mtl_stage.Save()
+
+        first_sofa = _place_two_sofas_then_get_first_path(state, sofa_asset)
+
+        result = asyncio.run(exec_tool(state, "bind_material", {
+            "prim_path": f"{first_sofa}/asset/Mesh",
+            "material_file": str(material_path),
+            "material_prim_path": "/mtl/wood",
+        }))
+        assert result.success is False
+        assert "2 scene instances" in result.error
+        assert "place_asset" in result.error
+        assert "confirm_shared_modification" in result.error
+
+
+def test_bind_material_proceeds_with_confirm_flag():
+    """bind_material with confirm_shared_modification=True succeeds on shared asset."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa_asset = create_test_asset(source_dir, "sofa")
+        material_path = source_dir / "wood.usda"
+        mtl_stage = Usd.Stage.CreateNew(str(material_path))
+        UsdGeom.SetStageMetersPerUnit(mtl_stage, 1.0)
+        UsdGeom.SetStageUpAxis(mtl_stage, UsdGeom.Tokens.y)
+        from pxr import UsdShade
+        scope = mtl_stage.DefinePrim("/mtl", "Scope")
+        mtl_stage.SetDefaultPrim(scope)
+        UsdShade.Material.Define(mtl_stage, "/mtl/wood")
+        mtl_stage.Save()
+
+        first_sofa = _place_two_sofas_then_get_first_path(state, sofa_asset)
+
+        result = asyncio.run(exec_tool(state, "bind_material", {
+            "prim_path": f"{first_sofa}/asset/Mesh",
+            "material_file": str(material_path),
+            "material_prim_path": "/mtl/wood",
+            "confirm_shared_modification": True,
+        }))
+        assert result.success, f"Expected success: {result.error}"
+
+
+def test_create_material_blocks_shared_container_without_confirm():
+    """create_material on an asset shared by 2+ scene instances refuses."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa_asset = create_test_asset(source_dir, "sofa")
+
+        first_sofa = _place_two_sofas_then_get_first_path(state, sofa_asset)
+
+        result = asyncio.run(exec_tool(state, "create_material", {
+            "prim_path": f"{first_sofa}/asset/Mesh",
+            "material_name": "red_gloss",
+            "base_color_r": 0.8, "base_color_g": 0.05, "base_color_b": 0.05,
+        }))
+        assert result.success is False
+        assert "2 scene instances" in result.error
+        assert "place_asset" in result.error
+        assert "confirm_shared_modification" in result.error
+
+
 if __name__ == "__main__":
     test_create_stage()
     test_place_asset()

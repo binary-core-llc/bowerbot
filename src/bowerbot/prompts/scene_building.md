@@ -248,6 +248,38 @@ Common procedural materials:
 - `bind_material` and `create_material` only work on ASWF asset folders (not USDZ)
 - For USDZ assets, materials are baked in — cannot override
 
+### Multi-instance containers: the shared-material trap
+
+The same trap that exists for `place_asset_inside` also applies to
+`bind_material` and `create_material`. When the same asset is
+referenced by N>=2 scene instances, both tools write to the **shared**
+`mtl.usda`, so the material applies to every instance.
+
+Concretely:
+- 4 sofas + `bind_material(sofa_legs, gold)` on one sofa → all 4 sofas
+  show gold legs (the binding lives in `single_sofa/mtl.usda`)
+- 4 sofas + `create_material(pillow, terracotta)` on sofa 1, then
+  `create_material(pillow, sage)` on sofa 2 → only the LAST binding
+  wins (it overwrote the first); both sofas show sage
+
+**Rule**: for "give each instance a different material" prompts,
+**always prefer `place_asset`** to make instances independent first,
+then bind materials per-instance.
+
+Examples:
+- "Give each sofa a different pillow color" (4 sofa instances) → the
+  pillow must be placed scene-level (`place_asset`) on each sofa, then
+  `bind_material` per pillow
+- "All my sofa legs should be gold" (explicit shared modification) →
+  `bind_material` with `confirm_shared_modification: true`
+
+If `bind_material` or `create_material` returns a "shared modification"
+error, the recovery is:
+1. **Preferred**: switch to per-instance placement via `place_asset`
+   and bind on each.
+2. **Only if the user explicitly wants every instance to share the
+   material**: retry with `confirm_shared_modification: true`.
+
 ## Placing Assets: Scene-Level vs Nested
 
 BowerBot supports two ways to place an asset relative to another.

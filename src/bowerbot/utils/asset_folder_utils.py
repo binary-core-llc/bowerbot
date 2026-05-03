@@ -189,7 +189,10 @@ def rebuild_root_references(asset_dir: Path) -> None:
     root_prim.GetReferences().ClearReferences()
 
     for layer_file in (
-        ASWFLayerNames.LGT, ASWFLayerNames.MTL, ASWFLayerNames.GEO,
+        ASWFLayerNames.CONTENTS,
+        ASWFLayerNames.LGT,
+        ASWFLayerNames.MTL,
+        ASWFLayerNames.GEO,
     ):
         if (asset_dir / layer_file).exists():
             root_prim.GetReferences().AddReference(f"./{layer_file}")

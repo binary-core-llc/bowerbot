@@ -1000,3 +1000,58 @@ def test_parse_nested_contents_path_rejects_paths_too_deep_or_too_shallow():
     assert _parse_nested_contents_path(
         "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props/Pillow_01/Mesh",
     ) is None
+
+
+def _build_scene_with_n_instances(
+    tmp_path: Path, container_name: str, n_instances: int,
+) -> tuple[Path, Path]:
+    """Author a scene that references *container_name* asset n_instances times."""
+    assets_dir = tmp_path / "assets"
+    assets_dir.mkdir()
+    container_root = create_aswf_folder(assets_dir, container_name)
+    container_dir = container_root.parent
+
+    scene_path = tmp_path / "scene.usda"
+    scene_stage = Usd.Stage.CreateNew(str(scene_path))
+    UsdGeom.SetStageMetersPerUnit(scene_stage, 1.0)
+    UsdGeom.SetStageUpAxis(scene_stage, UsdGeom.Tokens.y)
+    scene_root = scene_stage.DefinePrim("/Scene", "Xform")
+    scene_stage.SetDefaultPrim(scene_root)
+    rel = container_root.relative_to(tmp_path).as_posix()
+    for i in range(1, n_instances + 1):
+        wrapper = scene_stage.DefinePrim(
+            f"/Scene/Furniture/{container_name}_{i:02d}", "Xform",
+        )
+        ref_prim = scene_stage.DefinePrim(
+            f"{wrapper.GetPath()}/asset", "Xform",
+        )
+        ref_prim.GetReferences().AddReference(f"./{rel}")
+    scene_stage.Save()
+    return scene_path, container_dir
+
+
+def test_count_scene_refs_to_asset_dir_returns_n_instances():
+    from bowerbot.utils import stage_utils
+    with tempfile.TemporaryDirectory() as tmp:
+        scene_path, container_dir = _build_scene_with_n_instances(
+            Path(tmp), "single_sofa", 4,
+        )
+        stage = Usd.Stage.Open(str(scene_path))
+        assert stage_utils.count_scene_refs_to_asset_dir(stage, container_dir) == 4
+
+
+def test_count_scene_refs_to_asset_dir_returns_zero_when_unreferenced():
+    from bowerbot.utils import stage_utils
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+        container_root = create_aswf_folder(assets_dir, "lonely_asset")
+        container_dir = container_root.parent
+
+        scene_path = tmp_path / "scene.usda"
+        scene_stage = Usd.Stage.CreateNew(str(scene_path))
+        scene_stage.DefinePrim("/Scene", "Xform")
+        scene_stage.Save()
+        stage = Usd.Stage.Open(str(scene_path))
+        assert stage_utils.count_scene_refs_to_asset_dir(stage, container_dir) == 0

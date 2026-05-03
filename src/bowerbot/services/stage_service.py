@@ -69,6 +69,15 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     old_path = params["old_path"]
     new_path = params["new_path"]
 
+    if _parse_nested_contents_path(old_path) is not None:
+        msg = (
+            f"Cannot rename {old_path}: it lives inside a referenced "
+            "asset's contents.usda. Renaming at scene level would "
+            "create a per-instance override. Edit the asset folder "
+            "directly if you really need to rename a nested prim."
+        )
+        raise ValueError(msg)
+
     success = stage_utils.rename_prim(state.stage, old_path, new_path)
     if not success:
         msg = f"Failed to rename {old_path} to {new_path}"
@@ -137,11 +146,38 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    stage_utils.set_transform(
-        state.stage, prim_path,
-        translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
-    )
-    stage_utils.save_stage(state.stage)
+    nested = _parse_nested_contents_path(prim_path)
+    if nested is not None:
+        container_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
+        if container_dir is None:
+            msg = f"Failed to resolve container for nested prim {prim_path}"
+            raise RuntimeError(msg)
+        group, prim_name = nested
+
+        container_prim_path = prim_path.split("/asset/contents/")[0]
+        local = stage_utils.world_to_local_point(
+            state.stage, container_prim_path, tx, ty, tz,
+        )
+        if local is None:
+            msg = f"Failed to compute world-to-local for {container_prim_path}"
+            raise RuntimeError(msg)
+
+        success = asset_intake_utils.update_nested_asset_transform(
+            container_dir, group, prim_name,
+            translate=local,
+            rotate=(0.0, ry, 0.0),
+        )
+        if not success:
+            msg = f"Failed to update nested transform for {prim_path}"
+            raise RuntimeError(msg)
+        state.stage = stage_utils.open_stage(state.stage_path)
+    else:
+        stage_utils.set_transform(
+            state.stage, prim_path,
+            translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
+        )
+        stage_utils.save_stage(state.stage)
+
     state.touch_project()
 
     logger.info("Moved %s to (%s, %s, %s)", prim_path, tx, ty, tz)

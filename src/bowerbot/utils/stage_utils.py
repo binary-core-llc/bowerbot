@@ -431,6 +431,19 @@ def get_container_world_inverse(
     return xform_cache.GetLocalToWorldTransform(wrapper).GetInverse()
 
 
+def world_to_local_point(
+    stage: Usd.Stage,
+    container_prim_path: str,
+    x: float, y: float, z: float,
+) -> tuple[float, float, float] | None:
+    """Convert a world-space point into a container's local frame."""
+    inv = get_container_world_inverse(stage, container_prim_path)
+    if inv is None:
+        return None
+    local = inv.Transform(Gf.Vec3d(x, y, z))
+    return float(local[0]), float(local[1]), float(local[2])
+
+
 # ── Internal helpers ──
 
 

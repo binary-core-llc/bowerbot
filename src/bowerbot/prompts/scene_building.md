@@ -293,6 +293,48 @@ If the sensible default is not obvious from context, **ASK the user**:
 "Should the counter be a fixture of the building (nested, travels
 with it) or an independent scene element?"
 
+### Multi-instance containers: the shared-asset trap
+
+When the same container asset is referenced by N>=2 scene instances
+(e.g. four sofas all referencing `assets/single_sofa/`),
+`place_asset_inside` modifies the **shared** asset folder, which means
+every instance gets the nested asset. This is almost never what the
+user wants when they ask for per-instance variations.
+
+Concretely:
+- 4 sofas + `place_asset_inside(pillow)` on one sofa → all 4 sofas
+  show the pillow (the spec lives in the shared `contents.usda`)
+- 4 sofas + `place_asset(pillow)` at each sofa's world position → 4
+  independent pillows, one per sofa, each removable individually
+
+**Rule**: for "place X on each of the N instances of Y" prompts,
+**always prefer `place_asset`** unless the user explicitly says they
+want every instance of Y to share X.
+
+Examples:
+- "Place a pillow on each sofa" (4 sofa instances) → call
+  `place_asset` four times, one per sofa, with the pillow positioned
+  at each sofa's frame surface
+- "Add a label on the back of every chair" (10 chair instances) →
+  call `place_asset` ten times unless the user explicitly wants to
+  update the chair asset itself
+- "All sofas in this room are the deluxe model with built-in
+  cushions" (explicit shared modification) → `place_asset_inside`
+  with `confirm_shared_modification: true`
+
+How to detect the multi-instance case before calling
+`place_asset_inside`:
+1. Call `list_scene` and count prims that reference the container's
+   asset folder.
+2. If the count is >=2, use `place_asset` per instance instead.
+
+If `place_asset_inside` returns a "shared modification" error (the
+service refuses by default for shared containers), the recovery is:
+1. **Preferred**: switch to `place_asset` and place once per
+   instance, near each instance's world position.
+2. **Only if the user explicitly wants shared modification**: retry
+   with `confirm_shared_modification: true`.
+
 ### What BowerBot CANNOT do
 
 If the user asks to "extract" or "make scene-level" a prim that is

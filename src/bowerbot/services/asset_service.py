@@ -113,6 +113,25 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         )
         raise ValueError(msg)
 
+    instance_count = stage_utils.count_scene_refs_to_asset_dir(
+        state.stage, container_dir,
+    )
+    confirmed = bool(params.get("confirm_shared_modification", False))
+    if instance_count >= 2 and not confirmed:
+        msg = (
+            f"Container '{container_dir.name}/' is referenced by "
+            f"{instance_count} scene instances. Nested placement modifies "
+            f"the shared asset folder, which would affect all "
+            f"{instance_count} instances. Two ways forward: "
+            f"(1) For per-instance placement (different positions per "
+            f"instance), use 'place_asset' instead; it places the asset "
+            f"as an independent scene-level prim. "
+            f"(2) For deliberate shared modification (every instance "
+            f"should get the nested asset), retry with "
+            f"confirm_shared_modification=true."
+        )
+        raise ValueError(msg)
+
     assets_dir = state.resolve_assets_dir()
     report = prepare_asset(
         asset_path, assets_dir,

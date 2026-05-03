@@ -396,6 +396,23 @@ def get_all_ref_paths(stage: Usd.Stage) -> set[str]:
     return refs
 
 
+def count_scene_refs_to_asset_dir(stage: Usd.Stage, asset_dir: Path) -> int:
+    """Count how many prims in the scene reference *asset_dir*."""
+    root_path = stage.GetRootLayer().realPath
+    if not root_path:
+        return 0
+    stage_dir = Path(root_path).parent
+    target_dir = asset_dir.resolve()
+    count = 0
+    for prim in stage.Traverse():
+        for ref_path in get_prim_ref_paths(prim):
+            resolved = (stage_dir / ref_path).resolve()
+            if resolved.exists() and resolved.parent == target_dir:
+                count += 1
+                break
+    return count
+
+
 def get_container_world_inverse(
     stage: Usd.Stage, container_prim_path: str,
 ) -> Gf.Matrix4d | None:

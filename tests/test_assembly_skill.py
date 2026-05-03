@@ -372,6 +372,108 @@ def test_update_light_with_texture_copies_hdri_and_sets_attr():
         assert prim.GetAttribute("inputs:exposure").Get() == 1.0
 
 
+def _place_two_sofas_then_get_first_path(state, sofa_asset: Path) -> str:
+    """Place two sofas referencing the same asset; return the first prim path."""
+    asyncio.run(exec_tool(state, "create_stage", {"filename": "shared_test"}))
+    first_path = ""
+    for i in range(2):
+        result = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(sofa_asset),
+            "asset_name": "Sofa",
+            "group": "Furniture",
+            "translate_x": float(i * 2),
+            "translate_y": 0.0,
+            "translate_z": 0.0,
+        }))
+        assert result.success, f"Failed to place sofa {i}: {result.error}"
+        if i == 0:
+            first_path = result.data["prim_path"]
+    return first_path
+
+
+def test_place_asset_inside_blocks_shared_container_without_confirm():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa = create_test_asset(source_dir, "sofa")
+        pillow = create_test_asset(source_dir, "pillow")
+
+        first_sofa = _place_two_sofas_then_get_first_path(state, sofa)
+
+        result = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset_file_path": str(pillow),
+            "asset_name": "Pillow",
+            "container_prim_path": first_sofa,
+            "group": "Props",
+            "translate_x": 0.0,
+            "translate_y": 0.5,
+            "translate_z": 0.0,
+        }))
+        assert result.success is False
+        assert "2 scene instances" in result.error
+        assert "place_asset" in result.error
+        assert "confirm_shared_modification" in result.error
+
+
+def test_place_asset_inside_proceeds_with_confirm_flag():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa = create_test_asset(source_dir, "sofa")
+        pillow = create_test_asset(source_dir, "pillow")
+
+        first_sofa = _place_two_sofas_then_get_first_path(state, sofa)
+
+        result = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset_file_path": str(pillow),
+            "asset_name": "Pillow",
+            "container_prim_path": first_sofa,
+            "group": "Props",
+            "translate_x": 0.0,
+            "translate_y": 0.5,
+            "translate_z": 0.0,
+            "confirm_shared_modification": True,
+        }))
+        assert result.success, f"Expected success with confirm flag: {result.error}"
+
+
+def test_place_asset_inside_succeeds_for_unique_container():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa = create_test_asset(source_dir, "sofa")
+        pillow = create_test_asset(source_dir, "pillow")
+
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "unique_test"}))
+        place_result = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(sofa),
+            "asset_name": "Sofa",
+            "group": "Furniture",
+            "translate_x": 0.0,
+            "translate_y": 0.0,
+            "translate_z": 0.0,
+        }))
+        assert place_result.success
+        single_sofa = place_result.data["prim_path"]
+
+        result = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset_file_path": str(pillow),
+            "asset_name": "Pillow",
+            "container_prim_path": single_sofa,
+            "group": "Props",
+            "translate_x": 0.0,
+            "translate_y": 0.5,
+            "translate_z": 0.0,
+        }))
+        assert result.success, f"Expected success for unique container: {result.error}"
+
+
 if __name__ == "__main__":
     test_create_stage()
     test_place_asset()

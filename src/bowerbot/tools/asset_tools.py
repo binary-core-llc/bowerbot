@@ -137,12 +137,16 @@ TOOLS: list[Tool] = [
         name="place_asset_inside",
         description=(
             "Place a 3D asset NESTED INSIDE another asset (the container). "
-            "The asset becomes part of the container — if the container is "
-            "duplicated or reused, the nested asset comes along. Use this for "
-            "permanent fixtures (e.g. a built-in counter inside a building). "
-            "For independent, moveable scene items, use place_asset instead. "
-            "Translate values are in the container's coordinate space — use "
-            "position_mode='absolute' with coordinates from list_prim_children "
+            "The asset becomes part of the container's asset folder; if the "
+            "container is referenced by multiple scene instances, ALL of them "
+            "will see the nested asset. Use this for permanent fixtures every "
+            "instance should share (e.g. a built-in counter inside a building). "
+            "For independent, per-instance items (e.g. one pillow on each of "
+            "four sofa instances), use place_asset instead. If the container "
+            "is shared by 2+ scene instances, this tool will refuse the call "
+            "with a clear error unless confirm_shared_modification=true is "
+            "passed. Translate values are in the container's coordinate space; "
+            "use position_mode='absolute' with coordinates from list_prim_children "
             "bounds, or 'bounds_offset' for offsets from the container's surfaces."
         ),
         parameters={
@@ -205,6 +209,18 @@ TOOLS: list[Tool] = [
                     "description": (
                         "If true, auto-wraps non-Xform root prims in the "
                         "asset being placed."
+                    ),
+                    "default": False,
+                },
+                "confirm_shared_modification": {
+                    "type": "boolean",
+                    "description": (
+                        "Must be true to place into a container whose asset "
+                        "folder is referenced by 2+ scene instances. The "
+                        "placement modifies the shared asset and propagates "
+                        "to every instance. Default false: refuse with an "
+                        "error so the LLM can choose between place_asset "
+                        "(per-instance) or this flag (deliberate shared)."
                     ),
                     "default": False,
                 },

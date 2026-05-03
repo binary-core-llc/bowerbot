@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0](https://github.com/binary-core-llc/bowerbot/compare/v1.5.5...v1.6.0) (2026-05-03)
+
+
+### Features
+
+* add cleanup_unused_contents tool to drop empty contents.usda la… ([#135](https://github.com/binary-core-llc/bowerbot/issues/135)) ([8d00444](https://github.com/binary-core-llc/bowerbot/commit/8d00444be93d9cdad1e711377748ac132094557a))
+
+
+### Bug Fixes
+
+* clean up empty contents.usda after the last nested asset is removed ([#134](https://github.com/binary-core-llc/bowerbot/issues/134)) ([626a5f4](https://github.com/binary-core-llc/bowerbot/commit/626a5f4ec3674ab5ffdff097a1ce47b5d68276e3))
+* make remove_nested_asset_reference idempotent for shared-asset case ([#131](https://github.com/binary-core-llc/bowerbot/issues/131)) ([29d2c2d](https://github.com/binary-core-llc/bowerbot/commit/29d2c2decd468c12117d6fa8861240093855d2d5))
+* production-grade nested asset placement ([#136](https://github.com/binary-core-llc/bowerbot/issues/136)) ([18eef5d](https://github.com/binary-core-llc/bowerbot/commit/18eef5d9c859e59020278fae6a89f9de993417e1))
+* refuse place_asset_inside when container has multiple scene inst… ([#133](https://github.com/binary-core-llc/bowerbot/issues/133)) ([a855dcf](https://github.com/binary-core-llc/bowerbot/commit/a855dcfe4bfebcb29d404438e45d24c7ec889138))
+
 ## [1.5.5](https://github.com/binary-core-llc/bowerbot/compare/v1.5.4...v1.5.5) (2026-05-02)
 
 

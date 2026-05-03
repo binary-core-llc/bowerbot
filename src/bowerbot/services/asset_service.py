@@ -24,6 +24,7 @@ from bowerbot.utils import (
     geometry_utils,
     library_utils,
     stage_utils,
+    validation_utils,
 )
 from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
 from bowerbot.utils.naming_utils import safe_prim_name
@@ -487,6 +488,18 @@ def _validate_intake(
         if target_folder.exists():
             shutil.rmtree(target_folder, ignore_errors=True)
         raise
+
+    canonical_root = target_folder / report.root_canonical_name
+    if canonical_root.exists():
+        compliance_issues = validation_utils.run_usd_compliance_checker(
+            canonical_root,
+        )
+        for issue in compliance_issues:
+            report.warnings.append(issue.message)
+            logger.info(
+                "ComplianceChecker on %s: %s",
+                report.asset_folder_name, issue.message,
+            )
 
 
 def _compute_ref_asset_path(

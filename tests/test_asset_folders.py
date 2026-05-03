@@ -6,7 +6,7 @@
 import tempfile
 from pathlib import Path
 
-from pxr import Usd, UsdGeom, UsdLux, UsdShade
+from pxr import Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
 from bowerbot.schemas import (
     ASWFLayerNames,
@@ -981,6 +981,78 @@ def test_remove_nested_asset_reference_drops_empty_layer():
                 if ref_list:
                     ref_paths.extend(r.assetPath for r in ref_list)
         assert "./contents.usda" not in ref_paths
+
+
+def test_cleanup_unused_contents_in_folder_drops_orphan_layer():
+    """Empty contents.usda left over from prior versions gets cleaned up."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "accent_pillow")
+        container_dir = container_root.parent
+
+        ref_asset_path = (
+            f"../{nested_root.parent.name}/{nested_root.name}"
+        )
+        asset_intake_utils.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Props",
+            prim_name="Pillow_01",
+            ref_asset_path=ref_asset_path,
+            transform=TransformParams(),
+        )
+
+        contents_path = container_dir / ASWFLayerNames.CONTENTS
+        layer = Sdf.Layer.FindOrOpen(str(contents_path))
+        props_spec = layer.GetPrimAtPath(Sdf.Path("/sofa/contents/Props"))
+        del props_spec.nameChildren["Pillow_01"]
+        layer.Save()
+
+        assert contents_path.exists()
+
+        removed = asset_intake_utils.cleanup_unused_contents_in_folder(container_dir)
+
+        assert removed == ["Props"]
+        assert not contents_path.exists()
+
+
+def test_cleanup_unused_contents_in_folder_preserves_layer_with_refs():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "accent_pillow")
+        container_dir = container_root.parent
+
+        asset_intake_utils.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Props",
+            prim_name="Pillow_01",
+            ref_asset_path=f"../{nested_root.parent.name}/{nested_root.name}",
+            transform=TransformParams(),
+        )
+
+        removed = asset_intake_utils.cleanup_unused_contents_in_folder(container_dir)
+
+        assert removed == []
+        assert (container_dir / ASWFLayerNames.CONTENTS).exists()
+
+
+def test_cleanup_unused_contents_in_folder_no_layer_returns_empty():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        container_dir = container_root.parent
+
+        removed = asset_intake_utils.cleanup_unused_contents_in_folder(container_dir)
+        assert removed == []
 
 
 def test_remove_nested_asset_reference_keeps_layer_when_other_refs_remain():

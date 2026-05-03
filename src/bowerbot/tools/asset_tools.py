@@ -58,6 +58,17 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> ToolResul
     return ToolResult(success=True, data=data)
 
 
+def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Drop empty contents.usda layers from asset folders, per asset or project-wide."""
+    if (err := require_project(state)):
+        return err
+    try:
+        data = asset_service.cleanup_unused_contents(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
 def delete_project_texture(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete a texture from the project's ``textures/`` dir, if unreferenced."""
     if (err := require_project(state)):
@@ -294,6 +305,32 @@ TOOLS: list[Tool] = [
             "required": ["file_name"],
         },
     ),
+    Tool(
+        name="cleanup_unused_contents",
+        description=(
+            "Drop empty contents.usda layers from asset folders. Use this "
+            "when the user asks to clean up, prune, or remove leftover / "
+            "orphaned / empty nested-asset scaffolding (e.g. an empty "
+            "Props scope left after removing all nested pillows). If "
+            "asset_prim_path is provided, cleans only that asset's folder; "
+            "if omitted, sweeps every ASWF asset folder in the project. "
+            "Returns the list of removed group-scope names per folder."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "asset_prim_path": {
+                    "type": "string",
+                    "description": (
+                        "Optional: prim path of an asset in the scene "
+                        "(e.g. '/Scene/Furniture/Single_Sofa_01_41'). If "
+                        "omitted, every ASWF asset folder in the project "
+                        "is cleaned."
+                    ),
+                },
+            },
+        },
+    ),
 ]
 
 
@@ -303,4 +340,5 @@ HANDLERS = {
     "list_project_assets": list_project_assets,
     "delete_project_asset": delete_project_asset,
     "delete_project_texture": delete_project_texture,
+    "cleanup_unused_contents": cleanup_unused_contents,
 }

@@ -233,6 +233,66 @@ def list_project_assets(state: SceneState, params: dict[str, Any]) -> dict[str, 
 # ── delete_project_asset ──
 
 
+def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Drop empty ``contents.usda`` layers, per asset or project-wide."""
+    asset_prim_path = params.get("asset_prim_path")
+
+    if asset_prim_path:
+        asset_dir, _ = resolve_asset_dir_for_prim(state.stage, asset_prim_path)
+        if asset_dir is None:
+            msg = (
+                f"Cannot find ASWF asset folder for {asset_prim_path}. "
+                "Cleanup only works on ASWF folder assets."
+            )
+            raise ValueError(msg)
+
+        removed = asset_intake_utils.cleanup_unused_contents_in_folder(asset_dir)
+        state.stage = stage_utils.open_stage(state.stage_path)
+        logger.info(
+            "Cleaned %d empty group(s) from %s/contents",
+            len(removed), asset_dir.name,
+        )
+        return {
+            "asset_folder": asset_dir.name,
+            "removed_count": len(removed),
+            "removed": removed,
+            "message": (
+                f"Cleaned {len(removed)} empty group(s) from "
+                f"{asset_dir.name}/contents.usda."
+            ),
+        }
+
+    assets_dir = state.resolve_assets_dir()
+    per_folder: list[dict[str, Any]] = []
+    total = 0
+    for entry in sorted(assets_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        if not (entry / ASWFLayerNames.CONTENTS).exists():
+            continue
+        removed = asset_intake_utils.cleanup_unused_contents_in_folder(entry)
+        if removed:
+            per_folder.append({"asset_folder": entry.name, "removed": removed})
+            total += len(removed)
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    logger.info(
+        "Cleaned %d empty group(s) across %d asset folder(s)",
+        total, len(per_folder),
+    )
+    return {
+        "total_removed": total,
+        "per_folder": per_folder,
+        "message": (
+            f"Cleaned {total} empty group(s) across "
+            f"{len(per_folder)} asset folder(s)."
+        ),
+    }
+
+
+# ── delete_project_asset ──
+
+
 def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Delete an asset folder/file from the project (only if unreferenced)."""
     name = params["name"]

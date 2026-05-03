@@ -38,13 +38,13 @@ def resolve_asset_dir_for_prim(
     stage: Usd.Stage,
     prim_path: str,
 ) -> tuple[Path | None, str | None]:
-    """Find the ASWF asset folder backing *prim_path* in *stage*.
-
-    Walks the prim, its children, then ancestors looking for a
-    reference whose file name matches its parent directory
-    (e.g. ``chair/chair.usd``). Returns ``(asset_dir, ref_prim_path)``
-    or ``(None, None)`` if no ASWF folder is found.
-    """
+    """Find the outer ASWF asset folder backing *prim_path* in *stage*."""
+    # Resolution is rooted at stage_dir (project root) on purpose: nested
+    # refs in contents.usda are authored relative to that layer
+    # (../sibling_asset/...) and resolve to a nonexistent path here, so
+    # they are skipped and the walk continues to the outer container's
+    # scene-level reference. That is the routing target move/remove/freeze
+    # need.
     stage_dir = Path(stage.GetRootLayer().realPath).parent
 
     def _check(prim: Usd.Prim) -> tuple[Path | None, str | None]:

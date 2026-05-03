@@ -14,6 +14,13 @@ class MaterialXShaders:
     OUTPUT_QUALIFIER = "mtlx"
 
 
+class PreviewSurfaceShader:
+    """UsdPreviewSurface shader identifiers."""
+
+    SURFACE_ID = "UsdPreviewSurface"
+    SURFACE_PRIM = "preview_surface"
+
+
 class ProceduralMaterialParams(BaseModel):
     """Parameters for creating a procedural MaterialX material."""
 

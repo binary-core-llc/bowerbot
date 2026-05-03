@@ -191,6 +191,55 @@ def test_apply_aswf_root_metadata_overwrites_when_forced():
 # ── material_service: Add Material ─
 
 
+def test_create_procedural_material_authors_hybrid_outputs():
+    """Procedural materials carry both MaterialX and UsdPreviewSurface outputs."""
+    from bowerbot.schemas import ProceduralMaterialParams
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+        geo = create_geometry(source_dir, "table")
+        root = asset_intake_utils.create_asset_folder(output_dir, "table", geo)
+
+        material_utils.create_procedural_material_in_folder(
+            asset_dir=root.parent,
+            prim_path="/table/top",
+            params=ProceduralMaterialParams(
+                material_name="red_matte",
+                base_color=(0.8, 0.05, 0.05),
+                metalness=0.0,
+                roughness=0.85,
+            ),
+        )
+
+        mtl_stage = Usd.Stage.Open(str(root.parent / "mtl.usda"))
+        material = UsdShade.Material(
+            mtl_stage.GetPrimAtPath("/table/mtl/red_matte"),
+        )
+        assert material
+
+        mtlx_out = material.GetSurfaceOutput("mtlx")
+        assert mtlx_out and mtlx_out.HasConnectedSource()
+
+        preview_out = material.GetSurfaceOutput()
+        assert preview_out and preview_out.HasConnectedSource()
+
+        mtlx_shader = UsdShade.Shader(
+            mtl_stage.GetPrimAtPath("/table/mtl/red_matte/standard_surface"),
+        )
+        assert mtlx_shader.GetIdAttr().Get() == "ND_standard_surface_surfaceshader"
+
+        preview_shader = UsdShade.Shader(
+            mtl_stage.GetPrimAtPath("/table/mtl/red_matte/preview_surface"),
+        )
+        assert preview_shader.GetIdAttr().Get() == "UsdPreviewSurface"
+        diffuse = preview_shader.GetInput("diffuseColor").Get()
+        assert abs(diffuse[0] - 0.8) < 1e-5
+        roughness = preview_shader.GetInput("roughness").Get()
+        assert abs(roughness - 0.85) < 1e-5
+
+
 def test_add_material_creates_mtl():
     """add_material creates mtl.usd and updates root file."""
     with tempfile.TemporaryDirectory() as tmp:

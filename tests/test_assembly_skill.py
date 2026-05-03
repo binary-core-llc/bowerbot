@@ -792,6 +792,70 @@ def test_create_material_blocks_shared_container_without_confirm():
         assert "confirm_shared_modification" in result.error
 
 
+def test_intaken_asset_uses_posix_relative_paths_only():
+    """Cross-platform invariant: intaken assets author POSIX-relative paths."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        asset_path = create_test_asset(tmp_path, "table")
+
+        state, project = make_state(tmp_path, "posix_test")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "posix_test"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset_path),
+            "asset_name": "Table",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert place.success
+
+        for usd_file in project.path.rglob("*.usda"):
+            text = usd_file.read_text(encoding="utf-8")
+            for line in text.splitlines():
+                if "@" in line and ".usda" in line:
+                    assert "\\" not in line, (
+                        f"Non-POSIX backslash in {usd_file}: {line!r}"
+                    )
+
+        print("test_intaken_asset_uses_posix_relative_paths_only PASSED")
+
+
+def test_create_light_authors_light_link_collection():
+    """create_light with light_link_includes authors a UsdLux light:link collection."""
+    from pxr import Sdf, UsdLux
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        asset_path = create_test_asset(tmp_path, "hero")
+
+        state, project = make_state(tmp_path, "linking_test")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "linking_test"}))
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset_path),
+            "asset_name": "Hero",
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        hero_path = placed.data["prim_path"]
+
+        result = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "RectLight",
+            "light_name": "Rim",
+            "translate_x": 1.0, "translate_y": 1.5, "translate_z": 0.0,
+            "intensity": 200.0,
+            "light_link_includes": [hero_path],
+        }))
+        assert result.success
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        light_prim = stage.GetPrimAtPath(result.data["prim_path"])
+        assert light_prim.IsValid()
+        light_api = UsdLux.LightAPI(light_prim)
+        link_collection = light_api.GetLightLinkCollectionAPI()
+        targets = link_collection.GetIncludesRel().GetTargets()
+        assert Sdf.Path(hero_path) in targets
+
+        print("test_create_light_authors_light_link_collection PASSED")
+
+
 def test_package_scene_apple_validation_blocks_on_udim_texture():
     """package_scene(for_apple=true) refuses when a shader uses a UDIM texture."""
     with tempfile.TemporaryDirectory() as tmp:

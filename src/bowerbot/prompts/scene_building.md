@@ -204,6 +204,20 @@ Set rotation based on where the user wants the light to point:
 Always choose rotation based on the user's description of what the
 light should illuminate. Ask the user if the direction is ambiguous.
 
+### Light linking
+
+By default, a USD light affects every prim in the scene. To restrict
+a light to specific targets (e.g. "this rim light only on the hero
+prop", a product-shot kicker, a key light that should not bleed onto
+the dome), pass `light_link_includes` as a list of prim paths when
+calling `create_light`. BowerBot authors a UsdLux `light:link`
+collection on the light with those targets; the light then only
+illuminates the listed prims and their descendants.
+
+Leave `light_link_includes` empty (or omit it) for general
+illumination — that is the standard USD default and what most scene
+lights want.
+
 ### Modifying lights
 When the user wants to adjust an existing light (intensity, color,
 size, position, rotation), use `update_light` — do NOT create a new
@@ -488,6 +502,20 @@ BowerBot enforces this at intake: the canonical root authored by
 `create_asset_folder` and rebuilt after layer changes always uses
 this arc split, and `intake_folder` re-normalises imported folder
 packages to match. No separate flag required.
+
+### Class prim + inherits (shot-level broadcast hook)
+
+Every BowerBot-intaken asset's root layer ships with a sibling
+`class _class_<asset_name>` prim, and the asset's defaultPrim
+inherits from it. The class prim is empty by default — it is a hook
+that lets a stronger layer (a shot file, a layout sublayer) author
+overrides like `over "_class_sofa" { material:binding = ... }` and
+broadcast them to every prim in the asset (and every instance of
+that asset across the scene). Production VFX/animation pipelines
+use this for shot-level look variations without touching the
+shipped asset folder. Most BowerBot scene-assembly workflows do not
+need to touch the class prim directly — it is just there waiting
+for a more advanced pipeline to use.
 
 ### Asset identity: Kind + assetInfo
 

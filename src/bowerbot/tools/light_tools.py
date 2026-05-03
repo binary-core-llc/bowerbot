@@ -190,6 +190,19 @@ TOOLS: list[Tool] = [
                     "type": "number",
                     "description": "CylinderLight only: length in meters.",
                 },
+                "light_link_includes": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Optional list of prim paths the light should "
+                        "illuminate. Default empty = light affects every "
+                        "prim (standard USD behavior). Populated = the "
+                        "light only affects the listed prims and their "
+                        "descendants. Authored as a UsdLux light:link "
+                        "collection. Use this for 'this rim light only on "
+                        "the hero prop' or product-shot rigs."
+                    ),
+                },
             },
             "required": ["light_type", "light_name"],
         },

@@ -152,6 +152,7 @@ def _create_asset_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
         width=params.get("width"),
         height=params.get("height"),
         length=params.get("length"),
+        light_link_includes=params.get("light_link_includes") or [],
     )
 
     composed_path = light_utils.add_light_to_folder(
@@ -209,6 +210,7 @@ def _create_scene_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
         width=params.get("width"),
         height=params.get("height"),
         length=params.get("length"),
+        light_link_includes=params.get("light_link_includes") or [],
     )
 
     stage_utils.create_light(state.stage, prim_path, light_params)

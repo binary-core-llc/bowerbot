@@ -210,6 +210,29 @@ def test_create_asset_folder_sets_kind_and_asset_info():
         assert info["identifier"].path == "./chair.usda"
 
 
+def test_create_asset_folder_authors_class_prim_with_inherits():
+    """Asset root has a class _class_<name> sibling; defaultPrim inherits it."""
+    with tempfile.TemporaryDirectory() as tmp:
+        source_dir = Path(tmp) / "source"
+        source_dir.mkdir()
+        output_dir = Path(tmp) / "output"
+        output_dir.mkdir()
+        geo = create_geometry(source_dir, "lamp")
+
+        root = asset_intake_utils.create_asset_folder(
+            output_dir, "lamp", geo,
+        )
+
+        layer = Sdf.Layer.FindOrOpen(str(root))
+        class_spec = layer.GetPrimAtPath(Sdf.Path("/_class_lamp"))
+        assert class_spec is not None
+        assert class_spec.specifier == Sdf.SpecifierClass
+
+        root_spec = layer.GetPrimAtPath(Sdf.Path("/lamp"))
+        inherits = root_spec.inheritPathList.prependedItems
+        assert Sdf.Path("/_class_lamp") in list(inherits)
+
+
 def test_apply_aswf_root_metadata_preserves_existing_unless_forced():
     """apply_aswf_root_metadata respects upstream metadata when force=False."""
     with tempfile.TemporaryDirectory() as tmp:

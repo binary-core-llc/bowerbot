@@ -526,6 +526,34 @@ def test_move_asset_routes_nested_to_contents_layer():
         print("test_move_asset_routes_nested_to_contents_layer PASSED")
 
 
+def test_move_asset_refuses_path_inside_referenced_asset():
+    """move_asset on a path inside a referenced asset (not a wrapper) refuses."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa = create_test_asset(source_dir, "sofa")
+
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "guard_test"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(sofa),
+            "asset_name": "Sofa",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        sofa_prim = place.data["prim_path"]
+
+        result = asyncio.run(exec_tool(state, "move_asset", {
+            "prim_path": f"{sofa_prim}/asset/Mesh",
+            "translate_x": 1.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert not result.success
+        assert "referenced" in result.error.lower()
+
+        print("test_move_asset_refuses_path_inside_referenced_asset PASSED")
+
+
 def test_rename_prim_refuses_nested_path():
     """rename_prim on a nested-contents path returns an error."""
     with tempfile.TemporaryDirectory() as tmp:

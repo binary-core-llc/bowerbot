@@ -381,6 +381,35 @@ BowerBot follows ASWF USD Working Group guidelines for asset structure.
 - The scene.usda only contains references — no material sublayers
 - Existing ASWF folders are copied whole, preserving structure
 
+### Identity-root-transforms requirement
+
+Production USD assets must have identity transforms on the root prim
+(no translate/rotate/scale/pivot ops). BowerBot enforces this at intake.
+DCC exports without "Bake Transforms" enabled (Maya USD export's default
+without the flag, or Houdini's pre-freeze toggle) carry a pivot dance
+on the root prim that breaks nested placement.
+
+When `place_asset` or `place_asset_inside` returns an error containing
+"non-identity transforms":
+
+1. Tell the user the asset is unfrozen and ask if they want BowerBot
+   to bake the transforms automatically. Make clear that **only the
+   project copy is modified — the user's source file stays untouched.**
+2. If they confirm, retry the same call with
+   `fix_root_transforms: true`.
+3. If they decline, explain the alternative: re-export from their DCC
+   with "Bake Transforms" / "Pre-freeze" enabled.
+
+For cleaning up assets already in the project (e.g. ones imported
+before this validation existed), use `freeze_asset`:
+
+- `freeze_asset(name="single_sofa")` — bake one specific asset
+- `freeze_asset()` (no name) — sweep every asset folder in the
+  project and bake any that have non-identity root transforms
+
+`freeze_asset` is a no-op on already-clean assets (returns
+`baked: false` for them).
+
 ## Room Defaults
 - Width: 10m (X axis)
 - Height: 3m (Y axis)

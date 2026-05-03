@@ -1136,22 +1136,43 @@ def test_parse_nested_contents_path_recognises_nested():
     assert result == ("Props", "Accent_Pillow_01_45")
 
 
-def test_parse_nested_contents_path_rejects_top_level_wrapper():
+def test_parse_nested_contents_path_returns_none_for_scene_level_wrapper():
     from bowerbot.services.stage_service import _parse_nested_contents_path
     assert _parse_nested_contents_path("/Scene/Furniture/Single_Sofa_04_44") is None
-    assert _parse_nested_contents_path(
-        "/Scene/Furniture/Single_Sofa_04_44/asset",
-    ) is None
 
 
-def test_parse_nested_contents_path_rejects_paths_too_deep_or_too_shallow():
+def test_parse_nested_contents_path_raises_for_path_inside_top_level_asset():
+    import pytest
+
     from bowerbot.services.stage_service import _parse_nested_contents_path
-    assert _parse_nested_contents_path(
-        "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props",
-    ) is None
-    assert _parse_nested_contents_path(
-        "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props/Pillow_01/Mesh",
-    ) is None
+    with pytest.raises(ValueError, match="referenced top-level asset"):
+        _parse_nested_contents_path(
+            "/Scene/Furniture/Single_Sofa_04_44/asset",
+        )
+    with pytest.raises(ValueError, match="referenced top-level asset"):
+        _parse_nested_contents_path(
+            "/Scene/Furniture/Single_Sofa_04_44/asset/legs",
+        )
+
+
+def test_parse_nested_contents_path_raises_for_path_deeper_than_nested_wrapper():
+    import pytest
+
+    from bowerbot.services.stage_service import _parse_nested_contents_path
+    with pytest.raises(ValueError, match="not at the wrapper level"):
+        _parse_nested_contents_path(
+            "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props",
+        )
+    with pytest.raises(ValueError, match="not at the wrapper level"):
+        _parse_nested_contents_path(
+            "/Scene/Furniture/Single_Sofa_04_44/"
+            "asset/contents/Props/Pillow_01/asset",
+        )
+    with pytest.raises(ValueError, match="not at the wrapper level"):
+        _parse_nested_contents_path(
+            "/Scene/Furniture/Single_Sofa_04_44/"
+            "asset/contents/Props/Pillow_01/asset/Mesh",
+        )
 
 
 def _build_scene_with_n_instances(

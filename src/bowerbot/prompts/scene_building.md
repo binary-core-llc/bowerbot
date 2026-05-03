@@ -462,6 +462,21 @@ BowerBot follows ASWF USD Working Group guidelines for asset structure.
 - The scene.usda only contains references — no material sublayers
 - Existing ASWF folders are copied whole, preserving structure
 
+### Composition arcs: payload for geo, references for everything else
+
+Per ASWF guidelines and Isaac/Omniverse conventions, an asset's
+canonical root composes its heavy data via PAYLOAD and its lighter
+sublayers via REFERENCES:
+- `geo.usda` → payload (lazy-load; lets large stages open quickly,
+  works with population masks and partial loading)
+- `mtl.usda` / `lgt.usda` / `contents.usda` → references (composed
+  immediately; lighter and usually needed)
+
+BowerBot enforces this at intake: the canonical root authored by
+`create_asset_folder` and rebuilt after layer changes always uses
+this arc split, and `intake_folder` re-normalises imported folder
+packages to match. No separate flag required.
+
 ### Asset identity: Kind + assetInfo
 
 Every asset BowerBot intakes gets the canonical ASWF identity authored

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -31,8 +31,7 @@ class SceneState:
     stage_path: Path | None = None
     object_count: int = 0
     library_dir: Path | None = None
-    stage_last_save_mtime: float | None = None
-    stage_last_save_hash: str | None = None
+    layer_baselines: dict[Path, tuple[float, str]] = field(default_factory=dict)
 
     @property
     def assets_dir(self) -> Path | None:
@@ -64,31 +63,44 @@ class SceneState:
         if self.project is not None:
             self.project.save()
 
-    def _compute_stage_hash(self) -> str | None:
-        """Hash the on-disk stage file, or None if it does not exist."""
-        if self.stage_path is None or not self.stage_path.exists():
-            return None
+    def _hash_file(self, path: Path) -> str:
+        """Hash a file with blake2b in chunks."""
         h = hashlib.blake2b(digest_size=16)
-        with self.stage_path.open("rb") as f:
+        with path.open("rb") as f:
             for chunk in iter(lambda: f.read(_HASH_CHUNK_SIZE), b""):
                 h.update(chunk)
         return h.hexdigest()
 
-    def mark_saved(self) -> None:
-        """Record the current on-disk stage as the baseline."""
+    def _watched_layer_paths(self) -> list[Path]:
+        """Discover the scene's full layer stack (root + transitive sublayers)."""
+        from bowerbot.utils import stage_utils
         if self.stage_path is None or not self.stage_path.exists():
-            self.stage_last_save_mtime = None
-            self.stage_last_save_hash = None
-            return
-        self.stage_last_save_mtime = self.stage_path.stat().st_mtime
-        self.stage_last_save_hash = self._compute_stage_hash()
+            return []
+        return stage_utils.collect_scene_layer_paths(self.stage_path)
+
+    def mark_saved(self) -> None:
+        """Snapshot mtime + hash of every layer in the scene's stack."""
+        self.layer_baselines = {}
+        for layer_path in self._watched_layer_paths():
+            if layer_path.exists():
+                self.layer_baselines[layer_path] = (
+                    layer_path.stat().st_mtime,
+                    self._hash_file(layer_path),
+                )
 
     def detect_external_changes(self) -> bool:
-        """Return True if the stage file changed since the last baseline."""
-        if self.stage_path is None or not self.stage_path.exists():
+        """Return True if any watched layer changed since the last baseline."""
+        if not self.layer_baselines:
             return False
-        if self.stage_last_save_mtime is None or self.stage_last_save_hash is None:
-            return False
-        if self.stage_path.stat().st_mtime <= self.stage_last_save_mtime:
-            return False
-        return self._compute_stage_hash() != self.stage_last_save_hash
+        for layer_path in self._watched_layer_paths():
+            baseline = self.layer_baselines.get(layer_path)
+            if baseline is None:
+                return True
+            mtime, digest = baseline
+            if not layer_path.exists():
+                return True
+            if layer_path.stat().st_mtime <= mtime:
+                continue
+            if self._hash_file(layer_path) != digest:
+                return True
+        return False

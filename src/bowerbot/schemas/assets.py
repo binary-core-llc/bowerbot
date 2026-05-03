@@ -43,6 +43,12 @@ class ASWFLayerNames:
     TEXTURES = "textures"
 
 
+class SceneLayerNames:
+    """Scene-level sublayer file names sublayered under scene.usda."""
+
+    SCENE_LAYOUT = "scene_layout.usda"
+
+
 class AssetMetadata(BaseModel):
     """Metadata for a 3D asset sourced from any skill."""
 

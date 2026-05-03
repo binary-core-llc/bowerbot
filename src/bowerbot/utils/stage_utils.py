@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
-from bowerbot.schemas import LightParams, LightType, SceneObject
+from bowerbot.schemas import LightParams, LightType, SceneLayerNames, SceneObject
 
 LIGHT_CLASSES: dict[str, type] = {
     LightType.DISTANT: UsdLux.DistantLight,
@@ -112,31 +112,82 @@ def find_texture_references(
 
 
 def create_empty_scene(path: str | Path) -> None:
-    """Create a scene file with BowerBot defaults if it does not exist."""
+    """Create scene.usda + scene_layout.usda sublayer if they do not exist."""
     path = Path(path)
     if path.exists():
         return
 
+    layout_path = path.parent / SceneLayerNames.SCENE_LAYOUT
+
+    layout_stage = Usd.Stage.CreateNew(str(layout_path))
+    UsdGeom.SetStageMetersPerUnit(layout_stage, 1.0)
+    UsdGeom.SetStageUpAxis(layout_stage, UsdGeom.Tokens.y)
+    layout_root = layout_stage.DefinePrim("/Scene", "Xform")
+    layout_stage.SetDefaultPrim(layout_root)
+    Usd.ModelAPI(layout_root).SetKind(Kind.Tokens.assembly)
+    layout_stage.Save()
+
     stage = Usd.Stage.CreateNew(str(path))
     UsdGeom.SetStageMetersPerUnit(stage, 1.0)
     UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
-
-    root = stage.DefinePrim("/Scene", "Xform")
-    stage.SetDefaultPrim(root)
-    Usd.ModelAPI(root).SetKind(Kind.Tokens.assembly)
-
+    stage.GetRootLayer().subLayerPaths.append(
+        f"./{SceneLayerNames.SCENE_LAYOUT}",
+    )
+    stage.SetDefaultPrim(stage.GetPrimAtPath("/Scene"))
     stage.Save()
 
 
 def create_stage(path: str | Path) -> Usd.Stage:
     """Create the scene at *path* (if missing) and return the open stage."""
     create_empty_scene(path)
-    return Usd.Stage.Open(str(path))
+    return open_stage(path)
 
 
 def open_stage(path: str | Path) -> Usd.Stage:
-    """Open an existing USD stage from disk."""
-    return Usd.Stage.Open(str(path))
+    """Open a stage and route edits to scene_layout.usda when present."""
+    stage = Usd.Stage.Open(str(path))
+    if stage is None:
+        return stage
+
+    layout_layer = _find_layout_sublayer(stage)
+    if layout_layer is not None:
+        stage.SetEditTarget(Usd.EditTarget(layout_layer))
+    return stage
+
+
+def _find_layout_sublayer(stage: Usd.Stage) -> Sdf.Layer | None:
+    """Return scene_layout.usda's Sdf.Layer if the root sublayers it."""
+    root = stage.GetRootLayer()
+    for sub_path in root.subLayerPaths:
+        if Path(sub_path).name == SceneLayerNames.SCENE_LAYOUT:
+            resolved = Path(root.realPath).parent / sub_path
+            return Sdf.Layer.FindOrOpen(str(resolved))
+    return None
+
+
+def collect_scene_layer_paths(scene_path: str | Path) -> list[Path]:
+    """Return *scene_path* plus every transitive sublayer that exists on disk."""
+    scene_path = Path(scene_path)
+    if not scene_path.exists():
+        return []
+
+    paths: list[Path] = [scene_path]
+    visited: set[Path] = {scene_path.resolve()}
+
+    def walk(layer_path: Path) -> None:
+        layer = Sdf.Layer.FindOrOpen(str(layer_path))
+        if layer is None:
+            return
+        for sub in layer.subLayerPaths:
+            resolved = (layer_path.parent / sub).resolve()
+            if resolved in visited or not resolved.exists():
+                continue
+            visited.add(resolved)
+            paths.append(resolved)
+            walk(resolved)
+
+    walk(scene_path)
+    return paths
 
 
 def save_stage(stage: Usd.Stage) -> None:
@@ -150,9 +201,9 @@ def save_stage(stage: Usd.Stage) -> None:
 def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
     """Add a referenced asset under a wrapper Xform at the prim path.
 
-    The wrapper holds BowerBot's translate/rotate/scale; the reference
-    arc lives on an ``/asset`` child so DCC export transforms in the
-    referenced layer stay untouched.
+    Always authors the canonical translate + rotate + scale + xformOpOrder
+    so DCC overrides on this prim are sparse-delta and the prim is
+    XformCommonAPI-compliant.
     """
     asset_path = (
         scene_object.asset.file_path or scene_object.asset.source_id
@@ -163,20 +214,13 @@ def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
     xformable = UsdGeom.Xformable(wrapper)
 
     tx, ty, tz = scene_object.translate
-    xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-
     rx, ry, rz = scene_object.rotate
-    if any(v != 0.0 for v in (rx, ry, rz)):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
+    sx, sy, sz = scene_object.scale
+    final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
 
-    if abs(unit_scale - 1.0) > 1e-6:
-        xformable.AddScaleOp().Set(
-            Gf.Vec3f(unit_scale, unit_scale, unit_scale),
-        )
-    else:
-        sx, sy, sz = scene_object.scale
-        if any(v != 1.0 for v in (sx, sy, sz)):
-            xformable.AddScaleOp().Set(Gf.Vec3f(sx, sy, sz))
+    xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
+    xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
+    xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
 
     asset_prim = stage.DefinePrim(
         f"{scene_object.prim_path}/asset", "Xform",

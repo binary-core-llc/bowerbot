@@ -706,7 +706,7 @@ def _canonicalize_root(
 
 
 def _normalize_root_metadata(root_file: Path, asset_name: str) -> None:
-    """Ensure the intaken asset's root prim has Kind + assetInfo set."""
+    """Ensure the intaken asset's root prim has Kind + assetInfo + class inherit."""
     stage = Usd.Stage.Open(str(root_file))
     if stage is None:
         return
@@ -719,6 +719,7 @@ def _normalize_root_metadata(root_file: Path, asset_name: str) -> None:
         asset_name=asset_name,
         asset_identifier=f"./{root_file.name}",
     )
+    apply_aswf_class_inherits(stage, root_prim.GetName())
     stage.Save()
 
 
@@ -812,8 +813,31 @@ def _create_root_file(
         asset_identifier=f"./{root_path.name}",
         force=True,
     )
+    apply_aswf_class_inherits(stage, default_prim_name)
 
     stage.Save()
+
+
+def apply_aswf_class_inherits(
+    stage: Usd.Stage, default_prim_name: str,
+) -> bool:
+    """Add a sibling ``class _class_<name>`` and inherit it from the root."""
+    class_path = f"/_class_{default_prim_name}"
+    class_prim = stage.GetPrimAtPath(class_path)
+    if not class_prim or not class_prim.IsValid():
+        class_prim = stage.OverridePrim(class_path)
+        class_prim.SetSpecifier(Sdf.SpecifierClass)
+        class_prim.SetTypeName("Xform")
+
+    root_prim = stage.GetDefaultPrim()
+    if not root_prim or not root_prim.IsValid():
+        return False
+    inherits = root_prim.GetInherits()
+    existing = inherits.GetAllDirectInherits()
+    if Sdf.Path(class_path) in existing:
+        return False
+    inherits.AddInherit(class_path)
+    return True
 
 
 def apply_aswf_root_metadata(

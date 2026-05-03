@@ -40,3 +40,4 @@ class LightParams(BaseModel):
     width: float | None = None   # RectLight
     height: float | None = None  # RectLight
     length: float | None = None  # CylinderLight
+    light_link_includes: list[str] = []  # UsdCollectionAPI light:link.includes

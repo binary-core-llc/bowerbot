@@ -241,6 +241,7 @@ def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
     light_prim.CreateColorAttr(Gf.Vec3f(*light.color))
 
     _set_light_type_attrs(light_prim, light)
+    apply_light_link(light_prim, light.light_link_includes)
 
     xformable = UsdGeom.Xformable(light_prim)
     xformable.ClearXformOpOrder()
@@ -251,6 +252,18 @@ def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
     rx, ry, rz = light.rotate
     if any(v != 0.0 for v in (rx, ry, rz)):
         xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
+
+
+def apply_light_link(
+    light_prim: Usd.Prim, includes: list[str],
+) -> None:
+    """Author the UsdLux light:link collection on *light_prim*."""
+    binding = UsdLux.LightAPI(light_prim).GetLightLinkCollectionAPI()
+    binding.CreateIncludesRel().SetTargets(
+        [Sdf.Path(p) for p in includes] if includes else [],
+    )
+    if includes:
+        binding.CreateIncludeRootAttr(False)
 
 
 def update_light(

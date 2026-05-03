@@ -87,7 +87,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 🔌 **Pluggable skills**: connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
 - 🧠 **Multi-LLM support**: OpenAI, Anthropic, and any provider via [litellm](https://docs.litellm.ai/)
 - 📁 **Project-based workflow**: one folder per scene, resumable across sessions
-- ✅ **Scene validation**: `defaultPrim`, units, up-axis, reference resolution, and material binding checks
+- ✅ **Scene validation**: `defaultPrim`, units, up-axis, reference resolution, and material binding checks plus USD's modern `UsdValidation` framework (the same validators behind `usdchecker`) run automatically on intake and on `validate_scene`
 - 📦 **USDZ packaging**: export for Apple Vision Pro, Omniverse, or any USD viewer
 - 🏗️ **Onboarding wizard**: zero-config setup in 60 seconds
 

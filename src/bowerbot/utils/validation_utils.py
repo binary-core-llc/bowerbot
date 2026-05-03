@@ -9,7 +9,7 @@ import logging
 import os
 from pathlib import Path
 
-from pxr import Usd, UsdGeom, UsdShade, UsdUtils
+from pxr import Usd, UsdGeom, UsdShade, UsdUtils, UsdValidation
 
 from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
 from bowerbot.utils.stage_utils import get_prim_ref_paths
@@ -74,9 +74,15 @@ def validate_stage(
     issues.extend(_check_references(stage))
     issues.extend(_check_sublayers(stage))
     issues.extend(_check_material_bindings(stage))
+    issues.extend(_run_usd_compliance_checker(str(stage_path)))
 
     is_valid = not any(i.severity == Severity.ERROR for i in issues)
     return ValidationResult(is_valid=is_valid, issues=issues)
+
+
+def run_usd_compliance_checker(file_path: str | Path) -> list[ValidationIssue]:
+    """Run USD's ComplianceChecker against *file_path* and surface issues."""
+    return _run_usd_compliance_checker(str(file_path))
 
 
 def _check_default_prim(stage: Usd.Stage) -> list[ValidationIssue]:
@@ -149,6 +155,60 @@ def _check_sublayers(stage: Usd.Stage) -> list[ValidationIssue]:
                 severity=Severity.ERROR,
                 message=f"Unresolved sublayer: {sub_path}",
             ))
+    return issues
+
+
+_VALIDATION_CONTEXT: UsdValidation.ValidationContext | None = None
+
+
+def _get_validation_context() -> UsdValidation.ValidationContext | None:
+    """Lazily build a singleton ValidationContext with all registered validators."""
+    global _VALIDATION_CONTEXT
+    if _VALIDATION_CONTEXT is not None:
+        return _VALIDATION_CONTEXT
+    try:
+        registry = UsdValidation.ValidationRegistry()
+        validators = registry.GetOrLoadAllValidators()
+        _VALIDATION_CONTEXT = UsdValidation.ValidationContext(validators)
+    except Exception as exc:
+        logger.warning("Failed to build USD validation context: %s", exc)
+        return None
+    return _VALIDATION_CONTEXT
+
+
+def _run_usd_compliance_checker(file_path: str) -> list[ValidationIssue]:
+    """Run USD's modern ValidationFramework against *file_path*."""
+    ctx = _get_validation_context()
+    if ctx is None:
+        return []
+
+    stage = Usd.Stage.Open(file_path)
+    if stage is None:
+        return []
+
+    try:
+        errors = ctx.Validate(stage)
+    except Exception as exc:
+        logger.warning("USD validation failed on %s: %s", file_path, exc)
+        return []
+
+    issues: list[ValidationIssue] = []
+    for err in errors:
+        severity = (
+            Severity.ERROR
+            if err.GetType() == UsdValidation.ValidationErrorType.Error
+            else Severity.WARNING
+        )
+        sites = err.GetSites()
+        prim_path = (
+            str(sites[0].GetPrim().GetPath())
+            if sites and sites[0].GetPrim() else None
+        )
+        issues.append(ValidationIssue(
+            severity=severity,
+            message=f"{err.GetName()}: {err.GetMessage()}",
+            prim_path=prim_path,
+        ))
     return issues
 
 

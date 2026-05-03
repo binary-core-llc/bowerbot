@@ -168,6 +168,24 @@ def test_apply_aswf_root_metadata_preserves_existing_unless_forced():
         assert info["name"] == "asset"
 
 
+def test_run_usd_compliance_checker_returns_no_issues_for_clean_stage():
+    """The modern UsdValidation framework reports zero errors on a clean stage."""
+    from bowerbot.utils import validation_utils
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "clean.usda"
+        stage = Usd.Stage.CreateNew(str(path))
+        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+        prim = stage.DefinePrim("/asset", "Xform")
+        stage.SetDefaultPrim(prim)
+        UsdGeom.Cube.Define(stage, "/asset/Mesh")
+        stage.Save()
+
+        issues = validation_utils.run_usd_compliance_checker(path)
+        errors = [i for i in issues if i.severity.value == "error"]
+        assert errors == []
+
+
 def test_apply_aswf_root_metadata_overwrites_when_forced():
     """force=True overwrites existing kind + assetInfo."""
     with tempfile.TemporaryDirectory() as tmp:

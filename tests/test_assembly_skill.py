@@ -792,6 +792,77 @@ def test_create_material_blocks_shared_container_without_confirm():
         assert "confirm_shared_modification" in result.error
 
 
+def test_package_scene_apple_validation_blocks_on_udim_texture():
+    """package_scene(for_apple=true) refuses when a shader uses a UDIM texture."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        from pxr import Sdf, UsdShade
+        asset_path = create_test_asset(tmp_path, "table")
+
+        state, _ = make_state(tmp_path, "apple_block")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "apple_block"}))
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset_path),
+            "asset_name": "Table",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+
+        layout_layer = Sdf.Layer.FindOrOpen(
+            str(state.stage_path.parent / "scene_layout.usda"),
+        )
+        layout_stage = Usd.Stage.Open(layout_layer.identifier)
+        material = UsdShade.Material.Define(
+            layout_stage, "/Scene/Furniture/Table_01/asset/UDIM_Mat",
+        )
+        shader = UsdShade.Shader.Define(
+            layout_stage, "/Scene/Furniture/Table_01/asset/UDIM_Mat/tex",
+        )
+        shader.CreateIdAttr("UsdUVTexture")
+        shader.CreateInput(
+            "file", Sdf.ValueTypeNames.Asset,
+        ).Set(Sdf.AssetPath("./tex/diffuse.<UDIM>.png"))
+        material.CreateSurfaceOutput().ConnectToSource(
+            shader.CreateOutput("surface", Sdf.ValueTypeNames.Token),
+        )
+        layout_stage.Save()
+
+        result = asyncio.run(exec_tool(state, "package_scene", {
+            "for_apple_ar_quick_look": True,
+        }))
+        assert result.success
+        assert result.data["usdz_path"] is None
+        assert result.data["is_valid_for_apple"] is False
+        messages = " ".join(i["message"] for i in result.data["apple_issues"])
+        assert "UDIM" in messages
+
+        print("test_package_scene_apple_validation_blocks_on_udim_texture PASSED")
+
+
+def test_package_scene_default_does_not_run_apple_validation():
+    """Default package_scene packages without Apple validation."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        asset_path = create_test_asset(tmp_path, "table")
+
+        state, _ = make_state(tmp_path, "apple_default")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "apple_default"}))
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset_path),
+            "asset_name": "Table",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+
+        result = asyncio.run(exec_tool(state, "package_scene", {}))
+        assert result.success
+        assert result.data["usdz_path"] is not None
+        assert result.data["for_apple_ar_quick_look"] is False
+        assert result.data["apple_issues"] == []
+
+        print("test_package_scene_default_does_not_run_apple_validation PASSED")
+
+
 if __name__ == "__main__":
     test_create_stage()
     test_place_asset()

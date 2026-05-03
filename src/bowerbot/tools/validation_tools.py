@@ -50,9 +50,31 @@ TOOLS: list[Tool] = [
         description=(
             "Package the current scene into a .usdz file for distribution. "
             "Call validate_scene first to ensure correctness. "
-            "Returns the path to the output .usdz file."
+            "If the user is shipping the .usdz to Apple consumer paths "
+            "(iOS Files / Safari / iMessage AR Quick Look, macOS Quick "
+            "Look, Vision Pro), pass for_apple_ar_quick_look=true so "
+            "BowerBot validates the strict Apple subset (PNG/JPEG only, "
+            "UsdPreviewSurface required, no UDIM, etc.) before packaging. "
+            "Default off — the standard USDZ output works for Omniverse, "
+            "Isaac Sim, Unreal, Unity, web viewers, and most other USD "
+            "consumers without restriction. Returns the path to the .usdz "
+            "and any Apple-validation issues if applicable."
         ),
-        parameters={"type": "object", "properties": {}},
+        parameters={
+            "type": "object",
+            "properties": {
+                "for_apple_ar_quick_look": {
+                    "type": "boolean",
+                    "description": (
+                        "If true, run Apple consumer USDZ validation "
+                        "(AR Quick Look subset) before packaging and "
+                        "refuse on errors. Ask the user about the target "
+                        "before flipping this on."
+                    ),
+                    "default": False,
+                },
+            },
+        },
     ),
 ]
 

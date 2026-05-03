@@ -9,7 +9,8 @@ import logging
 from typing import Any
 
 from bowerbot.state import SceneState
-from bowerbot.utils import geometry_utils, stage_utils
+from bowerbot.utils import asset_intake_utils, geometry_utils, stage_utils
+from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
 from bowerbot.utils.naming_utils import safe_file_name
 
 logger = logging.getLogger(__name__)
@@ -85,10 +86,26 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove an object from the scene by prim path."""
     prim_path = params["prim_path"]
-    success = stage_utils.remove_prim(state.stage, prim_path)
-    if not success:
-        msg = f"Failed to remove {prim_path}"
-        raise RuntimeError(msg)
+
+    nested = _parse_nested_contents_path(prim_path)
+    if nested is not None:
+        container_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
+        if container_dir is None:
+            msg = f"Failed to resolve container for nested prim {prim_path}"
+            raise RuntimeError(msg)
+        group, prim_name = nested
+        success = asset_intake_utils.remove_nested_asset_reference(
+            container_dir, group, prim_name,
+        )
+        if not success:
+            msg = f"Failed to remove nested {prim_path}"
+            raise RuntimeError(msg)
+        state.stage = stage_utils.open_stage(state.stage_path)
+    else:
+        success = stage_utils.remove_prim(state.stage, prim_path)
+        if not success:
+            msg = f"Failed to remove {prim_path}"
+            raise RuntimeError(msg)
 
     state.object_count = max(0, state.object_count - 1)
     state.touch_project()
@@ -97,6 +114,19 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "prim_path": prim_path,
         "message": f"Removed {prim_path}",
     }
+
+
+def _parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
+    """If *prim_path* is a nested-asset reference, return (group, prim_name)."""
+    marker = "/asset/contents/"
+    idx = prim_path.find(marker)
+    if idx < 0:
+        return None
+    suffix = prim_path[idx + len(marker):]
+    parts = suffix.split("/")
+    if len(parts) != 2 or not all(parts):
+        return None
+    return parts[0], parts[1]
 
 
 def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:

@@ -474,6 +474,214 @@ def test_place_asset_inside_succeeds_for_unique_container():
         assert result.success, f"Expected success for unique container: {result.error}"
 
 
+def test_move_asset_routes_nested_to_contents_layer():
+    """move_asset on a nested path writes to contents.usda, not scene.usda."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, project = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa = create_test_asset(source_dir, "sofa")
+        pillow = create_test_asset(source_dir, "pillow")
+
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "route_test"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(sofa),
+            "asset_name": "Sofa",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        sofa_prim = place.data["prim_path"]
+
+        nested = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset_file_path": str(pillow),
+            "asset_name": "Pillow",
+            "container_prim_path": sofa_prim,
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.5, "translate_z": 0.0,
+        }))
+        assert nested.success
+        nested_prim = nested.data["prim_path"]
+        assert "/asset/contents/Props/" in nested_prim
+
+        move = asyncio.run(exec_tool(state, "move_asset", {
+            "prim_path": nested_prim,
+            "translate_x": 0.0, "translate_y": 1.5, "translate_z": 0.0,
+        }))
+        assert move.success, f"move_asset failed: {move.error}"
+
+        scene_layer = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        assert scene_layer.GetPrimAtPath(Sdf.Path(nested_prim)) is None, (
+            "scene.usda should not author specs on nested paths"
+        )
+
+        sofa_dir = project.path / "assets" / "sofa"
+        contents_layer = Sdf.Layer.FindOrOpen(str(sofa_dir / "contents.usda"))
+        wrapper_spec = contents_layer.GetPrimAtPath(
+            Sdf.Path("/sofa/contents/Props/Pillow_02"),
+        )
+        assert wrapper_spec is not None, "Wrapper missing in contents.usda"
+
+        print("test_move_asset_routes_nested_to_contents_layer PASSED")
+
+
+def test_rename_prim_refuses_nested_path():
+    """rename_prim on a nested-contents path returns an error."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, _ = make_state(tmp_path)
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        sofa = create_test_asset(source_dir, "sofa")
+        pillow = create_test_asset(source_dir, "pillow")
+
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "rename_test"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(sofa),
+            "asset_name": "Sofa",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        sofa_prim = place.data["prim_path"]
+
+        nested = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset_file_path": str(pillow),
+            "asset_name": "Pillow",
+            "container_prim_path": sofa_prim,
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.5, "translate_z": 0.0,
+        }))
+        nested_prim = nested.data["prim_path"]
+
+        result = asyncio.run(exec_tool(state, "rename_prim", {
+            "old_path": nested_prim,
+            "new_path": nested_prim.replace("Pillow_02", "Pillow_99"),
+        }))
+        assert not result.success
+        assert "scene level" in result.error.lower()
+
+        print("test_rename_prim_refuses_nested_path PASSED")
+
+
+def _create_dirty_test_asset(directory: Path, name: str) -> Path:
+    """Create a USD asset with a non-identity root transform (Maya-style)."""
+    from pxr import Gf
+    path = directory / f"{name}.usda"
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    root = stage.DefinePrim(f"/{name}", "Xform")
+    stage.SetDefaultPrim(root)
+    UsdGeom.Xformable(root).AddTranslateOp().Set(Gf.Vec3d(5.0, 0.0, 4.0))
+    cube = UsdGeom.Cube.Define(stage, f"/{name}/Mesh")
+    cube.GetSizeAttr().Set(1.0)
+    stage.Save()
+    return path
+
+
+def test_place_asset_rejects_dirty_root_without_flag():
+    """place_asset on an unfrozen asset fails with a helpful message + rolls back."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, project = make_state(tmp_path)
+        dirty = _create_dirty_test_asset(tmp_path, "dirty_thing")
+
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "dirty_test"}))
+        result = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(dirty),
+            "asset_name": "Dirty",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert not result.success
+        assert "non-identity transforms" in result.error.lower()
+
+        target = project.path / "assets" / "dirty_thing"
+        assert not target.exists(), "Failed intake should roll back the copy"
+
+        print("test_place_asset_rejects_dirty_root_without_flag PASSED")
+
+
+def test_place_asset_bakes_with_fix_root_transforms_flag():
+    """place_asset with fix_root_transforms=True bakes; source untouched."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, project = make_state(tmp_path)
+        dirty = _create_dirty_test_asset(tmp_path, "dirty_thing")
+        source_size_before = dirty.stat().st_size
+
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "bake_test"}))
+        result = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(dirty),
+            "asset_name": "Dirty",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+            "fix_root_transforms": True,
+        }))
+        assert result.success, f"Expected success: {result.error}"
+
+        target_geo = project.path / "assets" / "dirty_thing" / "geo.usda"
+        assert target_geo.exists()
+        baked_stage = Usd.Stage.Open(str(target_geo))
+        baked_root = baked_stage.GetDefaultPrim()
+        assert UsdGeom.Xformable(baked_root).GetXformOpOrderAttr().Get() in (
+            None, [],
+        ), "Baked geo.usda should have no xform ops on root"
+
+        assert dirty.stat().st_size == source_size_before, (
+            "Source file should not be modified by bake"
+        )
+
+        print("test_place_asset_bakes_with_fix_root_transforms_flag PASSED")
+
+
+def test_freeze_asset_batch_freezes_every_dirty_asset():
+    """freeze_asset with no name freezes every dirty asset in the project."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, project = make_state(tmp_path)
+        d1 = _create_dirty_test_asset(tmp_path, "dirty_a")
+        d2 = _create_dirty_test_asset(tmp_path, "dirty_b")
+        clean = create_test_asset(tmp_path, "clean_c")
+
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "batch_test"}))
+        for path, name, group in [
+            (d1, "DirtyA", "Furniture"),
+            (d2, "DirtyB", "Props"),
+            (clean, "CleanC", "Lighting"),
+        ]:
+            asyncio.run(exec_tool(state, "place_asset", {
+                "asset_file_path": str(path),
+                "asset_name": name,
+                "group": group,
+                "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+                "fix_root_transforms": True,
+            }))
+
+        re_dirty = project.path / "assets" / "dirty_a" / "geo.usda"
+        layer = Usd.Stage.Open(str(re_dirty))
+        prim = layer.GetDefaultPrim()
+        UsdGeom.Xformable(prim).AddTranslateOp().Set(__import__("pxr").Gf.Vec3d(1, 0, 0))
+        layer.Save()
+
+        result = asyncio.run(exec_tool(state, "freeze_asset", {}))
+        assert result.success, f"Batch freeze failed: {result.error}"
+        names = {r["name"] for r in result.data["results"]}
+        assert {"dirty_a", "dirty_b", "clean_c"}.issubset(names)
+
+        baked_a = next(
+            r for r in result.data["results"] if r["name"] == "dirty_a"
+        )
+        assert baked_a["baked"] is True
+        baked_c = next(
+            r for r in result.data["results"] if r["name"] == "clean_c"
+        )
+        assert baked_c["baked"] is False
+
+        print("test_freeze_asset_batch_freezes_every_dirty_asset PASSED")
+
+
 if __name__ == "__main__":
     test_create_stage()
     test_place_asset()

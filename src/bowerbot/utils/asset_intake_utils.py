@@ -177,6 +177,7 @@ def ensure_aswf_compliance(
     geometry_file: Path,
     *,
     fix_root_prim: bool = False,
+    fix_root_transforms: bool = False,
 ) -> None:
     """Validate and (optionally) repair a geometry file for ASWF compliance."""
     layer = Sdf.Layer.FindOrOpen(str(geometry_file))
@@ -235,6 +236,117 @@ def ensure_aswf_compliance(
             geometry_file.name,
         )
 
+    if not _root_transform_is_identity(geometry_file):
+        if not fix_root_transforms:
+            msg = (
+                f"Asset '{geometry_file.name}' has non-identity transforms "
+                f"baked on its root prim (translate/rotate/scale/pivot from "
+                f"an unfrozen DCC export). Production USD assets must have "
+                f"identity root transforms or nested placement breaks. Ask "
+                f"the user if they want BowerBot to bake the transforms into "
+                f"vertex data automatically — this only modifies the project "
+                f"copy, the user's original source file is untouched. If they "
+                f"confirm, call place_asset again with fix_root_transforms=true. "
+                f"Alternatively, advise them to re-export from their DCC with "
+                f"transforms frozen ('Bake Transforms' in Maya USD export, "
+                f"'Pre-freeze' in Houdini)."
+            )
+            raise ValueError(msg)
+        bake_root_transforms(geometry_file)
+        logger.info("Baked root transforms in %s", geometry_file.name)
+
+
+def bake_root_transforms(geometry_file: Path) -> bool:
+    """Bake the root prim's local transform into descendant geometry."""
+    stage = Usd.Stage.Open(str(geometry_file))
+    if stage is None:
+        return False
+
+    root_prim = stage.GetDefaultPrim()
+    if not root_prim or not root_prim.IsValid():
+        return False
+
+    xformable = UsdGeom.Xformable(root_prim)
+    if not xformable:
+        return False
+
+    matrix = xformable.GetLocalTransformation()
+    if _matrix_is_identity(matrix):
+        return False
+
+    normal_matrix = matrix.GetInverse().GetTranspose()
+
+    for prim in Usd.PrimRange(root_prim):
+        pb = UsdGeom.PointBased(prim)
+        if not pb:
+            continue
+        _bake_into_point_based(pb, matrix, normal_matrix)
+
+    xformable.ClearXformOpOrder()
+    for prop_name in list(root_prim.GetPropertyNames()):
+        if prop_name.startswith("xformOp:") or prop_name == "xformOpOrder":
+            root_prim.RemoveProperty(prop_name)
+
+    stage.Save()
+    return True
+
+
+def _root_transform_is_identity(geometry_file: Path) -> bool:
+    """Return True if the file's defaultPrim has identity local transform."""
+    stage = Usd.Stage.Open(str(geometry_file))
+    if stage is None:
+        return True
+    prim = stage.GetDefaultPrim()
+    if not prim or not prim.IsValid():
+        return True
+    xformable = UsdGeom.Xformable(prim)
+    if not xformable:
+        return True
+    return _matrix_is_identity(xformable.GetLocalTransformation())
+
+
+def _matrix_is_identity(matrix: Gf.Matrix4d, epsilon: float = 1e-5) -> bool:
+    """Return True if *matrix* is the identity matrix within *epsilon*."""
+    for i in range(4):
+        for j in range(4):
+            expected = 1.0 if i == j else 0.0
+            if abs(matrix[i, j] - expected) > epsilon:
+                return False
+    return True
+
+
+def _bake_into_point_based(
+    pb: UsdGeom.PointBased,
+    matrix: Gf.Matrix4d,
+    normal_matrix: Gf.Matrix4d,
+) -> None:
+    """Apply *matrix* to a PointBased prim's points / normals / extent."""
+    points_attr = pb.GetPointsAttr()
+    points = points_attr.Get()
+    if points is None or len(points) == 0:
+        return
+
+    new_points = [matrix.Transform(p) for p in points]
+    points_attr.Set(new_points)
+
+    normals_attr = pb.GetNormalsAttr()
+    normals = normals_attr.Get()
+    if normals is not None and len(normals) > 0:
+        new_normals = [
+            normal_matrix.TransformDir(n).GetNormalized() for n in normals
+        ]
+        normals_attr.Set(new_normals)
+
+    extent_attr = pb.GetExtentAttr()
+    if extent_attr.HasAuthoredValue():
+        xs = [p[0] for p in new_points]
+        ys = [p[1] for p in new_points]
+        zs = [p[2] for p in new_points]
+        extent_attr.Set([
+            Gf.Vec3f(min(xs), min(ys), min(zs)),
+            Gf.Vec3f(max(xs), max(ys), max(zs)),
+        ])
+
 
 # ── Nested references ──
 
@@ -265,9 +377,8 @@ def add_nested_asset_reference(
         msg = f"Cannot open contents layer: {contents_path}"
         raise RuntimeError(msg)
 
-    ref_prim_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
-    ref_prim = UsdGeom.Xform.Define(stage, ref_prim_path)
-    ref_prim.GetPrim().GetReferences().AddReference(ref_asset_path)
+    wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
+    wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
     container_mpu = get_mpu(container_dir)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
@@ -277,16 +388,11 @@ def add_nested_asset_reference(
         read_asset_mpu_from_file(ref_full_path)
         if ref_full_path.exists() else container_mpu
     )
-    compensation = (
+    unit_scale = (
         nested_mpu / container_mpu if container_mpu > 0 else 1.0
     )
-    final_scale = (
-        transform.scale[0] * compensation,
-        transform.scale[1] * compensation,
-        transform.scale[2] * compensation,
-    )
 
-    xformable = UsdGeom.Xformable(ref_prim)
+    xformable = UsdGeom.Xformable(wrapper)
     xformable.ClearXformOpOrder()
     xformable.AddTranslateOp().Set(
         Gf.Vec3d(
@@ -297,8 +403,18 @@ def add_nested_asset_reference(
     )
     if any(v != 0.0 for v in transform.rotate):
         xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
-    if final_scale != (1.0, 1.0, 1.0):
-        xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+
+    if abs(unit_scale - 1.0) > 1e-6:
+        xformable.AddScaleOp().Set(
+            Gf.Vec3f(unit_scale, unit_scale, unit_scale),
+        )
+    else:
+        sx, sy, sz = transform.scale
+        if any(v != 1.0 for v in (sx, sy, sz)):
+            xformable.AddScaleOp().Set(Gf.Vec3f(sx, sy, sz))
+
+    asset_inner = stage.DefinePrim(f"{wrapper_path}/asset", "Xform")
+    asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()
     ensure_root_reference(container_dir, ASWFLayerNames.CONTENTS)
@@ -307,7 +423,59 @@ def add_nested_asset_reference(
         "Added nested asset %s -> %s in %s/%s",
         prim_name, ref_asset_path, container_dir.name, ASWFLayerNames.CONTENTS,
     )
-    return ref_prim_path
+    return wrapper_path
+
+
+def update_nested_asset_transform(
+    container_dir: Path,
+    group: str,
+    prim_name: str,
+    translate: tuple[float, float, float],
+    rotate: tuple[float, float, float],
+) -> bool:
+    """Update translate/rotate on a nested-asset wrapper in ``contents.usda``."""
+    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    if not contents_path.exists():
+        return False
+
+    default_prim_name = resolve_default_prim_name(container_dir)
+    wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
+
+    stage = Usd.Stage.Open(str(contents_path))
+    if stage is None:
+        return False
+    wrapper = stage.GetPrimAtPath(wrapper_path)
+    if not wrapper or not wrapper.IsValid():
+        return False
+
+    container_mpu = get_mpu(container_dir)
+    factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
+
+    xformable = UsdGeom.Xformable(wrapper)
+    existing_scale_op = next(
+        (op for op in xformable.GetOrderedXformOps()
+         if op.GetOpType() == UsdGeom.XformOp.TypeScale),
+        None,
+    )
+    existing_scale = (
+        existing_scale_op.Get() if existing_scale_op is not None else None
+    )
+
+    xformable.ClearXformOpOrder()
+    xformable.AddTranslateOp().Set(
+        Gf.Vec3d(translate[0] * factor, translate[1] * factor, translate[2] * factor),
+    )
+    if any(v != 0.0 for v in rotate):
+        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
+    if existing_scale is not None:
+        xformable.AddScaleOp().Set(existing_scale)
+
+    stage.Save()
+    logger.info(
+        "Updated nested transform %s in %s/%s",
+        prim_name, container_dir.name, ASWFLayerNames.CONTENTS,
+    )
+    return True
 
 
 def remove_nested_asset_reference(

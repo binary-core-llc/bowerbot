@@ -58,6 +58,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             asset_path, assets_dir,
             library_dir=state.library_dir,
             fix_root_prim=params.get("fix_root_prim", False),
+            fix_root_transforms=params.get("fix_root_transforms", False),
         )
     except (ValueError, RuntimeError):
         state.object_count -= 1
@@ -137,6 +138,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         asset_path, assets_dir,
         library_dir=state.library_dir,
         fix_root_prim=params.get("fix_root_prim", False),
+        fix_root_transforms=params.get("fix_root_transforms", False),
     )
 
     mode = PositionMode(
@@ -162,7 +164,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
     try:
-        nested_prim_path = asset_intake_utils.add_nested_asset_reference(
+        asset_intake_utils.add_nested_asset_reference(
             container_dir=container_dir,
             group=group,
             prim_name=prim_name,
@@ -179,10 +181,12 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     state.stage = stage_utils.open_stage(state.stage_path)
     state.touch_project()
 
-    composed_path = f"{container_prim_path}/asset{nested_prim_path}"
+    composed_path = (
+        f"{container_prim_path}/asset/contents/{group}/{prim_name}"
+    )
     logger.info(
         "Placed %s inside %s at %s",
-        asset_name, container_dir.name, nested_prim_path,
+        asset_name, container_dir.name, composed_path,
     )
     return {
         "prim_path": composed_path,
@@ -290,6 +294,57 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[s
     }
 
 
+# ── freeze_asset ──
+
+
+def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Bake project asset root transforms into vertex data (one or all)."""
+    assets_dir = state.resolve_assets_dir()
+    name = params.get("name")
+
+    if name:
+        results = [_freeze_one(assets_dir, name)]
+    else:
+        results = [
+            _freeze_one(assets_dir, entry.name)
+            for entry in sorted(assets_dir.iterdir())
+            if entry.is_dir() and (entry / ASWFLayerNames.GEO).exists()
+        ]
+
+    state.touch_project()
+    if state.stage is not None:
+        state.stage = stage_utils.open_stage(state.stage_path)
+
+    baked_count = sum(1 for r in results if r["baked"])
+    logger.info(
+        "Froze %d/%d asset(s) in project", baked_count, len(results),
+    )
+    return {
+        "results": results,
+        "baked_count": baked_count,
+        "total": len(results),
+        "message": (
+            f"Baked transforms in {baked_count} of {len(results)} asset(s)."
+        ),
+    }
+
+
+def _freeze_one(assets_dir: Path, name: str) -> dict[str, Any]:
+    """Bake root transforms in a single asset folder."""
+    asset_dir = assets_dir / name
+    if not asset_dir.exists() or not asset_dir.is_dir():
+        msg = f"Asset folder not found: {name}"
+        raise ValueError(msg)
+
+    geo_path = asset_dir / ASWFLayerNames.GEO
+    if not geo_path.exists():
+        msg = f"No {ASWFLayerNames.GEO} in asset folder '{name}'"
+        raise ValueError(msg)
+
+    baked = asset_intake_utils.bake_root_transforms(geo_path)
+    return {"name": name, "baked": baked}
+
+
 # ── delete_project_asset ──
 
 
@@ -371,6 +426,7 @@ def prepare_asset(
     *,
     library_dir: Path | None,
     fix_root_prim: bool = False,
+    fix_root_transforms: bool = False,
 ) -> IntakeReport:
     """Route an input file to USDZ / library-package / loose-file intake."""
     if asset_path.suffix.lower() == ".usdz":
@@ -379,9 +435,13 @@ def prepare_asset(
     if library_dir is not None:
         package_dir = library_utils.find_package_for(asset_path, library_dir)
         if package_dir is not None:
-            return asset_intake_utils.intake_folder(package_dir, assets_dir)
-
-    asset_intake_utils.ensure_aswf_compliance(asset_path, fix_root_prim=fix_root_prim)
+            report = asset_intake_utils.intake_folder(package_dir, assets_dir)
+            _validate_intake(
+                report, assets_dir,
+                fix_root_prim=fix_root_prim,
+                fix_root_transforms=fix_root_transforms,
+            )
+            return report
 
     folder_name = asset_path.stem
     root_file = asset_intake_utils.create_asset_folder(
@@ -389,7 +449,7 @@ def prepare_asset(
         asset_name=folder_name,
         geometry_file=asset_path,
     )
-    return IntakeReport(
+    report = IntakeReport(
         scene_ref_path=f"assets/{folder_name}/{root_file.name}",
         asset_folder_name=folder_name,
         root_original_name=asset_path.name,
@@ -397,6 +457,36 @@ def prepare_asset(
         was_renamed=asset_path.name != root_file.name,
         files_copied=1,
     )
+    _validate_intake(
+        report, assets_dir,
+        fix_root_prim=fix_root_prim,
+        fix_root_transforms=fix_root_transforms,
+    )
+    return report
+
+
+def _validate_intake(
+    report: IntakeReport,
+    assets_dir: Path,
+    *,
+    fix_root_prim: bool,
+    fix_root_transforms: bool,
+) -> None:
+    """Validate the intaken asset's geo.usda; rollback target on failure."""
+    target_folder = assets_dir / report.asset_folder_name
+    geo_path = target_folder / ASWFLayerNames.GEO
+    if not geo_path.exists():
+        return
+    try:
+        asset_intake_utils.ensure_aswf_compliance(
+            geo_path,
+            fix_root_prim=fix_root_prim,
+            fix_root_transforms=fix_root_transforms,
+        )
+    except (ValueError, RuntimeError):
+        if target_folder.exists():
+            shutil.rmtree(target_folder, ignore_errors=True)
+        raise
 
 
 def _compute_ref_asset_path(

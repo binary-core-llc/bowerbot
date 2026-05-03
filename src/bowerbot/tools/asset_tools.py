@@ -69,6 +69,17 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> ToolRe
     return ToolResult(success=True, data=data)
 
 
+def freeze_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Bake an existing project asset's root transforms into vertex data."""
+    if (err := require_project(state)):
+        return err
+    try:
+        data = asset_service.freeze_asset(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
 def delete_project_texture(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete a texture from the project's ``textures/`` dir, if unreferenced."""
     if (err := require_project(state)):
@@ -134,6 +145,17 @@ TOOLS: list[Tool] = [
                         "prim under an Xform to comply with ASWF "
                         "guidelines. Only use when the user confirms "
                         "they want the fix."
+                    ),
+                    "default": False,
+                },
+                "fix_root_transforms": {
+                    "type": "boolean",
+                    "description": (
+                        "If true, bake non-identity root transforms "
+                        "(translate/rotate/scale/pivot from an unfrozen "
+                        "DCC export) into vertex data on intake. Only use "
+                        "when the user confirms they want the fix; "
+                        "otherwise re-export with transforms frozen."
                     ),
                     "default": False,
                 },
@@ -223,6 +245,14 @@ TOOLS: list[Tool] = [
                     ),
                     "default": False,
                 },
+                "fix_root_transforms": {
+                    "type": "boolean",
+                    "description": (
+                        "If true, bake non-identity root transforms into "
+                        "vertex data on intake (Maya/Houdini freeze)."
+                    ),
+                    "default": False,
+                },
                 "confirm_shared_modification": {
                     "type": "boolean",
                     "description": (
@@ -306,6 +336,31 @@ TOOLS: list[Tool] = [
         },
     ),
     Tool(
+        name="freeze_asset",
+        description=(
+            "Bake project assets' root transforms (translate/rotate/scale/"
+            "pivot) into vertex data, leaving the root prim with identity "
+            "transforms. Use this to clean up assets imported from DCC "
+            "exports without 'Bake Transforms' enabled — required for "
+            "nested placement to work correctly. If 'name' is provided, "
+            "freezes that one asset; if omitted, freezes every asset in "
+            "the project's assets/ directory."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": (
+                        "Optional: name of a single asset folder to "
+                        "freeze (e.g. 'single_sofa'). If omitted, every "
+                        "asset folder in the project is frozen."
+                    ),
+                },
+            },
+        },
+    ),
+    Tool(
         name="cleanup_unused_contents",
         description=(
             "Drop empty contents.usda layers from asset folders. Use this "
@@ -341,4 +396,5 @@ HANDLERS = {
     "delete_project_asset": delete_project_asset,
     "delete_project_texture": delete_project_texture,
     "cleanup_unused_contents": cleanup_unused_contents,
+    "freeze_asset": freeze_asset,
 }

@@ -59,7 +59,7 @@ Think of it as:
 
 ### Pipeline Quality Built In
 
-BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (non-canonical folder names, external dependencies) are auto-normalized on intake so the project copy is always self-contained. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
+BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (non-canonical folder names, external dependencies) are auto-normalized on intake so the project copy is always self-contained. Production-required invariants are validated at intake too: assets with non-identity root transforms (Maya pivot dance, unfrozen DCC exports) are refused with a clear message and the option to bake transforms into vertex data on the project copy without touching the source. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
 
 > **"The cheapest bug to fix is the one you catch before it enters the pipeline."**
 
@@ -299,6 +299,8 @@ BowerBot's core tools for building USD scenes:
 | `remove_material` | Clear material binding from a prim |
 | `list_materials` | Show all materials and their bindings |
 | `cleanup_unused_materials` | Prune material definitions no prim binds to (per asset or project-wide) |
+| `cleanup_unused_contents` | Prune empty `contents.usda` scopes left after removing nested assets |
+| `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data, per asset or project-wide |
 | `list_prim_children` | Discover mesh parts inside a referenced asset |
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (checks references first) |
@@ -615,6 +617,8 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 - References (not sublayers) per ASWF guidelines, for predictable opinion strength
 - Materials inline in `mtl.usda`, lights inline in `lgt.usda`, nested references in `contents.usda`
 - Automatic `metersPerUnit` conversion across composition boundaries
+- Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or baked into vertex data with explicit user consent), so nested placements compose predictably
+- Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
 
 ---
 

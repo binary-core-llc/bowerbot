@@ -1207,3 +1207,144 @@ def test_count_scene_refs_to_asset_dir_returns_zero_when_unreferenced():
         scene_stage.Save()
         stage = Usd.Stage.Open(str(scene_path))
         assert stage_utils.count_scene_refs_to_asset_dir(stage, container_dir) == 0
+
+
+def test_add_nested_asset_reference_uses_wrapper_asset_convention():
+    """Nested placement mirrors scene-level: wrapper holds xform, /asset holds ref."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        assets_dir = tmp_path / "assets"
+        assets_dir.mkdir()
+
+        container_root = create_aswf_folder(assets_dir, "sofa")
+        nested_root = create_aswf_folder(assets_dir, "pillow")
+        container_dir = container_root.parent
+
+        wrapper_path = asset_intake_utils.add_nested_asset_reference(
+            container_dir=container_dir,
+            group="Props",
+            prim_name="Pillow_01",
+            ref_asset_path=f"../{nested_root.parent.name}/{nested_root.name}",
+            transform=TransformParams(translate=(1.0, 0.0, 2.0)),
+        )
+
+        contents_path = container_dir / ASWFLayerNames.CONTENTS
+        layer = Sdf.Layer.FindOrOpen(str(contents_path))
+
+        wrapper_spec = layer.GetPrimAtPath(Sdf.Path(wrapper_path))
+        assert wrapper_spec is not None, "Wrapper prim missing"
+        assert not wrapper_spec.hasReferences, (
+            "Wrapper should not carry the reference"
+        )
+
+        asset_child = layer.GetPrimAtPath(Sdf.Path(f"{wrapper_path}/asset"))
+        assert asset_child is not None, "Inner /asset child missing"
+        assert asset_child.hasReferences, (
+            "Inner /asset child must carry the reference arc"
+        )
+
+
+def _make_geo_with_root_xform(
+    geo_path: Path,
+    asset_name: str,
+    *,
+    translate: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    rotate_xyz: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    scale: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    points: tuple[tuple[float, float, float], ...] = (
+        (0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+    ),
+) -> None:
+    """Author a geo.usda with the given root-prim xform ops + mesh points."""
+    from pxr import Gf
+    stage = Usd.Stage.CreateNew(str(geo_path))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    root = stage.DefinePrim(f"/{asset_name}", "Xform")
+    stage.SetDefaultPrim(root)
+    xf = UsdGeom.Xformable(root)
+    if translate != (0.0, 0.0, 0.0):
+        xf.AddTranslateOp().Set(Gf.Vec3d(*translate))
+    if rotate_xyz != (0.0, 0.0, 0.0):
+        xf.AddRotateXYZOp().Set(Gf.Vec3f(*rotate_xyz))
+    if scale != (1.0, 1.0, 1.0):
+        xf.AddScaleOp().Set(Gf.Vec3f(*scale))
+    mesh = UsdGeom.Mesh.Define(stage, f"/{asset_name}/mesh")
+    mesh.GetPointsAttr().Set([Gf.Vec3f(*p) for p in points])
+    stage.Save()
+
+
+def test_bake_root_transforms_translates_points():
+    """bake_root_transforms shifts mesh points by the root translate op."""
+    with tempfile.TemporaryDirectory() as tmp:
+        geo_path = Path(tmp) / "geo.usda"
+        _make_geo_with_root_xform(
+            geo_path, "thing", translate=(5.0, 0.0, 4.0),
+        )
+
+        baked = asset_intake_utils.bake_root_transforms(geo_path)
+        assert baked is True
+
+        stage = Usd.Stage.Open(str(geo_path))
+        mesh = UsdGeom.Mesh(stage.GetPrimAtPath("/thing/mesh"))
+        new_points = list(mesh.GetPointsAttr().Get())
+        assert abs(new_points[0][0] - 5.0) < 1e-5
+        assert abs(new_points[0][2] - 4.0) < 1e-5
+        assert abs(new_points[1][0] - 6.0) < 1e-5
+
+        root = stage.GetDefaultPrim()
+        assert UsdGeom.Xformable(root).GetXformOpOrderAttr().Get() in (None, [])
+        assert "xformOp:translate" not in root.GetPropertyNames()
+
+
+def test_bake_root_transforms_scales_points():
+    """bake_root_transforms applies scale to mesh points."""
+    with tempfile.TemporaryDirectory() as tmp:
+        geo_path = Path(tmp) / "geo.usda"
+        _make_geo_with_root_xform(
+            geo_path, "thing", scale=(0.1, 0.1, 0.1),
+        )
+
+        asset_intake_utils.bake_root_transforms(geo_path)
+
+        stage = Usd.Stage.Open(str(geo_path))
+        mesh = UsdGeom.Mesh(stage.GetPrimAtPath("/thing/mesh"))
+        points = list(mesh.GetPointsAttr().Get())
+        assert abs(points[1][0] - 0.1) < 1e-5
+
+
+def test_bake_root_transforms_skips_identity():
+    """bake_root_transforms returns False when root is already identity."""
+    with tempfile.TemporaryDirectory() as tmp:
+        geo_path = Path(tmp) / "geo.usda"
+        _make_geo_with_root_xform(geo_path, "thing")
+
+        baked = asset_intake_utils.bake_root_transforms(geo_path)
+        assert baked is False
+
+
+def test_ensure_aswf_compliance_rejects_dirty_root_without_flag():
+    """ensure_aswf_compliance raises when root has non-identity transforms."""
+    import pytest
+    with tempfile.TemporaryDirectory() as tmp:
+        geo_path = Path(tmp) / "geo.usda"
+        _make_geo_with_root_xform(geo_path, "thing", translate=(5.0, 0.0, 0.0))
+
+        with pytest.raises(ValueError, match="non-identity transforms"):
+            asset_intake_utils.ensure_aswf_compliance(geo_path)
+
+
+def test_ensure_aswf_compliance_bakes_when_flag_set():
+    """ensure_aswf_compliance bakes when fix_root_transforms=True."""
+    with tempfile.TemporaryDirectory() as tmp:
+        geo_path = Path(tmp) / "geo.usda"
+        _make_geo_with_root_xform(geo_path, "thing", translate=(5.0, 0.0, 0.0))
+
+        asset_intake_utils.ensure_aswf_compliance(
+            geo_path, fix_root_transforms=True,
+        )
+
+        stage = Usd.Stage.Open(str(geo_path))
+        mesh = UsdGeom.Mesh(stage.GetPrimAtPath("/thing/mesh"))
+        points = list(mesh.GetPointsAttr().Get())
+        assert abs(points[0][0] - 5.0) < 1e-5

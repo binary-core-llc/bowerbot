@@ -89,7 +89,7 @@ def create_aswf_folder(parent_dir: Path, name: str) -> Path:
 
 
 def test_create_asset_folder():
-    """create_asset_folder produces root + geo.usd."""
+    """create_asset_folder produces root + geo.usd; geo composed via payload."""
     with tempfile.TemporaryDirectory() as tmp:
         source_dir = Path(tmp) / "source"
         source_dir.mkdir()
@@ -110,18 +110,80 @@ def test_create_asset_folder():
         assert (root.parent / "geo.usda").exists()
         assert not (root.parent / "mtl.usda").exists()
 
-        # Root should reference geo.usd on the defaultPrim
         stage = Usd.Stage.Open(str(root))
         default_prim = stage.GetDefaultPrim()
         assert default_prim is not None
-        refs = default_prim.GetMetadata("references")
+
         ref_paths = []
+        refs = default_prim.GetMetadata("references")
         if refs:
             for ref_list in (refs.prependedItems, refs.appendedItems, refs.explicitItems):
                 if ref_list:
                     ref_paths.extend(r.assetPath for r in ref_list)
-        assert "./geo.usda" in ref_paths
+        assert "./geo.usda" not in ref_paths
         assert "./mtl.usda" not in ref_paths
+
+        payload_paths = []
+        payloads = default_prim.GetMetadata("payload")
+        if payloads:
+            for pl_list in (
+                payloads.prependedItems,
+                payloads.appendedItems,
+                payloads.explicitItems,
+            ):
+                if pl_list:
+                    payload_paths.extend(p.assetPath for p in pl_list)
+        assert "./geo.usda" in payload_paths
+
+
+def test_intake_folder_normalises_geo_to_payload():
+    """Folder intake rewrites geo as a payload arc on the canonical root."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        source = tmp_path / "couch"
+        source.mkdir()
+
+        geo_path = source / "geo.usda"
+        geo_stage = Usd.Stage.CreateNew(str(geo_path))
+        UsdGeom.SetStageMetersPerUnit(geo_stage, 1.0)
+        UsdGeom.SetStageUpAxis(geo_stage, UsdGeom.Tokens.y)
+        geo_root = geo_stage.DefinePrim("/couch", "Xform")
+        geo_stage.SetDefaultPrim(geo_root)
+        UsdGeom.Cube.Define(geo_stage, "/couch/Mesh")
+        geo_stage.Save()
+
+        root_path = source / "couch.usda"
+        root_stage = Usd.Stage.CreateNew(str(root_path))
+        UsdGeom.SetStageMetersPerUnit(root_stage, 1.0)
+        UsdGeom.SetStageUpAxis(root_stage, UsdGeom.Tokens.y)
+        root_prim = root_stage.DefinePrim("/couch", "Xform")
+        root_stage.SetDefaultPrim(root_prim)
+        root_prim.GetReferences().AddReference("./geo.usda")
+        root_stage.Save()
+
+        assets_dir = tmp_path / "project_assets"
+        assets_dir.mkdir()
+        report = asset_intake_utils.intake_folder(source, assets_dir)
+
+        canonical = assets_dir / report.asset_folder_name / report.root_canonical_name
+        composed = Usd.Stage.Open(str(canonical))
+        default_prim = composed.GetDefaultPrim()
+
+        ref_paths = []
+        refs = default_prim.GetMetadata("references")
+        if refs:
+            for rl in (refs.prependedItems, refs.appendedItems, refs.explicitItems):
+                if rl:
+                    ref_paths.extend(r.assetPath for r in rl)
+        assert "./geo.usda" not in ref_paths
+
+        payload_paths = []
+        payloads = default_prim.GetMetadata("payload")
+        if payloads:
+            for pl in (payloads.prependedItems, payloads.appendedItems, payloads.explicitItems):
+                if pl:
+                    payload_paths.extend(p.assetPath for p in pl)
+        assert "./geo.usda" in payload_paths
 
 
 def test_create_asset_folder_sets_kind_and_asset_info():
@@ -515,17 +577,28 @@ def test_remove_material_binding():
         # mtl.usd should be deleted (no materials left)
         assert not (root.parent / "mtl.usda").exists()
 
-        # Root should no longer reference mtl.usd
         stage = Usd.Stage.Open(str(root))
         default_prim = stage.GetDefaultPrim()
-        refs = default_prim.GetMetadata("references")
+
         ref_paths = []
+        refs = default_prim.GetMetadata("references")
         if refs:
             for ref_list in (refs.prependedItems, refs.appendedItems, refs.explicitItems):
                 if ref_list:
                     ref_paths.extend(r.assetPath for r in ref_list)
         assert "./mtl.usda" not in ref_paths
-        assert "./geo.usda" in ref_paths
+
+        payload_paths = []
+        payloads = default_prim.GetMetadata("payload")
+        if payloads:
+            for pl_list in (
+                payloads.prependedItems,
+                payloads.appendedItems,
+                payloads.explicitItems,
+            ):
+                if pl_list:
+                    payload_paths.extend(p.assetPath for p in pl_list)
+        assert "./geo.usda" in payload_paths
 
 
 # ── material_service: List Materials ─

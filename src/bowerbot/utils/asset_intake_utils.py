@@ -31,6 +31,7 @@ from bowerbot.utils.asset_folder_utils import (
     ensure_root_reference,
     read_asset_mpu_from_file,
     read_stage_metadata,
+    rebuild_root_references,
     remove_empty_layer,
     resolve_default_prim_name,
 )
@@ -108,6 +109,7 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
         )
 
         _normalize_root_metadata(canonical_root, target_folder.name)
+        rebuild_root_references(target_folder)
         warnings = _validate_self_contained(canonical_root, target_folder)
     except Exception:
         shutil.rmtree(target_folder, ignore_errors=True)
@@ -802,7 +804,7 @@ def _create_root_file(
 
     root_prim = stage.DefinePrim(f"/{default_prim_name}", "Xform")
     stage.SetDefaultPrim(root_prim)
-    root_prim.GetReferences().AddReference(f"./{ASWFLayerNames.GEO}")
+    root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
 
     apply_aswf_root_metadata(
         root_prim,

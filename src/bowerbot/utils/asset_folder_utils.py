@@ -173,7 +173,7 @@ def remove_empty_layer(
 
 
 def rebuild_root_references(asset_dir: Path) -> None:
-    """Rebuild the root file's references from existing layers."""
+    """Rebuild root composition arcs: geo via payload, others via references."""
     root_file = find_root_file(asset_dir)
     if root_file is None:
         return
@@ -187,12 +187,16 @@ def rebuild_root_references(asset_dir: Path) -> None:
         return
 
     root_prim.GetReferences().ClearReferences()
+    root_prim.GetPayloads().ClearPayloads()
+
+    geo_path = asset_dir / ASWFLayerNames.GEO
+    if geo_path.exists():
+        root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
 
     for layer_file in (
         ASWFLayerNames.CONTENTS,
         ASWFLayerNames.LGT,
         ASWFLayerNames.MTL,
-        ASWFLayerNames.GEO,
     ):
         if (asset_dir / layer_file).exists():
             root_prim.GetReferences().AddReference(f"./{layer_file}")

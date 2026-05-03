@@ -16,7 +16,11 @@ from bowerbot.schemas.assets import (
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.lights import LightParams, LightType
-from bowerbot.schemas.materials import MaterialXShaders, ProceduralMaterialParams
+from bowerbot.schemas.materials import (
+    MaterialXShaders,
+    PreviewSurfaceShader,
+    ProceduralMaterialParams,
+)
 from bowerbot.schemas.textures import HDRIFormat, ImageFormat, TextureCategory
 from bowerbot.schemas.transforms import (
     PlacementCategory,
@@ -41,6 +45,7 @@ __all__ = [
     "MaterialXShaders",
     "PlacementCategory",
     "PositionMode",
+    "PreviewSurfaceShader",
     "ProceduralMaterialParams",
     "SceneObject",
     "Severity",

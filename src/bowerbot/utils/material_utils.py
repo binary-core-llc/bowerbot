@@ -13,6 +13,7 @@ from pxr import Gf, Sdf, Usd, UsdShade
 from bowerbot.schemas import (
     ASWFLayerNames,
     MaterialXShaders,
+    PreviewSurfaceShader,
     ProceduralMaterialParams,
 )
 from bowerbot.utils.asset_folder_utils import (
@@ -112,35 +113,10 @@ def create_procedural_material_in_folder(
         raise RuntimeError(msg)
 
     mat_prim_path = f"/{default_prim_name}/mtl/{params.material_name}"
-    shader_prim_path = (
-        f"{mat_prim_path}/{MaterialXShaders.STANDARD_SURFACE_PRIM}"
-    )
-
     material = UsdShade.Material.Define(stage, mat_prim_path)
-    shader = UsdShade.Shader.Define(stage, shader_prim_path)
 
-    shader.CreateIdAttr(MaterialXShaders.STANDARD_SURFACE)
-    shader.CreateInput(
-        "base_color", Sdf.ValueTypeNames.Color3f,
-    ).Set(Gf.Vec3f(*params.base_color))
-    shader.CreateInput(
-        "metalness", Sdf.ValueTypeNames.Float,
-    ).Set(params.metalness)
-    shader.CreateInput(
-        "specular_roughness", Sdf.ValueTypeNames.Float,
-    ).Set(params.roughness)
-
-    if params.opacity < 1.0:
-        shader.CreateInput(
-            "opacity", Sdf.ValueTypeNames.Float,
-        ).Set(params.opacity)
-
-    surface_output = shader.CreateOutput(
-        "out", Sdf.ValueTypeNames.Token,
-    )
-    material.CreateSurfaceOutput(
-        MaterialXShaders.OUTPUT_QUALIFIER,
-    ).ConnectToSource(surface_output)
+    _author_materialx_standard_surface(stage, mat_prim_path, material, params)
+    _author_usd_preview_surface(stage, mat_prim_path, material, params)
 
     local_prim_path = to_layer_local_path(prim_path, default_prim_name)
     target_prim = stage.OverridePrim(local_prim_path)
@@ -154,6 +130,64 @@ def create_procedural_material_in_folder(
         mat_prim_path, prim_path, asset_dir.name,
     )
     return mat_prim_path
+
+
+def _author_materialx_standard_surface(
+    stage: Usd.Stage,
+    mat_prim_path: str,
+    material: UsdShade.Material,
+    params: ProceduralMaterialParams,
+) -> None:
+    """Author the MaterialX ``standard_surface`` branch on *material*."""
+    shader_path = f"{mat_prim_path}/{MaterialXShaders.STANDARD_SURFACE_PRIM}"
+    shader = UsdShade.Shader.Define(stage, shader_path)
+    shader.CreateIdAttr(MaterialXShaders.STANDARD_SURFACE)
+    shader.CreateInput(
+        "base_color", Sdf.ValueTypeNames.Color3f,
+    ).Set(Gf.Vec3f(*params.base_color))
+    shader.CreateInput(
+        "metalness", Sdf.ValueTypeNames.Float,
+    ).Set(params.metalness)
+    shader.CreateInput(
+        "specular_roughness", Sdf.ValueTypeNames.Float,
+    ).Set(params.roughness)
+    if params.opacity < 1.0:
+        shader.CreateInput(
+            "opacity", Sdf.ValueTypeNames.Float,
+        ).Set(params.opacity)
+
+    out = shader.CreateOutput("out", Sdf.ValueTypeNames.Token)
+    material.CreateSurfaceOutput(
+        MaterialXShaders.OUTPUT_QUALIFIER,
+    ).ConnectToSource(out)
+
+
+def _author_usd_preview_surface(
+    stage: Usd.Stage,
+    mat_prim_path: str,
+    material: UsdShade.Material,
+    params: ProceduralMaterialParams,
+) -> None:
+    """Author the UsdPreviewSurface branch on *material* for cross-DCC compat."""
+    shader_path = f"{mat_prim_path}/{PreviewSurfaceShader.SURFACE_PRIM}"
+    shader = UsdShade.Shader.Define(stage, shader_path)
+    shader.CreateIdAttr(PreviewSurfaceShader.SURFACE_ID)
+    shader.CreateInput(
+        "diffuseColor", Sdf.ValueTypeNames.Color3f,
+    ).Set(Gf.Vec3f(*params.base_color))
+    shader.CreateInput(
+        "metallic", Sdf.ValueTypeNames.Float,
+    ).Set(params.metalness)
+    shader.CreateInput(
+        "roughness", Sdf.ValueTypeNames.Float,
+    ).Set(params.roughness)
+    if params.opacity < 1.0:
+        shader.CreateInput(
+            "opacity", Sdf.ValueTypeNames.Float,
+        ).Set(params.opacity)
+
+    out = shader.CreateOutput("surface", Sdf.ValueTypeNames.Token)
+    material.CreateSurfaceOutput().ConnectToSource(out)
 
 
 def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None:

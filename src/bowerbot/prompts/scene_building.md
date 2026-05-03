@@ -223,10 +223,22 @@ folder's `mtl.usda` — never into the scene file.
    the specific mesh part
 6. Use `list_materials` to verify, `remove_material` to clear
 
+`bind_material` copies the source material verbatim — whatever shader
+network it has (MaterialX-only, UsdPreviewSurface-only, or hybrid)
+is preserved as-authored. If the user needs Apple RealityKit / AR
+Quick Look compatibility for a library material that is MaterialX-only,
+advise them to re-export from their DCC with both MaterialX and
+UsdPreviewSurface outputs. BowerBot does NOT auto-translate library
+materials.
+
 **2. Procedural materials** — use `create_material`:
 Use this when no existing material file matches what the user wants.
-Creates a MaterialX `ND_standard_surface_surfaceshader` material with
-base color, metalness, and roughness — no textures needed.
+Creates a hybrid material with both a MaterialX
+`ND_standard_surface_surfaceshader` (for VFX-grade renderers) and a
+`UsdPreviewSurface` (for Hydra Storm, Apple RealityKit / AR Quick Look,
+Isaac Sim viewport) wired off the same Material prim with shared input
+values, so BowerBot-generated materials render correctly across every
+USD consumer. No textures needed.
 
 1. Call `list_prim_children` to discover mesh parts — NEVER skip this
 2. Call `create_material` with the target prim path, a descriptive name,

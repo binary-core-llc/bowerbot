@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.7.0](https://github.com/binary-core-llc/bowerbot/compare/v1.6.0...v1.7.0) (2026-05-03)
+
+
+### Features
+
+* ASWF-canonical Kind + assetInfo on asset roots ([#140](https://github.com/binary-core-llc/bowerbot/issues/140)) ([d61537d](https://github.com/binary-core-llc/bowerbot/commit/d61537d5c31685b482089e8c9cb8a09e21941f52))
+* class+inherits, light linking, POSIX-path invariant ([#146](https://github.com/binary-core-llc/bowerbot/issues/146)) ([0373893](https://github.com/binary-core-llc/bowerbot/commit/0373893fb4915e1bde759c68a6b222b3b8b372e6))
+* hybrid MaterialX + UsdPreviewSurface output on procedural mater… ([#141](https://github.com/binary-core-llc/bowerbot/issues/141)) ([0785fc1](https://github.com/binary-core-llc/bowerbot/commit/0785fc1b19ca26daf7af2d4d9272c87f0f455716))
+* layered scene + canonical xformOps + sublayer-aware edit detection ([#143](https://github.com/binary-core-llc/bowerbot/issues/143)) ([56d54bb](https://github.com/binary-core-llc/bowerbot/commit/56d54bb1698b4915544b9695e85b672d613a54e0))
+* opt-in Apple AR Quick Look validation on package_scene ([#145](https://github.com/binary-core-llc/bowerbot/issues/145)) ([70e50ee](https://github.com/binary-core-llc/bowerbot/commit/70e50ee944d94dd44458e2924b7767036ce5f3c4))
+* payload arc for geo, references for mtl/lgt/contents ([#144](https://github.com/binary-core-llc/bowerbot/issues/144)) ([072078b](https://github.com/binary-core-llc/bowerbot/commit/072078b0d6c3977e5f8a6f02b28899e49a3afe5d))
+* USD validation framework on intake + validate_scene ([#142](https://github.com/binary-core-llc/bowerbot/issues/142)) ([2d26079](https://github.com/binary-core-llc/bowerbot/commit/2d260795a55fca6a22184cb57f88860345e6fa48))
+
+
+### Bug Fixes
+
+* refuse bind_material/create_material on shared assets without co… ([#139](https://github.com/binary-core-llc/bowerbot/issues/139)) ([51fc966](https://github.com/binary-core-llc/bowerbot/commit/51fc966ddf883c2464757bef3fbed9c3bb2ff9d5))
+* refuse edits on paths inside a referenced asset ([#137](https://github.com/binary-core-llc/bowerbot/issues/137)) ([f935640](https://github.com/binary-core-llc/bowerbot/commit/f9356403113437777ab14cbb7e0a31d285df7017))
+
 ## [1.6.0](https://github.com/binary-core-llc/bowerbot/compare/v1.5.5...v1.6.0) (2026-05-03)
 
 

@@ -15,7 +15,7 @@
   "rangeStrategy": "update-lockfile",
   "prHourlyLimit": 5,
   "prConcurrentLimit": 10,
-  "prCreation": "not-pending",
+  "prCreation": "immediate",
   "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
     "enabled": true,

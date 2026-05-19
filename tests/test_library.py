@@ -13,7 +13,7 @@ from bowerbot.config import SceneDefaults
 from bowerbot.services import asset_service
 from bowerbot.state import SceneState
 from bowerbot.tools import library_tools
-from bowerbot.utils import library_utils
+from bowerbot.utils import asset_intake_utils, library_utils
 
 # ── Helpers ──
 
@@ -97,6 +97,19 @@ def test_search_assets_matches_folder_or_root_stem():
         assert [r["name"] for r in by_stem] == ["wall"]
 
 
+def test_search_assets_normalizes_underscore_space_and_case():
+    """`single table`, `Single_Table`, `SINGLE-TABLE` all match `single_table`."""
+    with tempfile.TemporaryDirectory() as tmp:
+        library = Path(tmp)
+        _write_geo(library / "single_table.usda", "single_table")
+        _write_geo(library / "long_table.usda", "long_table")
+
+        for q in ("single table", "Single Table", "SINGLE-TABLE", "single_table"):
+            results = library_utils.scan_library(library, query=q)
+            names = sorted(r["name"] for r in results)
+            assert names == ["single_table"], f"query={q!r} got {names}"
+
+
 def test_list_assets_filters_by_category():
     with tempfile.TemporaryDirectory() as tmp:
         library = Path(tmp)
@@ -173,7 +186,7 @@ def test_prepare_asset_loose_at_library_root_does_not_intake_library():
         project_assets = Path(tmp) / "project_assets"
         project_assets.mkdir()
 
-        report = asset_service.prepare_asset(
+        report = asset_intake_utils.prepare_asset(
             library / "table.usda", project_assets,
             library_dir=library,
         )
@@ -198,7 +211,7 @@ def test_prepare_asset_inside_package_intakes_the_folder():
         project_assets = Path(tmp) / "project_assets"
         project_assets.mkdir()
 
-        report = asset_service.prepare_asset(
+        report = asset_intake_utils.prepare_asset(
             library / "wall" / "root.usda", project_assets,
             library_dir=library,
         )

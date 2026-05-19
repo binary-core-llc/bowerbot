@@ -36,14 +36,16 @@ def scan_library(
         return []
 
     results: list[dict[str, str]] = []
-    packages = find_top_level_packages(library_dir)
+    packages = _find_top_level_packages(library_dir)
     package_dirs = set(packages.keys())
-    needle = query.lower() if query else None
+    needle = _normalize_for_search(query) if query else None
 
     for pkg_dir, root_file in packages.items():
         name = pkg_dir.name
-        haystack = (name.lower(), root_file.stem.lower())
-        if needle and not any(needle in h for h in haystack):
+        haystack = " ".join(
+            _normalize_for_search(s) for s in (name, root_file.stem)
+        )
+        if needle and needle not in haystack:
             continue
         entry = {
             "name": name,
@@ -61,7 +63,7 @@ def scan_library(
             continue
         if _is_inside_package(f, package_dirs):
             continue
-        if needle and needle not in f.stem.lower():
+        if needle and needle not in _normalize_for_search(f.stem):
             continue
         entry = {
             "name": f.stem,
@@ -75,7 +77,12 @@ def scan_library(
     return results
 
 
-def find_top_level_packages(library_dir: Path) -> dict[Path, Path]:
+def _normalize_for_search(value: str) -> str:
+    """Lowercase + collapse ``_-.`` to spaces for forgiving substring search."""
+    return value.lower().replace("_", " ").replace("-", " ").replace(".", " ")
+
+
+def _find_top_level_packages(library_dir: Path) -> dict[Path, Path]:
     """Return ``{folder_path: root_file}`` for every package at the top level."""
     packages: dict[Path, Path] = {}
     for entry in library_dir.iterdir():

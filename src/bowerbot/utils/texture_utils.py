@@ -26,6 +26,39 @@ def copy_texture_to_project(source: Path, project_dir: Path) -> str:
     return f"./{ASWFLayerNames.TEXTURES}/{source.name}"
 
 
+def stage_asset_value(
+    value: str,
+    project_dir: Path,
+    library_dir: Path | None = None,
+) -> str:
+    """Resolve and stage an Asset-attr value into the project; raise if unresolvable."""
+    if not value:
+        return value
+    src = Path(value)
+    filename = src.name
+    if not filename:
+        return value
+
+    project_rel = f"./{ASWFLayerNames.TEXTURES}/{filename}"
+    if (project_dir / ASWFLayerNames.TEXTURES / filename).exists():
+        return project_rel
+
+    candidates: list[Path] = []
+    if src.is_absolute() and src.exists():
+        candidates.append(src)
+    if library_dir is not None and library_dir.exists():
+        candidates.extend(library_dir.rglob(filename))
+    for candidate in candidates:
+        if candidate.is_file():
+            return copy_texture_to_project(candidate, project_dir)
+
+    raise ValueError(
+        f"Cannot stage texture {value!r}: file not found in project's textures/, "
+        "in the library, or as an absolute path. Provide an absolute path to the "
+        "source file, or copy it into the library first.",
+    )
+
+
 def find_textures(
     library_dir: Path,
     category: TextureCategory,

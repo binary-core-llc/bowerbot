@@ -24,6 +24,8 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_default_prim_name,
     to_layer_local_path,
 )
+from bowerbot.utils.stage_utils import clear_orphan_variant_overs
+from bowerbot.utils.variant_utils import cleanup_if_empty
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +273,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
         bound_mat, _ = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()
         if bound_mat:
             bound_materials.add(str(bound_mat.GetPath()))
+    bound_materials |= _collect_variant_binding_targets(asset_dir)
 
     mtl_layer = Sdf.Layer.FindOrOpen(str(mtl_path))
     if mtl_layer is None:
@@ -285,13 +288,22 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
             child.path for child in mtl_scope.nameChildren
             if str(child.path) not in bound_materials
         ]
+        variants_path = asset_dir / ASWFLayerNames.VARIANTS
+        variants_layer = (
+            Sdf.Layer.FindOrOpen(str(variants_path))
+            if variants_path.exists() else None
+        )
         for path in to_remove:
             removed.append(path.name)
             edit = Sdf.BatchNamespaceEdit()
             edit.Add(path, Sdf.Path.emptyPath)
             mtl_layer.Apply(edit)
+            if variants_layer is not None:
+                clear_orphan_variant_overs(variants_layer, str(path))
 
     mtl_layer.Save()
+    if removed and variants_layer is not None:
+        cleanup_if_empty(asset_dir)
 
     remove_empty_layer(
         mtl_path, asset_dir, lambda p: p.IsA(UsdShade.Material),
@@ -303,6 +315,32 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
             len(removed), asset_dir.name,
         )
     return sorted(removed)
+
+
+def _collect_variant_binding_targets(asset_dir: Path) -> set[str]:
+    """Every ``material:binding`` target authored under any variant."""
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
+    if not variants_path.exists():
+        return set()
+    layer = Sdf.Layer.FindOrOpen(str(variants_path))
+    if layer is None:
+        return set()
+
+    targets: set[str] = set()
+
+    def visit(path: Sdf.Path) -> None:
+        prim_spec = layer.GetPrimAtPath(path)
+        if prim_spec is None:
+            return
+        rel = prim_spec.relationships.get("material:binding")
+        if rel is None:
+            return
+        targets.update(
+            str(t) for t in rel.targetPathList.GetAddedOrExplicitItems()
+        )
+
+    layer.Traverse(Sdf.Path.absoluteRootPath, visit)
+    return targets
 
 
 def find_first_material(file_path: Path) -> str | None:

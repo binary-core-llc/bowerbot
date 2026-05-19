@@ -347,11 +347,22 @@ def test_update_light_with_texture_copies_hdri_and_sets_attr():
 
         r = asyncio.run(exec_tool(state, "update_light", {
             "prim_path": prim_path,
-            "intensity": 2.5,
-            "exposure": 1.0,
             "texture": str(hdri),
         }))
         assert r.success, f"update_light failed: {r.error}"
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": prim_path,
+            "attribute_name": "inputs:intensity",
+            "value": 2.5,
+        }))
+        assert r.success
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": prim_path,
+            "attribute_name": "inputs:exposure",
+            "value": 1.0,
+        }))
+        assert r.success
 
         staged = project.path / "textures" / "studio.hdr"
         assert staged.exists(), "HDRI not copied into project/textures/"
@@ -524,6 +535,188 @@ def test_move_asset_routes_nested_to_contents_layer():
         assert wrapper_spec is not None, "Wrapper missing in contents.usda"
 
         print("test_move_asset_routes_nested_to_contents_layer PASSED")
+
+
+def test_save_scene_snapshot_strips_dcc_artifacts():
+    """Snapshot is clean; scene.usda keeps its DCC scratch and is otherwise untouched."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "strip")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "strip"}))
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+
+        scene = Usd.Stage.Open(str(project.scene_path))
+        scene.GetRootLayer().customLayerData = {
+            "cameraSettings": {"boundCamera": "/OmniverseKit_Persp"},
+            "renderSettings": {},
+        }
+        scene.DefinePrim("/OmniverseKit_Persp", "Camera")
+        scene.Save()
+        del scene
+        state.stage = stage_utils.open_stage(project.scene_path)
+
+        r = asyncio.run(exec_tool(state, "save_scene_snapshot", {
+            "name": "v1",
+        }))
+        assert r.success
+
+        snapshot_path = project.scene_path.parent / "v1.usda"
+        snapshot_layer = Sdf.Layer.FindOrOpen(str(snapshot_path))
+        assert not snapshot_layer.customLayerData
+        assert snapshot_layer.GetPrimAtPath(Sdf.Path("/OmniverseKit_Persp")) is None
+        assert snapshot_layer.GetPrimAtPath(
+            Sdf.Path("/Scene/Furniture/Chair_01"),
+        ) is not None
+
+        scene_layer = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        assert scene_layer.customLayerData.get("renderSettings") == {}
+        assert scene_layer.GetPrimAtPath(
+            Sdf.Path("/OmniverseKit_Persp"),
+        ) is not None
+        assert scene_layer.GetPrimAtPath(Sdf.Path("/Scene/Furniture/Chair_01")) is not None
+        assert not scene_layer.subLayerPaths
+
+
+def test_save_scene_snapshot_does_not_modify_scene_usda():
+    """Snapshot writes the named file but leaves scene.usda byte-identical."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "untouched")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "untouched"}))
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 1.0, "translate_y": 0.0, "translate_z": 1.0,
+        }))
+
+        scene_before = project.scene_path.read_bytes()
+        r = asyncio.run(exec_tool(state, "save_scene_snapshot", {
+            "name": "kitchen_v1",
+        }))
+        assert r.success
+        snapshot_path = project.scene_path.parent / "kitchen_v1.usda"
+        assert snapshot_path.exists()
+        assert project.scene_path.read_bytes() == scene_before
+
+
+def test_save_scene_snapshot_supports_multiple_named_versions():
+    """Multiple named snapshots coexist alongside scene.usda."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "versions")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "versions"}))
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+
+        r1 = asyncio.run(exec_tool(state, "save_scene_snapshot", {
+            "name": "kitchen_v1",
+        }))
+        assert r1.success
+        r2 = asyncio.run(exec_tool(state, "save_scene_snapshot", {
+            "name": "kitchen_v2",
+        }))
+        assert r2.success
+
+        listing = asyncio.run(exec_tool(state, "list_scene_snapshots", {}))
+        assert listing.success
+        names = {s["name"] for s in listing.data["snapshots"]}
+        assert names == {"kitchen_v1", "kitchen_v2"}
+
+        for name in names:
+            path = project.scene_path.parent / f"{name}.usda"
+            layer = Sdf.Layer.FindOrOpen(str(path))
+            assert layer.GetPrimAtPath(
+                Sdf.Path("/Scene/Furniture/Chair_01"),
+            ) is not None
+
+
+def test_save_scene_snapshot_refuses_overwrite_without_force():
+    """Re-using a snapshot name must require force=true."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, _project = make_state(tmp_path, "force")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "force"}))
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+
+        r1 = asyncio.run(exec_tool(state, "save_scene_snapshot", {"name": "v1"}))
+        assert r1.success
+        r2 = asyncio.run(exec_tool(state, "save_scene_snapshot", {"name": "v1"}))
+        assert not r2.success
+        assert "already exists" in r2.error.lower()
+        r3 = asyncio.run(exec_tool(state, "save_scene_snapshot", {
+            "name": "v1", "force": True,
+        }))
+        assert r3.success
+
+
+def test_delete_scene_snapshot_removes_file():
+    """delete_scene_snapshot removes the named file."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "del")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "del"}))
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        asyncio.run(exec_tool(state, "save_scene_snapshot", {"name": "v1"}))
+        snapshot_path = project.scene_path.parent / "v1.usda"
+        assert snapshot_path.exists()
+
+        r = asyncio.run(exec_tool(state, "delete_scene_snapshot", {"name": "v1"}))
+        assert r.success
+        assert not snapshot_path.exists()
+
+        missing = asyncio.run(exec_tool(state, "delete_scene_snapshot", {"name": "v1"}))
+        assert not missing.success
+
+
+def test_move_asset_preserves_omitted_axes():
+    """When the LLM omits axes, those axes keep their current value."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "axes")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "axes"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 5.0, "translate_y": 0.0, "translate_z": 4.0,
+        }))
+        prim_path = place.data["prim_path"]
+
+        # Move ONLY Y; X and Z must stay at 5.0 / 4.0
+        r = asyncio.run(exec_tool(state, "move_asset", {
+            "prim_path": prim_path, "translate_y": 2.0,
+        }))
+        assert r.success
+        assert r.data["position"] == {"x": 5.0, "y": 2.0, "z": 4.0}
+
+        # Move ONLY Y back down
+        r = asyncio.run(exec_tool(state, "move_asset", {
+            "prim_path": prim_path, "translate_y": 0.0,
+        }))
+        assert r.success
+        assert r.data["position"] == {"x": 5.0, "y": 0.0, "z": 4.0}
 
 
 def test_move_asset_refuses_path_inside_referenced_asset():
@@ -710,6 +903,260 @@ def test_freeze_asset_batch_freezes_every_dirty_asset():
         print("test_freeze_asset_batch_freezes_every_dirty_asset PASSED")
 
 
+def test_list_and_set_prim_attribute_generic_path():
+    """list_prim_attributes discovers schema inputs; set_prim_attribute authors override."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "generic_attr")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "generic_attr"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        prim_path = place.data["prim_path"]
+        mesh_path = f"{prim_path}/asset/Mesh"
+
+        asyncio.run(exec_tool(state, "create_material", {
+            "prim_path": mesh_path,
+            "material_name": "walnut",
+            "base_color_r": 0.4, "base_color_g": 0.2, "base_color_b": 0.1,
+        }))
+
+        shader_path = f"{prim_path}/asset/mtl/walnut/standard_surface"
+        r = asyncio.run(exec_tool(state, "list_prim_attributes", {
+            "prim_path": shader_path,
+        }))
+        assert r.success
+        names = {a["name"] for a in r.data["attributes"]}
+        assert "inputs:base_color" in names
+        # MaterialX schema exposes these even if not authored
+        assert "inputs:sheen" in names or any(
+            n.startswith("inputs:") for n in names
+        )
+
+        # Author a per-instance override on a schema attribute (sheen)
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": shader_path,
+            "attribute_name": "inputs:sheen",
+            "value": 0.4,
+        }))
+        assert r.success
+
+        # Override lands in scene.usda, NOT the asset's mtl.usda
+        scene_layer = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        spec = scene_layer.GetPrimAtPath(Sdf.Path(shader_path))
+        assert spec is not None
+        attr = spec.attributes.get("inputs:sheen")
+        assert attr is not None
+        assert abs(float(attr.default) - 0.4) < 1e-6
+
+        mtl_path = project.path / "assets" / "chair" / "mtl.usda"
+        mtl_layer = Sdf.Layer.FindOrOpen(str(mtl_path))
+        mtl_spec = mtl_layer.GetPrimAtPath(
+            Sdf.Path("/chair/mtl/walnut/standard_surface"),
+        )
+        assert mtl_spec is None or mtl_spec.attributes.get("inputs:sheen") is None
+
+
+def test_set_prim_attribute_supports_color_vec(tmp_path=None):
+    """set_prim_attribute accepts a 3-list for Color3f / Vec3f attributes."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "vec_attr")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "vec_attr"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        prim_path = place.data["prim_path"]
+        mesh_path = f"{prim_path}/asset/Mesh"
+        asyncio.run(exec_tool(state, "create_material", {
+            "prim_path": mesh_path, "material_name": "x",
+            "base_color_r": 0.5, "base_color_g": 0.5, "base_color_b": 0.5,
+        }))
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": f"{prim_path}/asset/mtl/x/standard_surface",
+            "attribute_name": "inputs:base_color",
+            "value": [0.1, 0.2, 0.9],
+        }))
+        assert r.success
+
+        scene_layer = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        spec = scene_layer.GetPrimAtPath(
+            Sdf.Path(f"{prim_path}/asset/mtl/x/standard_surface"),
+        )
+        color = tuple(float(c) for c in spec.attributes.get("inputs:base_color").default)
+        assert abs(color[0] - 0.1) < 1e-5
+        assert abs(color[1] - 0.2) < 1e-5
+        assert abs(color[2] - 0.9) < 1e-5
+
+
+def test_set_prim_attribute_per_instance_override_leaves_asset_untouched():
+    """set_prim_attribute on both shaders authors a per-instance override only in scene.usda."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "mtl_override")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "mtl_override"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        prim_path = place.data["prim_path"]
+        mesh_path = f"{prim_path}/asset/Mesh"
+
+        r = asyncio.run(exec_tool(state, "create_material", {
+            "prim_path": mesh_path,
+            "material_name": "walnut",
+            "base_color_r": 0.4, "base_color_g": 0.2, "base_color_b": 0.1,
+            "roughness": 0.7,
+        }))
+        assert r.success
+
+        mtl_path = project.path / "assets" / "chair" / "mtl.usda"
+        mtl_layer = Sdf.Layer.FindOrOpen(str(mtl_path))
+        baseline_color = tuple(
+            float(c) for c in mtl_layer.GetPrimAtPath(
+                Sdf.Path("/chair/mtl/walnut/standard_surface"),
+            ).attributes["inputs:base_color"].default
+        )
+
+        std_path = f"{prim_path}/asset/mtl/walnut/standard_surface"
+        prev_path = f"{prim_path}/asset/mtl/walnut/preview_surface"
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": std_path,
+            "attribute_name": "inputs:base_color",
+            "value": [0.0, 0.0, 1.0],
+        }))
+        assert r.success
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": prev_path,
+            "attribute_name": "inputs:diffuseColor",
+            "value": [0.0, 0.0, 1.0],
+        }))
+        assert r.success
+
+        mtl_layer_2 = Sdf.Layer.FindOrOpen(str(mtl_path))
+        after_color = tuple(
+            float(c) for c in mtl_layer_2.GetPrimAtPath(
+                Sdf.Path("/chair/mtl/walnut/standard_surface"),
+            ).attributes["inputs:base_color"].default
+        )
+        assert after_color == baseline_color
+
+        scene_layer = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        std_over = scene_layer.GetPrimAtPath(Sdf.Path(std_path))
+        prev_over = scene_layer.GetPrimAtPath(Sdf.Path(prev_path))
+        assert std_over is not None and prev_over is not None
+        std_override_color = tuple(
+            float(c) for c in std_over.attributes["inputs:base_color"].default
+        )
+        prev_override_color = tuple(
+            float(c) for c in prev_over.attributes["inputs:diffuseColor"].default
+        )
+        assert all(abs(a - b) < 1e-5 for a, b in zip(std_override_color, (0.0, 0.0, 1.0), strict=True))
+        assert all(abs(a - b) < 1e-5 for a, b in zip(prev_override_color, (0.0, 0.0, 1.0), strict=True))
+
+
+def test_set_prim_attribute_writes_to_scene_for_asset_light():
+    """set_prim_attribute on an asset light writes to scene.usda; lgt.usda is untouched."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "scene_write")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene_write"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        prim_path = place.data["prim_path"]
+        light_create = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": prim_path,
+            "light_type": "SphereLight",
+            "light_name": "Bulb",
+            "intensity": 1000.0,
+        }))
+        assert light_create.success
+        light_scene_path = light_create.data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": light_scene_path,
+            "attribute_name": "inputs:intensity",
+            "value": 2500.0,
+        }))
+        assert r.success, r.error
+
+        scene_layer = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        scene_spec = scene_layer.GetPrimAtPath(Sdf.Path(light_scene_path))
+        assert scene_spec is not None
+        assert abs(
+            float(scene_spec.attributes["inputs:intensity"].default) - 2500.0,
+        ) < 1e-5
+
+        lgt_path = project.path / "assets" / "chair" / "lgt.usda"
+        lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
+        bulb = lgt_layer.GetPrimAtPath(Sdf.Path("/chair/lgt/Bulb"))
+        assert abs(
+            float(bulb.attributes["inputs:intensity"].default) - 1000.0,
+        ) < 1e-5
+
+
+def test_set_prim_attribute_null_clears_authored_opinion():
+    """value=None on set_prim_attribute clears the authored override."""
+    from pxr import Sdf
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        chair = create_test_asset(tmp_path, "chair")
+        state, project = make_state(tmp_path, "clear_attr")
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "clear_attr"}))
+        place = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(chair), "asset_name": "Chair",
+            "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        prim_path = place.data["prim_path"]
+        light_create = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": prim_path,
+            "light_type": "SphereLight",
+            "light_name": "Bulb",
+            "intensity": 1000.0,
+        }))
+        light_scene_path = light_create.data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": light_scene_path,
+            "attribute_name": "inputs:intensity",
+            "value": 5000.0,
+        }))
+        assert r.success
+        scene_layer = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        spec = scene_layer.GetPrimAtPath(Sdf.Path(light_scene_path))
+        assert spec is not None
+        assert "inputs:intensity" in spec.attributes
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": light_scene_path,
+            "attribute_name": "inputs:intensity",
+            "value": None,
+        }))
+        assert r.success, r.error
+        scene_layer_2 = Sdf.Layer.FindOrOpen(str(project.scene_path))
+        spec_after = scene_layer_2.GetPrimAtPath(Sdf.Path(light_scene_path))
+        assert spec_after is None or "inputs:intensity" not in spec_after.attributes
+
+
+
 def test_bind_material_blocks_shared_container_without_confirm():
     """bind_material on an asset shared by 2+ scene instances refuses."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -872,15 +1319,12 @@ def test_package_scene_apple_validation_blocks_on_udim_texture():
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
 
-        layout_layer = Sdf.Layer.FindOrOpen(
-            str(state.stage_path.parent / "scene_layout.usda"),
-        )
-        layout_stage = Usd.Stage.Open(layout_layer.identifier)
+        scene_stage = Usd.Stage.Open(str(state.stage_path))
         material = UsdShade.Material.Define(
-            layout_stage, "/Scene/Furniture/Table_01/asset/UDIM_Mat",
+            scene_stage, "/Scene/Furniture/Table_01/asset/UDIM_Mat",
         )
         shader = UsdShade.Shader.Define(
-            layout_stage, "/Scene/Furniture/Table_01/asset/UDIM_Mat/tex",
+            scene_stage, "/Scene/Furniture/Table_01/asset/UDIM_Mat/tex",
         )
         shader.CreateIdAttr("UsdUVTexture")
         shader.CreateInput(
@@ -889,7 +1333,7 @@ def test_package_scene_apple_validation_blocks_on_udim_texture():
         material.CreateSurfaceOutput().ConnectToSource(
             shader.CreateOutput("surface", Sdf.ValueTypeNames.Token),
         )
-        layout_stage.Save()
+        scene_stage.Save()
 
         result = asyncio.run(exec_tool(state, "package_scene", {
             "for_apple_ar_quick_look": True,

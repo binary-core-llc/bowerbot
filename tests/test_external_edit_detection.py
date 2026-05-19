@@ -69,26 +69,6 @@ def test_mtime_bump_without_content_change_is_not_detected():
         assert state.detect_external_changes() is False
 
 
-def test_external_change_to_sublayer_is_detected():
-    """External edits to any sublayer (e.g. scene_layout.usda) are detected."""
-    from bowerbot.schemas import SceneLayerNames
-    with tempfile.TemporaryDirectory() as tmp:
-        state, project = make_state(Path(tmp))
-        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
-        state.mark_saved()
-
-        layout_path = state.stage_path.parent / SceneLayerNames.SCENE_LAYOUT
-        assert layout_path.exists()
-
-        layout_path.write_text(
-            layout_path.read_text() + "\n# external edit on sublayer\n",
-            encoding="utf-8",
-        )
-        _bump_mtime(layout_path)
-
-        assert state.detect_external_changes() is True
-
-
 def test_mark_saved_after_change_resets_baseline():
     with tempfile.TemporaryDirectory() as tmp:
         state, project = make_state(Path(tmp))

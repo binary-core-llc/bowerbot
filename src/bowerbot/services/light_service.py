@@ -9,9 +9,17 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from pxr import Sdf
+
 from bowerbot.schemas import LightParams, LightType, PositionMode
 from bowerbot.state import SceneState
-from bowerbot.utils import geometry_utils, light_utils, stage_utils, texture_utils
+from bowerbot.utils import (
+    geometry_utils,
+    light_utils,
+    stage_utils,
+    texture_utils,
+    variant_utils,
+)
 from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
 from bowerbot.utils.naming_utils import safe_prim_name
 
@@ -26,35 +34,44 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Update a scene-level or asset-level light."""
+    """Update a light's xform / HDRI texture; writes to scene.usda."""
     prim_path = params["prim_path"]
     asset_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
 
     translate = _unpack_vec3(params, "translate_x", "translate_y", "translate_z")
     rotate = _unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z")
-    color = _unpack_vec3(params, "color_r", "color_g", "color_b", default=1.0)
-    intensity = _opt_float(params.get("intensity"))
-    exposure = _opt_float(params.get("exposure"))
     texture = params.get("texture")
-    extras = {
-        key: float(params[key])
-        for key in ("radius", "angle", "width", "height", "length")
-        if params.get(key) is not None
-    }
 
-    if asset_dir is not None:
-        return _update_asset_light(
-            state, asset_dir, prim_path, params,
-            translate=translate, rotate=rotate, color=color,
-            intensity=intensity, exposure=exposure, texture=texture,
-            extras=extras,
+    if asset_dir is not None and translate is not None:
+        mode = PositionMode(
+            params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
         )
-    return _update_scene_light(
-        state, prim_path,
-        translate=translate, rotate=rotate, color=color,
-        intensity=intensity, exposure=exposure, texture=texture,
-        extras=extras,
+        translate = geometry_utils.resolve_asset_position(
+            mode,
+            geometry_utils.get_geometry_bounds(asset_dir),
+            *translate,
+            has_explicit_y=params.get("translate_y") is not None,
+            world_to_local_mat=stage_utils.get_container_world_inverse(
+                state.stage, prim_path,
+            ),
+            asset_mpu=geometry_utils.get_mpu(asset_dir),
+        )
+
+    stage_utils.update_light(
+        state.stage,
+        prim_path,
+        translate=translate,
+        rotate=rotate,
+        texture=_stage_scene_texture(state, texture),
     )
+    stage_utils.save_stage(state.stage)
+    state.touch_project()
+
+    logger.info("Updated light at %s", prim_path)
+    return {
+        "prim_path": prim_path,
+        "message": f"Updated light at {prim_path}",
+    }
 
 
 def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
@@ -70,10 +87,14 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         return {
             "prim_path": prim_path,
             "asset_folder": asset_dir.name,
-            "message": f"Removed light {light_name} from {asset_dir.name}",
+            "suspect_variant_sets": variant_utils.suspect_variant_sets_in_asset(
+                asset_dir,
+            ),
+            "message": f"Removed asset light {light_name} from {asset_dir.name}",
         }
 
     texture_file = stage_utils.get_light_texture(state.stage, prim_path)
+    carrier_path = str(Sdf.Path(prim_path).GetParentPath())
     success = stage_utils.remove_prim(state.stage, prim_path)
     if not success:
         msg = f"Failed to remove light {prim_path}"
@@ -85,6 +106,9 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     logger.info("Removed scene light at %s", prim_path)
     data: dict[str, Any] = {
         "prim_path": prim_path,
+        "suspect_variant_sets": variant_utils.suspect_variant_sets_on_scene_carrier(
+            state.stage, carrier_path,
+        ),
         "message": f"Removed light at {prim_path}",
     }
     if texture_file:
@@ -161,7 +185,8 @@ def _create_asset_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
 
     state.stage = stage_utils.open_stage(state.stage_path)
 
-    scene_light_path = f"{ref_prim_path}/{composed_path.lstrip('/')}"
+    asset_local_tail = composed_path.lstrip("/").split("/", 1)[1]
+    scene_light_path = f"{ref_prim_path}/{asset_local_tail}"
     logger.info(
         "Created asset light %s in %s/lgt.usda",
         light_type.value, asset_dir.name,
@@ -230,97 +255,6 @@ def _create_scene_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
 # ── Internal: update ──
 
 
-def _update_asset_light(
-    state: SceneState,
-    asset_dir: Path,
-    prim_path: str,
-    params: dict[str, Any],
-    *,
-    translate: tuple[float, float, float] | None,
-    rotate: tuple[float, float, float] | None,
-    color: tuple[float, float, float] | None,
-    intensity: float | None,
-    exposure: float | None,
-    texture: str | None,
-    extras: dict[str, float],
-) -> dict[str, Any]:
-    """Update a light authored inside an asset folder."""
-    light_name = prim_path.rstrip("/").split("/")[-1]
-
-    if translate is not None:
-        mode = PositionMode(
-            params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
-        )
-        translate = geometry_utils.resolve_asset_position(
-            mode,
-            geometry_utils.get_geometry_bounds(asset_dir),
-            *translate,
-            has_explicit_y=params.get("translate_y") is not None,
-            world_to_local_mat=stage_utils.get_container_world_inverse(
-                state.stage, prim_path,
-            ),
-            asset_mpu=geometry_utils.get_mpu(asset_dir),
-        )
-
-    extra_kwargs: dict[str, float | str] = {**extras}
-    staged_texture = light_utils.stage_asset_texture(asset_dir, texture)
-    if staged_texture is not None:
-        extra_kwargs["texture"] = staged_texture
-
-    light_utils.update_light_in_folder(
-        asset_dir=asset_dir,
-        light_name=light_name,
-        translate=translate,
-        rotate=rotate,
-        intensity=intensity,
-        exposure=exposure,
-        color=color,
-        **extra_kwargs,
-    )
-
-    state.stage = stage_utils.open_stage(state.stage_path)
-    logger.info("Updated asset light at %s", prim_path)
-    return {
-        "prim_path": prim_path,
-        "asset_folder": asset_dir.name,
-        "message": f"Updated asset light at {prim_path}",
-    }
-
-
-def _update_scene_light(
-    state: SceneState,
-    prim_path: str,
-    *,
-    translate: tuple[float, float, float] | None,
-    rotate: tuple[float, float, float] | None,
-    color: tuple[float, float, float] | None,
-    intensity: float | None,
-    exposure: float | None,
-    texture: str | None,
-    extras: dict[str, float],
-) -> dict[str, Any]:
-    """Update a scene-level light."""
-    stage_utils.update_light(
-        state.stage,
-        prim_path,
-        intensity=intensity,
-        exposure=exposure,
-        color=color,
-        translate=translate,
-        rotate=rotate,
-        texture=_stage_scene_texture(state, texture),
-        **extras,
-    )
-    stage_utils.save_stage(state.stage)
-    state.touch_project()
-
-    logger.info("Updated scene light at %s", prim_path)
-    return {
-        "prim_path": prim_path,
-        "message": f"Updated scene light at {prim_path}",
-    }
-
-
 # ── Internal: helpers ──
 
 
@@ -344,19 +278,12 @@ def _unpack_vec3(
     kx: str,
     ky: str,
     kz: str,
-    *,
-    default: float = 0.0,
 ) -> tuple[float, float, float] | None:
     """Read a triple of optional keys; return ``None`` if all are missing."""
     if all(params.get(k) is None for k in (kx, ky, kz)):
         return None
     return (
-        float(params.get(kx, default)),
-        float(params.get(ky, default)),
-        float(params.get(kz, default)),
+        float(params.get(kx, 0.0)),
+        float(params.get(ky, 0.0)),
+        float(params.get(kz, 0.0)),
     )
-
-
-def _opt_float(value: Any) -> float | None:
-    """Coerce a value to ``float``, preserving ``None``."""
-    return float(value) if value is not None else None

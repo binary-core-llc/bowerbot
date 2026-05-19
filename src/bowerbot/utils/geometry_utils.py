@@ -67,14 +67,6 @@ def get_mpu(asset_dir: Path) -> float:
     return mpu if mpu > 0 else 1.0
 
 
-def meters_to_asset_units(asset_dir: Path, value: float) -> float:
-    """Convert a meters value into the asset's native units."""
-    mpu = get_mpu(asset_dir)
-    if abs(mpu - 1.0) < 1e-6:
-        return value
-    return value / mpu
-
-
 def unit_factor(asset_dir: Path) -> float:
     """Return the factor that converts meters into asset units."""
     mpu = get_mpu(asset_dir)
@@ -111,10 +103,10 @@ def resolve_asset_position(
     if bounds is None:
         return tx, ty, tz
 
-    return apply_bounds_offsets(bounds, tx, ty, tz, has_explicit_y=has_explicit_y)
+    return _apply_bounds_offsets(bounds, tx, ty, tz, has_explicit_y=has_explicit_y)
 
 
-def apply_bounds_offsets(
+def _apply_bounds_offsets(
     bounds: dict[str, dict[str, float]],
     tx: float,
     ty: float,

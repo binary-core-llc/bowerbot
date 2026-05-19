@@ -158,12 +158,17 @@ def _parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
 
 
 def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Move an existing prim to a new position/rotation."""
+    """Move an existing prim. Axes omitted from params keep their current value."""
     prim_path = params["prim_path"]
-    tx = float(params["translate_x"])
-    ty = float(params["translate_y"])
-    tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
+    prim = state.stage.GetPrimAtPath(prim_path)
+    if not prim.IsValid():
+        raise ValueError(f"Prim not found: {prim_path}")
+
+    cur_tx, cur_ty, cur_tz, cur_ry = stage_utils.read_translate_and_rotate_y(prim)
+    tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
+    ty = float(params["translate_y"]) if params.get("translate_y") is not None else cur_ty
+    tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
+    ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
 
     nested = _parse_nested_contents_path(prim_path)
     if nested is not None:
@@ -205,6 +210,102 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "position": {"x": tx, "y": ty, "z": tz},
         "rotation_y": ry,
         "message": f"Moved {prim_path} to ({tx}, {ty}, {tz})",
+    }
+
+
+def list_prim_attributes(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """List every attribute on a prim with type + current value + authored flag."""
+    prim_path = params["prim_path"]
+    attributes = stage_utils.list_prim_attributes(state.stage, prim_path)
+    return {
+        "prim_path": prim_path,
+        "attributes": attributes,
+        "message": (
+            f"{len(attributes)} attribute(s) on {prim_path}."
+        ),
+    }
+
+
+def set_prim_attribute(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Author or clear an attribute opinion on a prim, in scene.usda."""
+    prim_path = params["prim_path"]
+    attribute_name = params["attribute_name"]
+    value = params.get("value")
+
+    stage_utils.set_prim_attribute(
+        state.stage, prim_path, attribute_name, value,
+    )
+    stage_utils.save_stage(state.stage)
+    state.touch_project()
+    action = "Cleared" if value is None else "Authored"
+    logger.info(
+        "%s %s.%s in %s", action, prim_path, attribute_name, state.stage_path,
+    )
+    return {
+        "prim_path": prim_path,
+        "attribute_name": attribute_name,
+        "value": value,
+        "message": (
+            f"{action} {prim_path}.{attribute_name} in "
+            f"{state.stage_path.name}."
+        ),
+    }
+
+
+def save_scene_snapshot(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Flatten the composed scene into a named, self-contained snapshot file."""
+    if state.stage_path is None:
+        raise ValueError("No scene is open.")
+    name = params["name"]
+    force = bool(params.get("force", False))
+    state.stage.Save()
+    snapshot_path = stage_utils.save_scene_snapshot(
+        state.stage_path, name, force=force,
+    )
+    state.touch_project()
+    return {
+        "scene_path": str(state.stage_path),
+        "snapshot_path": str(snapshot_path),
+        "snapshot_name": snapshot_path.stem,
+        "message": (
+            f"Saved snapshot '{snapshot_path.stem}' to {snapshot_path.name}. "
+            "scene.usda is unchanged; the snapshot is a self-contained "
+            "frozen copy."
+        ),
+    }
+
+
+def list_scene_snapshots(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """List every snapshot .usda file alongside scene.usda."""
+    del params
+    if state.stage_path is None:
+        raise ValueError("No scene is open.")
+    snapshots = stage_utils.list_scene_snapshots(state.stage_path)
+    return {
+        "scene_path": str(state.stage_path),
+        "snapshot_count": len(snapshots),
+        "snapshots": snapshots,
+        "message": f"Found {len(snapshots)} snapshot(s) alongside scene.usda.",
+    }
+
+
+def delete_scene_snapshot(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Delete a named snapshot file."""
+    if state.stage_path is None:
+        raise ValueError("No scene is open.")
+    name = params["name"]
+    removed = stage_utils.delete_scene_snapshot(state.stage_path, name)
+    state.touch_project()
+    return {
+        "snapshot_path": str(removed),
+        "snapshot_name": removed.stem,
+        "message": f"Deleted snapshot {removed.name}",
     }
 
 

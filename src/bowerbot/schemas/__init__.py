@@ -14,23 +14,25 @@ from bowerbot.schemas.assets import (
     AssetFormat,
     AssetMetadata,
     ASWFLayerNames,
-    SceneLayerNames,
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.lights import LightParams, LightType
+from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.materials import (
     MaterialXShaders,
     PreviewSurfaceShader,
     ProceduralMaterialParams,
 )
-from bowerbot.schemas.textures import HDRIFormat, ImageFormat, TextureCategory
-from bowerbot.schemas.transforms import (
-    PlacementCategory,
-    PositionMode,
-    SceneObject,
-    TransformParams,
-)
+from bowerbot.schemas.textures import HDRIFormat, TextureCategory
+from bowerbot.schemas.transforms import PositionMode, SceneObject, TransformParams
 from bowerbot.schemas.validation import Severity, ValidationIssue, ValidationResult
+from bowerbot.schemas.variants import (
+    SceneVariantsSummary,
+    VariantCarrier,
+    VariantCategory,
+    VariantSetSummary,
+    VariantsSummary,
+)
 
 __all__ = [
     "AppleUSDZConstraints",
@@ -41,20 +43,23 @@ __all__ = [
     "DetectionOutcome",
     "FolderDetection",
     "HDRIFormat",
-    "ImageFormat",
     "IntakeReport",
     "LightParams",
     "LightType",
     "MaterialXShaders",
-    "PlacementCategory",
     "PositionMode",
     "PreviewSurfaceShader",
     "ProceduralMaterialParams",
-    "SceneLayerNames",
+    "SceneNamespace",
     "SceneObject",
+    "SceneVariantsSummary",
     "Severity",
     "TextureCategory",
     "TransformParams",
     "ValidationIssue",
     "ValidationResult",
+    "VariantCarrier",
+    "VariantCategory",
+    "VariantSetSummary",
+    "VariantsSummary",
 ]

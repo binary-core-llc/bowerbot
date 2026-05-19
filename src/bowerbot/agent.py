@@ -68,6 +68,7 @@ class AgentRuntime:
             f"# Scene Building\n\n{load_prompt('scene_building')}",
             f"# Asset Library\n\n{load_prompt('library')}",
             f"# Textures\n\n{load_prompt('textures')}",
+            f"# Variant Sets\n\n{load_prompt('variants')}",
         ]
         skill_prompts = self.skill_registry.get_skill_prompts()
         if skill_prompts:

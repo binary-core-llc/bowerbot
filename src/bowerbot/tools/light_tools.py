@@ -210,13 +210,15 @@ TOOLS: list[Tool] = [
     Tool(
         name="update_light",
         description=(
-            "Update an existing light's parameters. Works for both "
-            "scene-level and asset-level lights. Only modifies values you "
-            "provide — everything else stays the same. Use this instead of "
-            "creating a new light when the user wants to adjust intensity, "
-            "color, size, position, or rotation. For asset lights, use "
-            "position_mode to choose between absolute coordinates or "
-            "bounds_offset (same as create_light)."
+            "Update an existing light's position, rotation, or HDRI "
+            "texture. Works for both scene-level and asset-level lights. "
+            "Only the things this tool covers go here: xform ops "
+            "(translate/rotate, including bounds_offset for asset lights) "
+            "and texture (file copy into <project>/textures/ or the "
+            "asset's maps/). For scalar attribute tweaks like intensity, "
+            "exposure, color, radius, angle, width, height, length, "
+            "colorTemperature, treatAsLine, etc., use set_prim_attribute "
+            "on the light prim directly."
         ),
         parameters={
             "type": "object",
@@ -240,24 +242,9 @@ TOOLS: list[Tool] = [
                     ),
                     "default": PositionMode.BOUNDS_OFFSET.value,
                 },
-                "intensity": {"type": "number", "description": "New intensity."},
-                "exposure": {
-                    "type": "number",
-                    "description": (
-                        "New exposure (power-of-2 multiplier on intensity)."
-                    ),
-                },
-                "color_r": {"type": "number", "description": "New red (0-1)."},
-                "color_g": {"type": "number", "description": "New green (0-1)."},
-                "color_b": {"type": "number", "description": "New blue (0-1)."},
                 "translate_x": {"type": "number", "description": "New X position."},
                 "translate_y": {"type": "number", "description": "New Y position."},
                 "translate_z": {"type": "number", "description": "New Z position."},
-                "radius": {"type": "number", "description": "New radius."},
-                "angle": {"type": "number", "description": "New angle."},
-                "width": {"type": "number", "description": "New width."},
-                "height": {"type": "number", "description": "New height."},
-                "length": {"type": "number", "description": "New length."},
                 "rotate_x": {"type": "number", "description": "New X rotation."},
                 "rotate_y": {"type": "number", "description": "New Y rotation."},
                 "rotate_z": {"type": "number", "description": "New Z rotation."},

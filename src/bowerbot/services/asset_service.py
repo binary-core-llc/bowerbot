@@ -55,7 +55,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     assets_dir = state.resolve_assets_dir()
     try:
-        report = prepare_asset(
+        report = asset_intake_utils.prepare_asset(
             asset_path, assets_dir,
             library_dir=state.library_dir,
             fix_root_prim=params.get("fix_root_prim", False),
@@ -135,7 +135,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         raise ValueError(msg)
 
     assets_dir = state.resolve_assets_dir()
-    report = prepare_asset(
+    report = asset_intake_utils.prepare_asset(
         asset_path, assets_dir,
         library_dir=state.library_dir,
         fix_root_prim=params.get("fix_root_prim", False),
@@ -418,88 +418,6 @@ def delete_project_texture(state: SceneState, params: dict[str, Any]) -> dict[st
     }
 
 
-# ── prepare_asset routing (USDZ / library-package / loose-file) ──
-
-
-def prepare_asset(
-    asset_path: Path,
-    assets_dir: Path,
-    *,
-    library_dir: Path | None,
-    fix_root_prim: bool = False,
-    fix_root_transforms: bool = False,
-) -> IntakeReport:
-    """Route an input file to USDZ / library-package / loose-file intake."""
-    if asset_path.suffix.lower() == ".usdz":
-        return asset_intake_utils.intake_usdz(asset_path, assets_dir)
-
-    if library_dir is not None:
-        package_dir = library_utils.find_package_for(asset_path, library_dir)
-        if package_dir is not None:
-            report = asset_intake_utils.intake_folder(package_dir, assets_dir)
-            _validate_intake(
-                report, assets_dir,
-                fix_root_prim=fix_root_prim,
-                fix_root_transforms=fix_root_transforms,
-            )
-            return report
-
-    folder_name = asset_path.stem
-    root_file = asset_intake_utils.create_asset_folder(
-        output_dir=assets_dir,
-        asset_name=folder_name,
-        geometry_file=asset_path,
-    )
-    report = IntakeReport(
-        scene_ref_path=f"assets/{folder_name}/{root_file.name}",
-        asset_folder_name=folder_name,
-        root_original_name=asset_path.name,
-        root_canonical_name=root_file.name,
-        was_renamed=asset_path.name != root_file.name,
-        files_copied=1,
-    )
-    _validate_intake(
-        report, assets_dir,
-        fix_root_prim=fix_root_prim,
-        fix_root_transforms=fix_root_transforms,
-    )
-    return report
-
-
-def _validate_intake(
-    report: IntakeReport,
-    assets_dir: Path,
-    *,
-    fix_root_prim: bool,
-    fix_root_transforms: bool,
-) -> None:
-    """Validate the intaken asset's geo.usda; rollback target on failure."""
-    target_folder = assets_dir / report.asset_folder_name
-    geo_path = target_folder / ASWFLayerNames.GEO
-    if not geo_path.exists():
-        return
-    try:
-        asset_intake_utils.ensure_aswf_compliance(
-            geo_path,
-            fix_root_prim=fix_root_prim,
-            fix_root_transforms=fix_root_transforms,
-        )
-    except (ValueError, RuntimeError):
-        if target_folder.exists():
-            shutil.rmtree(target_folder, ignore_errors=True)
-        raise
-
-    canonical_root = target_folder / report.root_canonical_name
-    if canonical_root.exists():
-        compliance_issues = validation_utils.run_usd_compliance_checker(
-            canonical_root,
-        )
-        for issue in compliance_issues:
-            report.warnings.append(issue.message)
-            logger.info(
-                "ComplianceChecker on %s: %s",
-                report.asset_folder_name, issue.message,
-            )
 
 
 def _compute_ref_asset_path(

@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.0](https://github.com/binary-core-llc/bowerbot/compare/v1.7.0...v1.8.0) (2026-05-19)
+
+
+### Features
+
+* asset and scene variant sets with invariant-protected mutations ([#152](https://github.com/binary-core-llc/bowerbot/issues/152)) ([9d89803](https://github.com/binary-core-llc/bowerbot/commit/9d89803e7f18faa63eaa072dac8c5826525f18e4))
+
+
+### Bug Fixes
+
+* open Renovate PRs immediately ([#147](https://github.com/binary-core-llc/bowerbot/issues/147)) ([d3a8ebf](https://github.com/binary-core-llc/bowerbot/commit/d3a8ebf678d69fe6166a768b4f5283693f1ad570))
+
 ## [1.7.0](https://github.com/binary-core-llc/bowerbot/compare/v1.6.0...v1.7.0) (2026-05-03)
 
 

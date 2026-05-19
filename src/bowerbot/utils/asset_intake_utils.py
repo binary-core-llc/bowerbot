@@ -36,8 +36,89 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_default_prim_name,
 )
 from bowerbot.utils.geometry_utils import get_mpu
+from bowerbot.utils.library_utils import find_package_for
+from bowerbot.utils.validation_utils import run_usd_compliance_checker
 
 logger = logging.getLogger(__name__)
+
+
+def prepare_asset(
+    asset_path: Path,
+    assets_dir: Path,
+    *,
+    library_dir: Path | None,
+    fix_root_prim: bool = False,
+    fix_root_transforms: bool = False,
+) -> IntakeReport:
+    """Route an input file to USDZ / library-package / loose-file intake."""
+    if asset_path.suffix.lower() == ".usdz":
+        return intake_usdz(asset_path, assets_dir)
+
+    if library_dir is not None:
+        package_dir = find_package_for(asset_path, library_dir)
+        if package_dir is not None:
+            report = intake_folder(package_dir, assets_dir)
+            _validate_intake(
+                report, assets_dir,
+                fix_root_prim=fix_root_prim,
+                fix_root_transforms=fix_root_transforms,
+            )
+            return report
+
+    folder_name = asset_path.stem
+    root_file = create_asset_folder(
+        output_dir=assets_dir,
+        asset_name=folder_name,
+        geometry_file=asset_path,
+    )
+    report = IntakeReport(
+        scene_ref_path=f"assets/{folder_name}/{root_file.name}",
+        asset_folder_name=folder_name,
+        root_original_name=asset_path.name,
+        root_canonical_name=root_file.name,
+        was_renamed=asset_path.name != root_file.name,
+        files_copied=1,
+    )
+    _validate_intake(
+        report, assets_dir,
+        fix_root_prim=fix_root_prim,
+        fix_root_transforms=fix_root_transforms,
+    )
+    return report
+
+
+def _validate_intake(
+    report: IntakeReport,
+    assets_dir: Path,
+    *,
+    fix_root_prim: bool,
+    fix_root_transforms: bool,
+) -> None:
+    """Validate the intaken asset's geo.usda; rollback target on failure."""
+    target_folder = assets_dir / report.asset_folder_name
+    geo_path = target_folder / ASWFLayerNames.GEO
+    if not geo_path.exists():
+        return
+    try:
+        ensure_aswf_compliance(
+            geo_path,
+            fix_root_prim=fix_root_prim,
+            fix_root_transforms=fix_root_transforms,
+        )
+    except (ValueError, RuntimeError):
+        if target_folder.exists():
+            shutil.rmtree(target_folder, ignore_errors=True)
+        raise
+
+    canonical_root = target_folder / report.root_canonical_name
+    if canonical_root.exists():
+        compliance_issues = run_usd_compliance_checker(canonical_root)
+        for issue in compliance_issues:
+            report.warnings.append(issue.message)
+            logger.info(
+                "ComplianceChecker on %s: %s",
+                report.asset_folder_name, issue.message,
+            )
 
 
 # ── Folder intake ──
@@ -719,7 +800,7 @@ def _normalize_root_metadata(root_file: Path, asset_name: str) -> None:
         asset_name=asset_name,
         asset_identifier=f"./{root_file.name}",
     )
-    apply_aswf_class_inherits(stage, root_prim.GetName())
+    _apply_aswf_class_inherits(stage, root_prim.GetName())
     stage.Save()
 
 
@@ -813,12 +894,12 @@ def _create_root_file(
         asset_identifier=f"./{root_path.name}",
         force=True,
     )
-    apply_aswf_class_inherits(stage, default_prim_name)
+    _apply_aswf_class_inherits(stage, default_prim_name)
 
     stage.Save()
 
 
-def apply_aswf_class_inherits(
+def _apply_aswf_class_inherits(
     stage: Usd.Stage, default_prim_name: str,
 ) -> bool:
     """Add a sibling ``class _class_<name>`` and inherit it from the root."""

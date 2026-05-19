@@ -37,15 +37,6 @@ class PositionMode(StrEnum):
     BOUNDS_OFFSET = "bounds_offset"
 
 
-class PlacementCategory(StrEnum):
-    """Where an object category gets placed by default."""
-
-    FLOOR = "floor"      # Y = 0 (tables, chairs, shelves)
-    SURFACE = "surface"  # Y = furniture_height (products, displays)
-    CEILING = "ceiling"  # Y = room_height (pendant lights)
-    WALL = "wall"        # Against wall boundary
-
-
 class SceneObject(BaseModel):
     """An object placed in the scene graph."""
 
@@ -54,4 +45,3 @@ class SceneObject(BaseModel):
     translate: tuple[float, float, float] = (0.0, 0.0, 0.0)
     rotate: tuple[float, float, float] = (0.0, 0.0, 0.0)
     scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
-    category: PlacementCategory = PlacementCategory.FLOOR

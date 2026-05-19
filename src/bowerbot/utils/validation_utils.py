@@ -189,6 +189,7 @@ def validate_stage(
     issues.extend(_check_references(stage))
     issues.extend(_check_sublayers(stage))
     issues.extend(_check_material_bindings(stage))
+    issues.extend(_check_scene_asset_variants(stage))
     issues.extend(_run_usd_compliance_checker(str(stage_path)))
 
     is_valid = not any(i.severity == Severity.ERROR for i in issues)
@@ -270,6 +271,130 @@ def _check_sublayers(stage: Usd.Stage) -> list[ValidationIssue]:
                 severity=Severity.ERROR,
                 message=f"Unresolved sublayer: {sub_path}",
             ))
+    return issues
+
+
+def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
+    """Structural checks for variant authoring on a single asset folder."""
+    from bowerbot.schemas import ASWFLayerNames
+    from bowerbot.utils import variant_utils
+    from bowerbot.utils.asset_folder_utils import (
+        find_root_file,
+        resolve_default_prim_name,
+    )
+
+    issues: list[ValidationIssue] = []
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return issues
+
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
+    root_layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if root_layer is None:
+        return issues
+
+    sublayers = list(root_layer.subLayerPaths)
+    sublayered = any(s == f"./{ASWFLayerNames.VARIANTS}" for s in sublayers)
+    if sublayered:
+        issues.append(ValidationIssue(
+            severity=Severity.ERROR,
+            message=(
+                f"variants.usda must be referenced, not sublayered, in "
+                f"{asset_dir.name} (LIVRPS strength order)."
+            ),
+        ))
+
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    root_prim_spec = root_layer.GetPrimAtPath(f"/{default_prim_name}")
+    has_ref = False
+    if root_prim_spec is not None:
+        ref_list = root_prim_spec.referenceList
+        for items in (
+            ref_list.prependedItems,
+            ref_list.appendedItems,
+            ref_list.addedItems,
+            ref_list.explicitItems,
+            ref_list.orderedItems,
+        ):
+            if any(r.assetPath == f"./{ASWFLayerNames.VARIANTS}" for r in items):
+                has_ref = True
+                break
+
+    if variants_path.exists() and not has_ref:
+        issues.append(ValidationIssue(
+            severity=Severity.ERROR,
+            message=(
+                f"variants.usda exists in {asset_dir.name} but is not "
+                "referenced from the asset root."
+            ),
+        ))
+    if has_ref and not variants_path.exists():
+        issues.append(ValidationIssue(
+            severity=Severity.ERROR,
+            message=(
+                f"Asset root references variants.usda but the file does "
+                f"not exist in {asset_dir.name} (orphaned reference)."
+            ),
+        ))
+
+    if not variants_path.exists():
+        return issues
+
+    summary = variant_utils.get_variant_summary(asset_dir)
+    for vset in summary.variant_sets:
+        if not variant_utils.is_valid_variant_set_name(vset.name):
+            issues.append(ValidationIssue(
+                severity=Severity.ERROR,
+                message=(
+                    f"Invalid variant set name {vset.name!r} in "
+                    f"{asset_dir.name} (no whitespace or path separators)."
+                ),
+            ))
+        for v in vset.variants:
+            if not variant_utils.is_valid_variant_set_name(v):
+                issues.append(ValidationIssue(
+                    severity=Severity.ERROR,
+                    message=(
+                        f"Invalid variant name {v!r} in set {vset.name!r} "
+                        f"in {asset_dir.name}."
+                    ),
+                ))
+        if vset.selection is None:
+            issues.append(ValidationIssue(
+                severity=Severity.WARNING,
+                message=(
+                    f"Variant set {vset.name!r} on {asset_dir.name} has "
+                    "no default selection; consumers will see whatever "
+                    "the first authored variant is."
+                ),
+            ))
+        elif vset.selection not in vset.variants:
+            issues.append(ValidationIssue(
+                severity=Severity.ERROR,
+                message=(
+                    f"Default variant {vset.selection!r} for set "
+                    f"{vset.name!r} on {asset_dir.name} does not exist."
+                ),
+            ))
+    return issues
+
+
+def _check_scene_asset_variants(stage: Usd.Stage) -> list[ValidationIssue]:
+    """Walk referenced asset folders and validate each one's variants."""
+    seen: set[Path] = set()
+    issues: list[ValidationIssue] = []
+    stage_dir = Path(stage.GetRootLayer().realPath).parent
+
+    for prim in stage.Traverse():
+        for ref_path in get_prim_ref_paths(prim):
+            resolved = (stage_dir / ref_path).resolve()
+            if not resolved.exists():
+                continue
+            asset_dir = resolved.parent
+            if asset_dir in seen:
+                continue
+            seen.add(asset_dir)
+            issues.extend(validate_asset_variants(asset_dir))
     return issues
 
 

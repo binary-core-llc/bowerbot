@@ -39,14 +39,9 @@ class ASWFLayerNames:
     MTL = "mtl.usda"
     LGT = "lgt.usda"
     CONTENTS = "contents.usda"  # Nested asset references placed inside this asset
+    VARIANTS = "variants.usda"  # Variant set declarations + opinions
     MAPS = "maps"
     TEXTURES = "textures"
-
-
-class SceneLayerNames:
-    """Scene-level sublayer file names sublayered under scene.usda."""
-
-    SCENE_LAYOUT = "scene_layout.usda"
 
 
 class AppleUSDZConstraints:

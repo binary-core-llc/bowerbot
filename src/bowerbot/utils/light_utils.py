@@ -19,8 +19,9 @@ from bowerbot.utils.asset_folder_utils import (
     remove_empty_layer,
     resolve_default_prim_name,
 )
-from bowerbot.utils.geometry_utils import meters_to_asset_units, unit_factor
-from bowerbot.utils.stage_utils import LIGHT_CLASSES
+from bowerbot.utils.geometry_utils import unit_factor
+from bowerbot.utils.stage_utils import LIGHT_CLASSES, clear_orphan_variant_overs
+from bowerbot.utils.variant_utils import cleanup_if_empty
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +33,6 @@ _LIGHT_EXTRA_ATTRS: dict[str, str] = {
     "height": "inputs:height",
     "length": "inputs:length",
 }
-_SPATIAL_LIGHT_ATTRS: frozenset[str] = frozenset(
-    {"radius", "width", "height", "length"},
-)
 
 
 def add_light_to_folder(
@@ -113,54 +111,6 @@ def add_light_to_folder(
     return light_prim_path
 
 
-def update_light_in_folder(
-    asset_dir: Path,
-    light_name: str,
-    *,
-    translate: tuple[float, float, float] | None = None,
-    rotate: tuple[float, float, float] | None = None,
-    intensity: float | None = None,
-    exposure: float | None = None,
-    color: tuple[float, float, float] | None = None,
-    **extra_attrs: float | str | None,
-) -> None:
-    """Update an asset-folder light's attributes in place."""
-    lgt_path = asset_dir / ASWFLayerNames.LGT
-    if not lgt_path.exists():
-        msg = f"No {ASWFLayerNames.LGT} found in asset folder"
-        raise ValueError(msg)
-
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
-
-    stage = Usd.Stage.Open(str(lgt_path))
-    if stage is None:
-        msg = f"Cannot open lgt layer: {lgt_path}"
-        raise RuntimeError(msg)
-
-    prim = stage.GetPrimAtPath(light_prim_path)
-    if not prim.IsValid():
-        msg = f"Light not found: {light_name}"
-        raise ValueError(msg)
-
-    if intensity is not None:
-        prim.GetAttribute("inputs:intensity").Set(intensity)
-    if exposure is not None:
-        prim.GetAttribute("inputs:exposure").Set(exposure)
-    if color is not None:
-        prim.GetAttribute("inputs:color").Set(Gf.Vec3f(*color))
-
-    _update_extra_attrs(prim, asset_dir, extra_attrs)
-
-    if translate is not None:
-        _set_translate(prim, translate, unit_factor(asset_dir))
-    if rotate is not None:
-        _set_rotate(prim, rotate)
-
-    stage.Save()
-    logger.info("Updated light %s in %s", light_name, asset_dir.name)
-
-
 def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     """Remove *light_name* from *asset_dir*'s ``lgt.usda``.
 
@@ -182,6 +132,13 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
         edit.Add(light_prim_path, Sdf.Path.emptyPath)
         lgt_layer.Apply(edit)
         lgt_layer.Save()
+
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
+    if variants_path.exists():
+        variants_layer = Sdf.Layer.FindOrOpen(str(variants_path))
+        if variants_layer is not None:
+            clear_orphan_variant_overs(variants_layer, str(light_prim_path))
+        cleanup_if_empty(asset_dir)
 
     remove_empty_layer(
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),
@@ -248,55 +205,6 @@ def _set_extra_attrs(
             attr = light_prim.GetAttribute(usd_attr)
             if attr:
                 attr.Set(value)
-
-
-def _update_extra_attrs(
-    prim: Usd.Prim,
-    asset_dir: Path,
-    values: dict[str, float | str | None],
-) -> None:
-    """Update type-specific attributes on an existing light prim."""
-    for attr_name, usd_attr in _LIGHT_EXTRA_ATTRS.items():
-        value = values.get(attr_name)
-        if value is None:
-            continue
-        if attr_name in _SPATIAL_LIGHT_ATTRS:
-            value = meters_to_asset_units(asset_dir, float(value))
-        attr = prim.GetAttribute(usd_attr)
-        if attr:
-            attr.Set(value)
-
-
-def _set_translate(
-    prim: Usd.Prim,
-    translate: tuple[float, float, float],
-    factor: float,
-) -> None:
-    """Set or update a translate xform op on a prim."""
-    converted = Gf.Vec3d(
-        translate[0] * factor,
-        translate[1] * factor,
-        translate[2] * factor,
-    )
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpName() == "xformOp:translate":
-            op.Set(converted)
-            return
-    xformable.AddTranslateOp().Set(converted)
-
-
-def _set_rotate(
-    prim: Usd.Prim, rotate: tuple[float, float, float],
-) -> None:
-    """Set or update a rotateXYZ xform op on a prim."""
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            op.Set(Gf.Vec3f(*rotate))
-            return
-    if any(v != 0.0 for v in rotate):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
 
 
 def _apply_inverse_transform(

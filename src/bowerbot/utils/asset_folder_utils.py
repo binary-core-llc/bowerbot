@@ -30,6 +30,13 @@ logger = logging.getLogger(__name__)
 _USD_EXTS: frozenset[str] = frozenset({".usd", ".usda", ".usdc"})
 _ROOT_NAME_HINTS: tuple[str, ...] = ("root", "main", "asset")
 
+CANONICAL_REFERENCE_ORDER: tuple[str, ...] = (
+    ASWFLayerNames.VARIANTS,
+    ASWFLayerNames.CONTENTS,
+    ASWFLayerNames.LGT,
+    ASWFLayerNames.MTL,
+)
+
 
 # ── Folder structure ──
 
@@ -94,6 +101,77 @@ def find_root_file(asset_dir: Path) -> Path | None:
     return None
 
 
+def require_asset_context(
+    stage: Usd.Stage, prim_path: str,
+) -> tuple[Path, str]:
+    """Resolve the asset folder + reference prim path; raise if neither is found."""
+    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
+    if asset_dir is None or ref_prim_path is None:
+        raise ValueError(
+            f"Cannot find ASWF asset folder for {prim_path}. "
+            "Operation only works on assets placed as ASWF folders (not USDZ).",
+        )
+    return asset_dir, ref_prim_path
+
+
+def asset_has_root_payload(asset_dir: Path) -> bool:
+    """Return whether the asset's root prim has a directly authored payload."""
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return False
+    layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if layer is None:
+        return False
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
+    if prim_spec is None:
+        return False
+    plist = prim_spec.payloadList
+    return bool(
+        plist.prependedItems
+        or plist.appendedItems
+        or plist.addedItems
+        or plist.explicitItems,
+    )
+
+
+def clear_root_payload(asset_dir: Path) -> None:
+    """Strip every payload list-op slot from the asset's root prim."""
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return
+    layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if layer is None:
+        return
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
+    if prim_spec is None:
+        return
+    plist = prim_spec.payloadList
+    plist.ClearEdits()
+    layer.Save()
+
+
+def list_alternate_geo_files(asset_dir: Path) -> list[str]:
+    """USD files in the asset folder that aren't canonical ASWF layers or root."""
+    if not asset_dir.is_dir():
+        return []
+    canonical = {
+        ASWFLayerNames.GEO,
+        ASWFLayerNames.MTL,
+        ASWFLayerNames.LGT,
+        ASWFLayerNames.CONTENTS,
+        ASWFLayerNames.VARIANTS,
+    }
+    canonical |= {f"{asset_dir.name}{ext}" for ext in _USD_EXTS}
+    return sorted(
+        p.name for p in asset_dir.iterdir()
+        if p.is_file()
+        and p.suffix.lower() in _USD_EXTS
+        and p.name not in canonical
+    )
+
+
 def resolve_default_prim_name(asset_dir: Path) -> str:
     """Return the asset's ``defaultPrim`` name, falling back to folder name."""
     name = _get_default_prim_name(asset_dir)
@@ -107,7 +185,22 @@ def to_layer_local_path(prim_path: str, default_prim_name: str) -> str:
         return prefix
     if prim_path.startswith(f"{prefix}/"):
         return prim_path
+    if not prim_path.startswith("/"):
+        prim_path = f"/{prim_path}"
     return f"{prefix}{prim_path}"
+
+
+def normalize_asset_prim_path(
+    prim_path: str, ref_prim_path: str, default_prim_name: str,
+) -> str:
+    """Strip the scene namespace then anchor under the asset's default prim."""
+    if prim_path == ref_prim_path:
+        return f"/{default_prim_name}"
+    if prim_path.startswith(f"{ref_prim_path}/"):
+        return to_layer_local_path(
+            prim_path[len(ref_prim_path):], default_prim_name,
+        )
+    return to_layer_local_path(prim_path, default_prim_name)
 
 
 def ensure_layer_scope(
@@ -149,10 +242,8 @@ def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
     if ref_path in get_prim_ref_paths(root_prim):
         return
 
-    root_prim.GetReferences().AddReference(
-        ref_path, position=Usd.ListPositionFrontOfPrependList,
-    )
-    stage.Save()
+    del stage
+    rebuild_root_references(asset_dir)
 
 
 def remove_empty_layer(
@@ -193,11 +284,7 @@ def rebuild_root_references(asset_dir: Path) -> None:
     if geo_path.exists():
         root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
 
-    for layer_file in (
-        ASWFLayerNames.CONTENTS,
-        ASWFLayerNames.LGT,
-        ASWFLayerNames.MTL,
-    ):
+    for layer_file in CANONICAL_REFERENCE_ORDER:
         if (asset_dir / layer_file).exists():
             root_prim.GetReferences().AddReference(f"./{layer_file}")
 

@@ -253,69 +253,35 @@ def test_apply_aswf_root_metadata_preserves_existing_unless_forced():
         assert info["name"] == "asset"
 
 
-def test_create_stage_produces_layered_scene_and_layout_sublayer():
-    """create_stage creates scene.usda + scene_layout.usda; layout is sublayered."""
-    from bowerbot.schemas import SceneLayerNames
+def test_create_stage_produces_single_scene_file():
+    """create_stage produces only scene.usda; no sublayer by default."""
     from bowerbot.utils import stage_utils
     with tempfile.TemporaryDirectory() as tmp:
         scene_path = Path(tmp) / "scene.usda"
-        layout_path = Path(tmp) / SceneLayerNames.SCENE_LAYOUT
 
         stage_utils.create_stage(scene_path)
 
         assert scene_path.exists()
-        assert layout_path.exists()
-
         scene_text = scene_path.read_text(encoding="utf-8")
-        assert f"./{SceneLayerNames.SCENE_LAYOUT}" in scene_text
-
-        layout_stage = Usd.Stage.Open(str(layout_path))
-        scene_prim = layout_stage.GetPrimAtPath("/Scene")
-        assert scene_prim.IsValid()
-        assert Usd.ModelAPI(scene_prim).GetKind() == "assembly"
+        assert "subLayers" not in scene_text
 
 
-def test_open_stage_routes_edits_to_scene_layout_sublayer():
-    """open_stage sets the edit target to scene_layout.usda when present."""
-    from bowerbot.schemas import SceneLayerNames
+def test_open_stage_uses_root_layer_edit_target():
+    """open_stage targets the root scene.usda layer; saves land there."""
     from bowerbot.utils import stage_utils
     with tempfile.TemporaryDirectory() as tmp:
         scene_path = Path(tmp) / "scene.usda"
-        layout_path = Path(tmp) / SceneLayerNames.SCENE_LAYOUT
         stage_utils.create_stage(scene_path)
 
         stage = stage_utils.open_stage(scene_path)
         edit_target = stage.GetEditTarget()
-        assert edit_target.GetLayer().identifier.endswith(
-            SceneLayerNames.SCENE_LAYOUT,
-        )
+        assert Path(edit_target.GetLayer().identifier) == scene_path
 
         stage.DefinePrim("/Scene/Furniture", "Xform")
         stage.Save()
 
         scene_layer = Sdf.Layer.FindOrOpen(str(scene_path))
-        layout_layer = Sdf.Layer.FindOrOpen(str(layout_path))
-        assert scene_layer.GetPrimAtPath(Sdf.Path("/Scene/Furniture")) is None
-        assert layout_layer.GetPrimAtPath(
-            Sdf.Path("/Scene/Furniture"),
-        ) is not None
-
-
-def test_open_stage_legacy_single_file_preserves_default_edit_target():
-    """Legacy scene.usda with no layout sublayer keeps edits on the root layer."""
-    from bowerbot.utils import stage_utils
-    with tempfile.TemporaryDirectory() as tmp:
-        scene_path = Path(tmp) / "scene.usda"
-        legacy = Usd.Stage.CreateNew(str(scene_path))
-        UsdGeom.SetStageMetersPerUnit(legacy, 1.0)
-        UsdGeom.SetStageUpAxis(legacy, UsdGeom.Tokens.y)
-        legacy.DefinePrim("/Scene", "Xform")
-        legacy.SetDefaultPrim(legacy.GetPrimAtPath("/Scene"))
-        legacy.Save()
-
-        stage = stage_utils.open_stage(scene_path)
-        identifier = Path(stage.GetEditTarget().GetLayer().identifier)
-        assert identifier == scene_path
+        assert scene_layer.GetPrimAtPath(Sdf.Path("/Scene/Furniture")) is not None
 
 
 def test_add_nested_asset_reference_authors_canonical_xform_op_set():
@@ -985,108 +951,6 @@ def test_rect_light_rotation_facing_right():
             if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
                 rot = op.Get()
                 assert rot[1] == -90.0
-
-
-def test_update_light_position_offset():
-    """update_light should correctly update translate values."""
-    with tempfile.TemporaryDirectory() as tmp:
-        source_dir = Path(tmp) / "source"
-        source_dir.mkdir()
-        output_dir = Path(tmp) / "output"
-        output_dir.mkdir()
-
-        geo = create_geometry(source_dir, "lamp")
-
-        root = asset_intake_utils.create_asset_folder(
-            output_dir, "lamp", geo,
-        )
-
-        # Create light at initial position
-        light_utils.add_light_to_folder(
-            asset_dir=root.parent,
-            light_name="spot",
-            light=LightParams(
-                light_type=LightType.DISK,
-                translate=(0.0, 1.0, 0.0),
-                rotate=(-90.0, 0.0, 0.0),
-                intensity=1000.0,
-            ),
-        )
-
-        # Update position
-        light_utils.update_light_in_folder(
-            asset_dir=root.parent,
-            light_name="spot",
-            translate=(0.5, 2.0, -0.3),
-        )
-
-        lgt_path = root.parent / "lgt.usda"
-        stage = Usd.Stage.Open(str(lgt_path))
-        prim = stage.GetPrimAtPath("/lamp/lgt/spot")
-        assert prim.IsValid()
-
-        xf = UsdGeom.Xformable(prim)
-        for op in xf.GetOrderedXformOps():
-            if op.GetOpName() == "xformOp:translate":
-                pos = op.Get()
-                # Geometry is in cm (mpu=0.01), so values
-                # should be scaled by 1/0.01 = 100
-                assert pos[0] == 50.0  # 0.5 * 100
-                assert pos[1] == 200.0  # 2.0 * 100
-                assert pos[2] == -30.0  # -0.3 * 100
-                break
-        else:
-            raise AssertionError("No translate op found")
-
-
-def test_update_light_rotation():
-    """update_light should correctly update rotation values."""
-    with tempfile.TemporaryDirectory() as tmp:
-        source_dir = Path(tmp) / "source"
-        source_dir.mkdir()
-        output_dir = Path(tmp) / "output"
-        output_dir.mkdir()
-
-        geo = create_geometry(source_dir, "lamp")
-
-        root = asset_intake_utils.create_asset_folder(
-            output_dir, "lamp", geo,
-        )
-
-        # Create light facing down
-        light_utils.add_light_to_folder(
-            asset_dir=root.parent,
-            light_name="spot",
-            light=LightParams(
-                light_type=LightType.DISK,
-                translate=(0.0, 1.0, 0.0),
-                rotate=(-90.0, 0.0, 0.0),
-                intensity=1000.0,
-            ),
-        )
-
-        # Update rotation to face right
-        light_utils.update_light_in_folder(
-            asset_dir=root.parent,
-            light_name="spot",
-            rotate=(0.0, -90.0, 0.0),
-        )
-
-        lgt_path = root.parent / "lgt.usda"
-        stage = Usd.Stage.Open(str(lgt_path))
-        prim = stage.GetPrimAtPath("/lamp/lgt/spot")
-        assert prim.IsValid()
-
-        xf = UsdGeom.Xformable(prim)
-        for op in xf.GetOrderedXformOps():
-            if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-                rot = op.Get()
-                assert rot[0] == 0.0
-                assert rot[1] == -90.0
-                assert rot[2] == 0.0
-                break
-        else:
-            raise AssertionError("No rotateXYZ op found")
 
 
 # ── Nested Asset Placement (asset_service) ─

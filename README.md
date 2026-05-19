@@ -536,14 +536,18 @@ src/bowerbot/
   prompts/            # LLM instructions as markdown (editable without code changes)
     core.md
     scene_building.md
+    library.md
+    textures.md
+    variants.md
 
   schemas/            # Pydantic models and enums, grouped by domain
     assets.py         #   Asset formats, categories, ASWF layer names, metadata
-    transforms.py     #   TransformParams, PositionMode, PlacementCategory, SceneObject
+    transforms.py     #   TransformParams, PositionMode, SceneObject
     lights.py         #   LightType, LightParams
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
     textures.py       #   HDRI / image / texture-category enums
     validation.py     #   Severity, ValidationIssue, ValidationResult
+    variants.py       #   VariantCategory, AddVariant params, VariantsSummary
 
   services/           # State-aware orchestrators, one per tools module
     stage_service.py       #   create_stage, list_scene, rename_prim, move_asset, ...
@@ -553,6 +557,10 @@ src/bowerbot/
     material_service.py    #   create_material, bind_material, list/remove/cleanup
     texture_service.py     #   list_textures, search_textures
     validation_service.py  #   validate_scene, package_scene
+    variant_service.py     #   add_asset_(material|geometry|attribute|configuration)_variant,
+                           #   add_scene_lighting_(attribute|selection)_variant,
+                           #   list_variants, select/remove_asset_variant(_set|_for_instance),
+                           #   select/remove_scene_variant(_set)
 
   tools/              # LLM-facing API layer (tool defs + thin handlers)
     _helpers.py            #   Precondition guards (require_stage / project / library)
@@ -563,6 +571,7 @@ src/bowerbot/
     material_tools.py      #   create_material, bind_material, list/remove_material
     texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
+    variant_tools.py       #   variant authoring + selection (asset + scene-instance)
 
   skills/             # Skill SDK. The contract every skill implements.
                       # Skills themselves ship as separate pip packages.
@@ -580,7 +589,9 @@ src/bowerbot/
     light_utils.py           #   light_in_folder primitives, HDRI staging
     material_utils.py        #   material_in_folder primitives, find_first_material
     texture_utils.py         #   find_textures, copy_texture_to_project
-    validation_utils.py      #   validate_stage, package_to_usdz
+    validation_utils.py      #   validate_stage, package_to_usdz, validate_asset_variants
+    variant_utils.py         #   variants.usda lifecycle, author_in_variant keystone,
+                             #   apply_variant, set/clear_default, removal + cleanup
     geometry_utils.py        #   Bounds, unit conversion, layout math
     dependency_utils.py      #   USD dependency tree walker
     naming_utils.py          #   Name sanitization for files, prims, projects
@@ -621,13 +632,28 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 - Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
 - Asset roots carry the canonical ASWF identity: `kind = "component"` for terminal assets and an `assetInfo` dictionary (`identifier`, `name`, `version`) so DCC outliners, asset browsers, and pipeline asset-management systems recognise BowerBot output as production-grade
 
+**Variant sets**
+- Variant declarations and opinions live in a dedicated `variants.usda` per asset, **referenced** (not sublayered) into the asset root, so LIVRPS strength order works as production expects
+- Default selection is authored on the asset's root prim (in `<asset>.usda`). This is the asset's "ship default" and is never authored inside `variants.usda`
+- Per-scene-instance overrides are authored **inline on the placement prim** in `scene_layout.usda` (`variants = { "set" = "value" }`), matching Pixar's End-to-End example, NVIDIA Omniverse asset-structure principles, and AOUSD shot-structuring guidance. There is no separate `scene_variants.usda` (no production precedent)
+- The foundation in `utils/variant_utils.py` is opinion-agnostic. `author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller-supplied function inside the variant's edit context, so future variant categories (light attributes, transforms, schema API attributes, anything else) are pure additions in services. The utils never change
+- Three category orchestrators ship today (material bindings, geometry payloads, configuration activations) plus list, select, remove, and per-asset auto-cleanup of `variants.usda` when the last variant set is removed
+- Variant validation is wired into `validate_scene`: structural checks (referenced-not-sublayered, default selection present, no orphan reference, naming) flag broken variants before packaging
+
+**Removal scope**
+- All variant removal operations are scoped to **one asset**. Removing a variant set from one asset never affects other assets, even when assets reference each other
+- When multiple assets are in scope, BowerBot asks which asset before calling the removal tool. It never guesses
+- Variants composed in via referenced assets stay visible after removal because they're authored elsewhere. Navigate to that asset and remove them there
+
 ---
 
 ## 🗺️ Roadmap
 
 What's next for BowerBot. Contributions welcome:
 
-- [ ] **USD Variant Sets**: ASWF-compliant variants on asset root prims (materials, geometry, lighting, configurations, and more)
+- [x] **USD Variant Sets (asset-level, foundation)**: opinion-agnostic foundation in `utils/variant_utils.py`, plus material, geometry, and configuration orchestrators, with per-scene-instance selection overrides authored inline in `scene_layout.usda`
+- [ ] **More asset variant categories**: light attributes (intensity / color / exposure / radius / angle), light type swaps, transform variants, wear state, animation, resolution, and arbitrary schema API attribute variants. Each is a pure addition in `services/variant_service.py` against the existing utils
+- [ ] **Scene-level variant sets**: variant sets declared on scene prims themselves (e.g. `/Scene` with a "lighting" set: day / dusk / night) so a single scene file ships multiple deliverables
 - [ ] **Scene templates**: JSON-driven scene assembly with asset resolution
 - [ ] **DCC exporter**: Maya/Houdini tool to export scene layout as BowerBot JSON
 - [ ] **More asset providers**: Fab, PolyHaven, Objaverse, CGTrader skills

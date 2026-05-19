@@ -68,6 +68,61 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     return ToolResult(success=True, data=data)
 
 
+def list_prim_attributes(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """List every attribute on a prim with type + current value."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = stage_service.list_prim_attributes(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def set_prim_attribute(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Author an attribute opinion on a prim (per-instance, scene.usda)."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = stage_service.set_prim_attribute(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def save_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Flatten the composed scene into a named, self-contained snapshot file."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = stage_service.save_scene_snapshot(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def list_scene_snapshots(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """List every snapshot .usda file alongside scene.usda."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = stage_service.list_scene_snapshots(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def delete_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Delete a named snapshot file."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = stage_service.delete_scene_snapshot(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
 def list_prim_children(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List geometry parts under a prim path."""
     if (err := require_stage(state)):
@@ -159,9 +214,11 @@ TOOLS: list[Tool] = [
     Tool(
         name="move_asset",
         description=(
-            "Move an existing object to a new position. "
-            "Use this instead of place_asset when repositioning "
-            "an object that is already in the scene."
+            "Move an existing object. Any axis (translate_x, translate_y, "
+            "translate_z, rotate_y) you omit keeps its current value, so "
+            "for single-axis moves pass only the axis the user asked to "
+            "change. Use this instead of place_asset when repositioning "
+            "an object already in the scene."
         ),
         parameters={
             "type": "object",
@@ -174,18 +231,27 @@ TOOLS: list[Tool] = [
                         "Use list_scene to find prim paths."
                     ),
                 },
-                "translate_x": {"type": "number", "description": "New X position in meters."},
-                "translate_y": {"type": "number", "description": "New Y position in meters."},
-                "translate_z": {"type": "number", "description": "New Z position in meters."},
+                "translate_x": {
+                    "type": "number",
+                    "description": "New X in meters. Omit to keep current X.",
+                },
+                "translate_y": {
+                    "type": "number",
+                    "description": "New Y in meters. Omit to keep current Y.",
+                },
+                "translate_z": {
+                    "type": "number",
+                    "description": "New Z in meters. Omit to keep current Z.",
+                },
                 "rotate_y": {
                     "type": "number",
-                    "description": "Rotation around Y axis in degrees.",
-                    "default": 0.0,
+                    "description": (
+                        "Rotation around Y axis in degrees. Omit to keep "
+                        "current rotation."
+                    ),
                 },
             },
-            "required": [
-                "prim_path", "translate_x", "translate_y", "translate_z",
-            ],
+            "required": ["prim_path"],
         },
     ),
     Tool(
@@ -234,6 +300,155 @@ TOOLS: list[Tool] = [
             "required": ["count"],
         },
     ),
+    Tool(
+        name="list_prim_attributes",
+        description=(
+            "List every attribute on a USD prim with type and current "
+            "value. Use this to discover what is settable when the user "
+            "asks about uncommon parameters (e.g. material specular, "
+            "transmission, sheen, coat; light angle, treatAsLine, "
+            "colorTemperature; any UsdLux/UsdShade/UsdGeom schema "
+            "attribute). After discovery, use set_prim_attribute to "
+            "author overrides. Returns each attribute as "
+            "{name, type, value, authored}."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "prim_path": {
+                    "type": "string",
+                    "description": (
+                        "Exact prim path to inspect (e.g. "
+                        "'/Scene/Furniture/Table_01/asset/mtl/walnut/"
+                        "standard_surface' or '/Scene/Lighting/Key_01')."
+                    ),
+                },
+            },
+            "required": ["prim_path"],
+        },
+    ),
+    Tool(
+        name="set_prim_attribute",
+        description=(
+            "Author or clear an attribute opinion on a prim in scene.usda. "
+            "Type is inferred from the prim's schema or the shader "
+            "registry (call list_prim_attributes first to see what is "
+            "settable). Pass value=null to clear an authored opinion. "
+            "Every value change in BowerBot goes through scene.usda: "
+            "asset files (mtl.usda, lgt.usda, variants.usda) are only "
+            "touched when DEFINING or REMOVING materials/lights/variants "
+            "via the dedicated tools (create_material, create_light, "
+            "add_asset_material_variant, etc.). To update the same parameter "
+            "on multiple placements, call this once per placement. "
+            "Works for any UsdLux / UsdShade / UsdGeom attribute (sheen, "
+            "coat, specular, colorTemperature, treatAsLine, intensity, "
+            "exposure, radius, angle, etc.)."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "prim_path": {
+                    "type": "string",
+                    "description": (
+                        "Exact prim path the attribute lives on. For a "
+                        "material shader: "
+                        "/Scene/<Group>/<Asset>/asset/mtl/<material>/<shader>. "
+                        "For an asset light: "
+                        "/Scene/<Group>/<Asset>/asset/lgt/<light_name>. "
+                        "For a scene light: /Scene/Lighting/<light_name>."
+                    ),
+                },
+                "attribute_name": {
+                    "type": "string",
+                    "description": (
+                        "Attribute name including any namespace prefix "
+                        "(e.g. 'inputs:sheen', 'inputs:colorTemperature', "
+                        "'xformOp:translate')."
+                    ),
+                },
+                "value": {
+                    "description": (
+                        "Value matching the attribute's type (float for "
+                        "Float, list of 3 numbers for Color3f / Vec3f, "
+                        "string for Token / Asset, bool for Bool). Pass "
+                        "null to clear the authored opinion."
+                    ),
+                },
+            },
+            "required": ["prim_path", "attribute_name", "value"],
+        },
+    ),
+    Tool(
+        name="save_scene_snapshot",
+        description=(
+            "Save a named, self-contained frozen copy of the current "
+            "scene alongside scene.usda. The snapshot is a flattened, "
+            "production-clean .usda file: customLayerData (DCC "
+            "camera/render settings) and root-level DCC prims (e.g. "
+            "/OmniverseKit_Persp) are stripped. scene.usda is NOT "
+            "modified — BowerBot keeps editing it normally. The user "
+            "can save multiple named snapshots (e.g. "
+            "'kitchen_with_plants', 'kitchen_no_plants') and open any "
+            "of them directly in their DCC as a final version. External "
+            "asset references (./assets/*) are preserved inside the "
+            "snapshot, so asset edits flow through when the snapshot "
+            "is reopened. Refuses if a snapshot with the same name "
+            "already exists unless force=true."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": (
+                        "Snapshot name (without extension). Example: "
+                        "'kitchen_with_plants'. Sanitized to alphanumeric + "
+                        "underscore + hyphen. Cannot collide with scene.usda."
+                    ),
+                },
+                "force": {
+                    "type": "boolean",
+                    "description": (
+                        "Overwrite an existing snapshot with the same name. "
+                        "Default false: refuse so the user can decide."
+                    ),
+                    "default": False,
+                },
+            },
+            "required": ["name"],
+        },
+    ),
+    Tool(
+        name="list_scene_snapshots",
+        description=(
+            "List every snapshot .usda file alongside scene.usda in the "
+            "project's scenes directory. Returns name, path, and size "
+            "for each snapshot. Use to show the user which versions "
+            "exist before deleting or overwriting."
+        ),
+        parameters={"type": "object", "properties": {}},
+    ),
+    Tool(
+        name="delete_scene_snapshot",
+        description=(
+            "Delete a named snapshot file. Refuses to delete scene.usda. "
+            "The snapshot is gone permanently — confirm with the user "
+            "before calling."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": (
+                        "Snapshot name to delete (without extension). Must "
+                        "match an existing snapshot from list_scene_snapshots."
+                    ),
+                },
+            },
+            "required": ["name"],
+        },
+    ),
 ]
 
 
@@ -245,4 +460,9 @@ HANDLERS = {
     "move_asset": move_asset,
     "list_prim_children": list_prim_children,
     "compute_grid_layout": compute_grid_layout,
+    "list_prim_attributes": list_prim_attributes,
+    "set_prim_attribute": set_prim_attribute,
+    "save_scene_snapshot": save_scene_snapshot,
+    "list_scene_snapshots": list_scene_snapshots,
+    "delete_scene_snapshot": delete_scene_snapshot,
 }

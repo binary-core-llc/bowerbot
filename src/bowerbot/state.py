@@ -51,13 +51,6 @@ class SceneState:
         self.assets_dir.mkdir(parents=True, exist_ok=True)
         return self.assets_dir
 
-    def resolve_project_dir(self) -> Path:
-        """Return the project's root directory, or raise if unset."""
-        if self.project_dir is None:
-            msg = "No project set. Use 'bowerbot new' to create a project first."
-            raise RuntimeError(msg)
-        return self.project_dir
-
     def touch_project(self) -> None:
         """Persist updated_at on the bound project, if any."""
         if self.project is not None:
@@ -72,11 +65,10 @@ class SceneState:
         return h.hexdigest()
 
     def _watched_layer_paths(self) -> list[Path]:
-        """Discover the scene's full layer stack (root + transitive sublayers)."""
-        from bowerbot.utils import stage_utils
+        """Return the scene's root layer for external-edit detection."""
         if self.stage_path is None or not self.stage_path.exists():
             return []
-        return stage_utils.collect_scene_layer_paths(self.stage_path)
+        return [self.stage_path]
 
     def mark_saved(self) -> None:
         """Snapshot mtime + hash of every layer in the scene's stack."""

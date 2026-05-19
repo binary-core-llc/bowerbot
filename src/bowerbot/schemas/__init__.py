@@ -17,12 +17,12 @@ from bowerbot.schemas.assets import (
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.lights import LightParams, LightType
-from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.materials import (
     MaterialXShaders,
     PreviewSurfaceShader,
     ProceduralMaterialParams,
 )
+from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
 from bowerbot.schemas.transforms import PositionMode, SceneObject, TransformParams
 from bowerbot.schemas.validation import Severity, ValidationIssue, ValidationResult

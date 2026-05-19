@@ -10,7 +10,6 @@ from pathlib import Path
 from pxr import Usd, UsdGeom, UsdShade
 
 from bowerbot.config import SceneDefaults
-from bowerbot.services import asset_service
 from bowerbot.state import SceneState
 from bowerbot.tools import library_tools
 from bowerbot.utils import asset_intake_utils, library_utils

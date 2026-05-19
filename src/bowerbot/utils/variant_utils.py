@@ -648,7 +648,8 @@ def validate_lod_namespace_stability(
         "must preserve the same prim names so material bindings, "
         "light-linking, collections, and per-instance overrides compose "
         "uniformly across every LOD. Differences vs "
-        f"'{canonical_name}' ({sorted(canonical_set)[:5]}{'...' if len(canonical_set) > 5 else ''}):",
+        f"'{canonical_name}' ({sorted(canonical_set)[:5]}"
+        f"{'...' if len(canonical_set) > 5 else ''}):",
     ]
     for name, only_canonical, only_other in divergences:
         if only_canonical:
@@ -1065,7 +1066,7 @@ def _is_collapsed_selection_set(vset_spec: Sdf.VariantSetSpec) -> bool:
 def restore_active_scene_variant_references_to_direct_ref(
     stage: Usd.Stage, carrier_prim_path: str, set_name: str,
 ) -> str | None:
-    """If a scene model-selection set's variants author refs on one child, demote the active variant's refs back to a direct ref on that child."""
+    """Demote a model-selection set's active variant refs back to a direct ref on its child."""
     layer = stage.GetRootLayer()
     carrier_spec = layer.GetPrimAtPath(carrier_prim_path)
     if carrier_spec is None or set_name not in carrier_spec.variantSets:

@@ -22,9 +22,7 @@ from bowerbot.state import SceneState
 from bowerbot.utils import (
     asset_intake_utils,
     geometry_utils,
-    library_utils,
     stage_utils,
-    validation_utils,
 )
 from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
 from bowerbot.utils.naming_utils import safe_prim_name

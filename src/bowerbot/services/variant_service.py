@@ -779,7 +779,7 @@ def remove_scene_variant(
 def remove_scene_variant_set(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Remove a scene variant set; for model-selection sets, demote active variant back to a direct ref."""
+    """Remove a scene variant set; demote model-selection active variant back to direct ref."""
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_utils.validate_variant_name(set_name, "variant set")

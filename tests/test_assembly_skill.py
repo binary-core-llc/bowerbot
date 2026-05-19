@@ -1063,8 +1063,15 @@ def test_set_prim_attribute_per_instance_override_leaves_asset_untouched():
         prev_override_color = tuple(
             float(c) for c in prev_over.attributes["inputs:diffuseColor"].default
         )
-        assert all(abs(a - b) < 1e-5 for a, b in zip(std_override_color, (0.0, 0.0, 1.0), strict=True))
-        assert all(abs(a - b) < 1e-5 for a, b in zip(prev_override_color, (0.0, 0.0, 1.0), strict=True))
+        expected = (0.0, 0.0, 1.0)
+        assert all(
+            abs(a - b) < 1e-5
+            for a, b in zip(std_override_color, expected, strict=True)
+        )
+        assert all(
+            abs(a - b) < 1e-5
+            for a, b in zip(prev_override_color, expected, strict=True)
+        )
 
 
 def test_set_prim_attribute_writes_to_scene_for_asset_light():

@@ -20,7 +20,6 @@ from bowerbot.utils import (
     variant_utils,
 )
 
-
 # ── Asset builder ──
 
 
@@ -1944,6 +1943,7 @@ def test_add_scene_model_selection_variant_refuses_missing_asset_file(tmp_path):
 def test_delete_project_asset_refuses_when_referenced_by_inactive_variant(tmp_path):
     """An asset referenced ONLY by a non-selected variant body must still block deletion."""
     import shutil
+
     from bowerbot.services import asset_service
 
     state, scene_path, library = _make_model_selection_state(tmp_path)

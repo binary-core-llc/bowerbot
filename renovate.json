@@ -7,7 +7,6 @@
     ":dependencyDashboard"
   ],
   "configMigration": true,
-  "schedule": ["* 0-5 * * 1"],
   "timezone": "UTC",
   "branchPrefix": "chore/renovate-",
   "minimumReleaseAge": "5 days",
@@ -18,8 +17,7 @@
   "prCreation": "immediate",
   "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": ["* 0-5 * * 1"]
+    "enabled": true
   },
   "vulnerabilityAlerts": {
     "enabled": true,

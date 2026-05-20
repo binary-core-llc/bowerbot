@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/binary-core-llc/bowerbot/compare/v1.8.0...v1.8.1) (2026-05-20)
+
+
+### Bug Fixes
+
+* silence litellm Bedrock/SageMaker pre-load warnings ([#154](https://github.com/binary-core-llc/bowerbot/issues/154)) ([b6fadfb](https://github.com/binary-core-llc/bowerbot/commit/b6fadfbfb55254b30807d2ff409d334c71887c27))
+
 ## [1.8.0](https://github.com/binary-core-llc/bowerbot/compare/v1.7.0...v1.8.0) (2026-05-19)
 
 

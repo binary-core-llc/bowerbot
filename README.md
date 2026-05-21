@@ -77,7 +77,8 @@ Projects are persistent. Close the session, come back later, and continue where 
 
 ## ✨ Features
 
-- 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box; new projects ship with the canonical Pixar-style two-layer scene (`scene.usda` aggregator + `scene_layout.usda` sublayer) so per-instance DCC overrides land in the root layer where they belong while BowerBot's base placements stay clean in the sublayer
+- 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box. BowerBot authors a single `scene.usda` as the live working layer; `save_scene_snapshot(name)` writes a flattened, DCC-stripped `<name>.usda` alongside whenever you want to publish a frozen version
+- 🎭 **USD variant sets**: asset-level (material, geometry/LOD, configuration, attribute) live in the asset's `variants.usda`; scene-level (lighting moods, light-type swap, model selection at a placement) live inline in `scene.usda`. Architectural invariants protect every mutation: auto-promote existing references into a model-selection variant on first add, auto-demote back to a direct ref when the set is removed, cascading orphan-opinion cleanup on prim delete/rename, automatic texture-asset staging for Asset-typed attribute values, and suspect-set detection that flags variants that collapse to a single choice
 - 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md). Heavy `geo.usda` composes via a **payload arc** for lazy-load (city-scale digital twins, robot fleets, large layouts open instantly); `mtl.usda` / `lgt.usda` / `contents.usda` use references
 - 🧳 **Self-contained intake**: non-canonical source folders are detected via USD composition, canonicalized (`root.usd` → `<folder>.usda`), and external dependencies (textures, sublayers) are localized into the asset folder so the project copy is always portable
 - 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts; procedural materials author hybrid MaterialX + UsdPreviewSurface outputs so they render across studio renderers (Renderman, Arnold), Hydra Storm, Apple RealityKit / AR Quick Look, and Isaac Sim
@@ -633,17 +634,29 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 - Asset roots carry the canonical ASWF identity: `kind = "component"` for terminal assets and an `assetInfo` dictionary (`identifier`, `name`, `version`) so DCC outliners, asset browsers, and pipeline asset-management systems recognise BowerBot output as production-grade
 
 **Variant sets**
-- Variant declarations and opinions live in a dedicated `variants.usda` per asset, **referenced** (not sublayered) into the asset root, so LIVRPS strength order works as production expects
-- Default selection is authored on the asset's root prim (in `<asset>.usda`). This is the asset's "ship default" and is never authored inside `variants.usda`
-- Per-scene-instance overrides are authored **inline on the placement prim** in `scene_layout.usda` (`variants = { "set" = "value" }`), matching Pixar's End-to-End example, NVIDIA Omniverse asset-structure principles, and AOUSD shot-structuring guidance. There is no separate `scene_variants.usda` (no production precedent)
-- The foundation in `utils/variant_utils.py` is opinion-agnostic. `author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller-supplied function inside the variant's edit context, so future variant categories (light attributes, transforms, schema API attributes, anything else) are pure additions in services. The utils never change
-- Three category orchestrators ship today (material bindings, geometry payloads, configuration activations) plus list, select, remove, and per-asset auto-cleanup of `variants.usda` when the last variant set is removed
-- Variant validation is wired into `validate_scene`: structural checks (referenced-not-sublayered, default selection present, no orphan reference, naming) flag broken variants before packaging
+
+Two layers of authority. The naming convention makes routing explicit.
+
+- **Asset-level** variants live in `<asset>/variants.usda`, referenced (not sublayered) into the asset root. Four orchestrators: material bindings, geometry/LOD payloads, configuration activations, and attribute overrides. The asset's "ship default" lives on the root prim in `<asset>.usda`, never inside `variants.usda`.
+- **Scene-level** variants live inline in `scene.usda` on a carrier prim. Three orchestrators: lighting attribute swaps and lighting selection on `/Scene/Lighting`, plus model selection on the placement wrapper. Lighting selection swaps which UsdLux is active across pre-placed siblings (DiskLight vs RectLight). Model selection swaps which asset reference loads at a placement (chair vs stool).
+- Tool names carry an explicit `asset_` or `scene_` prefix so the LLM never has to guess which layer of authority a call writes to.
+- Foundation: `utils/variant_utils.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
+- Per-instance overrides: any placement can author `variants = { "set" = "value" }` inline in `scene.usda` to pick a different variant from the asset's default.
+- Validation runs on `validate_scene` before packaging (referenced not sublayered, default selection present, no orphan reference, naming).
+
+**Architectural invariants (apply at every prim mutation):**
+
+1. **Orphan opinion cleanup cascade.** When a prim is removed, every variant body spec authored at the same path is dropped. Empty intermediate `over` specs are pruned. Empty variant bodies remove via `Sdf.VariantSetSpec.RemoveVariant`. Empty variant sets drop along with their `variantSetNames` and `variantSelections` metadata. When `variants.usda` becomes empty, the file is auto-deleted and the root reference scrubbed.
+2. **Rename invariant.** Renaming a prim follows the rename through every variant body opinion, preserving authored values.
+3. **Asset-staging for `Sdf.ValueTypeNames.Asset` attributes.** Variant bodies that author texture or HDRI paths automatically stage the source file into `<project>/textures/` and write the project-relative path. Refuses if the source cannot be resolved (no silent broken paths).
+4. **Suspect-set detection.** After a removal, variant sets that have collapsed to a single model-selection variant (or 2+ variants converging on one prim with active-only opinions) are flagged via `suspect_variant_sets` on the result. BowerBot surfaces the suspect to the user and asks before deleting the set.
+5. **Model-selection symmetry.** `add_scene_model_selection_variant`'s first call auto-promotes the placement's existing direct reference into a variant body (named after the source asset folder). Removing the entire set auto-demotes the active variant's reference back to a direct reference on `/asset`. No data loss, no dead-slot placements.
+6. **Layer-level reference scanning.** `delete_project_asset`'s safety check scans variant bodies in any layer, not just the composed stage view. An asset referenced only by a non-active variant body still blocks deletion.
 
 **Removal scope**
-- All variant removal operations are scoped to **one asset**. Removing a variant set from one asset never affects other assets, even when assets reference each other
-- When multiple assets are in scope, BowerBot asks which asset before calling the removal tool. It never guesses
-- Variants composed in via referenced assets stay visible after removal because they're authored elsewhere. Navigate to that asset and remove them there
+- Removal operations are scoped to one carrier. Removing a variant set from one asset never affects other assets, even when they reference each other.
+- When multiple assets are in scope, BowerBot asks which asset before calling the removal tool. It never guesses.
+- Variants composed in via referenced assets stay visible after removal because they are authored elsewhere. Navigate to that asset and remove them there.
 
 ---
 
@@ -651,11 +664,8 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 
 What's next for BowerBot. Contributions welcome:
 
-- [x] **USD Variant Sets (asset-level, foundation)**: opinion-agnostic foundation in `utils/variant_utils.py`, plus material, geometry, and configuration orchestrators, with per-scene-instance selection overrides authored inline in `scene_layout.usda`
-- [ ] **More asset variant categories**: light attributes (intensity / color / exposure / radius / angle), light type swaps, transform variants, wear state, animation, resolution, and arbitrary schema API attribute variants. Each is a pure addition in `services/variant_service.py` against the existing utils
-- [ ] **Scene-level variant sets**: variant sets declared on scene prims themselves (e.g. `/Scene` with a "lighting" set: day / dusk / night) so a single scene file ships multiple deliverables
-- [ ] **Scene templates**: JSON-driven scene assembly with asset resolution
-- [ ] **DCC exporter**: Maya/Houdini tool to export scene layout as BowerBot JSON
+- [ ] **More scene-level variant categories**: layout variants (atomic furniture arrangement swap on a group prim) and camera variants (active camera + render settings) on the `/Scene/Cameras` group. Infrastructure is in place via `apply_scene_variant`; the orchestrators are pure additions when use cases land
+- [ ] **Animation variants (asset-level)**: each variant body references a different animation clip (idle, walk, etc.), production-canonical for articulated state cycling
 - [ ] **More asset providers**: Fab, PolyHaven, Objaverse, CGTrader skills
 - [ ] **MCP Gateway**: FastAPI server for web UI and external AI clients
 - [ ] **Web UI**: chat panel + live 3D viewport
@@ -670,6 +680,18 @@ BowerBot is open source and welcomes contributions. The best way to start is wri
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the skill contract, the required FastAPI internal layout, and a worked `pyproject.toml` example for a stand-alone skill package.
 
 For a complete reference, see [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab): a real first-party skill on PyPI, with the production layout, entry-point registration, validation, and release pipeline you can mirror for your own.
+
+---
+
+## 💖 Sponsors
+
+BowerBot is open source and built by a small team at [Binary Core LLC](https://binarycore.us). Sponsorship funds new asset providers (PolyHaven, Fab, CGTrader), USD compliance work, scene templates, the MCP gateway, documentation, and community support.
+
+[**Become a sponsor on GitHub**](https://github.com/sponsors/binary-core-llc). Three monthly tiers (Egg, Nest, Bower) plus one-time options.
+
+### Backers
+
+_Be the first._
 
 ---
 

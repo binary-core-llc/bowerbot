@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/binary-core-llc/bowerbot/compare/v1.8.1...v1.8.2) (2026-05-21)
+
+
+### Documentation
+
+* update README for variant sets and add Sponsors section ([#156](https://github.com/binary-core-llc/bowerbot/issues/156)) ([4ed7a7f](https://github.com/binary-core-llc/bowerbot/commit/4ed7a7f230d609dd736cb2e02471594cca31d1b6))
+
 ## [1.8.1](https://github.com/binary-core-llc/bowerbot/compare/v1.8.0...v1.8.1) (2026-05-20)
 
 

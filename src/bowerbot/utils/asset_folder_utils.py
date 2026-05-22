@@ -35,6 +35,7 @@ CANONICAL_REFERENCE_ORDER: tuple[str, ...] = (
     ASWFLayerNames.CONTENTS,
     ASWFLayerNames.LGT,
     ASWFLayerNames.MTL,
+    ASWFLayerNames.PHY,
 )
 
 

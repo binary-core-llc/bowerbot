@@ -38,6 +38,7 @@ class ASWFLayerNames:
     GEO = "geo.usda"
     MTL = "mtl.usda"
     LGT = "lgt.usda"
+    PHY = "phy.usda"            # Physics APIs (RigidBody/Mass/Collision)
     CONTENTS = "contents.usda"  # Nested asset references placed inside this asset
     VARIANTS = "variants.usda"  # Variant set declarations + opinions
     MAPS = "maps"

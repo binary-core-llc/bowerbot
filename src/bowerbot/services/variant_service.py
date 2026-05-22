@@ -9,9 +9,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd, UsdLux, UsdShade
+from pxr import Sdf, Usd, UsdShade
 
-from bowerbot.schemas import SceneNamespace, VariantCategory
+from bowerbot.schemas import VariantCategory
 from bowerbot.state import SceneState
 from bowerbot.utils import asset_intake_utils, stage_utils, variant_utils
 from bowerbot.utils.asset_folder_utils import (
@@ -324,8 +324,10 @@ def add_scene_lighting_attribute_variant(
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
-    carrier = _require_lighting_carrier(state)
-    _validate_lighting_targets(state.stage, carrier, overrides.keys())
+    carrier = variant_utils.require_scene_lighting_carrier(state.stage)
+    variant_utils.validate_scene_lighting_targets(
+        state.stage, carrier, overrides.keys(),
+    )
 
     if variant_utils.enforce_no_scene_masking_overrides(
         state.stage,
@@ -338,6 +340,7 @@ def add_scene_lighting_attribute_variant(
     resolved_types = variant_utils.resolve_scene_attribute_types(
         state.stage, overrides,
     )
+    variant_utils.refuse_unknown_attributes(state.stage, resolved_types)
     overrides = variant_utils.stage_asset_typed_overrides(
         overrides, resolved_types,
         state.project.path if state.project else None,
@@ -394,8 +397,10 @@ def add_scene_lighting_selection_variant(
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
-    carrier = _require_lighting_carrier(state)
-    _validate_lighting_targets(state.stage, carrier, activations.keys())
+    carrier = variant_utils.require_scene_lighting_carrier(state.stage)
+    variant_utils.validate_scene_lighting_targets(
+        state.stage, carrier, activations.keys(),
+    )
 
     if variant_utils.enforce_no_scene_masking_overrides(
         state.stage,
@@ -427,37 +432,6 @@ def add_scene_lighting_selection_variant(
             f"to '{set_name}' on {carrier}"
         ),
     }
-
-
-def _require_lighting_carrier(state: SceneState) -> str:
-    """Return the lighting carrier path or refuse if it does not yet exist."""
-    if state.stage is None:
-        raise ValueError("No scene stage is open.")
-    carrier = SceneNamespace.LIGHTING
-    prim = state.stage.GetPrimAtPath(carrier)
-    if not prim or not prim.IsValid():
-        raise ValueError(
-            f"No lighting carrier at {carrier}. Create at least one scene "
-            "light before authoring a lighting variant.",
-        )
-    return carrier
-
-
-def _validate_lighting_targets(stage, carrier: str, paths) -> None:
-    """Refuse target paths that are outside the carrier or not UsdLux lights."""
-    for path in paths:
-        if not path.startswith(carrier + "/"):
-            raise ValueError(
-                f"Lighting variant targets must be under {carrier}. Got: {path}",
-            )
-        prim = stage.GetPrimAtPath(path)
-        if not prim or not prim.IsValid():
-            raise ValueError(f"Prim not found: {path}")
-        if not prim.HasAPI(UsdLux.LightAPI):
-            raise ValueError(
-                f"{path} is not a UsdLux light. Lighting variants target "
-                "UsdLux prims only.",
-            )
 
 
 def add_scene_model_selection_variant(

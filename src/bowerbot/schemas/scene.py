@@ -9,3 +9,4 @@ class SceneNamespace:
 
     ROOT = "/Scene"
     LIGHTING = "/Scene/Lighting"
+    PHYSICS = "/Scene/Physics"

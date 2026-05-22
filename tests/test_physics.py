@@ -16,7 +16,6 @@ from bowerbot.services import physics_service
 from bowerbot.state import SceneState
 from bowerbot.utils import physics_utils, stage_utils
 
-
 # ── Fixtures ──
 
 

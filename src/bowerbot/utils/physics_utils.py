@@ -24,8 +24,8 @@ from typing import Any
 from pxr import Sdf, Usd, UsdGeom, UsdPhysics
 
 from bowerbot.schemas import (
-    ASWFLayerNames,
     AssetPhysicsSummary,
+    ASWFLayerNames,
     PhysicsApiName,
     PhysicsApiSchemaInfo,
     PhysicsPrimSummary,

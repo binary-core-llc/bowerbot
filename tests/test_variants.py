@@ -2393,6 +2393,34 @@ def test_scene_lighting_variant_stages_hdri_when_passed_with_textures_prefix(tmp
     assert (project_dir / "textures" / "sunflowers_4k.hdr").exists()
 
 
+def test_scene_lighting_variant_refuses_unknown_attribute_name(tmp_path):
+    """Authoring a variant on an attribute that doesn't exist on the prim must raise."""
+    from bowerbot.project import Project, ProjectMeta
+
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    scene_path = make_scene(project_dir)
+    stage = stage_utils.open_stage(scene_path)
+    UsdLux.DomeLight.Define(stage, "/Scene/Lighting/Dome_01")
+    stage.Save()
+
+    state = _empty_state()
+    state.stage_path = scene_path
+    state.stage = stage_utils.open_stage(scene_path)
+    state.project = Project(path=project_dir, meta=ProjectMeta(name="project"))
+
+    with pytest.raises(ValueError, match="do not exist on the target prim"):
+        variant_service.add_scene_lighting_attribute_variant(state, {
+            "variant_set": "env",
+            "variant_name": "a",
+            "overrides": {
+                "/Scene/Lighting/Dome_01": {
+                    "inputs:texture": "fake.hdr",
+                },
+            },
+        })
+
+
 def test_scene_lighting_variant_refuses_unresolvable_texture(tmp_path):
     """Authoring a texture variant with a file that isn't anywhere must raise."""
     from bowerbot.project import Project, ProjectMeta

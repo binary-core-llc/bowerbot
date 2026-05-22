@@ -1,0 +1,63 @@
+# Copyright 2026 Binary Core LLC
+# SPDX-License-Identifier: Apache-2.0
+
+"""UsdPhysics static-foundation schemas.
+
+Output-only models and the whitelist of supported applied-API schemas.
+Attribute values are passed as free ``{name: value}`` dicts and resolved
+against the live USD schema registry at write time, mirroring the variant
+attribute-authoring pattern.
+"""
+
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import Any
+
+from pydantic import BaseModel
+
+
+class PhysicsApiName(StrEnum):
+    """Whitelist of UsdPhysics applied-API schemas supported in this foundation."""
+
+    RIGID_BODY = "PhysicsRigidBodyAPI"
+    MASS = "PhysicsMassAPI"
+    COLLISION = "PhysicsCollisionAPI"
+    MESH_COLLISION = "PhysicsMeshCollisionAPI"
+
+
+class PhysicsPropertySpec(BaseModel):
+    """One property exposed by a UsdPhysics API, discovered at runtime."""
+
+    name: str
+    kind: str  # "attribute" or "relationship"
+    type_name: str | None = None
+    default: Any = None
+    allowed_tokens: list[str] = []
+    documentation: str = ""
+
+
+class PhysicsApiSchemaInfo(BaseModel):
+    """Live introspection of a UsdPhysics applied-API schema."""
+
+    api_name: str
+    target_requirement: str  # e.g. "UsdGeomGprim", "UsdGeomXformable", "UsdGeomMesh"
+    requires_companion_api: str | None = None
+    properties: list[PhysicsPropertySpec] = []
+
+
+class PhysicsPrimSummary(BaseModel):
+    """One prim's authored physics APIs and attribute opinions."""
+
+    prim_path: str
+    applied_apis: list[str] = []
+    attributes: dict[str, Any] = {}
+    relationships: dict[str, list[str]] = {}
+
+
+class AssetPhysicsSummary(BaseModel):
+    """All physics opinions authored in an asset's ``phy.usda``."""
+
+    asset_path: str
+    has_physics_layer: bool = False
+    prims: list[PhysicsPrimSummary] = []

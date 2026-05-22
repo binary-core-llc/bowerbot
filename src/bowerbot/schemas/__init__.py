@@ -22,6 +22,13 @@ from bowerbot.schemas.materials import (
     PreviewSurfaceShader,
     ProceduralMaterialParams,
 )
+from bowerbot.schemas.physics import (
+    AssetPhysicsSummary,
+    PhysicsApiName,
+    PhysicsApiSchemaInfo,
+    PhysicsPrimSummary,
+    PhysicsPropertySpec,
+)
 from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
 from bowerbot.schemas.transforms import PositionMode, SceneObject, TransformParams
@@ -40,6 +47,7 @@ __all__ = [
     "AssetCategory",
     "AssetFormat",
     "AssetMetadata",
+    "AssetPhysicsSummary",
     "DetectionOutcome",
     "FolderDetection",
     "HDRIFormat",
@@ -47,6 +55,10 @@ __all__ = [
     "LightParams",
     "LightType",
     "MaterialXShaders",
+    "PhysicsApiName",
+    "PhysicsApiSchemaInfo",
+    "PhysicsPrimSummary",
+    "PhysicsPropertySpec",
     "PositionMode",
     "PreviewSurfaceShader",
     "ProceduralMaterialParams",

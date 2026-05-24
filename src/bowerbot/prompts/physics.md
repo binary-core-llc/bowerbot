@@ -203,3 +203,42 @@ the prim is inside an asset placement) and `scene` (scene.usda
 opinions on the same path). Use to check what's authored before
 making changes, or to debug why a placement behaves differently from
 the asset default.
+
+## Collision groups
+
+`UsdPhysicsCollisionGroup` is a typed prim that defines a named
+group and the filtering rules for which other groups its members
+collide with. Use for scenarios like "players collide with terrain
+but not with each other", "trigger volumes overlap but don't
+physically collide", "decorative props don't interact with
+anything".
+
+**Membership is INVERTED from the rest of UsdPhysics.** It is NOT an
+applied API on individual colliders. The group prim carries a
+`UsdCollectionAPI` (`collection:colliders:*`) and you declare which
+scene prim paths are in the group by listing them in the
+includes/excludes of that collection. Filtering is declared via
+`filteredGroups` on the group prim, optionally inverted to
+"only collide with these groups" via `invertFilteredGroups`.
+
+Group prims live at `/Scene/Physics/Groups/<name>` under a Scope
+that mirrors the `/Scene/Physics/PhysicsScene` pattern.
+
+### `create_or_update_collision_group(name, includes?, excludes?, filtered_groups?, invert_filter?, merge_group?)`
+Create a new `UsdPhysicsCollisionGroup` under
+`/Scene/Physics/Groups/<name>` or update an existing one. Each
+list-shaped arg replaces the existing value; pass `None` (omit) to
+leave a property untouched on update. `filtered_groups` accepts
+bare names that resolve to `/Scene/Physics/Groups/<name>`; the
+targets must already exist (call this tool to create them first
+otherwise).
+
+### `remove_collision_group(name, force?)`
+Remove a collision group. Refuses if other groups reference it via
+`filteredGroups` (would leave dangling rels) unless `force=True`.
+
+### `list_collision_groups()`
+Return every group under `/Scene/Physics/Groups` with its
+membership (includes / excludes), filter rules, and merge-group
+token. Call before authoring `filtered_groups` so you know which
+names exist.

@@ -24,6 +24,8 @@ from bowerbot.schemas.materials import (
 )
 from bowerbot.schemas.physics import (
     AssetPhysicsSummary,
+    CollisionGroupsSummary,
+    CollisionGroupSummary,
     PhysicsApiName,
     PhysicsApiSchemaInfo,
     PhysicsPrimSummary,
@@ -50,6 +52,8 @@ __all__ = [
     "AssetFormat",
     "AssetMetadata",
     "AssetPhysicsSummary",
+    "CollisionGroupSummary",
+    "CollisionGroupsSummary",
     "DetectionOutcome",
     "FolderDetection",
     "HDRIFormat",

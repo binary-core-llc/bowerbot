@@ -26,6 +26,8 @@ from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics
 from bowerbot.schemas import (
     AssetPhysicsSummary,
     ASWFLayerNames,
+    CollisionGroupsSummary,
+    CollisionGroupSummary,
     PhysicsApiName,
     PhysicsApiSchemaInfo,
     PhysicsPrimSummary,
@@ -238,21 +240,26 @@ def remove_api(
 # ── Scene-level authoring ──
 
 
+def ensure_physics_scope(stage: Usd.Stage) -> str:
+    """Create ``/Scene/Physics`` as a Scope if missing; return its path."""
+    scope_path = SceneNamespace.PHYSICS
+    if not stage.GetPrimAtPath(scope_path).IsValid():
+        stage.DefinePrim(scope_path, "Scope")
+    return scope_path
+
+
 def ensure_physics_scene(
     stage: Usd.Stage,
     name: str = "PhysicsScene",
     gravity_magnitude: float | None = None,
     gravity_direction: tuple[float, float, float] | None = None,
 ) -> str:
-    """Create ``/Scene/Physics`` container and a ``UsdPhysics.Scene`` child.
+    """Create the physics scope and a ``UsdPhysics.Scene`` child prim.
 
     Gravity magnitude defaults to ``9.81 / metersPerUnit`` (Earth gravity
     in stage units) and direction defaults to ``(0, -1, 0)``.
     """
-    scope_path = SceneNamespace.PHYSICS
-    if not stage.GetPrimAtPath(scope_path).IsValid():
-        stage.DefinePrim(scope_path, "Scope")
-
+    scope_path = ensure_physics_scope(stage)
     scene_path = f"{scope_path}/{name}"
     scene_prim = UsdPhysics.Scene.Define(stage, scene_path)
 
@@ -536,6 +543,134 @@ def get_scene_physics_summary(
     return ScenePhysicsSummary(prim_path=prim_path, prims=prims)
 
 
+def _group_prim_path(name: str) -> str:
+    """Path to a group prim, flat-sibling of PhysicsScene under /Scene/Physics."""
+    return f"{SceneNamespace.PHYSICS}/{name}"
+
+
+def _resolve_group_path(name_or_path: str) -> str:
+    """Accept either a bare group name or a full prim path; return prim path."""
+    if name_or_path.startswith("/"):
+        return name_or_path
+    return _group_prim_path(name_or_path)
+
+
+def create_or_update_collision_group(
+    stage: Usd.Stage,
+    name: str,
+    *,
+    includes: list[str] | None = None,
+    excludes: list[str] | None = None,
+    filtered_groups: list[str] | None = None,
+    invert_filter: bool | None = None,
+    merge_group: str | None = None,
+) -> dict[str, Any]:
+    """Create or update a ``UsdPhysicsCollisionGroup`` under the Groups scope.
+
+    Each list-shaped kwarg REPLACES the existing collection / rel targets
+    when provided (not appended). Pass ``None`` to leave that property
+    untouched on an existing group. ``filtered_groups`` accepts bare group
+    names; they are resolved to ``/Scene/Physics/Groups/<name>``.
+    """
+    _validate_group_name(name)
+    ensure_physics_scope(stage)
+
+    prim_path = _group_prim_path(name)
+    group = UsdPhysics.CollisionGroup.Define(stage, prim_path)
+
+    if includes is not None or excludes is not None:
+        collection = group.GetCollidersCollectionAPI()
+        if includes is not None:
+            collection.CreateIncludesRel().SetTargets(
+                [Sdf.Path(p) for p in includes],
+            )
+        if excludes is not None:
+            collection.CreateExcludesRel().SetTargets(
+                [Sdf.Path(p) for p in excludes],
+            )
+
+    if filtered_groups is not None:
+        resolved = [_resolve_group_path(g) for g in filtered_groups]
+        for path in resolved:
+            if not stage.GetPrimAtPath(path).IsValid():
+                raise ValueError(
+                    f"filtered_groups references missing group at {path}. "
+                    "Create that group first.",
+                )
+        group.CreateFilteredGroupsRel().SetTargets(
+            [Sdf.Path(p) for p in resolved],
+        )
+
+    if invert_filter is not None:
+        group.CreateInvertFilteredGroupsAttr().Set(bool(invert_filter))
+
+    if merge_group is not None:
+        group.CreateMergeGroupNameAttr().Set(str(merge_group))
+
+    stage.Save()
+    logger.info("Authored collision group %s at %s", name, prim_path)
+    return {
+        "name": name,
+        "prim_path": prim_path,
+        "includes_set": includes is not None,
+        "excludes_set": excludes is not None,
+        "filtered_groups_set": filtered_groups is not None,
+        "invert_filter_set": invert_filter is not None,
+        "merge_group_set": merge_group is not None,
+    }
+
+
+def remove_collision_group(
+    stage: Usd.Stage, name: str, *, force: bool = False,
+) -> bool:
+    """Remove a collision group. Refuses if any other group filters against it."""
+    prim_path = _group_prim_path(name)
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim or not prim.IsValid():
+        return False
+
+    if not force:
+        dependents = _find_dependent_groups(stage, prim_path)
+        if dependents:
+            raise ValueError(
+                f"Cannot remove collision group {name!r}: {len(dependents)} "
+                f"other group(s) reference it via filteredGroups: "
+                f"{sorted(dependents)}. Retry with force=True to remove "
+                "anyway (dangling rels will be left).",
+            )
+
+    removed = stage.RemovePrim(prim_path)
+    if removed:
+        stage.Save()
+    return removed
+
+
+def list_collision_groups(stage: Usd.Stage) -> CollisionGroupsSummary:
+    """Return every ``UsdPhysicsCollisionGroup`` under ``/Scene/Physics``."""
+    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
+    if not scope or not scope.IsValid():
+        return CollisionGroupsSummary()
+
+    summaries = [
+        _summarize_group(child)
+        for child in scope.GetChildren()
+        if child.IsA(UsdPhysics.CollisionGroup)
+    ]
+    return CollisionGroupsSummary(groups=summaries)
+
+
+def get_collision_group_summary(
+    stage: Usd.Stage, name: str,
+) -> CollisionGroupSummary | None:
+    """Return one group's summary, or ``None`` if not defined."""
+    prim = stage.GetPrimAtPath(_group_prim_path(name))
+    if not prim or not prim.IsValid():
+        return None
+    if not prim.IsA(UsdPhysics.CollisionGroup):
+        return None
+    return _summarize_group(prim)
+
+
 def cleanup_if_empty(asset_dir: Path) -> bool:
     """Delete ``phy.usda`` and drop its reference when no opinions remain."""
     phy_path = _phy_layer_path(asset_dir)
@@ -611,6 +746,66 @@ def _read_api_schemas(prim_spec: Sdf.PrimSpec) -> list[str]:
     for slot in ("prependedItems", "appendedItems", "explicitItems"):
         apis.extend(getattr(list_op, slot, ()))
     return apis
+
+
+_GROUP_NAME_FORBIDDEN_CHARS = frozenset(" \t\n\r/\\")
+
+
+def _validate_group_name(name: str) -> None:
+    """Refuse empty names or names with whitespace / path separators."""
+    if not name:
+        raise ValueError("Collision group name cannot be empty.")
+    bad = [c for c in name if c in _GROUP_NAME_FORBIDDEN_CHARS]
+    if bad:
+        raise ValueError(
+            f"Collision group name {name!r} has invalid characters "
+            f"{sorted(set(bad))}; use letters, digits, and underscores.",
+        )
+
+
+def _summarize_group(prim: Usd.Prim) -> CollisionGroupSummary:
+    """Read a ``UsdPhysicsCollisionGroup`` prim into a summary model."""
+    group = UsdPhysics.CollisionGroup(prim)
+    collection = group.GetCollidersCollectionAPI()
+
+    includes_rel = collection.GetIncludesRel()
+    excludes_rel = collection.GetExcludesRel()
+    filtered_rel = group.GetFilteredGroupsRel()
+    invert_attr = group.GetInvertFilteredGroupsAttr()
+    merge_attr = group.GetMergeGroupNameAttr()
+
+    return CollisionGroupSummary(
+        name=prim.GetName(),
+        prim_path=str(prim.GetPath()),
+        includes=[str(t) for t in includes_rel.GetTargets()]
+        if includes_rel else [],
+        excludes=[str(t) for t in excludes_rel.GetTargets()]
+        if excludes_rel else [],
+        filtered_groups=[str(t) for t in filtered_rel.GetTargets()]
+        if filtered_rel else [],
+        invert_filter=bool(invert_attr.Get()) if invert_attr else False,
+        merge_group=str(merge_attr.Get()) if (
+            merge_attr and merge_attr.Get()
+        ) else None,
+    )
+
+
+def _find_dependent_groups(stage: Usd.Stage, group_prim_path: str) -> list[str]:
+    """Names of other groups whose ``filteredGroups`` targets *group_prim_path*."""
+    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
+    if not scope or not scope.IsValid():
+        return []
+    target = Sdf.Path(group_prim_path)
+    dependents: list[str] = []
+    for child in scope.GetChildren():
+        if not child.IsA(UsdPhysics.CollisionGroup):
+            continue
+        if str(child.GetPath()) == group_prim_path:
+            continue
+        rel = UsdPhysics.CollisionGroup(child).GetFilteredGroupsRel()
+        if rel and target in rel.GetTargets():
+            dependents.append(child.GetName())
+    return dependents
 
 
 def _remove_api_from_layer(

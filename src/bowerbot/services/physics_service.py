@@ -195,3 +195,42 @@ def get_physics_summary(
         "asset": asset_summary.model_dump() if asset_summary else None,
         "scene": scene_summary.model_dump(),
     }
+
+
+def create_or_update_collision_group(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Create or update a ``UsdPhysicsCollisionGroup`` under /Scene/Physics/Groups."""
+    result = physics_utils.create_or_update_collision_group(
+        state.stage,
+        params["name"],
+        includes=params.get("includes"),
+        excludes=params.get("excludes"),
+        filtered_groups=params.get("filtered_groups"),
+        invert_filter=params.get("invert_filter"),
+        merge_group=params.get("merge_group"),
+    )
+    state.touch_project()
+    return result
+
+
+def remove_collision_group(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Remove a collision group; refuses if other groups filter against it."""
+    name = params["name"]
+    force = bool(params.get("force", False))
+    removed = physics_utils.remove_collision_group(
+        state.stage, name, force=force,
+    )
+    if removed:
+        state.touch_project()
+    return {"name": name, "removed": removed}
+
+
+def list_collision_groups(
+    _state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Return every collision group with its membership, filters, and merge token."""
+    summary = physics_utils.list_collision_groups(_state.stage)
+    return summary.model_dump()

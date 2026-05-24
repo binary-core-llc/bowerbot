@@ -28,6 +28,8 @@ from bowerbot.schemas.physics import (
     PhysicsApiSchemaInfo,
     PhysicsPrimSummary,
     PhysicsPropertySpec,
+    PhysicsSummary,
+    ScenePhysicsSummary,
 )
 from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
@@ -59,11 +61,13 @@ __all__ = [
     "PhysicsApiSchemaInfo",
     "PhysicsPrimSummary",
     "PhysicsPropertySpec",
+    "PhysicsSummary",
     "PositionMode",
     "PreviewSurfaceShader",
     "ProceduralMaterialParams",
     "SceneNamespace",
     "SceneObject",
+    "ScenePhysicsSummary",
     "SceneVariantsSummary",
     "Severity",
     "TextureCategory",

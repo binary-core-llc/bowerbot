@@ -61,3 +61,17 @@ class AssetPhysicsSummary(BaseModel):
     asset_path: str
     has_physics_layer: bool = False
     prims: list[PhysicsPrimSummary] = []
+
+
+class ScenePhysicsSummary(BaseModel):
+    """Scene-side physics opinions on a prim and its descendants in scene.usda."""
+
+    prim_path: str
+    prims: list[PhysicsPrimSummary] = []
+
+
+class PhysicsSummary(BaseModel):
+    """Combined asset + scene physics opinions for a prim."""
+
+    asset: AssetPhysicsSummary | None = None
+    scene: ScenePhysicsSummary | None = None

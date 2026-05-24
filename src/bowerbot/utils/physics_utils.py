@@ -21,7 +21,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd, UsdGeom, UsdPhysics
+from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics
 
 from bowerbot.schemas import (
     AssetPhysicsSummary,
@@ -30,6 +30,8 @@ from bowerbot.schemas import (
     PhysicsApiSchemaInfo,
     PhysicsPrimSummary,
     PhysicsPropertySpec,
+    SceneNamespace,
+    ScenePhysicsSummary,
 )
 from bowerbot.utils import stage_utils
 from bowerbot.utils.asset_folder_utils import (
@@ -230,34 +232,108 @@ def remove_api(
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
     if layer is None:
         return False
-    prim_spec = layer.GetPrimAtPath(prim_path)
-    if prim_spec is None:
-        return False
+    return _remove_api_from_layer(layer, prim_path, api_name)
 
-    authored = set(_read_api_schemas(prim_spec))
-    targets: list[PhysicsApiName] = [api_name]
-    for dependent in _DEPENDENTS.get(api_name, ()):
-        if dependent.value in authored:
-            targets.append(dependent)
 
-    touched = False
-    for name in targets:
-        if _drop_from_api_listop(prim_spec, name.value):
-            touched = True
-        for prop in list_api_properties(name).properties:
-            container = (
-                prim_spec.attributes if prop.kind == "attribute"
-                else prim_spec.relationships
-            )
-            spec = container.get(prop.name)
-            if spec is not None:
-                prim_spec.RemoveProperty(spec)
-                touched = True
+# ── Scene-level authoring ──
 
-    if touched:
-        layer.Save()
-        stage_utils.prune_empty_overrides(layer, prim_path)
-    return touched
+
+def ensure_physics_scene(
+    stage: Usd.Stage,
+    name: str = "PhysicsScene",
+    gravity_magnitude: float | None = None,
+    gravity_direction: tuple[float, float, float] | None = None,
+) -> str:
+    """Create ``/Scene/Physics`` container and a ``UsdPhysics.Scene`` child.
+
+    Gravity magnitude defaults to ``9.81 / metersPerUnit`` (Earth gravity
+    in stage units) and direction defaults to ``(0, -1, 0)``.
+    """
+    scope_path = SceneNamespace.PHYSICS
+    if not stage.GetPrimAtPath(scope_path).IsValid():
+        stage.DefinePrim(scope_path, "Scope")
+
+    scene_path = f"{scope_path}/{name}"
+    scene_prim = UsdPhysics.Scene.Define(stage, scene_path)
+
+    if gravity_magnitude is None:
+        mpu = UsdGeom.GetStageMetersPerUnit(stage) or 1.0
+        gravity_magnitude = 9.81 / mpu
+    if gravity_direction is None:
+        gravity_direction = (0.0, -1.0, 0.0)
+
+    scene_prim.CreateGravityDirectionAttr(Gf.Vec3f(*gravity_direction))
+    scene_prim.CreateGravityMagnitudeAttr(float(gravity_magnitude))
+
+    stage.Save()
+    logger.info(
+        "Set up PhysicsScene at %s (gravity magnitude %s)",
+        scene_path, gravity_magnitude,
+    )
+    return scene_path
+
+
+def apply_api_scene(
+    stage: Usd.Stage,
+    prim_path: str,
+    api_name: PhysicsApiName,
+    attributes: dict[str, Any] | None = None,
+    relationships: dict[str, list[str]] | None = None,
+) -> dict[str, Any]:
+    """Apply ``api_name`` directly on scene.usda at *prim_path*.
+
+    For per-placement overrides (e.g. disable collision on one chair
+    instance) and physics on scene-only prims. scene.usda is the
+    strongest layer in LIVRPS so opinions here win over the asset's
+    ``phy.usda`` defaults.
+    """
+    attributes = attributes or {}
+    relationships = relationships or {}
+
+    schema_info = list_api_properties(api_name)
+    _refuse_unknown(api_name, attributes, schema_info, "attribute")
+    _refuse_unknown(api_name, relationships, schema_info, "relationship")
+
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim or not prim.IsValid():
+        raise ValueError(f"Prim not found in scene: {prim_path}")
+    _require_target_type(prim, api_name)
+
+    companion = _COMPANION.get(api_name)
+    if companion is not None:
+        _API_CLASSES[companion].Apply(prim)
+    _API_CLASSES[api_name].Apply(prim)
+
+    for name, value in attributes.items():
+        attr = prim.GetAttribute(name)
+        stage_utils.set_prim_attribute(
+            stage, prim_path, name, value, expected_type=attr.GetTypeName(),
+        )
+
+    for name, targets in relationships.items():
+        prim.GetRelationship(name).SetTargets(
+            [Sdf.Path(t) for t in targets],
+        )
+
+    stage.Save()
+    logger.info(
+        "Applied %s scene-level on %s", api_name.value, prim_path,
+    )
+    return {
+        "prim_path": prim_path,
+        "api_name": api_name.value,
+        "companion_api": companion.value if companion else None,
+        "attributes_set": sorted(attributes),
+        "relationships_set": sorted(relationships),
+        "scope": "scene",
+    }
+
+
+def remove_api_scene(
+    stage: Usd.Stage, prim_path: str, api_name: PhysicsApiName,
+) -> bool:
+    """Remove ``api_name`` opinions from scene.usda at *prim_path*."""
+    return _remove_api_from_layer(stage.GetRootLayer(), prim_path, api_name)
 
 
 # ── Scene masking detection (refuse-or-acknowledge) ──
@@ -422,6 +498,44 @@ def get_physics_summary(asset_dir: Path) -> AssetPhysicsSummary:
     )
 
 
+def get_scene_physics_summary(
+    stage: Usd.Stage, prim_path: str,
+) -> ScenePhysicsSummary:
+    """Scene-side physics opinions on *prim_path* and its descendants."""
+    layer = stage.GetRootLayer()
+    if layer.GetPrimAtPath(prim_path) is None:
+        return ScenePhysicsSummary(prim_path=prim_path)
+
+    prims: list[PhysicsPrimSummary] = []
+
+    def visit(path: Sdf.Path) -> None:
+        spec = layer.GetObjectAtPath(path)
+        if not isinstance(spec, Sdf.PrimSpec):
+            return
+        apis = _read_api_schemas(spec)
+        attrs = {
+            a.name: _to_jsonable(a.default)
+            for a in spec.attributes
+            if a.name.startswith("physics:")
+        }
+        rels = {
+            r.name: [str(t) for t in r.targetPathList.explicitItems]
+            for r in spec.relationships
+            if r.name.startswith("physics:")
+            or r.name == "material:binding:physics"
+        }
+        if apis or attrs or rels:
+            prims.append(PhysicsPrimSummary(
+                prim_path=str(path),
+                applied_apis=apis,
+                attributes=attrs,
+                relationships=rels,
+            ))
+
+    layer.Traverse(Sdf.Path(prim_path), visit)
+    return ScenePhysicsSummary(prim_path=prim_path, prims=prims)
+
+
 def cleanup_if_empty(asset_dir: Path) -> bool:
     """Delete ``phy.usda`` and drop its reference when no opinions remain."""
     phy_path = _phy_layer_path(asset_dir)
@@ -439,6 +553,26 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
 
 
 # ── Internal helpers ──
+
+
+def validate_scope(scope: str) -> str:
+    """Refuse any value other than ``'asset'`` or ``'scene'``."""
+    if scope not in ("asset", "scene"):
+        raise ValueError(
+            f"Invalid scope {scope!r}; must be 'asset' or 'scene'.",
+        )
+    return scope
+
+
+def parse_vec3(
+    value: Any, name: str = "vector",
+) -> tuple[float, float, float] | None:
+    """Coerce a JSON-shaped triple to ``(float, float, float)`` or None."""
+    if value is None:
+        return None
+    if len(value) != 3:
+        raise ValueError(f"{name!r} must be a length-3 vector; got {value!r}")
+    return float(value[0]), float(value[1]), float(value[2])
 
 
 def _require_target_type(prim: Usd.Prim, api_name: PhysicsApiName) -> None:
@@ -477,6 +611,40 @@ def _read_api_schemas(prim_spec: Sdf.PrimSpec) -> list[str]:
     for slot in ("prependedItems", "appendedItems", "explicitItems"):
         apis.extend(getattr(list_op, slot, ()))
     return apis
+
+
+def _remove_api_from_layer(
+    layer: Sdf.Layer, prim_path: str, api_name: PhysicsApiName,
+) -> bool:
+    """Drop ``api_name`` + dependents + their opinions from *layer* at *prim_path*."""
+    prim_spec = layer.GetPrimAtPath(prim_path)
+    if prim_spec is None:
+        return False
+
+    authored = set(_read_api_schemas(prim_spec))
+    targets: list[PhysicsApiName] = [api_name]
+    for dependent in _DEPENDENTS.get(api_name, ()):
+        if dependent.value in authored:
+            targets.append(dependent)
+
+    touched = False
+    for name in targets:
+        if _drop_from_api_listop(prim_spec, name.value):
+            touched = True
+        for prop in list_api_properties(name).properties:
+            container = (
+                prim_spec.attributes if prop.kind == "attribute"
+                else prim_spec.relationships
+            )
+            spec = container.get(prop.name)
+            if spec is not None:
+                prim_spec.RemoveProperty(spec)
+                touched = True
+
+    if touched:
+        layer.Save()
+        stage_utils.prune_empty_overrides(layer, prim_path)
+    return touched
 
 
 def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:

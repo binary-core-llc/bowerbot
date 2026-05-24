@@ -1,14 +1,19 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Physics service — asset-level UsdPhysics applied-API orchestration.
+"""Physics service — UsdPhysics applied-API orchestration.
 
-Writes default opinions to ``phy.usda``. Refuses to write when
-``scene.usda`` already has authored opinions that would mask the asset
-default, unless the caller passes ``clear_masking_overrides=True`` (drop
-the scene opinions and write phy.usda) or ``confirm_masked=True`` (write
-phy.usda anyway, knowing scene overrides will keep winning on those
-placements). Mirrors the variant authoring discipline.
+Routes writes based on the ``scope`` param:
+
+- ``"asset"`` (default): authors into the asset's ``phy.usda`` after a
+  masking scan of ``scene.usda``. Refuses when scene overrides would
+  mask the write unless ``clear_masking_overrides`` or ``confirm_masked``
+  is set.
+- ``"scene"``: authors directly on the scene stage at the given prim
+  path (per-placement override or scene-only prim). No masking scan.
+
+Also exposes ``setup_physics_scene`` (creates ``/Scene/Physics`` +
+``UsdPhysics.Scene``) and ``get_physics_summary`` (asset + scene).
 """
 
 from __future__ import annotations
@@ -22,6 +27,7 @@ from bowerbot.utils import physics_utils, stage_utils
 from bowerbot.utils.asset_folder_utils import (
     normalize_asset_prim_path,
     require_asset_context,
+    resolve_asset_dir_for_prim,
     resolve_default_prim_name,
 )
 
@@ -37,11 +43,22 @@ def list_api_properties(
 
 
 def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Apply a UsdPhysics API to a prim and author opinions in the asset."""
+    """Apply a UsdPhysics API. Routes by ``scope`` (default ``'asset'``)."""
     api_name = PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]
     attributes = params.get("attributes") or {}
     relationships = params.get("relationships") or {}
+    scope = physics_utils.validate_scope(params.get("scope", "asset"))
+
+    if scope == "scene":
+        result = physics_utils.apply_api_scene(
+            state.stage, prim_path, api_name, attributes, relationships,
+        )
+        state.touch_project()
+        logger.info(
+            "Service applied %s scene-level on %s", api_name.value, prim_path,
+        )
+        return result
 
     asset_dir, ref_prim_path = require_asset_context(state.stage, prim_path)
     asset_local_path = normalize_asset_prim_path(
@@ -58,16 +75,16 @@ def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     result = physics_utils.apply_api(
         asset_dir, asset_local_path, api_name, attributes, relationships,
     )
-
     state.stage = stage_utils.open_stage(state.stage_path)
     state.touch_project()
 
     logger.info(
-        "Service applied %s on %s (asset %s)",
+        "Service applied %s asset-level on %s (asset %s)",
         api_name.value, prim_path, asset_dir.name,
     )
     return {
         **result,
+        "scope": "asset",
         "asset_folder": asset_dir.name,
         "scene_prim_path": prim_path,
         "asset_prim_path": asset_local_path,
@@ -79,9 +96,23 @@ def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def remove_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Remove a UsdPhysics API from a prim's asset-level opinions."""
+    """Remove a UsdPhysics API. Routes by ``scope`` (default ``'asset'``)."""
     api_name = PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]
+    scope = physics_utils.validate_scope(params.get("scope", "asset"))
+
+    if scope == "scene":
+        changed = physics_utils.remove_api_scene(
+            state.stage, prim_path, api_name,
+        )
+        if changed:
+            state.touch_project()
+        return {
+            "scope": "scene",
+            "prim_path": prim_path,
+            "api_name": api_name.value,
+            "removed": changed,
+        }
 
     asset_dir, ref_prim_path = require_asset_context(state.stage, prim_path)
     asset_local_path = normalize_asset_prim_path(
@@ -108,6 +139,7 @@ def remove_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     state.touch_project()
 
     return {
+        "scope": "asset",
         "scene_prim_path": prim_path,
         "asset_prim_path": asset_local_path,
         "asset_folder": asset_dir.name,
@@ -120,10 +152,46 @@ def remove_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def setup_physics_scene(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Create ``/Scene/Physics`` and a ``UsdPhysics.Scene`` child."""
+    name = params.get("name", "PhysicsScene")
+    gravity_magnitude = params.get("gravity_magnitude")
+    gravity_direction = physics_utils.parse_vec3(
+        params.get("gravity_direction"), "gravity_direction",
+    )
+
+    scene_path = physics_utils.ensure_physics_scene(
+        state.stage,
+        name=name,
+        gravity_magnitude=gravity_magnitude,
+        gravity_direction=gravity_direction,
+    )
+    state.touch_project()
+    logger.info("setup_physics_scene -> %s", scene_path)
+    return {
+        "prim_path": scene_path,
+        "gravity_magnitude": gravity_magnitude,
+        "gravity_direction": gravity_direction,
+    }
+
+
 def get_physics_summary(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Return the physics opinions authored in an asset's ``phy.usda``."""
+    """Return asset-side + scene-side physics opinions for a prim path."""
     prim_path = params["prim_path"]
-    asset_dir, _ = require_asset_context(state.stage, prim_path)
-    return physics_utils.get_physics_summary(asset_dir).model_dump()
+    asset_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
+
+    asset_summary = (
+        physics_utils.get_physics_summary(asset_dir)
+        if asset_dir is not None else None
+    )
+    scene_summary = physics_utils.get_scene_physics_summary(
+        state.stage, prim_path,
+    )
+    return {
+        "asset": asset_summary.model_dump() if asset_summary else None,
+        "scene": scene_summary.model_dump(),
+    }

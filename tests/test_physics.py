@@ -322,8 +322,8 @@ def test_service_summary_returns_authored_apis(tmp_path):
     summary = physics_service.get_physics_summary(state, {
         "prim_path": "/Scene/Models/Item_01/asset",
     })
-    assert summary["has_physics_layer"] is True
-    paths = {p["prim_path"] for p in summary["prims"]}
+    assert summary["asset"]["has_physics_layer"] is True
+    paths = {p["prim_path"] for p in summary["asset"]["prims"]}
     assert "/chair" in paths
 
 
@@ -462,3 +462,300 @@ def test_remove_api_refuses_with_scene_masking(tmp_path):
             "api_name": "PhysicsCollisionAPI",
             "prim_path": "/Scene/Models/Item_01/asset/Body",
         })
+
+
+# ── PhysicsScene singleton ──
+
+
+def test_setup_physics_scene_creates_scope_and_scene(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    scene_path = physics_utils.ensure_physics_scene(state.stage)
+    assert scene_path == "/Scene/Physics/PhysicsScene"
+
+    prim = state.stage.GetPrimAtPath(scene_path)
+    assert prim.IsValid()
+    assert prim.GetTypeName() == "PhysicsScene"
+
+
+def test_setup_physics_scene_derives_gravity_from_mpu(tmp_path):
+    """Stage in cm (mpu=0.01) should default to ~981 unit/s^2."""
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+    UsdGeom.SetStageMetersPerUnit(state.stage, 0.01)
+    state.stage.Save()
+
+    physics_utils.ensure_physics_scene(state.stage)
+    prim = state.stage.GetPrimAtPath("/Scene/Physics/PhysicsScene")
+    magnitude = prim.GetAttribute("physics:gravityMagnitude").Get()
+    assert abs(magnitude - 981.0) < 1e-3
+
+
+def test_setup_physics_scene_respects_explicit_gravity(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    physics_utils.ensure_physics_scene(
+        state.stage,
+        name="Moon",
+        gravity_magnitude=1.62,
+        gravity_direction=(0.0, -1.0, 0.0),
+    )
+    prim = state.stage.GetPrimAtPath("/Scene/Physics/Moon")
+    assert prim.IsValid()
+    assert abs(
+        prim.GetAttribute("physics:gravityMagnitude").Get() - 1.62
+    ) < 1e-6
+
+
+# ── Scene-level authoring ──
+
+
+def test_apply_api_scene_writes_to_scene_usda(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    result = physics_utils.apply_api_scene(
+        state.stage, "/Scene/Models/Item_01/asset/Body",
+        PhysicsApiName.COLLISION,
+        attributes={"physics:collisionEnabled": False},
+    )
+    assert result["scope"] == "scene"
+    assert result["api_name"] == "PhysicsCollisionAPI"
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    spec = state.stage.GetRootLayer().GetPrimAtPath(
+        "/Scene/Models/Item_01/asset/Body",
+    )
+    assert spec is not None
+    assert "physics:collisionEnabled" in spec.attributes
+    assert spec.attributes["physics:collisionEnabled"].default is False
+    # phy.usda should NOT have been touched by a scene-scope write.
+    assert not (asset / "phy.usda").exists()
+
+
+def test_apply_api_scene_refuses_on_xform(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    with pytest.raises(ValueError, match="requires UsdGeom.Gprim"):
+        physics_utils.apply_api_scene(
+            state.stage, "/Scene/Models/Item_01/asset/Group",
+            PhysicsApiName.COLLISION,
+        )
+
+
+def test_remove_api_scene_drops_opinions(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    physics_utils.apply_api_scene(
+        state.stage, "/Scene/Models/Item_01/asset/Body",
+        PhysicsApiName.COLLISION,
+        attributes={"physics:collisionEnabled": False},
+    )
+    changed = physics_utils.remove_api_scene(
+        state.stage, "/Scene/Models/Item_01/asset/Body",
+        PhysicsApiName.COLLISION,
+    )
+    assert changed is True
+    spec = state.stage.GetRootLayer().GetPrimAtPath(
+        "/Scene/Models/Item_01/asset/Body",
+    )
+    if spec is not None:
+        assert "physics:collisionEnabled" not in spec.attributes
+
+
+def test_get_scene_physics_summary_filters_non_physics(tmp_path):
+    """Should report physics:* opinions only, not transforms or refs."""
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    physics_utils.apply_api_scene(
+        state.stage, "/Scene/Models/Item_01/asset/Body",
+        PhysicsApiName.MESH_COLLISION,
+        attributes={"physics:approximation": "convexHull"},
+    )
+
+    summary = physics_utils.get_scene_physics_summary(
+        state.stage, "/Scene/Models/Item_01",
+    )
+    paths = {p.prim_path for p in summary.prims}
+    assert "/Scene/Models/Item_01/asset/Body" in paths
+
+    body_entry = next(
+        p for p in summary.prims
+        if p.prim_path == "/Scene/Models/Item_01/asset/Body"
+    )
+    assert "PhysicsMeshCollisionAPI" in body_entry.applied_apis
+    # No xformOps or material:binding leaked through.
+    non_physics = [
+        n for n in body_entry.attributes
+        if not n.startswith("physics:")
+    ]
+    assert non_physics == []
+
+
+# ── Service scope routing ──
+
+
+def test_service_scope_scene_per_placement_override(tmp_path):
+    """scope=scene writes to scene.usda even when asset has phy.usda."""
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    physics_service.apply_api(state, {
+        "api_name": "PhysicsCollisionAPI",
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+        "attributes": {"physics:collisionEnabled": True},
+    })
+    assert (asset / "phy.usda").exists()
+
+    result = physics_service.apply_api(state, {
+        "api_name": "PhysicsCollisionAPI",
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+        "attributes": {"physics:collisionEnabled": False},
+        "scope": "scene",
+    })
+    assert result["scope"] == "scene"
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    composed = state.stage.GetPrimAtPath(
+        "/Scene/Models/Item_01/asset/Body",
+    )
+    assert composed.GetAttribute("physics:collisionEnabled").Get() is False
+
+
+def test_service_scope_invalid_refused(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    with pytest.raises(ValueError, match="Invalid scope"):
+        physics_service.apply_api(state, {
+            "api_name": "PhysicsCollisionAPI",
+            "prim_path": "/Scene/Models/Item_01/asset/Body",
+            "scope": "bogus",
+        })
+
+
+def test_service_summary_returns_combined_asset_and_scene(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    physics_service.apply_api(state, {
+        "api_name": "PhysicsCollisionAPI",
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+        "attributes": {"physics:collisionEnabled": True},
+    })
+    physics_service.apply_api(state, {
+        "api_name": "PhysicsCollisionAPI",
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+        "attributes": {"physics:collisionEnabled": False},
+        "scope": "scene",
+    })
+
+    summary = physics_service.get_physics_summary(state, {
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+    })
+
+    asset_paths = {p["prim_path"] for p in summary["asset"]["prims"]}
+    assert "/chair/Body" in asset_paths
+
+    scene_paths = {p["prim_path"] for p in summary["scene"]["prims"]}
+    assert "/Scene/Models/Item_01/asset/Body" in scene_paths
+
+
+def test_service_setup_physics_scene(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    result = physics_service.setup_physics_scene(state, {
+        "gravity_magnitude": 9.81,
+        "gravity_direction": [0.0, -1.0, 0.0],
+    })
+    assert result["prim_path"] == "/Scene/Physics/PhysicsScene"
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    prim = state.stage.GetPrimAtPath("/Scene/Physics/PhysicsScene")
+    assert prim.IsValid()
+    assert prim.GetTypeName() == "PhysicsScene"
+
+
+# ── Tool dispatch (full agent surface) ──
+
+
+async def test_dispatch_list_physics_api_properties(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    from bowerbot import dispatcher
+    result = await dispatcher.execute(
+        state, "list_physics_api_properties",
+        {"api_name": "PhysicsCollisionAPI"},
+    )
+    assert result.success
+    assert result.data["api_name"] == "PhysicsCollisionAPI"
+
+
+async def test_dispatch_apply_physics_api(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    from bowerbot import dispatcher
+    result = await dispatcher.execute(state, "apply_physics_api", {
+        "api_name": "PhysicsRigidBodyAPI",
+        "prim_path": "/Scene/Models/Item_01/asset",
+        "attributes": {"physics:kinematicEnabled": True},
+    })
+    assert result.success, result.error
+    assert result.data["api_name"] == "PhysicsRigidBodyAPI"
+    assert result.data["scope"] == "asset"
+
+
+async def test_dispatch_setup_physics_scene(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    from bowerbot import dispatcher
+    result = await dispatcher.execute(state, "setup_physics_scene", {})
+    assert result.success
+    assert result.data["prim_path"] == "/Scene/Physics/PhysicsScene"
+
+
+async def test_dispatch_remove_physics_api_scope_scene(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    from bowerbot import dispatcher
+    await dispatcher.execute(state, "apply_physics_api", {
+        "api_name": "PhysicsCollisionAPI",
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+        "attributes": {"physics:collisionEnabled": False},
+        "scope": "scene",
+    })
+    result = await dispatcher.execute(state, "remove_physics_api", {
+        "api_name": "PhysicsCollisionAPI",
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+        "scope": "scene",
+    })
+    assert result.success
+    assert result.data["scope"] == "scene"
+    assert result.data["removed"] is True
+
+
+async def test_dispatch_get_physics_summary(tmp_path):
+    asset = _make_asset(tmp_path, "chair")
+    state = _place_asset(tmp_path, asset)
+
+    from bowerbot import dispatcher
+    await dispatcher.execute(state, "apply_physics_api", {
+        "api_name": "PhysicsCollisionAPI",
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+        "attributes": {"physics:collisionEnabled": True},
+    })
+    result = await dispatcher.execute(state, "get_physics_summary", {
+        "prim_path": "/Scene/Models/Item_01/asset/Body",
+    })
+    assert result.success
+    assert result.data["asset"]["has_physics_layer"] is True

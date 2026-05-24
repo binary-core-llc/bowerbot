@@ -75,3 +75,21 @@ class PhysicsSummary(BaseModel):
 
     asset: AssetPhysicsSummary | None = None
     scene: ScenePhysicsSummary | None = None
+
+
+class CollisionGroupSummary(BaseModel):
+    """One ``UsdPhysicsCollisionGroup`` and its authored state."""
+
+    name: str
+    prim_path: str
+    includes: list[str] = []
+    excludes: list[str] = []
+    filtered_groups: list[str] = []
+    invert_filter: bool = False
+    merge_group: str | None = None
+
+
+class CollisionGroupsSummary(BaseModel):
+    """Every ``UsdPhysicsCollisionGroup`` defined under ``/Scene/Physics/Groups``."""
+
+    groups: list[CollisionGroupSummary] = []

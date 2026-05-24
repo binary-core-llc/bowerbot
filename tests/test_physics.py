@@ -759,3 +759,258 @@ async def test_dispatch_get_physics_summary(tmp_path):
     })
     assert result.success
     assert result.data["asset"]["has_physics_layer"] is True
+
+
+# ── Collision groups ──
+
+
+def _empty_scene_state(tmp_path: Path) -> SceneState:
+    """SceneState bound to an empty single-file scene.usda."""
+    scene_path = tmp_path / "scene.usda"
+    stage_utils.create_stage(scene_path)
+    state = SceneState(scene_defaults=SceneDefaults())
+    state.stage_path = scene_path
+    state.stage = stage_utils.open_stage(scene_path)
+    return state
+
+
+def test_create_collision_group_creates_scope_and_typed_prim(tmp_path):
+    state = _empty_scene_state(tmp_path)
+
+    result = physics_utils.create_or_update_collision_group(
+        state.stage, "Players",
+    )
+    assert result["name"] == "Players"
+    assert result["prim_path"] == "/Scene/Physics/Groups/Players"
+
+    scope = state.stage.GetPrimAtPath("/Scene/Physics/Groups")
+    assert scope.IsValid()
+    assert scope.GetTypeName() == "Scope"
+
+    group = state.stage.GetPrimAtPath("/Scene/Physics/Groups/Players")
+    assert group.IsValid()
+    assert group.GetTypeName() == "PhysicsCollisionGroup"
+
+
+def test_create_group_authors_includes_and_excludes(tmp_path):
+    state = _empty_scene_state(tmp_path)
+
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players",
+        includes=["/Scene/Players/P1", "/Scene/Players/P2"],
+        excludes=["/Scene/Players/P1/Hat"],
+    )
+
+    summary = physics_utils.get_collision_group_summary(state.stage, "Players")
+    assert summary is not None
+    assert summary.includes == ["/Scene/Players/P1", "/Scene/Players/P2"]
+    assert summary.excludes == ["/Scene/Players/P1/Hat"]
+
+
+def test_update_group_replaces_includes(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players", includes=["/Scene/A", "/Scene/B"],
+    )
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players", includes=["/Scene/C"],
+    )
+
+    summary = physics_utils.get_collision_group_summary(state.stage, "Players")
+    assert summary.includes == ["/Scene/C"]
+
+
+def test_update_group_with_none_leaves_property_untouched(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players",
+        includes=["/Scene/A"], invert_filter=True,
+    )
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players", merge_group="combat",
+    )
+
+    summary = physics_utils.get_collision_group_summary(state.stage, "Players")
+    assert summary.includes == ["/Scene/A"]
+    assert summary.invert_filter is True
+    assert summary.merge_group == "combat"
+
+
+def test_create_group_with_filtered_groups_requires_targets_exist(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(state.stage, "Players")
+    physics_utils.create_or_update_collision_group(state.stage, "Enemies")
+
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players", filtered_groups=["Enemies"],
+    )
+
+    summary = physics_utils.get_collision_group_summary(state.stage, "Players")
+    assert summary.filtered_groups == ["/Scene/Physics/Groups/Enemies"]
+
+
+def test_filtered_groups_refused_for_missing_target(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(state.stage, "Players")
+
+    with pytest.raises(ValueError, match="references missing group"):
+        physics_utils.create_or_update_collision_group(
+            state.stage, "Players", filtered_groups=["NonExistent"],
+        )
+
+
+def test_create_group_invert_filter(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(state.stage, "Friends")
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players",
+        filtered_groups=["Friends"], invert_filter=True,
+    )
+
+    summary = physics_utils.get_collision_group_summary(state.stage, "Players")
+    assert summary.invert_filter is True
+
+
+def test_remove_collision_group_succeeds_when_no_dependents(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(state.stage, "Players")
+
+    removed = physics_utils.remove_collision_group(state.stage, "Players")
+    assert removed is True
+    assert not state.stage.GetPrimAtPath(
+        "/Scene/Physics/Groups/Players",
+    ).IsValid()
+
+
+def test_remove_group_refused_when_dependents_reference_it(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(state.stage, "Enemies")
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players", filtered_groups=["Enemies"],
+    )
+
+    with pytest.raises(ValueError, match="reference it via filteredGroups"):
+        physics_utils.remove_collision_group(state.stage, "Enemies")
+
+
+def test_remove_group_with_force_drops_anyway(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(state.stage, "Enemies")
+    physics_utils.create_or_update_collision_group(
+        state.stage, "Players", filtered_groups=["Enemies"],
+    )
+
+    removed = physics_utils.remove_collision_group(
+        state.stage, "Enemies", force=True,
+    )
+    assert removed is True
+
+
+def test_list_collision_groups_returns_every_group(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_utils.create_or_update_collision_group(state.stage, "Players")
+    physics_utils.create_or_update_collision_group(state.stage, "Enemies")
+    physics_utils.create_or_update_collision_group(state.stage, "Terrain")
+
+    summary = physics_utils.list_collision_groups(state.stage)
+    names = {g.name for g in summary.groups}
+    assert names == {"Players", "Enemies", "Terrain"}
+
+
+def test_list_collision_groups_empty_when_no_groups(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    summary = physics_utils.list_collision_groups(state.stage)
+    assert summary.groups == []
+
+
+def test_group_name_validation_refuses_bad_names(tmp_path):
+    state = _empty_scene_state(tmp_path)
+
+    with pytest.raises(ValueError, match="cannot be empty"):
+        physics_utils.create_or_update_collision_group(state.stage, "")
+
+    with pytest.raises(ValueError, match="invalid characters"):
+        physics_utils.create_or_update_collision_group(
+            state.stage, "Bad Name",
+        )
+
+    with pytest.raises(ValueError, match="invalid characters"):
+        physics_utils.create_or_update_collision_group(
+            state.stage, "with/slash",
+        )
+
+
+# ── Collision groups: service + dispatcher ──
+
+
+def test_service_create_or_update_collision_group(tmp_path):
+    state = _empty_scene_state(tmp_path)
+
+    result = physics_service.create_or_update_collision_group(state, {
+        "name": "Players",
+        "includes": ["/Scene/Players/P1"],
+    })
+    assert result["name"] == "Players"
+
+    summary = physics_service.list_collision_groups(state, {})
+    names = {g["name"] for g in summary["groups"]}
+    assert "Players" in names
+
+
+def test_service_remove_collision_group_refused_on_dependents(tmp_path):
+    state = _empty_scene_state(tmp_path)
+    physics_service.create_or_update_collision_group(state, {"name": "Enemies"})
+    physics_service.create_or_update_collision_group(state, {
+        "name": "Players", "filtered_groups": ["Enemies"],
+    })
+
+    with pytest.raises(ValueError, match="reference it via filteredGroups"):
+        physics_service.remove_collision_group(state, {"name": "Enemies"})
+
+    result = physics_service.remove_collision_group(state, {
+        "name": "Enemies", "force": True,
+    })
+    assert result["removed"] is True
+
+
+async def test_dispatch_create_collision_group(tmp_path):
+    state = _empty_scene_state(tmp_path)
+
+    from bowerbot import dispatcher
+    result = await dispatcher.execute(state, "create_or_update_collision_group", {
+        "name": "Players",
+        "includes": ["/Scene/Players/P1"],
+    })
+    assert result.success, result.error
+    assert result.data["name"] == "Players"
+
+
+async def test_dispatch_list_collision_groups(tmp_path):
+    state = _empty_scene_state(tmp_path)
+
+    from bowerbot import dispatcher
+    await dispatcher.execute(state, "create_or_update_collision_group", {
+        "name": "Players",
+    })
+    await dispatcher.execute(state, "create_or_update_collision_group", {
+        "name": "Enemies",
+    })
+
+    result = await dispatcher.execute(state, "list_collision_groups", {})
+    assert result.success
+    names = {g["name"] for g in result.data["groups"]}
+    assert names == {"Players", "Enemies"}
+
+
+async def test_dispatch_remove_collision_group(tmp_path):
+    state = _empty_scene_state(tmp_path)
+
+    from bowerbot import dispatcher
+    await dispatcher.execute(state, "create_or_update_collision_group", {
+        "name": "Players",
+    })
+    result = await dispatcher.execute(state, "remove_collision_group", {
+        "name": "Players",
+    })
+    assert result.success
+    assert result.data["removed"] is True

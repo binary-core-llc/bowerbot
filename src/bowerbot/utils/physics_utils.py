@@ -240,21 +240,26 @@ def remove_api(
 # ── Scene-level authoring ──
 
 
+def ensure_physics_scope(stage: Usd.Stage) -> str:
+    """Create ``/Scene/Physics`` as a Scope if missing; return its path."""
+    scope_path = SceneNamespace.PHYSICS
+    if not stage.GetPrimAtPath(scope_path).IsValid():
+        stage.DefinePrim(scope_path, "Scope")
+    return scope_path
+
+
 def ensure_physics_scene(
     stage: Usd.Stage,
     name: str = "PhysicsScene",
     gravity_magnitude: float | None = None,
     gravity_direction: tuple[float, float, float] | None = None,
 ) -> str:
-    """Create ``/Scene/Physics`` container and a ``UsdPhysics.Scene`` child.
+    """Create the physics scope and a ``UsdPhysics.Scene`` child prim.
 
     Gravity magnitude defaults to ``9.81 / metersPerUnit`` (Earth gravity
     in stage units) and direction defaults to ``(0, -1, 0)``.
     """
-    scope_path = SceneNamespace.PHYSICS
-    if not stage.GetPrimAtPath(scope_path).IsValid():
-        stage.DefinePrim(scope_path, "Scope")
-
+    scope_path = ensure_physics_scope(stage)
     scene_path = f"{scope_path}/{name}"
     scene_prim = UsdPhysics.Scene.Define(stage, scene_path)
 
@@ -538,17 +543,9 @@ def get_scene_physics_summary(
     return ScenePhysicsSummary(prim_path=prim_path, prims=prims)
 
 
-_GROUPS_SCOPE_NAME = "Groups"
-
-
-def _groups_scope_path() -> str:
-    """Path to the ``UsdPhysicsCollisionGroup`` container Scope."""
-    return f"{SceneNamespace.PHYSICS}/{_GROUPS_SCOPE_NAME}"
-
-
 def _group_prim_path(name: str) -> str:
-    """Path to a group prim under the collision-groups Scope."""
-    return f"{_groups_scope_path()}/{name}"
+    """Path to a group prim, flat-sibling of PhysicsScene under /Scene/Physics."""
+    return f"{SceneNamespace.PHYSICS}/{name}"
 
 
 def _resolve_group_path(name_or_path: str) -> str:
@@ -556,16 +553,6 @@ def _resolve_group_path(name_or_path: str) -> str:
     if name_or_path.startswith("/"):
         return name_or_path
     return _group_prim_path(name_or_path)
-
-
-def ensure_collision_groups_scope(stage: Usd.Stage) -> str:
-    """Create ``/Scene/Physics/Groups`` (and ``/Scene/Physics``) as Scopes."""
-    if not stage.GetPrimAtPath(SceneNamespace.PHYSICS).IsValid():
-        stage.DefinePrim(SceneNamespace.PHYSICS, "Scope")
-    scope_path = _groups_scope_path()
-    if not stage.GetPrimAtPath(scope_path).IsValid():
-        stage.DefinePrim(scope_path, "Scope")
-    return scope_path
 
 
 def create_or_update_collision_group(
@@ -586,7 +573,7 @@ def create_or_update_collision_group(
     names; they are resolved to ``/Scene/Physics/Groups/<name>``.
     """
     _validate_group_name(name)
-    ensure_collision_groups_scope(stage)
+    ensure_physics_scope(stage)
 
     prim_path = _group_prim_path(name)
     group = UsdPhysics.CollisionGroup.Define(stage, prim_path)
@@ -659,8 +646,8 @@ def remove_collision_group(
 
 
 def list_collision_groups(stage: Usd.Stage) -> CollisionGroupsSummary:
-    """Return every ``UsdPhysicsCollisionGroup`` under the Groups scope."""
-    scope = stage.GetPrimAtPath(_groups_scope_path())
+    """Return every ``UsdPhysicsCollisionGroup`` under ``/Scene/Physics``."""
+    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
     if not scope or not scope.IsValid():
         return CollisionGroupsSummary()
 
@@ -805,7 +792,7 @@ def _summarize_group(prim: Usd.Prim) -> CollisionGroupSummary:
 
 def _find_dependent_groups(stage: Usd.Stage, group_prim_path: str) -> list[str]:
     """Names of other groups whose ``filteredGroups`` targets *group_prim_path*."""
-    scope = stage.GetPrimAtPath(_groups_scope_path())
+    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
     if not scope or not scope.IsValid():
         return []
     target = Sdf.Path(group_prim_path)

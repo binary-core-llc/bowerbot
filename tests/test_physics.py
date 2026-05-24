@@ -774,20 +774,23 @@ def _empty_scene_state(tmp_path: Path) -> SceneState:
     return state
 
 
-def test_create_collision_group_creates_scope_and_typed_prim(tmp_path):
+def test_create_collision_group_as_flat_sibling_of_physics_scene(tmp_path):
     state = _empty_scene_state(tmp_path)
 
     result = physics_utils.create_or_update_collision_group(
         state.stage, "Players",
     )
     assert result["name"] == "Players"
-    assert result["prim_path"] == "/Scene/Physics/Groups/Players"
+    assert result["prim_path"] == "/Scene/Physics/Players"
 
-    scope = state.stage.GetPrimAtPath("/Scene/Physics/Groups")
-    assert scope.IsValid()
-    assert scope.GetTypeName() == "Scope"
+    physics_scope = state.stage.GetPrimAtPath("/Scene/Physics")
+    assert physics_scope.IsValid()
+    assert physics_scope.GetTypeName() == "Scope"
 
-    group = state.stage.GetPrimAtPath("/Scene/Physics/Groups/Players")
+    # No nested /Groups sub-Scope; groups are direct children of /Scene/Physics.
+    assert not state.stage.GetPrimAtPath("/Scene/Physics/Groups").IsValid()
+
+    group = state.stage.GetPrimAtPath("/Scene/Physics/Players")
     assert group.IsValid()
     assert group.GetTypeName() == "PhysicsCollisionGroup"
 
@@ -846,7 +849,7 @@ def test_create_group_with_filtered_groups_requires_targets_exist(tmp_path):
     )
 
     summary = physics_utils.get_collision_group_summary(state.stage, "Players")
-    assert summary.filtered_groups == ["/Scene/Physics/Groups/Enemies"]
+    assert summary.filtered_groups == ["/Scene/Physics/Enemies"]
 
 
 def test_filtered_groups_refused_for_missing_target(tmp_path):

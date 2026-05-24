@@ -69,6 +69,45 @@ def get_physics_summary(state: SceneState, params: dict[str, Any]) -> ToolResult
     return ToolResult(success=True, data=data)
 
 
+def create_or_update_collision_group(
+    state: SceneState, params: dict[str, Any],
+) -> ToolResult:
+    """Create or update a UsdPhysicsCollisionGroup under /Scene/Physics/Groups."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.create_or_update_collision_group(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def remove_collision_group(
+    state: SceneState, params: dict[str, Any],
+) -> ToolResult:
+    """Remove a collision group; refuses if other groups depend on it."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.remove_collision_group(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def list_collision_groups(
+    state: SceneState, params: dict[str, Any],
+) -> ToolResult:
+    """List every collision group with membership, filters, and merge token."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.list_collision_groups(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
 _API_VALUES = [a.value for a in PhysicsApiName]
 
 
@@ -343,10 +382,125 @@ TOOLS: list[Tool] = [
 ]
 
 
+TOOLS.append(Tool(
+    name="create_or_update_collision_group",
+    description=(
+        "Create or update a UsdPhysicsCollisionGroup typed prim under "
+        "/Scene/Physics/Groups/<name>. Collision groups declare WHICH "
+        "colliders are in the group (via a UsdCollectionAPI on the "
+        "group itself, NOT via an applied API on each collider) and "
+        "WHICH other groups they refuse to collide with. Use for "
+        "scenarios like 'players collide with terrain but not each "
+        "other', 'trigger volumes don't physically collide', 'UI "
+        "props don't interact with anything'.\n\n"
+        "Each list-shaped arg REPLACES the existing value when given "
+        "(omit to leave unchanged on an existing group). The "
+        "filtered_groups arg accepts bare group names; they resolve to "
+        "/Scene/Physics/Groups/<name>. Any group named there must "
+        "already exist; create it first if needed."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": (
+                    "Group name (e.g. 'Players', 'Terrain'). Becomes "
+                    "the child name under /Scene/Physics/Groups."
+                ),
+            },
+            "includes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "Scene prim paths to add to the group's colliders "
+                    "collection (UsdCollectionAPI includes rel). "
+                    "Replaces the existing list."
+                ),
+            },
+            "excludes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "Scene prim paths excluded from the colliders "
+                    "collection. Replaces the existing list."
+                ),
+            },
+            "filtered_groups": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "Other group names this group does NOT collide "
+                    "with. Resolved to /Scene/Physics/Groups/<name>. "
+                    "Refuses if any named group does not exist."
+                ),
+            },
+            "invert_filter": {
+                "type": "boolean",
+                "description": (
+                    "When true, filtered_groups means 'ONLY collide "
+                    "with these groups' instead of the default 'do NOT "
+                    "collide with these groups'."
+                ),
+            },
+            "merge_group": {
+                "type": "string",
+                "description": (
+                    "Token that groups multiple CollisionGroup prims "
+                    "into one filtering unit. Optional."
+                ),
+            },
+        },
+        "required": ["name"],
+    },
+))
+TOOLS.append(Tool(
+    name="remove_collision_group",
+    description=(
+        "Remove a UsdPhysicsCollisionGroup. Refuses if other groups "
+        "reference it via filteredGroups (would leave dangling "
+        "relationships) unless force=true is passed."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "Group name under /Scene/Physics/Groups.",
+            },
+            "force": {
+                "type": "boolean",
+                "default": False,
+                "description": (
+                    "Remove even when other groups still reference "
+                    "this one via filteredGroups. Dangling rels "
+                    "are left behind."
+                ),
+            },
+        },
+        "required": ["name"],
+    },
+))
+TOOLS.append(Tool(
+    name="list_collision_groups",
+    description=(
+        "Return every UsdPhysicsCollisionGroup under "
+        "/Scene/Physics/Groups with its membership (includes / "
+        "excludes), filtered_groups, invert_filter, and merge_group "
+        "token. Use before authoring filters to know which group "
+        "names exist."
+    ),
+    parameters={"type": "object", "properties": {}},
+))
+
+
 HANDLERS = {
     "list_physics_api_properties": list_physics_api_properties,
     "apply_physics_api": apply_physics_api,
     "remove_physics_api": remove_physics_api,
     "setup_physics_scene": setup_physics_scene,
     "get_physics_summary": get_physics_summary,
+    "create_or_update_collision_group": create_or_update_collision_group,
+    "remove_collision_group": remove_collision_group,
+    "list_collision_groups": list_collision_groups,
 }

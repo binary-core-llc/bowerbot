@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0](https://github.com/binary-core-llc/bowerbot/compare/v1.8.2...v1.9.0) (2026-05-24)
+
+
+### Features
+
+* scene-level physics, PhysicsScene singleton, and agent tool surface ([#161](https://github.com/binary-core-llc/bowerbot/issues/161)) ([d7b416a](https://github.com/binary-core-llc/bowerbot/commit/d7b416aec1939b14d7dd02f56e948a9c093cadb3))
+* static UsdPhysics foundation in phy.usda ([#159](https://github.com/binary-core-llc/bowerbot/issues/159)) ([a24d410](https://github.com/binary-core-llc/bowerbot/commit/a24d410be6fe7c3d700cbc722ff0c6e014cd663a))
+
 ## [1.8.2](https://github.com/binary-core-llc/bowerbot/compare/v1.8.1...v1.8.2) (2026-05-22)
 
 

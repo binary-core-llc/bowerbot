@@ -70,11 +70,23 @@ class SceneDefaults(BaseSettings):
     default_room_bounds: tuple[float, float, float] = (10.0, 3.0, 8.0)
 
 
+class LoggingSettings(BaseSettings):
+    """Structured file + console logging configuration."""
+
+    enabled: bool = True
+    log_dir: Path | None = None  # None = BOWERBOT_HOME / "logs"
+    level: str = "INFO"           # file log level
+    console_level: str = "WARNING"  # console log level
+    max_bytes: int = 10 * 1024 * 1024  # 10 MB per file
+    backup_count: int = 5         # number of rotated files to keep
+
+
 class Settings(BaseSettings):
     """Top-level BowerBot settings."""
 
     llm: LLMSettings = Field(default_factory=LLMSettings)
     scene_defaults: SceneDefaults = Field(default_factory=SceneDefaults)
+    logging: LoggingSettings = Field(default_factory=LoggingSettings)
     skills: dict[str, SkillConfig] = Field(default_factory=dict)
     assets_dir: Path = Path("./assets")
     projects_dir: Path = Path("./scenes")
@@ -126,6 +138,17 @@ def save_settings(settings: Settings) -> None:
             "default_room_bounds": list(
                 settings.scene_defaults.default_room_bounds,
             ),
+        },
+        "logging": {
+            "enabled": settings.logging.enabled,
+            "log_dir": (
+                str(settings.logging.log_dir)
+                if settings.logging.log_dir is not None else None
+            ),
+            "level": settings.logging.level,
+            "console_level": settings.logging.console_level,
+            "max_bytes": settings.logging.max_bytes,
+            "backup_count": settings.logging.backup_count,
         },
         "skills": {
             name: skill.to_json()

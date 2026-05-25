@@ -11,7 +11,7 @@ import pytest
 from pxr import Sdf, Usd, UsdGeom
 
 from bowerbot.config import SceneDefaults
-from bowerbot.schemas import ASWFLayerNames, PhysicsApiName
+from bowerbot.schemas import ASWFLayerNames, PhysicsApiName, PhysicsJointType
 from bowerbot.services import physics_service
 from bowerbot.state import SceneState
 from bowerbot.utils import physics_utils, stage_utils
@@ -1017,3 +1017,343 @@ async def test_dispatch_remove_collision_group(tmp_path):
     })
     assert result.success
     assert result.data["removed"] is True
+
+
+# ── Joints + articulation ──
+
+
+def _make_two_body_asset(parent: Path, name: str) -> Path:
+    """Asset with two named Xforms under the root for joint body targets."""
+    asset_dir = parent / name
+    asset_dir.mkdir()
+
+    geo_stage = Usd.Stage.CreateNew(str(asset_dir / ASWFLayerNames.GEO))
+    UsdGeom.SetStageMetersPerUnit(geo_stage, 1.0)
+    UsdGeom.SetStageUpAxis(geo_stage, UsdGeom.Tokens.y)
+    root = geo_stage.DefinePrim(f"/{name}", "Xform")
+    geo_stage.SetDefaultPrim(root)
+    geo_stage.DefinePrim(f"/{name}/link0", "Xform")
+    geo_stage.DefinePrim(f"/{name}/link1", "Xform")
+    geo_stage.Save()
+
+    root_stage = Usd.Stage.CreateNew(str(asset_dir / f"{name}.usda"))
+    UsdGeom.SetStageMetersPerUnit(root_stage, 1.0)
+    UsdGeom.SetStageUpAxis(root_stage, UsdGeom.Tokens.y)
+    root_prim = root_stage.DefinePrim(f"/{name}", "Xform")
+    root_stage.SetDefaultPrim(root_prim)
+    root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
+    root_stage.Save()
+    return asset_dir
+
+
+def _scene_with_two_bodies(tmp_path: Path) -> SceneState:
+    """Empty scene with /Scene/BodyA and /Scene/BodyB, both rigid bodies."""
+    scene_path = tmp_path / "scene.usda"
+    stage_utils.create_stage(scene_path)
+    state = SceneState(scene_defaults=SceneDefaults())
+    state.stage_path = scene_path
+    state.stage = stage_utils.open_stage(scene_path)
+
+    from pxr import UsdPhysics
+    for name in ("BodyA", "BodyB"):
+        prim = state.stage.DefinePrim(f"/Scene/{name}", "Xform")
+        UsdPhysics.RigidBodyAPI.Apply(prim)
+    state.stage.Save()
+    return state
+
+
+def test_list_joint_properties_revolute_exposes_axis_and_limits():
+    info = physics_utils.list_joint_properties(PhysicsJointType.REVOLUTE)
+    assert info.api_name == "PhysicsRevoluteJoint"
+    attr_names = {p.name for p in info.properties if p.kind == "attribute"}
+    assert "physics:axis" in attr_names
+    assert "physics:lowerLimit" in attr_names
+    assert "physics:upperLimit" in attr_names
+
+    rel_names = {p.name for p in info.properties if p.kind == "relationship"}
+    assert "physics:body0" in rel_names
+    assert "physics:body1" in rel_names
+
+
+def test_create_joint_scene_revolute_between_two_bodies(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+
+    result = physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.REVOLUTE, "hinge",
+        body0="/Scene/BodyA", body1="/Scene/BodyB",
+        attributes={"physics:axis": "Y"},
+    )
+    assert result["prim_path"] == "/Scene/Physics/hinge"
+    assert result["scope"] == "scene"
+
+    prim = state.stage.GetPrimAtPath("/Scene/Physics/hinge")
+    assert prim.IsValid()
+    assert prim.GetTypeName() == "PhysicsRevoluteJoint"
+    assert str(prim.GetRelationship("physics:body0").GetTargets()[0]) == "/Scene/BodyA"
+    assert str(prim.GetRelationship("physics:body1").GetTargets()[0]) == "/Scene/BodyB"
+    assert prim.GetAttribute("physics:axis").Get() == "Y"
+
+
+def test_create_joint_scene_each_type(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+
+    for joint_type, joint_name in [
+        (PhysicsJointType.REVOLUTE, "rev"),
+        (PhysicsJointType.PRISMATIC, "pris"),
+        (PhysicsJointType.SPHERICAL, "ball"),
+        (PhysicsJointType.FIXED, "weld"),
+        (PhysicsJointType.DISTANCE, "rope"),
+    ]:
+        result = physics_utils.create_joint_scene(
+            state.stage, joint_type, joint_name,
+            body0="/Scene/BodyA", body1="/Scene/BodyB",
+        )
+        prim = state.stage.GetPrimAtPath(result["prim_path"])
+        assert prim.IsValid()
+        assert prim.GetTypeName() == joint_type.value
+
+
+def test_create_joint_refuses_when_neither_body_has_rigid_body(tmp_path):
+    scene_path = tmp_path / "scene.usda"
+    stage_utils.create_stage(scene_path)
+    stage = stage_utils.open_stage(scene_path)
+    stage.DefinePrim("/Scene/Plain1", "Xform")
+    stage.DefinePrim("/Scene/Plain2", "Xform")
+    stage.Save()
+
+    with pytest.raises(ValueError, match="reaches PhysicsRigidBodyAPI"):
+        physics_utils.create_joint_scene(
+            stage, PhysicsJointType.FIXED, "weld",
+            body0="/Scene/Plain1", body1="/Scene/Plain2",
+        )
+
+
+def test_create_joint_refuses_missing_body_target(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+
+    with pytest.raises(ValueError, match="prim not found"):
+        physics_utils.create_joint_scene(
+            state.stage, PhysicsJointType.REVOLUTE, "bad",
+            body0="/Scene/BodyA", body1="/Scene/NonExistent",
+        )
+
+
+def test_create_joint_refuses_world_world(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+
+    with pytest.raises(ValueError, match="at least one body"):
+        physics_utils.create_joint_scene(
+            state.stage, PhysicsJointType.FIXED, "void",
+            body0=None, body1=None,
+        )
+
+
+def test_create_joint_accepts_one_world_attach(tmp_path):
+    """An empty body1 is legal and means attach-to-world."""
+    state = _scene_with_two_bodies(tmp_path)
+
+    result = physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.FIXED, "anchor",
+        body0="/Scene/BodyA", body1=None,
+    )
+    prim = state.stage.GetPrimAtPath(result["prim_path"])
+    assert list(prim.GetRelationship("physics:body1").GetTargets()) == []
+
+
+def test_create_joint_refuses_unknown_attribute(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+
+    with pytest.raises(ValueError, match="does not declare attribute"):
+        physics_utils.create_joint_scene(
+            state.stage, PhysicsJointType.REVOLUTE, "rev",
+            body0="/Scene/BodyA", body1="/Scene/BodyB",
+            attributes={"physics:bogus": 1.0},
+        )
+
+
+def test_create_joint_asset_writes_to_phy_usda(tmp_path):
+    asset = _make_two_body_asset(tmp_path, "arm")
+    # Make link0/link1 rigid bodies via phy.usda
+    physics_utils.apply_api(
+        asset, "/arm/link0", PhysicsApiName.RIGID_BODY,
+    )
+    physics_utils.apply_api(
+        asset, "/arm/link1", PhysicsApiName.RIGID_BODY,
+    )
+
+    result = physics_utils.create_joint_asset(
+        asset, PhysicsJointType.REVOLUTE, "elbow",
+        body0="/arm/link0", body1="/arm/link1",
+        attributes={"physics:axis": "Z"},
+    )
+    assert result["prim_path"] == "/arm/joints/elbow"
+    assert result["scope"] == "asset"
+
+    layer = Sdf.Layer.FindOrOpen(str(asset / ASWFLayerNames.PHY))
+    joint_spec = layer.GetPrimAtPath("/arm/joints/elbow")
+    assert joint_spec is not None
+    assert str(joint_spec.typeName) == "PhysicsRevoluteJoint"
+
+
+def test_remove_joint_scene_drops_prim(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.FIXED, "weld",
+        body0="/Scene/BodyA", body1="/Scene/BodyB",
+    )
+    removed = physics_utils.remove_joint_scene(
+        state.stage, "/Scene/Physics/weld",
+    )
+    assert removed is True
+    assert not state.stage.GetPrimAtPath("/Scene/Physics/weld").IsValid()
+
+
+def test_remove_joint_asset_drops_prim(tmp_path):
+    asset = _make_two_body_asset(tmp_path, "arm")
+    physics_utils.apply_api(asset, "/arm/link0", PhysicsApiName.RIGID_BODY)
+    physics_utils.apply_api(asset, "/arm/link1", PhysicsApiName.RIGID_BODY)
+    physics_utils.create_joint_asset(
+        asset, PhysicsJointType.FIXED, "weld",
+        body0="/arm/link0", body1="/arm/link1",
+    )
+
+    removed = physics_utils.remove_joint_asset(asset, "weld")
+    assert removed is True
+
+    layer = Sdf.Layer.FindOrOpen(str(asset / ASWFLayerNames.PHY))
+    assert layer.GetPrimAtPath("/arm/joints/weld") is None
+
+
+def test_list_joints_scene_returns_summaries(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.REVOLUTE, "rev",
+        body0="/Scene/BodyA", body1="/Scene/BodyB",
+        attributes={"physics:axis": "Y"},
+    )
+    physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.FIXED, "weld",
+        body0="/Scene/BodyA", body1="/Scene/BodyB",
+    )
+    summary = physics_utils.list_joints_scene(state.stage)
+    names = {j.prim_path for j in summary.joints}
+    assert "/Scene/Physics/rev" in names
+    assert "/Scene/Physics/weld" in names
+
+    rev = next(
+        j for j in summary.joints
+        if j.prim_path == "/Scene/Physics/rev"
+    )
+    assert rev.joint_type == "PhysicsRevoluteJoint"
+    assert rev.body0 == "/Scene/BodyA"
+    assert rev.body1 == "/Scene/BodyB"
+    assert rev.attributes.get("physics:axis") == "Y"
+
+
+def test_articulation_root_refused_on_nested_ancestor(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    state.stage.DefinePrim("/Scene/Robot", "Xform")
+    state.stage.DefinePrim("/Scene/Robot/Arm", "Xform")
+    state.stage.Save()
+
+    # Apply on parent
+    from pxr import UsdPhysics
+    UsdPhysics.ArticulationRootAPI.Apply(
+        state.stage.GetPrimAtPath("/Scene/Robot"),
+    )
+    state.stage.Save()
+
+    with pytest.raises(ValueError, match="forbids nesting"):
+        physics_utils.check_articulation_root_nesting(
+            state.stage, "/Scene/Robot/Arm",
+        )
+
+
+def test_articulation_root_refused_on_nested_descendant(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    state.stage.DefinePrim("/Scene/Robot", "Xform")
+    state.stage.DefinePrim("/Scene/Robot/Arm", "Xform")
+    state.stage.Save()
+
+    from pxr import UsdPhysics
+    UsdPhysics.ArticulationRootAPI.Apply(
+        state.stage.GetPrimAtPath("/Scene/Robot/Arm"),
+    )
+    state.stage.Save()
+
+    with pytest.raises(ValueError, match="forbids nesting"):
+        physics_utils.check_articulation_root_nesting(
+            state.stage, "/Scene/Robot",
+        )
+
+
+# ── Joint service + dispatcher ──
+
+
+def test_service_create_joint_scene_routes_correctly(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    result = physics_service.create_joint(state, {
+        "joint_type": "PhysicsRevoluteJoint",
+        "name": "rev",
+        "body0": "/Scene/BodyA",
+        "body1": "/Scene/BodyB",
+        "scope": "scene",
+    })
+    assert result["scope"] == "scene"
+    assert result["prim_path"] == "/Scene/Physics/rev"
+
+
+def test_service_list_joints_filters_to_supported_types(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    physics_service.create_joint(state, {
+        "joint_type": "PhysicsFixedJoint",
+        "name": "weld",
+        "body0": "/Scene/BodyA",
+        "body1": "/Scene/BodyB",
+    })
+    summary = physics_service.list_joints(state, {})
+    types = {j["joint_type"] for j in summary["joints"]}
+    assert types == {"PhysicsFixedJoint"}
+
+
+async def test_dispatch_create_and_list_joints(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+
+    from bowerbot import dispatcher
+    create_result = await dispatcher.execute(state, "create_joint", {
+        "joint_type": "PhysicsRevoluteJoint",
+        "name": "elbow",
+        "body0": "/Scene/BodyA",
+        "body1": "/Scene/BodyB",
+    })
+    assert create_result.success, create_result.error
+
+    list_result = await dispatcher.execute(state, "list_joints", {})
+    assert list_result.success
+    names = {j["prim_path"] for j in list_result.data["joints"]}
+    assert "/Scene/Physics/elbow" in names
+
+
+async def test_dispatch_list_joint_properties(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    from bowerbot import dispatcher
+    result = await dispatcher.execute(state, "list_joint_properties", {
+        "joint_type": "PhysicsPrismaticJoint",
+    })
+    assert result.success
+    assert result.data["api_name"] == "PhysicsPrismaticJoint"
+    attr_names = {p["name"] for p in result.data["properties"] if p["kind"] == "attribute"}
+    assert "physics:axis" in attr_names
+
+
+async def test_dispatch_apply_articulation_root_api(tmp_path):
+    asset = _make_two_body_asset(tmp_path, "robot")
+    state = _place_asset(tmp_path, asset)
+
+    from bowerbot import dispatcher
+    result = await dispatcher.execute(state, "apply_physics_api", {
+        "api_name": "PhysicsArticulationRootAPI",
+        "prim_path": "/Scene/Models/Item_01/asset",
+    })
+    assert result.success, result.error
+    assert result.data["api_name"] == "PhysicsArticulationRootAPI"

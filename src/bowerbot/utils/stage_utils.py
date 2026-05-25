@@ -327,8 +327,17 @@ def _usd_value_to_json(value: object) -> object:
         return value
     if isinstance(value, Sdf.AssetPath):
         return value.path or str(value)
-    if hasattr(value, "__len__") and hasattr(value, "__iter__"):
-        return [float(c) for c in value]
+    # Gf.Vec3f / Vec3d have no __iter__ but list() works via __getitem__.
+    if hasattr(value, "__len__") and not isinstance(value, bytes):
+        items = list(value)
+        if items and hasattr(items[0], "__len__") and not isinstance(
+            items[0], str | bytes,
+        ):
+            return [_usd_value_to_json(v) for v in items]
+        try:
+            return [float(c) for c in items]
+        except (TypeError, ValueError):
+            return [str(c) for c in items]
     return str(value)
 
 
@@ -826,7 +835,7 @@ def _scrub_variant_set_names(prim_spec: Sdf.PrimSpec, set_name: str) -> None:
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
-    """List every referenced asset and light placed in *stage*."""
+    """List referenced assets, lights, and scene-authored Gprims in *stage*."""
     bbox_cache = UsdGeom.BBoxCache(
         Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
     )
@@ -835,7 +844,10 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
     for prim in stage.Traverse():
         is_light = prim.HasAPI(UsdLux.LightAPI)
         has_refs = prim.GetMetadata("references") is not None
-        if not has_refs and not is_light:
+        scene_gprim = (
+            prim.IsA(UsdGeom.Gprim) and not _has_referenced_ancestor(prim)
+        )
+        if not (has_refs or is_light or scene_gprim):
             continue
 
         position = _extract_position(prim)
@@ -844,6 +856,19 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
         else:
             results.append(_format_geometry_prim(prim, position, bbox_cache))
     return results
+
+
+def _has_referenced_ancestor(prim: Usd.Prim) -> bool:
+    """Whether any ancestor of *prim* carries an authored references arc."""
+    cursor = prim.GetParent()
+    while (
+        cursor and cursor.IsValid()
+        and cursor.GetPath() != Sdf.Path.absoluteRootPath
+    ):
+        if cursor.GetMetadata("references") is not None:
+            return True
+        cursor = cursor.GetParent()
+    return False
 
 
 def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
@@ -1036,10 +1061,11 @@ def _format_geometry_prim(
     position: dict[str, float] | None,
     bbox_cache: UsdGeom.BBoxCache,
 ) -> dict:
-    """Format a referenced-asset prim for ``list_prims``."""
+    """Format a referenced-asset or scene-authored Gprim for ``list_prims``."""
     ref_paths = get_prim_ref_paths(prim)
     return {
         "prim_path": str(prim.GetPath()),
+        "type": str(prim.GetTypeName()) or None,
         "asset": ref_paths[0] if ref_paths else None,
         "position": position,
         "bounds": _world_bounds(prim, bbox_cache),

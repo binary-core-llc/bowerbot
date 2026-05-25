@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import PhysicsApiName
+from bowerbot.schemas import PhysicsApiName, PhysicsJointType
 from bowerbot.services import physics_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
@@ -69,6 +69,52 @@ def get_physics_summary(state: SceneState, params: dict[str, Any]) -> ToolResult
     return ToolResult(success=True, data=data)
 
 
+def list_joint_properties(
+    state: SceneState, params: dict[str, Any],
+) -> ToolResult:
+    """Schema-registry introspection for a typed joint prim."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.list_joint_properties(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def create_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Create a typed joint connecting two bodies."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.create_joint(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def remove_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Remove a joint prim (asset-level or scene-level)."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.remove_joint(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def list_joints(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """List joints scene-wide, scoped under a prim, or inside an asset folder."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.list_joints(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
 def create_or_update_collision_group(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
@@ -109,6 +155,7 @@ def list_collision_groups(
 
 
 _API_VALUES = [a.value for a in PhysicsApiName]
+_JOINT_TYPE_VALUES = [j.value for j in PhysicsJointType]
 
 
 TOOLS: list[Tool] = [
@@ -137,7 +184,8 @@ TOOLS: list[Tool] = [
                         "PhysicsMassAPI for mass/density/COM, "
                         "PhysicsCollisionAPI for colliders, "
                         "PhysicsMeshCollisionAPI for mesh-collision "
-                        "approximation choice."
+                        "approximation, PhysicsArticulationRootAPI "
+                        "for articulation roots."
                     ),
                 },
             },
@@ -485,6 +533,209 @@ TOOLS.append(Tool(
     },
 ))
 TOOLS.append(Tool(
+    name="list_joint_properties",
+    description=(
+        "Schema-registry introspection for a UsdPhysics typed joint "
+        "prim. Returns every attribute and relationship the joint "
+        "type declares with name, USD type, default, and allowed "
+        "tokens. ALWAYS call this before create_joint so you know "
+        "what attributes the joint accepts (e.g. RevoluteJoint has "
+        "physics:axis, physics:lowerLimit, physics:upperLimit; "
+        "DistanceJoint has physics:minDistance / maxDistance)."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "joint_type": {
+                "type": "string",
+                "enum": _JOINT_TYPE_VALUES,
+                "description": "Which typed joint to introspect.",
+            },
+        },
+        "required": ["joint_type"],
+    },
+))
+TOOLS.append(Tool(
+    name="create_joint",
+    description=(
+        "Create a typed UsdPhysics joint connecting two bodies. "
+        "Joints are typed prims (not applied APIs); supported types: "
+        "PhysicsRevoluteJoint (hinge, 1 angular DOF), "
+        "PhysicsPrismaticJoint (slider, 1 linear DOF), "
+        "PhysicsSphericalJoint (ball-and-socket, 3 angular DOFs with "
+        "cone limit), PhysicsFixedJoint (rigid weld, 0 DOFs), "
+        "PhysicsDistanceJoint (constrains distance between two "
+        "points).\n\n"
+        "body0 and body1 reference scene prim paths. At least one "
+        "must reach PhysicsRigidBodyAPI (self or ancestor); the "
+        "other can be world-static (set to empty / omit to mean "
+        "'attach to world'). Convention is body0=parent, body1=child "
+        "for articulated chains. Both must be UsdGeom.Xformable.\n\n"
+        "scope='asset' (default 'scene'): writes the joint into the "
+        "asset's phy.usda at /<defaultPrim>/joints/<name>. Used for "
+        "asset-internal articulations (robot arm, character, door). "
+        "Requires either body0 or body1 (or asset_anchor_prim_path) "
+        "to be inside an asset placement so BowerBot can find the "
+        "asset folder. body0/body1 are translated to asset-local "
+        "namespace before writing.\n\n"
+        "scope='scene' (default): writes the joint into scene.usda "
+        "at /Scene/Physics/<name> as a flat sibling of PhysicsScene "
+        "and collision groups. Used for joints that span two "
+        "separate assets (e.g. welding a hook on asset A to a chain "
+        "on asset B). body0/body1 are absolute scene paths.\n\n"
+        "Call list_joint_properties(joint_type) first to learn which "
+        "attributes the joint accepts. body0/body1 attributes are "
+        "set via the dedicated body0/body1 params here, not via the "
+        "attributes dict."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "joint_type": {
+                "type": "string",
+                "enum": _JOINT_TYPE_VALUES,
+                "description": "Which typed joint to create.",
+            },
+            "name": {
+                "type": "string",
+                "description": (
+                    "Joint name (e.g. 'elbow', 'door_hinge'). "
+                    "Becomes the prim's leaf name."
+                ),
+            },
+            "body0": {
+                "type": "string",
+                "description": (
+                    "Scene prim path of body0 (parent in articulated "
+                    "chains). Empty/omitted means 'world'. Must be "
+                    "Xformable; at least one of body0/body1 must "
+                    "reach PhysicsRigidBodyAPI."
+                ),
+            },
+            "body1": {
+                "type": "string",
+                "description": (
+                    "Scene prim path of body1 (child in articulated "
+                    "chains). Empty/omitted means 'world'. Same type "
+                    "and RigidBody constraints as body0."
+                ),
+            },
+            "scope": {
+                "type": "string",
+                "enum": ["asset", "scene"],
+                "default": "scene",
+                "description": (
+                    "'asset' writes inside the asset's phy.usda "
+                    "(asset-internal articulations). 'scene' writes "
+                    "into scene.usda (joints between separate assets "
+                    "or to scene-only prims)."
+                ),
+            },
+            "asset_anchor_prim_path": {
+                "type": "string",
+                "description": (
+                    "scope='asset' only. If body0 and body1 are both "
+                    "empty (world-attach), provide any scene prim "
+                    "path inside the asset placement so BowerBot can "
+                    "locate the asset folder."
+                ),
+            },
+            "attributes": {
+                "type": "object",
+                "additionalProperties": True,
+                "description": (
+                    "Map of joint attribute name -> value (e.g. "
+                    "'physics:axis': 'Y', 'physics:lowerLimit': "
+                    "-90.0). Names must come from "
+                    "list_joint_properties for the same joint_type. "
+                    "Do NOT set physics:body0 / physics:body1 here; "
+                    "use the dedicated body0/body1 params."
+                ),
+            },
+        },
+        "required": ["joint_type", "name"],
+    },
+))
+TOOLS.append(Tool(
+    name="remove_joint",
+    description=(
+        "Remove a typed joint prim. For scope='scene', pass the "
+        "full prim_path. For scope='asset', pass the joint name "
+        "plus asset_anchor_prim_path (a scene placement of the "
+        "asset). Joints are leaves (no cascade); ArticulationRootAPI "
+        "is independent and is not affected by joint removal."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "scope": {
+                "type": "string",
+                "enum": ["asset", "scene"],
+                "default": "scene",
+            },
+            "prim_path": {
+                "type": "string",
+                "description": (
+                    "scope='scene': full scene prim path of the joint "
+                    "(e.g. /Scene/Physics/door_hinge)."
+                ),
+            },
+            "name": {
+                "type": "string",
+                "description": (
+                    "scope='asset': joint name under "
+                    "/<defaultPrim>/joints/<name>."
+                ),
+            },
+            "asset_anchor_prim_path": {
+                "type": "string",
+                "description": (
+                    "scope='asset': any scene placement path inside "
+                    "the target asset so BowerBot can locate the "
+                    "asset folder."
+                ),
+            },
+        },
+    },
+))
+TOOLS.append(Tool(
+    name="list_joints",
+    description=(
+        "List every typed joint prim. For scope='scene', returns "
+        "joints found across the open scene (optionally under a "
+        "specific prim via under_prim_path). For scope='asset', "
+        "returns joints in the asset's phy.usda (requires "
+        "asset_anchor_prim_path to locate the asset folder). Each "
+        "joint entry includes joint_type, body0, body1, authored "
+        "attributes, and applied APIs (e.g. DriveAPI / LimitAPI "
+        "instances once those land)."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "scope": {
+                "type": "string",
+                "enum": ["asset", "scene"],
+                "default": "scene",
+            },
+            "under_prim_path": {
+                "type": "string",
+                "description": (
+                    "scope='scene' only: restrict listing to "
+                    "descendants of this prim. Default is scene root."
+                ),
+            },
+            "asset_anchor_prim_path": {
+                "type": "string",
+                "description": (
+                    "scope='asset' only: any scene placement path "
+                    "inside the target asset."
+                ),
+            },
+        },
+    },
+))
+TOOLS.append(Tool(
     name="list_collision_groups",
     description=(
         "Return every UsdPhysicsCollisionGroup under /Scene/Physics "
@@ -506,4 +757,8 @@ HANDLERS = {
     "create_or_update_collision_group": create_or_update_collision_group,
     "remove_collision_group": remove_collision_group,
     "list_collision_groups": list_collision_groups,
+    "list_joint_properties": list_joint_properties,
+    "create_joint": create_joint,
+    "remove_joint": remove_joint,
+    "list_joints": list_joints,
 }

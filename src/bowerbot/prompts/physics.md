@@ -245,3 +245,87 @@ Return every group under `/Scene/Physics` (typed as
 sibling) with its membership (includes / excludes), filter rules,
 and merge-group token. Call before authoring `filtered_groups` so
 you know which names exist.
+
+## Joints + articulations
+
+Five typed joint prims are supported:
+
+- `PhysicsRevoluteJoint` — hinge, one angular DOF (door pivot,
+  robot elbow).
+- `PhysicsPrismaticJoint` — slider, one linear DOF (piston, drawer).
+- `PhysicsSphericalJoint` — ball-and-socket, three angular DOFs
+  with cone limit (shoulder, hip).
+- `PhysicsFixedJoint` — rigid weld, zero DOFs (bolt two parts
+  together).
+- `PhysicsDistanceJoint` — constrains distance between two points
+  (rope, spring).
+
+`PhysicsArticulationRootAPI` is an **applied API** (not a joint)
+that marks a subtree as one articulation. Apply via the existing
+`apply_physics_api` tool with `api_name="PhysicsArticulationRootAPI"`.
+The UsdPhysics spec **forbids nesting** two ArticulationRootAPIs
+in the same subtree; the tool refuses.
+
+### Where joints live (verified canonical)
+
+- **Asset-internal articulations** (robots, doors, characters): use
+  `scope="asset"`. The joint lands inside the asset's `phy.usda` at
+  `/<AssetName>/joints/<name>` as a sibling of the body Xforms.
+  Matches the Isaac URDF importer convention. Every placement of
+  the asset inherits the articulation automatically.
+- **Scene-spanning joints** (welding asset A to asset B, attaching
+  a hook to a chain): use `scope="scene"` (default). The joint
+  lands in `scene.usda` at `/Scene/Physics/<name>` as a flat
+  sibling of `PhysicsScene` and collision groups.
+
+### body0 / body1 semantics
+
+- Both targets must be `UsdGeom.Xformable`.
+- At least one of body0 / body1 must reach `PhysicsRigidBodyAPI`
+  (self or ancestor). Empty / omitted target means "attach to
+  world" — legal per spec but only when there's a real body on the
+  other side.
+- Convention is **body0 = parent, body1 = child** for articulated
+  chains. Spec is silent on this, but PhysX/Isaac follow it and
+  ignoring it inverts drive target-position signs (relevant once
+  drives ship in the follow-up).
+
+### Multi-DOF caveat (for future drives + limits work)
+
+Drives and limits on the typed joints follow a fixed token mapping:
+`RevoluteJoint` uses `angular`, `PrismaticJoint` uses `linear`,
+`DistanceJoint` uses `distance`. **`FixedJoint` and `SphericalJoint`
+do NOT support `DriveAPI`** in the standard UsdPhysics spec; a
+driven spherical-like joint needs a generic `PhysicsJoint` (D6)
+with `rotX/Y/Z` drives, which is out of current scope.
+
+### Joint tools
+
+#### `list_joint_properties(joint_type)`
+Schema-registry introspection. Returns attribute names, types,
+defaults, allowed-token sets for the joint type. ALWAYS call this
+before `create_joint` so you know what attributes the joint
+accepts (axis, lower/upper limits, break force/torque, etc.). Do
+NOT include `physics:body0` / `physics:body1` in your attribute
+list; those are set via the dedicated `body0` / `body1` params on
+`create_joint`.
+
+#### `create_joint(joint_type, name, body0?, body1?, scope?, asset_anchor_prim_path?, attributes?)`
+Create a typed joint connecting two bodies. `scope="scene"`
+(default) writes to `/Scene/Physics/<name>`; `scope="asset"` writes
+to `/<AssetName>/joints/<name>` inside the asset's `phy.usda` (and
+translates body paths to asset-local namespace). For asset scope,
+either `body0` or `body1` (or `asset_anchor_prim_path`) must be a
+scene prim path inside an asset placement so BowerBot can locate
+the asset folder.
+
+#### `remove_joint(scope?, prim_path?, name?, asset_anchor_prim_path?)`
+Remove a joint. scope="scene" + prim_path = drop a scene-level
+joint. scope="asset" + name + asset_anchor_prim_path = drop a
+joint from the asset's `phy.usda`. Joints are leaves; no cascade.
+
+#### `list_joints(scope?, under_prim_path?, asset_anchor_prim_path?)`
+List every typed joint prim. scope="scene" walks the scene (or a
+subtree via under_prim_path); scope="asset" walks `phy.usda`. Each
+entry includes joint_type, body0, body1, authored attributes, and
+applied APIs.

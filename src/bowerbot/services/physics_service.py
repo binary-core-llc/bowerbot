@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from bowerbot.schemas import PhysicsApiName
+from bowerbot.schemas import PhysicsApiName, PhysicsJointType
 from bowerbot.state import SceneState
 from bowerbot.utils import physics_utils, stage_utils
 from bowerbot.utils.asset_folder_utils import (
@@ -195,6 +195,142 @@ def get_physics_summary(
         "asset": asset_summary.model_dump() if asset_summary else None,
         "scene": scene_summary.model_dump(),
     }
+
+
+# ── Joints + articulation ──
+
+
+def list_joint_properties(
+    _state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Return every property the given joint typed prim declares."""
+    joint_type = PhysicsJointType(params["joint_type"])
+    return physics_utils.list_joint_properties(joint_type).model_dump()
+
+
+def create_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Create a typed joint connecting two bodies. Routes by ``scope``."""
+    joint_type = PhysicsJointType(params["joint_type"])
+    name = params["name"]
+    body0 = params.get("body0")
+    body1 = params.get("body1")
+    attributes = params.get("attributes") or {}
+    scope = physics_utils.validate_scope(params.get("scope", "scene"))
+
+    if scope == "scene":
+        result = physics_utils.create_joint_scene(
+            state.stage, joint_type, name, body0, body1, attributes,
+        )
+        state.touch_project()
+        logger.info(
+            "Service created %s scene-level (%s)", joint_type.value, name,
+        )
+        return result
+
+    asset_anchor = params.get("asset_anchor_prim_path") or body0 or body1
+    if not asset_anchor:
+        raise ValueError(
+            "scope='asset' requires body0, body1, or "
+            "asset_anchor_prim_path so BowerBot can find the asset folder.",
+        )
+    asset_dir, ref_prim_path = require_asset_context(state.stage, asset_anchor)
+
+    for label, body in (("body0", body0), ("body1", body1)):
+        if not body:
+            continue
+        body_asset_dir, _ = resolve_asset_dir_for_prim(state.stage, body)
+        if body_asset_dir is None:
+            raise ValueError(
+                f"scope='asset' but {label}={body!r} is not inside "
+                "any asset placement. Use scope='scene' for joints "
+                "that connect to scene-only prims.",
+            )
+        if body_asset_dir != asset_dir:
+            raise ValueError(
+                f"scope='asset' requires both bodies in the SAME asset "
+                f"placement. The anchor resolves to {asset_dir.name!r}, "
+                f"but {label}={body!r} resolves to {body_asset_dir.name!r}. "
+                "Use scope='scene' for cross-asset joints.",
+            )
+
+    default_prim = resolve_default_prim_name(asset_dir)
+    asset_body0 = (
+        normalize_asset_prim_path(body0, ref_prim_path, default_prim)
+        if body0 else None
+    )
+    asset_body1 = (
+        normalize_asset_prim_path(body1, ref_prim_path, default_prim)
+        if body1 else None
+    )
+
+    result = physics_utils.create_joint_asset(
+        asset_dir, joint_type, name,
+        asset_body0, asset_body1, attributes,
+    )
+    state.stage = stage_utils.open_stage(state.stage_path)
+    state.touch_project()
+    logger.info(
+        "Service created %s asset-level (%s in %s)",
+        joint_type.value, name, asset_dir.name,
+    )
+    return {
+        **result,
+        "scene_body0": body0,
+        "scene_body1": body1,
+    }
+
+
+def remove_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Remove a joint prim. Routes by ``scope``."""
+    scope = physics_utils.validate_scope(params.get("scope", "scene"))
+
+    if scope == "scene":
+        prim_path = params["prim_path"]
+        removed = physics_utils.remove_joint_scene(state.stage, prim_path)
+        if removed:
+            state.touch_project()
+        return {"scope": "scene", "prim_path": prim_path, "removed": removed}
+
+    asset_anchor = (
+        params.get("asset_anchor_prim_path")
+        or params.get("prim_path")
+    )
+    if not asset_anchor:
+        raise ValueError(
+            "scope='asset' requires asset_anchor_prim_path (a scene "
+            "placement of the asset) to locate the asset folder.",
+        )
+    asset_dir, _ = require_asset_context(state.stage, asset_anchor)
+    name = params["name"]
+    removed = physics_utils.remove_joint_asset(asset_dir, name)
+    if removed:
+        physics_utils.cleanup_if_empty(asset_dir)
+        state.stage = stage_utils.open_stage(state.stage_path)
+        state.touch_project()
+    return {
+        "scope": "asset",
+        "asset_folder": asset_dir.name,
+        "name": name,
+        "removed": removed,
+    }
+
+
+def list_joints(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """List joints scene-wide, scoped under a prim, or inside an asset folder."""
+    scope = physics_utils.validate_scope(params.get("scope", "scene"))
+
+    if scope == "scene":
+        under = params.get("under_prim_path")
+        return physics_utils.list_joints_scene(state.stage, under).model_dump()
+
+    asset_anchor = params.get("asset_anchor_prim_path")
+    if not asset_anchor:
+        raise ValueError(
+            "scope='asset' requires asset_anchor_prim_path (a scene "
+            "placement of the asset) to locate the asset folder.",
+        )
+    asset_dir, _ = require_asset_context(state.stage, asset_anchor)
+    return physics_utils.list_joints_asset(asset_dir).model_dump()
 
 
 def create_or_update_collision_group(

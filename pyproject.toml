@@ -62,6 +62,7 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "integration: tests that require live credentials or external services (Sketchfab token, LLM API keys, network calls). Excluded from CI by default; run locally with `pytest -m integration`.",
+    "agent_integration: end-to-end agent scenarios that drive the live LLM with the user's OpenAI key from ~/.bowerbot/config.json. Excluded from default test runs (cost money). Run locally with `pytest -m agent_integration tests/agent/`.",
 ]
 
 [tool.mypy]

@@ -18,12 +18,23 @@ from pydantic import BaseModel
 
 
 class PhysicsApiName(StrEnum):
-    """Whitelist of UsdPhysics applied-API schemas supported in this foundation."""
+    """Whitelist of UsdPhysics applied-API schemas supported."""
 
     RIGID_BODY = "PhysicsRigidBodyAPI"
     MASS = "PhysicsMassAPI"
     COLLISION = "PhysicsCollisionAPI"
     MESH_COLLISION = "PhysicsMeshCollisionAPI"
+    ARTICULATION_ROOT = "PhysicsArticulationRootAPI"
+
+
+class PhysicsJointType(StrEnum):
+    """Whitelist of UsdPhysics typed joint prims supported."""
+
+    REVOLUTE = "PhysicsRevoluteJoint"
+    PRISMATIC = "PhysicsPrismaticJoint"
+    SPHERICAL = "PhysicsSphericalJoint"
+    FIXED = "PhysicsFixedJoint"
+    DISTANCE = "PhysicsDistanceJoint"
 
 
 class PhysicsPropertySpec(BaseModel):
@@ -93,3 +104,20 @@ class CollisionGroupsSummary(BaseModel):
     """Every ``UsdPhysicsCollisionGroup`` defined under ``/Scene/Physics/Groups``."""
 
     groups: list[CollisionGroupSummary] = []
+
+
+class JointSummary(BaseModel):
+    """One UsdPhysics joint prim and its authored state."""
+
+    prim_path: str
+    joint_type: str
+    body0: str | None = None
+    body1: str | None = None
+    attributes: dict[str, Any] = {}
+    applied_apis: list[str] = []
+
+
+class JointsSummary(BaseModel):
+    """Every UsdPhysics joint discovered under a prim or scene-wide."""
+
+    joints: list[JointSummary] = []

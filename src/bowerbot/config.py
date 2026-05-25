@@ -71,10 +71,14 @@ class SceneDefaults(BaseSettings):
 
 
 class LoggingSettings(BaseSettings):
-    """Structured file + console logging configuration."""
+    """Structured file + console logging configuration.
+
+    Log file location is always ``~/.bowerbot/logs/bowerbot.log`` and
+    cannot be overridden via config; only verbosity, rotation, and
+    enable/disable are user-tunable.
+    """
 
     enabled: bool = True
-    log_dir: Path | None = None  # None = BOWERBOT_HOME / "logs"
     level: str = "INFO"           # file log level
     console_level: str = "WARNING"  # console log level
     max_bytes: int = 10 * 1024 * 1024  # 10 MB per file
@@ -141,10 +145,6 @@ def save_settings(settings: Settings) -> None:
         },
         "logging": {
             "enabled": settings.logging.enabled,
-            "log_dir": (
-                str(settings.logging.log_dir)
-                if settings.logging.log_dir is not None else None
-            ),
             "level": settings.logging.level,
             "console_level": settings.logging.console_level,
             "max_bytes": settings.logging.max_bytes,

@@ -115,7 +115,9 @@ What gets logged at the default `INFO` level:
 When filing a bug, paste the relevant session's log lines along with the
 session ID into the issue. Tune `logging.level` to `DEBUG` in
 `~/.bowerbot/config.json` for verbose output during debugging, or set
-`logging.enabled` to `false` to opt out entirely.
+`logging.enabled` to `false` to opt out entirely. The log directory
+is fixed at `~/.bowerbot/logs/`; only verbosity and rotation are
+user-tunable.
 
 ## Where to get help
 

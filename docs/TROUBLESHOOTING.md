@@ -91,6 +91,32 @@ The LLM exceeded the per-request tool-call budget. Increase `max_tool_rounds` in
 
 `gpt-4o` skips tool calls and ignores SKILL.md. Use `gpt-4.1` (default), `gpt-4.1-mini`, or `anthropic/claude-sonnet-4-6`. See the Tested Models table in [README.md](../README.md#tested-models).
 
+## Logs
+
+BowerBot writes a structured log of every session to:
+
+```
+~/.bowerbot/logs/bowerbot.log
+```
+
+The log rotates at 10 MB and keeps the 5 most recent files
+(`bowerbot.log.1`, `bowerbot.log.2`, ...). Each line is prefixed with
+a 12-character session ID so you can grep one chat session out of a
+multi-session file.
+
+What gets logged at the default `INFO` level:
+
+- Each LLM round (model, prompt / completion / total token counts).
+- Each tool call (name + parameters, with `api_key` / `token` / `password` /
+  `secret` / `auth` values redacted).
+- Each tool result (success / error) and external-edit reloads.
+- Session start/end markers.
+
+When filing a bug, paste the relevant session's log lines along with the
+session ID into the issue. Tune `logging.level` to `DEBUG` in
+`~/.bowerbot/config.json` for verbose output during debugging, or set
+`logging.enabled` to `false` to opt out entirely.
+
 ## Where to get help
 
 - GitHub Discussions: https://github.com/binary-core-llc/bowerbot/discussions

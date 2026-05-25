@@ -27,6 +27,7 @@ from bowerbot.config import (
     load_settings,
     save_settings,
 )
+from bowerbot.logging_setup import configure_logging
 from bowerbot.project import Project
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
@@ -73,6 +74,7 @@ def _build_registry(settings: Settings) -> SkillRegistry:
 @click.version_option()
 def main() -> None:
     """BowerBot: AI-powered 3D scene assembly using OpenUSD."""
+    configure_logging(load_settings())
 
 
 @main.command()

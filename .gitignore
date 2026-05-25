@@ -20,6 +20,9 @@ scenes/
 output/
 assets/
 
+# BowerBot — agent integration test artifacts (transcripts, scenes, logs)
+tests/agent/artifacts/
+
 # BowerBot — packaged files
 *.usdz
 *.usdc

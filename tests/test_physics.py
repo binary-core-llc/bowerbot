@@ -1342,7 +1342,10 @@ async def test_dispatch_list_joint_properties(tmp_path):
     })
     assert result.success
     assert result.data["api_name"] == "PhysicsPrismaticJoint"
-    attr_names = {p["name"] for p in result.data["properties"] if p["kind"] == "attribute"}
+    attr_names = {
+        p["name"] for p in result.data["properties"]
+        if p["kind"] == "attribute"
+    }
     assert "physics:axis" in attr_names
 
 
@@ -1357,3 +1360,181 @@ async def test_dispatch_apply_articulation_root_api(tmp_path):
     })
     assert result.success, result.error
     assert result.data["api_name"] == "PhysicsArticulationRootAPI"
+
+
+# ── Bullet-proof gap closers ──
+
+
+def test_create_joint_spherical_writes_cone_limits(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    result = physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.SPHERICAL, "ball",
+        body0="/Scene/BodyA", body1="/Scene/BodyB",
+        attributes={
+            "physics:axis": "X",
+            "physics:coneAngle0Limit": 45.0,
+            "physics:coneAngle1Limit": 30.0,
+        },
+    )
+    prim = state.stage.GetPrimAtPath(result["prim_path"])
+    assert prim.GetAttribute("physics:axis").Get() == "X"
+    assert abs(
+        prim.GetAttribute("physics:coneAngle0Limit").Get() - 45.0,
+    ) < 1e-6
+    assert abs(
+        prim.GetAttribute("physics:coneAngle1Limit").Get() - 30.0,
+    ) < 1e-6
+
+
+def test_create_joint_distance_writes_min_max(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    result = physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.DISTANCE, "rope",
+        body0="/Scene/BodyA", body1="/Scene/BodyB",
+        attributes={
+            "physics:minDistance": 0.5,
+            "physics:maxDistance": 2.0,
+        },
+    )
+    prim = state.stage.GetPrimAtPath(result["prim_path"])
+    assert abs(prim.GetAttribute("physics:minDistance").Get() - 0.5) < 1e-6
+    assert abs(prim.GetAttribute("physics:maxDistance").Get() - 2.0) < 1e-6
+
+
+def test_create_joint_prismatic_writes_axis_and_limits(tmp_path):
+    state = _scene_with_two_bodies(tmp_path)
+    result = physics_utils.create_joint_scene(
+        state.stage, PhysicsJointType.PRISMATIC, "slider",
+        body0="/Scene/BodyA", body1="/Scene/BodyB",
+        attributes={
+            "physics:axis": "Z",
+            "physics:lowerLimit": -1.0,
+            "physics:upperLimit": 1.0,
+        },
+    )
+    prim = state.stage.GetPrimAtPath(result["prim_path"])
+    assert prim.GetAttribute("physics:axis").Get() == "Z"
+    assert abs(prim.GetAttribute("physics:lowerLimit").Get() + 1.0) < 1e-6
+    assert abs(prim.GetAttribute("physics:upperLimit").Get() - 1.0) < 1e-6
+
+
+def test_service_apply_articulation_root_api_happy_path(tmp_path):
+    asset = _make_two_body_asset(tmp_path, "robot")
+    state = _place_asset(tmp_path, asset)
+
+    physics_service.apply_api(state, {
+        "api_name": "PhysicsArticulationRootAPI",
+        "prim_path": "/Scene/Models/Item_01/asset",
+    })
+
+    state.stage = stage_utils.open_stage(state.stage_path)
+    applied = state.stage.GetPrimAtPath(
+        "/Scene/Models/Item_01/asset",
+    ).GetAppliedSchemas()
+    assert "PhysicsArticulationRootAPI" in applied
+
+
+def test_asset_joint_rebases_through_scene_reference(tmp_path):
+    """A joint inside phy.usda must compose with correctly-rebased body rels."""
+    asset = _make_two_body_asset(tmp_path, "robot")
+    physics_utils.apply_api(asset, "/robot/link0", PhysicsApiName.RIGID_BODY)
+    physics_utils.apply_api(asset, "/robot/link1", PhysicsApiName.RIGID_BODY)
+    physics_utils.create_joint_asset(
+        asset, PhysicsJointType.REVOLUTE, "elbow",
+        body0="/robot/link0", body1="/robot/link1",
+    )
+
+    state = _place_asset(tmp_path, asset)
+
+    joint = state.stage.GetPrimAtPath(
+        "/Scene/Models/Item_01/asset/joints/elbow",
+    )
+    assert joint.IsValid()
+    assert joint.GetTypeName() == "PhysicsRevoluteJoint"
+
+    body0_targets = list(joint.GetRelationship("physics:body0").GetTargets())
+    body1_targets = list(joint.GetRelationship("physics:body1").GetTargets())
+    assert str(body0_targets[0]) == "/Scene/Models/Item_01/asset/link0"
+    assert str(body1_targets[0]) == "/Scene/Models/Item_01/asset/link1"
+
+    for target in body0_targets + body1_targets:
+        target_prim = state.stage.GetPrimAtPath(target)
+        assert target_prim.IsValid(), (
+            f"Rebased target {target} does not resolve in the composed scene"
+        )
+
+
+def test_service_scope_asset_refuses_cross_asset_bodies(tmp_path):
+    """scope=asset with bodies in two different assets must refuse clearly."""
+    _make_two_body_asset(tmp_path, "alpha")
+    _make_two_body_asset(tmp_path, "beta")
+
+    scene_path = tmp_path / "scene.usda"
+    scene = Usd.Stage.CreateNew(str(scene_path))
+    UsdGeom.SetStageMetersPerUnit(scene, 1.0)
+    UsdGeom.SetStageUpAxis(scene, UsdGeom.Tokens.y)
+    sr = scene.DefinePrim("/Scene", "Xform")
+    scene.SetDefaultPrim(sr)
+    scene.DefinePrim("/Scene/Models/A_01", "Xform")
+    a_child = scene.DefinePrim("/Scene/Models/A_01/asset", "Xform")
+    a_child.GetReferences().AddReference("./alpha/alpha.usda")
+    scene.DefinePrim("/Scene/Models/B_01", "Xform")
+    b_child = scene.DefinePrim("/Scene/Models/B_01/asset", "Xform")
+    b_child.GetReferences().AddReference("./beta/beta.usda")
+    scene.Save()
+    del scene
+
+    state = SceneState(scene_defaults=SceneDefaults())
+    state.stage_path = scene_path
+    state.stage = stage_utils.open_stage(scene_path)
+
+    with pytest.raises(ValueError, match="cross-asset joints"):
+        physics_service.create_joint(state, {
+            "joint_type": "PhysicsFixedJoint",
+            "name": "weld_cross",
+            "body0": "/Scene/Models/A_01/asset/link0",
+            "body1": "/Scene/Models/B_01/asset/link0",
+            "scope": "asset",
+        })
+
+
+def test_service_scope_asset_refuses_scene_only_body(tmp_path):
+    """scope=asset with one body being a scene-only prim must refuse."""
+    asset = _make_two_body_asset(tmp_path, "robot")
+    state = _place_asset(tmp_path, asset)
+
+    wall = state.stage.DefinePrim("/Scene/Wall", "Xform")
+    from pxr import UsdPhysics as UsdPhys
+    UsdPhys.RigidBodyAPI.Apply(wall)
+    state.stage.Save()
+
+    with pytest.raises(ValueError, match="not inside any asset placement"):
+        physics_service.create_joint(state, {
+            "joint_type": "PhysicsFixedJoint",
+            "name": "weld",
+            "body0": "/Scene/Models/Item_01/asset/link0",
+            "body1": "/Scene/Wall",
+            "scope": "asset",
+        })
+
+
+def test_service_list_joints_scope_asset(tmp_path):
+    asset = _make_two_body_asset(tmp_path, "robot")
+    physics_utils.apply_api(asset, "/robot/link0", PhysicsApiName.RIGID_BODY)
+    physics_utils.apply_api(asset, "/robot/link1", PhysicsApiName.RIGID_BODY)
+    physics_utils.create_joint_asset(
+        asset, PhysicsJointType.REVOLUTE, "elbow",
+        body0="/robot/link0", body1="/robot/link1",
+    )
+    physics_utils.create_joint_asset(
+        asset, PhysicsJointType.FIXED, "weld",
+        body0="/robot/link0", body1="/robot/link1",
+    )
+
+    state = _place_asset(tmp_path, asset)
+    result = physics_service.list_joints(state, {
+        "scope": "asset",
+        "asset_anchor_prim_path": "/Scene/Models/Item_01/asset",
+    })
+    paths = {j["prim_path"] for j in result["joints"]}
+    assert paths == {"/robot/joints/elbow", "/robot/joints/weld"}

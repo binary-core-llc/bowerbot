@@ -63,3 +63,89 @@ def test_grid_layout():
             dz = a[2] - b[2]
             dist = (dx**2 + dz**2) ** 0.5
             assert dist >= 1.9, f"Objects {i} and {j} too close: {dist:.2f}m"
+
+
+def test_list_prims_includes_scene_authored_cubes():
+    """A raw Cube defined directly in scene.usda must appear in list_prims."""
+    with tempfile.TemporaryDirectory() as tmp:
+        stage_path = Path(tmp) / "test_scene.usda"
+        stage = stage_utils.create_stage(stage_path)
+        UsdGeom.Cube.Define(stage, "/Scene/Cube_Anchor")
+        UsdGeom.Cube.Define(stage, "/Scene/Cube_Bob")
+        stage_utils.save_stage(stage)
+
+        reopened = Usd.Stage.Open(str(stage_path))
+        prims = stage_utils.list_prims(reopened)
+        paths = {p["prim_path"] for p in prims}
+        assert "/Scene/Cube_Anchor" in paths
+        assert "/Scene/Cube_Bob" in paths
+        for entry in prims:
+            assert entry["type"] == "Cube"
+
+
+def test_list_prims_includes_scene_authored_mesh():
+    """A raw Mesh defined directly in scene.usda must appear in list_prims."""
+    with tempfile.TemporaryDirectory() as tmp:
+        stage_path = Path(tmp) / "test_scene.usda"
+        stage = stage_utils.create_stage(stage_path)
+        UsdGeom.Mesh.Define(stage, "/Scene/Plane")
+        stage_utils.save_stage(stage)
+
+        reopened = Usd.Stage.Open(str(stage_path))
+        prims = stage_utils.list_prims(reopened)
+        paths = {p["prim_path"] for p in prims}
+        assert "/Scene/Plane" in paths
+
+
+def test_list_prim_attributes_handles_cube_extent():
+    """list_prim_attributes must not crash on a Cube's Vec3f[] extent attribute."""
+    with tempfile.TemporaryDirectory() as tmp:
+        stage_path = Path(tmp) / "test_scene.usda"
+        stage = stage_utils.create_stage(stage_path)
+        UsdGeom.Cube.Define(stage, "/Scene/Cube")
+        stage_utils.save_stage(stage)
+
+        attrs = stage_utils.list_prim_attributes(stage, "/Scene/Cube")
+        extent = next(a for a in attrs if a["name"] == "extent")
+        assert extent["value"] == [
+            [-1.0, -1.0, -1.0], [1.0, 1.0, 1.0],
+        ]
+
+
+def test_list_prim_attributes_handles_mesh_points():
+    """A Mesh's point3f[] points attribute must serialize as nested floats."""
+    with tempfile.TemporaryDirectory() as tmp:
+        stage_path = Path(tmp) / "test_scene.usda"
+        stage = stage_utils.create_stage(stage_path)
+        mesh = UsdGeom.Mesh.Define(stage, "/Scene/Plane")
+        from pxr import Gf, Vt
+        mesh.CreatePointsAttr(Vt.Vec3fArray([
+            Gf.Vec3f(-0.5, 0, -0.5),
+            Gf.Vec3f(0.5, 0, -0.5),
+            Gf.Vec3f(0.5, 0, 0.5),
+            Gf.Vec3f(-0.5, 0, 0.5),
+        ]))
+        stage_utils.save_stage(stage)
+
+        attrs = stage_utils.list_prim_attributes(stage, "/Scene/Plane")
+        points = next(a for a in attrs if a["name"] == "points")
+        assert len(points["value"]) == 4
+        assert points["value"][0] == [-0.5, 0.0, -0.5]
+
+
+def test_list_prim_attributes_handles_int_array():
+    """A Mesh's int[] faceVertexCounts must serialize as a flat int list."""
+    with tempfile.TemporaryDirectory() as tmp:
+        stage_path = Path(tmp) / "test_scene.usda"
+        stage = stage_utils.create_stage(stage_path)
+        mesh = UsdGeom.Mesh.Define(stage, "/Scene/Plane")
+        from pxr import Vt
+        mesh.CreateFaceVertexCountsAttr(Vt.IntArray([4]))
+        mesh.CreateFaceVertexIndicesAttr(Vt.IntArray([0, 1, 2, 3]))
+        stage_utils.save_stage(stage)
+
+        attrs = stage_utils.list_prim_attributes(stage, "/Scene/Plane")
+        counts = next(a for a in attrs if a["name"] == "faceVertexCounts")
+        assert counts["value"] == [4.0]
+        indices = next(a for a in attrs if a["name"] == "faceVertexIndices")
+        assert indices["value"] == [0.0, 1.0, 2.0, 3.0]

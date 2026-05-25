@@ -234,6 +234,25 @@ def create_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "asset_anchor_prim_path so BowerBot can find the asset folder.",
         )
     asset_dir, ref_prim_path = require_asset_context(state.stage, asset_anchor)
+
+    for label, body in (("body0", body0), ("body1", body1)):
+        if not body:
+            continue
+        body_asset_dir, _ = resolve_asset_dir_for_prim(state.stage, body)
+        if body_asset_dir is None:
+            raise ValueError(
+                f"scope='asset' but {label}={body!r} is not inside "
+                "any asset placement. Use scope='scene' for joints "
+                "that connect to scene-only prims.",
+            )
+        if body_asset_dir != asset_dir:
+            raise ValueError(
+                f"scope='asset' requires both bodies in the SAME asset "
+                f"placement. The anchor resolves to {asset_dir.name!r}, "
+                f"but {label}={body!r} resolves to {body_asset_dir.name!r}. "
+                "Use scope='scene' for cross-asset joints.",
+            )
+
     default_prim = resolve_default_prim_name(asset_dir)
     asset_body0 = (
         normalize_asset_prim_path(body0, ref_prim_path, default_prim)

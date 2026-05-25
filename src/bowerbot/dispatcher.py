@@ -91,12 +91,18 @@ async def execute(
 
     handler = HANDLERS.get(tool_name)
     if handler is None:
+        logger.warning("tool-unknown name=%s", tool_name)
         return ToolResult(
             success=False, error=f"Unknown tool: {tool_name}",
         )
     result = handler(state, params)
     if inspect.isawaitable(result):
         result = await result
+
+    if not result.success:
+        logger.warning("tool-error name=%s error=%s", tool_name, result.error)
+    else:
+        logger.info("tool-ok name=%s", tool_name)
 
     state.mark_saved()
     return result

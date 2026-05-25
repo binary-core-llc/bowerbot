@@ -20,6 +20,7 @@ import litellm
 
 from bowerbot import dispatcher
 from bowerbot.config import Settings
+from bowerbot.logging_setup import sanitize
 from bowerbot.prompts import load_prompt
 from bowerbot.skills.base import ToolResult
 from bowerbot.skills.registry import SkillRegistry
@@ -104,6 +105,16 @@ class AgentRuntime:
                 kwargs["tools"] = self._tools
 
             response = await litellm.acompletion(**kwargs)
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                logger.info(
+                    "llm-turn model=%s prompt_tokens=%s "
+                    "completion_tokens=%s total_tokens=%s",
+                    self.settings.llm.model,
+                    getattr(usage, "prompt_tokens", None),
+                    getattr(usage, "completion_tokens", None),
+                    getattr(usage, "total_tokens", None),
+                )
             message = response.choices[0].message
 
             if not message.tool_calls:
@@ -130,7 +141,9 @@ class AgentRuntime:
         """Execute a single tool call and append its result to history."""
         func_name = tool_call.function.name
         func_args = json.loads(tool_call.function.arguments)
-        logger.info("Executing tool: %s(%s)", func_name, func_args)
+        logger.info(
+            "tool-call name=%s params=%s", func_name, sanitize(func_args),
+        )
 
         result = await self._dispatch_tool(func_name, func_args)
         self.conversation_history.append({

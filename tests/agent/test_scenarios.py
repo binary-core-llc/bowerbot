@@ -10,6 +10,7 @@ import pytest
 from tests.agent.runner import AgentScenario, ScenarioRunner
 from tests.agent.scenarios import (
     conceptual,
+    diagnose,
     discovery,
     exploratory,
     iteration,
@@ -32,6 +33,7 @@ _ALL_SCENARIOS: list[AgentScenario] = (
     + tool_coverage.ALL
     + tool_categories.ALL
     + exploratory.ALL
+    + diagnose.ALL
 )
 
 

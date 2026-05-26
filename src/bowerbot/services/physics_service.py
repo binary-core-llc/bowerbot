@@ -43,12 +43,16 @@ def list_api_properties(
 
 
 def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Apply a UsdPhysics API. Routes by ``scope`` (default ``'asset'``)."""
+    """Apply a UsdPhysics API. Auto-detects scope when not explicitly given."""
     api_name = PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]
     attributes = params.get("attributes") or {}
     relationships = params.get("relationships") or {}
-    scope = physics_utils.validate_scope(params.get("scope", "asset"))
+    explicit_scope = params.get("scope")
+    scope = (
+        physics_utils.validate_scope(explicit_scope) if explicit_scope
+        else physics_utils.autodetect_scope(state.stage, prim_path)
+    )
 
     if scope == "scene":
         result = physics_utils.apply_api_scene(
@@ -105,10 +109,14 @@ def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def remove_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Remove a UsdPhysics API. Routes by ``scope`` (default ``'asset'``)."""
+    """Remove a UsdPhysics API. Auto-detects scope when not explicitly given."""
     api_name = PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]
-    scope = physics_utils.validate_scope(params.get("scope", "asset"))
+    explicit_scope = params.get("scope")
+    scope = (
+        physics_utils.validate_scope(explicit_scope) if explicit_scope
+        else physics_utils.autodetect_scope(state.stage, prim_path)
+    )
 
     if scope == "scene":
         changed = physics_utils.remove_api_scene(

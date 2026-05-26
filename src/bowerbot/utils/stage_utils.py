@@ -11,6 +11,7 @@ from pathlib import Path
 from pxr import Gf, Kind, Sdf, Sdr, Usd, UsdGeom, UsdLux, UsdShade, UsdUtils
 
 from bowerbot.schemas import LightParams, LightType, SceneObject
+from bowerbot.utils import physics_typing_utils
 from bowerbot.utils.naming_utils import safe_file_name
 
 LIGHT_CLASSES: dict[str, type] = {
@@ -888,7 +889,7 @@ def _scrub_variant_set_names(prim_spec: Sdf.PrimSpec, set_name: str) -> None:
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
-    """List placement Xforms: referenced assets, lights, scene-authored Gprim roots."""
+    """List every meaningful prim: placements, lights, geometry, physics infrastructure."""
     bbox_cache = UsdGeom.BBoxCache(
         Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
     )
@@ -896,28 +897,43 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
     results: list[dict] = []
     seen: set[str] = set()
     for prim in stage.Traverse():
-        is_light = prim.HasAPI(UsdLux.LightAPI)
-        has_refs = prim.GetMetadata("references") is not None
-        scene_gprim = (
-            prim.IsA(UsdGeom.Gprim) and not _has_referenced_ancestor(prim)
-        )
-        if not (has_refs or is_light or scene_gprim):
+        entry = _classify_for_list(prim, bbox_cache)
+        if entry is None:
             continue
-
-        target = (
-            _placement_ancestor(prim) if scene_gprim and not has_refs and not is_light
-            else prim
-        )
-        path = str(target.GetPath())
-        if path in seen:
+        if entry["prim_path"] in seen:
             continue
-        seen.add(path)
-        position = _extract_position(target)
-        if is_light:
-            results.append(_format_light_prim(target, position))
-        else:
-            results.append(_format_geometry_prim(target, position, bbox_cache))
+        seen.add(entry["prim_path"])
+        results.append(entry)
     return results
+
+
+def _classify_for_list(
+    prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
+) -> dict | None:
+    """Return the formatted ``list_prims`` entry for *prim*, or None if not surfaced."""
+    if physics_typing_utils.is_physics_scene(prim):
+        return _format_physics_scene_prim(prim)
+    if physics_typing_utils.is_joint(prim):
+        return _format_joint_prim(prim)
+    if physics_typing_utils.is_collision_group(prim):
+        return _format_collision_group_prim(prim)
+
+    is_light = prim.HasAPI(UsdLux.LightAPI)
+    has_refs = prim.GetMetadata("references") is not None
+    scene_gprim = (
+        prim.IsA(UsdGeom.Gprim) and not _has_referenced_ancestor(prim)
+    )
+    if not (has_refs or is_light or scene_gprim):
+        return None
+
+    target = (
+        _placement_ancestor(prim) if scene_gprim and not has_refs and not is_light
+        else prim
+    )
+    position = _extract_position(target)
+    if is_light:
+        return _format_light_prim(target, position)
+    return _format_geometry_prim(target, position, bbox_cache)
 
 
 def _placement_ancestor(prim: Usd.Prim) -> Usd.Prim:
@@ -1108,6 +1124,7 @@ def _format_light_prim(
     """Format a light prim for ``list_prims``."""
     data: dict = {
         "prim_path": str(prim.GetPath()),
+        "kind": "light",
         "light_type": prim.GetTypeName(),
         "position": position,
     }
@@ -1135,10 +1152,45 @@ def _format_geometry_prim(
     ref_paths = get_prim_ref_paths(prim)
     return {
         "prim_path": str(prim.GetPath()),
+        "kind": "asset" if ref_paths else "geometry",
         "type": str(prim.GetTypeName()) or None,
         "asset": ref_paths[0] if ref_paths else None,
         "position": position,
         "bounds": _world_bounds(prim, bbox_cache),
+    }
+
+
+def _format_physics_scene_prim(prim: Usd.Prim) -> dict:
+    """Format a ``UsdPhysics.Scene`` for ``list_prims``."""
+    return {
+        "prim_path": str(prim.GetPath()),
+        "kind": "physics_scene",
+        "type": str(prim.GetTypeName()),
+    }
+
+
+def _format_joint_prim(prim: Usd.Prim) -> dict:
+    """Format a UsdPhysics joint for ``list_prims``."""
+    body0_rel = prim.GetRelationship("physics:body0")
+    body1_rel = prim.GetRelationship("physics:body1")
+    body0 = [str(t) for t in body0_rel.GetTargets()] if body0_rel else []
+    body1 = [str(t) for t in body1_rel.GetTargets()] if body1_rel else []
+    return {
+        "prim_path": str(prim.GetPath()),
+        "kind": "joint",
+        "type": str(prim.GetTypeName()),
+        "body0": body0[0] if body0 else None,
+        "body1": body1[0] if body1 else None,
+    }
+
+
+def _format_collision_group_prim(prim: Usd.Prim) -> dict:
+    """Format a ``UsdPhysics.CollisionGroup`` for ``list_prims``."""
+    return {
+        "prim_path": str(prim.GetPath()),
+        "kind": "collision_group",
+        "type": str(prim.GetTypeName()),
+        "name": prim.GetName(),
     }
 
 
@@ -1156,9 +1208,3 @@ def _world_bounds(
     }
 
 
-def _has_mesh_descendant(prim: Usd.Prim) -> bool:
-    """Return True if any descendant of *prim* is a Mesh."""
-    for child in Usd.PrimRange(prim):
-        if child.GetTypeName() == "Mesh":
-            return True
-    return False

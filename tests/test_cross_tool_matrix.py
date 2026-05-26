@@ -8,14 +8,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pxr import Sdf, Usd, UsdGeom, UsdPhysics
+from pxr import Usd, UsdGeom, UsdPhysics
 
 from bowerbot.config import SceneDefaults
 from bowerbot.schemas import ASWFLayerNames, PhysicsApiName, PhysicsJointType
 from bowerbot.services import physics_service, stage_service
 from bowerbot.state import SceneState
 from bowerbot.utils import stage_utils
-
 
 _JOINT_TYPES: tuple[PhysicsJointType, ...] = tuple(PhysicsJointType)
 

@@ -27,6 +27,7 @@ recovery_remove_rigid_body = AgentScenario(
     name="recovery_remove_rigid_body",
     description="Apply a rigid body, then ask the agent to take it off.",
     tier="recovery",
+    suites=("smoke", "full"),
     setup=setup_scene_with_one_cube,
     prompts=[
         "Make /Scene/Block a rigid body with collision so it falls.",

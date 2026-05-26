@@ -77,6 +77,9 @@ def get_tool_names() -> set[str]:
     return set(HANDLERS.keys())
 
 
+_TOOLS_BY_NAME: dict[str, Tool] = {t.name: t for t in TOOLS}
+
+
 async def execute(
     state: SceneState, tool_name: str, params: dict[str, Any],
 ) -> ToolResult:
@@ -95,6 +98,12 @@ async def execute(
         return ToolResult(
             success=False, error=f"Unknown tool: {tool_name}",
         )
+
+    rejection = _reject_unknown_params(tool_name, params)
+    if rejection is not None:
+        logger.warning("tool-bad-params name=%s error=%s", tool_name, rejection)
+        return ToolResult(success=False, error=rejection)
+
     result = handler(state, params)
     if inspect.isawaitable(result):
         result = await result
@@ -106,3 +115,25 @@ async def execute(
 
     state.mark_saved()
     return result
+
+
+def _reject_unknown_params(
+    tool_name: str, params: dict[str, Any],
+) -> str | None:
+    """Return an error message if *params* has keys the tool does not declare."""
+    tool = _TOOLS_BY_NAME.get(tool_name)
+    if tool is None:
+        return None
+    declared = (tool.parameters or {}).get("properties") or {}
+    if not declared:
+        return None
+    unknown = sorted(k for k in params if k not in declared)
+    if not unknown:
+        return None
+    return (
+        f"{tool_name} does not accept parameter(s) {unknown}. "
+        f"Allowed: {sorted(declared)}. If you need to set an "
+        "attribute the tool does not expose (e.g. rotation on the X or "
+        "Z axis, scale, colorTemperature), use set_prim_attribute with "
+        "the exact attribute name from list_prim_attributes."
+    )

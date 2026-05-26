@@ -11,7 +11,7 @@ from typing import Any
 
 from pxr import Sdf
 
-from bowerbot.schemas import LightParams, LightType, PositionMode
+from bowerbot.schemas import LightParams, LightType, PositionMode, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import (
     geometry_utils,
@@ -210,9 +210,10 @@ def _create_scene_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
     ty = float(params.get("translate_y", 0.0))
     tz = float(params.get("translate_z", 0.0))
 
-    state.object_count += 1
     safe_name = safe_prim_name(params["light_name"])
-    prim_path = f"/Scene/Lighting/{safe_name}_{state.object_count:02d}"
+    prim_path = stage_utils.unique_prim_path(
+        state.stage, SceneNamespace.LIGHTING, safe_name,
+    )
 
     light_params = LightParams(
         light_type=light_type,

@@ -12,6 +12,7 @@ from bowerbot.services import library_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 from bowerbot.tools._helpers import require_library_dir
+from bowerbot.utils.library_utils import DEFAULT_SEARCH_LIMIT
 
 _CATEGORY_VALUES: list[str] = [c.value for c in AssetCategory] + ["all"]
 
@@ -42,11 +43,13 @@ TOOLS: list[Tool] = [
     Tool(
         name="search_assets",
         description=(
-            "Search the user's asset library for USD assets by keyword. "
-            "Returns results classified as 'geo' (geometry), 'mtl' "
-            "(materials), or 'package' (ASWF asset folder). Use the "
-            "category to decide the right tool: place_asset for "
-            "geo/package, bind_material for mtl."
+            "Search the user's asset library by name across every category. "
+            "Returns "
+            "{results: [...], total_matches: int, truncated: bool}. Each "
+            "result carries its own 'category' field ('geo' single geometry, "
+            "'mtl' material, 'package' ASWF folder) so you can post-filter "
+            "if needed. If truncated is true, refine the query — do not "
+            "ask the user to pick from a partial list."
         ),
         parameters={
             "type": "object",
@@ -55,15 +58,13 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "description": "Search keyword to match against asset names.",
                 },
-                "category": {
-                    "type": "string",
-                    "enum": _CATEGORY_VALUES,
+                "limit": {
+                    "type": "integer",
                     "description": (
-                        "Filter by asset category: 'geo' = geometry, "
-                        "'mtl' = material definitions, 'package' = ASWF "
-                        "asset folders, 'all' = everything."
+                        f"Maximum number of results to return "
+                        f"(default {DEFAULT_SEARCH_LIMIT})."
                     ),
-                    "default": "all",
+                    "default": DEFAULT_SEARCH_LIMIT,
                 },
             },
             "required": ["query"],
@@ -72,8 +73,10 @@ TOOLS: list[Tool] = [
     Tool(
         name="list_assets",
         description=(
-            "List every USD asset in the user's library. Each result "
-            "includes a category: geo, mtl, or package."
+            "Browse the user's asset library, optionally filtered by "
+            "category. Returns {results: [...], total_matches: int, "
+            "truncated: bool}. If truncated is true, narrow the category "
+            "filter or use search_assets with a query instead."
         ),
         parameters={
             "type": "object",
@@ -83,6 +86,14 @@ TOOLS: list[Tool] = [
                     "enum": _CATEGORY_VALUES,
                     "description": "Filter by asset category.",
                     "default": "all",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": (
+                        f"Maximum number of results to return "
+                        f"(default {DEFAULT_SEARCH_LIMIT})."
+                    ),
+                    "default": DEFAULT_SEARCH_LIMIT,
                 },
             },
         },

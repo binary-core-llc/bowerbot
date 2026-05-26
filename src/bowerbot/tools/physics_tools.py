@@ -208,6 +208,10 @@ TOOLS: list[Tool] = [
             "auto-applies PhysicsCollisionAPI alongside it.\n"
             "- PhysicsRigidBodyAPI / PhysicsMassAPI require a "
             "UsdGeom.Xformable.\n\n"
+            "If you pass an Xform whose subtree contains a unique prim "
+            "of the required type, BowerBot resolves to that descendant "
+            "automatically and returns both `prim_path` (resolved) and "
+            "`requested_prim_path`. PhysicsScene is auto-ensured.\n\n"
             "LOAD-BEARING: when adding collision to a Mesh under a "
             "dynamic or kinematic PhysicsRigidBodyAPI subtree, you "
             "MUST use api_name='PhysicsMeshCollisionAPI' with "
@@ -229,7 +233,7 @@ TOOLS: list[Tool] = [
             "(this chair has collision, this barrel is a rigid body).\n\n"
             "scope='scene': writes directly to scene.usda on the given "
             "prim_path. Use for per-placement overrides (disable "
-            "collision on THIS chair instance only) or for physics on "
+            "collision on THIS chair instance only) AND for physics on "
             "scene-only prims that have no asset folder."
         ),
         parameters={
@@ -282,9 +286,9 @@ TOOLS: list[Tool] = [
                     "enum": ["asset", "scene"],
                     "default": "asset",
                     "description": (
-                        "'asset' writes to phy.usda (affects every "
-                        "placement). 'scene' writes per-placement to "
-                        "scene.usda (affects only this instance)."
+                        "'asset' writes to phy.usda (every placement); "
+                        "'scene' writes to scene.usda (per-placement "
+                        "override or scene-only prim)."
                     ),
                 },
                 "clear_masking_overrides": {

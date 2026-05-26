@@ -18,6 +18,20 @@ logger = logging.getLogger(__name__)
 _USD_EXTENSIONS: frozenset[str] = frozenset(f.value for f in AssetFormat)
 _NON_ASSET_DIRS: frozenset[str] = frozenset({"cache", "maps", "materials"})
 ALL: str = "all"
+DEFAULT_SEARCH_LIMIT: int = 25
+
+
+def truncate_with_total(
+    matches: list[dict[str, str]], limit: int,
+) -> dict[str, object]:
+    """Cap *matches* at *limit*; return ``{results, total_matches, truncated}``."""
+    limit = max(1, int(limit))
+    total = len(matches)
+    return {
+        "results": matches[:limit],
+        "total_matches": total,
+        "truncated": total > limit,
+    }
 
 
 def scan_library(

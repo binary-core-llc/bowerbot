@@ -44,6 +44,7 @@ discovery_what_is_in_scene = AgentScenario(
     name="discovery_what_is_in_scene",
     description="Ask 'what's in my scene' on a populated scene; expect inspection only.",
     tier="discovery",
+    suites=("smoke", "full"),
     setup=setup_two_cubes_in_scene,
     prompts=["what's in my scene?"],
     assertions=[_assert_used_inspection_tool, _assert_no_authoring_tools],

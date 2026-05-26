@@ -63,6 +63,8 @@ testpaths = ["tests"]
 markers = [
     "integration: tests that require live credentials or external services (Sketchfab token, LLM API keys, network calls). Excluded from CI by default; run locally with `pytest -m integration`.",
     "agent_integration: end-to-end agent scenarios that drive the live LLM with the user's OpenAI key from ~/.bowerbot/config.json. Excluded from default test runs (cost money). Run locally with `pytest -m agent_integration tests/agent/`.",
+    "agent_smoke: subset of agent_integration covering the highest-signal UX paths. Cheap; run before opening a PR with `pytest -m 'agent_integration and agent_smoke'`.",
+    "agent_full: every agent_integration scenario including the heavier multi-step ones. Run on demand for a full UX sweep with `pytest -m 'agent_integration and agent_full'`.",
 ]
 
 [tool.mypy]

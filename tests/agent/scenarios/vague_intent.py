@@ -69,6 +69,7 @@ vague_set_up_physics = AgentScenario(
     name="vague_set_up_physics",
     description="'Set up the physics' on a populated scene.",
     tier="vague",
+    suites=("smoke", "full"),
     setup=setup_scene_with_ground_and_box,
     prompts=[
         "Set up the physics in this scene. I don't know exactly what I "

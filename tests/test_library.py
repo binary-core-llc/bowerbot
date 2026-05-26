@@ -236,8 +236,26 @@ def test_tool_search_uses_library_dir():
             library_tools.search_assets, state, {"query": "chair"},
         ))
         assert result.success
-        assert len(result.data) == 1
-        assert result.data[0]["name"] == "chair"
+        assert result.data["total_matches"] == 1
+        assert result.data["truncated"] is False
+        assert result.data["results"][0]["name"] == "chair"
+
+
+def test_tool_search_truncates_large_result_set():
+    with tempfile.TemporaryDirectory() as tmp:
+        library = Path(tmp)
+        for i in range(40):
+            _write_geo(library / f"chair_{i:02d}.usda", f"chair_{i:02d}")
+        state = SceneState(scene_defaults=SceneDefaults(), library_dir=library)
+
+        result = asyncio.run(asyncio.to_thread(
+            library_tools.search_assets,
+            state, {"query": "chair", "limit": 10},
+        ))
+        assert result.success
+        assert result.data["total_matches"] == 40
+        assert result.data["truncated"] is True
+        assert len(result.data["results"]) == 10
 
 
 def test_tool_returns_error_when_library_dir_unset():

@@ -23,7 +23,7 @@ from typing import Any
 
 from bowerbot.schemas import PhysicsApiName, PhysicsJointType
 from bowerbot.state import SceneState
-from bowerbot.utils import physics_utils, stage_utils
+from bowerbot.utils import physics_utils, scene_integrity_utils, stage_utils
 from bowerbot.utils.asset_folder_utils import (
     normalize_asset_prim_path,
     require_asset_context,
@@ -60,7 +60,16 @@ def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         )
         return result
 
-    asset_dir, ref_prim_path = require_asset_context(state.stage, prim_path)
+    try:
+        asset_dir, ref_prim_path = require_asset_context(
+            state.stage, prim_path,
+        )
+    except ValueError as exc:
+        raise ValueError(
+            f"{exc} This prim is authored directly in scene.usda, not as "
+            "an asset placement. Retry the call with scope='scene' to "
+            "author physics on this prim directly in scene.usda.",
+        ) from None
     asset_local_path = normalize_asset_prim_path(
         prim_path, ref_prim_path, resolve_default_prim_name(asset_dir),
     )
@@ -114,7 +123,16 @@ def remove_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "removed": changed,
         }
 
-    asset_dir, ref_prim_path = require_asset_context(state.stage, prim_path)
+    try:
+        asset_dir, ref_prim_path = require_asset_context(
+            state.stage, prim_path,
+        )
+    except ValueError as exc:
+        raise ValueError(
+            f"{exc} This prim is authored directly in scene.usda, not as "
+            "an asset placement. Retry the call with scope='scene' to "
+            "remove physics from this prim directly in scene.usda.",
+        ) from None
     asset_local_path = normalize_asset_prim_path(
         prim_path, ref_prim_path, resolve_default_prim_name(asset_dir),
     )
@@ -353,15 +371,22 @@ def create_or_update_collision_group(
 def remove_collision_group(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Remove a collision group; refuses if other groups filter against it."""
+    """Remove a collision group; relies on scene_integrity to scrub dangling rels."""
     name = params["name"]
     force = bool(params.get("force", False))
     removed = physics_utils.remove_collision_group(
         state.stage, name, force=force,
     )
+    scrubbed = (
+        scene_integrity_utils.scrub_dangling_refs(state.stage) if removed else {}
+    )
     if removed:
         state.touch_project()
-    return {"name": name, "removed": removed}
+    return {
+        "name": name,
+        "removed": removed,
+        "scrubbed_dangling_refs": scrubbed,
+    }
 
 
 def list_collision_groups(

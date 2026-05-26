@@ -15,6 +15,7 @@ from bowerbot.schemas.assets import (
     AssetMetadata,
     ASWFLayerNames,
 )
+from bowerbot.schemas.diagnostics import DiagnosticReport, Finding, FindingStatus
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.lights import LightParams, LightType
 from bowerbot.schemas.materials import (
@@ -58,6 +59,9 @@ __all__ = [
     "CollisionGroupSummary",
     "CollisionGroupsSummary",
     "DetectionOutcome",
+    "DiagnosticReport",
+    "Finding",
+    "FindingStatus",
     "FolderDetection",
     "HDRIFormat",
     "IntakeReport",

@@ -42,6 +42,7 @@ from bowerbot.utils import stage_utils
 from bowerbot.utils.asset_folder_utils import (
     ensure_root_reference,
     find_root_file,
+    require_asset_context,
     resolve_default_prim_name,
 )
 
@@ -709,6 +710,15 @@ def validate_scope(scope: str) -> str:
             f"Invalid scope {scope!r}; must be 'asset' or 'scene'.",
         )
     return scope
+
+
+def autodetect_scope(stage: Usd.Stage, prim_path: str) -> str:
+    """Return ``'asset'`` if *prim_path* resolves through an ASWF placement; else ``'scene'``."""
+    try:
+        require_asset_context(stage, prim_path)
+    except ValueError:
+        return "scene"
+    return "asset"
 
 
 def parse_vec3(

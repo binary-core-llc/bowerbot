@@ -284,11 +284,12 @@ TOOLS: list[Tool] = [
                 "scope": {
                     "type": "string",
                     "enum": ["asset", "scene"],
-                    "default": "asset",
                     "description": (
-                        "'asset' writes to phy.usda (every placement); "
-                        "'scene' writes to scene.usda (per-placement "
-                        "override or scene-only prim)."
+                        "Optional. Omit to auto-detect: asset placements "
+                        "write to phy.usda, scene-authored prims write "
+                        "to scene.usda. Pass 'scene' explicitly only "
+                        "for a per-instance override on an asset "
+                        "placement (affects only this instance)."
                     ),
                 },
                 "clear_masking_overrides": {
@@ -339,10 +340,11 @@ TOOLS: list[Tool] = [
                 "scope": {
                     "type": "string",
                     "enum": ["asset", "scene"],
-                    "default": "asset",
                     "description": (
-                        "'asset' removes from phy.usda. 'scene' removes "
-                        "scene.usda overrides on this placement."
+                        "Optional. Omit to auto-detect (same rule as "
+                        "apply_physics_api). Pass 'scene' to remove only "
+                        "the per-instance override; 'asset' to remove "
+                        "from the shared phy.usda."
                     ),
                 },
                 "clear_masking_overrides": {

@@ -17,6 +17,7 @@ from bowerbot.skills.base import (
     SkillContext,
     ToolResult,
 )
+from bowerbot.utils import diagnostic_registry_utils
 
 if TYPE_CHECKING:
     from bowerbot.state import SceneState
@@ -34,14 +35,10 @@ class SkillRegistry:
         self._library_dir: Path | None = None
 
     def register(self, skill: Skill) -> None:
-        """Register a skill instance after its config validates.
-
-        Raises :class:`SkillConfigError` (re-raised from
-        :meth:`Skill.validate_config`) when the skill is misconfigured;
-        the caller decides whether to log and skip or propagate.
-        """
+        """Register a skill instance after its config validates."""
         skill.validate_config()
         self._skills[skill.name] = skill
+        skill.register_diagnostic_checks(diagnostic_registry_utils)
 
     def load_from_settings(self, settings: Settings) -> None:
         """Discover and load all enabled skills from entry points."""

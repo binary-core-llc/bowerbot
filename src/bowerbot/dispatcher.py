@@ -21,6 +21,7 @@ from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 from bowerbot.tools import (
     asset_tools,
+    diagnose_tools,
     library_tools,
     light_tools,
     material_tools,
@@ -48,6 +49,7 @@ def _collect_tools() -> list[Tool]:
     tools.extend(texture_tools.TOOLS)
     tools.extend(validation_tools.TOOLS)
     tools.extend(variant_tools.TOOLS)
+    tools.extend(diagnose_tools.TOOLS)
     return tools
 
 
@@ -57,7 +59,7 @@ def _collect_handlers() -> dict[str, ToolHandler]:
     for module in (
         stage_tools, asset_tools, library_tools, light_tools,
         material_tools, physics_tools, texture_tools,
-        validation_tools, variant_tools,
+        validation_tools, variant_tools, diagnose_tools,
     ):
         handlers.update(module.HANDLERS)
     return handlers

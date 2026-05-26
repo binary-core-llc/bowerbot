@@ -85,6 +85,7 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 - **`state.py`**: `SceneState`, threaded through every tool handler.
 - **`dispatcher.py`**: tool registry and router.
 - **`skills/`**: the skill SDK (the `Skill` contract and the `SkillRegistry`). Skills themselves ship as separate pip packages and are discovered at runtime via entry points; they do not live in this directory.
+- **Diagnostics**: `utils/diagnostic_registry_utils.py` owns the global `REGISTRY`. Per-domain checks live in `utils/<domain>_diagnostic_utils.py` (today: `physics_diagnostic_utils.py`). The `dispatcher` imports each `*_diagnostic_utils` module so registrations happen at startup. Skills register their own checks via the `Skill.register_diagnostic_checks(registry)` hook.
 - **`prompts/`**: LLM instructions as `.md` files.
 
 ## Writing a Skill
@@ -156,6 +157,32 @@ Skills that need stage access call `Usd.Stage.Open(ctx.scene_path)` themselves. 
 - **Use `ctx.cache_dir` for downloads**: declare `cache_subdir` on the class (e.g. `"cache/polyhaven"`); the registry creates the dir and exposes it via `ctx.cache_dir`.
 - **Use `ctx.project_dir` and `ctx.scene_path` for scene-aware skills**: these are `None` when no project is open. Always handle that case.
 - **No hardcoded paths**: every path comes through `SkillContext` or tool params.
+
+### Diagnostic checks
+
+Override `register_diagnostic_checks(registry)` on your skill to expose subsystem-specific checks to the core `diagnose` tool. Without this, the LLM can only speculate about why your skill's output is misbehaving. With it, the agent sees structured findings instead.
+
+```python
+from bowerbot.schemas import Finding, FindingStatus, Severity
+
+
+class PolyhavenSkill(Skill):
+    def register_diagnostic_checks(self, registry):
+        @registry.register(
+            check_id="polyhaven:hdri_resolution_supported",
+            subsystem="polyhaven",
+            applies_to=lambda stage, focus: focus is None or _is_dome_light(focus),
+        )
+        def check_hdri_resolution(stage, focus):
+            # Inspect dome lights; return [Finding(...)] for any unsupported HDRI.
+            return []
+```
+
+- **`check_id`** is `<subsystem>:<slug>`. Stable across releases so the LLM can name them.
+- **`applies_to(stage, focus)`** returns `True` when the check should run. `focus is None` means scene-wide. Use the `stage` arg to discover related prims (e.g. a body referenced by a joint).
+- **The check function** returns `list[Finding]`. Use `FindingStatus.FAIL` + an actionable `fix_hint` for issues the LLM should act on.
+
+The `SkillRegistry` invokes the hook on every loaded skill at startup, so a `pip install bowerbot-skill-polyhaven` is all the user needs for your checks to appear in `diagnose` output.
 
 ### Public API and stability
 

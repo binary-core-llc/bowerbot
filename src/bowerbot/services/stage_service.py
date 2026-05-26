@@ -9,7 +9,12 @@ import logging
 from typing import Any
 
 from bowerbot.state import SceneState
-from bowerbot.utils import asset_intake_utils, geometry_utils, stage_utils
+from bowerbot.utils import (
+    asset_intake_utils,
+    geometry_utils,
+    scene_integrity_utils,
+    stage_utils,
+)
 from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
 from bowerbot.utils.naming_utils import safe_file_name
 
@@ -65,7 +70,7 @@ def list_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Move/rename a prim to a new path in the scene hierarchy."""
+    """Move/rename a prim, rewriting every rel target across the scene."""
     old_path = params["old_path"]
     new_path = params["new_path"]
 
@@ -84,16 +89,20 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError(msg)
 
     state.stage = stage_utils.open_stage(state.stage_path)
+    rewrites = scene_integrity_utils.rewrite_refs(
+        state.stage, {old_path: new_path},
+    )
     logger.info("Renamed %s -> %s", old_path, new_path)
     return {
         "old_path": old_path,
         "new_path": new_path,
+        "rewritten_refs": rewrites,
         "message": f"Renamed {old_path} -> {new_path}",
     }
 
 
 def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Remove an object from the scene by prim path."""
+    """Remove an object from the scene, scrubbing every rel that targeted it."""
     prim_path = params["prim_path"]
 
     nested = _parse_nested_contents_path(prim_path)
@@ -116,11 +125,14 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
 
+    scrubbed = scene_integrity_utils.scrub_dangling_refs(state.stage)
+
     state.object_count = max(0, state.object_count - 1)
     state.touch_project()
     logger.info("Removed %s", prim_path)
     return {
         "prim_path": prim_path,
+        "scrubbed_dangling_refs": scrubbed,
         "message": f"Removed {prim_path}",
     }
 

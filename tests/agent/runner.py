@@ -105,7 +105,7 @@ class ScenarioContext:
 
 @dataclass
 class AgentScenario:
-    """One end-to-end agent walkthrough definition."""
+    """One end-to-end agent walkthrough; ``suites`` becomes ``agent_<suite>`` marks."""
 
     name: str
     description: str
@@ -113,6 +113,7 @@ class AgentScenario:
     setup: Callable[[Path], None] | None = None
     assertions: list[Callable[[ScenarioContext], None]] = field(default_factory=list)
     tier: str = ""
+    suites: tuple[str, ...] = ("full",)
 
 
 class _RecordingAgent(AgentRuntime):

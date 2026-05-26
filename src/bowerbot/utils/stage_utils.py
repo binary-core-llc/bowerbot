@@ -266,7 +266,12 @@ def _create_attribute_on_demand(
     value: object,
     expected_type: Sdf.ValueTypeName | None = None,
 ) -> Usd.Attribute:
-    """Create an attribute; prefers expected_type, then Sdr, then value shape."""
+    """Create an attribute; xformOp:* routes through Xformable so xformOpOrder updates."""
+    if attribute_name.startswith("xformOp:") and prim.IsA(UsdGeom.Xformable):
+        op = _add_xform_op(UsdGeom.Xformable(prim), attribute_name)
+        if op is not None:
+            return op.GetAttr()
+
     if expected_type is not None:
         return prim.CreateAttribute(attribute_name, expected_type, custom=False)
 
@@ -279,6 +284,42 @@ def _create_attribute_on_demand(
 
     inferred = _infer_sdf_type(value)
     return prim.CreateAttribute(attribute_name, inferred, custom=False)
+
+
+def _add_xform_op(
+    xformable: UsdGeom.Xformable, attribute_name: str,
+) -> UsdGeom.XformOp | None:
+    """Return the xform op for *attribute_name*, adding to xformOpOrder if missing."""
+    suffix = attribute_name[len("xformOp:"):]
+    base, _, namespace = suffix.partition(":")
+    spec = _XFORM_OP_SPECS.get(base)
+    if spec is None:
+        return None
+    op_type, value_type = spec
+    current_order = xformable.GetXformOpOrderAttr().Get() or ()
+    if attribute_name in current_order:
+        attr = xformable.GetPrim().CreateAttribute(
+            attribute_name, value_type, custom=False,
+        )
+        return UsdGeom.XformOp(attr)
+    return xformable.AddXformOp(op_type, opSuffix=namespace or "")
+
+
+_XFORM_OP_SPECS: dict[str, tuple[object, Sdf.ValueTypeName]] = {
+    "translate": (UsdGeom.XformOp.TypeTranslate, Sdf.ValueTypeNames.Double3),
+    "rotateX": (UsdGeom.XformOp.TypeRotateX, Sdf.ValueTypeNames.Float),
+    "rotateY": (UsdGeom.XformOp.TypeRotateY, Sdf.ValueTypeNames.Float),
+    "rotateZ": (UsdGeom.XformOp.TypeRotateZ, Sdf.ValueTypeNames.Float),
+    "rotateXYZ": (UsdGeom.XformOp.TypeRotateXYZ, Sdf.ValueTypeNames.Float3),
+    "rotateXZY": (UsdGeom.XformOp.TypeRotateXZY, Sdf.ValueTypeNames.Float3),
+    "rotateYXZ": (UsdGeom.XformOp.TypeRotateYXZ, Sdf.ValueTypeNames.Float3),
+    "rotateYZX": (UsdGeom.XformOp.TypeRotateYZX, Sdf.ValueTypeNames.Float3),
+    "rotateZXY": (UsdGeom.XformOp.TypeRotateZXY, Sdf.ValueTypeNames.Float3),
+    "rotateZYX": (UsdGeom.XformOp.TypeRotateZYX, Sdf.ValueTypeNames.Float3),
+    "scale": (UsdGeom.XformOp.TypeScale, Sdf.ValueTypeNames.Float3),
+    "orient": (UsdGeom.XformOp.TypeOrient, Sdf.ValueTypeNames.Quatf),
+    "transform": (UsdGeom.XformOp.TypeTransform, Sdf.ValueTypeNames.Matrix4d),
+}
 
 
 def _resolve_shader_input_type(
@@ -548,13 +589,25 @@ def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
 def _apply_light_link(
     light_prim: Usd.Prim, includes: list[str],
 ) -> None:
-    """Author the UsdLux light:link collection on *light_prim*."""
+    """Author the UsdLux light:link collection only when targets are provided."""
+    if not includes:
+        return
     binding = UsdLux.LightAPI(light_prim).GetLightLinkCollectionAPI()
-    binding.CreateIncludesRel().SetTargets(
-        [Sdf.Path(p) for p in includes] if includes else [],
-    )
-    if includes:
-        binding.CreateIncludeRootAttr(False)
+    binding.CreateIncludesRel().SetTargets([Sdf.Path(p) for p in includes])
+    binding.CreateIncludeRootAttr(False)
+
+
+def unique_prim_path(stage: Usd.Stage, parent: str, base_name: str) -> str:
+    """Return ``<parent>/<base_name>`` or the next free ``<parent>/<base_name>_NN``."""
+    direct = f"{parent}/{base_name}"
+    if not stage.GetPrimAtPath(direct).IsValid():
+        return direct
+    n = 2
+    while True:
+        candidate = f"{parent}/{base_name}_{n:02d}"
+        if not stage.GetPrimAtPath(candidate).IsValid():
+            return candidate
+        n += 1
 
 
 def update_light(
@@ -835,12 +888,13 @@ def _scrub_variant_set_names(prim_spec: Sdf.PrimSpec, set_name: str) -> None:
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
-    """List referenced assets, lights, and scene-authored Gprims in *stage*."""
+    """List placement Xforms: referenced assets, lights, scene-authored Gprim roots."""
     bbox_cache = UsdGeom.BBoxCache(
         Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
     )
 
     results: list[dict] = []
+    seen: set[str] = set()
     for prim in stage.Traverse():
         is_light = prim.HasAPI(UsdLux.LightAPI)
         has_refs = prim.GetMetadata("references") is not None
@@ -850,12 +904,35 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
         if not (has_refs or is_light or scene_gprim):
             continue
 
-        position = _extract_position(prim)
+        target = (
+            _placement_ancestor(prim) if scene_gprim and not has_refs and not is_light
+            else prim
+        )
+        path = str(target.GetPath())
+        if path in seen:
+            continue
+        seen.add(path)
+        position = _extract_position(target)
         if is_light:
-            results.append(_format_light_prim(prim, position))
+            results.append(_format_light_prim(target, position))
         else:
-            results.append(_format_geometry_prim(prim, position, bbox_cache))
+            results.append(_format_geometry_prim(target, position, bbox_cache))
     return results
+
+
+def _placement_ancestor(prim: Usd.Prim) -> Usd.Prim:
+    """Walk up from *prim* to the topmost Xform ancestor whose parent is ``/Scene``."""
+    candidate = prim
+    cursor = prim.GetParent()
+    while (
+        cursor and cursor.IsValid()
+        and cursor.GetPath() != Sdf.Path.absoluteRootPath
+        and str(cursor.GetPath()) != "/Scene"
+    ):
+        if cursor.IsA(UsdGeom.Xform):
+            candidate = cursor
+        cursor = cursor.GetParent()
+    return candidate
 
 
 def _has_referenced_ancestor(prim: Usd.Prim) -> bool:
@@ -872,7 +949,7 @@ def _has_referenced_ancestor(prim: Usd.Prim) -> bool:
 
 
 def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
-    """Return descendant prims with geometry under *prim_path*."""
+    """Return every bindable Gprim at or under *prim_path*."""
     root_prim = stage.GetPrimAtPath(prim_path)
     if not root_prim.IsValid():
         return []
@@ -883,24 +960,17 @@ def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
 
     results: list[dict] = []
     for prim in Usd.PrimRange(root_prim):
-        if str(prim.GetPath()) == prim_path:
+        if not prim.IsA(UsdGeom.Gprim):
             continue
-
-        type_name = prim.GetTypeName()
-        is_mesh = type_name == "Mesh"
-        has_geometry = is_mesh or _has_mesh_descendant(prim)
-        if not has_geometry:
-            continue
-
         bound_mat, _ = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()
-        current_material = str(bound_mat.GetPath()) if bound_mat else None
-
+        type_name = prim.GetTypeName()
         results.append({
             "prim_path": str(prim.GetPath()),
             "name": prim.GetName(),
             "type": type_name or "Xform",
-            "is_mesh": is_mesh,
-            "current_material": current_material,
+            "is_mesh": type_name == "Mesh",
+            "is_bindable": True,
+            "current_material": str(bound_mat.GetPath()) if bound_mat else None,
             "bounds": _world_bounds(prim, bbox_cache),
         })
     return results

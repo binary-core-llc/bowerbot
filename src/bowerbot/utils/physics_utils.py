@@ -192,19 +192,20 @@ def apply_api(
         raise ValueError(f"No root file in asset {asset_dir.name}")
 
     composed = Usd.Stage.Open(str(root_file))
-    target = composed.GetPrimAtPath(prim_path)
-    if not target or not target.IsValid():
+    requested = composed.GetPrimAtPath(prim_path)
+    if not requested or not requested.IsValid():
         raise ValueError(
             f"Prim not found in asset {asset_dir.name}: {prim_path}",
         )
-    _require_target_type(target, api_name)
+    target = resolve_typed_target(requested, api_name)
+    target_path = str(target.GetPath())
     if api_name == PhysicsApiName.ARTICULATION_ROOT:
-        check_articulation_root_nesting(composed, prim_path)
+        check_articulation_root_nesting(composed, target_path)
     del composed
 
     ensure_physics_layer(asset_dir)
     stage = Usd.Stage.Open(str(_phy_layer_path(asset_dir)))
-    prim = stage.OverridePrim(Sdf.Path(prim_path))
+    prim = stage.OverridePrim(Sdf.Path(target_path))
 
     companion = _COMPANION.get(api_name)
     if companion is not None:
@@ -214,7 +215,7 @@ def apply_api(
     for name, value in attributes.items():
         attr = prim.GetAttribute(name)
         stage_utils.set_prim_attribute(
-            stage, prim_path, name, value, expected_type=attr.GetTypeName(),
+            stage, target_path, name, value, expected_type=attr.GetTypeName(),
         )
 
     for name, targets in relationships.items():
@@ -227,10 +228,11 @@ def apply_api(
 
     logger.info(
         "Applied %s on %s in %s/phy.usda",
-        api_name.value, prim_path, asset_dir.name,
+        api_name.value, target_path, asset_dir.name,
     )
     return {
-        "prim_path": prim_path,
+        "prim_path": target_path,
+        "requested_prim_path": prim_path,
         "api_name": api_name.value,
         "companion_api": companion.value if companion else None,
         "attributes_set": sorted(attributes),
@@ -304,40 +306,36 @@ def apply_api_scene(
     attributes: dict[str, Any] | None = None,
     relationships: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
-    """Apply ``api_name`` directly on scene.usda at *prim_path*.
-
-    For per-placement overrides (e.g. disable collision on one chair
-    instance) and physics on scene-only prims. scene.usda is the
-    strongest layer in LIVRPS so opinions here win over the asset's
-    ``phy.usda`` defaults.
-    """
+    """Apply ``api_name`` on scene.usda; auto-ensures a ``UsdPhysics.Scene``."""
     attributes = attributes or {}
     relationships = relationships or {}
 
     schema_info = list_api_properties(api_name)
     _refuse_unknown(api_name, attributes, schema_info, "attribute")
     _refuse_unknown(api_name, relationships, schema_info, "relationship")
+    ensure_physics_scene(stage)
 
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Prim not found in scene: {prim_path}")
-    _require_target_type(prim, api_name)
+    target = resolve_typed_target(prim, api_name)
+    target_path = str(target.GetPath())
     if api_name == PhysicsApiName.ARTICULATION_ROOT:
-        check_articulation_root_nesting(stage, prim_path)
+        check_articulation_root_nesting(stage, target_path)
 
     companion = _COMPANION.get(api_name)
     if companion is not None:
-        _API_CLASSES[companion].Apply(prim)
-    _API_CLASSES[api_name].Apply(prim)
+        _API_CLASSES[companion].Apply(target)
+    _API_CLASSES[api_name].Apply(target)
 
     for name, value in attributes.items():
-        attr = prim.GetAttribute(name)
+        attr = target.GetAttribute(name)
         stage_utils.set_prim_attribute(
-            stage, prim_path, name, value, expected_type=attr.GetTypeName(),
+            stage, target_path, name, value, expected_type=attr.GetTypeName(),
         )
 
     for name, targets in relationships.items():
-        prim.GetRelationship(name).SetTargets(
+        target.GetRelationship(name).SetTargets(
             [Sdf.Path(t) for t in targets],
         )
 
@@ -346,7 +344,8 @@ def apply_api_scene(
         "Applied %s scene-level on %s", api_name.value, prim_path,
     )
     return {
-        "prim_path": prim_path,
+        "prim_path": target_path,
+        "requested_prim_path": prim_path,
         "api_name": api_name.value,
         "companion_api": companion.value if companion else None,
         "attributes_set": sorted(attributes),
@@ -584,15 +583,9 @@ def create_or_update_collision_group(
     invert_filter: bool | None = None,
     merge_group: str | None = None,
 ) -> dict[str, Any]:
-    """Create or update a ``UsdPhysicsCollisionGroup`` under the Groups scope.
-
-    Each list-shaped kwarg REPLACES the existing collection / rel targets
-    when provided (not appended). Pass ``None`` to leave that property
-    untouched on an existing group. ``filtered_groups`` accepts bare group
-    names; they are resolved to ``/Scene/Physics/Groups/<name>``.
-    """
+    """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``."""
     _validate_group_name(name)
-    ensure_physics_scope(stage)
+    ensure_physics_scene(stage)
 
     prim_path = _group_prim_path(name)
     group = UsdPhysics.CollisionGroup.Define(stage, prim_path)
@@ -642,7 +635,7 @@ def create_or_update_collision_group(
 def remove_collision_group(
     stage: Usd.Stage, name: str, *, force: bool = False,
 ) -> bool:
-    """Remove a collision group. Refuses if any other group filters against it."""
+    """Remove a collision group; refuses if other groups depend on it unless ``force``."""
     prim_path = _group_prim_path(name)
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
@@ -655,7 +648,7 @@ def remove_collision_group(
                 f"Cannot remove collision group {name!r}: {len(dependents)} "
                 f"other group(s) reference it via filteredGroups: "
                 f"{sorted(dependents)}. Retry with force=True to remove "
-                "anyway (dangling rels will be left).",
+                "(BowerBot scrubs the dangling references afterwards).",
             )
 
     removed = stage.RemovePrim(prim_path)
@@ -739,6 +732,32 @@ def _require_target_type(prim: Usd.Prim, api_name: PhysicsApiName) -> None:
         )
 
 
+def resolve_typed_target(
+    prim: Usd.Prim, api_name: PhysicsApiName,
+) -> Usd.Prim:
+    """Return *prim* or its unique descendant matching the API's target type."""
+    cls = _TARGET_TYPE[api_name]
+    if prim.IsA(cls):
+        return prim
+    candidates = [
+        d for d in Usd.PrimRange(prim) if d != prim and d.IsA(cls)
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        raise ValueError(
+            f"{api_name.value} requires UsdGeom.{cls.__name__}; "
+            f"{prim.GetPath()} is a {prim.GetTypeName()!r} with no "
+            f"{cls.__name__} descendants.",
+        )
+    raise ValueError(
+        f"{api_name.value} requires UsdGeom.{cls.__name__}; "
+        f"{prim.GetPath()} is a {prim.GetTypeName()!r} with "
+        f"{len(candidates)} {cls.__name__} descendants. Pick one and "
+        f"retry: {[str(c.GetPath()) for c in candidates]}",
+    )
+
+
 def _refuse_unknown(
     api_name: PhysicsApiName,
     provided: dict[str, Any],
@@ -817,18 +836,13 @@ def create_joint_scene(
     body1: str | None,
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Create a typed joint at ``/Scene/Physics/<name>`` connecting two bodies.
-
-    Used for joints that span separate assets in a scene. Validates both
-    body targets are Xformables and at least one reaches RigidBodyAPI.
-    An empty / None body rel is treated as 'attach to world' per the spec.
-    """
+    """Create a typed joint at ``/Scene/Physics/<name>``; auto-ensures a ``UsdPhysics.Scene``."""
     _validate_joint_name(name)
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
 
-    ensure_physics_scope(stage)
+    ensure_physics_scene(stage)
     prim_path = f"{SceneNamespace.PHYSICS}/{name}"
     joint = _JOINT_CLASSES[joint_type].Define(stage, prim_path)
 
@@ -859,13 +873,7 @@ def create_joint_asset(
     body1: str | None,
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Create a typed joint inside the asset's ``phy.usda`` at ``/<defaultPrim>/joints/<name>``.
-
-    body0 / body1 are asset-namespace prim paths (e.g.
-    ``/AssetName/base_link``). At least one must reach RigidBodyAPI in
-    the composed asset stage. The asset reference rebases the joint's
-    body rels automatically when placed in a scene.
-    """
+    """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``."""
     _validate_joint_name(name)
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
@@ -1322,3 +1330,5 @@ def _to_jsonable(value: Any) -> Any:
         except (TypeError, ValueError):
             return str(value)
     return str(value)
+
+

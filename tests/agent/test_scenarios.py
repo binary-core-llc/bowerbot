@@ -1,18 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Pytest harness wiring agent scenarios into parameterised test functions.
-
-These tests cost real money (LLM calls). They are excluded by default
-from ``pytest`` runs via the ``agent_integration`` marker. Run them
-locally with::
-
-    pytest -m agent_integration tests/agent/
-
-Or one tier::
-
-    pytest -m agent_integration tests/agent/ -k discovery
-"""
+"""Pytest harness for agent scenarios; tiers come from each scenario's ``suites``."""
 
 from __future__ import annotations
 
@@ -22,10 +11,12 @@ from tests.agent.runner import AgentScenario, ScenarioRunner
 from tests.agent.scenarios import (
     conceptual,
     discovery,
+    exploratory,
     iteration,
     physics_goals,
     recovery,
     refusals,
+    tool_categories,
     tool_coverage,
     vague_intent,
 )
@@ -39,13 +30,24 @@ _ALL_SCENARIOS: list[AgentScenario] = (
     + recovery.ALL
     + refusals.ALL
     + tool_coverage.ALL
+    + tool_categories.ALL
+    + exploratory.ALL
 )
+
+
+def _params() -> list:
+    return [
+        pytest.param(
+            s,
+            id=s.name,
+            marks=[getattr(pytest.mark, f"agent_{suite}") for suite in s.suites],
+        )
+        for s in _ALL_SCENARIOS
+    ]
 
 
 @pytest.mark.agent_integration
-@pytest.mark.parametrize(
-    "scenario", _ALL_SCENARIOS, ids=lambda s: s.name,
-)
+@pytest.mark.parametrize("scenario", _params())
 async def test_agent_scenario(
     scenario: AgentScenario,
     scenario_runner: ScenarioRunner,

@@ -68,8 +68,12 @@ class AgentRuntime:
             load_prompt("core"),
             f"# Scene Building\n\n{load_prompt('scene_building')}",
             f"# Asset Library\n\n{load_prompt('library')}",
+            f"# Placing Assets\n\n{load_prompt('assets')}",
+            f"# Lighting\n\n{load_prompt('lights')}",
+            f"# Materials\n\n{load_prompt('materials')}",
             f"# Textures\n\n{load_prompt('textures')}",
             f"# Variant Sets\n\n{load_prompt('variants')}",
+            f"# Physics\n\n{load_prompt('physics')}",
         ]
         skill_prompts = self.skill_registry.get_skill_prompts()
         if skill_prompts:

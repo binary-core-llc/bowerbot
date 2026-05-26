@@ -64,6 +64,7 @@ coverage_validate_scene = AgentScenario(
     name="coverage_validate_scene",
     description="Ask the agent to verify the scene is OK; expect validate_scene.",
     tier="tool_coverage",
+    suites=("smoke", "full"),
     setup=setup_scene_with_ground_and_box,
     prompts=[
         "Can you check whether my scene is well-formed? "

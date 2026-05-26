@@ -9,19 +9,24 @@ from typing import Any
 
 from bowerbot.state import SceneState
 from bowerbot.utils import library_utils
+from bowerbot.utils.library_utils import DEFAULT_SEARCH_LIMIT
 
 
-def list_assets(state: SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
-    """List every USD asset in the user's library, optionally filtered."""
-    return library_utils.scan_library(
+def list_assets(state: SceneState, params: dict[str, Any]) -> dict[str, object]:
+    """List library assets with optional category filter; truncated to *limit*."""
+    matches = library_utils.scan_library(
         state.library_dir, category=params.get("category", "all"),
+    )
+    return library_utils.truncate_with_total(
+        matches, params.get("limit", DEFAULT_SEARCH_LIMIT),
     )
 
 
-def search_assets(state: SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
-    """Search the user's library for USD assets matching a query."""
-    return library_utils.scan_library(
-        state.library_dir,
-        query=params.get("query", ""),
-        category=params.get("category", "all"),
+def search_assets(state: SceneState, params: dict[str, Any]) -> dict[str, object]:
+    """Search the user's library by name across every category; truncated to *limit*."""
+    matches = library_utils.scan_library(
+        state.library_dir, query=params.get("query", ""), category="all",
+    )
+    return library_utils.truncate_with_total(
+        matches, params.get("limit", DEFAULT_SEARCH_LIMIT),
     )

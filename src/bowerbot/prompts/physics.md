@@ -46,6 +46,12 @@ refuse violations at write time:
 - `PhysicsRigidBodyAPI` and `PhysicsMassAPI` require a
   `UsdGeom.Xformable`.
 
+`apply_physics_api` auto-resolves the right typed prim within a
+placement subtree and auto-ensures a `UsdPhysics.Scene`. Naming the
+placement Xform (e.g. `/Scene/Box_01`) is fine when the schema needs
+the Mesh underneath. The response reports both the resolved
+`prim_path` and the `requested_prim_path`.
+
 Rigid bodies sit at the asset root; collisions go on each leaf
 Gprim individually. Do not apply CollisionAPI to a parent Xform and
 expect it to propagate — it will not.

@@ -26,6 +26,21 @@ def copy_texture_to_project(source: Path, project_dir: Path) -> str:
     return f"./{ASWFLayerNames.TEXTURES}/{source.name}"
 
 
+def stage_scene_texture(
+    project_dir: Path | None, texture: str | None,
+) -> str | None:
+    """Copy a scene-level texture into ``<project>/textures/`` if it exists on disk."""
+    if texture is None:
+        return None
+    source = Path(texture)
+    if not source.exists():
+        return texture
+    if project_dir is None:
+        msg = "No project set; cannot copy scene-level texture."
+        raise RuntimeError(msg)
+    return copy_texture_to_project(source, project_dir)
+
+
 def stage_asset_value(
     value: str,
     project_dir: Path,

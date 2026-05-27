@@ -340,6 +340,56 @@ def ensure_aswf_compliance(
         logger.info("Baked root transforms in %s", geometry_file.name)
 
 
+def freeze_one_asset(assets_dir: Path, name: str) -> dict:
+    """Bake root transforms in a single asset folder; raise if folder/geo missing."""
+    asset_dir = assets_dir / name
+    if not asset_dir.exists() or not asset_dir.is_dir():
+        msg = f"Asset folder not found: {name}"
+        raise ValueError(msg)
+
+    geo_path = asset_dir / ASWFLayerNames.GEO
+    if not geo_path.exists():
+        msg = f"No {ASWFLayerNames.GEO} in asset folder '{name}'"
+        raise ValueError(msg)
+
+    baked = bake_root_transforms(geo_path)
+    return {"name": name, "baked": baked}
+
+
+def intake_summary(report: IntakeReport) -> dict:
+    """Condense an intake report into the fields surfaced to the LLM."""
+    return {
+        "asset_folder": report.asset_folder_name,
+        "root_canonical_name": report.root_canonical_name,
+        "was_renamed": report.was_renamed,
+        "root_original_name": (
+            report.root_original_name if report.was_renamed else None
+        ),
+        "files_copied": report.files_copied,
+        "localized_layers": report.localized_layers,
+        "localized_assets": report.localized_assets,
+        "warnings": report.warnings,
+    }
+
+
+def placement_message(
+    asset_name: str, prim_path: str, report: IntakeReport,
+) -> str:
+    """Format a placement message that narrates intake normalization."""
+    parts = [f"Placed {asset_name} at {prim_path}."]
+    if report.was_renamed:
+        parts.append(
+            f"Normalized on intake: {report.root_original_name} -> "
+            f"{report.root_canonical_name} (ASWF convention).",
+        )
+    localized = len(report.localized_layers) + len(report.localized_assets)
+    if localized:
+        parts.append(
+            f"Localized {localized} external dependency/ies into the asset folder.",
+        )
+    return " ".join(parts)
+
+
 def bake_root_transforms(geometry_file: Path) -> bool:
     """Bake the root prim's local transform into descendant geometry."""
     stage = Usd.Stage.Open(str(geometry_file))

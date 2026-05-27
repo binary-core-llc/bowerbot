@@ -23,7 +23,10 @@ from bowerbot.schemas import (
     FolderDetection,
 )
 from bowerbot.utils.dependency_utils import resolve as resolve_dependencies
-from bowerbot.utils.stage_utils import get_prim_ref_paths
+from bowerbot.utils.stage_utils import (
+    count_scene_refs_to_asset_dir,
+    get_prim_ref_paths,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +192,54 @@ def to_layer_local_path(prim_path: str, default_prim_name: str) -> str:
     if not prim_path.startswith("/"):
         prim_path = f"/{prim_path}"
     return f"{prefix}{prim_path}"
+
+
+def compute_ref_asset_path(
+    relative_asset_path: str,
+    assets_dir: Path,
+    container_dir: Path,
+) -> str:
+    """Compute the reference path from the container to the nested asset."""
+    asset_full_path = (assets_dir.parent / relative_asset_path).resolve()
+    try:
+        ref_path = asset_full_path.relative_to(container_dir.resolve())
+        return f"./{ref_path.as_posix()}"
+    except ValueError:
+        return (
+            "../" + asset_full_path.relative_to(
+                container_dir.parent.resolve(),
+            ).as_posix()
+        )
+
+
+def to_asset_local(prim_path: str, ref_prim_path: str) -> str:
+    """Strip the scene-side reference prefix to get an asset-local path."""
+    if prim_path.startswith(ref_prim_path):
+        remainder = prim_path[len(ref_prim_path):]
+        return remainder if remainder else "/"
+    return prim_path
+
+
+def check_shared_modification(
+    stage: Usd.Stage, asset_dir: Path, params: dict, *, op_label: str,
+) -> None:
+    """Refuse if *asset_dir* is referenced by 2+ scene instances and not confirmed."""
+    instance_count = count_scene_refs_to_asset_dir(stage, asset_dir)
+    confirmed = bool(params.get("confirm_shared_modification", False))
+    if instance_count >= 2 and not confirmed:
+        msg = (
+            f"Asset folder '{asset_dir.name}/' is referenced by "
+            f"{instance_count} scene instances. {op_label} writes to the "
+            f"shared {ASWFLayerNames.MTL}, so the binding would apply to "
+            f"all {instance_count} instances. Two ways forward: "
+            f"(1) For per-instance materials (different material per "
+            f"instance), use place_asset to make each instance independent, "
+            f"then bind a material on each. "
+            f"(2) For deliberate shared modification (every instance "
+            f"should get this material), retry with "
+            f"confirm_shared_modification=true."
+        )
+        raise ValueError(msg)
 
 
 def normalize_asset_prim_path(

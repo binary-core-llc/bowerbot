@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pxr import Usd, UsdGeom
 
-from bowerbot.utils import stage_utils
+from bowerbot.utils import inspection_utils, stage_utils
 from tests._helpers import exec_tool, make_state
 
 
@@ -227,7 +227,7 @@ def test_move_asset():
         t = xformable.GetLocalTransformation().ExtractTranslation()
         assert abs(t[1] - 0.75) < 0.01, f"Y should be 0.75, got {t[1]}"
 
-        objects = stage_utils.list_prims(state.stage)
+        objects = inspection_utils.list_prims(state.stage)
         mug_prims = [o for o in objects if "Mug" in o["prim_path"]]
         assert len(mug_prims) == 1, (
             f"Expected 1 mug prim, got {len(mug_prims)}: {mug_prims}"
@@ -340,7 +340,7 @@ def test_update_light_with_texture_copies_hdri_and_sets_attr():
         r = asyncio.run(exec_tool(state, "create_light", {
             "light_type": "DomeLight",
             "light_name": "Environment_Dome",
-            "intensity": 1.0,
+            "attributes": {"inputs:intensity": 1.0},
         }))
         assert r.success, f"create_light failed: {r.error}"
         prim_path = r.data["prim_path"]
@@ -1092,7 +1092,7 @@ def test_set_prim_attribute_writes_to_scene_for_asset_light():
             "asset_prim_path": prim_path,
             "light_type": "SphereLight",
             "light_name": "Bulb",
-            "intensity": 1000.0,
+            "attributes": {"inputs:intensity": 1000.0},
         }))
         assert light_create.success
         light_scene_path = light_create.data["prim_path"]
@@ -1137,7 +1137,7 @@ def test_set_prim_attribute_null_clears_authored_opinion():
             "asset_prim_path": prim_path,
             "light_type": "SphereLight",
             "light_name": "Bulb",
-            "intensity": 1000.0,
+            "attributes": {"inputs:intensity": 1000.0},
         }))
         light_scene_path = light_create.data["prim_path"]
 
@@ -1294,7 +1294,7 @@ def test_create_light_authors_light_link_collection():
             "light_type": "RectLight",
             "light_name": "Rim",
             "translate_x": 1.0, "translate_y": 1.5, "translate_z": 0.0,
-            "intensity": 200.0,
+            "attributes": {"inputs:intensity": 200.0},
             "light_link_includes": [hero_path],
         }))
         assert result.success

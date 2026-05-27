@@ -9,7 +9,11 @@ from pathlib import Path
 from pxr import Usd, UsdLux
 
 from bowerbot.schemas import LightParams, LightType
-from bowerbot.utils import stage_utils as stage_service
+from bowerbot.utils import (
+    inspection_utils,
+    light_utils,
+    stage_utils,
+)
 
 
 def test_create_sphere_light():
@@ -17,17 +21,19 @@ def test_create_sphere_light():
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        stage = stage_service.create_stage(stage_path)
+        stage = stage_utils.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.SPHERE,
-            intensity=500.0,
-            color=(1.0, 0.9, 0.8),
             translate=(5.0, 2.5, 4.0),
-            radius=0.1,
+            attributes={
+                "inputs:intensity": 500.0,
+                "inputs:color": (1.0, 0.9, 0.8),
+                "inputs:radius": 0.1,
+            },
         )
-        stage_service.create_light(stage, "/Scene/Lighting/Key_Light_01", light)
-        stage_service.save_stage(stage)
+        light_utils.create_light(stage, "/Scene/Lighting/Key_Light_01", light)
+        stage_utils.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
         prim = reopened.GetPrimAtPath("/Scene/Lighting/Key_Light_01")
@@ -38,24 +44,24 @@ def test_create_sphere_light():
         assert sphere.GetIntensityAttr().Get() == 500.0
         assert abs(sphere.GetRadiusAttr().Get() - 0.1) < 1e-6
 
-        print("test_create_sphere_light PASSED")
-
 
 def test_create_distant_light():
     """Create a DistantLight with angle and verify."""
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        stage = stage_service.create_stage(stage_path)
+        stage = stage_utils.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.DISTANT,
-            intensity=500.0,
             rotate=(-45.0, 0.0, 0.0),
-            angle=0.53,
+            attributes={
+                "inputs:intensity": 500.0,
+                "inputs:angle": 0.53,
+            },
         )
-        stage_service.create_light(stage, "/Scene/Lighting/Sun_01", light)
-        stage_service.save_stage(stage)
+        light_utils.create_light(stage, "/Scene/Lighting/Sun_01", light)
+        stage_utils.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
         prim = reopened.GetPrimAtPath("/Scene/Lighting/Sun_01")
@@ -65,25 +71,25 @@ def test_create_distant_light():
         distant = UsdLux.DistantLight(prim)
         assert abs(distant.GetAngleAttr().Get() - 0.53) < 1e-5
 
-        print("test_create_distant_light PASSED")
-
 
 def test_create_rect_light():
     """Create a RectLight with width and height."""
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        stage = stage_service.create_stage(stage_path)
+        stage = stage_utils.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.RECT,
-            intensity=1000.0,
             translate=(5.0, 2.7, 4.0),
-            width=1.5,
-            height=0.8,
+            attributes={
+                "inputs:intensity": 1000.0,
+                "inputs:width": 1.5,
+                "inputs:height": 0.8,
+            },
         )
-        stage_service.create_light(stage, "/Scene/Lighting/Ceiling_Panel_01", light)
-        stage_service.save_stage(stage)
+        light_utils.create_light(stage, "/Scene/Lighting/Ceiling_Panel_01", light)
+        stage_utils.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
         prim = reopened.GetPrimAtPath("/Scene/Lighting/Ceiling_Panel_01")
@@ -93,35 +99,33 @@ def test_create_rect_light():
         assert abs(rect.GetWidthAttr().Get() - 1.5) < 1e-6
         assert abs(rect.GetHeightAttr().Get() - 0.8) < 1e-6
 
-        print("test_create_rect_light PASSED")
-
 
 def test_list_prims_includes_lights():
-    """stage_service.list_prims returns lights with type and attributes."""
+    """inspection_utils.list_prims returns lights with type and attributes."""
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        stage = stage_service.create_stage(stage_path)
+        stage = stage_utils.create_stage(stage_path)
 
         light = LightParams(
             light_type=LightType.SPHERE,
-            intensity=800.0,
-            color=(1.0, 0.95, 0.9),
             translate=(3.0, 2.0, 3.0),
+            attributes={
+                "inputs:intensity": 800.0,
+                "inputs:color": (1.0, 0.95, 0.9),
+            },
         )
-        stage_service.create_light(stage, "/Scene/Lighting/Spot_01", light)
-        stage_service.save_stage(stage)
+        light_utils.create_light(stage, "/Scene/Lighting/Spot_01", light)
+        stage_utils.save_stage(stage)
 
-        prims = stage_service.list_prims(stage)
+        prims = inspection_utils.list_prims(stage)
         assert len(prims) == 1, f"Expected 1 prim, got {len(prims)}"
 
         light_entry = prims[0]
         assert light_entry["light_type"] == "SphereLight"
         assert light_entry["position"]["x"] == 3.0
         assert light_entry["intensity"] == 800.0
-        assert "bounds" not in light_entry  # lights have no geometry bounds
-
-        print("test_list_prims_includes_lights PASSED")
+        assert "bounds" not in light_entry
 
 
 def test_create_multiple_light_types():
@@ -129,50 +133,47 @@ def test_create_multiple_light_types():
     with tempfile.TemporaryDirectory() as tmp:
         stage_path = Path(tmp) / "test_scene.usda"
 
-        stage = stage_service.create_stage(stage_path)
+        stage = stage_utils.create_stage(stage_path)
 
         lights = [
             (
                 "/Scene/Lighting/Sun",
-                LightParams(light_type=LightType.DISTANT, intensity=500.0),
+                LightParams(
+                    light_type=LightType.DISTANT,
+                    attributes={"inputs:intensity": 500.0},
+                ),
             ),
             (
                 "/Scene/Lighting/Fill",
                 LightParams(
                     light_type=LightType.RECT,
-                    intensity=1000.0,
-                    width=2.0, height=1.0,
                     translate=(5.0, 2.7, 4.0),
+                    attributes={
+                        "inputs:intensity": 1000.0,
+                        "inputs:width": 2.0,
+                        "inputs:height": 1.0,
+                    },
                 ),
             ),
             (
                 "/Scene/Lighting/Accent",
                 LightParams(
                     light_type=LightType.DISK,
-                    intensity=600.0,
-                    radius=0.2,
                     translate=(2.0, 2.5, 2.0),
+                    attributes={
+                        "inputs:intensity": 600.0,
+                        "inputs:radius": 0.2,
+                    },
                 ),
             ),
         ]
 
         for prim_path, light in lights:
-            stage_service.create_light(stage, prim_path, light)
-        stage_service.save_stage(stage)
+            light_utils.create_light(stage, prim_path, light)
+        stage_utils.save_stage(stage)
 
-        prims = stage_service.list_prims(stage)
+        prims = inspection_utils.list_prims(stage)
         assert len(prims) == 3, f"Expected 3 lights, got {len(prims)}"
 
         types = {p["light_type"] for p in prims}
         assert types == {"DistantLight", "RectLight", "DiskLight"}
-
-        print("test_create_multiple_light_types PASSED")
-
-
-if __name__ == "__main__":
-    test_create_sphere_light()
-    test_create_distant_light()
-    test_create_rect_light()
-    test_list_prims_includes_lights()
-    test_create_multiple_light_types()
-    print("\nAll light tests passed!")

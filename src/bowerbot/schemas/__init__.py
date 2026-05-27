@@ -17,7 +17,12 @@ from bowerbot.schemas.assets import (
 )
 from bowerbot.schemas.diagnostics import DiagnosticReport, Finding, FindingStatus
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
-from bowerbot.schemas.lights import LightParams, LightType
+from bowerbot.schemas.lights import (
+    LightParams,
+    LightPropertySpec,
+    LightType,
+    LightTypeSchemaInfo,
+)
 from bowerbot.schemas.materials import (
     MaterialXShaders,
     PreviewSurfaceShader,
@@ -68,7 +73,9 @@ __all__ = [
     "JointSummary",
     "JointsSummary",
     "LightParams",
+    "LightPropertySpec",
     "LightType",
+    "LightTypeSchemaInfo",
     "MaterialXShaders",
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",

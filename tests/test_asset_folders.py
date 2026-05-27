@@ -755,8 +755,10 @@ def test_add_light_creates_lgt():
             light=LightParams(
                 light_type=LightType.SPHERE,
                 translate=(0.0, 0.5, 0.0),
-                intensity=500.0,
-                radius=0.05,
+                attributes={
+                    "inputs:intensity": 500.0,
+                    "inputs:radius": 0.05,
+                },
             ),
         )
 
@@ -806,7 +808,7 @@ def test_add_multiple_lights():
             LightParams(
                 light_type=LightType.SPHERE,
                 translate=(0.0, 0.5, 0.0),
-                radius=0.05,
+                attributes={"inputs:radius": 0.05},
             ),
         )
         light_utils.add_light_to_folder(
@@ -814,7 +816,7 @@ def test_add_multiple_lights():
             LightParams(
                 light_type=LightType.DISK,
                 translate=(0.0, 0.3, 0.0),
-                radius=0.1,
+                attributes={"inputs:radius": 0.1},
             ),
         )
 
@@ -888,8 +890,10 @@ def test_disk_light_rotation_facing_down():
                 light_type=LightType.DISK,
                 translate=(0.0, 1.0, 0.0),
                 rotate=(-90.0, 0.0, 0.0),
-                intensity=1000.0,
-                radius=0.3,
+                attributes={
+                    "inputs:intensity": 1000.0,
+                    "inputs:radius": 0.3,
+                },
             ),
         )
 
@@ -935,9 +939,11 @@ def test_rect_light_rotation_facing_right():
                 light_type=LightType.RECT,
                 translate=(0.5, 0.0, 0.0),
                 rotate=(0.0, -90.0, 0.0),
-                intensity=800.0,
-                width=0.5,
-                height=0.5,
+                attributes={
+                    "inputs:intensity": 800.0,
+                    "inputs:width": 0.5,
+                    "inputs:height": 0.5,
+                },
             ),
         )
 

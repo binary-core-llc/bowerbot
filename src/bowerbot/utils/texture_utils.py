@@ -8,6 +8,8 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+from pxr import Usd
+
 from bowerbot.schemas import ASWFLayerNames, HDRIFormat, TextureCategory
 
 
@@ -72,6 +74,37 @@ def stage_asset_value(
         "in the library, or as an absolute path. Provide an absolute path to the "
         "source file, or copy it into the library first.",
     )
+
+
+def find_texture_references(
+    project_dir: Path,
+    file_name: str,
+) -> list[str]:
+    """Scan *project_dir* for USD files that reference *file_name*."""
+    referencing: list[str] = []
+    for usd_file in project_dir.rglob("*"):
+        if usd_file.suffix not in (".usd", ".usda", ".usdc"):
+            continue
+        try:
+            stage = Usd.Stage.Open(str(usd_file))
+        except Exception:
+            continue
+        if stage is None:
+            continue
+        for prim in stage.Traverse():
+            tex_attr = prim.GetAttribute("inputs:texture:file")
+            if not tex_attr or not tex_attr.Get():
+                continue
+            tex_val = tex_attr.Get()
+            tex_path = (
+                tex_val.path if hasattr(tex_val, "path") else str(tex_val)
+            )
+            if file_name in tex_path:
+                referencing.append(
+                    str(usd_file.relative_to(project_dir)),
+                )
+                break
+    return referencing
 
 
 def find_textures(

@@ -31,7 +31,7 @@ from bowerbot.logging_setup import configure_logging
 from bowerbot.project import Project
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
-from bowerbot.utils import stage_utils
+from bowerbot.utils import inspection_utils, stage_utils
 from bowerbot.utils.naming_utils import safe_project_name
 
 theme = Theme({
@@ -58,7 +58,7 @@ def _build_state(
 
     if project.scene_path.exists():
         state.stage = stage_utils.open_stage(project.scene_path)
-        state.object_count = len(stage_utils.list_prims(state.stage))
+        state.object_count = len(inspection_utils.list_prims(state.stage))
         state.mark_saved()
     return state
 
@@ -187,7 +187,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
     )
 
     if project and project.scene_path.exists() and state.object_count > 0:
-        objects = stage_utils.list_prims(state.stage)
+        objects = inspection_utils.list_prims(state.stage)
         object_summary = "\n".join(
             _format_object_summary(o) for o in objects
         )

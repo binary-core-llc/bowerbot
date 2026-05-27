@@ -102,7 +102,7 @@ def test_apply_api_on_scene_only_prim_without_scope_succeeds(
     """The exact pendulum failure: raw Cubes + omitted scope used to raise."""
     state = _scene_with_scene_authored_cubes(tmp_path)
 
-    result = physics_service.apply_api(state, {
+    result = physics_service.apply_physics_api(state, {
         "api_name": PhysicsApiName.RIGID_BODY.value,
         "prim_path": "/Scene/Cube_Anchor",
     })
@@ -118,7 +118,7 @@ def test_apply_api_explicit_scene_overrides_autodetect_on_placement(
 ) -> None:
     state = _scene_with_placed_asset(tmp_path)
 
-    result = physics_service.apply_api(state, {
+    result = physics_service.apply_physics_api(state, {
         "api_name": PhysicsApiName.RIGID_BODY.value,
         "prim_path": "/Scene/Things/Box_A",
         "scope": "scene",

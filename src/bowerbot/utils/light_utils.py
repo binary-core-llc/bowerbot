@@ -8,10 +8,17 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
+from typing import Any
 
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux
 
-from bowerbot.schemas import ASWFLayerNames, LightParams
+from bowerbot.schemas import (
+    ASWFLayerNames,
+    LightParams,
+    LightPropertySpec,
+    LightType,
+    LightTypeSchemaInfo,
+)
 from bowerbot.utils.asset_folder_utils import (
     ensure_layer_scope,
     ensure_root_reference,
@@ -20,19 +27,188 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_default_prim_name,
 )
 from bowerbot.utils.geometry_utils import unit_factor
-from bowerbot.utils.stage_utils import LIGHT_CLASSES, clear_orphan_variant_overs
+from bowerbot.utils.stage_utils import (
+    clear_orphan_variant_overs,
+    set_prim_attribute,
+    update_rotate_op,
+    update_translate_op,
+)
+from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
 from bowerbot.utils.variant_utils import cleanup_if_empty
+
+LIGHT_CLASSES: dict[str, type] = {
+    LightType.DISTANT: UsdLux.DistantLight,
+    LightType.DOME: UsdLux.DomeLight,
+    LightType.SPHERE: UsdLux.SphereLight,
+    LightType.RECT: UsdLux.RectLight,
+    LightType.DISK: UsdLux.DiskLight,
+    LightType.CYLINDER: UsdLux.CylinderLight,
+}
 
 logger = logging.getLogger(__name__)
 
-_LIGHT_EXTRA_ATTRS: dict[str, str] = {
-    "angle": "inputs:angle",
-    "texture": "inputs:texture:file",
-    "radius": "inputs:radius",
-    "width": "inputs:width",
-    "height": "inputs:height",
-    "length": "inputs:length",
-}
+# UsdLux inputs measured in stage units (scaled by asset MPU at write time).
+SPATIAL_LIGHT_INPUTS: frozenset[str] = frozenset({
+    "inputs:radius",
+    "inputs:width",
+    "inputs:height",
+    "inputs:length",
+})
+
+
+def list_light_type_properties(light_type: LightType) -> LightTypeSchemaInfo:
+    """Live schema-registry view of every input the light type declares."""
+    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)
+    if prim_def is None:
+        raise ValueError(
+            f"USD schema registry does not know {light_type.value}. "
+            "USD build is missing UsdLux.",
+        )
+
+    properties: list[LightPropertySpec] = []
+    for prop_name in prim_def.GetPropertyNames():
+        if not prop_name.startswith("inputs:"):
+            continue
+        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
+        if attr_spec is None:
+            continue
+        properties.append(LightPropertySpec(
+            name=prop_name,
+            kind="attribute",
+            type_name=str(attr_spec.typeName),
+            default=to_jsonable(attr_spec.default),
+            allowed_tokens=[
+                str(t) for t in (attr_spec.allowedTokens or [])
+            ],
+            documentation=property_doc(prim_def, prop_name, attr_spec),
+        ))
+
+    return LightTypeSchemaInfo(
+        light_type=light_type.value,
+        properties=properties,
+    )
+
+
+def scale_spatial_attributes(
+    attributes: dict[str, Any], factor: float,
+) -> dict[str, Any]:
+    """Return *attributes* with spatial UsdLux inputs scaled by *factor*."""
+    if factor == 1.0:
+        return dict(attributes)
+    return {
+        name: (value * factor if name in SPATIAL_LIGHT_INPUTS else value)
+        for name, value in attributes.items()
+    }
+
+
+def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
+    """Create a USD light prim in *stage* at *prim_path*."""
+    light_cls = LIGHT_CLASSES[light.light_type.value]
+    light_prim = light_cls.Define(stage, prim_path).GetPrim()
+
+    write_light_attributes(stage, prim_path, light.attributes)
+    if light.texture is not None:
+        tex_attr = light_prim.GetAttribute("inputs:texture:file")
+        if tex_attr:
+            tex_attr.Set(Sdf.AssetPath(light.texture))
+    apply_light_link(light_prim, light.light_link_includes)
+
+    xformable = UsdGeom.Xformable(light_prim)
+    xformable.ClearXformOpOrder()
+
+    tx, ty, tz = light.translate
+    xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
+
+    rx, ry, rz = light.rotate
+    if any(v != 0.0 for v in (rx, ry, rz)):
+        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
+
+
+def update_light(
+    stage: Usd.Stage,
+    prim_path: str,
+    *,
+    translate: tuple[float, float, float] | None = None,
+    rotate: tuple[float, float, float] | None = None,
+    texture: str | None = None,
+) -> None:
+    """Update an existing scene-level light's xform / HDRI texture."""
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim.IsValid():
+        msg = f"Prim not found: {prim_path}"
+        raise ValueError(msg)
+
+    if texture is not None:
+        tex_attr = prim.GetAttribute("inputs:texture:file")
+        if tex_attr:
+            tex_attr.Set(Sdf.AssetPath(texture))
+
+    if translate is not None:
+        update_translate_op(prim, Gf.Vec3d(*translate))
+    if rotate is not None:
+        update_rotate_op(prim, Gf.Vec3f(*rotate))
+
+
+def write_light_attributes(
+    stage: Usd.Stage, prim_path: str, attributes: dict[str, Any],
+) -> None:
+    """Write a UsdLux ``inputs:*`` dict onto an existing light prim."""
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim or not prim.IsValid():
+        raise ValueError(f"Prim not found: {prim_path}")
+    for name, value in attributes.items():
+        attr = prim.GetAttribute(name)
+        if not attr:
+            continue
+        set_prim_attribute(
+            stage, prim_path, name, value, expected_type=attr.GetTypeName(),
+        )
+
+
+def apply_light_link(light_prim: Usd.Prim, includes: list[str]) -> None:
+    """Author the UsdLux light:link collection only when targets are provided."""
+    if not includes:
+        return
+    binding = UsdLux.LightAPI(light_prim).GetLightLinkCollectionAPI()
+    binding.CreateIncludesRel().SetTargets([Sdf.Path(p) for p in includes])
+    binding.CreateIncludeRootAttr(False)
+
+
+def get_light_texture(stage: Usd.Stage, prim_path: str) -> str | None:
+    """Return the texture file path for a light prim, or ``None``."""
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim or not prim.IsValid():
+        return None
+    tex_attr = prim.GetAttribute("inputs:texture:file")
+    if not tex_attr or not tex_attr.Get():
+        return None
+    tex_val = tex_attr.Get()
+    return tex_val.path if hasattr(tex_val, "path") else str(tex_val)
+
+
+def format_light_prim(
+    prim: Usd.Prim, position: dict[str, float] | None,
+) -> dict:
+    """Format a light prim for ``list_prims``."""
+    data: dict = {
+        "prim_path": str(prim.GetPath()),
+        "kind": "light",
+        "light_type": prim.GetTypeName(),
+        "position": position,
+    }
+    intensity_attr = prim.GetAttribute("inputs:intensity")
+    if intensity_attr:
+        data["intensity"] = intensity_attr.Get()
+    exposure_attr = prim.GetAttribute("inputs:exposure")
+    if exposure_attr:
+        data["exposure"] = exposure_attr.Get()
+    color_attr = prim.GetAttribute("inputs:color")
+    if color_attr:
+        c = color_attr.Get()
+        data["color"] = {
+            "r": round(c[0], 3), "g": round(c[1], 3), "b": round(c[2], 3),
+        }
+    return data
 
 
 def add_light_to_folder(
@@ -40,11 +216,7 @@ def add_light_to_folder(
     light_name: str,
     light: LightParams,
 ) -> str:
-    """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path.
-
-    Spatial inputs (translate, radius, width, height, length) are
-    converted from meters to the asset's native units.
-    """
+    """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path."""
     lgt_path = asset_dir / ASWFLayerNames.LGT
     default_prim_name = resolve_default_prim_name(asset_dir)
 
@@ -71,24 +243,18 @@ def add_light_to_folder(
         msg = f"Unknown light type: {light.light_type.value}"
         raise ValueError(msg)
 
-    light_schema = light_cls.Define(stage, light_prim_path)
-    light_schema.CreateIntensityAttr(light.intensity)
-    light_schema.CreateExposureAttr(light.exposure)
-    light_schema.CreateColorAttr(Gf.Vec3f(*light.color))
-
+    light_prim = light_cls.Define(stage, light_prim_path).GetPrim()
     factor = unit_factor(asset_dir)
-    light_prim = light_schema.GetPrim()
-    _set_extra_attrs(
-        light_prim,
-        {
-            "angle": light.angle,
-            "texture": light.texture,
-            "radius": _scale_or_none(light.radius, factor),
-            "width": _scale_or_none(light.width, factor),
-            "height": _scale_or_none(light.height, factor),
-            "length": _scale_or_none(light.length, factor),
-        },
+
+    write_light_attributes(
+        stage, light_prim_path,
+        scale_spatial_attributes(light.attributes, factor),
     )
+    if light.texture is not None:
+        tex_attr = light_prim.GetAttribute("inputs:texture:file")
+        if tex_attr:
+            tex_attr.Set(Sdf.AssetPath(light.texture))
+    apply_light_link(light_prim, light.light_link_includes)
 
     xformable = UsdGeom.Xformable(light_prim)
     xformable.AddTranslateOp().Set(
@@ -187,24 +353,6 @@ def stage_asset_texture(asset_dir: Path, texture: str | None) -> str | None:
 
 
 # ── Internal helpers ──
-
-
-def _scale_or_none(value: float | None, factor: float) -> float | None:
-    """Multiply *value* by *factor*, preserving ``None``."""
-    return value * factor if value is not None else None
-
-
-def _set_extra_attrs(
-    light_prim: Usd.Prim,
-    values: dict[str, float | str | None],
-) -> None:
-    """Set type-specific attributes on a newly created light prim."""
-    for attr_name, usd_attr in _LIGHT_EXTRA_ATTRS.items():
-        value = values.get(attr_name)
-        if value is not None:
-            attr = light_prim.GetAttribute(usd_attr)
-            if attr:
-                attr.Set(value)
 
 
 def _apply_inverse_transform(

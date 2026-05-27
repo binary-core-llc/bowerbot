@@ -294,7 +294,7 @@ def test_service_applies_via_scene_placement(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    result = physics_service.apply_api(state, {
+    result = physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
@@ -313,7 +313,7 @@ def test_service_summary_returns_authored_apis(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsRigidBodyAPI",
         "prim_path": "/Scene/Models/Item_01/asset",
         "attributes": {"physics:kinematicEnabled": True},
@@ -329,7 +329,7 @@ def test_service_summary_returns_authored_apis(tmp_path):
 
 def test_service_list_api_properties():
     state = SceneState(scene_defaults=SceneDefaults())
-    info = physics_service.list_api_properties(state, {
+    info = physics_service.list_physics_api_properties(state, {
         "api_name": "PhysicsRigidBodyAPI",
     })
     assert info["api_name"] == "PhysicsRigidBodyAPI"
@@ -356,7 +356,7 @@ def test_apply_refuses_when_scene_has_masking_attribute(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
@@ -369,7 +369,7 @@ def test_apply_refuses_when_scene_has_masking_attribute(tmp_path):
     state.stage = stage_utils.open_stage(state.stage_path)
 
     with pytest.raises(ValueError, match="scene.usda opinion"):
-        physics_service.apply_api(state, {
+        physics_service.apply_physics_api(state, {
             "api_name": "PhysicsCollisionAPI",
             "prim_path": "/Scene/Models/Item_01/asset/Body",
             "attributes": {"physics:collisionEnabled": True},
@@ -380,7 +380,7 @@ def test_apply_clear_masking_overrides_removes_scene_opinion(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
@@ -392,7 +392,7 @@ def test_apply_clear_masking_overrides_removes_scene_opinion(tmp_path):
     )
     state.stage = stage_utils.open_stage(state.stage_path)
 
-    result = physics_service.apply_api(state, {
+    result = physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
@@ -415,7 +415,7 @@ def test_apply_confirm_masked_writes_phy_despite_scene_override(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
@@ -427,7 +427,7 @@ def test_apply_confirm_masked_writes_phy_despite_scene_override(tmp_path):
     )
     state.stage = stage_utils.open_stage(state.stage_path)
 
-    result = physics_service.apply_api(state, {
+    result = physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
@@ -446,7 +446,7 @@ def test_remove_api_refuses_with_scene_masking(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
@@ -458,7 +458,7 @@ def test_remove_api_refuses_with_scene_masking(tmp_path):
     state.stage = stage_utils.open_stage(state.stage_path)
 
     with pytest.raises(ValueError, match="scene.usda opinion"):
-        physics_service.remove_api(state, {
+        physics_service.remove_physics_api(state, {
             "api_name": "PhysicsCollisionAPI",
             "prim_path": "/Scene/Models/Item_01/asset/Body",
         })
@@ -605,14 +605,14 @@ def test_service_scope_scene_per_placement_override(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
     })
     assert (asset / "phy.usda").exists()
 
-    result = physics_service.apply_api(state, {
+    result = physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": False},
@@ -632,7 +632,7 @@ def test_service_scope_invalid_refused(tmp_path):
     state = _place_asset(tmp_path, asset)
 
     with pytest.raises(ValueError, match="Invalid scope"):
-        physics_service.apply_api(state, {
+        physics_service.apply_physics_api(state, {
             "api_name": "PhysicsCollisionAPI",
             "prim_path": "/Scene/Models/Item_01/asset/Body",
             "scope": "bogus",
@@ -643,12 +643,12 @@ def test_service_summary_returns_combined_asset_and_scene(tmp_path):
     asset = _make_asset(tmp_path, "chair")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": True},
     })
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsCollisionAPI",
         "prim_path": "/Scene/Models/Item_01/asset/Body",
         "attributes": {"physics:collisionEnabled": False},
@@ -1422,7 +1422,7 @@ def test_service_apply_articulation_root_api_happy_path(tmp_path):
     asset = _make_two_body_asset(tmp_path, "robot")
     state = _place_asset(tmp_path, asset)
 
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": "PhysicsArticulationRootAPI",
         "prim_path": "/Scene/Models/Item_01/asset",
     })

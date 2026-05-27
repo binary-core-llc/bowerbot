@@ -19,7 +19,7 @@ def list_physics_api_properties(
 ) -> ToolResult:
     """Return live schema-registry info for a UsdPhysics applied API."""
     try:
-        data = physics_service.list_api_properties(_state, params)
+        data = physics_service.list_physics_api_properties(_state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
     return ToolResult(success=True, data=data)
@@ -30,7 +30,7 @@ def apply_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
     if (err := require_stage(state)):
         return err
     try:
-        data = physics_service.apply_api(state, params)
+        data = physics_service.apply_physics_api(state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
     return ToolResult(success=True, data=data)
@@ -41,7 +41,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
     if (err := require_stage(state)):
         return err
     try:
-        data = physics_service.remove_api(state, params)
+        data = physics_service.remove_physics_api(state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
     return ToolResult(success=True, data=data)

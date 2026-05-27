@@ -3,7 +3,10 @@
 
 """USD light schemas."""
 
+from __future__ import annotations
+
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -19,25 +22,30 @@ class LightType(StrEnum):
     CYLINDER = "CylinderLight"
 
 
-class LightParams(BaseModel):
-    """Parameters describing a USD light.
+class LightPropertySpec(BaseModel):
+    """One UsdLux property discovered from the schema registry."""
 
-    Contains only the light's own attributes. Placement context
-    (scene prim path or asset folder + light name) is passed
-    separately to the engine methods.
-    """
+    name: str
+    kind: str
+    type_name: str | None = None
+    default: Any = None
+    allowed_tokens: list[str] = []
+    documentation: str = ""
+
+
+class LightTypeSchemaInfo(BaseModel):
+    """Live introspection of a UsdLux concrete-prim schema."""
+
+    light_type: str
+    properties: list[LightPropertySpec] = []
+
+
+class LightParams(BaseModel):
+    """Parameters describing a USD light."""
 
     light_type: LightType
-    intensity: float = 1000.0
-    exposure: float = 0.0  # Power-of-2 multiplier on intensity (camera stops)
-    color: tuple[float, float, float] = (1.0, 1.0, 1.0)
     translate: tuple[float, float, float] = (0.0, 0.0, 0.0)
     rotate: tuple[float, float, float] = (0.0, 0.0, 0.0)
-    # Type-specific (only relevant ones used per light type)
-    angle: float | None = None   # DistantLight
-    texture: str | None = None   # DomeLight HDRI path
-    radius: float | None = None  # SphereLight, DiskLight, CylinderLight
-    width: float | None = None   # RectLight
-    height: float | None = None  # RectLight
-    length: float | None = None  # CylinderLight
-    light_link_includes: list[str] = []  # UsdCollectionAPI light:link.includes
+    texture: str | None = None
+    light_link_includes: list[str] = []
+    attributes: dict[str, Any] = {}

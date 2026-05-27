@@ -280,38 +280,103 @@ Skills extend BowerBot with **external** asset providers, DCC connectors, and si
 
 ### Scene Builder Tools
 
-BowerBot's core tools for building USD scenes:
+BowerBot's core tools, grouped by domain. Every tool maps 1:1 to a
+service function and is described in the LLM prompts under
+`src/bowerbot/prompts/`.
+
+#### Stage & scene
 
 | Tool | Description |
 |------|-------------|
 | `create_stage` | Initialize a new USD scene with standard hierarchy |
+| `list_scene` | Show current scene with positions and bounding boxes |
+| `list_prim_children` | Discover mesh parts inside a referenced asset |
+| `list_prim_attributes` | Enumerate every attribute on a prim with type, value, authored flag |
+| `set_prim_attribute` | Author or clear an attribute opinion (per-instance overrides; `value=null` clears) |
+| `move_asset` | Reposition an existing object without creating duplicates |
+| `rename_prim` | Move/rename objects in the hierarchy (cascades into variant bodies) |
+| `remove_prim` | Delete objects from the scene (cascades orphan-opinion cleanup) |
+| `compute_grid_layout` | Calculate evenly spaced positions |
+| `save_scene_snapshot` / `list_scene_snapshots` / `delete_scene_snapshot` | Flatten the live `scene.usda` into a frozen `<name>.usda` snapshot you can publish |
+
+#### Assets
+
+| Tool | Description |
+|------|-------------|
 | `place_asset` | Add an asset (auto-creates ASWF folder for loose geometry) |
 | `place_asset_inside` | Nest an asset inside an ASWF container's `contents.usda` |
-| `move_asset` | Reposition an existing object without creating duplicates |
-| `compute_grid_layout` | Calculate evenly spaced positions |
-| `list_scene` | Show current scene with positions and bounding boxes |
-| `rename_prim` | Move/rename objects in the hierarchy |
-| `remove_prim` | Delete objects from the scene |
-| `create_light` | Add native USD lights (sun, dome, point, area, disk, tube) |
-| `update_light` | Modify an existing light's properties |
-| `remove_light` | Delete a light from the scene or asset |
-| `create_material` | Author a procedural MaterialX material and bind it to a prim |
-| `bind_material` | Apply a material to a specific mesh part (writes into asset mtl.usda) |
-| `remove_material` | Clear material binding from a prim |
-| `list_materials` | Show all materials and their bindings |
-| `cleanup_unused_materials` | Prune material definitions no prim binds to (per asset or project-wide) |
-| `cleanup_unused_contents` | Prune empty `contents.usda` scopes left after removing nested assets |
-| `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data, per asset or project-wide |
-| `list_prim_children` | Discover mesh parts inside a referenced asset |
 | `list_project_assets` | Show asset folders with scene usage status |
-| `delete_project_asset` | Remove an asset folder (checks references first) |
+| `delete_project_asset` | Remove an asset folder (scans variant bodies in every layer first) |
 | `delete_project_texture` | Remove a texture file (checks references first) |
+| `cleanup_unused_contents` | Prune nested asset wrappers whose target folder no longer exists |
+| `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data |
+
+#### Library
+
+| Tool | Description |
+|------|-------------|
 | `search_assets` | Find USD assets in the user's library by keyword (geo, mtl, package) |
 | `list_assets` | List every USD asset in the user's library, classified by category |
 | `search_textures` | Find HDRIs and material maps in the asset library by keyword |
 | `list_textures` | List every HDRI and material map in the asset library |
-| `validate_scene` | Check for USD errors |
-| `package_scene` | Bundle as `.usdz` |
+
+#### Lighting
+
+| Tool | Description |
+|------|-------------|
+| `list_light_type_properties` | Live UsdLux schema view for a light type (call before `create_light` to discover supported `inputs:*`) |
+| `create_light` | Add a native USD light (sun, dome, point, area, disk, tube) at scene or asset level |
+| `update_light` | Modify an existing light's xform / HDRI texture |
+| `remove_light` | Delete a light from the scene or asset |
+
+#### Materials
+
+| Tool | Description |
+|------|-------------|
+| `create_material` | Author a procedural MaterialX material and bind it to a prim |
+| `bind_material` | Apply a material to a specific mesh part (writes into asset `mtl.usda`) |
+| `remove_material` | Clear material binding from a prim |
+| `list_materials` | Show all materials and their bindings |
+| `cleanup_unused_materials` | Prune material definitions no prim binds to |
+
+#### Physics
+
+| Tool | Description |
+|------|-------------|
+| `list_physics_api_properties` | Live UsdPhysics schema view for an applied API (call before `apply_physics_api`) |
+| `apply_physics_api` | Apply a UsdPhysics API (RigidBody, Mass, Collision, MeshCollision, ArticulationRoot) to a prim |
+| `remove_physics_api` | Remove a UsdPhysics API and any dependent APIs |
+| `setup_physics_scene` | Create `/Scene/Physics` and a `UsdPhysics.Scene` with gravity |
+| `get_physics_summary` | Return asset-side + scene-side physics opinions for a prim |
+| `list_joint_properties` | Schema view for a UsdPhysics typed joint |
+| `create_joint` / `remove_joint` / `list_joints` | Author / remove / list typed joints (Revolute, Prismatic, Spherical, Fixed, Distance) at scene or asset scope |
+| `create_or_update_collision_group` / `remove_collision_group` / `list_collision_groups` | Manage `UsdPhysicsCollisionGroup` membership and filter relationships |
+
+#### Variants
+
+Asset-level variants live in `<asset>/variants.usda`; scene-level
+variants live inline in `scene.usda` on a carrier prim. Tool names
+carry an `asset_` or `scene_` prefix so the LLM never has to guess.
+
+| Tool | Description |
+|------|-------------|
+| `add_asset_material_variant` | Bind a different material set per variant |
+| `add_asset_geometry_variant` / `setup_asset_geometry_variants` / `list_asset_geo_files` | Swap geometry / LOD payloads per variant |
+| `add_asset_attribute_variant` | Override any prim attribute per variant (stages texture assets automatically) |
+| `add_asset_configuration_variant` | Activate / deactivate prims per variant |
+| `add_scene_lighting_attribute_variant` / `add_scene_lighting_selection_variant` | Lighting mood swaps + light-type swaps on `/Scene/Lighting` |
+| `add_scene_model_selection_variant` | Swap which asset reference loads at a placement (auto-promotes the existing ref into a variant body on first call) |
+| `select_asset_variant` / `select_asset_variant_for_instance` / `select_scene_variant` | Choose the active variant |
+| `remove_asset_variant` / `remove_asset_variant_set` / `remove_scene_variant` / `remove_scene_variant_set` | Delete a variant or whole set (cascades orphan cleanup, surfaces suspect sets) |
+| `list_variants` | Show every variant set with carrier path, selections, and authoring layer |
+
+#### Validation, packaging, diagnostics
+
+| Tool | Description |
+|------|-------------|
+| `validate_scene` | Check for USD errors (USD's `UsdValidation` framework + BowerBot's invariants) |
+| `package_scene` | Bundle as `.usdz` (with optional Apple AR Quick Look strict-subset pre-validation) |
+| `diagnose` | Run the registered diagnostic checks and return a report (OK / WARNING / FAIL findings with remediation hints) |
 
 ### Extension Skills
 
@@ -428,7 +493,7 @@ All settings live in `~/.bowerbot/config.json`. The `skills` block holds the con
 ```json
 {
   "llm": {
-    "model": "gpt-4.1",
+    "model": "anthropic/claude-sonnet-4-6",
     "api_key": "sk-...",
     "temperature": 0.1,
     "max_tokens": 4096,
@@ -457,21 +522,34 @@ All settings live in `~/.bowerbot/config.json`. The `skills` block holds the con
 Switch models by changing one line:
 
 ```json
-{ "model": "gpt-4.1" }
+{ "model": "anthropic/claude-opus-4-7" }
 { "model": "anthropic/claude-sonnet-4-6" }
+{ "model": "gpt-5" }
 { "model": "deepseek/deepseek-chat" }
 ```
 
 ### Tested Models
 
+BowerBot leans hard on tool calling, multi-step orchestration, and the
+SKILL.md instructions injected into the system prompt. The model table
+below ranks models by how well they hold up under that load.
+
 | Model | Tool Calling | Instruction Following | Recommended |
 |-------|-------------|----------------------|-------------|
-| `gpt-4.1` | Excellent | Excellent | **Yes** (default) |
-| `gpt-4.1-mini` | Good | Good | Yes (budget) |
+| `anthropic/claude-opus-4-7` | Excellent | Excellent | **Yes** (best overall) |
+| `anthropic/claude-sonnet-4-6` | Excellent | Excellent | **Yes** (default — best value) |
+| `anthropic/claude-haiku-4-5-20251001` | Good | Good | Yes (budget / fast) |
+| `gpt-5` | Excellent | Excellent | Yes |
+| `gpt-5-mini` | Good | Good | Yes (budget) |
+| `gpt-4.1` | Good | Good | Works (legacy — newer models give a better experience) |
+| `gpt-4.1-mini` | Fair | Fair | Works (legacy budget) |
 | `gpt-4o` | Poor | Poor | No (skips tool calls, ignores SKILL.md) |
-| `anthropic/claude-sonnet-4-6` | Excellent | Excellent | Yes |
 
-BowerBot relies heavily on tool calling and SKILL.md instructions. Models that don't follow tool-calling patterns reliably will produce poor results.
+Claude Opus 4.7 and Sonnet 4.6 give the most reliable experience today,
+especially on long sessions (physics + variants + materials in the same
+project) where consistent multi-round tool calling matters most.
+GPT-4.1 still works for simple flows but is no longer the recommended
+default — pick a current-generation model when you can.
 
 ### Token Management
 
@@ -537,42 +615,65 @@ src/bowerbot/
   prompts/            # LLM instructions as markdown (editable without code changes)
     core.md
     scene_building.md
+    assets.md
     library.md
+    lights.md
+    materials.md
+    physics.md
     textures.md
     variants.md
 
   schemas/            # Pydantic models and enums, grouped by domain
     assets.py         #   Asset formats, categories, ASWF layer names, metadata
-    transforms.py     #   TransformParams, PositionMode, SceneObject
-    lights.py         #   LightType, LightParams
+    diagnostics.py    #   DiagnosticReport, Finding, FindingStatus
+    intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
+    lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
+    physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
+                      #   PhysicsApiSchemaInfo, joint/collision-group summaries
+    scene.py          #   SceneNamespace (canonical /Scene/* layout)
     textures.py       #   HDRI / image / texture-category enums
+    transforms.py     #   TransformParams, PositionMode, SceneObject
     validation.py     #   Severity, ValidationIssue, ValidationResult
     variants.py       #   VariantCategory, AddVariant params, VariantsSummary
 
-  services/           # State-aware orchestrators, one per tools module
-    stage_service.py       #   create_stage, list_scene, rename_prim, move_asset, ...
-    asset_service.py       #   place_asset, place_asset_inside, list/delete_project_*
-    library_service.py     #   list_assets, search_assets, find_package_for
-    light_service.py       #   create_light, update_light, remove_light
-    material_service.py    #   create_material, bind_material, list/remove/cleanup
+  services/           # State-aware orchestrators. One same-named function per tool.
+    stage_service.py       #   create_stage, list_scene, rename/remove_prim, move_asset,
+                           #   set/list_prim_attribute(s), snapshot lifecycle, ...
+    asset_service.py       #   place_asset, place_asset_inside, list/delete_project_*,
+                           #   cleanup_unused_contents, freeze_asset
+    library_service.py     #   list_assets, search_assets
+    light_service.py       #   list_light_type_properties, create/update/remove_light
+    material_service.py    #   create/bind/remove_material, list_materials,
+                           #   cleanup_unused_materials
+    physics_service.py     #   list_physics_api_properties, apply/remove_physics_api,
+                           #   setup_physics_scene, get_physics_summary, joints (3),
+                           #   collision groups (3)
     texture_service.py     #   list_textures, search_textures
     validation_service.py  #   validate_scene, package_scene
     variant_service.py     #   add_asset_(material|geometry|attribute|configuration)_variant,
-                           #   add_scene_lighting_(attribute|selection)_variant,
+                           #   add_scene_(lighting_attribute|lighting_selection|model_selection)_variant,
                            #   list_variants, select/remove_asset_variant(_set|_for_instance),
                            #   select/remove_scene_variant(_set)
+    diagnose_service.py    #   diagnose (runs the registered diagnostic checks)
 
-  tools/              # LLM-facing API layer (tool defs + thin handlers)
+  tools/              # LLM-facing API layer (tool defs + thin handlers).
+                      # Every public function mirrors a service function 1:1.
     _helpers.py            #   Precondition guards (require_stage / project / library)
-    stage_tools.py         #   create_stage, list_scene, rename_prim, move_asset, ...
-    asset_tools.py         #   place_asset, place_asset_inside, list/delete_project_*
+    stage_tools.py         #   create_stage, list_scene, rename/remove_prim, move_asset,
+                           #   set/list_prim_attribute(s), snapshot lifecycle, ...
+    asset_tools.py         #   place_asset(_inside), list/delete_project_*,
+                           #   cleanup_unused_contents, freeze_asset
     library_tools.py       #   search_assets, list_assets
-    light_tools.py         #   create_light, update_light, remove_light
-    material_tools.py      #   create_material, bind_material, list/remove_material
+    light_tools.py         #   list_light_type_properties, create/update/remove_light
+    material_tools.py      #   create/bind/remove_material, list_materials,
+                           #   cleanup_unused_materials
+    physics_tools.py       #   physics APIs (3), physics scene + summary (2),
+                           #   joints (4), collision groups (3)
     texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
     variant_tools.py       #   variant authoring + selection (asset + scene-instance)
+    diagnose_tools.py      #   diagnose
 
   skills/             # Skill SDK. The contract every skill implements.
                       # Skills themselves ship as separate pip packages.
@@ -580,28 +681,41 @@ src/bowerbot/
                            #   SkillCategory, Tool, ToolResult
     registry.py            #   Entry-point discovery and tool routing
 
-  utils/              # Pure-function primitives shared by services
-    stage_utils.py           #   Stage create/open/save, references, transforms, prims,
-                             #   ref-path scanning, LIGHT_CLASSES
-    asset_intake_utils.py    #   intake_folder, intake_usdz, create_asset_folder, ASWF
-    asset_folder_utils.py    #   ASWF folder primitives (detect root, layer scopes,
-                             #   resolve_asset_dir_for_prim)
-    library_utils.py         #   scan_library, find_package_for
-    light_utils.py           #   light_in_folder primitives, HDRI staging
-    material_utils.py        #   material_in_folder primitives, find_first_material
-    texture_utils.py         #   find_textures, copy_texture_to_project
-    validation_utils.py      #   validate_stage, package_to_usdz, validate_asset_variants
-    variant_utils.py         #   variants.usda lifecycle, author_in_variant keystone,
-                             #   apply_variant, set/clear_default, removal + cleanup
-    geometry_utils.py        #   Bounds, unit conversion, layout math
-    dependency_utils.py      #   USD dependency tree walker
-    naming_utils.py          #   Name sanitization for files, prims, projects
+  utils/              # Pure-function primitives. One domain per file.
+    stage_utils.py             #   USD-stage primitives: open/save, references,
+                               #   xform-op edits, namespace edits, set/list_prim_attribute
+    inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, physics,
+                               #   placements, geometry)
+    asset_intake_utils.py      #   intake_folder, intake_usdz, create_asset_folder, ASWF
+    asset_folder_utils.py      #   ASWF folder primitives (detect root, layer scopes,
+                               #   resolve_asset_dir_for_prim)
+    library_utils.py           #   scan_library, find_package_for
+    light_utils.py             #   All light authoring: create/update/remove,
+                               #   list_light_type_properties, lgt.usda lifecycle,
+                               #   HDRI staging
+    material_utils.py          #   material_in_folder primitives, find_first_material
+    texture_utils.py           #   find_textures, copy_texture_to_project,
+                               #   find_texture_references
+    physics_utils.py           #   All physics authoring: APIs, joints, collision groups,
+                               #   phy.usda lifecycle, masking-policy enforcement
+    physics_typing_utils.py    #   is_joint / is_physics_scene / is_collision_group / ...
+    physics_diagnostic_utils.py #  Registered physics diagnostic checks
+    diagnostic_registry_utils.py # CHECKS registry + register decorator
+    scene_integrity_utils.py   #   Generic dangling-rel/target scrubbers
+    validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants
+    variant_utils.py           #   variants.usda lifecycle, author_in_variant keystone,
+                               #   apply_variant, set/clear_default, removal + cleanup
+    geometry_utils.py          #   Bounds, unit conversion, layout math
+    dependency_utils.py        #   USD dependency tree walker
+    naming_utils.py            #   Name sanitization for files, prims, projects
+    usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
+                               #   (used by both physics_utils and light_utils)
   gateway/            # Future: FastAPI + MCP server
 ```
 
 **Design principles**
 
-- **One tools module, one service**: every service module backs exactly one tool surface, with one orchestrator per tool. Shared primitives live in `utils/`, called freely by any service.
+- **Tool ↔ service ↔ prompt 1:1:1**: every public tool function has a same-named public service function and is described in some `prompts/*.md` file. A test in `tests/test_tool_service_prompt_invariant.py` fails the build if this ever drifts.
 - **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums) and a small set of state objects (`SceneState`, `Project`).
 - **Tools are thin**: guard preconditions, call ONE service, wrap in `ToolResult`. No business logic, no util calls, no cross-service routing.
 - **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
@@ -620,7 +734,7 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 
 **Scene level**
 - `metersPerUnit = 1.0`, `upAxis = "Y"`, `defaultPrim` always set
-- Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Props`
+- Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Props`, `/Scene/Physics`
 - References only: no inline geometry, no scattered material sublayers
 - Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched
 - Pre-packaging validator checks `defaultPrim`, units, up-axis, reference resolution, and material bindings

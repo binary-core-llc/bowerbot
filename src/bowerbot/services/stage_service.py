@@ -12,6 +12,7 @@ from bowerbot.state import SceneState
 from bowerbot.utils import (
     asset_intake_utils,
     geometry_utils,
+    inspection_utils,
     scene_integrity_utils,
     stage_utils,
 )
@@ -33,7 +34,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     state.stage_path = state.project.scene_path
     if state.stage_path.exists():
         state.stage = stage_utils.open_stage(state.stage_path)
-        state.object_count = len(stage_utils.list_prims(state.stage))
+        state.object_count = len(inspection_utils.list_prims(state.stage))
         logger.info("Reopened existing stage: %s", state.stage_path)
         return {
             "stage_path": str(state.stage_path),
@@ -61,7 +62,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 def list_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Return every placement, light, and physics-infrastructure prim in the scene."""
     del params
-    objects = stage_utils.list_prims(state.stage)
+    objects = inspection_utils.list_prims(state.stage)
     return {
         "object_count": len(objects),
         "objects": objects,

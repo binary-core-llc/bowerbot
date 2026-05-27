@@ -203,3 +203,20 @@ before this validation existed), use `freeze_asset`:
 
 `freeze_asset` is a no-op on already-clean assets (returns
 `baked: false` for them).
+
+### Inspecting and cleaning up the project
+
+Use these read/maintenance tools when the user asks about what is
+in their project or when an asset reference has gone stale.
+
+- `list_project_assets()` — list every asset folder under the
+  project's `assets/` directory, with file paths. Use this to answer
+  "what assets do I have?" or before suggesting a `place_asset` call.
+- `delete_project_asset(name=...)` — remove an asset folder. Refuses
+  by default if the asset is still referenced anywhere in the scene
+  (the response lists referencing prims so the user can decide).
+- `cleanup_unused_contents()` — sweep nested asset wrappers under
+  every container's `contents.usda` and remove the ones whose
+  referenced sub-asset folder no longer exists. Run this after the
+  user deletes an asset that was nested inside another, or when a
+  `place_asset_inside` reference shows up as missing.

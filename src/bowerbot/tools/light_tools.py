@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Light tools — create / update / remove scene + asset lights."""
+"""Light tools — schema discovery + create / update / remove lights."""
 
 from __future__ import annotations
 
@@ -12,6 +12,17 @@ from bowerbot.services import light_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 from bowerbot.tools._helpers import require_stage
+
+
+def list_light_type_properties(
+    state: SceneState, params: dict[str, Any],
+) -> ToolResult:
+    """Return every UsdLux input the given light type declares."""
+    try:
+        data = light_service.list_light_type_properties(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
 
 
 def create_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
@@ -49,18 +60,65 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 TOOLS: list[Tool] = [
     Tool(
+        name="list_light_type_properties",
+        description=(
+            "Live UsdLux schema view of every inputs:* attribute the given "
+            "light type declares: name, type, default, and documentation. "
+            "Call this BEFORE create_light to discover the attribute names "
+            "and default values that the type supports (e.g. inputs:intensity, "
+            "inputs:radius for SphereLight, inputs:width/inputs:height for "
+            "RectLight). Pass any subset of those names back in create_light's "
+            "attributes dict."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "light_type": {
+                    "type": "string",
+                    "enum": [t.value for t in LightType],
+                    "description": (
+                        "Light type to introspect. DistantLight = sun/"
+                        "directional, DomeLight = environment/HDRI, "
+                        "SphereLight = point, RectLight = area, "
+                        "DiskLight = round area, CylinderLight = tube."
+                    ),
+                },
+            },
+            "required": ["light_type"],
+        },
+    ),
+    Tool(
         name="create_light",
         description=(
             "Create a USD light. By default creates a scene-level light in "
             "/Scene/Lighting. If asset_prim_path is provided, creates an "
             "asset-level light in that asset's lgt.usda (e.g. a lamp's bulb "
-            "light). For asset lights, use position_mode to choose between "
-            "absolute asset-local coordinates (e.g. from list_prim_children "
-            "bounds) or bounds_offset (relative to the asset's surfaces)."
+            "light). UsdLux inputs (intensity, color, radius, width, height, "
+            "angle, colorTemperature, etc.) are passed via the attributes "
+            "dict using their full inputs:* names. Call "
+            "list_light_type_properties FIRST to discover the attribute names "
+            "and defaults for the chosen light type. For asset lights, use "
+            "position_mode to choose between absolute asset-local coordinates "
+            "(e.g. from list_prim_children bounds) or bounds_offset "
+            "(relative to the asset's surfaces)."
         ),
         parameters={
             "type": "object",
             "properties": {
+                "light_type": {
+                    "type": "string",
+                    "enum": [t.value for t in LightType],
+                    "description": (
+                        "Type of light. DistantLight = sun/directional, "
+                        "DomeLight = environment/HDRI, SphereLight = point, "
+                        "RectLight = area, DiskLight = round area, "
+                        "CylinderLight = tube."
+                    ),
+                },
+                "light_name": {
+                    "type": "string",
+                    "description": "Human-readable name (e.g. 'Key_Light', 'Sun').",
+                },
                 "asset_prim_path": {
                     "type": "string",
                     "description": (
@@ -83,52 +141,6 @@ TOOLS: list[Tool] = [
                         "(e.g. a bulb 0.5m above a lamp)."
                     ),
                     "default": PositionMode.BOUNDS_OFFSET.value,
-                },
-                "light_type": {
-                    "type": "string",
-                    "enum": [t.value for t in LightType],
-                    "description": (
-                        "Type of light. DistantLight = sun/directional, "
-                        "DomeLight = environment/HDRI, SphereLight = point, "
-                        "RectLight = area, DiskLight = round area, "
-                        "CylinderLight = tube."
-                    ),
-                },
-                "light_name": {
-                    "type": "string",
-                    "description": "Human-readable name (e.g. 'Key_Light', 'Sun').",
-                },
-                "intensity": {
-                    "type": "number",
-                    "description": (
-                        "Light intensity. Default: 1000 for most lights, "
-                        "1.0 for DomeLight."
-                    ),
-                    "default": 1000.0,
-                },
-                "exposure": {
-                    "type": "number",
-                    "description": (
-                        "Power-of-2 multiplier on intensity (camera stops). "
-                        "Final brightness = intensity * 2^exposure. +1 "
-                        "doubles, -1 halves. Default: 0."
-                    ),
-                    "default": 0.0,
-                },
-                "color_r": {
-                    "type": "number",
-                    "description": "Red channel (0-1). Default: 1.0.",
-                    "default": 1.0,
-                },
-                "color_g": {
-                    "type": "number",
-                    "description": "Green channel (0-1). Default: 1.0.",
-                    "default": 1.0,
-                },
-                "color_b": {
-                    "type": "number",
-                    "description": "Blue channel (0-1). Default: 1.0.",
-                    "default": 1.0,
                 },
                 "translate_x": {
                     "type": "number",
@@ -160,35 +172,31 @@ TOOLS: list[Tool] = [
                     "description": "Rotation around Z axis in degrees.",
                     "default": 0.0,
                 },
-                "angle": {
-                    "type": "number",
-                    "description": (
-                        "DistantLight only: angular size in degrees. "
-                        "0.53 = realistic sun."
-                    ),
-                },
                 "texture": {
                     "type": "string",
-                    "description": "DomeLight only: path to HDRI texture file.",
-                },
-                "radius": {
-                    "type": "number",
                     "description": (
-                        "SphereLight/DiskLight/CylinderLight: light "
-                        "radius in meters."
+                        "DomeLight / RectLight only. Absolute path to an "
+                        "HDRI or texture file on disk. BowerBot copies the "
+                        "file into the project's textures/ (scene light) or "
+                        "the asset's maps/ (asset light) and authors the "
+                        "relative reference into inputs:texture:file. "
+                        "Pre-staged relative paths (e.g. ./textures/foo.hdr) "
+                        "are accepted unchanged."
                     ),
                 },
-                "width": {
-                    "type": "number",
-                    "description": "RectLight only: width in meters.",
-                },
-                "height": {
-                    "type": "number",
-                    "description": "RectLight only: height in meters.",
-                },
-                "length": {
-                    "type": "number",
-                    "description": "CylinderLight only: length in meters.",
+                "attributes": {
+                    "type": "object",
+                    "description": (
+                        "Free dict of UsdLux inputs:* attributes to author, "
+                        "keyed by full attribute name "
+                        "(e.g. 'inputs:intensity', 'inputs:color', "
+                        "'inputs:radius'). Use list_light_type_properties to "
+                        "discover supported names and defaults. Spatial "
+                        "inputs (radius, width, height, length) are given in "
+                        "meters; BowerBot converts to the asset's native "
+                        "units for asset lights."
+                    ),
+                    "additionalProperties": True,
                 },
                 "light_link_includes": {
                     "type": "array",
@@ -199,8 +207,7 @@ TOOLS: list[Tool] = [
                         "prim (standard USD behavior). Populated = the "
                         "light only affects the listed prims and their "
                         "descendants. Authored as a UsdLux light:link "
-                        "collection. Use this for 'this rim light only on "
-                        "the hero prop' or product-shot rigs."
+                        "collection."
                     ),
                 },
             },
@@ -215,10 +222,10 @@ TOOLS: list[Tool] = [
             "Only the things this tool covers go here: xform ops "
             "(translate/rotate, including bounds_offset for asset lights) "
             "and texture (file copy into <project>/textures/ or the "
-            "asset's maps/). For scalar attribute tweaks like intensity, "
-            "exposure, color, radius, angle, width, height, length, "
-            "colorTemperature, treatAsLine, etc., use set_prim_attribute "
-            "on the light prim directly."
+            "asset's maps/). For any UsdLux attribute (intensity, exposure, "
+            "color, radius, angle, width, height, length, colorTemperature, "
+            "diffuse, specular, normalize, etc.), use set_prim_attribute on "
+            "the light prim directly."
         ),
         parameters={
             "type": "object",
@@ -287,6 +294,7 @@ TOOLS: list[Tool] = [
 
 
 HANDLERS = {
+    "list_light_type_properties": list_light_type_properties,
     "create_light": create_light,
     "update_light": update_light,
     "remove_light": remove_light,

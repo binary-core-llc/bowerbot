@@ -2068,11 +2068,17 @@ def test_remove_light_from_folder_clears_orphan_asset_variant_overs(tmp_path):
     asset = make_asset(tmp_path, "lamp")
     light_utils.add_light_to_folder(
         asset, "Bulb",
-        LightParams(light_type=LightType.SPHERE, intensity=1000.0),
+        LightParams(
+            light_type=LightType.SPHERE,
+            attributes={"inputs:intensity": 1000.0},
+        ),
     )
     light_utils.add_light_to_folder(
         asset, "Disk",
-        LightParams(light_type=LightType.DISK, intensity=1000.0),
+        LightParams(
+            light_type=LightType.DISK,
+            attributes={"inputs:intensity": 1000.0},
+        ),
     )
 
     variant_utils.apply_variant(

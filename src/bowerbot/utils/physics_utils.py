@@ -45,6 +45,7 @@ from bowerbot.utils.asset_folder_utils import (
     require_asset_context,
     resolve_default_prim_name,
 )
+from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
 
 logger = logging.getLogger(__name__)
 
@@ -141,11 +142,11 @@ def list_api_properties(api_name: PhysicsApiName) -> PhysicsApiSchemaInfo:
                 name=prop_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=_to_jsonable(attr_spec.default),
+                default=to_jsonable(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
-                documentation=_property_doc(prim_def, prop_name, attr_spec),
+                documentation=property_doc(prim_def, prop_name, attr_spec),
             ))
             continue
         rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
@@ -153,7 +154,7 @@ def list_api_properties(api_name: PhysicsApiName) -> PhysicsApiSchemaInfo:
             properties.append(PhysicsPropertySpec(
                 name=prop_name,
                 kind="relationship",
-                documentation=_property_doc(prim_def, prop_name, rel_spec),
+                documentation=property_doc(prim_def, prop_name, rel_spec),
             ))
 
     companion = _COMPANION.get(api_name)
@@ -505,7 +506,7 @@ def get_physics_summary(asset_dir: Path) -> AssetPhysicsSummary:
         if not isinstance(spec, Sdf.PrimSpec):
             return
         apis = _read_api_schemas(spec)
-        attrs = {a.name: _to_jsonable(a.default) for a in spec.attributes}
+        attrs = {a.name: to_jsonable(a.default) for a in spec.attributes}
         rels = {
             r.name: [str(t) for t in r.targetPathList.explicitItems]
             for r in spec.relationships
@@ -540,7 +541,7 @@ def get_scene_physics_summary(
             return
         apis = _read_api_schemas(spec)
         attrs = {
-            a.name: _to_jsonable(a.default)
+            a.name: to_jsonable(a.default)
             for a in spec.attributes
             if a.name.startswith("physics:")
         }
@@ -806,11 +807,11 @@ def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
                 name=prop_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=_to_jsonable(attr_spec.default),
+                default=to_jsonable(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
-                documentation=_property_doc(prim_def, prop_name, attr_spec),
+                documentation=property_doc(prim_def, prop_name, attr_spec),
             ))
             continue
         rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
@@ -818,7 +819,7 @@ def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
             properties.append(PhysicsPropertySpec(
                 name=prop_name,
                 kind="relationship",
-                documentation=_property_doc(prim_def, prop_name, rel_spec),
+                documentation=property_doc(prim_def, prop_name, rel_spec),
             ))
 
     return PhysicsApiSchemaInfo(
@@ -1119,7 +1120,7 @@ def _summarize_joint(prim: Usd.Prim) -> JointSummary:
             continue
         if not a.HasAuthoredValue():
             continue
-        attrs[name] = _to_jsonable(a.Get())
+        attrs[name] = to_jsonable(a.Get())
 
     return JointSummary(
         prim_path=str(prim.GetPath()),
@@ -1310,25 +1311,35 @@ def _drop_physics_reference(asset_dir: Path) -> None:
     layer.Save()
 
 
-def _property_doc(
-    prim_def: Usd.PrimDefinition, prop_name: str, spec: Sdf.PropertySpec,
-) -> str:
-    """Best-effort documentation lookup across USD versions."""
-    getter = getattr(prim_def, "GetPropertyDocumentation", None)
-    if callable(getter):
-        return getter(prop_name) or ""
-    return spec.GetInfo("documentation") or ""
+def format_physics_scene_prim(prim: Usd.Prim) -> dict:
+    """Format a ``UsdPhysics.Scene`` for ``list_prims``."""
+    return {
+        "prim_path": str(prim.GetPath()),
+        "kind": "physics_scene",
+        "type": str(prim.GetTypeName()),
+    }
 
 
-def _to_jsonable(value: Any) -> Any:
-    """Convert pxr values to JSON-friendly Python for summaries."""
-    if value is None or isinstance(value, bool | int | float | str):
-        return value
-    if hasattr(value, "__iter__") and not isinstance(value, str):
-        try:
-            return [float(c) for c in value]
-        except (TypeError, ValueError):
-            return str(value)
-    return str(value)
+def format_joint_prim(prim: Usd.Prim) -> dict:
+    """Format a UsdPhysics joint for ``list_prims``."""
+    body0_rel = prim.GetRelationship("physics:body0")
+    body1_rel = prim.GetRelationship("physics:body1")
+    body0 = [str(t) for t in body0_rel.GetTargets()] if body0_rel else []
+    body1 = [str(t) for t in body1_rel.GetTargets()] if body1_rel else []
+    return {
+        "prim_path": str(prim.GetPath()),
+        "kind": "joint",
+        "type": str(prim.GetTypeName()),
+        "body0": body0[0] if body0 else None,
+        "body1": body1[0] if body1 else None,
+    }
 
 
+def format_collision_group_prim(prim: Usd.Prim) -> dict:
+    """Format a ``UsdPhysics.CollisionGroup`` for ``list_prims``."""
+    return {
+        "prim_path": str(prim.GetPath()),
+        "kind": "collision_group",
+        "type": str(prim.GetTypeName()),
+        "name": prim.GetName(),
+    }

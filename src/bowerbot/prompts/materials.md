@@ -127,3 +127,11 @@ error, the recovery is:
    and bind on each.
 2. **Only if the user explicitly wants every instance to share the
    material**: retry with `confirm_shared_modification: true`.
+
+### Cleaning up orphan materials
+
+`cleanup_unused_materials()` removes any material prims under
+`/Scene/Materials` that are not bound by any prim in the scene. Run
+it after the user does a bulk material swap or removes the prims that
+used to consume a material. Asset-folder materials in `mtl.usda` are
+not touched, only scene-level ones.

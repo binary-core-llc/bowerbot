@@ -40,7 +40,7 @@ from bowerbot.project import Project
 from bowerbot.skills.base import ToolResult
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
-from bowerbot.utils import stage_utils
+from bowerbot.utils import inspection_utils, stage_utils
 
 logger = logging.getLogger(__name__)
 
@@ -232,7 +232,7 @@ class ScenarioRunner:
         state.stage_path = project.scene_path
         if project.scene_path.exists():
             state.stage = stage_utils.open_stage(project.scene_path)
-            state.object_count = len(stage_utils.list_prims(state.stage))
+            state.object_count = len(inspection_utils.list_prims(state.stage))
             state.mark_saved()
         return state
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pxr import Usd, UsdGeom
 
-from bowerbot.utils import stage_utils, validation_utils
+from bowerbot.utils import inspection_utils, stage_utils, validation_utils
 from bowerbot.utils.geometry_utils import suggest_grid_layout
 
 
@@ -75,7 +75,7 @@ def test_list_prims_includes_scene_authored_cubes():
         stage_utils.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
-        prims = stage_utils.list_prims(reopened)
+        prims = inspection_utils.list_prims(reopened)
         paths = {p["prim_path"] for p in prims}
         assert "/Scene/Cube_Anchor" in paths
         assert "/Scene/Cube_Bob" in paths
@@ -92,7 +92,7 @@ def test_list_prims_includes_scene_authored_mesh():
         stage_utils.save_stage(stage)
 
         reopened = Usd.Stage.Open(str(stage_path))
-        prims = stage_utils.list_prims(reopened)
+        prims = inspection_utils.list_prims(reopened)
         paths = {p["prim_path"] for p in prims}
         assert "/Scene/Plane" in paths
 

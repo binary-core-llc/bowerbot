@@ -8,21 +8,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from pxr import Gf, Kind, Sdf, Sdr, Usd, UsdGeom, UsdLux, UsdShade, UsdUtils
+from pxr import Gf, Kind, Sdf, Sdr, Usd, UsdGeom, UsdShade, UsdUtils
 
-from bowerbot.schemas import LightParams, LightType, SceneObject
-from bowerbot.utils import physics_typing_utils
+from bowerbot.schemas import SceneObject
 from bowerbot.utils.naming_utils import safe_file_name
-
-LIGHT_CLASSES: dict[str, type] = {
-    LightType.DISTANT: UsdLux.DistantLight,
-    LightType.DOME: UsdLux.DomeLight,
-    LightType.SPHERE: UsdLux.SphereLight,
-    LightType.RECT: UsdLux.RectLight,
-    LightType.DISK: UsdLux.DiskLight,
-    LightType.CYLINDER: UsdLux.CylinderLight,
-}
-
 
 # ── Reference inspection ──
 
@@ -95,37 +84,6 @@ def _layer_references_folder(layer: Sdf.Layer, folder_name: str) -> bool:
 
     layer.Traverse(Sdf.Path.absoluteRootPath, visit)
     return found[0]
-
-
-def find_texture_references(
-    project_dir: Path,
-    file_name: str,
-) -> list[str]:
-    """Scan *project_dir* for USD files that reference *file_name*."""
-    referencing: list[str] = []
-    for usd_file in project_dir.rglob("*"):
-        if usd_file.suffix not in (".usd", ".usda", ".usdc"):
-            continue
-        try:
-            stage = Usd.Stage.Open(str(usd_file))
-        except Exception:
-            continue
-        if stage is None:
-            continue
-        for prim in stage.Traverse():
-            tex_attr = prim.GetAttribute("inputs:texture:file")
-            if not tex_attr or not tex_attr.Get():
-                continue
-            tex_val = tex_attr.Get()
-            tex_path = (
-                tex_val.path if hasattr(tex_val, "path") else str(tex_val)
-            )
-            if file_name in tex_path:
-                referencing.append(
-                    str(usd_file.relative_to(project_dir)),
-                )
-                break
-    return referencing
 
 
 # ── Open / save ──
@@ -564,40 +522,6 @@ def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
 # ── Lights (scene level) ──
 
 
-def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
-    """Create a USD light prim in *stage* at *prim_path*."""
-    light_cls = LIGHT_CLASSES[light.light_type.value]
-    light_prim = light_cls.Define(stage, prim_path)
-
-    light_prim.CreateIntensityAttr(light.intensity)
-    light_prim.CreateExposureAttr(light.exposure)
-    light_prim.CreateColorAttr(Gf.Vec3f(*light.color))
-
-    _set_light_type_attrs(light_prim, light)
-    _apply_light_link(light_prim, light.light_link_includes)
-
-    xformable = UsdGeom.Xformable(light_prim)
-    xformable.ClearXformOpOrder()
-
-    tx, ty, tz = light.translate
-    xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-
-    rx, ry, rz = light.rotate
-    if any(v != 0.0 for v in (rx, ry, rz)):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
-
-
-def _apply_light_link(
-    light_prim: Usd.Prim, includes: list[str],
-) -> None:
-    """Author the UsdLux light:link collection only when targets are provided."""
-    if not includes:
-        return
-    binding = UsdLux.LightAPI(light_prim).GetLightLinkCollectionAPI()
-    binding.CreateIncludesRel().SetTargets([Sdf.Path(p) for p in includes])
-    binding.CreateIncludeRootAttr(False)
-
-
 def unique_prim_path(stage: Usd.Stage, parent: str, base_name: str) -> str:
     """Return ``<parent>/<base_name>`` or the next free ``<parent>/<base_name>_NN``."""
     direct = f"{parent}/{base_name}"
@@ -611,41 +535,6 @@ def unique_prim_path(stage: Usd.Stage, parent: str, base_name: str) -> str:
         n += 1
 
 
-def update_light(
-    stage: Usd.Stage,
-    prim_path: str,
-    *,
-    translate: tuple[float, float, float] | None = None,
-    rotate: tuple[float, float, float] | None = None,
-    texture: str | None = None,
-) -> None:
-    """Update an existing scene-level light's xform / HDRI texture."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim.IsValid():
-        msg = f"Prim not found: {prim_path}"
-        raise ValueError(msg)
-
-    if texture is not None:
-        tex_attr = prim.GetAttribute("inputs:texture:file")
-        if tex_attr:
-            tex_attr.Set(Sdf.AssetPath(texture))
-
-    if translate is not None:
-        _update_translate_op(prim, Gf.Vec3d(*translate))
-    if rotate is not None:
-        _update_rotate_op(prim, Gf.Vec3f(*rotate))
-
-
-def get_light_texture(stage: Usd.Stage, prim_path: str) -> str | None:
-    """Return the texture file path for a light prim, or ``None``."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim or not prim.IsValid():
-        return None
-    tex_attr = prim.GetAttribute("inputs:texture:file")
-    if not tex_attr or not tex_attr.Get():
-        return None
-    tex_val = tex_attr.Get()
-    return tex_val.path if hasattr(tex_val, "path") else str(tex_val)
 
 
 # ── Transforms / namespace edits ──
@@ -883,82 +772,6 @@ def _is_variant_body_empty(variant_spec: Sdf.VariantSpec) -> bool:
 # ── Inspection ──
 
 
-def list_prims(stage: Usd.Stage) -> list[dict]:
-    """List every meaningful prim: placements, lights, geometry, physics infrastructure."""
-    bbox_cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
-
-    results: list[dict] = []
-    seen: set[str] = set()
-    for prim in stage.Traverse():
-        entry = _classify_for_list(prim, bbox_cache)
-        if entry is None:
-            continue
-        if entry["prim_path"] in seen:
-            continue
-        seen.add(entry["prim_path"])
-        results.append(entry)
-    return results
-
-
-def _classify_for_list(
-    prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
-) -> dict | None:
-    """Return the formatted ``list_prims`` entry for *prim*, or None if not surfaced."""
-    if physics_typing_utils.is_physics_scene(prim):
-        return _format_physics_scene_prim(prim)
-    if physics_typing_utils.is_joint(prim):
-        return _format_joint_prim(prim)
-    if physics_typing_utils.is_collision_group(prim):
-        return _format_collision_group_prim(prim)
-
-    is_light = prim.HasAPI(UsdLux.LightAPI)
-    has_refs = prim.GetMetadata("references") is not None
-    scene_gprim = (
-        prim.IsA(UsdGeom.Gprim) and not _has_referenced_ancestor(prim)
-    )
-    if not (has_refs or is_light or scene_gprim):
-        return None
-
-    target = (
-        _placement_ancestor(prim) if scene_gprim and not has_refs and not is_light
-        else prim
-    )
-    position = _extract_position(target)
-    if is_light:
-        return _format_light_prim(target, position)
-    return _format_geometry_prim(target, position, bbox_cache)
-
-
-def _placement_ancestor(prim: Usd.Prim) -> Usd.Prim:
-    """Walk up from *prim* to the topmost Xform ancestor whose parent is ``/Scene``."""
-    candidate = prim
-    cursor = prim.GetParent()
-    while (
-        cursor and cursor.IsValid()
-        and cursor.GetPath() != Sdf.Path.absoluteRootPath
-        and str(cursor.GetPath()) != "/Scene"
-    ):
-        if cursor.IsA(UsdGeom.Xform):
-            candidate = cursor
-        cursor = cursor.GetParent()
-    return candidate
-
-
-def _has_referenced_ancestor(prim: Usd.Prim) -> bool:
-    """Whether any ancestor of *prim* carries an authored references arc."""
-    cursor = prim.GetParent()
-    while (
-        cursor and cursor.IsValid()
-        and cursor.GetPath() != Sdf.Path.absoluteRootPath
-    ):
-        if cursor.GetMetadata("references") is not None:
-            return True
-        cursor = cursor.GetParent()
-    return False
-
-
 def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
     """Return every bindable Gprim at or under *prim_path*."""
     root_prim = stage.GetPrimAtPath(prim_path)
@@ -982,7 +795,7 @@ def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
             "is_mesh": type_name == "Mesh",
             "is_bindable": True,
             "current_material": str(bound_mat.GetPath()) if bound_mat else None,
-            "bounds": _world_bounds(prim, bbox_cache),
+            "bounds": world_bounds(prim, bbox_cache),
         })
     return results
 
@@ -1083,25 +896,7 @@ def world_to_local_point(
 # ── Internal helpers ──
 
 
-_LIGHT_TYPE_ATTRS: dict[str, str] = {
-    "angle": "CreateAngleAttr",
-    "texture": "CreateTextureFileAttr",
-    "radius": "CreateRadiusAttr",
-    "width": "CreateWidthAttr",
-    "height": "CreateHeightAttr",
-    "length": "CreateLengthAttr",
-}
-
-
-def _set_light_type_attrs(light_prim: UsdLux.LightAPI, light: LightParams) -> None:
-    """Set type-specific attributes on a freshly defined light prim."""
-    for field_name, create_method in _LIGHT_TYPE_ATTRS.items():
-        value = getattr(light, field_name, None)
-        if value is not None and hasattr(light_prim, create_method):
-            getattr(light_prim, create_method)().Set(value)
-
-
-def _update_translate_op(prim: Usd.Prim, value: Gf.Vec3d) -> None:
+def update_translate_op(prim: Usd.Prim, value: Gf.Vec3d) -> None:
     """Update the first translate xform op on *prim*."""
     xformable = UsdGeom.Xformable(prim)
     for op in xformable.GetOrderedXformOps():
@@ -1110,7 +905,7 @@ def _update_translate_op(prim: Usd.Prim, value: Gf.Vec3d) -> None:
             return
 
 
-def _update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
+def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
     """Update the first rotateXYZ xform op on *prim*."""
     xformable = UsdGeom.Xformable(prim)
     for op in xformable.GetOrderedXformOps():
@@ -1136,7 +931,7 @@ def _compute_unit_scale(stage: Usd.Stage, asset_path: str) -> float:
     return asset_mpu / scene_mpu
 
 
-def _extract_position(prim: Usd.Prim) -> dict[str, float] | None:
+def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
     """Return the translate component of a prim's local transform."""
     xformable = UsdGeom.Xformable(prim)
     if not xformable:
@@ -1145,83 +940,7 @@ def _extract_position(prim: Usd.Prim) -> dict[str, float] | None:
     return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
 
 
-def _format_light_prim(
-    prim: Usd.Prim, position: dict[str, float] | None,
-) -> dict:
-    """Format a light prim for ``list_prims``."""
-    data: dict = {
-        "prim_path": str(prim.GetPath()),
-        "kind": "light",
-        "light_type": prim.GetTypeName(),
-        "position": position,
-    }
-    intensity_attr = prim.GetAttribute("inputs:intensity")
-    if intensity_attr:
-        data["intensity"] = intensity_attr.Get()
-    exposure_attr = prim.GetAttribute("inputs:exposure")
-    if exposure_attr:
-        data["exposure"] = exposure_attr.Get()
-    color_attr = prim.GetAttribute("inputs:color")
-    if color_attr:
-        c = color_attr.Get()
-        data["color"] = {
-            "r": round(c[0], 3), "g": round(c[1], 3), "b": round(c[2], 3),
-        }
-    return data
-
-
-def _format_geometry_prim(
-    prim: Usd.Prim,
-    position: dict[str, float] | None,
-    bbox_cache: UsdGeom.BBoxCache,
-) -> dict:
-    """Format a referenced-asset or scene-authored Gprim for ``list_prims``."""
-    ref_paths = get_prim_ref_paths(prim)
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "asset" if ref_paths else "geometry",
-        "type": str(prim.GetTypeName()) or None,
-        "asset": ref_paths[0] if ref_paths else None,
-        "position": position,
-        "bounds": _world_bounds(prim, bbox_cache),
-    }
-
-
-def _format_physics_scene_prim(prim: Usd.Prim) -> dict:
-    """Format a ``UsdPhysics.Scene`` for ``list_prims``."""
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "physics_scene",
-        "type": str(prim.GetTypeName()),
-    }
-
-
-def _format_joint_prim(prim: Usd.Prim) -> dict:
-    """Format a UsdPhysics joint for ``list_prims``."""
-    body0_rel = prim.GetRelationship("physics:body0")
-    body1_rel = prim.GetRelationship("physics:body1")
-    body0 = [str(t) for t in body0_rel.GetTargets()] if body0_rel else []
-    body1 = [str(t) for t in body1_rel.GetTargets()] if body1_rel else []
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "joint",
-        "type": str(prim.GetTypeName()),
-        "body0": body0[0] if body0 else None,
-        "body1": body1[0] if body1 else None,
-    }
-
-
-def _format_collision_group_prim(prim: Usd.Prim) -> dict:
-    """Format a ``UsdPhysics.CollisionGroup`` for ``list_prims``."""
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "collision_group",
-        "type": str(prim.GetTypeName()),
-        "name": prim.GetName(),
-    }
-
-
-def _world_bounds(
+def world_bounds(
     prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
 ) -> dict | None:
     """Compute world-aligned AABB for a prim, rounded to 4 decimals."""

@@ -28,10 +28,8 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_asset_dir_for_prim,
 )
 from bowerbot.utils.naming_utils import safe_prim_name
-from bowerbot.utils.stage_utils import (
-    find_asset_references,
-    find_texture_references,
-)
+from bowerbot.utils.stage_utils import find_asset_references
+from bowerbot.utils.texture_utils import find_texture_references
 
 logger = logging.getLogger(__name__)
 

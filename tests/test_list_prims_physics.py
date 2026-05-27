@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom, UsdPhysics
 
-from bowerbot.utils import stage_utils
+from bowerbot.utils import inspection_utils
 
 
 def _scene_with_pendulum(tmp_path: Path) -> Usd.Stage:
@@ -47,7 +47,7 @@ def _by_kind(results: list[dict]) -> dict[str, list[dict]]:
 def test_list_prims_surfaces_physics_scene(tmp_path: Path) -> None:
     stage = _scene_with_pendulum(tmp_path)
 
-    results = stage_utils.list_prims(stage)
+    results = inspection_utils.list_prims(stage)
 
     grouped = _by_kind(results)
     assert "physics_scene" in grouped
@@ -57,7 +57,7 @@ def test_list_prims_surfaces_physics_scene(tmp_path: Path) -> None:
 def test_list_prims_surfaces_joints_with_body_rels(tmp_path: Path) -> None:
     stage = _scene_with_pendulum(tmp_path)
 
-    results = stage_utils.list_prims(stage)
+    results = inspection_utils.list_prims(stage)
 
     grouped = _by_kind(results)
     assert "joint" in grouped
@@ -78,7 +78,7 @@ def test_list_prims_surfaces_collision_groups(tmp_path: Path) -> None:
     )
     stage.Save()
 
-    results = stage_utils.list_prims(stage)
+    results = inspection_utils.list_prims(stage)
 
     grouped = _by_kind(results)
     assert "collision_group" in grouped
@@ -91,7 +91,7 @@ def test_list_prims_complete_pendulum_inventory(tmp_path: Path) -> None:
     """The full picture: 2 geometry cubes + 1 physics_scene + 1 joint."""
     stage = _scene_with_pendulum(tmp_path)
 
-    results = stage_utils.list_prims(stage)
+    results = inspection_utils.list_prims(stage)
 
     grouped = _by_kind(results)
     assert {e["prim_path"] for e in grouped["geometry"]} == {
@@ -104,7 +104,7 @@ def test_list_prims_complete_pendulum_inventory(tmp_path: Path) -> None:
 def test_list_prims_every_entry_has_kind(tmp_path: Path) -> None:
     stage = _scene_with_pendulum(tmp_path)
 
-    results = stage_utils.list_prims(stage)
+    results = inspection_utils.list_prims(stage)
 
     assert results
     for entry in results:

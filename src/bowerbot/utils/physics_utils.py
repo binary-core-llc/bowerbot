@@ -58,15 +58,46 @@ _API_CLASSES: dict[PhysicsApiName, type] = {
     PhysicsApiName.COLLISION: UsdPhysics.CollisionAPI,
     PhysicsApiName.MESH_COLLISION: UsdPhysics.MeshCollisionAPI,
     PhysicsApiName.ARTICULATION_ROOT: UsdPhysics.ArticulationRootAPI,
+    PhysicsApiName.DRIVE: UsdPhysics.DriveAPI,
+    PhysicsApiName.LIMIT: UsdPhysics.LimitAPI,
 }
 
-# Prim base type each API requires per the UsdPhysics spec.
+# Prim base type each single-apply API requires per the UsdPhysics spec.
+# Multi-apply APIs (Drive, Limit) target joint prims directly.
 _TARGET_TYPE: dict[PhysicsApiName, type] = {
     PhysicsApiName.RIGID_BODY: UsdGeom.Xformable,
     PhysicsApiName.MASS: UsdGeom.Xformable,
     PhysicsApiName.COLLISION: UsdGeom.Gprim,
     PhysicsApiName.MESH_COLLISION: UsdGeom.Mesh,
     PhysicsApiName.ARTICULATION_ROOT: UsdGeom.Xformable,
+}
+
+MULTI_APPLY_APIS: frozenset[PhysicsApiName] = frozenset({
+    PhysicsApiName.DRIVE,
+    PhysicsApiName.LIMIT,
+})
+
+_INSTANCE_NAME_PLACEHOLDER = "__INSTANCE_NAME__"
+
+_DRIVE_TOKENS_BY_JOINT: dict[PhysicsJointType, frozenset[str]] = {
+    PhysicsJointType.REVOLUTE: frozenset({"angular"}),
+    PhysicsJointType.PRISMATIC: frozenset({"linear"}),
+    PhysicsJointType.SPHERICAL: frozenset(),
+    PhysicsJointType.FIXED: frozenset(),
+    PhysicsJointType.DISTANCE: frozenset(),
+}
+
+_LIMIT_TOKENS_BY_JOINT: dict[PhysicsJointType, frozenset[str]] = {
+    PhysicsJointType.REVOLUTE: frozenset({"angular"}),
+    PhysicsJointType.PRISMATIC: frozenset({"linear"}),
+    PhysicsJointType.SPHERICAL: frozenset({"rotX", "rotY", "rotZ"}),
+    PhysicsJointType.FIXED: frozenset(),
+    PhysicsJointType.DISTANCE: frozenset({"distance"}),
+}
+
+_VALID_TOKENS: dict[PhysicsApiName, dict[PhysicsJointType, frozenset[str]]] = {
+    PhysicsApiName.DRIVE: _DRIVE_TOKENS_BY_JOINT,
+    PhysicsApiName.LIMIT: _LIMIT_TOKENS_BY_JOINT,
 }
 
 _JOINT_CLASSES: dict[PhysicsJointType, type] = {
@@ -121,13 +152,26 @@ def ensure_physics_referenced(asset_dir: Path) -> None:
 # ── Schema introspection ──
 
 
-def list_api_properties(api_name: PhysicsApiName) -> PhysicsApiSchemaInfo:
+def list_api_properties(
+    api_name: PhysicsApiName,
+    *,
+    instance_name: str | None = None,
+) -> PhysicsApiSchemaInfo:
     """Live schema-registry view of every property the API declares.
 
-    Callers query this before authoring to discover attributes, types,
-    defaults, and allowed-token sets without hardcoding any of them.
+    For multi-apply APIs (DriveAPI, LimitAPI) *instance_name* is
+    required; property names are returned with the instance substituted
+    (e.g. ``drive:angular:physics:stiffness``).
     """
-    prim_def = Usd.SchemaRegistry().FindAppliedAPIPrimDefinition(api_name.value)
+    if api_name in MULTI_APPLY_APIS and not instance_name:
+        raise ValueError(
+            f"{api_name.value} is a multi-apply API. "
+            "Provide instance_name (e.g. 'angular', 'linear').",
+        )
+
+    prim_def = Usd.SchemaRegistry().FindAppliedAPIPrimDefinition(
+        api_name.value,
+    )
     if prim_def is None:
         raise ValueError(
             f"USD schema registry does not know {api_name.value}. "
@@ -136,34 +180,78 @@ def list_api_properties(api_name: PhysicsApiName) -> PhysicsApiSchemaInfo:
 
     properties: list[PhysicsPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
+        real_name = (
+            prop_name.replace(_INSTANCE_NAME_PLACEHOLDER, instance_name)
+            if instance_name else prop_name
+        )
         attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
         if attr_spec is not None:
             properties.append(PhysicsPropertySpec(
-                name=prop_name,
+                name=real_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
                 default=to_jsonable(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
-                documentation=property_doc(prim_def, prop_name, attr_spec),
+                documentation=property_doc(
+                    prim_def, prop_name, attr_spec,
+                ),
             ))
             continue
         rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
         if rel_spec is not None:
             properties.append(PhysicsPropertySpec(
-                name=prop_name,
+                name=real_name,
                 kind="relationship",
-                documentation=property_doc(prim_def, prop_name, rel_spec),
+                documentation=property_doc(
+                    prim_def, prop_name, rel_spec,
+                ),
             ))
 
+    target_req = (
+        "UsdPhysics joint prim" if api_name in MULTI_APPLY_APIS
+        else f"UsdGeom.{_TARGET_TYPE[api_name].__name__}"
+    )
     companion = _COMPANION.get(api_name)
     return PhysicsApiSchemaInfo(
         api_name=api_name.value,
-        target_requirement=f"UsdGeom.{_TARGET_TYPE[api_name].__name__}",
+        target_requirement=target_req,
         requires_companion_api=companion.value if companion else None,
         properties=properties,
     )
+
+
+def validate_instance_name(
+    api_name: PhysicsApiName,
+    instance_name: str,
+    joint_type_name: str,
+) -> None:
+    """Refuse if *instance_name* is invalid for *api_name* on *joint_type*."""
+    try:
+        jt = PhysicsJointType(joint_type_name)
+    except ValueError:
+        raise ValueError(
+            f"{api_name.value} can only be applied to a UsdPhysics "
+            f"joint prim; got type {joint_type_name!r}.",
+        ) from None
+
+    valid = _VALID_TOKENS[api_name].get(jt, frozenset())
+    if not valid:
+        raise ValueError(
+            f"{api_name.value} is not supported on {jt.value}.",
+        )
+    if instance_name not in valid:
+        raise ValueError(
+            f"instance_name {instance_name!r} is not valid for "
+            f"{api_name.value} on {jt.value}. "
+            f"Allowed: {sorted(valid)}",
+        )
+
+
+def _apply_multi(prim: Usd.Prim, api_name: PhysicsApiName, instance_name: str) -> None:
+    """Apply a multi-apply API with the given instance name."""
+    _API_CLASSES[api_name].Apply(prim, instance_name)
 
 
 # ── API application ──
@@ -175,17 +263,17 @@ def apply_api(
     api_name: PhysicsApiName,
     attributes: dict[str, Any] | None = None,
     relationships: dict[str, list[str]] | None = None,
+    *,
+    instance_name: str | None = None,
 ) -> dict[str, Any]:
-    """Apply ``api_name`` to *prim_path* and author opinions in ``phy.usda``.
-
-    Validates the target's prim type against the composed asset stage and
-    refuses any property name not declared by the API. Companion APIs
-    (MeshCollisionAPI requires CollisionAPI) are applied first.
-    """
+    """Apply ``api_name`` to *prim_path* and author opinions in ``phy.usda``."""
     attributes = attributes or {}
     relationships = relationships or {}
+    is_multi = api_name in MULTI_APPLY_APIS
 
-    schema_info = list_api_properties(api_name)
+    schema_info = list_api_properties(
+        api_name, instance_name=instance_name,
+    )
     _refuse_unknown(api_name, attributes, schema_info, "attribute")
     _refuse_unknown(api_name, relationships, schema_info, "relationship")
 
@@ -199,10 +287,17 @@ def apply_api(
         raise ValueError(
             f"Prim not found in asset {asset_dir.name}: {prim_path}",
         )
-    target = resolve_typed_target(requested, api_name)
-    target_path = str(target.GetPath())
-    if api_name == PhysicsApiName.ARTICULATION_ROOT:
-        check_articulation_root_nesting(composed, target_path)
+
+    if is_multi:
+        validate_instance_name(
+            api_name, instance_name, requested.GetTypeName(),
+        )
+        target_path = str(requested.GetPath())
+    else:
+        target = resolve_typed_target(requested, api_name)
+        target_path = str(target.GetPath())
+        if api_name == PhysicsApiName.ARTICULATION_ROOT:
+            check_articulation_root_nesting(composed, target_path)
     del composed
 
     ensure_physics_layer(asset_dir)
@@ -212,12 +307,16 @@ def apply_api(
     companion = _COMPANION.get(api_name)
     if companion is not None:
         _API_CLASSES[companion].Apply(prim)
-    _API_CLASSES[api_name].Apply(prim)
+    if is_multi:
+        _apply_multi(prim, api_name, instance_name)
+    else:
+        _API_CLASSES[api_name].Apply(prim)
 
     for name, value in attributes.items():
         attr = prim.GetAttribute(name)
         stage_utils.set_prim_attribute(
-            stage, target_path, name, value, expected_type=attr.GetTypeName(),
+            stage, target_path, name, value,
+            expected_type=attr.GetTypeName(),
         )
 
     for name, targets in relationships.items():
@@ -229,13 +328,16 @@ def apply_api(
     ensure_physics_referenced(asset_dir)
 
     logger.info(
-        "Applied %s on %s in %s/phy.usda",
-        api_name.value, target_path, asset_dir.name,
+        "Applied %s%s on %s in %s/phy.usda",
+        api_name.value,
+        f":{instance_name}" if instance_name else "",
+        target_path, asset_dir.name,
     )
     return {
         "prim_path": target_path,
         "requested_prim_path": prim_path,
         "api_name": api_name.value,
+        "instance_name": instance_name,
         "companion_api": companion.value if companion else None,
         "attributes_set": sorted(attributes),
         "relationships_set": sorted(relationships),
@@ -246,7 +348,11 @@ def apply_api(
 
 
 def remove_api(
-    asset_dir: Path, prim_path: str, api_name: PhysicsApiName,
+    asset_dir: Path,
+    prim_path: str,
+    api_name: PhysicsApiName,
+    *,
+    instance_name: str | None = None,
 ) -> bool:
     """Remove ``api_name`` (and any dependent APIs) from *prim_path*."""
     phy_path = _phy_layer_path(asset_dir)
@@ -255,7 +361,9 @@ def remove_api(
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
     if layer is None:
         return False
-    return _remove_api_from_layer(layer, prim_path, api_name)
+    return _remove_api_from_layer(
+        layer, prim_path, api_name, instance_name=instance_name,
+    )
 
 
 # ── Scene-level authoring ──
@@ -307,12 +415,17 @@ def apply_api_scene(
     api_name: PhysicsApiName,
     attributes: dict[str, Any] | None = None,
     relationships: dict[str, list[str]] | None = None,
+    *,
+    instance_name: str | None = None,
 ) -> dict[str, Any]:
     """Apply ``api_name`` on scene.usda; auto-ensures a ``UsdPhysics.Scene``."""
     attributes = attributes or {}
     relationships = relationships or {}
+    is_multi = api_name in MULTI_APPLY_APIS
 
-    schema_info = list_api_properties(api_name)
+    schema_info = list_api_properties(
+        api_name, instance_name=instance_name,
+    )
     _refuse_unknown(api_name, attributes, schema_info, "attribute")
     _refuse_unknown(api_name, relationships, schema_info, "relationship")
     ensure_physics_scene(stage)
@@ -320,20 +433,32 @@ def apply_api_scene(
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Prim not found in scene: {prim_path}")
-    target = resolve_typed_target(prim, api_name)
-    target_path = str(target.GetPath())
-    if api_name == PhysicsApiName.ARTICULATION_ROOT:
-        check_articulation_root_nesting(stage, target_path)
+
+    if is_multi:
+        validate_instance_name(
+            api_name, instance_name, prim.GetTypeName(),
+        )
+        target = prim
+        target_path = prim_path
+    else:
+        target = resolve_typed_target(prim, api_name)
+        target_path = str(target.GetPath())
+        if api_name == PhysicsApiName.ARTICULATION_ROOT:
+            check_articulation_root_nesting(stage, target_path)
 
     companion = _COMPANION.get(api_name)
     if companion is not None:
         _API_CLASSES[companion].Apply(target)
-    _API_CLASSES[api_name].Apply(target)
+    if is_multi:
+        _apply_multi(target, api_name, instance_name)
+    else:
+        _API_CLASSES[api_name].Apply(target)
 
     for name, value in attributes.items():
         attr = target.GetAttribute(name)
         stage_utils.set_prim_attribute(
-            stage, target_path, name, value, expected_type=attr.GetTypeName(),
+            stage, target_path, name, value,
+            expected_type=attr.GetTypeName(),
         )
 
     for name, targets in relationships.items():
@@ -343,12 +468,16 @@ def apply_api_scene(
 
     stage.Save()
     logger.info(
-        "Applied %s scene-level on %s", api_name.value, prim_path,
+        "Applied %s%s scene-level on %s",
+        api_name.value,
+        f":{instance_name}" if instance_name else "",
+        prim_path,
     )
     return {
         "prim_path": target_path,
         "requested_prim_path": prim_path,
         "api_name": api_name.value,
+        "instance_name": instance_name,
         "companion_api": companion.value if companion else None,
         "attributes_set": sorted(attributes),
         "relationships_set": sorted(relationships),
@@ -357,10 +486,17 @@ def apply_api_scene(
 
 
 def remove_api_scene(
-    stage: Usd.Stage, prim_path: str, api_name: PhysicsApiName,
+    stage: Usd.Stage,
+    prim_path: str,
+    api_name: PhysicsApiName,
+    *,
+    instance_name: str | None = None,
 ) -> bool:
     """Remove ``api_name`` opinions from scene.usda at *prim_path*."""
-    return _remove_api_from_layer(stage.GetRootLayer(), prim_path, api_name)
+    return _remove_api_from_layer(
+        stage.GetRootLayer(), prim_path, api_name,
+        instance_name=instance_name,
+    )
 
 
 # ── Scene masking detection (refuse-or-acknowledge) ──
@@ -1233,9 +1369,13 @@ def _find_dependent_groups(stage: Usd.Stage, group_prim_path: str) -> list[str]:
 
 
 def _remove_api_from_layer(
-    layer: Sdf.Layer, prim_path: str, api_name: PhysicsApiName,
+    layer: Sdf.Layer,
+    prim_path: str,
+    api_name: PhysicsApiName,
+    *,
+    instance_name: str | None = None,
 ) -> bool:
-    """Drop ``api_name`` + dependents + their opinions from *layer* at *prim_path*."""
+    """Drop ``api_name`` + dependents + their opinions from *layer*."""
     prim_spec = layer.GetPrimAtPath(prim_path)
     if prim_spec is None:
         return False
@@ -1248,9 +1388,18 @@ def _remove_api_from_layer(
 
     touched = False
     for name in targets:
-        if _drop_from_api_listop(prim_spec, name.value):
+        token = (
+            f"{name.value}:{instance_name}"
+            if name in MULTI_APPLY_APIS and instance_name
+            else name.value
+        )
+        if _drop_from_api_listop(prim_spec, token):
             touched = True
-        for prop in list_api_properties(name).properties:
+        props = list_api_properties(
+            name,
+            instance_name=instance_name if name in MULTI_APPLY_APIS else None,
+        )
+        for prop in props.properties:
             container = (
                 prim_spec.attributes if prop.kind == "attribute"
                 else prim_spec.relationships

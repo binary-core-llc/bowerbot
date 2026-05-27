@@ -143,6 +143,3 @@ class Skill(ABC):
             return skill_md.read_text(encoding="utf-8")
         return ""
 
-    def register_diagnostic_checks(self, registry: Any) -> None:
-        """Optional hook: register subsystem checks with the diagnostic registry."""
-        del registry

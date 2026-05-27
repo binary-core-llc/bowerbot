@@ -17,7 +17,6 @@ from bowerbot.skills.base import (
     SkillContext,
     ToolResult,
 )
-from bowerbot.utils import diagnostic_registry_utils
 
 if TYPE_CHECKING:
     from bowerbot.state import SceneState
@@ -38,7 +37,6 @@ class SkillRegistry:
         """Register a skill instance after its config validates."""
         skill.validate_config()
         self._skills[skill.name] = skill
-        skill.register_diagnostic_checks(diagnostic_registry_utils)
 
     def load_from_settings(self, settings: Settings) -> None:
         """Discover and load all enabled skills from entry points."""

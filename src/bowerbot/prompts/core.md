@@ -18,13 +18,4 @@ call.** The user's scene is the source of truth, not your model of
 what it "should" contain. When you don't know something, say so and use
 a tool to find out; don't guess.
 
-## Diagnosing failures
-
-When a tool returns a confusing error, or the user reports something
-"doesn't look right" without a clear cause, use `diagnose`. It runs
-the registered diagnostic checks against the current project (asset
-folders, scene composition, physics, variants, etc.) and returns a
-report of OK / WARNING / FAIL findings with prim paths and remediation
-hints. Treat the output as evidence, not a verdict: share the findings
-with the user and ask which to fix.
 

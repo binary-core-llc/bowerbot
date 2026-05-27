@@ -101,7 +101,7 @@ async def execute(
 
     rejection = _reject_unknown_params(tool_name, params)
     if rejection is not None:
-        logger.warning("tool-bad-params name=%s error=%s", tool_name, rejection)
+        logger.info("tool-bad-params name=%s error=%s", tool_name, rejection)
         return ToolResult(success=False, error=rejection)
 
     result = handler(state, params)
@@ -109,7 +109,7 @@ async def execute(
         result = await result
 
     if not result.success:
-        logger.warning("tool-error name=%s error=%s", tool_name, result.error)
+        logger.info("tool-error name=%s error=%s", tool_name, result.error)
     else:
         logger.info("tool-ok name=%s", tool_name)
 

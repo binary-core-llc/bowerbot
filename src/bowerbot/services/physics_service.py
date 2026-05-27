@@ -131,12 +131,21 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         )
         if changed:
             state.touch_project()
+        api_label = (
+            f"{api_name.value}:{instance_name}" if instance_name
+            else api_name.value
+        )
         return {
             "scope": "scene",
             "prim_path": prim_path,
             "api_name": api_name.value,
             "instance_name": instance_name,
             "removed": changed,
+            "message": (
+                f"Removed {api_label} from {prim_path}"
+                if changed
+                else f"{api_label} was not present on {prim_path}"
+            ),
         }
 
     try:
@@ -175,6 +184,10 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
     state.stage = stage_utils.open_stage(state.stage_path)
     state.touch_project()
 
+    api_label = (
+        f"{api_name.value}:{instance_name}" if instance_name
+        else api_name.value
+    )
     return {
         "scope": "asset",
         "scene_prim_path": prim_path,
@@ -182,6 +195,11 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "asset_folder": asset_dir.name,
         "api_name": api_name.value,
         "removed": changed,
+        "message": (
+            f"Removed {api_label} from {asset_local_path}"
+            if changed
+            else f"{api_label} was not present on {asset_local_path}"
+        ),
         "cleared_masking_opinions": [
             {"prim_path": p, "kind": k, "key": key}
             for p, k, key in cleared
@@ -211,6 +229,33 @@ def setup_physics_scene(
         "prim_path": scene_path,
         "gravity_magnitude": gravity_magnitude,
         "gravity_direction": gravity_direction,
+    }
+
+
+def list_physics_scenes(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Return every UsdPhysics.Scene prim under /Scene/Physics."""
+    scenes = physics_utils.list_physics_scenes(state.stage)
+    return {"scenes": scenes, "count": len(scenes)}
+
+
+def remove_physics_scene(
+    state: SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Remove a UsdPhysics.Scene prim by name."""
+    name = params["name"]
+    removed = physics_utils.remove_physics_scene(state.stage, name)
+    if removed:
+        state.touch_project()
+    return {
+        "name": name,
+        "removed": removed,
+        "message": (
+            f"Removed PhysicsScene '{name}'"
+            if removed
+            else f"PhysicsScene '{name}' not found under /Scene/Physics"
+        ),
     }
 
 

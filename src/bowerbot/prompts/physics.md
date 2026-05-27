@@ -204,6 +204,15 @@ metersPerUnit` in stage units, direction `(0, -1, 0)`. Call once per
 scene before authoring rigid bodies; static colliders work without
 it.
 
+### `list_physics_scenes()`
+List every `UsdPhysics.Scene` prim under `/Scene/Physics` with name,
+gravity magnitude, and gravity direction. Use to check what exists
+before creating or removing a physics scene.
+
+### `remove_physics_scene(name)`
+Remove a `UsdPhysics.Scene` prim by name from `/Scene/Physics`. Use
+when the user wants to clean up stale or duplicate physics scenes.
+
 ### `get_physics_summary(prim_path)`
 Inspect every authored physics opinion on a prim and its
 descendants. Returns two sections: `asset` (phy.usda opinions, when

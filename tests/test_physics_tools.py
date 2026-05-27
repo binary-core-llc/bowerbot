@@ -882,6 +882,157 @@ def test_apply_limit_api_refuses_fixed_joint():
         assert not r.success
 
 
+def test_remove_api_message_when_present():
+    """Message confirms removal when API was present."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        placed = _place(tmp_path, state)
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": placed.data["prim_path"],
+            "api_name": "PhysicsRigidBodyAPI",
+            "scope": "scene",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": placed.data["prim_path"],
+            "api_name": "PhysicsRigidBodyAPI",
+            "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is True
+        assert "Removed" in r.data["message"]
+
+
+def test_remove_api_message_when_not_present():
+    """Message says 'not present' when API was already gone."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        placed = _place(tmp_path, state)
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": placed.data["prim_path"],
+            "api_name": "PhysicsRigidBodyAPI",
+            "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is False
+        assert "not present" in r.data["message"]
+
+
+def test_remove_api_cascade_message():
+    """After cascade removal, second remove says 'not present'."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        mesh_asset = _mesh_asset(tmp_path, "slab")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(mesh_asset),
+            "asset_name": "Slab", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
+
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": mesh_path,
+            "api_name": "PhysicsMeshCollisionAPI",
+        }))
+        asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": mesh_path,
+            "api_name": "PhysicsCollisionAPI",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": mesh_path,
+            "api_name": "PhysicsMeshCollisionAPI",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is False
+        assert "not present" in r.data["message"]
+
+
+def test_remove_drive_api_message():
+    """Message includes instance name for multi-apply removal."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        joint_path = _joint_with_bodies(tmp_path, state)
+
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is True
+        assert "DriveAPI:angular" in r.data["message"]
+
+
+# ── list_physics_scenes / remove_physics_scene ──
+
+
+def test_list_physics_scenes():
+    """Lists created PhysicsScene prims."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+
+        r = asyncio.run(exec_tool(state, "list_physics_scenes"))
+        assert r.success, r.error
+        assert r.data["count"] >= 1
+        names = {s["name"] for s in r.data["scenes"]}
+        assert "PhysicsScene" in names
+
+
+def test_list_physics_scenes_empty():
+    """Returns empty when no PhysicsScene exists."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "list_physics_scenes"))
+        assert r.success, r.error
+        assert r.data["count"] == 0
+
+
+def test_remove_physics_scene_success():
+    """Removes a PhysicsScene prim by name."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        asyncio.run(exec_tool(state, "setup_physics_scene", {
+            "name": "ToDelete",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_scene", {
+            "name": "ToDelete",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is True
+        assert "Removed" in r.data["message"]
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath("/Scene/Physics/ToDelete")
+        assert not prim.IsValid()
+
+
+def test_remove_physics_scene_not_found():
+    """Returns removed=false with a clear message for missing scene."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+
+        r = asyncio.run(exec_tool(state, "remove_physics_scene", {
+            "name": "Nonexistent",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is False
+        assert "not found" in r.data["message"]
+
+
 def test_remove_limit_api():
     """Removes an applied LimitAPI:angular."""
     with tempfile.TemporaryDirectory() as tmp:

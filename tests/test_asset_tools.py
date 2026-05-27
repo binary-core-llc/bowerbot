@@ -4,6 +4,7 @@
 """Tool-layer tests for asset tools."""
 
 import asyncio
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -86,6 +87,76 @@ def test_place_asset_creates_folder():
         assert any(
             d.is_dir() for d in project.assets_dir.iterdir()
         )
+
+
+def test_place_asset_relative_path_from_project():
+    """Resolves a relative path against the project directory."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "cup")
+
+        project_sub = project.path / "my_assets"
+        project_sub.mkdir()
+        shutil.copy2(asset, project_sub / "cup.usda")
+
+        r = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": "my_assets/cup.usda",
+            "asset_name": "Cup", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert r.success, r.error
+
+
+def test_place_asset_relative_path_from_library():
+    """Resolves a relative path against the library directory."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "mug")
+
+        lib_dir = tmp_path / "library"
+        lib_dir.mkdir()
+        shutil.copy2(asset, lib_dir / "mug.usda")
+        state.library_dir = lib_dir
+
+        r = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": "mug.usda",
+            "asset_name": "Mug", "group": "Products",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert r.success, r.error
+
+
+def test_place_asset_relative_path_not_found():
+    """Fails when relative path doesn't exist in project or library."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": "nonexistent/ghost.usda",
+            "asset_name": "Ghost", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert not r.success
+
+
+def test_place_asset_inside_relative_path():
+    """place_asset_inside resolves relative paths too."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        container = _place(tmp_path, state, "shelf", "Furniture")
+
+        nested = _asset(tmp_path, "book")
+        project_sub = project.path / "imports"
+        project_sub.mkdir()
+        shutil.copy2(nested, project_sub / "book.usda")
+
+        r = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset_file_path": "imports/book.usda",
+            "asset_name": "Book",
+            "container_prim_path": container.data["prim_path"],
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.3, "translate_z": 0.0,
+        }))
+        assert r.success, r.error
 
 
 def test_place_asset_missing_stage():

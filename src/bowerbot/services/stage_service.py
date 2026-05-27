@@ -74,7 +74,7 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     old_path = params["old_path"]
     new_path = params["new_path"]
 
-    if _parse_nested_contents_path(old_path) is not None:
+    if stage_utils.parse_nested_contents_path(old_path) is not None:
         msg = (
             f"Cannot rename {old_path}: it lives inside a referenced "
             "asset's contents.usda. Renaming at scene level would "
@@ -105,7 +105,7 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove an object from the scene, scrubbing every rel that targeted it."""
     prim_path = params["prim_path"]
 
-    nested = _parse_nested_contents_path(prim_path)
+    nested = stage_utils.parse_nested_contents_path(prim_path)
     if nested is not None:
         container_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
         if container_dir is None:
@@ -137,38 +137,6 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
-    """If *prim_path* is a nested-asset wrapper, return (group, prim_name)."""
-    marker = "/asset/contents/"
-    idx = prim_path.find(marker)
-    if idx >= 0:
-        suffix = prim_path[idx + len(marker):]
-        parts = [p for p in suffix.split("/") if p]
-        if len(parts) == 2:
-            return parts[0], parts[1]
-        msg = (
-            f"Path {prim_path} is inside a nested asset's contents but "
-            f"not at the wrapper level. Only the wrapper "
-            f"(.../asset/contents/<group>/<name>) can be edited; deeper "
-            f"prims live inside the referenced nested asset and editing "
-            f"them at scene level would create per-instance overrides."
-        )
-        raise ValueError(msg)
-
-    if "/asset/" in prim_path or prim_path.endswith("/asset"):
-        msg = (
-            f"Path {prim_path} is inside a referenced top-level asset. "
-            f"Only the scene-level wrapper (/Scene/<Group>/<Name>) and "
-            f"nested wrappers (.../asset/contents/<group>/<name>) can be "
-            f"edited; everything else lives inside the referenced asset "
-            f"and editing it at scene level would create per-instance "
-            f"overrides."
-        )
-        raise ValueError(msg)
-
-    return None
-
-
 def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Move an existing prim. Axes omitted from params keep their current value."""
     prim_path = params["prim_path"]
@@ -182,7 +150,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
     ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
 
-    nested = _parse_nested_contents_path(prim_path)
+    nested = stage_utils.parse_nested_contents_path(prim_path)
     if nested is not None:
         container_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
         if container_dir is None:

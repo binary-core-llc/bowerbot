@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 from pxr import Sdf
@@ -29,8 +28,8 @@ logger = logging.getLogger(__name__)
 def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level or asset-level light."""
     if params.get("asset_prim_path"):
-        return _create_asset_light(state, params)
-    return _create_scene_light(state, params)
+        return create_asset_light(state, params)
+    return create_scene_light(state, params)
 
 
 def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
@@ -38,8 +37,8 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     prim_path = params["prim_path"]
     asset_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
 
-    translate = _unpack_vec3(params, "translate_x", "translate_y", "translate_z")
-    rotate = _unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z")
+    translate = geometry_utils.unpack_vec3(params,"translate_x", "translate_y", "translate_z")
+    rotate = geometry_utils.unpack_vec3(params,"rotate_x", "rotate_y", "rotate_z")
     texture = params.get("texture")
 
     if asset_dir is not None and translate is not None:
@@ -62,7 +61,9 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         prim_path,
         translate=translate,
         rotate=rotate,
-        texture=_stage_scene_texture(state, texture),
+        texture=texture_utils.stage_scene_texture(
+            state.project.path if state.project else None, texture,
+        ),
     )
     stage_utils.save_stage(state.stage)
     state.touch_project()
@@ -119,7 +120,7 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 # ── Internal: create ──
 
 
-def _create_asset_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def create_asset_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Author a light inside an ASWF asset's ``lgt.usda``."""
     asset_prim_path = params["asset_prim_path"]
     light_type = LightType(params["light_type"])
@@ -203,7 +204,7 @@ def _create_asset_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
     }
 
 
-def _create_scene_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def create_scene_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Author a light at ``/Scene/Lighting/<name>``."""
     light_type = LightType(params["light_type"])
     tx = float(params.get("translate_x", 0.0))
@@ -231,7 +232,10 @@ def _create_scene_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
             float(params.get("rotate_z", 0.0)),
         ),
         angle=params.get("angle"),
-        texture=_stage_scene_texture(state, params.get("texture")),
+        texture=texture_utils.stage_scene_texture(
+            state.project.path if state.project else None,
+            params.get("texture"),
+        ),
         radius=params.get("radius"),
         width=params.get("width"),
         height=params.get("height"),
@@ -253,38 +257,3 @@ def _create_scene_light(state: SceneState, params: dict[str, Any]) -> dict[str, 
     }
 
 
-# ── Internal: update ──
-
-
-# ── Internal: helpers ──
-
-
-def _stage_scene_texture(
-    state: SceneState, texture: str | None,
-) -> str | None:
-    """Copy a scene-level texture into ``<project>/textures/``."""
-    if texture is None:
-        return None
-    source = Path(texture)
-    if not source.exists():
-        return texture
-    if state.project is None:
-        msg = "No project set; cannot copy scene-level texture."
-        raise RuntimeError(msg)
-    return texture_utils.copy_texture_to_project(source, state.project.path)
-
-
-def _unpack_vec3(
-    params: dict[str, Any],
-    kx: str,
-    ky: str,
-    kz: str,
-) -> tuple[float, float, float] | None:
-    """Read a triple of optional keys; return ``None`` if all are missing."""
-    if all(params.get(k) is None for k in (kx, ky, kz)):
-        return None
-    return (
-        float(params.get(kx, 0.0)),
-        float(params.get(ky, 0.0)),
-        float(params.get(kz, 0.0)),
-    )

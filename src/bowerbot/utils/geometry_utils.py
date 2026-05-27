@@ -129,6 +129,22 @@ def _apply_bounds_offsets(
     return tx, ty, tz
 
 
+def unpack_vec3(
+    params: dict,
+    kx: str,
+    ky: str,
+    kz: str,
+) -> tuple[float, float, float] | None:
+    """Read a triple of optional keys; return ``None`` if all are missing."""
+    if all(params.get(k) is None for k in (kx, ky, kz)):
+        return None
+    return (
+        float(params.get(kx, 0.0)),
+        float(params.get(ky, 0.0)),
+        float(params.get(kz, 0.0)),
+    )
+
+
 def suggest_grid_layout(
     count: int,
     *,

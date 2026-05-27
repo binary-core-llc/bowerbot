@@ -1035,6 +1035,38 @@ def get_container_world_inverse(
     return xform_cache.GetLocalToWorldTransform(wrapper).GetInverse()
 
 
+def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
+    """If *prim_path* is a nested-asset wrapper, return (group, prim_name)."""
+    marker = "/asset/contents/"
+    idx = prim_path.find(marker)
+    if idx >= 0:
+        suffix = prim_path[idx + len(marker):]
+        parts = [p for p in suffix.split("/") if p]
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        msg = (
+            f"Path {prim_path} is inside a nested asset's contents but "
+            f"not at the wrapper level. Only the wrapper "
+            f"(.../asset/contents/<group>/<name>) can be edited; deeper "
+            f"prims live inside the referenced nested asset and editing "
+            f"them at scene level would create per-instance overrides."
+        )
+        raise ValueError(msg)
+
+    if "/asset/" in prim_path or prim_path.endswith("/asset"):
+        msg = (
+            f"Path {prim_path} is inside a referenced top-level asset. "
+            f"Only the scene-level wrapper (/Scene/<Group>/<Name>) and "
+            f"nested wrappers (.../asset/contents/<group>/<name>) can be "
+            f"edited; everything else lives inside the referenced asset "
+            f"and editing it at scene level would create per-instance "
+            f"overrides."
+        )
+        raise ValueError(msg)
+
+    return None
+
+
 def world_to_local_point(
     stage: Usd.Stage,
     container_prim_path: str,

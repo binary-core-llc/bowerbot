@@ -13,7 +13,6 @@ from typing import Any
 from bowerbot.schemas import (
     AssetMetadata,
     ASWFLayerNames,
-    IntakeReport,
     PositionMode,
     SceneObject,
     TransformParams,
@@ -24,7 +23,10 @@ from bowerbot.utils import (
     geometry_utils,
     stage_utils,
 )
-from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
+from bowerbot.utils.asset_folder_utils import (
+    compute_ref_asset_path,
+    resolve_asset_dir_for_prim,
+)
 from bowerbot.utils.naming_utils import safe_prim_name
 from bowerbot.utils.stage_utils import (
     find_asset_references,
@@ -85,8 +87,8 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "asset": asset_name,
         "position": {"x": tx, "y": ty, "z": tz},
         "rotation_y": ry,
-        "intake": _intake_summary(report),
-        "message": _placement_message(asset_name, prim_path, report),
+        "intake": asset_intake_utils.intake_summary(report),
+        "message": asset_intake_utils.placement_message(asset_name, prim_path, report),
     }
 
 
@@ -154,7 +156,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         asset_mpu=geometry_utils.get_mpu(container_dir),
     )
 
-    ref_asset_path = _compute_ref_asset_path(
+    ref_asset_path = compute_ref_asset_path(
         report.scene_ref_path, assets_dir, container_dir,
     )
 
@@ -193,7 +195,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "container": container_dir.name,
         "position": {"x": tx, "y": ty, "z": tz},
         "rotation_y": ry,
-        "intake": _intake_summary(report),
+        "intake": asset_intake_utils.intake_summary(report),
         "message": (
             f"Placed {asset_name} inside {container_dir.name} at {composed_path}"
         ),
@@ -302,10 +304,10 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     name = params.get("name")
 
     if name:
-        results = [_freeze_one(assets_dir, name)]
+        results = [asset_intake_utils.freeze_one_asset(assets_dir, name)]
     else:
         results = [
-            _freeze_one(assets_dir, entry.name)
+            asset_intake_utils.freeze_one_asset(assets_dir, entry.name)
             for entry in sorted(assets_dir.iterdir())
             if entry.is_dir() and (entry / ASWFLayerNames.GEO).exists()
         ]
@@ -326,22 +328,6 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             f"Baked transforms in {baked_count} of {len(results)} asset(s)."
         ),
     }
-
-
-def _freeze_one(assets_dir: Path, name: str) -> dict[str, Any]:
-    """Bake root transforms in a single asset folder."""
-    asset_dir = assets_dir / name
-    if not asset_dir.exists() or not asset_dir.is_dir():
-        msg = f"Asset folder not found: {name}"
-        raise ValueError(msg)
-
-    geo_path = asset_dir / ASWFLayerNames.GEO
-    if not geo_path.exists():
-        msg = f"No {ASWFLayerNames.GEO} in asset folder '{name}'"
-        raise ValueError(msg)
-
-    baked = asset_intake_utils.bake_root_transforms(geo_path)
-    return {"name": name, "baked": baked}
 
 
 # ── delete_project_asset ──
@@ -418,53 +404,3 @@ def delete_project_texture(state: SceneState, params: dict[str, Any]) -> dict[st
 
 
 
-def _compute_ref_asset_path(
-    relative_asset_path: str,
-    assets_dir: Path,
-    container_dir: Path,
-) -> str:
-    """Compute the reference path from the container to the nested asset."""
-    asset_full_path = (assets_dir.parent / relative_asset_path).resolve()
-    try:
-        ref_path = asset_full_path.relative_to(container_dir.resolve())
-        return f"./{ref_path.as_posix()}"
-    except ValueError:
-        return (
-            "../" + asset_full_path.relative_to(
-                container_dir.parent.resolve(),
-            ).as_posix()
-        )
-
-
-def _intake_summary(report: IntakeReport) -> dict[str, Any]:
-    """Condense an intake report into fields surfaced to the LLM."""
-    return {
-        "asset_folder": report.asset_folder_name,
-        "root_canonical_name": report.root_canonical_name,
-        "was_renamed": report.was_renamed,
-        "root_original_name": (
-            report.root_original_name if report.was_renamed else None
-        ),
-        "files_copied": report.files_copied,
-        "localized_layers": report.localized_layers,
-        "localized_assets": report.localized_assets,
-        "warnings": report.warnings,
-    }
-
-
-def _placement_message(
-    asset_name: str, prim_path: str, report: IntakeReport,
-) -> str:
-    """Format a placement message that narrates intake normalization."""
-    parts = [f"Placed {asset_name} at {prim_path}."]
-    if report.was_renamed:
-        parts.append(
-            f"Normalized on intake: {report.root_original_name} -> "
-            f"{report.root_canonical_name} (ASWF convention).",
-        )
-    localized = len(report.localized_layers) + len(report.localized_assets)
-    if localized:
-        parts.append(
-            f"Localized {localized} external dependency/ies into the asset folder.",
-        )
-    return " ".join(parts)

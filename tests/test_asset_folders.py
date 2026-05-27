@@ -1310,48 +1310,48 @@ def test_remove_nested_asset_reference_idempotent_double_remove():
         assert second is True
 
 
-def test_parse_nested_contents_path_recognises_nested():
-    from bowerbot.services.stage_service import _parse_nested_contents_path
-    result = _parse_nested_contents_path(
+def testparse_nested_contents_path_recognises_nested():
+    from bowerbot.utils.stage_utils import parse_nested_contents_path
+    result = parse_nested_contents_path(
         "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props/Accent_Pillow_01_45",
     )
     assert result == ("Props", "Accent_Pillow_01_45")
 
 
-def test_parse_nested_contents_path_returns_none_for_scene_level_wrapper():
-    from bowerbot.services.stage_service import _parse_nested_contents_path
-    assert _parse_nested_contents_path("/Scene/Furniture/Single_Sofa_04_44") is None
+def testparse_nested_contents_path_returns_none_for_scene_level_wrapper():
+    from bowerbot.utils.stage_utils import parse_nested_contents_path
+    assert parse_nested_contents_path("/Scene/Furniture/Single_Sofa_04_44") is None
 
 
-def test_parse_nested_contents_path_raises_for_path_inside_top_level_asset():
+def testparse_nested_contents_path_raises_for_path_inside_top_level_asset():
     import pytest
 
-    from bowerbot.services.stage_service import _parse_nested_contents_path
+    from bowerbot.utils.stage_utils import parse_nested_contents_path
     with pytest.raises(ValueError, match="referenced top-level asset"):
-        _parse_nested_contents_path(
+        parse_nested_contents_path(
             "/Scene/Furniture/Single_Sofa_04_44/asset",
         )
     with pytest.raises(ValueError, match="referenced top-level asset"):
-        _parse_nested_contents_path(
+        parse_nested_contents_path(
             "/Scene/Furniture/Single_Sofa_04_44/asset/legs",
         )
 
 
-def test_parse_nested_contents_path_raises_for_path_deeper_than_nested_wrapper():
+def testparse_nested_contents_path_raises_for_path_deeper_than_nested_wrapper():
     import pytest
 
-    from bowerbot.services.stage_service import _parse_nested_contents_path
+    from bowerbot.utils.stage_utils import parse_nested_contents_path
     with pytest.raises(ValueError, match="not at the wrapper level"):
-        _parse_nested_contents_path(
+        parse_nested_contents_path(
             "/Scene/Furniture/Single_Sofa_04_44/asset/contents/Props",
         )
     with pytest.raises(ValueError, match="not at the wrapper level"):
-        _parse_nested_contents_path(
+        parse_nested_contents_path(
             "/Scene/Furniture/Single_Sofa_04_44/"
             "asset/contents/Props/Pillow_01/asset",
         )
     with pytest.raises(ValueError, match="not at the wrapper level"):
-        _parse_nested_contents_path(
+        parse_nested_contents_path(
             "/Scene/Furniture/Single_Sofa_04_44/"
             "asset/contents/Props/Pillow_01/asset/Mesh",
         )

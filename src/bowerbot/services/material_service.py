@@ -12,7 +12,11 @@ from typing import Any
 from bowerbot.schemas import ASWFLayerNames, ProceduralMaterialParams
 from bowerbot.state import SceneState
 from bowerbot.utils import material_utils, stage_utils
-from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
+from bowerbot.utils.asset_folder_utils import (
+    check_shared_modification,
+    resolve_asset_dir_for_prim,
+    to_asset_local,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +35,9 @@ def create_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
         )
         raise ValueError(msg)
 
-    _check_shared_modification(state, asset_dir, params, op_label="create_material")
+    check_shared_modification(state.stage, asset_dir, params, op_label="create_material")
 
-    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
+    asset_local_path = to_asset_local(prim_path, ref_prim_path)
     material_params = ProceduralMaterialParams(
         material_name=material_name,
         base_color=(
@@ -87,9 +91,9 @@ def bind_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         )
         raise ValueError(msg)
 
-    _check_shared_modification(state, asset_dir, params, op_label="bind_material")
+    check_shared_modification(state.stage, asset_dir, params, op_label="bind_material")
 
-    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
+    asset_local_path = to_asset_local(prim_path, ref_prim_path)
     material_prim_path = material_utils.add_material_to_folder(
         asset_dir=asset_dir,
         material_file=material_file,
@@ -121,7 +125,7 @@ def remove_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
         msg = f"Cannot find ASWF asset folder for {prim_path}."
         raise ValueError(msg)
 
-    asset_local_path = _to_asset_local(prim_path, ref_prim_path)
+    asset_local_path = to_asset_local(prim_path, ref_prim_path)
     material_utils.remove_material_binding_from_folder(asset_dir, asset_local_path)
     state.stage = stage_utils.open_stage(state.stage_path)
 
@@ -211,33 +215,3 @@ def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> dict[
     }
 
 
-def _to_asset_local(prim_path: str, ref_prim_path: str) -> str:
-    """Strip the scene-side reference prefix to get an asset-local path."""
-    if prim_path.startswith(ref_prim_path):
-        remainder = prim_path[len(ref_prim_path):]
-        return remainder if remainder else "/"
-    return prim_path
-
-
-def _check_shared_modification(
-    state: SceneState, asset_dir: Path, params: dict[str, Any], *, op_label: str,
-) -> None:
-    """Refuse if *asset_dir* is referenced by 2+ scene instances and not confirmed."""
-    instance_count = stage_utils.count_scene_refs_to_asset_dir(
-        state.stage, asset_dir,
-    )
-    confirmed = bool(params.get("confirm_shared_modification", False))
-    if instance_count >= 2 and not confirmed:
-        msg = (
-            f"Asset folder '{asset_dir.name}/' is referenced by "
-            f"{instance_count} scene instances. {op_label} writes to the "
-            f"shared {ASWFLayerNames.MTL}, so the binding would apply to "
-            f"all {instance_count} instances. Two ways forward: "
-            f"(1) For per-instance materials (different material per "
-            f"instance), use place_asset to make each instance independent, "
-            f"then bind a material on each. "
-            f"(2) For deliberate shared modification (every instance "
-            f"should get this material), retry with "
-            f"confirm_shared_modification=true."
-        )
-        raise ValueError(msg)

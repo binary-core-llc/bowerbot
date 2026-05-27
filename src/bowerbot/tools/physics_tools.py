@@ -225,16 +225,9 @@ TOOLS: list[Tool] = [
             "mesh-accurate collision for terrain / walls / ground "
             "planes. Default to convexHull unless the user specifies "
             "another approximation.\n\n"
-            "scope='asset' (default): writes to the asset's phy.usda so "
-            "every placement of the asset inherits the opinion. Refuses "
-            "if scene.usda already has authored opinions on the same "
-            "prim+attribute (see clear_masking_overrides / "
-            "confirm_masked). Use this for the asset's natural defaults "
-            "(this chair has collision, this barrel is a rigid body).\n\n"
-            "scope='scene': writes directly to scene.usda on the given "
-            "prim_path. Use for per-placement overrides (disable "
-            "collision on THIS chair instance only) AND for physics on "
-            "scene-only prims that have no asset folder."
+            "Omit `scope` to auto-detect. Pass `scope='scene'` "
+            "explicitly only for a per-placement override on an asset "
+            "(disable collision on THIS chair instance only)."
         ),
         parameters={
             "type": "object",

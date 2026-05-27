@@ -178,8 +178,10 @@ PhysicsMeshCollisionAPI). **Always call this before
 Apply a UsdPhysics applied API and author its attributes /
 relationships. `attributes` keys must come from
 `list_physics_api_properties` for the same `api_name`; unknown names
-are refused. `scope="asset"` (default) writes to the asset's
-`phy.usda`. `scope="scene"` writes per-placement to `scene.usda`.
+are refused. **Omit `scope` to let BowerBot auto-detect** — asset
+placements write to the asset's `phy.usda`, scene-only prims write
+to `scene.usda`. Pass `scope="scene"` explicitly only for a
+per-placement override on an asset.
 
 When authoring collision on a Mesh that belongs to a dynamic or
 kinematic rigid body subtree, use

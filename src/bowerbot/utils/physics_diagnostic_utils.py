@@ -9,31 +9,21 @@ from pxr import Sdf, Usd, UsdGeom, UsdPhysics
 
 from bowerbot.schemas import Finding, FindingStatus, SceneNamespace, Severity
 from bowerbot.utils.diagnostic_registry_utils import register
-from bowerbot.utils.physics_typing_utils import is_joint as _is_joint_type
+from bowerbot.utils.physics_typing_utils import (
+    is_articulation_root,
+    is_joint,
+    is_rigid_body,
+)
 
 _VALID_AXIS_TOKENS: frozenset[str] = frozenset({"X", "Y", "Z"})
 
 
-def _is_joint(prim: Usd.Prim | None) -> bool:
-    return prim is not None and _is_joint_type(prim)
-
-
-def _is_rigid_body(prim: Usd.Prim | None) -> bool:
-    return (
-        prim is not None
-        and "PhysicsRigidBodyAPI" in prim.GetAppliedSchemas()
-    )
-
-
-def _is_articulation_root(prim: Usd.Prim | None) -> bool:
-    return (
-        prim is not None
-        and "PhysicsArticulationRootAPI" in prim.GetAppliedSchemas()
-    )
-
-
 def _iter_joints(stage: Usd.Stage) -> list[Usd.Prim]:
-    return [p for p in stage.Traverse() if _is_joint(p)]
+    return [p for p in stage.Traverse() if is_joint(p)]
+
+
+def _iter_rigid_bodies(stage: Usd.Stage) -> list[Usd.Prim]:
+    return [p for p in stage.Traverse() if is_rigid_body(p)]
 
 
 def _joints_referencing(stage: Usd.Stage, body: Usd.Prim) -> list[Usd.Prim]:
@@ -48,12 +38,10 @@ def _joints_referencing(stage: Usd.Stage, body: Usd.Prim) -> list[Usd.Prim]:
     return out
 
 
-def _is_referenced_by_joint(stage: Usd.Stage, focus: Usd.Prim | None) -> bool:
-    return focus is not None and bool(_joints_referencing(stage, focus))
-
-
 def _joint_focus_matches(stage: Usd.Stage, focus: Usd.Prim | None) -> bool:
-    return focus is None or _is_joint(focus) or _is_referenced_by_joint(stage, focus)
+    if focus is None or is_joint(focus):
+        return True
+    return bool(_joints_referencing(stage, focus))
 
 
 def _joints_for_focus(
@@ -61,13 +49,9 @@ def _joints_for_focus(
 ) -> list[Usd.Prim]:
     if focus is None:
         return _iter_joints(stage)
-    if _is_joint(focus):
+    if is_joint(focus):
         return [focus]
     return _joints_referencing(stage, focus)
-
-
-def _iter_rigid_bodies(stage: Usd.Stage) -> list[Usd.Prim]:
-    return [p for p in stage.Traverse() if _is_rigid_body(p)]
 
 
 def _ancestor_has_rigid_body(prim: Usd.Prim) -> bool:
@@ -330,7 +314,7 @@ def check_joint_local_pos_within_bounds(
 @register(
     check_id="physics:dynamic_body_has_nonzero_mass",
     subsystem="physics",
-    applies_to=lambda _stage, focus: focus is None or _is_rigid_body(focus),
+    applies_to=lambda _stage, focus: focus is None or is_rigid_body(focus),
 )
 def check_dynamic_body_has_nonzero_mass(
     stage: Usd.Stage, focus: Usd.Prim | None,
@@ -367,7 +351,7 @@ def check_dynamic_body_has_nonzero_mass(
 @register(
     check_id="physics:articulation_root_not_nested",
     subsystem="physics",
-    applies_to=lambda _stage, focus: focus is None or _is_articulation_root(focus),
+    applies_to=lambda _stage, focus: focus is None or is_articulation_root(focus),
 )
 def check_articulation_root_not_nested(
     stage: Usd.Stage, focus: Usd.Prim | None,
@@ -375,7 +359,7 @@ def check_articulation_root_not_nested(
     """No ancestor or descendant of an ArticulationRootAPI may also carry it."""
     roots = (
         [focus] if focus is not None
-        else [p for p in stage.Traverse() if _is_articulation_root(p)]
+        else [p for p in stage.Traverse() if is_articulation_root(p)]
     )
     findings: list[Finding] = []
     for prim in roots:
@@ -400,12 +384,12 @@ def check_articulation_root_not_nested(
 def _find_nested_articulation_root(prim: Usd.Prim) -> Usd.Prim | None:
     cursor = prim.GetParent()
     while cursor and cursor.IsValid() and cursor.GetPath() != Sdf.Path.absoluteRootPath:
-        if _is_articulation_root(cursor):
+        if is_articulation_root(cursor):
             return cursor
         cursor = cursor.GetParent()
     for descendant in Usd.PrimRange(prim):
         if descendant == prim:
             continue
-        if _is_articulation_root(descendant):
+        if is_articulation_root(descendant):
             return descendant
     return None

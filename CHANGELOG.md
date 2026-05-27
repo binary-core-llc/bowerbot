@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.10.0](https://github.com/binary-core-llc/bowerbot/compare/v1.9.0...v1.10.0) (2026-05-27)
+
+
+### Features
+
+* agent integration test suite with transcript artifacts ([#169](https://github.com/binary-core-llc/bowerbot/issues/169)) ([203ab28](https://github.com/binary-core-llc/bowerbot/commit/203ab28dbc570ac5a6ce6b3f591956adad1480da))
+* collision groups for physics filtering ([#162](https://github.com/binary-core-llc/bowerbot/issues/162)) ([a9962c5](https://github.com/binary-core-llc/bowerbot/commit/a9962c55325da2591d3d4faf270d392d20a8dda0))
+* diagnose framework, list_prims physics inventory, scope auto-detect ([#172](https://github.com/binary-core-llc/bowerbot/issues/172)) ([5f67ab3](https://github.com/binary-core-llc/bowerbot/commit/5f67ab310b0f0ecb5667cd5dd733ddcd0ed7b3a6))
+* enforce cross-tool invariants in code; tiered agent tests ([#171](https://github.com/binary-core-llc/bowerbot/issues/171)) ([f1bf9ab](https://github.com/binary-core-llc/bowerbot/commit/f1bf9abae6caf73b7340960baf29042672c6470e))
+* joints and articulation root for asset and scene physics ([#165](https://github.com/binary-core-llc/bowerbot/issues/165)) ([e44c225](https://github.com/binary-core-llc/bowerbot/commit/e44c2252f060870420fb6f5d1a4bd50b7cd05ac8))
+* structured file logging with rotation and tool-call audit trail ([#167](https://github.com/binary-core-llc/bowerbot/issues/167)) ([ba7c335](https://github.com/binary-core-llc/bowerbot/commit/ba7c33555a298efd3ab97e18e55cef45fee9445c))
+
+
+### Bug Fixes
+
+* demote tool-error and tool-bad-params logs from WARNING to INFO ([#178](https://github.com/binary-core-llc/bowerbot/issues/178)) ([0188158](https://github.com/binary-core-llc/bowerbot/commit/0188158e82ca4bb3533d955955dd3690e851a539))
+* drop log_dir override from logging config (always use ~/.bowerbot/logs/) ([#168](https://github.com/binary-core-llc/bowerbot/issues/168)) ([c2ef816](https://github.com/binary-core-llc/bowerbot/commit/c2ef81699beb1a2cde8176b9b8e90871bc8300ac))
+* scene-only Gprim inspection and vector-array serialization ([#166](https://github.com/binary-core-llc/bowerbot/issues/166)) ([7c0debe](https://github.com/binary-core-llc/bowerbot/commit/7c0debe37e1ec5d6dd622e84d90f90ff13a6e0cb))
+
 ## [1.9.0](https://github.com/binary-core-llc/bowerbot/compare/v1.8.2...v1.9.0) (2026-05-24)
 
 

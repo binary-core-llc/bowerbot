@@ -370,13 +370,12 @@ carry an `asset_` or `scene_` prefix so the LLM never has to guess.
 | `remove_asset_variant` / `remove_asset_variant_set` / `remove_scene_variant` / `remove_scene_variant_set` | Delete a variant or whole set (cascades orphan cleanup, surfaces suspect sets) |
 | `list_variants` | Show every variant set with carrier path, selections, and authoring layer |
 
-#### Validation, packaging, diagnostics
+#### Validation & packaging
 
 | Tool | Description |
 |------|-------------|
 | `validate_scene` | Check for USD errors (USD's `UsdValidation` framework + BowerBot's invariants) |
 | `package_scene` | Bundle as `.usdz` (with optional Apple AR Quick Look strict-subset pre-validation) |
-| `diagnose` | Run the registered diagnostic checks and return a report (OK / WARNING / FAIL findings with remediation hints) |
 
 ### Extension Skills
 
@@ -625,7 +624,6 @@ src/bowerbot/
 
   schemas/            # Pydantic models and enums, grouped by domain
     assets.py         #   Asset formats, categories, ASWF layer names, metadata
-    diagnostics.py    #   DiagnosticReport, Finding, FindingStatus
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
     lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
@@ -655,7 +653,6 @@ src/bowerbot/
                            #   add_scene_(lighting_attribute|lighting_selection|model_selection)_variant,
                            #   list_variants, select/remove_asset_variant(_set|_for_instance),
                            #   select/remove_scene_variant(_set)
-    diagnose_service.py    #   diagnose (runs the registered diagnostic checks)
 
   tools/              # LLM-facing API layer (tool defs + thin handlers).
                       # Every public function mirrors a service function 1:1.
@@ -673,7 +670,6 @@ src/bowerbot/
     texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
     variant_tools.py       #   variant authoring + selection (asset + scene-instance)
-    diagnose_tools.py      #   diagnose
 
   skills/             # Skill SDK. The contract every skill implements.
                       # Skills themselves ship as separate pip packages.
@@ -699,8 +695,6 @@ src/bowerbot/
     physics_utils.py           #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
     physics_typing_utils.py    #   is_joint / is_physics_scene / is_collision_group / ...
-    physics_diagnostic_utils.py #  Registered physics diagnostic checks
-    diagnostic_registry_utils.py # CHECKS registry + register decorator
     scene_integrity_utils.py   #   Generic dangling-rel/target scrubbers
     validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants
     variant_utils.py           #   variants.usda lifecycle, author_in_variant keystone,

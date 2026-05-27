@@ -5,7 +5,7 @@ folder's `mtl.usda` — never into the scene file.
 ### Two ways to apply materials
 
 **1. Existing material files** — use `bind_material`:
-1. Search for the material using `search_assets` with category "mtl"
+1. Search for the material using `search_assets`; each result carries a `category` field, so filter for `"mtl"` on the returned list
 2. If the search returns MORE THAN ONE material, you MUST stop and list
    ALL matching materials to the user with their names. Ask the user to
    choose. Do NOT pick a material on their behalf. This is mandatory.

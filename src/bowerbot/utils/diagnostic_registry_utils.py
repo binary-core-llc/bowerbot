@@ -70,3 +70,8 @@ def resolve_focus(
     if prim == stage.GetDefaultPrim() or not has_applicable_check(stage, prim):
         return None, None
     return prim, focus_path
+
+
+def register_core_checks() -> None:
+    """Import every core ``*_diagnostic_utils`` module so its checks register."""
+    from bowerbot.utils import physics_diagnostic_utils  # noqa: F401

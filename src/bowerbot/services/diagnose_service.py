@@ -11,8 +11,7 @@ from bowerbot.schemas import DiagnosticReport
 from bowerbot.state import SceneState
 from bowerbot.utils import diagnostic_registry_utils
 
-# Side-effect import: registers every core diagnostic check at startup.
-from bowerbot.utils import physics_diagnostic_utils as _physics_diagnostic_utils  # noqa: F401, E402
+diagnostic_registry_utils.register_core_checks()
 
 
 def diagnose(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:

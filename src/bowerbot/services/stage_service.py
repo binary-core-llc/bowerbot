@@ -59,7 +59,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def list_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Return every placed object and light in the scene."""
+    """Return every placement, light, and physics-infrastructure prim in the scene."""
     del params
     objects = stage_utils.list_prims(state.stage)
     return {

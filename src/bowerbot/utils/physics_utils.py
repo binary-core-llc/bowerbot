@@ -732,16 +732,6 @@ def parse_vec3(
     return float(value[0]), float(value[1]), float(value[2])
 
 
-def _require_target_type(prim: Usd.Prim, api_name: PhysicsApiName) -> None:
-    """Refuse if *prim* is not the schema's required prim type."""
-    cls = _TARGET_TYPE[api_name]
-    if not prim.IsA(cls):
-        raise ValueError(
-            f"{api_name.value} requires UsdGeom.{cls.__name__}; "
-            f"{prim.GetPath()} is a {prim.GetTypeName()!r}",
-        )
-
-
 def resolve_typed_target(
     prim: Usd.Prim, api_name: PhysicsApiName,
 ) -> Usd.Prim:

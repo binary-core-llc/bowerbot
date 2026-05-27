@@ -816,7 +816,18 @@ def clear_orphan_variant_overs(
                     touched = True
             if len(vset_spec.variants) == 0:
                 del ancestor_spec.variantSets[vset_name]
-                _scrub_variant_set_names(ancestor_spec, vset_name)
+                name_list = ancestor_spec.variantSetNameList
+                for items in (
+                    name_list.prependedItems,
+                    name_list.appendedItems,
+                    name_list.addedItems,
+                    name_list.explicitItems,
+                    name_list.orderedItems,
+                ):
+                    if vset_name in items:
+                        items.remove(vset_name)
+                if vset_name in name_list.deletedItems:
+                    name_list.deletedItems.remove(vset_name)
                 if vset_name in ancestor_spec.variantSelections:
                     del ancestor_spec.variantSelections[vset_name]
                 touched = True
@@ -867,22 +878,6 @@ def _is_variant_body_empty(variant_spec: Sdf.VariantSpec) -> bool:
         return False
     info = set(inner.ListInfoKeys()) - {"specifier", "typeName"}
     return not info
-
-
-def _scrub_variant_set_names(prim_spec: Sdf.PrimSpec, set_name: str) -> None:
-    """Remove *set_name* from every variantSetNames list-op slot on *prim_spec*."""
-    name_list = prim_spec.variantSetNameList
-    for items in (
-        name_list.prependedItems,
-        name_list.appendedItems,
-        name_list.addedItems,
-        name_list.explicitItems,
-        name_list.orderedItems,
-    ):
-        if set_name in items:
-            items.remove(set_name)
-    if set_name in name_list.deletedItems:
-        name_list.deletedItems.remove(set_name)
 
 
 # ── Inspection ──

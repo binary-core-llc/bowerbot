@@ -25,7 +25,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 
 def list_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Return every placed object and light in the scene."""
+    """Return every placement, light, and physics-infrastructure prim in the scene."""
     if (err := require_stage(state)):
         return err
     try:
@@ -205,7 +205,9 @@ TOOLS: list[Tool] = [
             "properties": {
                 "prim_path": {
                     "type": "string",
-                    "description": "Prim path to remove (e.g. '/Scene/Furniture/Table_01')",
+                    "description": (
+                        "Prim path to remove (e.g. '/Scene/Furniture/Table_01')."
+                    ),
                 },
             },
             "required": ["prim_path"],

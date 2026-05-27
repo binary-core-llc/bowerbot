@@ -50,10 +50,8 @@ Loose files at the library root (e.g. `library/table.usda`) are
 classified individually and wrapped into a fresh ASWF folder when
 placed.
 
-Use the `category` filter to narrow results:
-- `search_assets("table", category="package")` — find asset packages
-- `search_assets("wood", category="mtl")` — find material files
-- `list_assets(category="package")` — list all asset packages
+- `search_assets("table")` searches everywhere by name; filter the returned list by the result's `category` field if needed
+- `list_assets(category="package")` browses every asset folder in the library
 
 ## Behavior
 - Detects ASWF asset folders at the top level of the library, then

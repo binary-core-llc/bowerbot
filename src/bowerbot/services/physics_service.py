@@ -34,7 +34,7 @@ from bowerbot.utils.asset_folder_utils import (
 logger = logging.getLogger(__name__)
 
 
-def list_api_properties(
+def list_physics_api_properties(
     _state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Return every property the given UsdPhysics API declares."""
@@ -42,7 +42,7 @@ def list_api_properties(
     return physics_utils.list_api_properties(api_name).model_dump()
 
 
-def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def apply_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Apply a UsdPhysics API. Auto-detects scope when not explicitly given."""
     api_name = PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]
@@ -108,7 +108,7 @@ def apply_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def remove_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a UsdPhysics API. Auto-detects scope when not explicitly given."""
     api_name = PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]

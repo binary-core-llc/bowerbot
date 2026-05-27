@@ -66,7 +66,7 @@ def _scene_with_two_assets(tmp_path: Path) -> SceneState:
 
 
 def _apply_rigid_body(state: SceneState, prim_path: str) -> None:
-    physics_service.apply_api(state, {
+    physics_service.apply_physics_api(state, {
         "api_name": PhysicsApiName.RIGID_BODY.value,
         "prim_path": prim_path,
         "scope": "scene",

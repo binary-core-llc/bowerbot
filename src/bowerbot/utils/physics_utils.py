@@ -377,6 +377,38 @@ def ensure_physics_scope(stage: Usd.Stage) -> str:
     return scope_path
 
 
+def list_physics_scenes(stage: Usd.Stage) -> list[dict[str, Any]]:
+    """Return every ``UsdPhysics.Scene`` prim under ``/Scene/Physics``."""
+    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
+    if not scope or not scope.IsValid():
+        return []
+    return [
+        {
+            "prim_path": str(p.GetPath()),
+            "name": p.GetName(),
+            "gravity_magnitude": (
+                p.GetAttribute("physics:gravityMagnitude").Get()
+            ),
+            "gravity_direction": (
+                list(p.GetAttribute("physics:gravityDirection").Get() or [])
+            ),
+        }
+        for p in Usd.PrimRange(scope)
+        if p.IsA(UsdPhysics.Scene)
+    ]
+
+
+def remove_physics_scene(stage: Usd.Stage, name: str) -> bool:
+    """Remove a ``UsdPhysics.Scene`` prim by name; return True if removed."""
+    path = f"{SceneNamespace.PHYSICS}/{name}"
+    prim = stage.GetPrimAtPath(path)
+    if not prim or not prim.IsValid() or not prim.IsA(UsdPhysics.Scene):
+        return False
+    stage.RemovePrim(Sdf.Path(path))
+    stage.Save()
+    return True
+
+
 def ensure_physics_scene(
     stage: Usd.Stage,
     name: str = "PhysicsScene",

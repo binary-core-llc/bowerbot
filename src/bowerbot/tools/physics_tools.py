@@ -58,6 +58,32 @@ def setup_physics_scene(state: SceneState, params: dict[str, Any]) -> ToolResult
     return ToolResult(success=True, data=data)
 
 
+def list_physics_scenes(
+    state: SceneState, params: dict[str, Any],
+) -> ToolResult:
+    """Return every UsdPhysics.Scene prim under /Scene/Physics."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.list_physics_scenes(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def remove_physics_scene(
+    state: SceneState, params: dict[str, Any],
+) -> ToolResult:
+    """Remove a UsdPhysics.Scene prim by name."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = physics_service.remove_physics_scene(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
 def get_physics_summary(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Return asset-side and scene-side physics opinions for a prim path."""
     if (err := require_stage(state)):
@@ -429,6 +455,36 @@ TOOLS: list[Tool] = [
         },
     ),
     Tool(
+        name="list_physics_scenes",
+        description=(
+            "List every UsdPhysics.Scene prim under /Scene/Physics. "
+            "Shows name, gravity magnitude, and gravity direction for "
+            "each. Use to check which physics scenes exist before "
+            "creating or removing one."
+        ),
+        parameters={"type": "object", "properties": {}},
+    ),
+    Tool(
+        name="remove_physics_scene",
+        description=(
+            "Remove a UsdPhysics.Scene prim by name from /Scene/Physics. "
+            "Use when the user asks to delete or clean up a physics scene."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": (
+                        "Name of the PhysicsScene prim to remove "
+                        "(e.g. 'PhysicsScene', 'PendulumPhysics')."
+                    ),
+                },
+            },
+            "required": ["name"],
+        },
+    ),
+    Tool(
         name="get_physics_summary",
         description=(
             "Inspect every authored physics opinion on a prim and its "
@@ -780,6 +836,8 @@ HANDLERS = {
     "apply_physics_api": apply_physics_api,
     "remove_physics_api": remove_physics_api,
     "setup_physics_scene": setup_physics_scene,
+    "list_physics_scenes": list_physics_scenes,
+    "remove_physics_scene": remove_physics_scene,
     "get_physics_summary": get_physics_summary,
     "create_or_update_collision_group": create_or_update_collision_group,
     "remove_collision_group": remove_collision_group,

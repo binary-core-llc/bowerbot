@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 import shutil
-from pathlib import Path
 from typing import Any
 
 from bowerbot.schemas import (
@@ -26,6 +25,7 @@ from bowerbot.utils import (
 from bowerbot.utils.asset_folder_utils import (
     compute_ref_asset_path,
     resolve_asset_dir_for_prim,
+    resolve_asset_file_path,
 )
 from bowerbot.utils.naming_utils import safe_prim_name
 from bowerbot.utils.stage_utils import find_asset_references
@@ -39,7 +39,11 @@ logger = logging.getLogger(__name__)
 
 def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bring an asset into the project and add it to the scene."""
-    asset_path = Path(params["asset_file_path"])
+    asset_path = resolve_asset_file_path(
+        params["asset_file_path"],
+        state.project.path if state.project else None,
+        state.library_dir,
+    )
     asset_name = params["asset_name"]
     group = params["group"]
     tx = float(params["translate_x"])
@@ -95,7 +99,11 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Nest an asset inside an ASWF container's ``contents.usda``."""
-    asset_path = Path(params["asset_file_path"])
+    asset_path = resolve_asset_file_path(
+        params["asset_file_path"],
+        state.project.path if state.project else None,
+        state.library_dir,
+    )
     asset_name = params["asset_name"]
     container_prim_path = params["container_prim_path"]
     group = params["group"]

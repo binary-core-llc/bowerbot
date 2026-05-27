@@ -39,7 +39,9 @@ def list_physics_api_properties(
 ) -> dict[str, Any]:
     """Return every property the given UsdPhysics API declares."""
     api_name = PhysicsApiName(params["api_name"])
-    return physics_utils.list_api_properties(api_name).model_dump()
+    return physics_utils.list_api_properties(
+        api_name, instance_name=params.get("instance_name"),
+    ).model_dump()
 
 
 def apply_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
@@ -48,6 +50,7 @@ def apply_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, An
     prim_path = params["prim_path"]
     attributes = params.get("attributes") or {}
     relationships = params.get("relationships") or {}
+    instance_name = params.get("instance_name")
     explicit_scope = params.get("scope")
     scope = (
         physics_utils.validate_scope(explicit_scope) if explicit_scope
@@ -57,6 +60,7 @@ def apply_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, An
     if scope == "scene":
         result = physics_utils.apply_api_scene(
             state.stage, prim_path, api_name, attributes, relationships,
+            instance_name=instance_name,
         )
         state.touch_project()
         logger.info(
@@ -87,6 +91,7 @@ def apply_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, An
 
     result = physics_utils.apply_api(
         asset_dir, asset_local_path, api_name, attributes, relationships,
+        instance_name=instance_name,
     )
     state.stage = stage_utils.open_stage(state.stage_path)
     state.touch_project()
@@ -112,6 +117,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
     """Remove a UsdPhysics API. Auto-detects scope when not explicitly given."""
     api_name = PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]
+    instance_name = params.get("instance_name")
     explicit_scope = params.get("scope")
     scope = (
         physics_utils.validate_scope(explicit_scope) if explicit_scope
@@ -121,6 +127,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
     if scope == "scene":
         changed = physics_utils.remove_api_scene(
             state.stage, prim_path, api_name,
+            instance_name=instance_name,
         )
         if changed:
             state.touch_project()
@@ -128,6 +135,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
             "scope": "scene",
             "prim_path": prim_path,
             "api_name": api_name.value,
+            "instance_name": instance_name,
             "removed": changed,
         }
 
@@ -145,7 +153,9 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         prim_path, ref_prim_path, resolve_default_prim_name(asset_dir),
     )
 
-    api_props = physics_utils.list_api_properties(api_name).properties
+    api_props = physics_utils.list_api_properties(
+        api_name, instance_name=instance_name,
+    ).properties
     attr_names = {p.name: None for p in api_props if p.kind == "attribute"}
     rel_names = {p.name: [] for p in api_props if p.kind == "relationship"}
 
@@ -158,6 +168,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
 
     changed = physics_utils.remove_api(
         asset_dir, asset_local_path, api_name,
+        instance_name=instance_name,
     )
     if changed:
         physics_utils.cleanup_if_empty(asset_dir)

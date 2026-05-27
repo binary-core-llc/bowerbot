@@ -180,12 +180,22 @@ TOOLS: list[Tool] = [
                     "enum": _API_VALUES,
                     "description": (
                         "Which UsdPhysics applied API to introspect. "
-                        "PhysicsRigidBodyAPI for rigid bodies, "
-                        "PhysicsMassAPI for mass/density/COM, "
-                        "PhysicsCollisionAPI for colliders, "
-                        "PhysicsMeshCollisionAPI for mesh-collision "
-                        "approximation, PhysicsArticulationRootAPI "
-                        "for articulation roots."
+                        "PhysicsRigidBodyAPI, PhysicsMassAPI, "
+                        "PhysicsCollisionAPI, PhysicsMeshCollisionAPI, "
+                        "PhysicsArticulationRootAPI, PhysicsDriveAPI "
+                        "(multi-apply: motor/spring on joints), "
+                        "PhysicsLimitAPI (multi-apply: angle/distance "
+                        "limits on joints)."
+                    ),
+                },
+                "instance_name": {
+                    "type": "string",
+                    "description": (
+                        "Required for multi-apply APIs (DriveAPI, "
+                        "LimitAPI). The degree-of-freedom token: "
+                        "'angular' (revolute), 'linear' (prismatic), "
+                        "'rotX'/'rotY'/'rotZ'/'transX'/'transY'/"
+                        "'transZ' (D6), 'distance' (distance joint)."
                     ),
                 },
             },
@@ -248,6 +258,16 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "enum": _API_VALUES,
                     "description": "Which UsdPhysics applied API to apply.",
+                },
+                "instance_name": {
+                    "type": "string",
+                    "description": (
+                        "Required for multi-apply APIs (DriveAPI, "
+                        "LimitAPI). The DOF token: 'angular' "
+                        "(revolute), 'linear' (prismatic), "
+                        "'rotX'/'rotY'/'rotZ'/'transX'/'transY'/"
+                        "'transZ' (D6), 'distance' (distance joint)."
+                    ),
                 },
                 "attributes": {
                     "type": "object",
@@ -329,6 +349,14 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "enum": _API_VALUES,
                     "description": "Which UsdPhysics applied API to remove.",
+                },
+                "instance_name": {
+                    "type": "string",
+                    "description": (
+                        "Required for multi-apply APIs (DriveAPI, "
+                        "LimitAPI). Must match the instance_name "
+                        "used in apply_physics_api."
+                    ),
                 },
                 "scope": {
                     "type": "string",

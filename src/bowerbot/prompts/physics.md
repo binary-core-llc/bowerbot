@@ -298,14 +298,45 @@ in the same subtree; the tool refuses.
   ignoring it inverts drive target-position signs (relevant once
   drives ship in the follow-up).
 
-### Multi-DOF caveat (for future drives + limits work)
+### Joint drives (PhysicsDriveAPI)
 
-Drives and limits on the typed joints follow a fixed token mapping:
-`RevoluteJoint` uses `angular`, `PrismaticJoint` uses `linear`,
-`DistanceJoint` uses `distance`. **`FixedJoint` and `SphericalJoint`
-do NOT support `DriveAPI`** in the standard UsdPhysics spec; a
-driven spherical-like joint needs a generic `PhysicsJoint` (D6)
-with `rotX/Y/Z` drives, which is out of current scope.
+DriveAPI is a multi-apply API that adds motor/spring behavior to a
+joint. It models a damped spring:
+`force = stiffness * (targetPos - pos) + damping * (targetVel - vel)`.
+
+To add a drive:
+1. Call `list_physics_api_properties(api_name="PhysicsDriveAPI",
+   instance_name="angular")` to discover the attribute names.
+2. Call `apply_physics_api(prim_path=<joint>, api_name="PhysicsDriveAPI",
+   instance_name="angular", scope="scene", attributes={...})`.
+
+Valid instance names per joint type:
+- **RevoluteJoint**: `angular`
+- **PrismaticJoint**: `linear`
+- **SphericalJoint**: not supported (use D6 with rotX/Y/Z)
+- **FixedJoint**: not supported
+- **DistanceJoint**: not supported
+
+Drive modes (`drive:<instance>:physics:type`):
+- `force`: mass-dependent (default)
+- `acceleration`: mass-independent (preferred for robotics)
+
+### Joint limits (PhysicsLimitAPI)
+
+LimitAPI is a multi-apply API that constrains a joint's range of
+motion beyond its built-in limits.
+
+RevoluteJoint and PrismaticJoint have built-in `lowerLimit` /
+`upperLimit` attributes directly on the joint schema. Use those for
+simple range clamping. LimitAPI is for additional axis constraints
+on SphericalJoint (rotX/rotY/rotZ) and DistanceJoint (distance).
+
+Valid instance names per joint type:
+- **RevoluteJoint**: `angular`
+- **PrismaticJoint**: `linear`
+- **SphericalJoint**: `rotX`, `rotY`, `rotZ`
+- **FixedJoint**: not supported
+- **DistanceJoint**: `distance`
 
 ### Joint tools
 

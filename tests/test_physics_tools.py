@@ -631,3 +631,275 @@ def test_setup_physics_scene_custom_name():
         }))
         assert r.success, r.error
         assert "SimScene" in r.data["prim_path"]
+
+
+# ── DriveAPI ──
+
+
+def _joint_with_bodies(tmp_path, state):
+    """Place two assets, apply RigidBody, create a RevoluteJoint."""
+    p1 = _place(tmp_path, state, "arm")
+    p2 = _place(tmp_path, state, "hand")
+    asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+    for p in [p1, p2]:
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": p.data["prim_path"],
+            "api_name": "PhysicsRigidBodyAPI",
+            "scope": "scene",
+        }))
+    joint = asyncio.run(exec_tool(state, "create_joint", {
+        "joint_type": "PhysicsRevoluteJoint",
+        "name": "hinge",
+        "body0": p1.data["prim_path"],
+        "body1": p2.data["prim_path"],
+        "scope": "scene",
+    }))
+    assert joint.success, joint.error
+    return joint.data["prim_path"]
+
+
+def test_list_drive_api_properties():
+    """Returns DriveAPI properties with instance name substituted."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "angular",
+        }))
+        assert r.success, r.error
+        names = {p["name"] for p in r.data["properties"]}
+        assert "drive:angular:physics:stiffness" in names
+        assert "drive:angular:physics:damping" in names
+        assert "drive:angular:physics:type" in names
+
+
+def test_list_drive_api_requires_instance_name():
+    """Fails when instance_name is omitted for a multi-apply API."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+            "api_name": "PhysicsDriveAPI",
+        }))
+        assert not r.success
+
+
+def test_apply_drive_api_on_revolute_joint():
+    """Applies DriveAPI:angular on a RevoluteJoint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        joint_path = _joint_with_bodies(tmp_path, state)
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+            "attributes": {
+                "drive:angular:physics:stiffness": 100.0,
+                "drive:angular:physics:damping": 10.0,
+                "drive:angular:physics:type": "force",
+            },
+        }))
+        assert r.success, r.error
+        assert r.data["instance_name"] == "angular"
+        assert "drive:angular:physics:stiffness" in r.data["attributes_set"]
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath(joint_path)
+        assert prim.HasAPI(UsdPhysics.DriveAPI, "angular")
+
+
+def test_apply_drive_api_refuses_spherical():
+    """DriveAPI is not supported on SphericalJoint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        p1 = _place(tmp_path, state, "ball")
+        p2 = _place(tmp_path, state, "socket")
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        for p in [p1, p2]:
+            asyncio.run(exec_tool(state, "apply_physics_api", {
+                "prim_path": p.data["prim_path"],
+                "api_name": "PhysicsRigidBodyAPI",
+                "scope": "scene",
+            }))
+        joint = asyncio.run(exec_tool(state, "create_joint", {
+            "joint_type": "PhysicsSphericalJoint",
+            "name": "ball_socket",
+            "body0": p1.data["prim_path"],
+            "body1": p2.data["prim_path"],
+            "scope": "scene",
+        }))
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint.data["prim_path"],
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+        assert not r.success
+
+
+def test_apply_drive_api_refuses_bad_instance():
+    """DriveAPI refuses 'linear' on a RevoluteJoint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        joint_path = _joint_with_bodies(tmp_path, state)
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "linear",
+            "scope": "scene",
+        }))
+        assert not r.success
+        assert "linear" in r.error
+
+
+def test_remove_drive_api():
+    """Removes an applied DriveAPI:angular."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        joint_path = _joint_with_bodies(tmp_path, state)
+
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsDriveAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is True
+
+
+# ── LimitAPI ──
+
+
+def test_list_limit_api_properties():
+    """Returns LimitAPI properties with instance name substituted."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+            "api_name": "PhysicsLimitAPI",
+            "instance_name": "angular",
+        }))
+        assert r.success, r.error
+        names = {p["name"] for p in r.data["properties"]}
+        assert "limit:angular:physics:low" in names
+        assert "limit:angular:physics:high" in names
+
+
+def test_apply_limit_api_on_revolute_joint():
+    """Applies LimitAPI:angular on a RevoluteJoint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        joint_path = _joint_with_bodies(tmp_path, state)
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsLimitAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+            "attributes": {
+                "limit:angular:physics:low": -90.0,
+                "limit:angular:physics:high": 90.0,
+            },
+        }))
+        assert r.success, r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath(joint_path)
+        assert prim.HasAPI(UsdPhysics.LimitAPI, "angular")
+
+
+def test_apply_limit_api_distance_on_distance_joint():
+    """Applies LimitAPI:distance on a DistanceJoint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        p1 = _place(tmp_path, state, "anchor")
+        p2 = _place(tmp_path, state, "tether")
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        for p in [p1, p2]:
+            asyncio.run(exec_tool(state, "apply_physics_api", {
+                "prim_path": p.data["prim_path"],
+                "api_name": "PhysicsRigidBodyAPI",
+                "scope": "scene",
+            }))
+        joint = asyncio.run(exec_tool(state, "create_joint", {
+            "joint_type": "PhysicsDistanceJoint",
+            "name": "rope",
+            "body0": p1.data["prim_path"],
+            "body1": p2.data["prim_path"],
+            "scope": "scene",
+        }))
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint.data["prim_path"],
+            "api_name": "PhysicsLimitAPI",
+            "instance_name": "distance",
+            "scope": "scene",
+            "attributes": {
+                "limit:distance:physics:low": 0.5,
+                "limit:distance:physics:high": 2.0,
+            },
+        }))
+        assert r.success, r.error
+
+
+def test_apply_limit_api_refuses_fixed_joint():
+    """LimitAPI is not supported on FixedJoint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        p1 = _place(tmp_path, state, "base")
+        p2 = _place(tmp_path, state, "top")
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        for p in [p1, p2]:
+            asyncio.run(exec_tool(state, "apply_physics_api", {
+                "prim_path": p.data["prim_path"],
+                "api_name": "PhysicsRigidBodyAPI",
+                "scope": "scene",
+            }))
+        joint = asyncio.run(exec_tool(state, "create_joint", {
+            "joint_type": "PhysicsFixedJoint",
+            "name": "weld",
+            "body0": p1.data["prim_path"],
+            "body1": p2.data["prim_path"],
+            "scope": "scene",
+        }))
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint.data["prim_path"],
+            "api_name": "PhysicsLimitAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+        assert not r.success
+
+
+def test_remove_limit_api():
+    """Removes an applied LimitAPI:angular."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        joint_path = _joint_with_bodies(tmp_path, state)
+
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsLimitAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": joint_path,
+            "api_name": "PhysicsLimitAPI",
+            "instance_name": "angular",
+            "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is True

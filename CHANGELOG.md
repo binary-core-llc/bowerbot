@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.11.0](https://github.com/binary-core-llc/bowerbot/compare/v1.10.0...v1.11.0) (2026-05-27)
+
+
+### Features
+
+* **physics:** DriveAPI + LimitAPI (multi-apply) on joints ([#179](https://github.com/binary-core-llc/bowerbot/issues/179)) ([a3fcdb3](https://github.com/binary-core-llc/bowerbot/commit/a3fcdb3a514eef230eb91e9e98e08d7356a8fbaa))
+
+
+### Bug Fixes
+
+* place_asset relative paths, remove_api status, PhysicsScene lifecycle ([#181](https://github.com/binary-core-llc/bowerbot/issues/181)) ([21e61f4](https://github.com/binary-core-llc/bowerbot/commit/21e61f48501fe473a1c196373d22156ae6f864b5))
+
 ## [1.10.0](https://github.com/binary-core-llc/bowerbot/compare/v1.9.0...v1.10.0) (2026-05-27)
 
 

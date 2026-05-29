@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from bowerbot.config import Settings
+from bowerbot.logging_setup import log_tool_result
 from bowerbot.skills.base import (
     Skill,
     SkillConfigError,
@@ -122,17 +123,34 @@ class SkillRegistry:
         """Execute a tool by its qualified name (``skill__tool``)."""
         parts = qualified_name.split("__", 1)
         if len(parts) != 2:
-            return ToolResult(
+            result = ToolResult(
                 success=False, error=f"Invalid tool name: {qualified_name}",
             )
+            log_tool_result(logger, qualified_name, result)
+            return result
 
         skill_name, tool_name = parts
         skill = self._skills.get(skill_name)
         if skill is None:
-            return ToolResult(success=False, error=f"Skill not found: {skill_name}")
+            result = ToolResult(
+                success=False, error=f"Skill not found: {skill_name}",
+            )
+            log_tool_result(logger, qualified_name, result)
+            return result
 
         ctx = self._build_context(skill, state)
-        return await skill.execute(tool_name, params, ctx)
+        try:
+            result = await skill.execute(tool_name, params, ctx)
+        except Exception as e:
+            logger.exception(
+                "skill-crash name=%s", qualified_name,
+            )
+            result = ToolResult(
+                success=False,
+                error=f"{qualified_name} crashed: {e}",
+            )
+        log_tool_result(logger, qualified_name, result)
+        return result
 
     def _build_context(
         self, skill: Skill, state: SceneState | None,

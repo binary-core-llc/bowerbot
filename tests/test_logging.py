@@ -10,7 +10,13 @@ import logging
 import pytest
 
 from bowerbot.config import LLMSettings, LoggingSettings, Settings
-from bowerbot.logging_setup import configure_logging, sanitize, session_id
+from bowerbot.logging_setup import (
+    configure_logging,
+    log_tool_result,
+    sanitize,
+    session_id,
+)
+from bowerbot.skills.base import ToolResult
 
 
 @pytest.fixture(autouse=True)
@@ -135,6 +141,118 @@ def test_logger_writes_with_session_prefix(tmp_path, monkeypatch):
     assert lines
     sid = session_id()
     assert any(sid in line for line in lines)
+
+
+def test_log_tool_result_ok(caplog):
+    """Success result emits tool-ok with the tool name."""
+    logger = logging.getLogger("bowerbot.test")
+    with caplog.at_level(logging.INFO, logger="bowerbot.test"):
+        log_tool_result(
+            logger, "create_light", ToolResult(success=True, data={}),
+        )
+    msgs = [r.message for r in caplog.records]
+    assert any("tool-ok name=create_light" in m for m in msgs)
+
+
+def test_log_tool_result_error(caplog):
+    """Failure result emits tool-error with the error message."""
+    logger = logging.getLogger("bowerbot.test")
+    with caplog.at_level(logging.INFO, logger="bowerbot.test"):
+        log_tool_result(
+            logger, "create_light",
+            ToolResult(success=False, error="boom"),
+        )
+    msgs = [r.message for r in caplog.records]
+    assert any(
+        "tool-error name=create_light" in m and "boom" in m
+        for m in msgs
+    )
+
+
+def test_skill_tool_call_logs_uniformly_with_core(caplog):
+    """Skill tool calls produce identical tool-ok / tool-error lines."""
+    import asyncio
+
+    from bowerbot.skills.base import SkillCategory
+    from bowerbot.skills.registry import SkillRegistry
+
+    class _StubSkill:
+        name = "stub"
+        cache_subdir = None
+
+        def validate_config(self):
+            pass
+
+        def get_tools(self):
+            return []
+
+        def get_skill_prompt(self):
+            return ""
+
+        @property
+        def category(self):
+            return SkillCategory.ASSET_PROVIDER
+
+        async def execute(self, tool_name, params, ctx):
+            if tool_name == "ok":
+                return ToolResult(success=True, data={"hi": "there"})
+            return ToolResult(success=False, error="bad request")
+
+    registry = SkillRegistry()
+    registry._skills["stub"] = _StubSkill()
+    registry._library_dir = tmp = __import__("pathlib").Path(".")
+    del tmp
+
+    with caplog.at_level(logging.INFO, logger="bowerbot.skills.registry"):
+        asyncio.run(registry.execute_tool("stub__ok", {}))
+        asyncio.run(registry.execute_tool("stub__bad", {}))
+
+    msgs = [r.message for r in caplog.records]
+    assert any("tool-ok name=stub__ok" in m for m in msgs)
+    assert any(
+        "tool-error name=stub__bad" in m and "bad request" in m
+        for m in msgs
+    )
+
+
+def test_skill_crash_logs_tool_error(caplog):
+    """A skill that raises gets converted to a tool-error log line."""
+    import asyncio
+
+    from bowerbot.skills.base import SkillCategory
+    from bowerbot.skills.registry import SkillRegistry
+
+    class _CrashSkill:
+        name = "crashy"
+        cache_subdir = None
+
+        def validate_config(self):
+            pass
+
+        def get_tools(self):
+            return []
+
+        def get_skill_prompt(self):
+            return ""
+
+        @property
+        def category(self):
+            return SkillCategory.ASSET_PROVIDER
+
+        async def execute(self, tool_name, params, ctx):
+            raise RuntimeError("kaboom")
+
+    registry = SkillRegistry()
+    registry._skills["crashy"] = _CrashSkill()
+    registry._library_dir = __import__("pathlib").Path(".")
+
+    with caplog.at_level(logging.INFO, logger="bowerbot.skills.registry"):
+        result = asyncio.run(registry.execute_tool("crashy__any", {}))
+
+    assert result.success is False
+    assert "kaboom" in result.error
+    msgs = [r.message for r in caplog.records]
+    assert any("tool-error name=crashy__any" in m for m in msgs)
 
 
 def test_rotating_handler_respects_max_bytes(tmp_path, monkeypatch):

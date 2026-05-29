@@ -17,6 +17,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from bowerbot.logging_setup import log_tool_result
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 from bowerbot.tools import (
@@ -108,11 +109,7 @@ async def execute(
     if inspect.isawaitable(result):
         result = await result
 
-    if not result.success:
-        logger.info("tool-error name=%s error=%s", tool_name, result.error)
-    else:
-        logger.info("tool-ok name=%s", tool_name)
-
+    log_tool_result(logger, tool_name, result)
     state.mark_saved()
     return result
 

@@ -103,6 +103,16 @@ def configure_logging(settings: Settings) -> Path | None:
     return log_file
 
 
+def log_tool_result(
+    logger: logging.Logger, tool_name: str, result: Any,
+) -> None:
+    """Emit ``tool-ok`` / ``tool-error`` for a ToolResult at the boundary."""
+    if result.success:
+        logger.info("tool-ok name=%s", tool_name)
+    else:
+        logger.info("tool-error name=%s error=%s", tool_name, result.error)
+
+
 def sanitize(value: Any) -> Any:
     """Recursively redact secret-looking keys and truncate long scalars."""
     if isinstance(value, Mapping):

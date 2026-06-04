@@ -66,6 +66,7 @@ class AgentRuntime:
         """Stitch together core + scene-building + skill prompt sections."""
         sections = [
             load_prompt("core"),
+            f"# Projects\n\n{load_prompt('projects')}",
             f"# Scene Building\n\n{load_prompt('scene_building')}",
             f"# Asset Library\n\n{load_prompt('library')}",
             f"# Placing Assets\n\n{load_prompt('assets')}",

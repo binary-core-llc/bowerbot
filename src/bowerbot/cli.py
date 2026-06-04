@@ -31,7 +31,7 @@ from bowerbot.logging_setup import configure_logging
 from bowerbot.project import Project
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
-from bowerbot.utils import inspection_utils, stage_utils
+from bowerbot.utils import inspection_utils
 from bowerbot.utils.naming_utils import safe_project_name
 
 theme = Theme({
@@ -45,21 +45,14 @@ console = Console(theme=theme)
 def _build_state(
     settings: Settings, project: Project | None = None,
 ) -> SceneState:
-    """Build a SceneState, optionally binding it to *project*."""
+    """Build a SceneState, optionally focusing it on *project*."""
     state = SceneState(
         scene_defaults=settings.scene_defaults,
         library_dir=Path(settings.assets_dir),
+        projects_dir=Path(settings.projects_dir),
     )
-    if project is None:
-        return state
-
-    state.project = project
-    state.stage_path = project.scene_path
-
-    if project.scene_path.exists():
-        state.stage = stage_utils.open_stage(project.scene_path)
-        state.object_count = len(inspection_utils.list_prims(state.stage))
-        state.mark_saved()
+    if project is not None:
+        state.bind_project(project)
     return state
 
 
@@ -205,8 +198,14 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
     asyncio.run(_chat_loop(agent, console))
 
 
+def _focused_project_name(agent: AgentRuntime) -> str | None:
+    """Name of the project the agent's state is currently focused on."""
+    return agent.state.project.name if agent.state.project else None
+
+
 async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
     """Run the interactive chat loop."""
+    focused = _focused_project_name(agent)
     while True:
         console.print()
         try:
@@ -229,6 +228,14 @@ async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
             with console.status("[sf]BowerBot is thinking...[/]", spinner="dots"):
                 response = await agent.process(user_input)
             console.print(f"\n[sf]BowerBot:[/] {response}")
+            now_focused = _focused_project_name(agent)
+            if now_focused != focused:
+                focused = now_focused
+                if now_focused is not None:
+                    console.print(
+                        f"\n[info]→ Now working on: {now_focused}  "
+                        f"({agent.state.object_count} object(s))[/]",
+                    )
         except KeyboardInterrupt:
             console.print("\n[info]Interrupted. Type 'quit' to exit.[/]")
         except litellm.AuthenticationError:

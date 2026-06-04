@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from pxr import Usd
 
 from bowerbot.config import SceneDefaults
+from bowerbot.utils import inspection_utils, stage_utils
 
 if TYPE_CHECKING:
     from bowerbot.project import Project
@@ -31,6 +32,7 @@ class SceneState:
     stage_path: Path | None = None
     object_count: int = 0
     library_dir: Path | None = None
+    projects_dir: Path | None = None
     layer_baselines: dict[Path, tuple[float, str]] = field(default_factory=dict)
 
     @property
@@ -50,6 +52,14 @@ class SceneState:
             raise RuntimeError(msg)
         self.assets_dir.mkdir(parents=True, exist_ok=True)
         return self.assets_dir
+
+    def bind_project(self, project: Project) -> None:
+        """Focus this state on *project*: open its scene and count objects."""
+        self.project = project
+        self.stage_path = project.scene_path
+        self.stage = stage_utils.open_stage(project.scene_path)
+        self.object_count = len(inspection_utils.list_prims(self.stage))
+        self.mark_saved()
 
     def touch_project(self) -> None:
         """Persist updated_at on the bound project, if any."""

@@ -1,0 +1,130 @@
+# Copyright 2026 Binary Core LLC
+# SPDX-License-Identifier: Apache-2.0
+
+"""Project tools — create / open / list / report the focused project."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from bowerbot.services import project_service
+from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.state import SceneState
+from bowerbot.tools._helpers import require_projects_dir
+
+
+def list_projects(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """List every project in the projects directory."""
+    if (err := require_projects_dir(state)):
+        return err
+    try:
+        data = project_service.list_projects(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def create_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Create a new project and focus it."""
+    if (err := require_projects_dir(state)):
+        return err
+    try:
+        data = project_service.create_project(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def open_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Open an existing project and focus it."""
+    if (err := require_projects_dir(state)):
+        return err
+    try:
+        data = project_service.open_project(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def get_current_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Report the currently focused project, or none."""
+    try:
+        data = project_service.get_current_project(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+TOOLS: list[Tool] = [
+    Tool(
+        name="list_projects",
+        description=(
+            "List every BowerBot project in the projects directory, with "
+            "the currently focused one flagged. Use this to see what "
+            "projects exist before opening one."
+        ),
+        parameters={"type": "object", "properties": {}},
+    ),
+    Tool(
+        name="create_project",
+        description=(
+            "Create a new BowerBot project and immediately focus it. "
+            "Every subsequent tool call (place_asset, create_light, ...) "
+            "operates on this project until another is opened. Use when "
+            "the user wants to start a fresh scene."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": (
+                        "Human-readable project name (e.g. 'Coffee Shop'). "
+                        "The folder name is derived from it."
+                    ),
+                },
+            },
+            "required": ["name"],
+        },
+    ),
+    Tool(
+        name="open_project",
+        description=(
+            "Open an existing BowerBot project and focus it. Every "
+            "subsequent tool call operates on this project until another "
+            "is opened. Use when the user wants to resume or switch to a "
+            "different project. Call list_projects first if unsure of the "
+            "exact name."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": (
+                        "Name of the project to open (as shown by "
+                        "list_projects)."
+                    ),
+                },
+            },
+            "required": ["name"],
+        },
+    ),
+    Tool(
+        name="get_current_project",
+        description=(
+            "Report which project is currently focused, including its "
+            "path and object count. Returns 'no project open' if none is "
+            "focused. Use to confirm context before authoring."
+        ),
+        parameters={"type": "object", "properties": {}},
+    ),
+]
+
+
+HANDLERS = {
+    "list_projects": list_projects,
+    "create_project": create_project,
+    "open_project": open_project,
+    "get_current_project": get_current_project,
+}

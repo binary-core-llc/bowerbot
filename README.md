@@ -135,7 +135,7 @@ uv run bowerbot onboard
 bowerbot onboard
 ```
 
-The wizard asks for your LLM API key, your asset library directory, and your projects directory, then writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
+The wizard first asks **how you'll run BowerBot** (agent or MCP mode, see below), then your asset library directory and projects directory, and (in agent mode only) your LLM API key. It writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
 
 ### Create a project and start building
 
@@ -145,6 +145,38 @@ bowerbot open coffee_shop
 ```
 
 To plug in asset providers like Sketchfab, see [Skills](#-skills) below.
+
+---
+
+## 🔀 Two ways to run: agent mode and MCP mode
+
+BowerBot is one program with a mode switch. You run it one way or the other, never both. The switch is a single line in `~/.bowerbot/config.json` (the onboard wizard sets it):
+
+```jsonc
+{ "mode": "agent" }   // default. BowerBot uses its own AI. Needs an LLM API key.
+{ "mode": "mcp" }     // BowerBot has no AI; an MCP client drives it. No API key.
+```
+
+- **Agent mode**: BowerBot thinks for itself using the LLM key. Good for running standalone or as a product: `bowerbot open coffee_shop`.
+- **MCP mode**: BowerBot has no brain of its own. An MCP client (Claude Desktop, Gemini, Codex, ...) is the brain; BowerBot is purely a tool provider. No API key needed.
+
+### MCP mode
+
+Set `"mode": "mcp"` (or choose MCP during `bowerbot onboard`), then register BowerBot as an MCP server in whatever client you use. Most clients take a server entry like:
+
+```json
+{
+  "mcpServers": {
+    "bowerbot": {
+      "command": "bowerbot"
+    }
+  }
+}
+```
+
+The client launches `bowerbot`; it reads `~/.bowerbot/config.json`, sees `"mode": "mcp"`, and serves over stdio. BowerBot exposes its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...), and the client's model drives them. It opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`).
+
+No LLM API key is read in MCP mode. Skills still use their own config (e.g. the Sketchfab token, the Kit `base_url`) from the same `config.json`.
 
 ---
 
@@ -283,6 +315,15 @@ Skills extend BowerBot with **external** asset providers, DCC connectors, and si
 BowerBot's core tools, grouped by domain. Every tool maps 1:1 to a
 service function and is described in the LLM prompts under
 `src/bowerbot/prompts/`.
+
+#### Projects
+
+| Tool | Description |
+|------|-------------|
+| `create_project` | Create a new project and focus it |
+| `open_project` | Focus an existing project (resume or switch) |
+| `list_projects` | List every project, flagging the focused one |
+| `get_current_project` | Report the focused project, path, and object count |
 
 #### Stage & scene
 
@@ -491,6 +532,7 @@ All settings live in `~/.bowerbot/config.json`. The `skills` block holds the con
 
 ```json
 {
+  "mode": "agent",
   "llm": {
     "model": "anthropic/claude-sonnet-4-6",
     "api_key": "sk-...",
@@ -603,16 +645,19 @@ Adding a feature is the same three-file change every time: schema, service, tool
 
 ```
 src/bowerbot/
-  agent.py            # LLM tool-calling loop and prompt assembly
-  cli.py              # Click CLI
-  config.py           # Settings from ~/.bowerbot/config.json
+  agent.py            # Agent mode: the LLM tool-calling loop and prompt assembly
+  mcp_server.py       # MCP mode: serves the tool surface to an MCP client over stdio
+  tool_router.py      # Shared router over core tools + skills (used by both modes)
+  cli.py              # Click CLI; dispatches to agent runtime or MCP server by mode
+  config.py           # Settings (incl. mode: agent|mcp) from ~/.bowerbot/config.json
   project.py          # Project lifecycle (create / load / resume)
   state.py            # SceneState: the context threaded through every tool handler
-  dispatcher.py       # Aggregates tool defs + routes tool calls to handlers
-  token_manager.py    # Conversation compression and summarization
+  dispatcher.py       # Aggregates core tool defs + routes core tool calls to handlers
+  token_manager.py    # Conversation compression and summarization (agent mode)
 
   prompts/            # LLM instructions as markdown (editable without code changes)
     core.md
+    projects.md
     scene_building.md
     assets.md
     library.md
@@ -636,6 +681,8 @@ src/bowerbot/
     variants.py       #   VariantCategory, AddVariant params, VariantsSummary
 
   services/           # State-aware orchestrators. One same-named function per tool.
+    project_service.py     #   create_project, open_project, list_projects,
+                           #   get_current_project (focus the bound project)
     stage_service.py       #   create_stage, list_scene, rename/remove_prim, move_asset,
                            #   set/list_prim_attribute(s), snapshot lifecycle, ...
     asset_service.py       #   place_asset, place_asset_inside, list/delete_project_*,
@@ -656,7 +703,10 @@ src/bowerbot/
 
   tools/              # LLM-facing API layer (tool defs + thin handlers).
                       # Every public function mirrors a service function 1:1.
-    _helpers.py            #   Precondition guards (require_stage / project / library)
+    _helpers.py            #   Precondition guards (require_stage / project / library /
+                           #   projects_dir)
+    project_tools.py       #   create_project, open_project, list_projects,
+                           #   get_current_project
     stage_tools.py         #   create_stage, list_scene, rename/remove_prim, move_asset,
                            #   set/list_prim_attribute(s), snapshot lifecycle, ...
     asset_tools.py         #   place_asset(_inside), list/delete_project_*,

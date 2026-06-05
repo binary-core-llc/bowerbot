@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from pxr import Usd
 
-from bowerbot.config import SceneDefaults
+from bowerbot.config import SceneDefaults, Settings
 from bowerbot.utils import inspection_utils, stage_utils
 
 if TYPE_CHECKING:
@@ -34,6 +34,15 @@ class SceneState:
     library_dir: Path | None = None
     projects_dir: Path | None = None
     layer_baselines: dict[Path, tuple[float, str]] = field(default_factory=dict)
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> SceneState:
+        """Build an unbound state with the configured library and projects dirs."""
+        return cls(
+            scene_defaults=settings.scene_defaults,
+            library_dir=Path(settings.assets_dir),
+            projects_dir=Path(settings.projects_dir),
+        )
 
     @property
     def assets_dir(self) -> Path | None:

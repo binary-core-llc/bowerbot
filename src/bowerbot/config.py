@@ -14,6 +14,7 @@ Load order:
 from __future__ import annotations
 
 import json
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,13 @@ from pydantic_settings import BaseSettings
 # Global config directory
 BOWERBOT_HOME = Path.home() / ".bowerbot"
 GLOBAL_CONFIG_PATH = BOWERBOT_HOME / "config.json"
+
+
+class Mode(StrEnum):
+    """How BowerBot runs: with its own LLM, or driven by an MCP client."""
+
+    AGENT = "agent"
+    MCP = "mcp"
 
 
 class LLMSettings(BaseSettings):
@@ -88,6 +96,7 @@ class LoggingSettings(BaseSettings):
 class Settings(BaseSettings):
     """Top-level BowerBot settings."""
 
+    mode: Mode = Mode.AGENT
     llm: LLMSettings = Field(default_factory=LLMSettings)
     scene_defaults: SceneDefaults = Field(default_factory=SceneDefaults)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
@@ -130,6 +139,7 @@ def save_settings(settings: Settings) -> None:
     ensure_home()
 
     data: dict[str, Any] = {
+        "mode": settings.mode.value,
         "llm": {
             "model": settings.llm.model,
             "api_key": settings.llm.api_key,

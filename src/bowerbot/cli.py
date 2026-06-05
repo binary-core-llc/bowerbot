@@ -15,12 +15,13 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.theme import Theme
 
-from bowerbot import __version__, dispatcher
+from bowerbot import __version__, dispatcher, mcp_server
 from bowerbot.agent import AgentRuntime
 from bowerbot.config import (
     BOWERBOT_HOME,
     GLOBAL_CONFIG_PATH,
     LLMSettings,
+    Mode,
     SceneDefaults,
     Settings,
     ensure_home,
@@ -46,11 +47,7 @@ def _build_state(
     settings: Settings, project: Project | None = None,
 ) -> SceneState:
     """Build a SceneState, optionally focusing it on *project*."""
-    state = SceneState(
-        scene_defaults=settings.scene_defaults,
-        library_dir=Path(settings.assets_dir),
-        projects_dir=Path(settings.projects_dir),
-    )
+    state = SceneState.from_settings(settings)
     if project is not None:
         state.bind_project(project)
     return state
@@ -63,11 +60,19 @@ def _build_registry(settings: Settings) -> SkillRegistry:
     return registry
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option()
-def main() -> None:
+@click.pass_context
+def main(ctx: click.Context) -> None:
     """BowerBot: AI-powered 3D scene assembly using OpenUSD."""
-    configure_logging(load_settings())
+    settings = load_settings()
+    configure_logging(settings)
+    if ctx.invoked_subcommand is not None:
+        return
+    if settings.mode is Mode.MCP:
+        mcp_server.serve(settings)
+    else:
+        click.echo(ctx.get_help())
 
 
 @main.command()
@@ -391,15 +396,32 @@ def onboard() -> None:
 
     ensure_home()
 
-    console.print("\n[sf]LLM Configuration[/]")
-    model = console.input("  Model [gpt-4.1]: ").strip() or "gpt-4.1"
-    api_key = console.input("  API key: ").strip()
+    console.print("\n[sf]How will you run BowerBot?[/]")
+    console.print(
+        "  [sf]1[/] Agent mode  — BowerBot uses its own AI. Needs an LLM API key.",
+    )
+    console.print(
+        "  [sf]2[/] MCP mode    — Claude Desktop (or another MCP client) drives "
+        "BowerBot. No API key.",
+    )
+    choice = console.input("  Choose [1]: ").strip() or "1"
+    mode = Mode.MCP if choice == "2" else Mode.AGENT
 
-    if not api_key:
+    llm = LLMSettings()
+    if mode is Mode.AGENT:
+        console.print("\n[sf]LLM Configuration[/]")
+        model = console.input("  Model [gpt-4.1]: ").strip() or "gpt-4.1"
+        api_key = console.input("  API key: ").strip()
+        if not api_key:
+            console.print(
+                "[yellow]Warning:[/] No API key provided. Agent mode won't "
+                "work without one. Add it later in ~/.bowerbot/config.json",
+            )
+        llm = LLMSettings(model=model, api_key=api_key)
+    else:
         console.print(
-            "[yellow]Warning:[/] No API key provided. "
-            "BowerBot won't work without one.\n"
-            "You can add it later in ~/.bowerbot/config.json",
+            "\n[info]MCP mode selected — no API key needed. "
+            "Claude Desktop provides the AI.[/]",
         )
 
     console.print("\n[sf]Directories[/]")
@@ -411,12 +433,8 @@ def onboard() -> None:
     )
 
     settings = Settings(
-        llm=LLMSettings(
-            model=model,
-            api_key=api_key,
-            temperature=0.1,
-            max_tokens=4096,
-        ),
+        mode=mode,
+        llm=llm,
         scene_defaults=SceneDefaults(),
         skills={},
         assets_dir=assets_dir,
@@ -431,9 +449,15 @@ def onboard() -> None:
         "After installing one (e.g. [sf]pip install bowerbot-skill-sketchfab[/]), "
         "add its config to your config.json under the [sf]skills[/] block.[/]",
     )
-    console.print("\n[info]You're ready to go! Try:[/]")
-    console.print("  [sf]bowerbot new my_first_scene[/]")
-    console.print("  [sf]bowerbot chat[/]")
+    if mode is Mode.AGENT:
+        console.print("\n[info]You're ready to go! Try:[/]")
+        console.print("  [sf]bowerbot new my_first_scene[/]")
+        console.print("  [sf]bowerbot chat[/]")
+    else:
+        console.print(
+            "\n[info]MCP mode ready. Add BowerBot to your MCP client "
+            "(e.g. Claude Desktop) — see 'MCP mode' in the README.[/]",
+        )
 
 
 if __name__ == "__main__":

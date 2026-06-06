@@ -162,19 +162,36 @@ BowerBot is one program with a mode switch. You run it one way or the other, nev
 
 ### MCP mode
 
-Set `"mode": "mcp"` (or choose MCP during `bowerbot onboard`), then register BowerBot as an MCP server in whatever client you use. Most clients take a server entry like:
+In MCP mode BowerBot runs as a local HTTP server that your MCP client connects to over a URL. Start the server, then point your client at its address.
 
-```json
+**1. Set the mode** (and optionally the host/port/path) in `~/.bowerbot/config.json`:
+
+```jsonc
 {
-  "mcpServers": {
-    "bowerbot": {
-      "command": "bowerbot"
-    }
-  }
+  "mode": "mcp",
+  "mcp": { "host": "127.0.0.1", "port": 8181, "path": "/mcp" }
 }
 ```
 
-The client launches `bowerbot`; it reads `~/.bowerbot/config.json`, sees `"mode": "mcp"`, and serves over stdio. BowerBot exposes its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...), and the client's model drives them. It opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`).
+The `mcp` block is optional; it defaults to `127.0.0.1:8181/mcp`.
+
+**2. Start the server** (leave it running):
+
+```bash
+bowerbot
+```
+
+It serves on `http://<host>:<port><path>` (e.g. `http://127.0.0.1:8181/mcp`).
+
+**3. Connect your MCP client** to that URL. For example, with Claude Code:
+
+```bash
+claude mcp add --transport http bowerbot http://127.0.0.1:8181/mcp
+```
+
+Other clients take an equivalent streamable-HTTP server URL; consult your client's docs.
+
+BowerBot exposes its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...), and the client's model drives them. It opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`).
 
 No LLM API key is read in MCP mode. Skills still use their own config (e.g. the Sketchfab token, the Kit `base_url`) from the same `config.json`.
 
@@ -544,6 +561,11 @@ All settings live in `~/.bowerbot/config.json`. The `skills` block holds the con
     "request_timeout": 120.0,
     "max_tool_rounds": 25
   },
+  "mcp": {
+    "host": "127.0.0.1",
+    "port": 8181,
+    "path": "/mcp"
+  },
   "scene_defaults": {
     "meters_per_unit": 1.0,
     "up_axis": "Y",
@@ -646,7 +668,7 @@ Adding a feature is the same three-file change every time: schema, service, tool
 ```
 src/bowerbot/
   agent.py            # Agent mode: the LLM tool-calling loop and prompt assembly
-  mcp_server.py       # MCP mode: serves the tool surface to an MCP client over stdio
+  mcp_server.py       # MCP mode: serves the tool surface to an MCP client over HTTP
   tool_router.py      # Shared router over core tools + skills (used by both modes)
   cli.py              # Click CLI; dispatches to agent runtime or MCP server by mode
   config.py           # Settings (incl. mode: agent|mcp) from ~/.bowerbot/config.json

@@ -1,19 +1,22 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""MCP server runtime: exposes BowerBot's tools to an MCP client over stdio."""
+"""MCP server runtime: serves BowerBot's tools to an MCP client over HTTP."""
 
 from __future__ import annotations
 
-import asyncio
+import contextlib
 import json
 import logging
+from collections.abc import AsyncIterator
 from importlib.metadata import PackageNotFoundError, version
 
 import mcp.types as types
-from mcp.server.lowlevel import NotificationOptions, Server
-from mcp.server.models import InitializationOptions
-from mcp.server.stdio import stdio_server
+import uvicorn
+from mcp.server.lowlevel import Server
+from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+from starlette.applications import Starlette
+from starlette.routing import Mount
 
 from bowerbot import tool_router
 from bowerbot.config import Settings
@@ -48,7 +51,7 @@ def _to_mcp_tools(schemas: list[dict]) -> list[types.Tool]:
 
 def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
     """Wire the list-tools and call-tool handlers onto a new MCP server."""
-    server = Server("bowerbot")
+    server: Server = Server("bowerbot", version=_server_version())
 
     @server.list_tools()
     async def list_tools() -> list[types.Tool]:
@@ -72,33 +75,38 @@ def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
     return server
 
 
-async def _serve(settings: Settings) -> None:
-    """Run the stdio MCP server until the client disconnects."""
+def build_app(settings: Settings) -> Starlette:
+    """Build the ASGI app that serves the MCP tool surface over HTTP."""
     state = SceneState.from_settings(settings)
     skill_registry = SkillRegistry()
     skill_registry.load_from_settings(settings)
     server = _build_server(state, skill_registry)
+    manager = StreamableHTTPSessionManager(app=server, stateless=True)
 
-    logger.info(
-        "MCP server starting: %d tool(s), %d skill(s)",
-        len(tool_router.combined_tool_schemas(skill_registry)),
-        skill_registry.skill_count,
+    async def handle(scope, receive, send) -> None:
+        await manager.handle_request(scope, receive, send)
+
+    @contextlib.asynccontextmanager
+    async def lifespan(_app: Starlette) -> AsyncIterator[None]:
+        async with manager.run():
+            logger.info(
+                "MCP server ready: %d tool(s), %d skill(s) on %s",
+                len(tool_router.combined_tool_schemas(skill_registry)),
+                skill_registry.skill_count,
+                settings.mcp.path,
+            )
+            yield
+
+    return Starlette(
+        routes=[Mount(settings.mcp.path, app=handle)],
+        lifespan=lifespan,
     )
-    async with stdio_server() as (read, write):
-        await server.run(
-            read,
-            write,
-            InitializationOptions(
-                server_name="bowerbot",
-                server_version=_server_version(),
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                ),
-            ),
-        )
 
 
 def serve(settings: Settings) -> None:
-    """Run the MCP server (blocking) until the client disconnects."""
-    asyncio.run(_serve(settings))
+    """Run the MCP HTTP server (blocking) until interrupted."""
+    uvicorn.run(
+        build_app(settings),
+        host=settings.mcp.host,
+        port=settings.mcp.port,
+    )

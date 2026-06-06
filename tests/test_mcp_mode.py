@@ -44,6 +44,27 @@ def test_mode_parses_mcp():
     assert Settings(mode="mcp").mode is Mode.MCP
 
 
+def test_mcp_settings_defaults():
+    """MCP server defaults to localhost:8181 at /mcp."""
+    s = Settings().mcp
+    assert s.host == "127.0.0.1"
+    assert s.port == 8181
+    assert s.path == "/mcp"
+
+
+def test_mcp_app_mounts_configured_path():
+    """build_app mounts the server at the configured path."""
+    with tempfile.TemporaryDirectory() as tmp:
+        settings = Settings(
+            mode="mcp",
+            mcp={"host": "0.0.0.0", "port": 9000, "path": "/bowerbot"},
+            projects_dir=Path(tmp) / "scenes",
+            assets_dir=Path(tmp) / "assets",
+        )
+        app = mcp_server.build_app(settings)
+        assert [r.path for r in app.routes] == ["/bowerbot"]
+
+
 # ── tool_router ──
 
 

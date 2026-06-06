@@ -18,7 +18,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
 # Global config directory
@@ -33,7 +33,7 @@ class Mode(StrEnum):
     MCP = "mcp"
 
 
-class LLMSettings(BaseSettings):
+class LLMSettings(BaseModel):
     """LLM provider configuration."""
 
     model: str = "gpt-4.1"
@@ -56,7 +56,15 @@ class LLMSettings(BaseSettings):
     max_tool_rounds: int = 25  # max LLM <-> tool exchange rounds per request
 
 
-class SkillConfig(BaseSettings):
+class McpSettings(BaseModel):
+    """Streamable-HTTP server configuration for MCP mode."""
+
+    host: str = "127.0.0.1"
+    port: int = 8181
+    path: str = "/mcp"
+
+
+class SkillConfig(BaseModel):
     """Configuration for a single skill."""
 
     enabled: bool = False
@@ -70,7 +78,7 @@ class SkillConfig(BaseSettings):
         return data
 
 
-class SceneDefaults(BaseSettings):
+class SceneDefaults(BaseModel):
     """Default scene parameters baked into every USD stage."""
 
     meters_per_unit: float = 1.0
@@ -78,7 +86,7 @@ class SceneDefaults(BaseSettings):
     default_room_bounds: tuple[float, float, float] = (10.0, 3.0, 8.0)
 
 
-class LoggingSettings(BaseSettings):
+class LoggingSettings(BaseModel):
     """Structured file + console logging configuration.
 
     Log file location is always ``~/.bowerbot/logs/bowerbot.log`` and
@@ -98,6 +106,7 @@ class Settings(BaseSettings):
 
     mode: Mode = Mode.AGENT
     llm: LLMSettings = Field(default_factory=LLMSettings)
+    mcp: McpSettings = Field(default_factory=McpSettings)
     scene_defaults: SceneDefaults = Field(default_factory=SceneDefaults)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     skills: dict[str, SkillConfig] = Field(default_factory=dict)
@@ -145,6 +154,11 @@ def save_settings(settings: Settings) -> None:
             "api_key": settings.llm.api_key,
             "temperature": settings.llm.temperature,
             "max_tokens": settings.llm.max_tokens,
+        },
+        "mcp": {
+            "host": settings.mcp.host,
+            "port": settings.mcp.port,
+            "path": settings.mcp.path,
         },
         "scene_defaults": {
             "meters_per_unit": settings.scene_defaults.meters_per_unit,

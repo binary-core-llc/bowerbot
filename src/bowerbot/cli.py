@@ -398,10 +398,10 @@ def onboard() -> None:
 
     console.print("\n[sf]How will you run BowerBot?[/]")
     console.print(
-        "  [sf]1[/] Agent mode  — BowerBot uses its own AI. Needs an LLM API key.",
+        "  [sf]1[/] Agent mode: BowerBot uses its own AI. Needs an LLM API key.",
     )
     console.print(
-        "  [sf]2[/] MCP mode    — Claude Desktop (or another MCP client) drives "
+        "  [sf]2[/] MCP mode: an MCP client (Claude Desktop, etc.) drives "
         "BowerBot. No API key.",
     )
     choice = console.input("  Choose [1]: ").strip() or "1"
@@ -420,8 +420,8 @@ def onboard() -> None:
         llm = LLMSettings(model=model, api_key=api_key)
     else:
         console.print(
-            "\n[info]MCP mode selected — no API key needed. "
-            "Claude Desktop provides the AI.[/]",
+            "\n[info]MCP mode selected. No API key needed; "
+            "the connecting MCP client provides the AI.[/]",
         )
 
     console.print("\n[sf]Directories[/]")
@@ -454,9 +454,11 @@ def onboard() -> None:
         console.print("  [sf]bowerbot new my_first_scene[/]")
         console.print("  [sf]bowerbot chat[/]")
     else:
+        console.print("\n[info]MCP mode ready. Start the server with:[/]")
+        console.print("  [sf]bowerbot[/]")
         console.print(
-            "\n[info]MCP mode ready. Add BowerBot to your MCP client "
-            "(e.g. Claude Desktop) — see 'MCP mode' in the README.[/]",
+            "[info]then connect your MCP client to its URL "
+            "(see 'MCP mode' in the README).[/]",
         )
 
 

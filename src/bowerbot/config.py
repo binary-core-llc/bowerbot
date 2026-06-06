@@ -33,6 +33,13 @@ class Mode(StrEnum):
     MCP = "mcp"
 
 
+class Transport(StrEnum):
+    """How an MCP client reaches the server: spawned over stdio, or over HTTP."""
+
+    STDIO = "stdio"
+    HTTP = "http"
+
+
 class LLMSettings(BaseModel):
     """LLM provider configuration."""
 
@@ -57,8 +64,9 @@ class LLMSettings(BaseModel):
 
 
 class McpSettings(BaseModel):
-    """Streamable-HTTP server configuration for MCP mode."""
+    """MCP server configuration. host/port/path apply to the http transport."""
 
+    transport: Transport = Transport.STDIO
     host: str = "127.0.0.1"
     port: int = 8181
     path: str = "/mcp"
@@ -156,6 +164,7 @@ def save_settings(settings: Settings) -> None:
             "max_tokens": settings.llm.max_tokens,
         },
         "mcp": {
+            "transport": settings.mcp.transport.value,
             "host": settings.mcp.host,
             "port": settings.mcp.port,
             "path": settings.mcp.path,

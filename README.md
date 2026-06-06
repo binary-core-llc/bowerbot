@@ -135,7 +135,7 @@ uv run bowerbot onboard
 bowerbot onboard
 ```
 
-The wizard first asks **how you'll run BowerBot** (agent or MCP mode, see below), then your asset library directory and projects directory, and (in agent mode only) your LLM API key. It writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
+The wizard first asks **how you'll run BowerBot** (agent or MCP mode, and in MCP mode which transport, see below), then your asset library directory and projects directory, and (in agent mode) your LLM API key. It writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
 
 ### Create a project and start building
 
@@ -158,42 +158,92 @@ BowerBot is one program with a mode switch. You run it one way or the other, nev
 ```
 
 - **Agent mode**: BowerBot thinks for itself using the LLM key. Good for running standalone or as a product: `bowerbot open coffee_shop`.
-- **MCP mode**: BowerBot has no brain of its own. An MCP client (Claude Desktop, Gemini, Codex, ...) is the brain; BowerBot is purely a tool provider. No API key needed.
+- **MCP mode**: BowerBot has no brain of its own. An MCP client (Claude Desktop, Cursor, VS Code, Claude Code, ...) is the brain; BowerBot is purely a tool provider. No API key needed.
+
+### Agent mode
+
+BowerBot drives itself with its own LLM. Set the model and API key in `~/.bowerbot/config.json`:
+
+```jsonc
+{
+  "mode": "agent",
+  "llm": { "model": "anthropic/claude-sonnet-4-6", "api_key": "sk-..." }
+}
+```
+
+Then work in natural language:
+
+```bash
+bowerbot new "Coffee Shop"     # create a project
+bowerbot open coffee_shop      # open it and start an interactive session
+bowerbot build "a reading nook with a chair, lamp, and bookshelf"
+```
 
 ### MCP mode
 
-In MCP mode BowerBot runs as a local HTTP server that your MCP client connects to over a URL. Start the server, then point your client at its address.
+In MCP mode BowerBot has no LLM of its own. An MCP client is the brain and BowerBot is the tool provider, exposing its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...). The client opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`). No LLM API key is read; skills still use their own config (the Sketchfab token, the Kit `base_url`) from the same `config.json`.
 
-**1. Set the mode** (and optionally the host/port/path) in `~/.bowerbot/config.json`:
+MCP mode speaks one of two transports, chosen by `mcp.transport`:
+
+```jsonc
+{ "mcp": { "transport": "stdio" } }  // the client launches BowerBot as a subprocess
+{ "mcp": { "transport": "http" } }   // BowerBot runs as a local server; clients connect by URL
+```
+
+Pick `stdio` for clients that launch local servers themselves (Claude Desktop). Pick `http` for clients that connect to a server by URL (Cursor, VS Code, Claude Code, Windsurf, ...). The tool surface is identical either way.
+
+#### stdio transport
+
+The client spawns BowerBot and talks over stdin/stdout. No port, no server to keep running, no bridge. Set the transport:
 
 ```jsonc
 {
   "mode": "mcp",
-  "mcp": { "host": "127.0.0.1", "port": 8181, "path": "/mcp" }
+  "mcp": { "transport": "stdio" }
 }
 ```
 
-The `mcp` block is optional; it defaults to `127.0.0.1:8181/mcp`.
+Then point your client's MCP config at the `bowerbot` command:
 
-**2. Start the server** (leave it running):
+```jsonc
+{
+  "mcpServers": {
+    "bowerbot": { "command": "bowerbot" }
+  }
+}
+```
+
+Use the full path to the executable if `bowerbot` is not on the client's `PATH` (e.g. `C:/Users/you/Desktop/bowerbot/.venv/Scripts/bowerbot.exe`). The client starts and stops the server for you.
+
+#### http transport
+
+BowerBot runs as a local server your client connects to by URL. Set the transport and, optionally, the host/port/path:
+
+```jsonc
+{
+  "mode": "mcp",
+  "mcp": { "transport": "http", "host": "127.0.0.1", "port": 8181, "path": "/mcp" }
+}
+```
+
+The host/port/path default to `127.0.0.1:8181/mcp`. Start the server and leave it running:
 
 ```bash
 bowerbot
 ```
 
-It serves on `http://<host>:<port><path>` (e.g. `http://127.0.0.1:8181/mcp`).
+It serves at `http://<host>:<port><path>` (e.g. `http://127.0.0.1:8181/mcp`). For safety it only accepts requests whose `Host`/`Origin` match that local address (DNS-rebinding protection). Connect your client to the URL, most support a local HTTP MCP server natively:
 
-**3. Connect your MCP client** to that URL. For example, with Claude Code:
+| Client | How to add it |
+|---|---|
+| Claude Code (CLI) | `claude mcp add --transport http bowerbot http://127.0.0.1:8181/mcp` |
+| Cursor | `mcp.json`: `{ "mcpServers": { "bowerbot": { "url": "http://127.0.0.1:8181/mcp" } } }` |
+| VS Code (Copilot agent) | `mcp.json`: `{ "servers": { "bowerbot": { "type": "http", "url": "http://127.0.0.1:8181/mcp" } } }` |
+| Windsurf | `{ "mcpServers": { "bowerbot": { "serverUrl": "http://127.0.0.1:8181/mcp" } } }` |
+| Cline | `{ "mcpServers": { "bowerbot": { "type": "streamableHttp", "url": "http://127.0.0.1:8181/mcp" } } }` |
+| Zed | `settings.json`: `{ "context_servers": { "bowerbot": { "url": "http://127.0.0.1:8181/mcp" } } }` |
 
-```bash
-claude mcp add --transport http bowerbot http://127.0.0.1:8181/mcp
-```
-
-Other clients take an equivalent streamable-HTTP server URL; consult your client's docs.
-
-BowerBot exposes its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...), and the client's model drives them. It opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`).
-
-No LLM API key is read in MCP mode. Skills still use their own config (e.g. the Sketchfab token, the Kit `base_url`) from the same `config.json`.
+Claude Desktop is the exception: its config only spawns stdio servers, so use the **stdio transport** above, or bridge the HTTP server with `npx mcp-remote http://127.0.0.1:8181/mcp`.
 
 ---
 
@@ -545,7 +595,9 @@ A skill's `SKILL.md` is injected into the LLM's system prompt, and its tools run
 
 ## ⚙️ Configuration
 
-All settings live in `~/.bowerbot/config.json`. The `skills` block holds the config for any skill packages you've installed; the example below shows what it looks like once you've installed `bowerbot-skill-sketchfab` (see [Skills](#-skills)). A fresh install starts with `"skills": {}`.
+All settings live in `~/.bowerbot/config.json`. A config is for **one mode at a time**: agent mode reads the `llm` block, MCP mode reads the `mcp` block. The `scene_defaults`, `skills`, `assets_dir`, and `projects_dir` keys are shared by both modes. The `skills` block holds the config for any skill packages you've installed (the examples show `bowerbot-skill-sketchfab`, see [Skills](#-skills)); a fresh install starts with `"skills": {}`.
+
+**Agent mode** (BowerBot uses its own LLM):
 
 ```json
 {
@@ -560,11 +612,6 @@ All settings live in `~/.bowerbot/config.json`. The `skills` block holds the con
     "num_retries": 3,
     "request_timeout": 120.0,
     "max_tool_rounds": 25
-  },
-  "mcp": {
-    "host": "127.0.0.1",
-    "port": 8181,
-    "path": "/mcp"
   },
   "scene_defaults": {
     "meters_per_unit": 1.0,
@@ -581,6 +628,32 @@ All settings live in `~/.bowerbot/config.json`. The `skills` block holds the con
   "projects_dir": "./scenes"
 }
 ```
+
+**MCP mode** (an MCP client drives BowerBot, no LLM key):
+
+```json
+{
+  "mode": "mcp",
+  "mcp": {
+    "transport": "stdio"
+  },
+  "scene_defaults": {
+    "meters_per_unit": 1.0,
+    "up_axis": "Y",
+    "default_room_bounds": [10.0, 3.0, 8.0]
+  },
+  "skills": {
+    "sketchfab": {
+      "enabled": true,
+      "config": { "token": "your-sketchfab-token" }
+    }
+  },
+  "assets_dir": "./assets",
+  "projects_dir": "./scenes"
+}
+```
+
+For the http transport, use `"mcp": { "transport": "http", "host": "127.0.0.1", "port": 8181, "path": "/mcp" }` (see [MCP mode](#mcp-mode)).
 
 Switch models by changing one line:
 
@@ -668,7 +741,7 @@ Adding a feature is the same three-file change every time: schema, service, tool
 ```
 src/bowerbot/
   agent.py            # Agent mode: the LLM tool-calling loop and prompt assembly
-  mcp_server.py       # MCP mode: serves the tool surface to an MCP client over HTTP
+  mcp_server.py       # MCP mode: serves the tool surface to an MCP client over stdio or HTTP
   tool_router.py      # Shared router over core tools + skills (used by both modes)
   cli.py              # Click CLI; dispatches to agent runtime or MCP server by mode
   config.py           # Settings (incl. mode: agent|mcp) from ~/.bowerbot/config.json

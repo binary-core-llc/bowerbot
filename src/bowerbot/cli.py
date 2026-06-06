@@ -6,12 +6,14 @@
 from __future__ import annotations
 
 import asyncio
+from enum import StrEnum
 from pathlib import Path
 
 import click
 import litellm
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import Prompt
 from rich.table import Table
 from rich.theme import Theme
 
@@ -21,9 +23,11 @@ from bowerbot.config import (
     BOWERBOT_HOME,
     GLOBAL_CONFIG_PATH,
     LLMSettings,
+    McpSettings,
     Mode,
     SceneDefaults,
     Settings,
+    Transport,
     ensure_home,
     load_settings,
     save_settings,
@@ -58,6 +62,22 @@ def _build_registry(settings: Settings) -> SkillRegistry:
     registry = SkillRegistry()
     registry.load_from_settings(settings)
     return registry
+
+
+def _choose[EnumT: StrEnum](
+    prompt: str, options: dict[EnumT, str], default: EnumT,
+) -> EnumT:
+    """Prompt for one StrEnum value, listing a description per option."""
+    enum_cls = type(default)
+    console.print(f"\n[sf]{prompt}[/]")
+    for value, description in options.items():
+        console.print(f"  [sf]{value.value}[/]: {description}")
+    chosen = Prompt.ask(
+        "  Choose",
+        choices=[value.value for value in options],
+        default=default.value,
+    )
+    return enum_cls(chosen)
 
 
 @click.group(invoke_without_command=True)
@@ -396,18 +416,18 @@ def onboard() -> None:
 
     ensure_home()
 
-    console.print("\n[sf]How will you run BowerBot?[/]")
-    console.print(
-        "  [sf]1[/] Agent mode: BowerBot uses its own AI. Needs an LLM API key.",
+    mode = _choose(
+        "How will you run BowerBot?",
+        {
+            Mode.AGENT: "BowerBot uses its own AI. Needs an LLM API key.",
+            Mode.MCP: "an MCP client (Claude Desktop, etc.) drives BowerBot. "
+            "No API key.",
+        },
+        Mode.AGENT,
     )
-    console.print(
-        "  [sf]2[/] MCP mode: an MCP client (Claude Desktop, etc.) drives "
-        "BowerBot. No API key.",
-    )
-    choice = console.input("  Choose [1]: ").strip() or "1"
-    mode = Mode.MCP if choice == "2" else Mode.AGENT
 
     llm = LLMSettings()
+    mcp = McpSettings()
     if mode is Mode.AGENT:
         console.print("\n[sf]LLM Configuration[/]")
         model = console.input("  Model [gpt-4.1]: ").strip() or "gpt-4.1"
@@ -423,6 +443,17 @@ def onboard() -> None:
             "\n[info]MCP mode selected. No API key needed; "
             "the connecting MCP client provides the AI.[/]",
         )
+        transport = _choose(
+            "How will your MCP client connect?",
+            {
+                Transport.STDIO: "the client launches BowerBot itself "
+                "(e.g. Claude Desktop).",
+                Transport.HTTP: "BowerBot runs as a local server the client "
+                "connects to by URL (e.g. Cursor, VS Code, Claude Code).",
+            },
+            Transport.STDIO,
+        )
+        mcp = McpSettings(transport=transport)
 
     console.print("\n[sf]Directories[/]")
     assets_dir = (
@@ -435,6 +466,7 @@ def onboard() -> None:
     settings = Settings(
         mode=mode,
         llm=llm,
+        mcp=mcp,
         scene_defaults=SceneDefaults(),
         skills={},
         assets_dir=assets_dir,
@@ -453,12 +485,19 @@ def onboard() -> None:
         console.print("\n[info]You're ready to go! Try:[/]")
         console.print("  [sf]bowerbot new my_first_scene[/]")
         console.print("  [sf]bowerbot chat[/]")
+    elif mcp.transport is Transport.STDIO:
+        console.print(
+            "\n[info]MCP mode ready. Point your MCP client at the "
+            "[sf]bowerbot[/] command; it launches the server for you "
+            "(see 'MCP mode' in the README).[/]",
+        )
     else:
         console.print("\n[info]MCP mode ready. Start the server with:[/]")
         console.print("  [sf]bowerbot[/]")
         console.print(
-            "[info]then connect your MCP client to its URL "
-            "(see 'MCP mode' in the README).[/]",
+            f"[info]then connect your MCP client to "
+            f"[sf]http://{mcp.host}:{mcp.port}{mcp.path}[/] "
+            f"(see 'MCP mode' in the README).[/]",
         )
 
 

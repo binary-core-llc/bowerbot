@@ -10,7 +10,7 @@ from pathlib import Path
 from mcp.shared.memory import create_connected_server_and_client_session
 
 from bowerbot import mcp_server, tool_router
-from bowerbot.config import Mode, Settings
+from bowerbot.config import McpSettings, Mode, Settings, Transport
 from bowerbot.skills.base import SkillCategory, ToolResult
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
@@ -45,11 +45,27 @@ def test_mode_parses_mcp():
 
 
 def test_mcp_settings_defaults():
-    """MCP server defaults to localhost:8181 at /mcp."""
+    """MCP server defaults to stdio, with http bound to localhost:8181 at /mcp."""
     s = Settings().mcp
+    assert s.transport is Transport.STDIO
     assert s.host == "127.0.0.1"
     assert s.port == 8181
     assert s.path == "/mcp"
+
+
+def test_mcp_transport_parses_http():
+    """The transport field accepts 'http'."""
+    assert Settings(mcp={"transport": "http"}).mcp.transport is Transport.HTTP
+
+
+def test_http_security_locks_to_configured_origin():
+    """The HTTP transport enables DNS-rebinding protection scoped to its origin."""
+    s = mcp_server._security_settings(McpSettings(host="127.0.0.1", port=8181))
+    assert s.enable_dns_rebinding_protection
+    assert "127.0.0.1:8181" in s.allowed_hosts
+    assert "localhost:8181" in s.allowed_hosts
+    assert "http://127.0.0.1:8181" in s.allowed_origins
+    assert "http://evil.test" not in s.allowed_origins
 
 
 def test_mcp_app_mounts_configured_path():

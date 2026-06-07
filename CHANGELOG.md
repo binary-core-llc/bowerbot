@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.0](https://github.com/binary-core-llc/bowerbot/compare/v1.11.0...v1.12.0) (2026-06-07)
+
+
+### Features
+
+* dual-mode operation (agent or MCP server) with a shared project lifecycle ([#185](https://github.com/binary-core-llc/bowerbot/issues/185)) ([2ac3e95](https://github.com/binary-core-llc/bowerbot/commit/2ac3e95a83480fb35114ddf6cb9c51ca1d38a7fa))
+
+
+### Bug Fixes
+
+* log skill tool calls uniformly with core tool calls ([#182](https://github.com/binary-core-llc/bowerbot/issues/182)) ([df830ef](https://github.com/binary-core-llc/bowerbot/commit/df830ef4df18e248da7bcd94d1587b8b5fe32eb4))
+
 ## [1.11.0](https://github.com/binary-core-llc/bowerbot/compare/v1.10.0...v1.11.0) (2026-05-27)
 
 

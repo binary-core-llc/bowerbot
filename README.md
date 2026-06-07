@@ -237,6 +237,7 @@ It serves at `http://<host>:<port><path>` (e.g. `http://127.0.0.1:8181/mcp`). Fo
 | Client | How to add it |
 |---|---|
 | Claude Code (CLI) | `claude mcp add --transport http bowerbot http://127.0.0.1:8181/mcp` |
+| Codex (CLI) | `codex mcp add bowerbot --url http://127.0.0.1:8181/mcp` (or a `[mcp_servers.bowerbot] url = "..."` entry in `~/.codex/config.toml`) |
 | Cursor | `mcp.json`: `{ "mcpServers": { "bowerbot": { "url": "http://127.0.0.1:8181/mcp" } } }` |
 | VS Code (Copilot agent) | `mcp.json`: `{ "servers": { "bowerbot": { "type": "http", "url": "http://127.0.0.1:8181/mcp" } } }` |
 | Windsurf | `{ "mcpServers": { "bowerbot": { "serverUrl": "http://127.0.0.1:8181/mcp" } } }` |

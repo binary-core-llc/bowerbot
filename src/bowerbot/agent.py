@@ -18,7 +18,7 @@ from typing import Any
 
 import litellm
 
-from bowerbot import dispatcher
+from bowerbot import dispatcher, tool_router
 from bowerbot.config import Settings
 from bowerbot.logging_setup import sanitize
 from bowerbot.prompts import load_prompt
@@ -43,17 +43,12 @@ class AgentRuntime:
     _system_prompt: str = field(default="", init=False)
     _tools: list[dict[str, Any]] = field(default_factory=list, init=False)
     _token_manager: TokenManager = field(init=False)
-    _scene_tool_names: set[str] = field(default_factory=set, init=False)
 
     def __post_init__(self) -> None:
         """Assemble the system prompt and cache the tool list."""
         self._system_prompt = self._build_system_prompt()
-        self._tools = (
-            dispatcher.get_tool_schemas()
-            + self.skill_registry.get_all_tools()
-        )
+        self._tools = tool_router.combined_tool_schemas(self.skill_registry)
         self._token_manager = TokenManager(self.settings.llm)
-        self._scene_tool_names = dispatcher.get_tool_names()
 
         logger.info(
             "System prompt: %d chars, %d scene tools + %d skill(s)",
@@ -66,6 +61,7 @@ class AgentRuntime:
         """Stitch together core + scene-building + skill prompt sections."""
         sections = [
             load_prompt("core"),
+            f"# Projects\n\n{load_prompt('projects')}",
             f"# Scene Building\n\n{load_prompt('scene_building')}",
             f"# Asset Library\n\n{load_prompt('library')}",
             f"# Placing Assets\n\n{load_prompt('assets')}",
@@ -162,10 +158,8 @@ class AgentRuntime:
         self, func_name: str, func_args: dict[str, Any],
     ) -> ToolResult:
         """Route a tool call to the dispatcher or the skill registry."""
-        if func_name in self._scene_tool_names:
-            return await dispatcher.execute(self.state, func_name, func_args)
-        return await self.skill_registry.execute_tool(
-            func_name, func_args, self.state,
+        return await tool_router.route(
+            self.state, self.skill_registry, func_name, func_args,
         )
 
     def _nudge_on_validation_errors(

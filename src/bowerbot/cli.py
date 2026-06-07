@@ -6,23 +6,28 @@
 from __future__ import annotations
 
 import asyncio
+from enum import StrEnum
 from pathlib import Path
 
 import click
 import litellm
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import Prompt
 from rich.table import Table
 from rich.theme import Theme
 
-from bowerbot import __version__, dispatcher
+from bowerbot import __version__, dispatcher, mcp_server
 from bowerbot.agent import AgentRuntime
 from bowerbot.config import (
     BOWERBOT_HOME,
     GLOBAL_CONFIG_PATH,
     LLMSettings,
+    McpSettings,
+    Mode,
     SceneDefaults,
     Settings,
+    Transport,
     ensure_home,
     load_settings,
     save_settings,
@@ -31,7 +36,7 @@ from bowerbot.logging_setup import configure_logging
 from bowerbot.project import Project
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
-from bowerbot.utils import inspection_utils, stage_utils
+from bowerbot.utils import inspection_utils
 from bowerbot.utils.naming_utils import safe_project_name
 
 theme = Theme({
@@ -45,21 +50,10 @@ console = Console(theme=theme)
 def _build_state(
     settings: Settings, project: Project | None = None,
 ) -> SceneState:
-    """Build a SceneState, optionally binding it to *project*."""
-    state = SceneState(
-        scene_defaults=settings.scene_defaults,
-        library_dir=Path(settings.assets_dir),
-    )
-    if project is None:
-        return state
-
-    state.project = project
-    state.stage_path = project.scene_path
-
-    if project.scene_path.exists():
-        state.stage = stage_utils.open_stage(project.scene_path)
-        state.object_count = len(inspection_utils.list_prims(state.stage))
-        state.mark_saved()
+    """Build a SceneState, optionally focusing it on *project*."""
+    state = SceneState.from_settings(settings)
+    if project is not None:
+        state.bind_project(project)
     return state
 
 
@@ -70,11 +64,35 @@ def _build_registry(settings: Settings) -> SkillRegistry:
     return registry
 
 
-@click.group()
+def _choose[EnumT: StrEnum](
+    prompt: str, options: dict[EnumT, str], default: EnumT,
+) -> EnumT:
+    """Prompt for one StrEnum value, listing a description per option."""
+    enum_cls = type(default)
+    console.print(f"\n[sf]{prompt}[/]")
+    for value, description in options.items():
+        console.print(f"  [sf]{value.value}[/]: {description}")
+    chosen = Prompt.ask(
+        "  Choose",
+        choices=[value.value for value in options],
+        default=default.value,
+    )
+    return enum_cls(chosen)
+
+
+@click.group(invoke_without_command=True)
 @click.version_option()
-def main() -> None:
+@click.pass_context
+def main(ctx: click.Context) -> None:
     """BowerBot: AI-powered 3D scene assembly using OpenUSD."""
-    configure_logging(load_settings())
+    settings = load_settings()
+    configure_logging(settings)
+    if ctx.invoked_subcommand is not None:
+        return
+    if settings.mode is Mode.MCP:
+        mcp_server.serve(settings)
+    else:
+        click.echo(ctx.get_help())
 
 
 @main.command()
@@ -205,8 +223,14 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
     asyncio.run(_chat_loop(agent, console))
 
 
+def _focused_project_name(agent: AgentRuntime) -> str | None:
+    """Name of the project the agent's state is currently focused on."""
+    return agent.state.project.name if agent.state.project else None
+
+
 async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
     """Run the interactive chat loop."""
+    focused = _focused_project_name(agent)
     while True:
         console.print()
         try:
@@ -229,6 +253,14 @@ async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
             with console.status("[sf]BowerBot is thinking...[/]", spinner="dots"):
                 response = await agent.process(user_input)
             console.print(f"\n[sf]BowerBot:[/] {response}")
+            now_focused = _focused_project_name(agent)
+            if now_focused != focused:
+                focused = now_focused
+                if now_focused is not None:
+                    console.print(
+                        f"\n[info]→ Now working on: {now_focused}  "
+                        f"({agent.state.object_count} object(s))[/]",
+                    )
         except KeyboardInterrupt:
             console.print("\n[info]Interrupted. Type 'quit' to exit.[/]")
         except litellm.AuthenticationError:
@@ -384,16 +416,44 @@ def onboard() -> None:
 
     ensure_home()
 
-    console.print("\n[sf]LLM Configuration[/]")
-    model = console.input("  Model [gpt-4.1]: ").strip() or "gpt-4.1"
-    api_key = console.input("  API key: ").strip()
+    mode = _choose(
+        "How will you run BowerBot?",
+        {
+            Mode.AGENT: "BowerBot uses its own AI. Needs an LLM API key.",
+            Mode.MCP: "an MCP client (Claude Desktop, etc.) drives BowerBot. "
+            "No API key.",
+        },
+        Mode.AGENT,
+    )
 
-    if not api_key:
+    llm = LLMSettings()
+    mcp = McpSettings()
+    if mode is Mode.AGENT:
+        console.print("\n[sf]LLM Configuration[/]")
+        model = console.input("  Model [gpt-4.1]: ").strip() or "gpt-4.1"
+        api_key = console.input("  API key: ").strip()
+        if not api_key:
+            console.print(
+                "[yellow]Warning:[/] No API key provided. Agent mode won't "
+                "work without one. Add it later in ~/.bowerbot/config.json",
+            )
+        llm = LLMSettings(model=model, api_key=api_key)
+    else:
         console.print(
-            "[yellow]Warning:[/] No API key provided. "
-            "BowerBot won't work without one.\n"
-            "You can add it later in ~/.bowerbot/config.json",
+            "\n[info]MCP mode selected. No API key needed; "
+            "the connecting MCP client provides the AI.[/]",
         )
+        transport = _choose(
+            "How will your MCP client connect?",
+            {
+                Transport.STDIO: "the client launches BowerBot itself "
+                "(e.g. Claude Desktop).",
+                Transport.HTTP: "BowerBot runs as a local server the client "
+                "connects to by URL (e.g. Cursor, VS Code, Claude Code).",
+            },
+            Transport.STDIO,
+        )
+        mcp = McpSettings(transport=transport)
 
     console.print("\n[sf]Directories[/]")
     assets_dir = (
@@ -404,12 +464,9 @@ def onboard() -> None:
     )
 
     settings = Settings(
-        llm=LLMSettings(
-            model=model,
-            api_key=api_key,
-            temperature=0.1,
-            max_tokens=4096,
-        ),
+        mode=mode,
+        llm=llm,
+        mcp=mcp,
         scene_defaults=SceneDefaults(),
         skills={},
         assets_dir=assets_dir,
@@ -424,9 +481,24 @@ def onboard() -> None:
         "After installing one (e.g. [sf]pip install bowerbot-skill-sketchfab[/]), "
         "add its config to your config.json under the [sf]skills[/] block.[/]",
     )
-    console.print("\n[info]You're ready to go! Try:[/]")
-    console.print("  [sf]bowerbot new my_first_scene[/]")
-    console.print("  [sf]bowerbot chat[/]")
+    if mode is Mode.AGENT:
+        console.print("\n[info]You're ready to go! Try:[/]")
+        console.print("  [sf]bowerbot new my_first_scene[/]")
+        console.print("  [sf]bowerbot chat[/]")
+    elif mcp.transport is Transport.STDIO:
+        console.print(
+            "\n[info]MCP mode ready. Point your MCP client at the "
+            "[sf]bowerbot[/] command; it launches the server for you "
+            "(see 'MCP mode' in the README).[/]",
+        )
+    else:
+        console.print("\n[info]MCP mode ready. Start the server with:[/]")
+        console.print("  [sf]bowerbot[/]")
+        console.print(
+            f"[info]then connect your MCP client to "
+            f"[sf]http://{mcp.host}:{mcp.port}{mcp.path}[/] "
+            f"(see 'MCP mode' in the README).[/]",
+        )
 
 
 if __name__ == "__main__":

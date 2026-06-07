@@ -135,7 +135,7 @@ uv run bowerbot onboard
 bowerbot onboard
 ```
 
-The wizard asks for your LLM API key, your asset library directory, and your projects directory, then writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
+The wizard first asks **how you'll run BowerBot** (agent or MCP mode, and in MCP mode which transport, see below), then your asset library directory and projects directory, and (in agent mode) your LLM API key. It writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
 
 ### Create a project and start building
 
@@ -145,6 +145,106 @@ bowerbot open coffee_shop
 ```
 
 To plug in asset providers like Sketchfab, see [Skills](#-skills) below.
+
+---
+
+## 🔀 Two ways to run: agent mode and MCP mode
+
+BowerBot is one program with a mode switch. You run it one way or the other, never both. The switch is a single line in `~/.bowerbot/config.json` (the onboard wizard sets it):
+
+```jsonc
+{ "mode": "agent" }   // default. BowerBot uses its own AI. Needs an LLM API key.
+{ "mode": "mcp" }     // BowerBot has no AI; an MCP client drives it. No API key.
+```
+
+- **Agent mode**: BowerBot thinks for itself using the LLM key. Good for running standalone or as a product: `bowerbot open coffee_shop`.
+- **MCP mode**: BowerBot has no brain of its own. An MCP client (Claude Desktop, Cursor, VS Code, Claude Code, ...) is the brain; BowerBot is purely a tool provider. No API key needed.
+
+### Agent mode
+
+BowerBot drives itself with its own LLM. Set the model and API key in `~/.bowerbot/config.json`:
+
+```jsonc
+{
+  "mode": "agent",
+  "llm": { "model": "anthropic/claude-sonnet-4-6", "api_key": "sk-..." }
+}
+```
+
+Then work in natural language:
+
+```bash
+bowerbot new "Coffee Shop"     # create a project
+bowerbot open coffee_shop      # open it and start an interactive session
+bowerbot build "a reading nook with a chair, lamp, and bookshelf"
+```
+
+### MCP mode
+
+In MCP mode BowerBot has no LLM of its own. An MCP client is the brain and BowerBot is the tool provider, exposing its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...). The client opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`). No LLM API key is read; skills still use their own config (the Sketchfab token, the Kit `base_url`) from the same `config.json`.
+
+MCP mode speaks one of two transports, chosen by `mcp.transport`:
+
+```jsonc
+{ "mcp": { "transport": "stdio" } }  // the client launches BowerBot as a subprocess
+{ "mcp": { "transport": "http" } }   // BowerBot runs as a local server; clients connect by URL
+```
+
+Pick `stdio` for clients that launch local servers themselves (Claude Desktop). Pick `http` for clients that connect to a server by URL (Cursor, VS Code, Claude Code, Windsurf, ...). The tool surface is identical either way.
+
+#### stdio transport
+
+The client spawns BowerBot and talks over stdin/stdout. No port, no server to keep running, no bridge. Set the transport:
+
+```jsonc
+{
+  "mode": "mcp",
+  "mcp": { "transport": "stdio" }
+}
+```
+
+Then point your client's MCP config at the `bowerbot` command:
+
+```jsonc
+{
+  "mcpServers": {
+    "bowerbot": { "command": "bowerbot" }
+  }
+}
+```
+
+Use the full path to the executable if `bowerbot` is not on the client's `PATH` (e.g. `C:/Users/you/Desktop/bowerbot/.venv/Scripts/bowerbot.exe`). The client starts and stops the server for you.
+
+#### http transport
+
+BowerBot runs as a local server your client connects to by URL. Set the transport and, optionally, the host/port/path:
+
+```jsonc
+{
+  "mode": "mcp",
+  "mcp": { "transport": "http", "host": "127.0.0.1", "port": 8181, "path": "/mcp" }
+}
+```
+
+The host/port/path default to `127.0.0.1:8181/mcp`. Start the server and leave it running:
+
+```bash
+bowerbot
+```
+
+It serves at `http://<host>:<port><path>` (e.g. `http://127.0.0.1:8181/mcp`). For safety it only accepts requests whose `Host`/`Origin` match that local address (DNS-rebinding protection). Connect your client to the URL, most support a local HTTP MCP server natively:
+
+| Client | How to add it |
+|---|---|
+| Claude Code (CLI) | `claude mcp add --transport http bowerbot http://127.0.0.1:8181/mcp` |
+| Codex (CLI) | `codex mcp add bowerbot --url http://127.0.0.1:8181/mcp` (or a `[mcp_servers.bowerbot] url = "..."` entry in `~/.codex/config.toml`) |
+| Cursor | `mcp.json`: `{ "mcpServers": { "bowerbot": { "url": "http://127.0.0.1:8181/mcp" } } }` |
+| VS Code (Copilot agent) | `mcp.json`: `{ "servers": { "bowerbot": { "type": "http", "url": "http://127.0.0.1:8181/mcp" } } }` |
+| Windsurf | `{ "mcpServers": { "bowerbot": { "serverUrl": "http://127.0.0.1:8181/mcp" } } }` |
+| Cline | `{ "mcpServers": { "bowerbot": { "type": "streamableHttp", "url": "http://127.0.0.1:8181/mcp" } } }` |
+| Zed | `settings.json`: `{ "context_servers": { "bowerbot": { "url": "http://127.0.0.1:8181/mcp" } } }` |
+
+Claude Desktop is the exception: its config only spawns stdio servers, so use the **stdio transport** above, or bridge the HTTP server with `npx mcp-remote http://127.0.0.1:8181/mcp`.
 
 ---
 
@@ -283,6 +383,15 @@ Skills extend BowerBot with **external** asset providers, DCC connectors, and si
 BowerBot's core tools, grouped by domain. Every tool maps 1:1 to a
 service function and is described in the LLM prompts under
 `src/bowerbot/prompts/`.
+
+#### Projects
+
+| Tool | Description |
+|------|-------------|
+| `create_project` | Create a new project and focus it |
+| `open_project` | Focus an existing project (resume or switch) |
+| `list_projects` | List every project, flagging the focused one |
+| `get_current_project` | Report the focused project, path, and object count |
 
 #### Stage & scene
 
@@ -487,10 +596,13 @@ A skill's `SKILL.md` is injected into the LLM's system prompt, and its tools run
 
 ## ⚙️ Configuration
 
-All settings live in `~/.bowerbot/config.json`. The `skills` block holds the config for any skill packages you've installed; the example below shows what it looks like once you've installed `bowerbot-skill-sketchfab` (see [Skills](#-skills)). A fresh install starts with `"skills": {}`.
+All settings live in `~/.bowerbot/config.json`. A config is for **one mode at a time**: agent mode reads the `llm` block, MCP mode reads the `mcp` block. The `scene_defaults`, `skills`, `assets_dir`, and `projects_dir` keys are shared by both modes. The `skills` block holds the config for any skill packages you've installed (the examples show `bowerbot-skill-sketchfab`, see [Skills](#-skills)); a fresh install starts with `"skills": {}`.
+
+**Agent mode** (BowerBot uses its own LLM):
 
 ```json
 {
+  "mode": "agent",
   "llm": {
     "model": "anthropic/claude-sonnet-4-6",
     "api_key": "sk-...",
@@ -517,6 +629,32 @@ All settings live in `~/.bowerbot/config.json`. The `skills` block holds the con
   "projects_dir": "./scenes"
 }
 ```
+
+**MCP mode** (an MCP client drives BowerBot, no LLM key):
+
+```json
+{
+  "mode": "mcp",
+  "mcp": {
+    "transport": "stdio"
+  },
+  "scene_defaults": {
+    "meters_per_unit": 1.0,
+    "up_axis": "Y",
+    "default_room_bounds": [10.0, 3.0, 8.0]
+  },
+  "skills": {
+    "sketchfab": {
+      "enabled": true,
+      "config": { "token": "your-sketchfab-token" }
+    }
+  },
+  "assets_dir": "./assets",
+  "projects_dir": "./scenes"
+}
+```
+
+For the http transport, use `"mcp": { "transport": "http", "host": "127.0.0.1", "port": 8181, "path": "/mcp" }` (see [MCP mode](#mcp-mode)).
 
 Switch models by changing one line:
 
@@ -603,16 +741,19 @@ Adding a feature is the same three-file change every time: schema, service, tool
 
 ```
 src/bowerbot/
-  agent.py            # LLM tool-calling loop and prompt assembly
-  cli.py              # Click CLI
-  config.py           # Settings from ~/.bowerbot/config.json
+  agent.py            # Agent mode: the LLM tool-calling loop and prompt assembly
+  mcp_server.py       # MCP mode: serves the tool surface to an MCP client over stdio or HTTP
+  tool_router.py      # Shared router over core tools + skills (used by both modes)
+  cli.py              # Click CLI; dispatches to agent runtime or MCP server by mode
+  config.py           # Settings (incl. mode: agent|mcp) from ~/.bowerbot/config.json
   project.py          # Project lifecycle (create / load / resume)
   state.py            # SceneState: the context threaded through every tool handler
-  dispatcher.py       # Aggregates tool defs + routes tool calls to handlers
-  token_manager.py    # Conversation compression and summarization
+  dispatcher.py       # Aggregates core tool defs + routes core tool calls to handlers
+  token_manager.py    # Conversation compression and summarization (agent mode)
 
   prompts/            # LLM instructions as markdown (editable without code changes)
     core.md
+    projects.md
     scene_building.md
     assets.md
     library.md
@@ -636,6 +777,8 @@ src/bowerbot/
     variants.py       #   VariantCategory, AddVariant params, VariantsSummary
 
   services/           # State-aware orchestrators. One same-named function per tool.
+    project_service.py     #   create_project, open_project, list_projects,
+                           #   get_current_project (focus the bound project)
     stage_service.py       #   create_stage, list_scene, rename/remove_prim, move_asset,
                            #   set/list_prim_attribute(s), snapshot lifecycle, ...
     asset_service.py       #   place_asset, place_asset_inside, list/delete_project_*,
@@ -656,7 +799,10 @@ src/bowerbot/
 
   tools/              # LLM-facing API layer (tool defs + thin handlers).
                       # Every public function mirrors a service function 1:1.
-    _helpers.py            #   Precondition guards (require_stage / project / library)
+    _helpers.py            #   Precondition guards (require_stage / project / library /
+                           #   projects_dir)
+    project_tools.py       #   create_project, open_project, list_projects,
+                           #   get_current_project
     stage_tools.py         #   create_stage, list_scene, rename/remove_prim, move_asset,
                            #   set/list_prim_attribute(s), snapshot lifecycle, ...
     asset_tools.py         #   place_asset(_inside), list/delete_project_*,
@@ -704,7 +850,6 @@ src/bowerbot/
     naming_utils.py            #   Name sanitization for files, prims, projects
     usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
                                #   (used by both physics_utils and light_utils)
-  gateway/            # Future: FastAPI + MCP server
 ```
 
 **Design principles**
@@ -775,7 +920,6 @@ What's next for BowerBot. Contributions welcome:
 - [ ] **More scene-level variant categories**: layout variants (atomic furniture arrangement swap on a group prim) and camera variants (active camera + render settings) on the `/Scene/Cameras` group. Infrastructure is in place via `apply_scene_variant`; the orchestrators are pure additions when use cases land
 - [ ] **Animation variants (asset-level)**: each variant body references a different animation clip (idle, walk, etc.), production-canonical for articulated state cycling
 - [ ] **More asset providers**: Fab, PolyHaven, Objaverse, CGTrader skills
-- [ ] **MCP Gateway**: FastAPI server for web UI and external AI clients
 - [ ] **Web UI**: chat panel + live 3D viewport
 - [ ] **BowerHub**: community skill registry
 
@@ -793,7 +937,7 @@ For a complete reference, see [bowerbot-skill-sketchfab](https://github.com/bina
 
 ## 💖 Sponsors
 
-BowerBot is open source and built by a small team at [Binary Core LLC](https://binarycore.us). Sponsorship funds new asset providers (PolyHaven, Fab, CGTrader), USD compliance work, scene templates, the MCP gateway, documentation, and community support.
+BowerBot is open source and built by a small team at [Binary Core LLC](https://binarycore.us). Sponsorship funds new asset providers (PolyHaven, Fab, CGTrader), USD compliance work, scene templates, documentation, and community support.
 
 [**Become a sponsor on GitHub**](https://github.com/sponsors/binary-core-llc). Three monthly tiers (Egg, Nest, Bower) plus one-time options.
 

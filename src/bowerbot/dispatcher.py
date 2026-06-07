@@ -26,6 +26,7 @@ from bowerbot.tools import (
     light_tools,
     material_tools,
     physics_tools,
+    project_tools,
     stage_tools,
     texture_tools,
     validation_tools,
@@ -40,6 +41,7 @@ ToolHandler = Callable[[SceneState, dict[str, Any]], ToolResult | Awaitable[Tool
 def _collect_tools() -> list[Tool]:
     """Flatten every tool module's ``TOOLS`` list into one registry."""
     tools: list[Tool] = []
+    tools.extend(project_tools.TOOLS)
     tools.extend(stage_tools.TOOLS)
     tools.extend(asset_tools.TOOLS)
     tools.extend(library_tools.TOOLS)
@@ -56,7 +58,7 @@ def _collect_handlers() -> dict[str, ToolHandler]:
     """Flatten every tool module's ``HANDLERS`` dict into one registry."""
     handlers: dict[str, ToolHandler] = {}
     for module in (
-        stage_tools, asset_tools, library_tools, light_tools,
+        project_tools, stage_tools, asset_tools, library_tools, light_tools,
         material_tools, physics_tools, texture_tools,
         validation_tools, variant_tools,
     ):

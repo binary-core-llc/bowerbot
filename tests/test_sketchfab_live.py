@@ -17,16 +17,18 @@ async def test_sketchfab_mug():
     from bowerbot.agent import AgentRuntime
     from bowerbot.config import load_settings
     from bowerbot.skills.registry import SkillRegistry
+    from bowerbot.state import SceneState
 
     settings = load_settings()
 
+    state = SceneState.from_settings(settings)
     registry = SkillRegistry()
     registry.load_from_settings(settings)
 
     print(f"  Skills: {registry.enabled_skills}")
     print(f"  Tools: {[t['function']['name'] for t in registry.get_all_tools()]}")
 
-    agent = AgentRuntime(settings=settings, skill_registry=registry)
+    agent = AgentRuntime(settings=settings, state=state, skill_registry=registry)
 
     prompt = (
         "Search my Sketchfab account for a mug. "

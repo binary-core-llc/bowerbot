@@ -34,3 +34,13 @@ def require_library_dir(state: SceneState) -> ToolResult | None:
             error="No asset library configured. Set 'assets_dir' in config.json.",
         )
     return None
+
+
+def require_projects_dir(state: SceneState) -> ToolResult | None:
+    """Return an error ToolResult if no projects dir is configured, else ``None``."""
+    if state.projects_dir is None:
+        return ToolResult(
+            success=False,
+            error="No projects directory configured. Set 'projects_dir' in config.json.",
+        )
+    return None

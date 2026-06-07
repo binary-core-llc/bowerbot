@@ -850,7 +850,6 @@ src/bowerbot/
     naming_utils.py            #   Name sanitization for files, prims, projects
     usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
                                #   (used by both physics_utils and light_utils)
-  gateway/            # Future: FastAPI + MCP server
 ```
 
 **Design principles**
@@ -921,7 +920,6 @@ What's next for BowerBot. Contributions welcome:
 - [ ] **More scene-level variant categories**: layout variants (atomic furniture arrangement swap on a group prim) and camera variants (active camera + render settings) on the `/Scene/Cameras` group. Infrastructure is in place via `apply_scene_variant`; the orchestrators are pure additions when use cases land
 - [ ] **Animation variants (asset-level)**: each variant body references a different animation clip (idle, walk, etc.), production-canonical for articulated state cycling
 - [ ] **More asset providers**: Fab, PolyHaven, Objaverse, CGTrader skills
-- [ ] **MCP Gateway**: FastAPI server for web UI and external AI clients
 - [ ] **Web UI**: chat panel + live 3D viewport
 - [ ] **BowerHub**: community skill registry
 
@@ -939,7 +937,7 @@ For a complete reference, see [bowerbot-skill-sketchfab](https://github.com/bina
 
 ## 💖 Sponsors
 
-BowerBot is open source and built by a small team at [Binary Core LLC](https://binarycore.us). Sponsorship funds new asset providers (PolyHaven, Fab, CGTrader), USD compliance work, scene templates, the MCP gateway, documentation, and community support.
+BowerBot is open source and built by a small team at [Binary Core LLC](https://binarycore.us). Sponsorship funds new asset providers (PolyHaven, Fab, CGTrader), USD compliance work, scene templates, documentation, and community support.
 
 [**Become a sponsor on GitHub**](https://github.com/sponsors/binary-core-llc). Three monthly tiers (Egg, Nest, Bower) plus one-time options.
 

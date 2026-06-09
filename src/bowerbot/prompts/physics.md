@@ -1,7 +1,9 @@
 <!-- Copyright 2026 Binary Core LLC | SPDX-License-Identifier: Apache-2.0 -->
-You have tools to apply UsdPhysics schemas to assets. Static foundation
-only: collision shapes, rigid bodies, mass properties, mesh collision
-approximations. No joints, force fields, or solver-specific extensions.
+You have tools to apply UsdPhysics schemas to assets: collision shapes,
+rigid bodies, mass properties, mesh-collision approximations, collision
+groups, typed joints (revolute/prismatic/spherical/fixed/distance),
+articulation roots, and joint drives/limits. Out of scope: force fields
+and solver-specific extensions.
 
 ## Supported applied-API schemas
 
@@ -171,8 +173,11 @@ used verbatim against the open scene. Use `list_scene` and
 Discover every attribute and relationship a UsdPhysics applied API
 declares. Returns property name, kind, USD type, default, and
 allowed-token set (e.g. the approximation token list on
-PhysicsMeshCollisionAPI). **Always call this before
-`apply_physics_api`** so you know what to author.
+PhysicsMeshCollisionAPI). It also returns `target_requirement` (the prim
+type the API targets) and `requires_companion_api` (the API auto-applied
+with it, e.g. `PhysicsCollisionAPI` for `PhysicsMeshCollisionAPI`, else
+null). **Always call this before `apply_physics_api`** so you know what
+to author.
 
 ### `apply_physics_api(prim_path, api_name, attributes?, relationships?, scope?, clear_masking_overrides?, confirm_masked?)`
 Apply a UsdPhysics applied API and author its attributes /
@@ -181,7 +186,11 @@ relationships. `attributes` keys must come from
 are refused. **Omit `scope` to let BowerBot auto-detect** — asset
 placements write to the asset's `phy.usda`, scene-only prims write
 to `scene.usda`. Pass `scope="scene"` explicitly only for a
-per-placement override on an asset.
+per-placement override on an asset. The response reports `api_name`,
+`instance_name`, `companion_api`, `attributes_set`, `relationships_set`,
+and `scope`; asset-scope writes also return `asset_folder`,
+`scene_prim_path`, `asset_prim_path`, and `cleared_masking_opinions`
+(scene overrides deleted when `clear_masking_overrides=true`).
 
 When authoring collision on a Mesh that belongs to a dynamic or
 kinematic rigid body subtree, use
@@ -254,7 +263,9 @@ tool to create them first otherwise).
 
 ### `remove_collision_group(name, force?)`
 Remove a collision group. Refuses if other groups reference it via
-`filteredGroups` (would leave dangling rels) unless `force=True`.
+`filteredGroups` unless `force=True`. On a forced removal BowerBot
+scrubs the now-dangling references and reports them in
+`scrubbed_dangling_refs`.
 
 ### `list_collision_groups()`
 Return every group under `/Scene/Physics` (typed as
@@ -322,7 +333,9 @@ To add a drive:
 Valid instance names per joint type:
 - **RevoluteJoint**: `angular`
 - **PrismaticJoint**: `linear`
-- **SphericalJoint**: not supported (use D6 with rotX/Y/Z)
+- **SphericalJoint**: drives not supported. For per-axis angular limits,
+  apply PhysicsLimitAPI with instance_name `rotX` / `rotY` / `rotZ`
+  directly to the SphericalJoint (see Joint limits below).
 - **FixedJoint**: not supported
 - **DistanceJoint**: not supported
 

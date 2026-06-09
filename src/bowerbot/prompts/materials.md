@@ -130,8 +130,12 @@ error, the recovery is:
 
 ### Cleaning up orphan materials
 
-`cleanup_unused_materials()` removes any material prims under
-`/Scene/Materials` that are not bound by any prim in the scene. Run
-it after the user does a bulk material swap or removes the prims that
-used to consume a material. Asset-folder materials in `mtl.usda` are
-not touched, only scene-level ones.
+`cleanup_unused_materials()` removes material definitions from each ASWF
+asset folder's `mtl.usda` that no prim binds to. Binding is resolved
+through the composed root stage (including opinions on `over` prims and
+`material:binding` authored under variants), so a material counts as used
+if anything in the asset references it. With `asset_prim_path`, only that
+asset's `mtl.usda` is cleaned; otherwise every ASWF asset folder in the
+project is swept. Run it after a bulk material swap or after removing the
+prims that consumed a material. It does NOT touch `scene.usda`; there is
+no scene-level `/Scene/Materials` scope, only asset-folder `mtl.usda`.

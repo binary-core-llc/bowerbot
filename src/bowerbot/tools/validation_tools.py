@@ -40,8 +40,17 @@ TOOLS: list[Tool] = [
         name="validate_scene",
         description=(
             "Run validation checks on the current scene. Checks: "
-            "defaultPrim, metersPerUnit, upAxis, and reference resolution. "
-            "Call this after placing all assets and BEFORE packaging."
+            "defaultPrim, metersPerUnit, upAxis, reference and sublayer "
+            "resolution, material bindings, and referenced-asset variant "
+            "integrity, AND runs USD's UsdValidation framework (the engine "
+            "behind usdchecker). Call this after placing all assets and "
+            "BEFORE packaging. Returns {is_valid: bool, error_count: int, "
+            "message: str, issues: [{severity: 'error'|'warning'|'info', "
+            "message: str, prim: str|null}]}. error_count counts only "
+            "error-severity issues (there is no separate warning count), so "
+            "filter issues by severity to separate errors (must fix) from "
+            "warnings/info (advisory); 'prim' is the offending prim path "
+            "(null for stage-level checks and unresolved sublayers)."
         ),
         parameters={"type": "object", "properties": {}},
     ),
@@ -57,8 +66,11 @@ TOOLS: list[Tool] = [
             "UsdPreviewSurface required, no UDIM, etc.) before packaging. "
             "Default off — the standard USDZ output works for Omniverse, "
             "Isaac Sim, Unreal, Unity, web viewers, and most other USD "
-            "consumers without restriction. Returns the path to the .usdz "
-            "and any Apple-validation issues if applicable."
+            "consumers without restriction. Returns {usdz_path (or null if "
+            "Apple validation refused on errors), for_apple_ar_quick_look "
+            "(echo of the flag), is_valid_for_apple (bool), apple_issues "
+            "(list of {severity, message, prim}, empty unless the flag was "
+            "set), message}."
         ),
         parameters={
             "type": "object",

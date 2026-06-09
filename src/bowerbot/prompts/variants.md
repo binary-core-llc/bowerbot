@@ -69,7 +69,10 @@ including a variant that captures the original geometry (typically
 ### `add_asset_geometry_variant(prim_path, variant_set, variant_name, payloads, set_as_default?)`
 EXTEND an existing geometry variant set with another LOD. Refuses
 on first call when the asset still has a direct root payload — run
-`setup_asset_geometry_variants` first.
+`setup_asset_geometry_variants` first. Also refuses if a payload file
+is missing or resolves outside the asset folder, or if the new LOD's
+prim hierarchy diverges from the existing LODs (production LODs must
+share prim names so bindings, light-linking, and overrides compose).
 
 ### `add_asset_configuration_variant(prim_path, variant_set, variant_name, activations, set_as_default?)`
 Toggle prim activation per variant. `activations` is a map of prim
@@ -211,10 +214,15 @@ convention (`lightingVariant`, `lightSelection`, `modelType`).
 
 ### `add_scene_lighting_attribute_variant(variant_set, variant_name, overrides, set_as_default?)`
 
-Per-variant attribute overrides on existing scene lights. Same
-mechanism as `add_asset_attribute_variant` but writes to `scene.usda`,
-not an asset's `variants.usda`. `overrides` maps a UsdLux prim path
-under `/Scene/Lighting` to `{attribute_name: value}`.
+Per-variant attribute overrides on existing scene lights. Like
+`add_asset_attribute_variant` but writes to `scene.usda`, not an
+asset's `variants.usda`. `overrides` maps a UsdLux prim path under
+`/Scene/Lighting` to `{attribute_name: value}`. Targets must be UsdLux
+lights under `/Scene/Lighting`, and each attribute must already exist on
+the target light; out-of-carrier or non-light targets and unknown
+attribute names are refused with an available-inputs / did-you-mean
+hint. (The asset-side `add_asset_attribute_variant` does NOT pre-validate
+attribute names, so verify them with `list_prim_attributes` there.)
 
 Refuses if `scene.usda` has direct authored opinions on the target
 attributes (LIVRPS: local opinion masks same-layer variant body).

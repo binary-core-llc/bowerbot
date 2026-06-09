@@ -184,6 +184,7 @@ def list_alternate_geo_files(asset_dir: Path) -> list[str]:
         ASWFLayerNames.GEO,
         ASWFLayerNames.MTL,
         ASWFLayerNames.LGT,
+        ASWFLayerNames.PHY,
         ASWFLayerNames.CONTENTS,
         ASWFLayerNames.VARIANTS,
     }

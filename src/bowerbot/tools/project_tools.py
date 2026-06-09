@@ -59,9 +59,12 @@ TOOLS: list[Tool] = [
     Tool(
         name="list_projects",
         description=(
-            "List every BowerBot project in the projects directory, with "
-            "the currently focused one flagged. Use this to see what "
-            "projects exist before opening one."
+            "List every BowerBot project. Each entry has the project's "
+            "name, path, and updated_at (ISO timestamp of last edit); the "
+            "result also carries a total count and a top-level current "
+            "field naming the focused project (null if none). Use updated_at "
+            "to resume the most recently edited project without reading any "
+            "files."
         ),
         parameters={"type": "object", "properties": {}},
     ),
@@ -112,9 +115,11 @@ TOOLS: list[Tool] = [
         description=(
             "Open an existing BowerBot project and focus it. Every "
             "subsequent tool call operates on this project until another "
-            "is opened. Use when the user wants to resume or switch to a "
-            "different project. Call list_projects first if unsure of the "
-            "exact name."
+            "is opened. Returns the project name, path, and object_count "
+            "(prims already in the opened scene), so no follow-up call is "
+            "needed to learn the scene size. Use when the user wants to "
+            "resume or switch to a different project. Call list_projects "
+            "first if unsure of the exact name."
         ),
         parameters={
             "type": "object",
@@ -134,8 +139,9 @@ TOOLS: list[Tool] = [
         name="get_current_project",
         description=(
             "Report which project is currently focused, including its "
-            "path and object count. Returns 'no project open' if none is "
-            "focused. Use to confirm context before authoring."
+            "path and object count. Returns current=null (with an "
+            "explanatory message) when none is focused. Use to confirm "
+            "context before authoring."
         ),
         parameters={"type": "object", "properties": {}},
     ),

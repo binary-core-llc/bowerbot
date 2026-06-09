@@ -72,10 +72,18 @@ TOOLS: list[Tool] = [
     Tool(
         name="create_material",
         description=(
-            "Create a procedural MaterialX material and bind it to a prim. "
+            "Create a procedural hybrid material and bind it to a prim. "
             "Use this when no existing material file matches what the user "
-            "wants. Creates a ND_standard_surface_surfaceshader with base "
-            "color, metalness, and roughness — no textures needed."
+            "wants. Authors BOTH a MaterialX ND_standard_surface_surfaceshader "
+            "(standard_surface prim) and a UsdPreviewSurface (preview_surface "
+            "prim) off the same Material with shared base color, metalness, "
+            "roughness, and opacity — no textures needed. Returns the bound "
+            "prim_path, the material's asset-local prim path (field "
+            "'material'), and asset_folder. To tweak a value afterward, target "
+            "the COMPOSED scene shader path "
+            "'/Scene/<Group>/<Asset>/asset/mtl/<name>/standard_surface' (and "
+            "'/preview_surface') with set_prim_attribute, not the returned "
+            "'material' value."
         ),
         parameters={
             "type": "object",
@@ -153,9 +161,12 @@ TOOLS: list[Tool] = [
     Tool(
         name="bind_material",
         description=(
-            "Bind a material to a prim. Copies the material file to project "
-            "assets, adds it as a sublayer, and binds it to the target prim. "
-            "Use this for individual material assignments."
+            "Bind a material to a prim. Copies the material into the asset's "
+            "mtl.usda (referenced by the asset root) and binds it to the "
+            "target prim. Use this for individual material assignments. "
+            "Returns the bound material's composed prim path (field "
+            "'material', asset-local /<defaultPrim>/mtl/<name>) and "
+            "asset_folder."
         ),
         parameters={
             "type": "object",
@@ -199,18 +210,22 @@ TOOLS: list[Tool] = [
     Tool(
         name="list_materials",
         description=(
-            "List all materials in the scene and which prims they are "
-            "bound to. Use this to show current material assignments."
+            "List all materials across the project's ASWF asset folders and "
+            "which prims each is bound to. Use this to show current material "
+            "assignments. Returns material_count and, per material, "
+            "material_path (the composed prim path under the asset), "
+            "material_name, asset_folder, and bound_prims."
         ),
         parameters={"type": "object", "properties": {}},
     ),
     Tool(
         name="remove_material",
         description=(
-            "Remove material binding from a prim. Clears the material "
-            "assignment and removes any unused material sublayers from the "
-            "scene. Use list_prim_children first to find the exact mesh "
-            "prim path."
+            "Remove a material binding from a prim inside an ASWF asset. "
+            "Clears the binding in the asset's mtl.usda and garbage-collects "
+            "any now-unused material definitions (dropping the mtl.usda layer "
+            "if it becomes empty). Use list_prim_children first to find the "
+            "exact mesh prim path."
         ),
         parameters={
             "type": "object",

@@ -196,7 +196,12 @@ TOOLS: list[Tool] = [
             "apply_physics_api so you know which property names are valid "
             "and what types to pass. Property names come from the live USD "
             "schema registry, so new OpenUSD attributes are picked up "
-            "automatically with no BowerBot changes."
+            "automatically with no BowerBot changes. The result also "
+            "includes target_requirement (the prim type the API must "
+            "target, e.g. UsdGeom.Mesh for PhysicsMeshCollisionAPI) and "
+            "requires_companion_api (the API auto-applied alongside this "
+            "one, e.g. PhysicsCollisionAPI for PhysicsMeshCollisionAPI, "
+            "else null)."
         ),
         parameters={
             "type": "object",
@@ -218,10 +223,11 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "description": (
                         "Required for multi-apply APIs (DriveAPI, "
-                        "LimitAPI). The degree-of-freedom token: "
-                        "'angular' (revolute), 'linear' (prismatic), "
-                        "'rotX'/'rotY'/'rotZ'/'transX'/'transY'/"
-                        "'transZ' (D6), 'distance' (distance joint)."
+                        "LimitAPI). The degree-of-freedom token. DriveAPI: "
+                        "'angular' (revolute), 'linear' (prismatic). "
+                        "LimitAPI: 'angular' (revolute), 'linear' "
+                        "(prismatic), 'rotX'/'rotY'/'rotZ' (spherical), "
+                        "'distance' (distance joint)."
                     ),
                 },
             },
@@ -263,7 +269,15 @@ TOOLS: list[Tool] = [
             "another approximation.\n\n"
             "Omit `scope` to auto-detect. Pass `scope='scene'` "
             "explicitly only for a per-placement override on an asset "
-            "(disable collision on THIS chair instance only)."
+            "(disable collision on THIS chair instance only).\n\n"
+            "The response reports api_name, instance_name, companion_api "
+            "(the auto-applied companion, e.g. PhysicsCollisionAPI alongside "
+            "PhysicsMeshCollisionAPI, else null), attributes_set, "
+            "relationships_set, and scope. For asset-scope writes it also "
+            "returns asset_folder, scene_prim_path, asset_prim_path, and "
+            "cleared_masking_opinions (the scene.usda overrides "
+            "{prim_path, kind, key} deleted when clear_masking_overrides=true, "
+            "empty otherwise)."
         ),
         parameters={
             "type": "object",
@@ -289,10 +303,11 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "description": (
                         "Required for multi-apply APIs (DriveAPI, "
-                        "LimitAPI). The DOF token: 'angular' "
-                        "(revolute), 'linear' (prismatic), "
-                        "'rotX'/'rotY'/'rotZ'/'transX'/'transY'/"
-                        "'transZ' (D6), 'distance' (distance joint)."
+                        "LimitAPI). The DOF token. DriveAPI: 'angular' "
+                        "(revolute), 'linear' (prismatic). LimitAPI: "
+                        "'angular' (revolute), 'linear' (prismatic), "
+                        "'rotX'/'rotY'/'rotZ' (spherical), 'distance' "
+                        "(distance joint)."
                     ),
                 },
                 "attributes": {
@@ -592,8 +607,9 @@ TOOLS.append(Tool(
     name="remove_collision_group",
     description=(
         "Remove a UsdPhysicsCollisionGroup. Refuses if other groups "
-        "reference it via filteredGroups (would leave dangling "
-        "relationships) unless force=true is passed."
+        "reference it via filteredGroups unless force=true is passed. "
+        "Returns scrubbed_dangling_refs describing any now-dangling "
+        "filteredGroups references BowerBot cleaned up after removal."
     ),
     parameters={
         "type": "object",
@@ -607,8 +623,8 @@ TOOLS.append(Tool(
                 "default": False,
                 "description": (
                     "Remove even when other groups still reference "
-                    "this one via filteredGroups. Dangling rels "
-                    "are left behind."
+                    "this one via filteredGroups; BowerBot scrubs the "
+                    "now-dangling references afterwards."
                 ),
             },
         },

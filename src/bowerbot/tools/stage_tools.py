@@ -147,10 +147,14 @@ TOOLS: list[Tool] = [
     Tool(
         name="create_stage",
         description=(
-            "Create a new empty USD stage with standard BowerBot hierarchy. "
-            "Call this FIRST before placing any assets. "
-            "Creates: /Scene/Architecture, /Scene/Furniture, /Scene/Products, "
-            "/Scene/Lighting, /Scene/Props"
+            "Create or reopen the project's scene file. Creates an empty "
+            "/Scene root prim if the scene file is missing, or reopens it "
+            "with its current contents (returning the object count) if it "
+            "already exists. You normally do NOT need to call this: the "
+            "scene is created and opened with the project, and "
+            "place_asset/move_asset operate on the already-open stage. "
+            "Standard groups (/Scene/Furniture, /Scene/Products, ...) are "
+            "created on demand when assets are placed, not by this tool."
         ),
         parameters={
             "type": "object",
@@ -158,20 +162,26 @@ TOOLS: list[Tool] = [
                 "filename": {
                     "type": "string",
                     "description": (
-                        "Name for the scene file (without extension). "
-                        "Example: 'retail_store'"
+                        "Informational label only. The scene is always "
+                        "written to the project's scene.usda regardless of "
+                        "this value; it has no effect on the output path."
                     ),
                 },
             },
-            "required": ["filename"],
         },
     ),
     Tool(
         name="list_scene",
         description=(
-            "List all objects currently in the scene with their prim paths, "
-            "asset names, and positions. Use this to show the user what's "
-            "in the scene so they can request changes."
+            "List everything in the scene: returns object_count and an "
+            "objects array where each entry has a 'kind' and kind-specific "
+            "fields. kind 'asset'/'geometry': prim_path, type, asset, "
+            "position, and bounds (world-space {min, max}); kind 'light': "
+            "prim_path, light_type, position, and intensity/exposure/color "
+            "when authored; kind 'physics_scene'/'joint'/'collision_group': "
+            "prim_path, type, plus body0/body1 (joint) or name "
+            "(collision_group). Use an object's bounds to size or place "
+            "items on its surface without reading USD files."
         ),
         parameters={"type": "object", "properties": {}},
     ),
@@ -180,7 +190,12 @@ TOOLS: list[Tool] = [
         description=(
             "Move/rename a prim to a new path in the scene hierarchy. "
             "This changes the USD prim path, letting the user reorganize "
-            "the scene structure. The new path can be any valid USD path."
+            "the scene structure. The new path can be any valid USD path. "
+            "Also rewrites every relationship target across the scene that "
+            "pointed at the old path (material bindings, joint bodies, "
+            "collision-group members) so they follow the prim, and returns "
+            "rewritten_refs ({rels_touched: [...]}) listing the rebased "
+            "relationships; report any rewrites to the user."
         ),
         parameters={
             "type": "object",
@@ -199,7 +214,13 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="remove_prim",
-        description="Remove an object from the scene by its prim path.",
+        description=(
+            "Remove an object from the scene by its prim path. Also scrubs "
+            "any relationship targets left dangling by the removal and "
+            "returns scrubbed_dangling_refs ({rels_touched: [...]}) listing "
+            "what was cleaned up. Handles top-level placements and prims "
+            "nested inside a referenced asset's contents.usda."
+        ),
         parameters={
             "type": "object",
             "properties": {
@@ -220,7 +241,12 @@ TOOLS: list[Tool] = [
             "translate_z, rotate_y) you omit keeps its current value, so "
             "for single-axis moves pass only the axis the user asked to "
             "change. Use this instead of place_asset when repositioning "
-            "an object already in the scene."
+            "an object already in the scene. translate_x/y/z are "
+            "world-space meters; for a prim nested inside a referenced "
+            "asset's contents (path containing '/asset/contents/'), the "
+            "move is converted into the asset's local space and written "
+            "into that asset folder's contents.usda, while the returned "
+            "'position' still echoes the world-space values you passed."
         ),
         parameters={
             "type": "object",
@@ -263,7 +289,9 @@ TOOLS: list[Tool] = [
             "Use this BEFORE bind_material to discover the internal "
             "parts (table top, legs, frame, etc.) so you can target "
             "the exact mesh for material binding. Returns each part's "
-            "name, type, and current material."
+            "prim_path, name, type, is_mesh, is_bindable, current_material, "
+            "and world-space bounds {min, max}. Use a part's prim_path with "
+            "bind_material."
         ),
         parameters={
             "type": "object",

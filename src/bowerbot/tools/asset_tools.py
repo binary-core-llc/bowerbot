@@ -97,7 +97,11 @@ TOOLS: list[Tool] = [
         description=(
             "Place a 3D asset into the current scene. The asset is added as a "
             "USD reference at the specified prim path with the given transform. "
-            "Use the standard hierarchy: Furniture, Products, Lighting, Props."
+            "Use the standard hierarchy: Architecture, Furniture, Products, "
+            "Lighting, Props. Returns the prim_path, position, and an intake "
+            "summary (asset_folder, whether the root was renamed to the ASWF "
+            "canonical name, files_copied, localized dependencies, compliance "
+            "warnings)."
         ),
         parameters={
             "type": "object",
@@ -180,7 +184,12 @@ TOOLS: list[Tool] = [
             "with a clear error unless confirm_shared_modification=true is "
             "passed. Translate values are in the container's coordinate space; "
             "use position_mode='absolute' with coordinates from list_prim_children "
-            "bounds, or 'bounds_offset' for offsets from the container's surfaces."
+            "bounds, or 'bounds_offset' where X/Z are offsets from the container's "
+            "bounding-box CENTER and Y is an offset from its TOP surface (or BOTTOM "
+            "for negative Y; default 0.5 m above the top if Y is omitted). Returns "
+            "the composed prim_path, the resolved container-local position, and an "
+            "intake summary (asset_folder, renamed root, files_copied, localized "
+            "dependencies, compliance warnings)."
         ),
         parameters={
             "type": "object",
@@ -233,7 +242,10 @@ TOOLS: list[Tool] = [
                         "world-space coordinates (as returned by list_scene / "
                         "list_prim_children) — BowerBot converts to the "
                         "container's internal coordinate frame; 'bounds_offset' "
-                        "= offsets from the container's bounding box surfaces."
+                        "= X and Z are offsets from the container's bounding-box "
+                        "CENTER, Y is an offset from the TOP surface (or BOTTOM "
+                        "for negative Y); if translate_y is omitted the asset is "
+                        "placed 0.5 m above the top surface."
                     ),
                     "default": PositionMode.ABSOLUTE.value,
                 },

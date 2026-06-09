@@ -89,15 +89,23 @@ def _layer_references_folder(layer: Sdf.Layer, folder_name: str) -> bool:
 # ── Open / save ──
 
 
-def create_empty_scene(path: str | Path) -> None:
+def create_empty_scene(
+    path: str | Path,
+    *,
+    up_axis: str = "Y",
+    meters_per_unit: float = 1.0,
+) -> None:
     """Create a single ``scene.usda`` at *path* if it does not exist."""
     path = Path(path)
     if path.exists():
         return
 
     stage = Usd.Stage.CreateNew(str(path))
-    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
-    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
+    UsdGeom.SetStageUpAxis(
+        stage,
+        UsdGeom.Tokens.z if str(up_axis).upper() == "Z" else UsdGeom.Tokens.y,
+    )
     root = stage.DefinePrim("/Scene", "Xform")
     stage.SetDefaultPrim(root)
     Usd.ModelAPI(root).SetKind(Kind.Tokens.assembly)
@@ -490,16 +498,12 @@ def save_stage(stage: Usd.Stage) -> None:
 
 
 def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
-    """Add a referenced asset under a wrapper Xform at the prim path.
-
-    Always authors the canonical translate + rotate + scale + xformOpOrder
-    so DCC overrides on this prim are sparse-delta and the prim is
-    XformCommonAPI-compliant.
-    """
+    """Reference an asset under a wrapper Xform, conformed to the scene's units and up-axis."""
     asset_path = (
         scene_object.asset.file_path or scene_object.asset.source_id
     )
     unit_scale = _compute_unit_scale(stage, asset_path)
+    up_axis_correction = _compute_up_axis_correction(stage, asset_path)
 
     wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
     xformable = UsdGeom.Xformable(wrapper)
@@ -516,6 +520,8 @@ def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
     asset_prim = stage.DefinePrim(
         f"{scene_object.prim_path}/asset", "Xform",
     )
+    if up_axis_correction is not None:
+        UsdGeom.Xformable(asset_prim).AddRotateXOp().Set(up_axis_correction)
     asset_prim.GetReferences().AddReference(asset_path)
 
 
@@ -929,6 +935,29 @@ def _compute_unit_scale(stage: Usd.Stage, asset_path: str) -> float:
     if scene_mpu == 0:
         return 1.0
     return asset_mpu / scene_mpu
+
+
+def _compute_up_axis_correction(
+    stage: Usd.Stage, asset_path: str,
+) -> float | None:
+    """Return X-rotation degrees to stand an asset up in the stage, or None if aligned."""
+    if not os.path.isabs(asset_path):
+        stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
+        asset_path = os.path.join(stage_dir, asset_path)
+
+    asset_stage = Usd.Stage.Open(asset_path)
+    if asset_stage is None:
+        return None
+
+    asset_up = UsdGeom.GetStageUpAxis(asset_stage)
+    scene_up = UsdGeom.GetStageUpAxis(stage)
+    if asset_up == scene_up:
+        return None
+    if asset_up == UsdGeom.Tokens.y and scene_up == UsdGeom.Tokens.z:
+        return 90.0
+    if asset_up == UsdGeom.Tokens.z and scene_up == UsdGeom.Tokens.y:
+        return -90.0
+    return None
 
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:

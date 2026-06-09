@@ -16,8 +16,8 @@ def validate_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     del params
     result = validation_utils.validate_stage(
         state.stage_path,
-        expected_meters_per_unit=state.scene_defaults.meters_per_unit,
-        expected_up_axis=state.scene_defaults.up_axis,
+        expected_meters_per_unit=state.meters_per_unit,
+        expected_up_axis=state.up_axis,
     )
     return {
         "is_valid": result.is_valid,

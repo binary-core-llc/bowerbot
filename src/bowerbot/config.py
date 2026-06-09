@@ -40,6 +40,25 @@ class Transport(StrEnum):
     HTTP = "http"
 
 
+class UpAxis(StrEnum):
+    """World up axis a scene is authored in."""
+
+    Y = "Y"
+    Z = "Z"
+
+
+class LinearUnit(StrEnum):
+    """Named linear unit, mapped to USD metersPerUnit."""
+
+    METERS = "meters"
+    CENTIMETERS = "centimeters"
+    MILLIMETERS = "millimeters"
+
+    @property
+    def meters_per_unit(self) -> float:
+        return {"meters": 1.0, "centimeters": 0.01, "millimeters": 0.001}[self.value]
+
+
 class LLMSettings(BaseModel):
     """LLM provider configuration."""
 
@@ -86,14 +105,6 @@ class SkillConfig(BaseModel):
         return data
 
 
-class SceneDefaults(BaseModel):
-    """Default scene parameters baked into every USD stage."""
-
-    meters_per_unit: float = 1.0
-    up_axis: str = "Y"
-    default_room_bounds: tuple[float, float, float] = (10.0, 3.0, 8.0)
-
-
 class LoggingSettings(BaseModel):
     """Structured file + console logging configuration.
 
@@ -115,7 +126,6 @@ class Settings(BaseSettings):
     mode: Mode = Mode.AGENT
     llm: LLMSettings = Field(default_factory=LLMSettings)
     mcp: McpSettings = Field(default_factory=McpSettings)
-    scene_defaults: SceneDefaults = Field(default_factory=SceneDefaults)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     skills: dict[str, SkillConfig] = Field(default_factory=dict)
     assets_dir: Path = Path("./assets")
@@ -168,13 +178,6 @@ def save_settings(settings: Settings) -> None:
             "host": settings.mcp.host,
             "port": settings.mcp.port,
             "path": settings.mcp.path,
-        },
-        "scene_defaults": {
-            "meters_per_unit": settings.scene_defaults.meters_per_unit,
-            "up_axis": settings.scene_defaults.up_axis,
-            "default_room_bounds": list(
-                settings.scene_defaults.default_room_bounds,
-            ),
         },
         "logging": {
             "enabled": settings.logging.enabled,

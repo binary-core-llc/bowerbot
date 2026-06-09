@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from pxr import Usd
 
-from bowerbot.config import SceneDefaults, Settings
+from bowerbot.config import Settings, UpAxis
 from bowerbot.utils import inspection_utils, stage_utils
 
 if TYPE_CHECKING:
@@ -26,7 +26,8 @@ _HASH_CHUNK_SIZE = 65536
 class SceneState:
     """Mutable scene-building context shared across tool handlers."""
 
-    scene_defaults: SceneDefaults
+    up_axis: UpAxis = UpAxis.Y
+    meters_per_unit: float = 1.0
     project: Project | None = None
     stage: Usd.Stage | None = None
     stage_path: Path | None = None
@@ -39,7 +40,6 @@ class SceneState:
     def from_settings(cls, settings: Settings) -> SceneState:
         """Build an unbound state with the configured library and projects dirs."""
         return cls(
-            scene_defaults=settings.scene_defaults,
             library_dir=Path(settings.assets_dir),
             projects_dir=Path(settings.projects_dir),
         )
@@ -65,6 +65,8 @@ class SceneState:
     def bind_project(self, project: Project) -> None:
         """Focus this state on *project*: open its scene and count objects."""
         self.project = project
+        self.up_axis = project.meta.up_axis
+        self.meters_per_unit = project.meta.meters_per_unit
         self.stage_path = project.scene_path
         self.stage = stage_utils.open_stage(project.scene_path)
         self.object_count = len(inspection_utils.list_prims(self.stage))

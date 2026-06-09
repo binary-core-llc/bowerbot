@@ -59,7 +59,7 @@ async def test_agent_with_local_assets():
         },
     )
 
-    state = SceneState(scene_defaults=settings.scene_defaults)
+    state = SceneState()
     registry = SkillRegistry()
     registry.load_from_settings(settings)
 

@@ -71,7 +71,12 @@ TOOLS: list[Tool] = [
             "Create a new BowerBot project and immediately focus it. "
             "Every subsequent tool call (place_asset, create_light, ...) "
             "operates on this project until another is opened. Use when "
-            "the user wants to start a fresh scene."
+            "the user wants to start a fresh scene. The project's scene "
+            "fixes its world up-axis and units up front and every placed "
+            "asset is conformed to them, so up_axis and meters_per_unit "
+            "are required: ask the user, or match the source you are "
+            "reconstructing (an Omniverse/Isaac scene is usually Z-up in "
+            "meters; most Maya/web content is Y-up)."
         ),
         parameters={
             "type": "object",
@@ -83,8 +88,23 @@ TOOLS: list[Tool] = [
                         "The folder name is derived from it."
                     ),
                 },
+                "up_axis": {
+                    "type": "string",
+                    "enum": ["Y", "Z"],
+                    "description": (
+                        "World up-axis for the scene. 'Z' for "
+                        "Omniverse/Isaac/CAD-style sources, 'Y' otherwise."
+                    ),
+                },
+                "meters_per_unit": {
+                    "type": "number",
+                    "description": (
+                        "Scene units as USD metersPerUnit: 1.0 = meters, "
+                        "0.01 = centimeters, 0.001 = millimeters."
+                    ),
+                },
             },
-            "required": ["name"],
+            "required": ["name", "up_axis", "meters_per_unit"],
         },
     ),
     Tool(

@@ -225,7 +225,6 @@ class ScenarioRunner:
     def _build_state(self, project: Project) -> SceneState:
         """Build a SceneState bound to *project*, opening its scene if present."""
         state = SceneState(
-            scene_defaults=self.settings.scene_defaults,
             library_dir=Path(self.settings.assets_dir),
         )
         state.project = project

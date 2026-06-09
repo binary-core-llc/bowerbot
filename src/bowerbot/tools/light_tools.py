@@ -63,7 +63,9 @@ TOOLS: list[Tool] = [
         name="list_light_type_properties",
         description=(
             "Live UsdLux schema view of every inputs:* attribute the given "
-            "light type declares: name, type, default, and documentation. "
+            "light type declares: name, type, default, documentation, and "
+            "allowed_tokens (valid values for enum-typed inputs such as "
+            "inputs:texture:format). "
             "Call this BEFORE create_light to discover the attribute names "
             "and default values that the type supports (e.g. inputs:intensity, "
             "inputs:radius for SphereLight, inputs:width/inputs:height for "
@@ -218,11 +220,13 @@ TOOLS: list[Tool] = [
         name="update_light",
         description=(
             "Update an existing light's position, rotation, or HDRI "
-            "texture. Works for both scene-level and asset-level lights. "
-            "Only the things this tool covers go here: xform ops "
-            "(translate/rotate, including bounds_offset for asset lights) "
-            "and texture (file copy into <project>/textures/ or the "
-            "asset's maps/). For any UsdLux attribute (intensity, exposure, "
+            "texture. Position/rotation work for both scene-level and "
+            "asset-level lights. Only the things this tool covers go here: "
+            "xform ops (translate/rotate, including bounds_offset for asset "
+            "lights) and texture (file copied into <project>/textures/, "
+            "scene-level lights only; to change an asset-level light's HDRI, "
+            "recreate it with create_light). For any UsdLux attribute "
+            "(intensity, exposure, "
             "color, radius, angle, width, height, length, colorTemperature, "
             "diffuse, specular, normalize, etc.), use set_prim_attribute on "
             "the light prim directly."
@@ -258,11 +262,11 @@ TOOLS: list[Tool] = [
                 "texture": {
                     "type": "string",
                     "description": (
-                        "DomeLight only. Path to an HDRI file. Scene-level "
-                        "DomeLights have the file copied into "
-                        "<project>/textures/; asset-level DomeLights have "
-                        "it copied into the asset's maps/. The light's "
-                        "inputs:texture:file is set to the relative path."
+                        "DomeLight / RectLight only. Path to an HDRI or "
+                        "texture file, copied into <project>/textures/ and "
+                        "set as inputs:texture:file. Applies to scene-level "
+                        "lights; to change an asset-level light's HDRI, "
+                        "recreate it with create_light."
                     ),
                 },
             },

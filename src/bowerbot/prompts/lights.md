@@ -4,8 +4,9 @@ Use `create_light` to add native USD lights. There are two levels.
 
 1. Call `list_light_type_properties` with the chosen `light_type` to learn
    which `inputs:*` attributes the type declares (names, types, defaults,
-   docs). This is the source of truth, not a memorized list. The schema
-   is read live from UsdLux.
+   docs, and `allowed_tokens` for enum-typed inputs like
+   `inputs:texture:format`). This is the source of truth, not a memorized
+   list. The schema is read live from UsdLux.
 2. Call `create_light` and pass the inputs you want to set in the
    `attributes` dict, keyed by full attribute name
    (`inputs:intensity`, `inputs:color`, `inputs:radius`, ...). Anything
@@ -67,6 +68,12 @@ Workflow for interior fixtures:
 Values are always in meters. Spatial inputs (radius, width, height,
 length) inside `attributes` are also in meters; BowerBot scales them
 to the asset's native units for asset lights.
+
+`create_light` returns the **resolved** `position` (in bounds_offset /
+absolute modes the final asset-local coordinates differ from what you
+passed) and, for asset lights, the composed scene `prim_path` (also
+restated in the `message`). Pass that `prim_path` to `update_light` or
+`set_prim_attribute` for later per-placement tweaks.
 
 ### Light types
 - **DistantLight** — sun/directional. Only rotation matters.

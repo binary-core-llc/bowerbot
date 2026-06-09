@@ -7,14 +7,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import AssetCategory
 from bowerbot.services import library_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 from bowerbot.tools._helpers import require_library_dir
-from bowerbot.utils.library_utils import DEFAULT_SEARCH_LIMIT
+from bowerbot.utils.library_utils import (
+    ALL,
+    DEFAULT_SEARCH_LIMIT,
+    LIBRARY_CATEGORIES,
+)
 
-_CATEGORY_VALUES: list[str] = [c.value for c in AssetCategory] + ["all"]
+_CATEGORY_VALUES: list[str] = [c.value for c in LIBRARY_CATEGORIES] + [ALL]
 
 
 def search_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
@@ -44,12 +47,13 @@ TOOLS: list[Tool] = [
         name="search_assets",
         description=(
             "Search the user's asset library by name across every category. "
-            "Returns "
-            "{results: [...], total_matches: int, truncated: bool}. Each "
-            "result carries its own 'category' field ('geo' single geometry, "
-            "'mtl' material, 'package' ASWF folder) so you can post-filter "
-            "if needed. If truncated is true, refine the query — do not "
-            "ask the user to pick from a partial list."
+            "Returns {results: [...], total_matches: int, truncated: bool}. "
+            "Each result is {name, path, format, category}: 'path' is the "
+            "local file path to load — pass it as asset_file_path to "
+            "place_asset for 'geo'/'package' results, or as material_file to "
+            "bind_material for 'mtl' results; 'format' is the file suffix "
+            "(e.g. '.usda', '.usdz'). If truncated is true, refine the query "
+            "— do not ask the user to pick from a partial list."
         ),
         parameters={
             "type": "object",
@@ -62,7 +66,7 @@ TOOLS: list[Tool] = [
                     "type": "integer",
                     "description": (
                         f"Maximum number of results to return "
-                        f"(default {DEFAULT_SEARCH_LIMIT})."
+                        f"(default {DEFAULT_SEARCH_LIMIT}, minimum 1)."
                     ),
                     "default": DEFAULT_SEARCH_LIMIT,
                 },
@@ -75,8 +79,12 @@ TOOLS: list[Tool] = [
         description=(
             "Browse the user's asset library, optionally filtered by "
             "category. Returns {results: [...], total_matches: int, "
-            "truncated: bool}. If truncated is true, narrow the category "
-            "filter or use search_assets with a query instead."
+            "truncated: bool}. Each result is {name, path, format, "
+            "category}: 'path' is the local file path you pass straight to "
+            "place_asset (asset_file_path) for 'geo'/'package' results or to "
+            "bind_material (material_file) for 'mtl' results; 'format' is the "
+            "USD suffix (e.g. '.usda'). If truncated is true, narrow the "
+            "category filter or use search_assets with a query instead."
         ),
         parameters={
             "type": "object",
@@ -91,7 +99,7 @@ TOOLS: list[Tool] = [
                     "type": "integer",
                     "description": (
                         f"Maximum number of results to return "
-                        f"(default {DEFAULT_SEARCH_LIMIT})."
+                        f"(default {DEFAULT_SEARCH_LIMIT}, minimum 1)."
                     ),
                     "default": DEFAULT_SEARCH_LIMIT,
                 },

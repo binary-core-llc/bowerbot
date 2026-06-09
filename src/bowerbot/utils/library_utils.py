@@ -20,6 +20,15 @@ _NON_ASSET_DIRS: frozenset[str] = frozenset({"cache", "maps", "materials"})
 ALL: str = "all"
 DEFAULT_SEARCH_LIMIT: int = 25
 
+# The only categories scan_library assigns: package roots, loose materials,
+# loose geometry. Source of truth for the listable-category filter; 'lgt' is
+# an ASWF layer kind, never a library result.
+LIBRARY_CATEGORIES: tuple[AssetCategory, ...] = (
+    AssetCategory.PACKAGE,
+    AssetCategory.MTL,
+    AssetCategory.GEO,
+)
+
 
 def truncate_with_total(
     matches: list[dict[str, str]], limit: int,

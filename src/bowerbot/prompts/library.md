@@ -21,7 +21,10 @@ USD-family files: `.usd`, `.usda`, `.usdc`, `.usdz`
 
 ## Asset Categories
 
-Every result includes a `category` field:
+Every result is `{name, path, format, category}`. Use `category` to pick
+the next tool, and forward the result's `path` verbatim as that tool's
+file argument: `path` -> `place_asset`'s `asset_file_path` for
+`package`/`geo`, or `path` -> `bind_material`'s `material_file` for `mtl`.
 
 | Category | What it is | Which tool to use |
 |----------|-----------|-------------------|

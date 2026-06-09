@@ -54,7 +54,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     return {
         "stage_path": str(state.stage_path),
         "message": (
-            f"Stage created at {state.stage_path} with standard hierarchy."
+            f"Stage created at {state.stage_path} with an empty /Scene root prim."
         ),
     }
 

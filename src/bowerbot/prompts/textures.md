@@ -26,6 +26,11 @@ You have tools for finding texture files in the user's asset library.
      `create_material` for a procedural MaterialX material.
 
 ## Notes
+- `search_textures` and `list_textures` both return a list of
+  `{name, path, format, category}` entries. `path` is the file path to
+  pass downstream, `format` is the lowercased extension (e.g. `.hdr`),
+  and `category` is `hdri` or `material` — route by `category` rather
+  than re-inspecting the extension.
 - Textures live in the user's asset library (`assets_dir` from
   `~/.bowerbot/config.json`). Anything an external skill (e.g.
   Sketchfab) downloads also lands there and becomes searchable.

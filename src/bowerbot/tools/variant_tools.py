@@ -366,7 +366,12 @@ TOOLS: list[Tool] = [
             "set; use add_asset_geometry_variant afterwards to extend it. "
             "Provide every variant in one call, including a 'default'-like "
             "variant (commonly 'high' or 'hero') that captures the asset's "
-            "current geometry payload."
+            "current geometry payload. REFUSES if any payload file is "
+            "missing or resolves outside the asset folder (ASWF assets must "
+            "be self-contained), and REFUSES if the LOD payloads have "
+            "divergent geometry prim hierarchies (production LODs must share "
+            "prim names so bindings, light-linking, and overrides compose); "
+            "the error names the missing/extra prims."
         ),
         parameters={
             "type": "object",
@@ -409,7 +414,13 @@ TOOLS: list[Tool] = [
             "Author a geometry/LOD variant by overriding payload arcs. Each "
             "entry in 'payloads' maps a prim path to a payload asset path "
             "to load when this variant is selected. Use for LODs, geometry "
-            "swaps, or alternative meshes."
+            "swaps, or alternative meshes. Use ONLY to EXTEND an existing "
+            "geometry variant set: if the set is new and the asset still has "
+            "a direct root payload, this REFUSES and tells you to run "
+            "setup_asset_geometry_variants first. Also REFUSES if a payload "
+            "file is missing or resolves outside the asset folder, or if the "
+            "new LOD's geometry prim hierarchy diverges from the existing "
+            "LODs in the set."
         ),
         parameters={
             "type": "object",
@@ -521,7 +532,11 @@ TOOLS: list[Tool] = [
             "where the same lights take different attribute values per "
             "variant (warm/cool color, intensity profiles, exposure swaps). "
             "Each entry in 'overrides' maps a UsdLux prim path under "
-            "/Scene/Lighting to attribute_name -> value. "
+            "/Scene/Lighting to attribute_name -> value. Targets must be "
+            "UsdLux lights under /Scene/Lighting (non-light or out-of-carrier "
+            "prims are REFUSED), and each attribute must already exist on the "
+            "target light (unknown attributes are REFUSED with an "
+            "available-inputs / did-you-mean hint). "
             "REFUSES if scene.usda already has direct authored opinions on "
             "those attributes (LIVRPS: local opinion masks same-layer "
             "variant body). Pass clear_masking_overrides=true to remove "
@@ -606,7 +621,11 @@ TOOLS: list[Tool] = [
             "asset folder) so the user's original choice is preserved as "
             "the default — the set starts with TWO variants minimum. "
             "Refuses with a clear message if your variant_name collides "
-            "with the auto-promoted name."
+            "with the auto-promoted name. Returns asset_reference (the "
+            "staged './assets/<folder>/<file>' reference authored in the new "
+            "variant body), asset_folder (the staged folder name), and "
+            "promoted_existing_variant (the auto-promoted prior reference's "
+            "variant name on the first call, else null)."
         ),
         parameters={
             "type": "object",
@@ -695,7 +714,13 @@ TOOLS: list[Tool] = [
         description=(
             "Remove an entire scene-level variant set (all variants) "
             "from a scene carrier prim (e.g. '/Scene/Lighting'). "
-            "Idempotent. Operates on scene.usda only."
+            "Idempotent. Operates on scene.usda only. For model-selection "
+            "sets this AUTO-DEMOTES: the currently-selected variant's "
+            "reference is restored as a direct reference on the child prim "
+            "before the set is dropped, and that variant name is returned "
+            "as demoted_to_direct_ref (None otherwise) so you can confirm "
+            "which asset survived. Also returns removed (bool) and scope "
+            "('scene')."
         ),
         parameters={
             "type": "object",
@@ -711,7 +736,7 @@ TOOLS: list[Tool] = [
         description=(
             "List alternate geometry files (LODs, swap geometry, "
             "alt states) inside an asset folder. Canonical layers "
-            "(geo.usda, mtl.usda, lgt.usda, contents.usda, "
+            "(geo.usda, mtl.usda, lgt.usda, phy.usda, contents.usda, "
             "variants.usda, and the root file) are excluded. Call "
             "this before add_asset_geometry_variant so you know which "
             "payload files exist; pick from the returned list."
@@ -726,7 +751,9 @@ TOOLS: list[Tool] = [
         name="list_variants",
         description=(
             "List all variant sets, their variants, and the current "
-            "default selection on an asset. Call this before authoring "
+            "composed (effective) variant selection at each carrier under "
+            "the placement, which reflects any per-instance scene override, "
+            "not just the asset's ship default. Call this before authoring "
             "or removing variants to see what already exists."
         ),
         parameters={
@@ -762,7 +789,11 @@ TOOLS: list[Tool] = [
             "selection is authored inline next to the placement in "
             "scene.usda. The asset's ship default is untouched, so other "
             "scene instances of the same asset are unaffected. Use for "
-            "'make THIS one different' requests."
+            "'make THIS one different' requests. Returns prim_path (the "
+            "resolved carrier the override was written to, which can differ "
+            "from your input when you pass a wrapper), requested_prim_path "
+            "(the path you passed), and effective_selection (the composed "
+            "selection read back)."
         ),
         parameters={
             "type": "object",

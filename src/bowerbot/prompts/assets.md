@@ -209,14 +209,19 @@ before this validation existed), use `freeze_asset`:
 Use these read/maintenance tools when the user asks about what is
 in their project or when an asset reference has gone stale.
 
-- `list_project_assets()` — list every asset folder under the
-  project's `assets/` directory, with file paths. Use this to answer
-  "what assets do I have?" or before suggesting a `place_asset` call.
+- `list_project_assets()` — list every asset under the project's
+  `assets/` directory; each entry reports its `name`, `type` (`folder`
+  or `file`), and `in_scene` (whether it is referenced in the current
+  scene). Use this to answer "what assets do I have?" or before
+  suggesting a `place_asset` call.
 - `delete_project_asset(name=...)` — remove an asset folder. Refuses
-  by default if the asset is still referenced anywhere in the scene
-  (the response lists referencing prims so the user can decide).
-- `cleanup_unused_contents()` — sweep nested asset wrappers under
-  every container's `contents.usda` and remove the ones whose
-  referenced sub-asset folder no longer exists. Run this after the
-  user deletes an asset that was nested inside another, or when a
-  `place_asset_inside` reference shows up as missing.
+  by default if the asset is still referenced anywhere in the project;
+  the error names the referencing USD files (relative to the project)
+  so the user can remove those references first.
+- `cleanup_unused_contents()` — remove empty group scopes (e.g. an empty
+  `Props` or `Furniture` scope left in a container's `contents.usda`
+  after every nested asset in that group was removed), and drop the
+  `contents.usda` layer when no references remain. Run this after
+  removing the last nested asset from a group. It does NOT detect a
+  wrapper whose referenced sub-asset folder is missing on disk; it only
+  prunes scopes that already have zero child references.

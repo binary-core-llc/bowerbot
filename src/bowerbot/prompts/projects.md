@@ -13,7 +13,8 @@ operates on the focused project.
   them. Ask the user, or match the source you are reconstructing (an
   Omniverse/Isaac scene is usually `Z`-up in meters; most Maya/web
   content is `Y`-up).
-- `open_project(name)` — focus an existing project. Use to resume or
+- `open_project(name)` — focus an existing project, returning its name,
+  path, and `object_count` (prims already in the scene). Use to resume or
   switch ("keep working on my kitchen"). Call `list_projects` first if
   you are unsure of the exact name.
 - Both calls rebind the focus: from that point on, all authoring lands
@@ -21,9 +22,13 @@ operates on the focused project.
 
 ### Knowing where you are
 
-- `list_projects` — show every project, with the focused one flagged.
+- `list_projects` — show every project, each with its `name`, `path`, and
+  `updated_at` (ISO timestamp of last edit). A top-level `current` field
+  names the focused one (null if none). Use `updated_at` to resume the
+  most recently edited project instead of reading any `project.json`.
 - `get_current_project` — report the focused project, its path, and its
-  object count. Returns "no project open" when nothing is focused.
+  object count. Returns `current` = null (with an explanatory message)
+  when nothing is focused.
 
 ### When nothing is focused
 

@@ -50,6 +50,13 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     asset_prim_path = params.get("asset_prim_path")
     if asset_prim_path:
+        if light_type in light_utils.SCENE_ONLY_LIGHT_TYPES:
+            msg = (
+                f"{light_type.value} is a scene-level environment light and "
+                f"cannot be nested in an asset. Create it without "
+                f"asset_prim_path."
+            )
+            raise ValueError(msg)
         asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
             state.stage, asset_prim_path,
         )
@@ -135,7 +142,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Update a light's xform / HDRI texture; writes to scene.usda."""
+    """Update a light's xform / HDRI texture in its asset or in scene.usda."""
     prim_path = params["prim_path"]
     asset_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
 
@@ -147,33 +154,43 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     )
     texture = params.get("texture")
 
-    if asset_dir is not None and translate is not None:
-        mode = PositionMode(
-            params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
+    if asset_dir is not None:
+        if translate is not None:
+            mode = PositionMode(
+                params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
+            )
+            translate = geometry_utils.resolve_asset_position(
+                mode,
+                geometry_utils.get_geometry_bounds(asset_dir),
+                *translate,
+                has_explicit_y=params.get("translate_y") is not None,
+                world_to_local_mat=stage_utils.get_container_world_inverse(
+                    state.stage, prim_path,
+                ),
+                asset_mpu=geometry_utils.get_mpu(asset_dir),
+            )
+        light_name = prim_path.rstrip("/").split("/")[-1]
+        light_utils.update_light_in_folder(
+            asset_dir,
+            light_name,
+            translate=translate,
+            rotate=rotate,
+            texture=light_utils.stage_asset_texture(asset_dir, texture),
         )
-        translate = geometry_utils.resolve_asset_position(
-            mode,
-            geometry_utils.get_geometry_bounds(asset_dir),
-            *translate,
-            has_explicit_y=params.get("translate_y") is not None,
-            world_to_local_mat=stage_utils.get_container_world_inverse(
-                state.stage, prim_path,
+        state.stage = stage_utils.open_stage(state.stage_path)
+    else:
+        light_utils.update_light(
+            state.stage,
+            prim_path,
+            translate=translate,
+            rotate=rotate,
+            texture=texture_utils.stage_scene_texture(
+                state.project.path if state.project else None, texture,
             ),
-            asset_mpu=geometry_utils.get_mpu(asset_dir),
         )
+        stage_utils.save_stage(state.stage)
 
-    light_utils.update_light(
-        state.stage,
-        prim_path,
-        translate=translate,
-        rotate=rotate,
-        texture=texture_utils.stage_scene_texture(
-            state.project.path if state.project else None, texture,
-        ),
-    )
-    stage_utils.save_stage(state.stage)
     state.touch_project()
-
     logger.info("Updated light at %s", prim_path)
     return {
         "prim_path": prim_path,

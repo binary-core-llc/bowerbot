@@ -34,6 +34,14 @@ flame, recessed ceiling lights inside a building. These travel with
 the asset. Set `asset_prim_path` to the asset's prim path to create
 the light in the asset's `lgt.usda` file instead of the scene.
 
+`DomeLight` (sky/HDRI environment) and `DistantLight` (the sun /
+infinite directional) are scene-level environment lights and **cannot**
+be asset-level — create them without `asset_prim_path`. Only local
+fixtures (`SphereLight`, `RectLight`, `DiskLight`, `CylinderLight`) can
+be asset-level. The texturable asset-level light is the `RectLight` (a
+textured area light, e.g. a glowing screen or panel); its texture is
+staged into the asset's `maps/`.
+
 Asset lights support two coordinate modes via the `position_mode`
 parameter. Choose the one that matches what the user is asking for.
 
@@ -145,12 +153,15 @@ on the same asset.** When the user says any of:
    scene-level lights.
 
 ### Modifying lights
-Every value change goes to `scene.usda`. The asset's `lgt.usda` is
-only touched by `create_light` (publish) and `remove_light` (delete).
+`update_light` edits the light where it lives — an asset light's
+`lgt.usda` (so the change applies to every instance) or `scene.usda`
+for a scene light. `set_prim_attribute` instead authors a per-instance
+override in `scene.usda` on one placement's composed light prim.
 
-- **Position / rotation / HDRI texture** → `update_light`. Handles
+- **Position / rotation / texture** → `update_light`. Handles
   xform-op management, `position_mode: bounds_offset` math for
-  asset lights, and texture file staging.
+  asset lights, and texture staging (asset `maps/` for an asset
+  RectLight, `<project>/textures/` for a scene DomeLight).
 - **Any UsdLux input** (intensity, exposure, color, radius, angle,
   width, height, length, colorTemperature, diffuse, specular,
   normalize, etc.) → `set_prim_attribute` on the light prim with

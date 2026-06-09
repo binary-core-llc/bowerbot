@@ -294,6 +294,26 @@ def test_create_asset_light():
         assert lgt_path.exists()
 
 
+def test_create_asset_scene_only_light_refused():
+    """DomeLight and DistantLight are scene environment lights, not asset-level."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "lamp")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        for light_type in ("DomeLight", "DistantLight"):
+            r = asyncio.run(exec_tool(state, "create_light", {
+                "asset_prim_path": placed.data["prim_path"],
+                "light_type": light_type,
+                "light_name": "Env",
+            }))
+            assert not r.success, light_type
+            assert "scene-level" in r.error.lower()
+
+
 # ── create_light — error cases ──
 
 
@@ -366,6 +386,41 @@ def test_update_light_texture():
         }))
         assert r.success, r.error
         assert (project.path / "textures" / "sunset.hdr").exists()
+
+
+def test_update_asset_rect_light_texture_into_asset():
+    """An asset RectLight's texture update stages into the asset's maps/, not project textures/."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "panel")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset), "asset_name": "Panel",
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        created = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed.data["prim_path"],
+            "light_type": "RectLight",
+            "light_name": "Screen",
+        }))
+        assert created.success, created.error
+
+        tex = tmp_path / "screen.png"
+        tex.write_bytes(b"fake-png")
+        r = asyncio.run(exec_tool(state, "update_light", {
+            "prim_path": created.data["prim_path"],
+            "texture": str(tex),
+        }))
+        assert r.success, r.error
+
+        assert (project.path / "assets" / "panel" / "maps" / "screen.png").exists()
+        assert not (project.path / "textures" / "screen.png").exists()
+
+        stage = Usd.Stage.Open(str(project.path / "assets" / "panel" / "lgt.usda"))
+        rect = next(p for p in stage.Traverse() if p.GetName() == "Screen")
+        tex_val = rect.GetAttribute("inputs:texture:file").Get()
+        path = tex_val.path if hasattr(tex_val, "path") else str(tex_val)
+        assert "maps/screen.png" in path
 
 
 def test_update_light_nonexistent_prim():

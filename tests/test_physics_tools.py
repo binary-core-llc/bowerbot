@@ -224,13 +224,30 @@ def test_setup_physics_scene():
 
 
 def test_setup_physics_scene_custom_gravity():
-    """Creates scene with custom gravity magnitude."""
+    """Creates scene with custom gravity magnitude and echoes it back."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
         r = asyncio.run(exec_tool(state, "setup_physics_scene", {
             "gravity_magnitude": 1.62,
         }))
         assert r.success, r.error
+        assert r.data["gravity_magnitude"] == 1.62
+
+
+def test_setup_physics_scene_reports_resolved_gravity():
+    """With no gravity params, the response reports the authored Earth gravity, not null."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        assert r.success, r.error
+        assert r.data["gravity_magnitude"] == 9.81
+        assert r.data["gravity_direction"] == [0.0, -1.0, 0.0]
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        scene = UsdPhysics.Scene(stage.GetPrimAtPath(r.data["prim_path"]))
+        assert abs(scene.GetGravityMagnitudeAttr().Get() - 9.81) < 1e-6
+        gd = scene.GetGravityDirectionAttr().Get()
+        assert (round(gd[0], 3), round(gd[1], 3), round(gd[2], 3)) == (0.0, -1.0, 0.0)
 
 
 # ── get_physics_summary ──

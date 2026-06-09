@@ -409,29 +409,36 @@ def remove_physics_scene(stage: Usd.Stage, name: str) -> bool:
     return True
 
 
+def resolve_gravity(
+    stage: Usd.Stage,
+    gravity_magnitude: float | None,
+    gravity_direction: tuple[float, float, float] | None,
+) -> tuple[float, tuple[float, float, float]]:
+    """Resolve gravity to authored values; defaults to Earth gravity (stage units) along -Y."""
+    if gravity_magnitude is None:
+        mpu = UsdGeom.GetStageMetersPerUnit(stage) or 1.0
+        gravity_magnitude = 9.81 / mpu
+    if gravity_direction is None:
+        gravity_direction = (0.0, -1.0, 0.0)
+    return float(gravity_magnitude), gravity_direction
+
+
 def ensure_physics_scene(
     stage: Usd.Stage,
     name: str = "PhysicsScene",
     gravity_magnitude: float | None = None,
     gravity_direction: tuple[float, float, float] | None = None,
 ) -> str:
-    """Create the physics scope and a ``UsdPhysics.Scene`` child prim.
-
-    Gravity magnitude defaults to ``9.81 / metersPerUnit`` (Earth gravity
-    in stage units) and direction defaults to ``(0, -1, 0)``.
-    """
+    """Create the physics scope and a ``UsdPhysics.Scene`` child prim."""
     scope_path = ensure_physics_scope(stage)
     scene_path = f"{scope_path}/{name}"
     scene_prim = UsdPhysics.Scene.Define(stage, scene_path)
 
-    if gravity_magnitude is None:
-        mpu = UsdGeom.GetStageMetersPerUnit(stage) or 1.0
-        gravity_magnitude = 9.81 / mpu
-    if gravity_direction is None:
-        gravity_direction = (0.0, -1.0, 0.0)
-
+    gravity_magnitude, gravity_direction = resolve_gravity(
+        stage, gravity_magnitude, gravity_direction,
+    )
     scene_prim.CreateGravityDirectionAttr(Gf.Vec3f(*gravity_direction))
-    scene_prim.CreateGravityMagnitudeAttr(float(gravity_magnitude))
+    scene_prim.CreateGravityMagnitudeAttr(gravity_magnitude)
 
     stage.Save()
     logger.info(

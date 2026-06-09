@@ -216,6 +216,7 @@ def add_asset_attribute_variant(
     resolved_types = variant_utils.resolve_attribute_types_for_overrides(
         asset_dir, overrides,
     )
+    variant_utils.refuse_unknown_asset_attributes(asset_dir, resolved_types)
     overrides = variant_utils.stage_asset_typed_overrides(
         overrides, resolved_types,
         state.project.path if state.project else None,

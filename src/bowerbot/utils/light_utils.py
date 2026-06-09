@@ -45,6 +45,11 @@ LIGHT_CLASSES: dict[str, type] = {
     LightType.CYLINDER: UsdLux.CylinderLight,
 }
 
+SCENE_ONLY_LIGHT_TYPES: frozenset[LightType] = frozenset({
+    LightType.DOME,
+    LightType.DISTANT,
+})
+
 logger = logging.getLogger(__name__)
 
 # UsdLux inputs measured in stage units (scaled by asset MPU at write time).
@@ -275,6 +280,61 @@ def add_light_to_folder(
         light_name, light.light_type.value, asset_dir.name,
     )
     return light_prim_path
+
+
+def update_light_in_folder(
+    asset_dir: Path,
+    light_name: str,
+    *,
+    translate: tuple[float, float, float] | None = None,
+    rotate: tuple[float, float, float] | None = None,
+    texture: str | None = None,
+) -> None:
+    """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``."""
+    lgt_path = asset_dir / ASWFLayerNames.LGT
+    if not lgt_path.exists():
+        msg = f"No lights authored in {asset_dir.name}/{ASWFLayerNames.LGT}"
+        raise ValueError(msg)
+
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
+
+    stage = Usd.Stage.Open(str(lgt_path))
+    if stage is None:
+        msg = f"Cannot open lgt layer: {lgt_path}"
+        raise RuntimeError(msg)
+
+    prim = stage.GetPrimAtPath(light_prim_path)
+    if not prim.IsValid():
+        msg = (
+            f"Light '{light_name}' not found in "
+            f"{asset_dir.name}/{ASWFLayerNames.LGT}"
+        )
+        raise ValueError(msg)
+
+    if texture is not None:
+        tex_attr = prim.GetAttribute("inputs:texture:file")
+        if tex_attr:
+            tex_attr.Set(Sdf.AssetPath(texture))
+
+    factor = unit_factor(asset_dir)
+    if translate is not None:
+        update_translate_op(
+            prim,
+            Gf.Vec3d(
+                translate[0] * factor,
+                translate[1] * factor,
+                translate[2] * factor,
+            ),
+        )
+    if rotate is not None:
+        update_rotate_op(prim, Gf.Vec3f(*rotate))
+
+    stage.Save()
+    logger.info(
+        "Updated light %s in %s/%s",
+        light_name, asset_dir.name, ASWFLayerNames.LGT,
+    )
 
 
 def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:

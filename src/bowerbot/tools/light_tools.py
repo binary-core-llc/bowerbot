@@ -95,7 +95,11 @@ TOOLS: list[Tool] = [
             "Create a USD light. By default creates a scene-level light in "
             "/Scene/Lighting. If asset_prim_path is provided, creates an "
             "asset-level light in that asset's lgt.usda (e.g. a lamp's bulb "
-            "light). UsdLux inputs (intensity, color, radius, width, height, "
+            "light). DomeLights and DistantLights are scene-level "
+            "environment lights (the sky/HDRI and the sun) and cannot be "
+            "asset-level; only local fixtures (Sphere/Rect/Disk/Cylinder) "
+            "can be asset-level. UsdLux inputs (intensity, color, radius, "
+            "width, height, "
             "angle, colorTemperature, etc.) are passed via the attributes "
             "dict using their full inputs:* names. Call "
             "list_light_type_properties FIRST to discover the attribute names "
@@ -126,8 +130,10 @@ TOOLS: list[Tool] = [
                     "description": (
                         "Optional: prim path of an asset in the scene to "
                         "attach the light to. If provided, the light is "
-                        "created in the asset's lgt.usda. If omitted, the "
-                        "light is created as a scene-level light."
+                        "created in the asset's lgt.usda (not allowed for "
+                        "DomeLight or DistantLight, which are scene-level). "
+                        "If omitted, the light is created as a scene-level "
+                        "light."
                     ),
                 },
                 "position_mode": {
@@ -219,13 +225,14 @@ TOOLS: list[Tool] = [
     Tool(
         name="update_light",
         description=(
-            "Update an existing light's position, rotation, or HDRI "
-            "texture. Position/rotation work for both scene-level and "
-            "asset-level lights. Only the things this tool covers go here: "
-            "xform ops (translate/rotate, including bounds_offset for asset "
-            "lights) and texture (file copied into <project>/textures/, "
-            "scene-level lights only; to change an asset-level light's HDRI, "
-            "recreate it with create_light). For any UsdLux attribute "
+            "Update an existing light's position, rotation, or texture. "
+            "Works for both scene-level and asset-level lights, writing to "
+            "the asset's lgt.usda for asset lights (all instances) or to "
+            "scene.usda for scene lights. Only the things this tool covers "
+            "go here: xform ops (translate/rotate, including bounds_offset "
+            "for asset lights) and texture (a scene DomeLight HDRI into "
+            "<project>/textures/, or a RectLight area-light texture into the "
+            "asset's maps/). For any UsdLux attribute "
             "(intensity, exposure, "
             "color, radius, angle, width, height, length, colorTemperature, "
             "diffuse, specular, normalize, etc.), use set_prim_attribute on "
@@ -262,11 +269,13 @@ TOOLS: list[Tool] = [
                 "texture": {
                     "type": "string",
                     "description": (
-                        "DomeLight / RectLight only. Path to an HDRI or "
-                        "texture file, copied into <project>/textures/ and "
-                        "set as inputs:texture:file. Applies to scene-level "
-                        "lights; to change an asset-level light's HDRI, "
-                        "recreate it with create_light."
+                        "DomeLight / RectLight only (the light types that "
+                        "carry inputs:texture:file). Path to an HDRI or "
+                        "texture file, set as inputs:texture:file. For a "
+                        "scene light the file is copied into "
+                        "<project>/textures/; for an asset light (a textured "
+                        "RectLight area light) into the asset's maps/, so it "
+                        "travels with the asset."
                     ),
                 },
             },

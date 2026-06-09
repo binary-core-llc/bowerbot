@@ -22,12 +22,13 @@ from bowerbot.agent import AgentRuntime
 from bowerbot.config import (
     BOWERBOT_HOME,
     GLOBAL_CONFIG_PATH,
+    LinearUnit,
     LLMSettings,
     McpSettings,
     Mode,
-    SceneDefaults,
     Settings,
     Transport,
+    UpAxis,
     ensure_home,
     load_settings,
     save_settings,
@@ -103,9 +104,33 @@ def new(name: str) -> None:
     projects_dir = Path(settings.projects_dir)
     projects_dir.mkdir(parents=True, exist_ok=True)
 
+    up_axis = _choose(
+        "World up-axis for this scene?",
+        {
+            UpAxis.Y: "Y-up (most DCCs, Maya, web).",
+            UpAxis.Z: "Z-up (Omniverse, Isaac Sim, CAD).",
+        },
+        UpAxis.Y,
+    )
+    unit = _choose(
+        "Scene units?",
+        {
+            LinearUnit.METERS: "meters (metersPerUnit 1.0).",
+            LinearUnit.CENTIMETERS: "centimeters (0.01).",
+            LinearUnit.MILLIMETERS: "millimeters (0.001).",
+        },
+        LinearUnit.METERS,
+    )
+
     try:
-        project = Project.create(projects_dir, name)
-        console.print(f"[sf]Created project:[/] {project.name}")
+        project = Project.create(
+            projects_dir, name,
+            up_axis=up_axis, meters_per_unit=unit.meters_per_unit,
+        )
+        console.print(
+            f"[sf]Created project:[/] {project.name} "
+            f"({up_axis.value}-up, {unit.value})",
+        )
         console.print(f"   Path: {project.path}")
         console.print("\n[info]Start working:[/]")
         console.print(f"   cd {project.path}")
@@ -388,9 +413,6 @@ def info() -> None:
         f"{'[green]set[/]' if settings.get_api_key() else '[red]missing[/]'}",
     )
     console.print(f"  Projects dir:    {settings.projects_dir}")
-    console.print(f"  Meters per unit: {settings.scene_defaults.meters_per_unit}")
-    console.print(f"  Up axis:         {settings.scene_defaults.up_axis}")
-    console.print(f"  Room bounds:     {settings.scene_defaults.default_room_bounds}")
 
     skills_enabled = [k for k, v in settings.skills.items() if v.enabled]
     console.print(f"  Skills enabled:  {skills_enabled or 'none'}")
@@ -467,7 +489,6 @@ def onboard() -> None:
         mode=mode,
         llm=llm,
         mcp=mcp,
-        scene_defaults=SceneDefaults(),
         skills={},
         assets_dir=assets_dir,
         projects_dir=projects_dir,

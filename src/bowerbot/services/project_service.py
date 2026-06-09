@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from bowerbot.config import UpAxis
 from bowerbot.project import Project
 from bowerbot.state import SceneState
 from bowerbot.utils.naming_utils import safe_project_name
@@ -35,19 +36,38 @@ def list_projects(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a new project and focus it."""
     name = params["name"]
+    if "up_axis" not in params or "meters_per_unit" not in params:
+        msg = (
+            "create_project requires up_axis ('Y' or 'Z') and meters_per_unit "
+            "(1.0 = meters, 0.01 = centimeters, 0.001 = millimeters)."
+        )
+        raise ValueError(msg)
+    up_axis = UpAxis(params["up_axis"])
+    meters_per_unit = float(params["meters_per_unit"])
     state.projects_dir.mkdir(parents=True, exist_ok=True)
     try:
-        project = Project.create(state.projects_dir, name)
+        project = Project.create(
+            state.projects_dir, name,
+            up_axis=up_axis, meters_per_unit=meters_per_unit,
+        )
     except FileExistsError:
         msg = f"Project '{name}' already exists. Use open_project to open it."
         raise ValueError(msg) from None
     state.bind_project(project)
-    logger.info("Created and focused project %s", project.name)
+    logger.info(
+        "Created and focused project %s (up_axis=%s, mpu=%s)",
+        project.name, up_axis.value, meters_per_unit,
+    )
     return {
         "name": project.name,
         "path": str(project.path),
+        "up_axis": up_axis.value,
+        "meters_per_unit": meters_per_unit,
         "object_count": state.object_count,
-        "message": f"Created and opened project '{project.name}'.",
+        "message": (
+            f"Created and opened project '{project.name}' "
+            f"({up_axis.value}-up, metersPerUnit={meters_per_unit})."
+        ),
     }
 
 

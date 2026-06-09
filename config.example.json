@@ -10,15 +10,6 @@
     "request_timeout": 120.0,
     "max_tool_rounds": 25
   },
-  "scene_defaults": {
-    "meters_per_unit": 1.0,
-    "up_axis": "Y",
-    "default_room_bounds": [
-      10.0,
-      3.0,
-      8.0
-    ]
-  },
   "skills": {
     "local": {
       "enabled": true

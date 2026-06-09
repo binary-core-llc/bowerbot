@@ -320,7 +320,6 @@ def compute_grid_layout(state: SceneState, params: dict[str, Any]) -> dict[str, 
     placements = geometry_utils.suggest_grid_layout(
         count,
         spacing=spacing,
-        room_bounds=state.scene_defaults.default_room_bounds,
     )
     positions = [
         {"x": round(p[0], 2), "z": round(p[2], 2)} for p in placements

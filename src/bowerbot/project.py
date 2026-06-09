@@ -22,6 +22,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from bowerbot.config import UpAxis
 from bowerbot.utils.naming_utils import safe_project_name
 from bowerbot.utils.stage_utils import create_empty_scene
 
@@ -35,6 +36,8 @@ class ProjectMeta(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     scene_file: str = "scene.usda"
+    up_axis: UpAxis = UpAxis.Y
+    meters_per_unit: float = 1.0
 
 
 class Project:
@@ -77,7 +80,13 @@ class Project:
         )
 
     @staticmethod
-    def create(projects_dir: Path, name: str) -> Project:
+    def create(
+        projects_dir: Path,
+        name: str,
+        *,
+        up_axis: UpAxis = UpAxis.Y,
+        meters_per_unit: float = 1.0,
+    ) -> Project:
         """Create a new project directory and initialize it."""
         safe_name = safe_project_name(name)
         if not safe_name:
@@ -93,12 +102,18 @@ class Project:
         (project_path / "assets").mkdir()
 
         # Create and save metadata
-        meta = ProjectMeta(name=name)
+        meta = ProjectMeta(
+            name=name, up_axis=up_axis, meters_per_unit=meters_per_unit,
+        )
         project = Project(path=project_path, meta=meta)
         project.save()
 
-        # Create empty scene file
-        create_empty_scene(project.scene_path)
+        # Create empty scene file with the project's up-axis and units
+        create_empty_scene(
+            project.scene_path,
+            up_axis=meta.up_axis,
+            meters_per_unit=meta.meters_per_unit,
+        )
 
         return project
 
@@ -125,7 +140,11 @@ class Project:
 
         # Ensure project invariants
         project.assets_dir.mkdir(parents=True, exist_ok=True)
-        create_empty_scene(project.scene_path)
+        create_empty_scene(
+            project.scene_path,
+            up_axis=meta.up_axis,
+            meters_per_unit=meta.meters_per_unit,
+        )
 
         return project
 

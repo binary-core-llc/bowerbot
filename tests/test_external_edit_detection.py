@@ -10,7 +10,6 @@ import os
 import tempfile
 from pathlib import Path
 
-from bowerbot.config import SceneDefaults
 from bowerbot.state import SceneState
 from tests._helpers import exec_tool, make_state
 
@@ -22,13 +21,12 @@ def _bump_mtime(path: Path) -> None:
 
 
 def test_no_changes_when_baseline_unset():
-    state = SceneState(scene_defaults=SceneDefaults())
+    state = SceneState()
     assert state.detect_external_changes() is False
 
 
 def test_no_changes_when_stage_path_missing():
     state = SceneState(
-        scene_defaults=SceneDefaults(),
         stage_path=Path("/nonexistent/scene.usda"),
     )
     state.mark_saved()

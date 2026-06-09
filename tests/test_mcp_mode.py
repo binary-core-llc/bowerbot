@@ -105,7 +105,10 @@ def test_router_dispatches_core_tool():
         registry = SkillRegistry()
         registry.load_from_settings(settings)
         r = asyncio.run(
-            tool_router.route(state, registry, "create_project", {"name": "R"}),
+            tool_router.route(
+                state, registry, "create_project",
+                {"name": "R", "up_axis": "Y", "meters_per_unit": 1.0},
+            ),
         )
         assert r.success, r.error
         assert state.project.name == "R"
@@ -176,7 +179,10 @@ def test_mcp_call_tool_over_protocol():
     """A client call_tool focuses the server's project."""
     with tempfile.TemporaryDirectory() as tmp:
         server, state = _server_and_state(tmp)
-        result = asyncio.run(_call_tool(server, "create_project", {"name": "Proto"}))
+        result = asyncio.run(_call_tool(
+            server, "create_project",
+            {"name": "Proto", "up_axis": "Y", "meters_per_unit": 1.0},
+        ))
         assert not result.isError
         assert state.project.name == "Proto"
 

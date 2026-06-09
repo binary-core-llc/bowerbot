@@ -5,8 +5,14 @@ operates on the focused project.
 
 ### Focusing a project
 
-- `create_project(name)` — start a fresh project and focus it. Use when
-  the user wants a new scene ("make me a coffee shop").
+- `create_project(name, up_axis, meters_per_unit)` — start a fresh
+  project and focus it. Use when the user wants a new scene ("make me a
+  coffee shop"). `up_axis` (`Y` or `Z`) and `meters_per_unit` (1.0 =
+  meters, 0.01 = centimeters, 0.001 = millimeters) are required and fix
+  the scene at creation; every asset placed afterward is conformed to
+  them. Ask the user, or match the source you are reconstructing (an
+  Omniverse/Isaac scene is usually `Z`-up in meters; most Maya/web
+  content is `Y`-up).
 - `open_project(name)` — focus an existing project. Use to resume or
   switch ("keep working on my kitchen"). Call `list_projects` first if
   you are unsure of the exact name.

@@ -596,7 +596,12 @@ A skill's `SKILL.md` is injected into the LLM's system prompt, and its tools run
 
 ## ⚙️ Configuration
 
-All settings live in `~/.bowerbot/config.json`. A config is for **one mode at a time**: agent mode reads the `llm` block, MCP mode reads the `mcp` block. The `scene_defaults`, `skills`, `assets_dir`, and `projects_dir` keys are shared by both modes. The `skills` block holds the config for any skill packages you've installed (the examples show `bowerbot-skill-sketchfab`, see [Skills](#-skills)); a fresh install starts with `"skills": {}`.
+All settings live in one file: `~/.bowerbot/config.json`. BowerBot runs in one mode at a time:
+
+- **agent mode** uses the `llm` block
+- **MCP mode** uses the `mcp` block
+
+The `skills`, `assets_dir`, and `projects_dir` keys apply to both modes. The `skills` block configures any skill packages you've installed (the example shows `bowerbot-skill-sketchfab`, see [Skills](#-skills)); a fresh install starts with `"skills": {}`. A scene's up-axis and units are not set here, you choose them per project at creation (see [MCP mode](#mcp-mode) and `bowerbot new`).
 
 **Agent mode** (BowerBot uses its own LLM):
 
@@ -613,11 +618,6 @@ All settings live in `~/.bowerbot/config.json`. A config is for **one mode at a 
     "num_retries": 3,
     "request_timeout": 120.0,
     "max_tool_rounds": 25
-  },
-  "scene_defaults": {
-    "meters_per_unit": 1.0,
-    "up_axis": "Y",
-    "default_room_bounds": [10.0, 3.0, 8.0]
   },
   "skills": {
     "sketchfab": {
@@ -637,11 +637,6 @@ All settings live in `~/.bowerbot/config.json`. A config is for **one mode at a 
   "mode": "mcp",
   "mcp": {
     "transport": "stdio"
-  },
-  "scene_defaults": {
-    "meters_per_unit": 1.0,
-    "up_axis": "Y",
-    "default_room_bounds": [10.0, 3.0, 8.0]
   },
   "skills": {
     "sketchfab": {

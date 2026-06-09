@@ -21,7 +21,7 @@ async def test_full_scene_build():
     from pxr import Usd, UsdGeom
 
     from bowerbot.agent import AgentRuntime
-    from bowerbot.config import LLMSettings, SceneDefaults, Settings, SkillConfig
+    from bowerbot.config import LLMSettings, Settings, SkillConfig
     from bowerbot.project import Project
     from bowerbot.skills.registry import SkillRegistry
     from bowerbot.state import SceneState
@@ -51,11 +51,6 @@ async def test_full_scene_build():
             temperature=0.1,
             max_tokens=4096,
         ),
-        scene_defaults=SceneDefaults(
-            meters_per_unit=1.0,
-            up_axis="Y",
-            default_room_bounds=(10.0, 3.0, 8.0),
-        ),
         assets_dir=str(asset_dir),
         projects_dir=str(tmp_path / "projects"),
         skills={
@@ -65,7 +60,7 @@ async def test_full_scene_build():
 
     project = Project.create(Path(settings.projects_dir), "e2e_test")
 
-    state = SceneState(scene_defaults=settings.scene_defaults)
+    state = SceneState()
     state.project = project
     state.stage_path = project.scene_path
     if project.scene_path.exists():

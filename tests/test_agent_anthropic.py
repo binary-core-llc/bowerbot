@@ -44,7 +44,7 @@ async def test_agent_anthropic():
         },
     )
 
-    state = SceneState(scene_defaults=settings.scene_defaults)
+    state = SceneState()
     registry = SkillRegistry()
     registry.load_from_settings(settings)
     agent = AgentRuntime(

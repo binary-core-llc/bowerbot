@@ -7,7 +7,7 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from bowerbot.config import SceneDefaults, Settings, SkillConfig
+from bowerbot.config import Settings, SkillConfig
 from bowerbot.skills import (
     Skill,
     SkillCategory,
@@ -187,7 +187,7 @@ def test_skill_context_carries_project_and_scene_when_state_provided():
             path = project_dir
             assets_dir = project_dir / "assets"
 
-        state = SceneState(scene_defaults=SceneDefaults(), library_dir=library)
+        state = SceneState(library_dir=library)
         state.project = _FakeProject()
         state.stage_path = scene_path
 

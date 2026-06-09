@@ -168,6 +168,34 @@ def test_add_asset_attribute_variant():
         assert r.success, r.error
 
 
+def test_add_asset_attribute_variant_unknown_attribute():
+    """Rejects an unknown attribute name on an asset prim with a helpful hint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        placed = _place(tmp_path, state)
+
+        asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed.data["prim_path"],
+            "light_type": "SphereLight",
+            "light_name": "Bulb",
+            "attributes": {"inputs:intensity": 500.0},
+        }))
+
+        r = asyncio.run(exec_tool(
+            state, "add_asset_attribute_variant", {
+                "prim_path": placed.data["prim_path"],
+                "variant_set": "mood",
+                "variant_name": "warm",
+                "overrides": {
+                    "lgt/Bulb": {"inputs:intensit": 1500.0},
+                },
+            },
+        ))
+        assert not r.success
+        assert "do not exist" in r.error
+        assert "inputs:intensity" in r.error
+
+
 # ── setup_asset_geometry_variants + add_asset_geometry_variant ──
 
 
@@ -436,6 +464,32 @@ def test_add_scene_lighting_attribute_variant_two_moods():
                 },
             ))
             assert r.success, r.error
+
+
+def test_add_scene_lighting_attribute_variant_unknown_attribute():
+    """Rejects an unknown attribute name on a scene light with a helpful hint."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+
+        created = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Key",
+            "attributes": {"inputs:intensity": 1000.0},
+        }))
+        light_path = created.data["prim_path"]
+
+        r = asyncio.run(exec_tool(
+            state, "add_scene_lighting_attribute_variant", {
+                "clear_masking_overrides": True,
+                "variant_set": "mood",
+                "variant_name": "warm",
+                "overrides": {
+                    light_path: {"inputs:intensit": 1500.0},
+                },
+            },
+        ))
+        assert not r.success
+        assert "do not exist" in r.error
+        assert "inputs:intensity" in r.error
 
 
 # ── add_scene_lighting_selection_variant ──

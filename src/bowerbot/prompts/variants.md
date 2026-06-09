@@ -87,6 +87,10 @@ that isn't a material binding, payload, or activation toggle:
   when the material itself stays the same but a parameter changes
 - Any UsdGeom or UsdSkel attribute
 
+Each named attribute must already exist on the target prim; unknown
+attribute names are refused with an available-inputs / did-you-mean
+hint (verify with `list_prim_attributes` if unsure).
+
 One call per variant. Example for a 4-color light palette:
 ```
 add_asset_attribute_variant(table, "light_colors", "blue",
@@ -221,8 +225,8 @@ asset's `variants.usda`. `overrides` maps a UsdLux prim path under
 lights under `/Scene/Lighting`, and each attribute must already exist on
 the target light; out-of-carrier or non-light targets and unknown
 attribute names are refused with an available-inputs / did-you-mean
-hint. (The asset-side `add_asset_attribute_variant` does NOT pre-validate
-attribute names, so verify them with `list_prim_attributes` there.)
+hint. The asset-side `add_asset_attribute_variant` enforces the same
+unknown-attribute rejection against the asset's own prims.
 
 Refuses if `scene.usda` has direct authored opinions on the target
 attributes (LIVRPS: local opinion masks same-layer variant body).

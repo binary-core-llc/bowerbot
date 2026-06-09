@@ -1069,7 +1069,7 @@ def refuse_unknown_attributes(
 
     lines = ["Attribute(s) do not exist on the target prim(s):"]
     for prim_path, attr_name in missing:
-        prim = stage.GetPrimAtPath(prim_path)
+        prim = stage.GetPrimAtPath(prim_path) if stage is not None else None
         available = sorted(
             a.GetName() for a in prim.GetAttributes()
             if a.GetName().startswith("inputs:")
@@ -1326,6 +1326,16 @@ def resolve_attribute_types_for_overrides(
             resolved[attr_name] = type_name
         out[asset_path] = resolved
     return out
+
+
+def refuse_unknown_asset_attributes(
+    asset_dir: Path,
+    resolved_types: dict[str, dict[str, Sdf.ValueTypeName | None]],
+) -> None:
+    """Refuse override attributes that do not exist on the asset's composed prims."""
+    root_file = find_root_file(asset_dir)
+    stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
+    refuse_unknown_attributes(stage, resolved_types)
 
 
 def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:

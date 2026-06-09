@@ -223,12 +223,15 @@ def setup_physics_scene(
         gravity_magnitude=gravity_magnitude,
         gravity_direction=gravity_direction,
     )
+    resolved_magnitude, resolved_direction = physics_utils.resolve_gravity(
+        state.stage, gravity_magnitude, gravity_direction,
+    )
     state.touch_project()
     logger.info("setup_physics_scene -> %s", scene_path)
     return {
         "prim_path": scene_path,
-        "gravity_magnitude": gravity_magnitude,
-        "gravity_direction": gravity_direction,
+        "gravity_magnitude": resolved_magnitude,
+        "gravity_direction": list(resolved_direction),
     }
 
 

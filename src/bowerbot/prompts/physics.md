@@ -211,7 +211,9 @@ Create the scene's PhysicsScene singleton at `/Scene/Physics/<name>`
 (default name `PhysicsScene`). Gravity defaults to `9.81 /
 metersPerUnit` in stage units, direction `(0, -1, 0)`. Call once per
 scene before authoring rigid bodies; static colliders work without
-it.
+it. Returns the resolved `gravity_magnitude` and `gravity_direction`
+that were authored (the defaults when omitted), so you can report the
+actual gravity back to the user.
 
 ### `list_physics_scenes()`
 List every `UsdPhysics.Scene` prim under `/Scene/Physics` with name,

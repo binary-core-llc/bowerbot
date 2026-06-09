@@ -434,7 +434,9 @@ TOOLS: list[Tool] = [
             "physics, unless you only need static colliders (no rigid "
             "bodies). Gravity magnitude defaults to 9.81 / "
             "metersPerUnit (Earth gravity in stage units); direction "
-            "defaults to (0, -1, 0) (negative Y)."
+            "defaults to (0, -1, 0) (negative Y). Returns prim_path and "
+            "the resolved gravity_magnitude and gravity_direction actually "
+            "authored (the defaults when you omit them, never null)."
         ),
         parameters={
             "type": "object",

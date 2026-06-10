@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import PositionMode
+from bowerbot.schemas import MAX_LAYOUT_PLACEMENTS, LayoutPattern, PositionMode
 from bowerbot.services import asset_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
@@ -31,6 +31,17 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
         return err
     try:
         data = asset_service.place_asset_inside(state, params)
+    except (ValueError, RuntimeError) as e:
+        return ToolResult(success=False, error=str(e))
+    return ToolResult(success=True, data=data)
+
+
+def place_layout(state: SceneState, params: dict[str, Any]) -> ToolResult:
+    """Place many assets in one batch from enumerated or parametric layout entries."""
+    if (err := require_stage(state)):
+        return err
+    try:
+        data = asset_service.place_layout(state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
     return ToolResult(success=True, data=data)
@@ -168,6 +179,192 @@ TOOLS: list[Tool] = [
                 "asset_file_path", "asset_name", "group",
                 "translate_x", "translate_y", "translate_z",
             ],
+        },
+    ),
+    Tool(
+        name="place_layout",
+        description=(
+            "Place MANY assets into the scene in a single call, the batch form "
+            "of place_asset. Provide EXACTLY ONE of 'placements' (inline "
+            "entries) or 'layout_file' (path to a JSON file with the same "
+            "entries: {\"version\": 1, \"placements\": [...]}; absolute or "
+            "project-relative). Use inline for small or parametric layouts; "
+            "use layout_file beyond a few dozen entries (e.g. a layout "
+            "extracted from an existing scene by a script or exported from a "
+            "DCC). Each entry references one asset and positions it many "
+            "times, via an enumerated 'transforms' list or a parametric "
+            "'pattern' (grid or linear). Entry asset paths resolve in order: "
+            "absolute, layout-file dir, project dir, library dir; they must "
+            "name the asset's root FILE. Authoring matches place_asset "
+            "(grouped /asset reference wrappers, conformed to the scene "
+            "up-axis and units) in one stage write; the whole plan is "
+            "validated first and ALL problems are reported at once, nothing "
+            "is placed unless every entry is valid. Pass validate_only=true "
+            "to lint a layout (especially a layout_file) without placing "
+            "anything. Put a logical 'group' on each entry (e.g. 'Boxes', "
+            "'Building/Racks') so the set can be inspected or removed as a "
+            "unit. Returns the total placed, the groups written, a per-asset "
+            "count, and the resolved source per asset; use list_scene or "
+            "list_prim_children on a group to read individual prim paths."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "placements": {
+                    "type": "array",
+                    "description": (
+                        "Each entry places one asset at many transforms; at "
+                        f"most {MAX_LAYOUT_PLACEMENTS} placements per call."
+                    ),
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "asset": {
+                                "type": "string",
+                                "description": (
+                                    "Path to the asset's root FILE, absolute "
+                                    "or relative to the layout-file/project/"
+                                    "library dirs (e.g. "
+                                    "'SM_floor02/SM_floor02.usda')."
+                                ),
+                            },
+                            "group": {
+                                "type": "string",
+                                "description": (
+                                    "Scene group to place into, e.g. 'Boxes' or "
+                                    "'Building/Racks'. Nested groups use '/'. Becomes "
+                                    "a /Scene/<group> scope."
+                                ),
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": (
+                                    "Optional base name for the placed prims "
+                                    "(default: the asset file name)."
+                                ),
+                            },
+                            "fix_root_prim": {
+                                "type": "boolean",
+                                "description": (
+                                    "Wrap a non-Xform root under an Xform on "
+                                    "intake (ASWF compliance fix). Only with "
+                                    "user confirmation."
+                                ),
+                                "default": False,
+                            },
+                            "fix_root_transforms": {
+                                "type": "boolean",
+                                "description": (
+                                    "Bake non-identity root transforms into "
+                                    "vertex data on intake. Only with user "
+                                    "confirmation."
+                                ),
+                                "default": False,
+                            },
+                            "rotate": {
+                                "type": "array",
+                                "items": {"type": "number"},
+                                "description": (
+                                    "Optional [rx, ry, rz] degrees default for "
+                                    "placements that do not set their own."
+                                ),
+                            },
+                            "scale": {
+                                "description": (
+                                    "Optional scale default for placements that "
+                                    "do not set their own: a uniform number or "
+                                    "[sx, sy, sz]."
+                                ),
+                            },
+                            "transforms": {
+                                "type": "array",
+                                "description": (
+                                    "Enumerated placements; use this OR 'pattern'. "
+                                    "Each item is { translate: [x, y, z] in scene "
+                                    "units, rotate?: [rx, ry, rz], scale?: number "
+                                    "or [sx, sy, sz] }."
+                                ),
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "translate": {
+                                            "type": "array",
+                                            "items": {"type": "number"},
+                                        },
+                                        "rotate": {
+                                            "type": "array",
+                                            "items": {"type": "number"},
+                                        },
+                                        "scale": {},
+                                    },
+                                    "required": ["translate"],
+                                },
+                            },
+                            "pattern": {
+                                "type": "object",
+                                "description": (
+                                    "Parametric placements; use this OR 'transforms'."
+                                ),
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [p.value for p in LayoutPattern],
+                                        "description": (
+                                            "'grid' repeats along X/Y(/Z); 'linear' "
+                                            "repeats along one direction step."
+                                        ),
+                                    },
+                                    "origin": {
+                                        "type": "array",
+                                        "items": {"type": "number"},
+                                        "description": (
+                                            "[x, y, z] of the first placement, in "
+                                            "scene units."
+                                        ),
+                                    },
+                                    "count": {
+                                        "description": (
+                                            "grid: [nx, ny] or [nx, ny, nz]. "
+                                            "linear: a single integer n."
+                                        ),
+                                    },
+                                    "spacing": {
+                                        "type": "array",
+                                        "items": {"type": "number"},
+                                        "description": (
+                                            "Step in scene units between placements. "
+                                            "grid: [sx, sy] or [sx, sy, sz] (a 3-axis "
+                                            "count needs a 3-axis spacing). linear: "
+                                            "[sx, sy, sz] direction step."
+                                        ),
+                                    },
+                                },
+                                "required": ["type", "origin", "count", "spacing"],
+                            },
+                        },
+                        "required": ["asset", "group"],
+                    },
+                },
+                "layout_file": {
+                    "type": "string",
+                    "description": (
+                        "Path to a layout JSON file: {\"version\": 1, "
+                        "\"placements\": [...]} with the same entries as the "
+                        "inline form. Absolute or project-relative. Use "
+                        "INSTEAD of 'placements' for bulk layouts."
+                    ),
+                },
+                "validate_only": {
+                    "type": "boolean",
+                    "description": (
+                        "If true, lint the layout without placing anything: "
+                        "reports every shape and asset-resolution problem, or "
+                        "the would-be placement summary. Intake-time issues "
+                        "(e.g. ASWF compliance) only surface on the real run."
+                    ),
+                    "default": False,
+                },
+            },
         },
     ),
     Tool(
@@ -404,6 +601,7 @@ TOOLS: list[Tool] = [
 HANDLERS = {
     "place_asset": place_asset,
     "place_asset_inside": place_asset_inside,
+    "place_layout": place_layout,
     "list_project_assets": list_project_assets,
     "delete_project_asset": delete_project_asset,
     "delete_project_texture": delete_project_texture,

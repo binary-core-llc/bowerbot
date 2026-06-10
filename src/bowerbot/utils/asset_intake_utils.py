@@ -87,6 +87,17 @@ def prepare_asset(
     return report
 
 
+def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
+    """Return the assets/ entry name prepare_asset would stage for *asset_path*."""
+    if asset_path.suffix.lower() == ".usdz":
+        return asset_path.name
+    if library_dir is not None:
+        package_dir = find_package_for(asset_path, library_dir)
+        if package_dir is not None:
+            return package_dir.name
+    return asset_path.stem
+
+
 def _validate_intake(
     report: IntakeReport,
     assets_dir: Path,

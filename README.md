@@ -372,6 +372,48 @@ def Xform "Scene" (kind = "assembly") {
 
 Open it in Maya, usdview, Omniverse, Isaac Sim, or any USD-compatible tool to refine.
 
+### Batch Placement (layout files)
+
+`place_layout` places many assets in one call. Small or parametric
+layouts are passed inline; bulk layouts (a scene extracted by a script,
+or a DCC export) are passed as a **layout file**, a JSON contract any
+exporter can target:
+
+```json
+{
+  "version": 1,
+  "placements": [
+    { "asset": "SM_floor02/SM_floor02.usda", "group": "Building/Floor",
+      "pattern": { "type": "grid", "origin": [0, 0, 0],
+                   "count": [6, 5], "spacing": [6, 6] } },
+    { "asset": "forklift/forklift.usda", "group": "Props",
+      "transforms": [ { "translate": [4.2, 0, 1.5], "rotate": [0, 90, 0] } ] }
+  ]
+}
+```
+
+- `version` is required; this BowerBot reads version `1`.
+- Each entry names one `asset` (the asset's **root file**) and one
+  `group`, plus either an enumerated `transforms` list or a parametric
+  `pattern` (`grid`: `origin`, `count` `[nx, ny]`/`[nx, ny, nz]`,
+  `spacing`; `linear`: `origin`, integer `count`, `spacing` direction
+  step). Optional per-entry `name`, `rotate`, and `scale` (a uniform
+  number or `[sx, sy, sz]`) act as defaults for placements that do not
+  set their own.
+- Relative asset paths resolve in order: **layout-file dir → project
+  dir → library dir**. There is no working-directory fallback.
+- Translates are in scene units, and pattern axes map to world
+  `[x, y, z]` (not up-axis aware — the example above is for a Z-up
+  scene). Each asset is conformed (units + up-axis) on reference, same
+  as `place_asset`.
+- A layout expands to at most 100,000 placements per call.
+- The whole file is validated before anything is placed; every invalid
+  entry and unresolvable asset is reported at once with entry indices.
+  To lint a file without placing anything, call `place_layout` with
+  `validate_only=true` — it checks shape and asset resolution against
+  the live rules. The normative contract is the pydantic models in
+  `src/bowerbot/schemas/layout.py`.
+
 ---
 
 ## 🔌 Skills
@@ -413,6 +455,7 @@ service function and is described in the LLM prompts under
 | Tool | Description |
 |------|-------------|
 | `place_asset` | Add an asset (auto-creates ASWF folder for loose geometry) |
+| `place_layout` | Batch placement: many assets/transforms in one call, inline or from a layout JSON file |
 | `place_asset_inside` | Nest an asset inside an ASWF container's `contents.usda` |
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (scans variant bodies in every layer first) |

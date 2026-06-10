@@ -16,6 +16,14 @@ from bowerbot.schemas.assets import (
     ASWFLayerNames,
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
+from bowerbot.schemas.layout import (
+    LAYOUT_FILE_VERSION,
+    MAX_LAYOUT_PLACEMENTS,
+    GridPattern,
+    LayoutEntry,
+    LayoutTransform,
+    LinearPattern,
+)
 from bowerbot.schemas.lights import (
     LightParams,
     LightPropertySpec,
@@ -43,7 +51,12 @@ from bowerbot.schemas.physics import (
 )
 from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
-from bowerbot.schemas.transforms import PositionMode, SceneObject, TransformParams
+from bowerbot.schemas.transforms import (
+    LayoutPattern,
+    PositionMode,
+    SceneObject,
+    TransformParams,
+)
 from bowerbot.schemas.validation import Severity, ValidationIssue, ValidationResult
 from bowerbot.schemas.variants import (
     SceneVariantsSummary,
@@ -54,6 +67,8 @@ from bowerbot.schemas.variants import (
 )
 
 __all__ = [
+    "LAYOUT_FILE_VERSION",
+    "MAX_LAYOUT_PLACEMENTS",
     "AppleUSDZConstraints",
     "ASWFLayerNames",
     "AssetCategory",
@@ -64,14 +79,19 @@ __all__ = [
     "CollisionGroupsSummary",
     "DetectionOutcome",
     "FolderDetection",
+    "GridPattern",
     "HDRIFormat",
     "IntakeReport",
     "JointSummary",
     "JointsSummary",
+    "LayoutEntry",
+    "LayoutPattern",
+    "LayoutTransform",
     "LightParams",
     "LightPropertySpec",
     "LightType",
     "LightTypeSchemaInfo",
+    "LinearPattern",
     "MaterialXShaders",
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",

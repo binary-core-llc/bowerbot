@@ -41,6 +41,70 @@ If the sensible default is not obvious from context, **ASK the user**:
 "Should the counter be a fixture of the building (nested, travels
 with it) or an independent scene element?"
 
+### Batch placement (`place_layout`)
+
+When you need the SAME asset placed many times, or a structured layout
+(a floor grid, a row of shelving, stacked boxes), use `place_layout`
+instead of calling `place_asset` once per object. It authors the
+identical scene structure as `place_asset` (grouped `/asset` reference
+wrappers, conformed to the scene up-axis and units) but writes the whole
+batch in one call, which is dramatically cheaper than one call per item.
+
+Each entry in `placements` names one `asset` and one `group`, then gives
+either:
+
+- `transforms`: an explicit list of `{ translate, rotate?, scale? }` for
+  irregular placements (a forklift, a few signs), or
+- `pattern`: a parametric `grid` or `linear` arrangement. A grid takes
+  `origin`, `count` (`[nx, ny]` or `[nx, ny, nz]`), and `spacing`
+  (`[sx, sy]` or `[sx, sy, sz]`). A linear arrangement takes `origin`, an
+  integer `count`, and a `spacing` direction step `[sx, sy, sz]`.
+
+Group related placements (`Boxes`, `Building/Racks`) so they can be read
+back with `list_scene` / `list_prim_children` or removed together with
+`remove_prim` on the group. `place_layout` returns the count placed, the
+groups written, and a per-asset breakdown; read individual prim paths
+with `list_scene` when you need them.
+
+For BULK layouts (more than a few dozen entries — e.g. rebuilding a
+layout extracted from an existing USD scene, or a DCC export), do not
+stream entries inline. Write them to a layout JSON file and pass its
+path as `layout_file` instead of `placements`:
+
+```
+{ "version": 1, "placements": [ ...same entries as inline... ] }
+```
+
+When the source is an existing scene, write a small script that
+extracts `(asset, transform, group)` per placement and dumps that file —
+never transcribe transforms by hand. Entry asset paths resolve in
+order: absolute → layout-file dir → project dir → library dir, and must
+name the asset's root file (e.g. `SM_floor02/SM_floor02.usda`).
+
+The whole plan is validated before anything is placed: every invalid
+entry and every unresolvable asset is reported at once, with entry
+indices. Pass `validate_only=true` to lint a layout file without
+placing anything, fix the reported entries, and rerun.
+
+Pattern `count` and `spacing` map to the world axes `[x, y, z]` — they
+are NOT up-axis aware. In a Z-up scene the ground plane is XY, so a
+floor grid is `count: [6, 5]` / `spacing: [6, 6]`; in a Y-up scene the
+ground plane is XZ, so the same floor is `count: [6, 1, 5]` /
+`spacing: [6, 0, 6]`. Check the project's up axis before authoring
+patterns.
+
+Example — a 6×5 floor and a back wall in a Z-up scene:
+```
+place_layout(placements=[
+  { "asset": "SM_floor02/SM_floor02.usda", "group": "Building/Floor",
+    "pattern": { "type": "grid", "origin": [0, 0, 0],
+                 "count": [6, 5], "spacing": [6, 6] } },
+  { "asset": "SM_WallA_6M/SM_WallA_6M.usda", "group": "Building/Walls",
+    "pattern": { "type": "linear", "origin": [0, 30, 0],
+                 "count": 6, "spacing": [6, 0, 0] } }
+])
+```
+
 ### Multi-instance containers: the shared-asset trap
 
 When the same container asset is referenced by N>=2 scene instances

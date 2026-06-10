@@ -37,6 +37,13 @@ class PositionMode(StrEnum):
     BOUNDS_OFFSET = "bounds_offset"
 
 
+class LayoutPattern(StrEnum):
+    """Parametric placement pattern for a batch layout entry."""
+
+    GRID = "grid"
+    LINEAR = "linear"
+
+
 class SceneObject(BaseModel):
     """An object placed in the scene graph."""
 

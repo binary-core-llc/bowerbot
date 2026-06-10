@@ -4,6 +4,7 @@
 """Tool-layer tests for asset tools."""
 
 import asyncio
+import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -193,6 +194,316 @@ def test_place_asset_inside():
 
         container_dir = project.assets_dir / "building"
         assert (container_dir / "contents.usda").exists()
+
+
+# ── place_layout ──
+
+
+def test_place_layout_grid_pattern():
+    """A grid pattern places nx*ny prims with the expected corner transforms."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(asset),
+                "group": "Building/Floor",
+                "pattern": {
+                    "type": "grid", "origin": [0, 0, 0],
+                    "count": [3, 2], "spacing": [6, 6],
+                },
+            }],
+        }))
+        assert r.success, r.error
+        assert r.data["placed"] == 6
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        floor = stage.GetPrimAtPath("/Scene/Building/Floor")
+        assert floor.IsValid()
+        children = list(floor.GetChildren())
+        assert len(children) == 6
+        corners = set()
+        for child in children:
+            t = UsdGeom.Xformable(child).GetLocalTransformation().ExtractTranslation()
+            corners.add((round(t[0], 1), round(t[1], 1)))
+        assert (0.0, 0.0) in corners
+        assert (12.0, 6.0) in corners
+
+
+def test_place_layout_linear_pattern_intakes_once():
+    """A linear pattern places count prims and stages the asset folder once."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "barrel")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(asset),
+                "group": "Props",
+                "pattern": {
+                    "type": "linear", "origin": [0, 0, 0],
+                    "count": 4, "spacing": [2, 0, 0],
+                },
+            }],
+        }))
+        assert r.success, r.error
+        assert r.data["placed"] == 4
+        assert r.data["by_asset"] == {"barrel": 4}
+        assert (project.assets_dir / "barrel").is_dir()
+
+
+def test_place_layout_enumerated_transforms():
+    """Enumerated transforms place one prim per listed transform."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "crate")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(asset),
+                "group": "Props",
+                "transforms": [
+                    {"translate": [1, 0, 2]},
+                    {"translate": [3, 0, 4], "rotate": [0, 90, 0]},
+                ],
+            }],
+        }))
+        assert r.success, r.error
+        assert r.data["placed"] == 2
+        stage = Usd.Stage.Open(str(project.scene_path))
+        props = stage.GetPrimAtPath("/Scene/Props")
+        assert len(list(props.GetChildren())) == 2
+
+
+def test_place_layout_rejects_both_modes():
+    """An entry with both 'transforms' and 'pattern' is rejected."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "thing")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(asset),
+                "group": "Props",
+                "transforms": [{"translate": [0, 0, 0]}],
+                "pattern": {
+                    "type": "grid", "origin": [0, 0, 0],
+                    "count": [2, 2], "spacing": [1, 1],
+                },
+            }],
+        }))
+        assert not r.success
+        assert "exactly one" in r.error
+
+
+def test_place_layout_missing_stage():
+    """Fails when no stage is open."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, _ = make_state(Path(tmp))
+        asset = _asset(Path(tmp), "x")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(asset), "group": "Props",
+                "transforms": [{"translate": [0, 0, 0]}],
+            }],
+        }))
+        assert not r.success
+
+
+def test_place_layout_from_layout_file():
+    """A BOM'd layout file places its entries, resolving assets against its own dir."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        _asset(tmp_path, "tile")
+        layout = tmp_path / "layout.json"
+        layout.write_text(json.dumps({
+            "version": 1,
+            "placements": [
+                {"asset": "tile.usda", "group": "Building/Floor",
+                 "pattern": {"type": "grid", "origin": [0, 0, 0],
+                             "count": [2, 2], "spacing": [6, 6]}},
+                {"asset": "tile.usda", "group": "Props", "name": "Spare",
+                 "transforms": [{"translate": [1, 0, 1]}]},
+            ],
+        }), encoding="utf-8-sig")
+
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "layout_file": str(layout),
+        }))
+        assert r.success, r.error
+        assert r.data["placed"] == 5
+        assert r.data["sources"]["tile"] == str(tmp_path / "tile.usda")
+
+
+def test_place_layout_file_version_rejected():
+    """A layout file with an unsupported version is refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        _asset(tmp_path, "tile")
+        layout = tmp_path / "layout.json"
+        layout.write_text(json.dumps({
+            "version": 2,
+            "placements": [{"asset": "tile.usda", "group": "Props",
+                            "transforms": [{"translate": [0, 0, 0]}]}],
+        }), encoding="utf-8")
+
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "layout_file": str(layout),
+        }))
+        assert not r.success
+        assert "version" in r.error
+
+
+def test_place_layout_aggregates_all_problems():
+    """Every invalid entry and unresolvable asset is reported in one error."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [
+                {"asset": str(asset), "group": "Props"},
+                {"asset": "ghost.usda", "group": "Props",
+                 "transforms": [{"translate": [0, 0, 0]}]},
+            ],
+        }))
+        assert not r.success
+        assert "placements[0]" in r.error
+        assert "exactly one" in r.error
+        assert "placements[1]" in r.error
+        assert "not found" in r.error
+        assert "searched" in r.error
+
+
+def test_place_layout_validate_only():
+    """validate_only reports the plan without staging or placing anything."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "validate_only": True,
+            "placements": [{
+                "asset": str(asset), "group": "Props",
+                "pattern": {"type": "grid", "origin": [0, 0, 0],
+                            "count": [2, 2], "spacing": [1, 1]},
+            }],
+        }))
+        assert r.success, r.error
+        assert r.data["valid"] is True
+        assert r.data["placements"] == 4
+        assert not state.stage.GetPrimAtPath("/Scene/Props").IsValid()
+        assert not (project.assets_dir / "tile").exists()
+
+
+def test_place_layout_rolls_back_on_failure(monkeypatch):
+    """A failure during the batch write leaves the stage and counter untouched."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        count_before = state.object_count
+
+        def boom(stage):
+            raise RuntimeError("disk full")
+
+        monkeypatch.setattr(
+            "bowerbot.services.asset_service.stage_utils.save_stage", boom,
+        )
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(asset), "group": "Props",
+                "pattern": {"type": "grid", "origin": [0, 0, 0],
+                            "count": [2, 2], "spacing": [1, 1]},
+            }],
+        }))
+        assert not r.success
+        assert state.object_count == count_before
+        assert not state.stage.GetPrimAtPath("/Scene/Props").IsValid()
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert not stage.GetPrimAtPath("/Scene/Props").IsValid()
+
+
+def test_place_layout_rejects_folder_asset():
+    """An entry pointing at a folder is refused with root-file guidance."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        folder = tmp_path / "tile"
+        folder.mkdir()
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(folder), "group": "Props",
+                "transforms": [{"translate": [0, 0, 0]}],
+            }],
+        }))
+        assert not r.success
+        assert "root file" in r.error
+
+
+def test_place_layout_rejects_3d_count_with_2d_spacing():
+    """A grid with a 3-axis count and a 2-axis spacing is refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(asset), "group": "Props",
+                "pattern": {"type": "grid", "origin": [0, 0, 0],
+                            "count": [2, 2, 3], "spacing": [6, 6]},
+            }],
+        }))
+        assert not r.success
+        assert "3-axis 'spacing'" in r.error
+
+
+def test_place_layout_rejects_invalid_prim_names():
+    """Digit-leading group segments and names fail validation, not authoring."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "validate_only": True,
+            "placements": [{
+                "asset": str(asset), "group": "2ndFloor",
+                "transforms": [{"translate": [0, 0, 0]}],
+            }],
+        }))
+        assert not r.success
+        assert "valid USD prim name" in r.error
+
+
+def test_place_layout_rejects_oversized_layout():
+    """A layout beyond the placement ceiling is refused without expansion."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "validate_only": True,
+            "placements": [{
+                "asset": str(asset), "group": "Props",
+                "pattern": {"type": "grid", "origin": [0, 0, 0],
+                            "count": [400, 400], "spacing": [1, 1]},
+            }],
+        }))
+        assert not r.success
+        assert "maximum per call" in r.error
+
+
+def test_place_layout_same_file_two_spellings_no_collision():
+    """The same asset via absolute and layout-relative paths is one source."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _asset(tmp_path, "tile")
+        layout = tmp_path / "layout.json"
+        layout.write_text(json.dumps({
+            "version": 1,
+            "placements": [
+                {"asset": str(asset), "group": "Props",
+                 "transforms": [{"translate": [0, 0, 0]}]},
+                {"asset": "tile.usda", "group": "Props",
+                 "transforms": [{"translate": [2, 0, 0]}]},
+            ],
+        }), encoding="utf-8")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "layout_file": str(layout),
+        }))
+        assert r.success, r.error
+        assert r.data["placed"] == 2
+        assert r.data["by_asset"] == {"tile": 2}
 
 
 # ── list_project_assets ──

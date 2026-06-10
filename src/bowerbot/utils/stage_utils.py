@@ -499,30 +499,38 @@ def save_stage(stage: Usd.Stage) -> None:
 
 def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
     """Reference an asset under a wrapper Xform, conformed to the scene's units and up-axis."""
-    asset_path = (
-        scene_object.asset.file_path or scene_object.asset.source_id
-    )
-    unit_scale = _compute_unit_scale(stage, asset_path)
-    up_axis_correction = _compute_up_axis_correction(stage, asset_path)
+    add_references(stage, [scene_object])
 
-    wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
-    xformable = UsdGeom.Xformable(wrapper)
 
-    tx, ty, tz = scene_object.translate
-    rx, ry, rz = scene_object.rotate
-    sx, sy, sz = scene_object.scale
-    final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
+def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
+    """Author a batch of asset references, computing conform once per unique asset."""
+    conform: dict[str, tuple[float, float | None]] = {}
+    for scene_object in scene_objects:
+        asset_path = (
+            scene_object.asset.file_path or scene_object.asset.source_id
+        )
+        if asset_path not in conform:
+            conform[asset_path] = _asset_conform(stage, asset_path)
+        unit_scale, up_axis_correction = conform[asset_path]
 
-    xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-    xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
-    xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+        wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
+        xformable = UsdGeom.Xformable(wrapper)
 
-    asset_prim = stage.DefinePrim(
-        f"{scene_object.prim_path}/asset", "Xform",
-    )
-    if up_axis_correction is not None:
-        UsdGeom.Xformable(asset_prim).AddRotateXOp().Set(up_axis_correction)
-    asset_prim.GetReferences().AddReference(asset_path)
+        tx, ty, tz = scene_object.translate
+        rx, ry, rz = scene_object.rotate
+        sx, sy, sz = scene_object.scale
+        final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
+
+        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
+        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
+        xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+
+        asset_prim = stage.DefinePrim(
+            f"{scene_object.prim_path}/asset", "Xform",
+        )
+        if up_axis_correction is not None:
+            UsdGeom.Xformable(asset_prim).AddRotateXOp().Set(up_axis_correction)
+        asset_prim.GetReferences().AddReference(asset_path)
 
 
 # ── Lights (scene level) ──
@@ -920,44 +928,28 @@ def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
             return
 
 
-def _compute_unit_scale(stage: Usd.Stage, asset_path: str) -> float:
-    """Return the factor to scale an asset into the stage's unit space."""
+def _asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | None]:
+    """Return (unit scale, up-axis X-rotation or None) conforming an asset to the stage."""
     if not os.path.isabs(asset_path):
         stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
         asset_path = os.path.join(stage_dir, asset_path)
 
-    asset_stage = Usd.Stage.Open(asset_path)
+    asset_stage = Usd.Stage.Open(asset_path, Usd.Stage.LoadNone)
     if asset_stage is None:
-        return 1.0
+        return 1.0, None
 
     asset_mpu = UsdGeom.GetStageMetersPerUnit(asset_stage)
     scene_mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    if scene_mpu == 0:
-        return 1.0
-    return asset_mpu / scene_mpu
-
-
-def _compute_up_axis_correction(
-    stage: Usd.Stage, asset_path: str,
-) -> float | None:
-    """Return X-rotation degrees to stand an asset up in the stage, or None if aligned."""
-    if not os.path.isabs(asset_path):
-        stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
-        asset_path = os.path.join(stage_dir, asset_path)
-
-    asset_stage = Usd.Stage.Open(asset_path)
-    if asset_stage is None:
-        return None
+    unit_scale = 1.0 if scene_mpu == 0 else asset_mpu / scene_mpu
 
     asset_up = UsdGeom.GetStageUpAxis(asset_stage)
     scene_up = UsdGeom.GetStageUpAxis(stage)
-    if asset_up == scene_up:
-        return None
+    correction = None
     if asset_up == UsdGeom.Tokens.y and scene_up == UsdGeom.Tokens.z:
-        return 90.0
-    if asset_up == UsdGeom.Tokens.z and scene_up == UsdGeom.Tokens.y:
-        return -90.0
-    return None
+        correction = 90.0
+    elif asset_up == UsdGeom.Tokens.z and scene_up == UsdGeom.Tokens.y:
+        correction = -90.0
+    return unit_scale, correction
 
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:

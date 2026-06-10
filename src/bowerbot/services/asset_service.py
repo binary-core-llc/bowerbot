@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import logging
 import shutil
+from pathlib import Path
 from typing import Any
 
 from bowerbot.schemas import (
+    MAX_LAYOUT_PLACEMENTS,
     AssetMetadata,
     ASWFLayerNames,
     PositionMode,
@@ -20,6 +22,7 @@ from bowerbot.state import SceneState
 from bowerbot.utils import (
     asset_intake_utils,
     geometry_utils,
+    layout_utils,
     stage_utils,
 )
 from bowerbot.utils.asset_folder_utils import (
@@ -27,7 +30,7 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_asset_dir_for_prim,
     resolve_asset_file_path,
 )
-from bowerbot.utils.naming_utils import safe_prim_name
+from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
 from bowerbot.utils.stage_utils import find_asset_references
 from bowerbot.utils.texture_utils import find_texture_references
 
@@ -91,6 +94,172 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "rotation_y": ry,
         "intake": asset_intake_utils.intake_summary(report),
         "message": asset_intake_utils.placement_message(asset_name, prim_path, report),
+    }
+
+
+# ── place_layout ──
+
+
+def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Place many assets in one transactional batch from inline entries or a layout file."""
+    raw_entries = params.get("placements")
+    layout_file = params.get("layout_file")
+    if (raw_entries is None) == (layout_file is None):
+        msg = "place_layout needs exactly one of 'placements' or 'layout_file'."
+        raise ValueError(msg)
+
+    project_dir = state.project.path if state.project else None
+    layout_dir = None
+    if layout_file is not None:
+        file_path = layout_utils.resolve_layout_file(layout_file, project_dir)
+        raw_entries = layout_utils.parse_layout_file(file_path)
+        layout_dir = file_path.parent
+    if not raw_entries:
+        raise ValueError("place_layout needs a non-empty 'placements' list.")
+
+    valid, problems = layout_utils.validate_layout_entries(raw_entries)
+
+    items: list[dict[str, Any]] = []
+    folder_sources: dict[str, Path] = {}
+    for idx, entry in valid:
+        try:
+            asset_path = layout_utils.resolve_layout_asset(
+                entry.asset,
+                layout_dir=layout_dir,
+                project_dir=project_dir,
+                library_dir=state.library_dir,
+            )
+            group_path = layout_utils.scene_group_path(entry.group)
+        except ValueError as e:
+            problems.append(f"placements[{idx}]: {e}")
+            continue
+        base_name = safe_prim_name(entry.name or asset_path.stem)
+        if not is_valid_prim_name(base_name):
+            problems.append(
+                f"placements[{idx}]: name '{base_name}' is not a valid USD "
+                f"prim name (it must start with a letter or underscore); "
+                f"set the entry's 'name'.",
+            )
+            continue
+        target = asset_intake_utils.intake_target_name(
+            asset_path, state.library_dir,
+        )
+        prior = folder_sources.setdefault(target, asset_path)
+        if prior != asset_path:
+            problems.append(
+                f"placements[{idx}]: '{asset_path}' and '{prior}' would both "
+                f"stage to assets/{target}; rename one source.",
+            )
+            continue
+        items.append({
+            "entry": entry,
+            "asset_path": asset_path,
+            "group_path": group_path,
+            "base_name": base_name,
+            "target": target,
+            "count": layout_utils.count_entry(entry),
+        })
+
+    placed = sum(item["count"] for item in items)
+    if placed > MAX_LAYOUT_PLACEMENTS:
+        problems.append(
+            f"layout expands to {placed} placements; the maximum per call "
+            f"is {MAX_LAYOUT_PLACEMENTS}.",
+        )
+    if problems:
+        summary = f"layout validation failed ({len(problems)} problem(s)):"
+        raise ValueError("\n".join([summary, *problems]))
+
+    by_asset: dict[str, int] = {}
+    groups: set[str] = set()
+    for item in items:
+        by_asset[item["target"]] = by_asset.get(item["target"], 0) + item["count"]
+        groups.add(item["group_path"])
+    sources = {
+        target: str(path) for target, path in folder_sources.items()
+    }
+
+    if params.get("validate_only", False):
+        return {
+            "valid": True,
+            "placements": placed,
+            "groups": sorted(groups),
+            "by_asset": by_asset,
+            "sources": sources,
+            "message": (
+                f"Layout is valid: {placed} placement(s) across "
+                f"{len(groups)} group(s). Nothing was placed."
+            ),
+        }
+
+    assets_dir = state.resolve_assets_dir()
+    fix_prim: dict[Path, bool] = {}
+    fix_transforms: dict[Path, bool] = {}
+    for item in items:
+        path = item["asset_path"]
+        fix_prim[path] = fix_prim.get(path, False) or item["entry"].fix_root_prim
+        fix_transforms[path] = (
+            fix_transforms.get(path, False) or item["entry"].fix_root_transforms
+        )
+
+    reports: dict[Path, Any] = {}
+    intake_problems: list[str] = []
+    for path in folder_sources.values():
+        try:
+            reports[path] = asset_intake_utils.prepare_asset(
+                path, assets_dir,
+                library_dir=state.library_dir,
+                fix_root_prim=fix_prim[path],
+                fix_root_transforms=fix_transforms[path],
+            )
+        except (ValueError, RuntimeError) as e:
+            intake_problems.append(f"{path.name}: {e}")
+    if intake_problems:
+        summary = f"asset intake failed ({len(intake_problems)} asset(s)):"
+        raise ValueError("\n".join([summary, *intake_problems]))
+
+    object_count_snapshot = state.object_count
+    try:
+        objects: list[SceneObject] = []
+        for item in items:
+            report = reports[item["asset_path"]]
+            for transform in layout_utils.expand_entry(item["entry"]):
+                state.object_count += 1
+                prim_path = (
+                    f"{item['group_path']}/"
+                    f"{item['base_name']}_{state.object_count:02d}"
+                )
+                objects.append(SceneObject(
+                    prim_path=prim_path,
+                    asset=AssetMetadata(
+                        name=item["base_name"],
+                        source_skill="local",
+                        source_id=str(item["asset_path"]),
+                        file_path=report.scene_ref_path,
+                    ),
+                    translate=transform.translate,
+                    rotate=transform.rotate,
+                    scale=transform.scale,
+                ))
+        stage_utils.add_references(state.stage, objects)
+        stage_utils.save_stage(state.stage)
+    except Exception:
+        state.object_count = object_count_snapshot
+        state.stage.Reload()
+        raise
+    state.touch_project()
+
+    logger.info(
+        "place_layout placed %d asset(s) across %d group(s)", placed, len(groups),
+    )
+    return {
+        "placed": placed,
+        "groups": sorted(groups),
+        "by_asset": by_asset,
+        "sources": sources,
+        "message": (
+            f"Placed {placed} asset(s) across {len(groups)} group(s) in one call."
+        ),
     }
 
 

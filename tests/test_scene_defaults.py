@@ -122,9 +122,9 @@ def test_up_axis_correction_signs():
         y_scene = Usd.Stage.CreateNew(str(d / "y_scene.usda"))
         UsdGeom.SetStageUpAxis(y_scene, UsdGeom.Tokens.y)
         y_scene.Save()
-        assert stage_utils._compute_up_axis_correction(z_scene, str(y_asset)) == 90.0
-        assert stage_utils._compute_up_axis_correction(y_scene, str(z_asset)) == -90.0
-        assert stage_utils._compute_up_axis_correction(y_scene, str(y_asset)) is None
+        assert stage_utils._asset_conform(z_scene, str(y_asset))[1] == 90.0
+        assert stage_utils._asset_conform(y_scene, str(z_asset))[1] == -90.0
+        assert stage_utils._asset_conform(y_scene, str(y_asset))[1] is None
 
 
 def test_y_asset_stands_up_in_z_scene():

@@ -160,6 +160,7 @@ source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
+    { name = "jsonschema" },
     { name = "litellm" },
     { name = "mcp" },
     { name = "pydantic" },
@@ -189,6 +190,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.1,<9" },
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.111,<1" },
     { name = "httpx", specifier = ">=0.27,<1" },
+    { name = "jsonschema", specifier = ">=4.0,<5" },
     { name = "litellm", specifier = ">=1.40,<2" },
     { name = "mcp", specifier = ">=1.27,<2" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10,<2" },

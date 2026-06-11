@@ -397,11 +397,13 @@ TOOLS: list[Tool] = [
                     ),
                 },
                 "value": {
+                    "type": ["array", "boolean", "number", "string", "null"],
                     "description": (
                         "Value matching the attribute's type (float for "
                         "Float, list of 3 numbers for Color3f / Vec3f, "
                         "string for Token / Asset, bool for Bool). Pass "
-                        "null to clear the authored opinion."
+                        "the JSON value itself, not a string encoding of "
+                        "it. Pass null to clear the authored opinion."
                     ),
                 },
             },

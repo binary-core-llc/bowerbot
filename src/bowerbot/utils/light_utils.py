@@ -29,6 +29,7 @@ from bowerbot.utils.asset_folder_utils import (
 from bowerbot.utils.geometry_utils import unit_factor
 from bowerbot.utils.stage_utils import (
     clear_orphan_variant_overs,
+    coerce_number,
     set_prim_attribute,
     update_rotate_op,
     update_translate_op,
@@ -101,7 +102,10 @@ def scale_spatial_attributes(
     if factor == 1.0:
         return dict(attributes)
     return {
-        name: (value * factor if name in SPATIAL_LIGHT_INPUTS else value)
+        name: (
+            coerce_number(value, f"spatial light input '{name}'") * factor
+            if name in SPATIAL_LIGHT_INPUTS else value
+        )
         for name, value in attributes.items()
     }
 

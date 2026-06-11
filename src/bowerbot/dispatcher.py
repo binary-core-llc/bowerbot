@@ -17,6 +17,8 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+import jsonschema
+
 from bowerbot.logging_setup import log_tool_result
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
@@ -103,6 +105,8 @@ async def execute(
         )
 
     rejection = _reject_unknown_params(tool_name, params)
+    if rejection is None:
+        rejection = _reject_invalid_params(tool_name, params)
     if rejection is not None:
         logger.info("tool-bad-params name=%s error=%s", tool_name, rejection)
         return ToolResult(success=False, error=rejection)
@@ -114,6 +118,28 @@ async def execute(
     log_tool_result(logger, tool_name, result)
     state.mark_saved()
     return result
+
+
+_VALIDATORS: dict[str, jsonschema.Draft202012Validator] = {}
+
+
+def _reject_invalid_params(
+    tool_name: str, params: dict[str, Any],
+) -> str | None:
+    """Return an error message if *params* violates the tool's JSON schema."""
+    tool = _TOOLS_BY_NAME.get(tool_name)
+    if tool is None or not tool.parameters:
+        return None
+    validator = _VALIDATORS.get(tool_name)
+    if validator is None:
+        validator = jsonschema.Draft202012Validator(tool.parameters)
+        _VALIDATORS[tool_name] = validator
+    error = jsonschema.exceptions.best_match(validator.iter_errors(params))
+    if error is None:
+        return None
+    path = ".".join(str(part) for part in error.absolute_path)
+    where = f" at '{path}'" if path else ""
+    return f"invalid parameters for {tool_name}{where}: {error.message}"
 
 
 def _reject_unknown_params(

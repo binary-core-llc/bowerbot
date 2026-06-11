@@ -903,9 +903,12 @@ def parse_vec3(
     """Coerce a JSON-shaped triple to ``(float, float, float)`` or None."""
     if value is None:
         return None
-    if len(value) != 3:
-        raise ValueError(f"{name!r} must be a length-3 vector; got {value!r}")
-    return float(value[0]), float(value[1]), float(value[2])
+    if not isinstance(value, (list, tuple)) or len(value) != 3:
+        raise ValueError(
+            f"{name!r} must be a list of 3 numbers; got {value!r}",
+        )
+    x, y, z = (stage_utils.coerce_number(v, name) for v in value)
+    return x, y, z
 
 
 def resolve_typed_target(

@@ -22,6 +22,8 @@ dependencies = [
     "rich>=13.0,<16",
     # LLM (agent mode only; harmless when running in MCP mode)
     "litellm>=1.40,<2",
+    # Tool-param validation (agent mode parity with the MCP SDK's checks)
+    "jsonschema>=4.0,<5",
     # MCP server (mcp mode): official SDK + the ASGI stack it serves over.
     "mcp>=1.27,<2",
     "starlette>=0.40,<2",

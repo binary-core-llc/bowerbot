@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -180,7 +181,14 @@ def set_prim_attribute(
 
     type_name = expected_type if expected_type is not None else attr.GetTypeName()
     converted = _json_to_usd_value(value, type_name)
-    attr.Set(converted)
+    try:
+        attr.Set(converted)
+    except (TypeError, RuntimeError):
+        msg = (
+            f"value {value!r} does not match {attribute_name}'s "
+            f"declared type {type_name}."
+        )
+        raise ValueError(msg) from None
 
 
 def prune_empty_overrides(layer: Sdf.Layer, prim_path: str) -> None:
@@ -353,25 +361,76 @@ def _json_to_usd_value(value: object, type_name: Sdf.ValueTypeName) -> object:
     """Cast a JSON-shaped value to match a USD attribute's declared type."""
     raw = str(type_name).lower()
 
-    if raw in ("float", "half", "double"):
-        return float(value)
-    if raw in ("int", "uchar", "uint", "int64", "uint64"):
-        return int(value)
-    if raw == "bool":
-        return bool(value)
     if raw in ("token", "string"):
         return str(value)
     if raw == "asset":
         return Sdf.AssetPath(str(value))
+
+    value = _decode_json_string(value, type_name)
+    if raw in ("float", "half", "double"):
+        return _number(value, type_name)
+    if raw in ("int", "uchar", "uint", "int64", "uint64"):
+        return int(_number(value, type_name))
+    if raw == "bool":
+        return _boolean(value, type_name)
     if raw.startswith(("color3", "float3", "vector3f", "normal3f", "point3f")):
-        return Gf.Vec3f(*value)
+        return Gf.Vec3f(*_number_seq(value, 3, type_name))
     if raw.startswith(("double3", "vector3d", "normal3d", "point3d")):
-        return Gf.Vec3d(*value)
+        return Gf.Vec3d(*_number_seq(value, 3, type_name))
     if raw.startswith(("color4", "float4")):
-        return Gf.Vec4f(*value)
+        return Gf.Vec4f(*_number_seq(value, 4, type_name))
     if raw.startswith("float2"):
-        return Gf.Vec2f(*value)
+        return Gf.Vec2f(*_number_seq(value, 2, type_name))
     return value
+
+
+def coerce_number(value: object, what: object) -> float:
+    """Coerce a scalar (or its JSON-encoded string) to float with a curated error."""
+    return _number(_decode_json_string(value, what), what)
+
+
+def _decode_json_string(value: object, what: object) -> object:
+    """Decode a JSON-encoded string sent for a non-string value."""
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except ValueError:
+        msg = (
+            f"value {value!r} is not valid for {what}; pass JSON matching "
+            f"the type (e.g. a list of numbers for vectors, true/false "
+            f"for bools)."
+        )
+        raise ValueError(msg) from None
+
+
+def _number(value: object, what: object) -> float:
+    """Coerce a scalar to float with a curated error."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        msg = f"value {value!r} is not a number; {what} needs one."
+        raise ValueError(msg)
+    return float(value)
+
+
+def _boolean(value: object, what: object) -> bool:
+    """Coerce a bool (or 0/1) with a curated error."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    msg = f"value {value!r} is not a bool; {what} needs true or false."
+    raise ValueError(msg)
+
+
+def _number_seq(value: object, arity: int, what: object) -> list[float]:
+    """Coerce a sequence of *arity* numbers with a curated error."""
+    if not isinstance(value, (list, tuple)) or len(value) != arity:
+        msg = (
+            f"value {value!r} does not match {what}; "
+            f"pass a list of {arity} numbers."
+        )
+        raise ValueError(msg)
+    return [_number(item, what) for item in value]
 
 
 def save_scene_snapshot(

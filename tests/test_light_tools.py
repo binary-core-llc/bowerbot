@@ -487,3 +487,63 @@ def test_remove_light_nonexistent_prim():
             "prim_path": "/Scene/Lighting/Ghost",
         }))
         assert not r.success
+
+
+# ── asset-light spatial input coercion ──
+
+
+def _cm_asset(directory: Path, name: str) -> Path:
+    path = directory / f"{name}.usda"
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, 0.01)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    root = stage.DefinePrim(f"/{name}", "Xform")
+    stage.SetDefaultPrim(root)
+    UsdGeom.Cube.Define(stage, f"/{name}/Mesh").GetSizeAttr().Set(1.0)
+    stage.Save()
+    return path
+
+
+def test_create_asset_light_spatial_string_coerced():
+    """A JSON-string spatial input on a non-meter asset is coerced and scaled."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _cm_asset(tmp_path, "cmlamp")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert placed.success, placed.error
+
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed.data["prim_path"],
+            "light_type": "SphereLight", "light_name": "Bulb",
+            "attributes": {"inputs:radius": "0.05"},
+        }))
+        assert r.success, r.error
+
+        lgt = Usd.Stage.Open(str(project.assets_dir / "cmlamp" / "lgt.usda"))
+        radius = lgt.GetPrimAtPath("/cmlamp/lgt/Bulb").GetAttribute("inputs:radius").Get()
+        assert abs(radius - 5.0) < 1e-4
+
+
+def test_create_asset_light_spatial_garbage_refused():
+    """A non-numeric spatial input fails with a curated error, not a crash."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        asset = _cm_asset(tmp_path, "cmlamp2")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert placed.success, placed.error
+
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed.data["prim_path"],
+            "light_type": "SphereLight", "light_name": "Bulb",
+            "attributes": {"inputs:radius": "big"},
+        }))
+        assert not r.success
+        assert "spatial light input" in r.error

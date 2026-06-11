@@ -249,6 +249,56 @@ def test_set_prim_attribute_null_clears():
         assert spec is None or "size" not in spec.attributes
 
 
+def test_set_prim_attribute_json_string_vector():
+    """A JSON-encoded string for a vector attribute is decoded and authored."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state)
+        wrapper = placed.data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": wrapper,
+            "attribute_name": "xformOp:translate",
+            "value": "[1, 2, 3]",
+        }))
+        assert r.success, r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        t = stage.GetPrimAtPath(wrapper).GetAttribute("xformOp:translate").Get()
+        assert tuple(t) == (1.0, 2.0, 3.0)
+
+
+def test_set_prim_attribute_garbage_string_refused():
+    """A non-JSON string for a typed attribute fails with a curated error."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        placed = _place(tmp_path, state)
+        mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": mesh_path,
+            "attribute_name": "size",
+            "value": "garbage",
+        }))
+        assert not r.success
+        assert "is not valid" in r.error
+
+
+def test_set_prim_attribute_wrong_arity_refused():
+    """A 2-element list for a 3-component attribute fails with a curated error."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        placed = _place(tmp_path, state)
+
+        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": placed.data["prim_path"],
+            "attribute_name": "xformOp:translate",
+            "value": [1.0, 2.0],
+        }))
+        assert not r.success
+        assert "list of 3 numbers" in r.error
+
+
 # ── save/list/delete scene snapshots ──
 
 

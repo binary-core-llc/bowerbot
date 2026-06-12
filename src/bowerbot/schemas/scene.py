@@ -8,5 +8,6 @@ class SceneNamespace:
     """Canonical prim paths inside BowerBot scene.usda."""
 
     ROOT = "/Scene"
+    CAMERAS = "/Scene/Cameras"
     LIGHTING = "/Scene/Lighting"
     PHYSICS = "/Scene/Physics"

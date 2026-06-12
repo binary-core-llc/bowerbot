@@ -15,6 +15,12 @@ from bowerbot.schemas.assets import (
     AssetMetadata,
     ASWFLayerNames,
 )
+from bowerbot.schemas.cameras import (
+    DEFAULT_CLIPPING_RANGE_METERS,
+    CameraParams,
+    CameraPropertySpec,
+    CameraSchemaInfo,
+)
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.layout import (
     LAYOUT_FILE_VERSION,
@@ -67,6 +73,7 @@ from bowerbot.schemas.variants import (
 )
 
 __all__ = [
+    "DEFAULT_CLIPPING_RANGE_METERS",
     "LAYOUT_FILE_VERSION",
     "MAX_LAYOUT_PLACEMENTS",
     "AppleUSDZConstraints",
@@ -75,6 +82,9 @@ __all__ = [
     "AssetFormat",
     "AssetMetadata",
     "AssetPhysicsSummary",
+    "CameraParams",
+    "CameraPropertySpec",
+    "CameraSchemaInfo",
     "CollisionGroupSummary",
     "CollisionGroupsSummary",
     "DetectionOutcome",

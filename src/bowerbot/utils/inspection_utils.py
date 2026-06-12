@@ -8,6 +8,7 @@ from __future__ import annotations
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
 from bowerbot.utils import physics_typing_utils
+from bowerbot.utils.camera_utils import format_camera_prim
 from bowerbot.utils.light_utils import format_light_prim
 from bowerbot.utils.physics_utils import (
     format_collision_group_prim,
@@ -50,6 +51,8 @@ def _classify(
         return format_joint_prim(prim)
     if physics_typing_utils.is_collision_group(prim):
         return format_collision_group_prim(prim)
+    if prim.IsA(UsdGeom.Camera):
+        return format_camera_prim(prim)
 
     is_light = prim.HasAPI(UsdLux.LightAPI)
     has_refs = prim.GetMetadata("references") is not None

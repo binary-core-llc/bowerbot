@@ -481,6 +481,15 @@ service function and is described in the LLM prompts under
 | `update_light` | Modify an existing light's xform / HDRI texture |
 | `remove_light` | Delete a light from the scene or asset |
 
+#### Cameras
+
+| Tool | Description |
+|------|-------------|
+| `list_camera_properties` | Live UsdGeom schema view of the Camera attributes (call before `create_camera`) |
+| `create_camera` | Add a scene camera, aimed via a `look_at` point or explicit rotation |
+| `update_camera` | Reposition or re-aim an existing camera |
+| `remove_camera` | Delete a camera from the scene |
+
 #### Materials
 
 | Tool | Description |

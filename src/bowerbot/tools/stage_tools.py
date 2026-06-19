@@ -25,7 +25,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 
 def list_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Return every placement, light, and physics-infrastructure prim in the scene."""
+    """List the scene contents: every managed object, each tagged with its kind."""
     if (err := require_stage(state)):
         return err
     try:
@@ -173,15 +173,19 @@ TOOLS: list[Tool] = [
     Tool(
         name="list_scene",
         description=(
-            "List everything in the scene: returns object_count and an "
-            "objects array where each entry has a 'kind' and kind-specific "
-            "fields. kind 'asset'/'geometry': prim_path, type, asset, "
-            "position, and bounds (world-space {min, max}); kind 'light': "
-            "prim_path, light_type, position, and intensity/exposure/color "
-            "when authored; kind 'physics_scene'/'joint'/'collision_group': "
-            "prim_path, type, plus body0/body1 (joint) or name "
-            "(collision_group). Use an object's bounds to size or place "
-            "items on its surface without reading USD files."
+            "List the contents of the scene. Returns object_count and an "
+            "objects array; every object BowerBot manages is included, of "
+            "any kind, and each entry carries a 'kind' tag plus "
+            "kind-specific fields. Kinds include 'asset'/'geometry' "
+            "(prim_path, type, asset, position, bounds {min, max}), 'light' "
+            "(prim_path, light_type, position, intensity/exposure/color when "
+            "authored), 'camera' (prim_path, type, projection, focal_length, "
+            "position), and 'physics_scene'/'joint'/'collision_group' "
+            "(prim_path, type, plus body0/body1 or name). New object kinds "
+            "appear here automatically. Call this to see what is actually "
+            "in the scene rather than assuming a kind is absent. Use an "
+            "object's bounds to size or place items on a surface without "
+            "reading USD files."
         ),
         parameters={"type": "object", "properties": {}},
     ),

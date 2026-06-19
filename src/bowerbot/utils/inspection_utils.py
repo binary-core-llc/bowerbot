@@ -23,7 +23,7 @@ from bowerbot.utils.stage_utils import (
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
-    """List every meaningful prim: placements, lights, geometry, physics."""
+    """List every meaningful prim in the scene, classified by kind."""
     bbox_cache = UsdGeom.BBoxCache(
         Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
     )

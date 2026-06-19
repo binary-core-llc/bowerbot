@@ -60,7 +60,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def list_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Return every placement, light, and physics-infrastructure prim in the scene."""
+    """List the scene contents: every managed object, each tagged with its kind."""
     del params
     objects = inspection_utils.list_prims(state.stage)
     return {

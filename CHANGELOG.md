@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.13.0](https://github.com/binary-core-llc/bowerbot/compare/v1.12.0...v1.13.0) (2026-06-19)
+
+
+### Features
+
+* **assets:** batch placement with place_layout, inline or from a layout file ([#194](https://github.com/binary-core-llc/bowerbot/issues/194)) ([6556b84](https://github.com/binary-core-llc/bowerbot/commit/6556b844a45daad288322a44eb55dee492d6d4be))
+* **cameras:** scene-level camera tools with schema discovery and look_at aiming ([#196](https://github.com/binary-core-llc/bowerbot/issues/196)) ([b780238](https://github.com/binary-core-llc/bowerbot/commit/b78023893e4325551d5949aa97cac7e538a598d7))
+* **scene:** per-project up-axis and units with placement conform ([#188](https://github.com/binary-core-llc/bowerbot/issues/188)) ([ed32cb0](https://github.com/binary-core-llc/bowerbot/commit/ed32cb00debaea38b800c2f91ec09cd6c466a95e))
+
+
+### Bug Fixes
+
+* **lights:** route asset light updates to the asset, keep environment lights scene-only ([#192](https://github.com/binary-core-llc/bowerbot/issues/192)) ([3af8610](https://github.com/binary-core-llc/bowerbot/commit/3af8610d8e46116f333b12457f9f962c293ed9d0))
+* **physics:** report the resolved gravity setup_physics_scene authored ([#191](https://github.com/binary-core-llc/bowerbot/issues/191)) ([90acc9d](https://github.com/binary-core-llc/bowerbot/commit/90acc9d1697d6568d1c36bebeec1395c86fa9840))
+* **tools:** align tool descriptions and prompts with actual behavior ([#190](https://github.com/binary-core-llc/bowerbot/issues/190)) ([9eefc67](https://github.com/binary-core-llc/bowerbot/commit/9eefc6757728562e93bb065e38354bcc13a05a86))
+* **tools:** de-limit list_scene description so MCP clients surface cameras ([#198](https://github.com/binary-core-llc/bowerbot/issues/198)) ([7dac321](https://github.com/binary-core-llc/bowerbot/commit/7dac32101df692139f5fcb63990d5318d8c6ee33))
+* **tools:** validate tool params and coerce attribute values deterministically ([#195](https://github.com/binary-core-llc/bowerbot/issues/195)) ([0dbb92e](https://github.com/binary-core-llc/bowerbot/commit/0dbb92e6becb4d7d87c710fd3ce0edc1d97a37b3))
+* **variants:** reject unknown attribute names in asset attribute variants ([#193](https://github.com/binary-core-llc/bowerbot/issues/193)) ([7d2a89f](https://github.com/binary-core-llc/bowerbot/commit/7d2a89f183ac2e65826aeae20bb027981a864dd4))
+
+
+### Documentation
+
+* **readme:** add camera and layout modules to the architecture map ([#199](https://github.com/binary-core-llc/bowerbot/issues/199)) ([18320fa](https://github.com/binary-core-llc/bowerbot/commit/18320fae3badf43477403627dda780945292ffce))
+
 ## [1.12.0](https://github.com/binary-core-llc/bowerbot/compare/v1.11.0...v1.12.0) (2026-06-07)
 
 

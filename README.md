@@ -805,6 +805,7 @@ src/bowerbot/
     assets.md
     library.md
     lights.md
+    cameras.md
     materials.md
     physics.md
     textures.md
@@ -812,7 +813,9 @@ src/bowerbot/
 
   schemas/            # Pydantic models and enums, grouped by domain
     assets.py         #   Asset formats, categories, ASWF layer names, metadata
+    cameras.py        #   CameraParams, CameraPropertySpec, CameraSchemaInfo
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
+    layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
     lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
     physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
@@ -832,6 +835,7 @@ src/bowerbot/
                            #   cleanup_unused_contents, freeze_asset
     library_service.py     #   list_assets, search_assets
     light_service.py       #   list_light_type_properties, create/update/remove_light
+    camera_service.py      #   list_camera_properties, create/update/remove_camera
     material_service.py    #   create/bind/remove_material, list_materials,
                            #   cleanup_unused_materials
     physics_service.py     #   list_physics_api_properties, apply/remove_physics_api,
@@ -856,6 +860,7 @@ src/bowerbot/
                            #   cleanup_unused_contents, freeze_asset
     library_tools.py       #   search_assets, list_assets
     light_tools.py         #   list_light_type_properties, create/update/remove_light
+    camera_tools.py        #   list_camera_properties, create/update/remove_camera
     material_tools.py      #   create/bind/remove_material, list_materials,
                            #   cleanup_unused_materials
     physics_tools.py       #   physics APIs (3), physics scene + summary (2),
@@ -873,8 +878,8 @@ src/bowerbot/
   utils/              # Pure-function primitives. One domain per file.
     stage_utils.py             #   USD-stage primitives: open/save, references,
                                #   xform-op edits, namespace edits, set/list_prim_attribute
-    inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, physics,
-                               #   placements, geometry)
+    inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, cameras,
+                               #   physics, placements, geometry)
     asset_intake_utils.py      #   intake_folder, intake_usdz, create_asset_folder, ASWF
     asset_folder_utils.py      #   ASWF folder primitives (detect root, layer scopes,
                                #   resolve_asset_dir_for_prim)
@@ -882,6 +887,8 @@ src/bowerbot/
     light_utils.py             #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle,
                                #   HDRI staging
+    camera_utils.py            #   Camera authoring: create/update/remove, look_at
+                               #   aiming, list_camera_properties
     material_utils.py          #   material_in_folder primitives, find_first_material
     texture_utils.py           #   find_textures, copy_texture_to_project,
                                #   find_texture_references
@@ -893,6 +900,8 @@ src/bowerbot/
     variant_utils.py           #   variants.usda lifecycle, author_in_variant keystone,
                                #   apply_variant, set/clear_default, removal + cleanup
     geometry_utils.py          #   Bounds, unit conversion, layout math
+    layout_utils.py            #   place_layout expansion: grid/linear patterns,
+                               #   asset resolution
     dependency_utils.py        #   USD dependency tree walker
     naming_utils.py            #   Name sanitization for files, prims, projects
     usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
@@ -920,7 +929,7 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 
 **Scene level**
 - `metersPerUnit = 1.0`, `upAxis = "Y"`, `defaultPrim` always set
-- Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Props`, `/Scene/Physics`
+- Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Cameras`, `/Scene/Props`, `/Scene/Physics`
 - References only: no inline geometry, no scattered material sublayers
 - Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched
 - Pre-packaging validator checks `defaultPrim`, units, up-axis, reference resolution, and material bindings

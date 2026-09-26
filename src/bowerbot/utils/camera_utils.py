@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pxr import Gf, Usd, UsdGeom
 
 from bowerbot.schemas import CameraParams, CameraSchemaInfo, CameraTuning
@@ -75,7 +77,7 @@ def update_camera(
 
 
 def _set_op(
-    ops: dict, op_name: str, value: object, prim_path: str,
+    ops: dict[str, UsdGeom.XformOp], op_name: str, value: object, prim_path: str,
 ) -> None:
     """Set one authored xform op, refusing layouts create_camera did not author."""
     op = ops.get(op_name)
@@ -104,7 +106,7 @@ def camera_translate(prim: Usd.Prim) -> Vec3:
 
 
 def write_camera_attributes(
-    stage: Usd.Stage, prim_path: str, attributes: dict,
+    stage: Usd.Stage, prim_path: str, attributes: dict[str, Any],
 ) -> None:
     """Author Camera schema attributes by exact name."""
     for name, value in attributes.items():
@@ -115,7 +117,7 @@ def write_camera_attributes(
         )
 
 
-def refuse_unknown_camera_attributes(attributes: dict) -> None:
+def refuse_unknown_camera_attributes(attributes: dict[str, Any]) -> None:
     """Raise if any attribute name is not declared by the Camera schema."""
     valid = {str(n) for n in UsdGeom.Camera.GetSchemaAttributeNames(False)}
     unknown = sorted(name for name in attributes if name not in valid)
@@ -126,7 +128,7 @@ def refuse_unknown_camera_attributes(attributes: dict) -> None:
         )
 
 
-def format_camera_prim(prim: Usd.Prim) -> dict:
+def format_camera_prim(prim: Usd.Prim) -> dict[str, Any]:
     """Format a Camera prim for ``list_prims``."""
     camera = UsdGeom.Camera(prim)
     return {

@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd, UsdGeom
+from pxr import Sdf, Usd, UsdGeom, UsdPhysics
 
 from bowerbot.schemas import (
     ASWFLayerNames,
@@ -188,7 +188,7 @@ def list_joints_asset(asset_dir: Path) -> JointsSummary:
     return list_joints_scene(stage)
 
 
-def format_joint_prim(prim: Usd.Prim) -> dict:
+def format_joint_prim(prim: Usd.Prim) -> dict[str, Any]:
     """Format a UsdPhysics joint for ``list_prims``."""
     body0_rel = prim.GetRelationship("physics:body0")
     body1_rel = prim.GetRelationship("physics:body1")
@@ -237,7 +237,7 @@ def _validate_joint_bodies(
         )
 
 
-def _set_body_rel(joint, rel_name: str, target_path: str | None) -> None:
+def _set_body_rel(joint: UsdPhysics.Joint, rel_name: str, target_path: str | None) -> None:
     """Author the body0 / body1 rel. Empty/None target = world (no targets set)."""
     rel = joint.GetPrim().GetRelationship(rel_name)
     if not rel or not rel.IsValid():
@@ -249,7 +249,7 @@ def _set_body_rel(joint, rel_name: str, target_path: str | None) -> None:
 
 
 def _author_joint_attributes(
-    joint, attributes: dict[str, Any], joint_type: PhysicsJointType,
+    joint: UsdPhysics.Joint, attributes: dict[str, Any], joint_type: PhysicsJointType,
 ) -> None:
     """Set caller-provided joint attributes after typed-prim definition."""
     prim = joint.GetPrim()

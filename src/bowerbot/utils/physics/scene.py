@@ -94,7 +94,7 @@ def remove_physics_scene(stage: Usd.Stage, name: str) -> bool:
     return True
 
 
-def format_physics_scene_prim(prim: Usd.Prim) -> dict:
+def format_physics_scene_prim(prim: Usd.Prim) -> dict[str, Any]:
     """Format a ``UsdPhysics.Scene`` for ``list_prims``."""
     return {
         "prim_path": str(prim.GetPath()),

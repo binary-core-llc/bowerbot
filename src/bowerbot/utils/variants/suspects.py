@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from pxr import Sdf, Usd
 
@@ -35,7 +37,7 @@ def find_suspect_variant_sets(
 
 def suspect_variant_sets_on_scene_carrier(
     stage: Usd.Stage, base_prim_path: str,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Return suspect scene-level variant sets walking ancestors of *base_prim_path*."""
     if stage is None or not base_prim_path or base_prim_path == "/":
         return []
@@ -48,7 +50,7 @@ def suspect_variant_sets_on_scene_carrier(
 
 def suspect_variant_sets_in_asset(
     asset_dir: Path, base_prim_path: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Return suspect asset-level variant sets walking ancestors of *base_prim_path*."""
     variants_path = asset_dir / ASWFLayerNames.VARIANTS
     if not variants_path.exists():
@@ -102,7 +104,7 @@ def _variant_body_authors_references(variant_spec: Sdf.VariantSpec) -> bool:
     return False
 
 
-def _walk_leaf_authorings(spec: Sdf.PrimSpec, accum: str):
+def _walk_leaf_authorings(spec: Sdf.PrimSpec, accum: str) -> Iterator[tuple[Sdf.PrimSpec, str]]:
     """Yield (leaf_spec, rel_path) for descendants that author direct opinions."""
     has_opinions = (
         len(spec.attributes) > 0

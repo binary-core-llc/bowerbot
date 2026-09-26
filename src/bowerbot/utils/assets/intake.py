@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
+from typing import Any
 
 from bowerbot.schemas import (
     AssetFormat,
@@ -129,7 +130,7 @@ def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
     )
 
 
-def intake_summary(report: IntakeReport) -> dict:
+def intake_summary(report: IntakeReport) -> dict[str, Any]:
     """Condense an intake report into the fields surfaced to the LLM."""
     return {
         "asset_folder": report.asset_folder_name,

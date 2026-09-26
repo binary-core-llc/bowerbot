@@ -83,10 +83,10 @@ def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
 
 def validate_instance_name(
     api_name: PhysicsApiName,
-    instance_name: str,
+    instance_name: str | None,
     joint_type_name: str,
-) -> None:
-    """Refuse if *instance_name* is invalid for *api_name* on *joint_type*."""
+) -> str:
+    """Return *instance_name*, refusing it if invalid for *api_name* on *joint_type*."""
     try:
         jt = PhysicsJointType(joint_type_name)
     except ValueError:
@@ -100,12 +100,13 @@ def validate_instance_name(
         raise ValueError(
             f"{api_name.value} is not supported on {jt.value}.",
         )
-    if instance_name not in valid:
+    if instance_name is None or instance_name not in valid:
         raise ValueError(
             f"instance_name {instance_name!r} is not valid for "
             f"{api_name.value} on {jt.value}. "
             f"Allowed: {sorted(valid)}",
         )
+    return instance_name
 
 
 def refuse_unknown(

@@ -21,11 +21,11 @@ from bowerbot.utils.physics.scene import format_physics_scene_prim
 from bowerbot.utils.scatter.authoring import format_scatter_prim
 
 
-def list_prims(stage: Usd.Stage) -> list[dict]:
+def list_prims(stage: Usd.Stage) -> list[dict[str, Any]]:
     """List every meaningful prim in the scene, classified by kind."""
     cache = bbox_cache()
 
-    results: list[dict] = []
+    results: list[dict[str, Any]] = []
     seen: set[str] = set()
     iterator = iter(stage.Traverse())
     for prim in iterator:
@@ -47,7 +47,7 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
 
 def _classify(
     prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
-) -> dict | None:
+) -> dict[str, Any] | None:
     """Return the formatted ``list_prims`` entry for *prim*, or None."""
     if is_physics_scene(prim):
         return format_physics_scene_prim(prim)
@@ -109,7 +109,7 @@ def _format_geometry_prim(
     prim: Usd.Prim,
     position: dict[str, float] | None,
     bbox_cache: UsdGeom.BBoxCache,
-) -> dict:
+) -> dict[str, Any]:
     """Format a referenced-asset or scene-authored Gprim for ``list_prims``."""
     ref_paths = get_prim_ref_paths(prim)
     return {

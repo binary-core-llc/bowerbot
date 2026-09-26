@@ -45,7 +45,8 @@ class TokenCounter:
     def count_messages(model: str, messages: list[dict[str, Any]]) -> int:
         """Count tokens for a message list using the model's tokenizer."""
         try:
-            return litellm.token_counter(model=model, messages=messages)
+            count: int = litellm.token_counter(model=model, messages=messages)
+            return count
         except Exception:
             total_chars = sum(
                 len(json.dumps(m.get("content", ""))) for m in messages
@@ -54,12 +55,12 @@ class TokenCounter:
 
     @staticmethod
     def get_context_limit(model: str) -> int:
-        """Return the context window size for a model."""
+        """Return the context window size for a model, or 128k when litellm doesn't know it."""
         try:
-            info = litellm.get_model_info(model)
-            return info.get("max_input_tokens", 128_000)
+            limit = litellm.get_model_info(model).get("max_input_tokens")
         except Exception:
-            return 128_000
+            limit = None
+        return limit or 128_000
 
 
 class TokenManager:

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from pxr import Gf, Sdf, Usd, UsdShade
 
@@ -206,7 +207,7 @@ def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None
     cleanup_unused_in_folder(asset_dir)
 
 
-def list_materials_in_folder(asset_dir: Path) -> list[dict]:
+def list_materials_in_folder(asset_dir: Path) -> list[dict[str, Any]]:
     """List all materials and their bindings in *asset_dir*."""
     mtl_path = asset_dir / ASWFLayerNames.MTL
     if not mtl_path.exists():

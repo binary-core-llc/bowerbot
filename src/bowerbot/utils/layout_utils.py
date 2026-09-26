@@ -134,7 +134,7 @@ def count_entry(entry: LayoutEntry) -> int:
     """Return how many placements an entry expands to, without materializing them."""
     if entry.transforms is not None:
         return len(entry.transforms)
-    pattern = entry.pattern
+    pattern = _pattern_of(entry)
     if pattern.type == LayoutPattern.GRID:
         nx, ny, nz = _pad3(pattern.count, 1)
         return nx * ny * nz
@@ -154,7 +154,7 @@ def expand_entry(entry: LayoutEntry) -> list[TransformParams]:
         ]
     return [
         _transform(translate, entry.rotate, entry.scale)
-        for translate in _expand_pattern(entry.pattern)
+        for translate in _expand_pattern(_pattern_of(entry))
     ]
 
 
@@ -183,6 +183,14 @@ def _transform(
     return TransformParams(**fields)
 
 
+def _pattern_of(entry: LayoutEntry) -> GridPattern | LinearPattern:
+    """The entry's pattern; LayoutEntry validation guarantees one when it has no transforms."""
+    if entry.pattern is None:
+        msg = "each layout entry needs exactly one of 'transforms' or 'pattern'."
+        raise ValueError(msg)
+    return entry.pattern
+
+
 def _expand_pattern(pattern: GridPattern | LinearPattern) -> list[Vec3]:
     """Generate translate tuples for a grid or linear pattern."""
     ox, oy, oz = pattern.origin
@@ -201,9 +209,11 @@ def _expand_pattern(pattern: GridPattern | LinearPattern) -> list[Vec3]:
     ]
 
 
-def _pad3(values: tuple, fill: float | int) -> tuple:
+def _pad3[T](values: tuple[T, T] | tuple[T, T, T], fill: T) -> tuple[T, T, T]:
     """Pad a 2-tuple to 3 with the identity value for the missing axis."""
-    return (*values, fill) if len(values) == 2 else tuple(values)
+    if len(values) == 2:
+        return (*values, fill)
+    return values
 
 
 def suggest_grid_layout(

@@ -66,8 +66,9 @@ def apply_api(
             f"Prim not found in asset {asset_dir.name}: {prim_path}",
         )
 
+    instance: str | None = None
     if is_multi:
-        validate_instance_name(
+        instance = validate_instance_name(
             api_name, instance_name, requested.GetTypeName(),
         )
         target_path = str(requested.GetPath())
@@ -84,8 +85,8 @@ def apply_api(
     companion = PhysicsRules.COMPANIONS.get(api_name)
     if companion is not None:
         schema_class(companion).Apply(prim)
-    if is_multi:
-        _apply_multi(prim, api_name, instance_name)
+    if instance is not None:
+        _apply_multi(prim, api_name, instance)
     else:
         schema_class(api_name).Apply(prim)
 
@@ -165,8 +166,9 @@ def apply_api_scene(
     if not prim or not prim.IsValid():
         raise ValueError(f"Prim not found in scene: {prim_path}")
 
+    instance: str | None = None
     if is_multi:
-        validate_instance_name(
+        instance = validate_instance_name(
             api_name, instance_name, prim.GetTypeName(),
         )
         target = prim
@@ -180,8 +182,8 @@ def apply_api_scene(
     companion = PhysicsRules.COMPANIONS.get(api_name)
     if companion is not None:
         schema_class(companion).Apply(target)
-    if is_multi:
-        _apply_multi(target, api_name, instance_name)
+    if instance is not None:
+        _apply_multi(target, api_name, instance)
     else:
         schema_class(api_name).Apply(target)
 

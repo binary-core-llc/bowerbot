@@ -6,13 +6,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from pxr import Gf, Usd, UsdGeom
 
 from bowerbot.schemas import ASWFLayerNames
 
 
-def freeze_one_asset(assets_dir: Path, name: str) -> dict:
+def freeze_one_asset(assets_dir: Path, name: str) -> dict[str, Any]:
     """Bake root transforms in a single asset folder; raise if folder/geo missing."""
     asset_dir = assets_dir / name
     if not asset_dir.exists() or not asset_dir.is_dir():

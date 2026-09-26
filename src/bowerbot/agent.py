@@ -163,7 +163,7 @@ class AgentRuntime:
         )
 
     def _nudge_on_validation_errors(
-        self, tool_calls: list, retries: int,
+        self, tool_calls: list[Any], retries: int,
     ) -> bool:
         """If ``validate_scene`` returned errors, nudge the LLM to fix them."""
         max_retries = self.settings.llm.max_validation_retries

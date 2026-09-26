@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -61,7 +62,7 @@ def add_asset_material_variant(
     ):
         state.reopen_stage()
 
-    def author_fn(stage, _prim_path: str) -> None:
+    def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
         for mesh_path, material_path in bindings.items():
             mesh_over = stage.OverridePrim(mesh_path)
             binding_api = UsdShade.MaterialBindingAPI.Apply(mesh_over)
@@ -126,7 +127,7 @@ def add_asset_geometry_variant(
         asset_dir, {**existing_refs, variant_name: new_payload_ref},
     )
 
-    def author_fn(stage, _prim_path: str) -> None:
+    def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
         for target_path, payload_asset in payloads.items():
             target = stage.OverridePrim(target_path)
             target.GetPayloads().ClearPayloads()
@@ -223,7 +224,7 @@ def add_asset_attribute_variant(
         state.library_dir,
     )
 
-    def author_fn(stage, _prim_path: str) -> None:
+    def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
         for path, attrs in overrides.items():
             stage.OverridePrim(path)
             types = resolved_types[path]
@@ -283,7 +284,7 @@ def add_asset_configuration_variant(
     ):
         state.reopen_stage()
 
-    def author_fn(stage, _prim_path: str) -> None:
+    def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
         for prim_path, active in activations.items():
             target = stage.OverridePrim(prim_path)
             target.SetActive(active)
@@ -349,7 +350,7 @@ def add_scene_lighting_attribute_variant(
         state.library_dir,
     )
 
-    def author_fn(stage, _carrier: str) -> None:
+    def author_fn(stage: Usd.Stage, _carrier: str) -> None:
         for path, attrs in overrides.items():
             stage.OverridePrim(path)
             types = resolved_types[path]
@@ -412,7 +413,7 @@ def add_scene_lighting_selection_variant(
     ):
         stage = state.reopen_stage()
 
-    def author_fn(stage, _carrier: str) -> None:
+    def author_fn(stage: Usd.Stage, _carrier: str) -> None:
         for path, active in activations.items():
             stage.OverridePrim(path).SetActive(active)
 
@@ -470,7 +471,7 @@ def add_scene_model_selection_variant(
     )
     new_ref = f"./{report.scene_ref_path}"
 
-    def author_refs(refs: list[str]):
+    def author_refs(refs: list[str]) -> Callable[[Usd.Stage, str], None]:
         def fn(stage: Usd.Stage, _carrier: str) -> None:
             ov = stage.OverridePrim(asset_child)
             ov.GetReferences().ClearReferences()
@@ -725,7 +726,7 @@ def remove_scene_variant(
     removed = variants.scene.remove_scene_variant(
         stage, prim_path, set_name, variant_name,
     )
-    suspects: list[dict] = []
+    suspects: list[dict[str, Any]] = []
     if removed:
         suspects = variants.suspects.suspect_variant_sets_on_scene_carrier(
             stage, prim_path,

@@ -58,6 +58,7 @@ feat/my-feature → PR titled "feat: ..." → squash merge → main → Release 
 - [ ] Branch name follows `type/description` convention
 - [ ] PR title follows `type: description` format
 - [ ] Tests pass (`uv run pytest`)
+- [ ] Lint and types pass (`uv run ruff check src/ tests/`, `uv run mypy src/`)
 - [ ] One feature or fix per PR
 - [ ] New functionality includes tests
 
@@ -212,7 +213,7 @@ For the full production setup (PyPI Trusted Publisher OIDC, release-please, GitH
 ## Code Style
 
 - Python 3.12+
-- Type hints on all public methods
+- Fully typed: `uv run mypy src/` passes in strict mode, with no casts or `# type: ignore` (CI runs it). Libraries without type information (`pxr`, `jsonschema`) are typed as `Any` in `pyproject.toml`; annotate what their calls return (`removed: bool = stage.RemovePrim(path)`).
 - No `.env` files; all config goes through `~/.bowerbot/config.json`
 - Keep imports at the top of the file, not inside methods
 

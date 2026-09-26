@@ -11,6 +11,7 @@ import json
 import logging
 from collections.abc import AsyncIterator
 from importlib.metadata import PackageNotFoundError, version
+from typing import Any
 
 import mcp.types as types
 import uvicorn
@@ -20,6 +21,7 @@ from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.routing import Mount
+from starlette.types import Receive, Scope, Send
 
 from bowerbot import tool_router
 from bowerbot.config import McpSettings, Settings, Transport
@@ -37,7 +39,7 @@ def _server_version() -> str:
         return "0.0.0"
 
 
-def _to_mcp_tools(schemas: list[dict]) -> list[types.Tool]:
+def _to_mcp_tools(schemas: list[dict[str, Any]]) -> list[types.Tool]:
     """Convert litellm function schemas into MCP tool definitions."""
     tools: list[types.Tool] = []
     for schema in schemas:
@@ -62,7 +64,7 @@ def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
 
     @server.call_tool()
     async def call_tool(
-        name: str, arguments: dict,
+        name: str, arguments: dict[str, Any],
     ) -> list[types.TextContent]:
         result = await tool_router.route(
             state, skill_registry, name, arguments or {},
@@ -104,7 +106,7 @@ def build_app(settings: Settings) -> Starlette:
         security_settings=_security_settings(settings.mcp),
     )
 
-    async def handle(scope, receive, send) -> None:
+    async def handle(scope: Scope, receive: Receive, send: Send) -> None:
         await manager.handle_request(scope, receive, send)
 
     @contextlib.asynccontextmanager

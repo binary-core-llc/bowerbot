@@ -99,7 +99,7 @@ def remove_collision_group(
                 "(BowerBot scrubs the dangling references afterwards).",
             )
 
-    removed = stage.RemovePrim(prim_path)
+    removed: bool = stage.RemovePrim(prim_path)
     if removed:
         stage.Save()
     return removed
@@ -131,7 +131,7 @@ def get_collision_group_summary(
     return _summarize_group(prim)
 
 
-def format_collision_group_prim(prim: Usd.Prim) -> dict:
+def format_collision_group_prim(prim: Usd.Prim) -> dict[str, Any]:
     """Format a ``UsdPhysics.CollisionGroup`` for ``list_prims``."""
     return {
         "prim_path": str(prim.GetPath()),

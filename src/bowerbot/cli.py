@@ -8,9 +8,10 @@ from __future__ import annotations
 import asyncio
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 import click
-import litellm
+from litellm.exceptions import APIConnectionError, AuthenticationError, RateLimitError, Timeout
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
@@ -192,7 +193,7 @@ def chat() -> None:
     _start_chat(settings, project)
 
 
-def _format_object_summary(obj: dict) -> str:
+def _format_object_summary(obj: dict[str, Any]) -> str:
     """Format a scene object for the resume context message."""
     path = obj["prim_path"]
     pos = obj.get("position")
@@ -286,21 +287,21 @@ async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
                     )
         except KeyboardInterrupt:
             console.print("\n[info]Interrupted. Type 'quit' to exit.[/]")
-        except litellm.AuthenticationError:
+        except AuthenticationError:
             console.print(
                 "\n[red]Authentication failed.[/] "
                 "Check your API key with 'bowerbot info'.",
             )
-        except litellm.RateLimitError:
+        except RateLimitError:
             console.print(
                 "\n[yellow]Rate limited.[/] "
                 "Retries exhausted. Wait a moment and try again.",
             )
-        except litellm.APIConnectionError:
+        except APIConnectionError:
             console.print(
                 "\n[red]Cannot reach API.[/] Check your network connection.",
             )
-        except litellm.Timeout:
+        except Timeout:
             console.print(
                 "\n[yellow]Request timed out.[/] "
                 "Try again or increase request_timeout in config.",
@@ -346,21 +347,21 @@ def build(prompt: str) -> None:
     try:
         response = asyncio.run(agent.process(prompt))
         console.print(f"\n{response}")
-    except litellm.AuthenticationError:
+    except AuthenticationError:
         console.print(
             "\n[red]Authentication failed.[/] "
             "Check your API key with 'bowerbot info'.",
         )
-    except litellm.RateLimitError:
+    except RateLimitError:
         console.print(
             "\n[yellow]Rate limited.[/] "
             "Retries exhausted. Wait a moment and try again.",
         )
-    except litellm.APIConnectionError:
+    except APIConnectionError:
         console.print(
             "\n[red]Cannot reach API.[/] Check your network connection.",
         )
-    except litellm.Timeout:
+    except Timeout:
         console.print(
             "\n[yellow]Request timed out.[/] "
             "Try again or increase request_timeout in config.",
@@ -488,8 +489,8 @@ def onboard() -> None:
         llm=llm,
         mcp=mcp,
         skills={},
-        assets_dir=assets_dir,
-        projects_dir=projects_dir,
+        assets_dir=Path(assets_dir),
+        projects_dir=Path(projects_dir),
     )
 
     save_settings(settings)

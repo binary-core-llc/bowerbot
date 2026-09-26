@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from pxr import Sdf, Usd
@@ -33,13 +34,15 @@ def rewrite_refs(
     return {"rels_touched": touched}
 
 
-def _drop_missing(stage: Usd.Stage):
+def _drop_missing(stage: Usd.Stage) -> Callable[[list[Sdf.Path]], list[Sdf.Path]]:
     def policy(targets: list[Sdf.Path]) -> list[Sdf.Path]:
         return [t for t in targets if _prim_exists(stage, t)]
     return policy
 
 
-def _rewrite(mapping: dict[Sdf.Path, Sdf.Path]):
+def _rewrite(
+    mapping: dict[Sdf.Path, Sdf.Path],
+) -> Callable[[list[Sdf.Path]], list[Sdf.Path]]:
     def policy(targets: list[Sdf.Path]) -> list[Sdf.Path]:
         return [_rebase(t, mapping) for t in targets]
     return policy
@@ -62,7 +65,9 @@ def _prim_exists(stage: Usd.Stage, path: Sdf.Path) -> bool:
     return bool(prim and prim.IsValid())
 
 
-def _walk_root_layer_rels(layer: Sdf.Layer, policy) -> list[dict[str, Any]]:
+def _walk_root_layer_rels(
+    layer: Sdf.Layer, policy: Callable[[list[Sdf.Path]], list[Sdf.Path]],
+) -> list[dict[str, Any]]:
     touched: list[dict[str, Any]] = []
 
     def visit(path: Sdf.Path) -> None:
@@ -82,7 +87,9 @@ def _walk_root_layer_rels(layer: Sdf.Layer, policy) -> list[dict[str, Any]]:
     return touched
 
 
-def _apply(rel_spec: Sdf.RelationshipSpec, policy) -> dict[str, Any] | None:
+def _apply(
+    rel_spec: Sdf.RelationshipSpec, policy: Callable[[list[Sdf.Path]], list[Sdf.Path]],
+) -> dict[str, Any] | None:
     list_op = rel_spec.targetPathList
     before: dict[str, list[str]] = {}
     after: dict[str, list[str]] = {}

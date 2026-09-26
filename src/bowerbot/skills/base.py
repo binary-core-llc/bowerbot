@@ -14,6 +14,7 @@ open project / scene without coupling the skill to ``SceneState``.
 
 from __future__ import annotations
 
+import inspect
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -135,9 +136,7 @@ class Skill(ABC):
 
     def get_skill_prompt(self) -> str:
         """Load this skill's ``SKILL.md`` content for the system prompt."""
-        module_file = Path(
-            __import__(self.__class__.__module__, fromlist=[""]).__file__,
-        )
+        module_file = Path(inspect.getfile(type(self)))
         skill_md = module_file.parent / "SKILL.md"
         if skill_md.exists():
             return skill_md.read_text(encoding="utf-8")

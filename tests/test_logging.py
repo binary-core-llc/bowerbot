@@ -12,6 +12,7 @@ import pytest
 from bowerbot.config import LLMSettings, LoggingSettings, Settings
 from bowerbot.logging_setup import (
     configure_logging,
+    is_secret_key,
     log_tool_result,
     sanitize,
     session_id,
@@ -272,3 +273,16 @@ def test_rotating_handler_respects_max_bytes(tmp_path, monkeypatch):
     rotated = list((tmp_path / "logs").glob("bowerbot.log*"))
     assert log_file in rotated
     assert len(rotated) >= 2
+
+
+@pytest.mark.parametrize("key", [
+    "api_key", "apiKey", "x-api-key", "token", "access_token", "accessToken",
+    "sketchfab_token", "password", "client_secret", "Authorization", "auth",
+])
+def test_secret_keys_are_recognized(key):
+    assert is_secret_key(key)
+
+
+@pytest.mark.parametrize("key", ["max_tokens", "author", "keyframe", "name", "tokens_used"])
+def test_ordinary_keys_are_not_redacted(key):
+    assert not is_secret_key(key)

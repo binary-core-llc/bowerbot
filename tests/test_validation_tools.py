@@ -11,7 +11,7 @@ from pxr import Sdr, Usd, UsdGeom, UsdShade
 
 from bowerbot.schemas import Severity
 from bowerbot.utils.validation.compliance import run_usd_compliance_checker
-from tests._helpers import exec_tool, make_state
+from tests._helpers import exec_tool, library_state, make_state
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -172,3 +172,29 @@ def test_validate_scene_resolves_nested_references_from_their_layer():
         r = asyncio.run(exec_tool(state, "validate_scene"))
         assert r.success, r.error
         assert not [i for i in r.data["issues"] if "Unresolved reference" in i["message"]]
+
+
+def test_package_refuses_while_validation_finds_errors():
+    """Errors keep the package from being written; force packages anyway."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        project = state.require_project()
+        asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "table", "asset_name": "Table", "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        stage = state.require_stage()
+        UsdGeom.SetStageMetersPerUnit(stage, 0.5)
+        stage.Save()
+        usdz = project.path / "scene.usdz"
+
+        refused = asyncio.run(exec_tool(state, "package_scene", {}))
+        assert refused.success, refused.error
+        assert refused.data["usdz_path"] is None
+        assert refused.data["validation"]["error_count"] >= 1
+        assert not usdz.exists()
+
+        forced = asyncio.run(exec_tool(state, "package_scene", {"force": True}))
+        assert forced.success, forced.error
+        assert forced.data["usdz_path"] == str(usdz)
+        assert usdz.exists()

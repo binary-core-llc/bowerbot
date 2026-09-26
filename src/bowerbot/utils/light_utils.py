@@ -174,18 +174,6 @@ def require_light(stage: Usd.Stage, prim_path: str) -> Usd.Prim:
     return prim
 
 
-def get_light_texture(stage: Usd.Stage, prim_path: str) -> str | None:
-    """Return the texture file path for a light prim, or ``None``."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim or not prim.IsValid():
-        return None
-    tex_attr = prim.GetAttribute("inputs:texture:file")
-    if not tex_attr or not tex_attr.Get():
-        return None
-    tex_val = tex_attr.Get()
-    return tex_val.path if hasattr(tex_val, "path") else str(tex_val)
-
-
 def format_light_prim(
     prim: Usd.Prim, position: dict[str, float] | None,
 ) -> dict[str, Any]:

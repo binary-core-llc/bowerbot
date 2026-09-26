@@ -81,6 +81,11 @@ def get_tool_schemas() -> list[dict[str, Any]]:
     return [tool.to_llm_schema() for tool in TOOLS]
 
 
+def get_tools() -> list[Tool]:
+    """Return every core tool definition."""
+    return list(TOOLS)
+
+
 def get_tool_names() -> set[str]:
     """Return the set of tool names owned by the dispatcher."""
     return set(HANDLERS.keys())

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+from dataclasses import replace
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -18,6 +19,7 @@ from bowerbot.skills.base import (
     Skill,
     SkillConfigError,
     SkillContext,
+    Tool,
     ToolResult,
 )
 
@@ -131,6 +133,14 @@ class SkillRegistry:
                 schema["function"]["name"] = f"{skill_name}__{tool.name}"
                 tools.append(schema)
         return tools
+
+    def get_tool_definitions(self) -> list[Tool]:
+        """Every enabled skill's tools, each named ``<skill>__<tool>`` as clients call it."""
+        return [
+            replace(tool, name=f"{skill_name}__{tool.name}")
+            for skill_name, skill in self._skills.items()
+            for tool in skill.get_tools()
+        ]
 
     def get_skill_prompts(self) -> str:
         """Concatenate every enabled skill's SKILL.md content."""

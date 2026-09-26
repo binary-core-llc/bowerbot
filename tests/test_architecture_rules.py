@@ -314,3 +314,22 @@ def test_core_builds_on_openusd_only() -> None:
             ):
                 offenders.append(f"{rel}:{node.lineno} {node.value!r}")
     assert not offenders, f"vendor runtime or schema in the core: {offenders}"
+
+
+READ_TOOL = ("list_", "get_", "search_")
+READ_TOOLS = {"validate_scene", "compute_grid_layout"}
+REMOVING_TOOL = ("remove_", "delete_", "cleanup_")
+
+
+def test_a_tool_s_effect_matches_what_its_name_says() -> None:
+    """Reads are READ and nothing else is; removals are never ADD (clients trust these hints)."""
+    from bowerbot.skills import ToolEffect
+
+    offenders = []
+    for tool in dispatcher.get_tools():
+        reads = tool.name.startswith(READ_TOOL) or tool.name in READ_TOOLS
+        if reads != (tool.effect is ToolEffect.READ):
+            offenders.append(f"{tool.name}: {tool.effect.value}")
+        if tool.name.startswith(REMOVING_TOOL) and tool.effect is not ToolEffect.CHANGE:
+            offenders.append(f"{tool.name}: {tool.effect.value}")
+    assert not offenders, f"tool effect does not match its name: {offenders}"

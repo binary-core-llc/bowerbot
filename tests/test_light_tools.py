@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
-from tests._helpers import exec_tool, make_state
+from tests._helpers import exec_tool, library_state, make_state
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -174,7 +174,7 @@ def test_create_dome_light_with_texture():
 
 
 def test_remove_dome_light_names_the_texture_to_delete():
-    """remove_light hands back the name delete_project_texture takes; only the project copy goes."""
+    """remove_light lists the texture it left unused; delete_project_texture takes that path."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         hdri = tmp_path / "studio.hdr"
@@ -188,10 +188,10 @@ def test_remove_dome_light_names_the_texture_to_delete():
             "prim_path": made.data["prim_path"],
         }))
         assert removed.success, removed.error
-        assert removed.data["texture_name"] == "studio.hdr"
+        assert removed.data["unused_files"] == ["textures/studio.hdr"]
 
         deleted = asyncio.run(exec_tool(state, "delete_project_texture", {
-            "file_name": removed.data["texture_name"],
+            "file_name": removed.data["unused_files"][0],
         }))
         assert deleted.success, deleted.error
         assert not (project.path / "textures" / "studio.hdr").exists()
@@ -458,7 +458,7 @@ def test_update_asset_light_absolute_uses_the_placement_frame():
 
 
 def test_update_asset_light_offset_keeps_omitted_axes():
-    """A bounds_offset update moves only the axes it names."""
+    """Moving an asset light needs position_mode; a bounds_offset update moves only its axes."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "lamp")
@@ -475,6 +475,14 @@ def test_update_asset_light_offset_keeps_omitted_axes():
 
         r = asyncio.run(exec_tool(state, "update_light", {
             "prim_path": light, "translate_x": 0.3, "rotate_z": 15.0,
+        }))
+        assert not r.success
+        assert "position_mode" in r.error
+        assert _world_position(project.scene_path, light) == before
+
+        r = asyncio.run(exec_tool(state, "update_light", {
+            "prim_path": light, "position_mode": "bounds_offset",
+            "translate_x": 0.3, "rotate_z": 15.0,
         }))
         assert r.success, r.error
         after = _world_position(project.scene_path, light)
@@ -888,3 +896,52 @@ def test_textures_that_share_a_name_do_not_overwrite_each_other():
             light = stage.GetPrimAtPath(r.data["prim_path"])
             paths.append(light.GetAttribute("inputs:texture:file").Get().path)
         assert paths == ["./maps/screen.png", "./maps/screen_2.png", "./maps/screen.png"]
+
+
+# ── placement paths and leftover textures ──
+
+
+def _run(state, tool, **params):
+    return asyncio.run(exec_tool(state, tool, params))
+
+
+def test_an_asset_light_takes_the_placement_or_its_asset_child_never_a_part():
+    """A part path is refused before anything is written; /asset means the placement."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        lamp = _run(state, "place_asset", asset="lamp", asset_name="Lamp", group="Props",
+                    translate_x=5.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+        light = {"light_type": "SphereLight", "light_name": "Bulb", "position_mode": "absolute",
+                 "translate_x": 5.1, "translate_y": 0.5, "translate_z": 0.0}
+
+        part = _run(state, "create_light", asset_prim_path=f"{lamp}/asset/Shade", **light)
+        assert not part.success
+        assert f"pass the placement itself ({lamp})" in part.error
+        assert not (state.require_project().assets_dir / "lamp" / "lgt.usda").exists()
+
+        made = _run(state, "create_light", asset_prim_path=f"{lamp}/asset", **light)
+        assert made.success, made.error
+        assert made.data["position"] == {"x": 5.1, "y": 0.5, "z": 0.0}
+
+
+def test_removing_an_asset_rect_light_lists_its_texture_for_deletion():
+    """The copied texture stays until the user deletes it; the library keeps its original."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        project = state.require_project()
+        lamp = _run(state, "place_asset", asset="lamp", asset_name="Lamp", group="Props",
+                    translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+        screen = _run(state, "create_light", light_type="RectLight", light_name="Screen",
+                      asset_prim_path=lamp, texture="textures/glow.png")
+        assert screen.success, screen.error
+        maps = project.assets_dir / "lamp" / "maps"
+
+        removed = _run(state, "remove_light", prim_path=screen.data["prim_path"])
+        assert removed.success, removed.error
+        assert removed.data["unused_files"] == ["assets/lamp/maps/glow.png"]
+
+        deleted = _run(state, "delete_project_texture", file_name="assets/lamp/maps/glow.png")
+        assert deleted.success, deleted.error
+        assert not (maps / "glow.png").exists()
+        assert (maps / "shade.png").exists()
+        assert (state.library_dir / "textures" / "glow.png").exists()

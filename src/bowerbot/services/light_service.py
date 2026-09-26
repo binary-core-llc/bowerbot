@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 from pxr import Sdf
@@ -22,6 +21,7 @@ from bowerbot.schemas import (
 from bowerbot.state import SceneState
 from bowerbot.utils import light_utils, stage_utils, texture_utils, variants
 from bowerbot.utils.core.asset_folder import (
+    project_unused_files,
     resolve_asset_dir_for_prim,
     resolve_default_prim_name,
 )
@@ -33,6 +33,7 @@ from bowerbot.utils.core.integrity import (
     require_prims,
 )
 from bowerbot.utils.core.naming import clean_prim_name, unique_prim_path
+from bowerbot.utils.core.references import newly_unused, placement_of, unused_files_note
 from bowerbot.utils.core.transforms import (
     orientation_in_asset,
     orientation_in_scene,
@@ -80,6 +81,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                 f"asset_prim_path."
             )
             raise ValueError(msg)
+        asset_prim_path = placement_of(stage, asset_prim_path)
         asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
             stage, asset_prim_path,
         )
@@ -174,6 +176,8 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     prim = light_utils.require_light(stage, prim_path)
     asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
     texture = params.get("texture")
+    project_dir = state.require_project().path
+    watched = project_unused_files(project_dir, asset_dir)
 
     if asset_dir is not None and ref_prim_path is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
@@ -188,9 +192,18 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         given = read_axes(params, "translate_x", "translate_y", "translate_z")
         translate = None
         if any(axis is not None for axis in given):
+            mode = params.get("position_mode")
+            if mode is None:
+                msg = (
+                    f"{prim_path} is an asset light: say how to read the translate "
+                    f"values with position_mode ('absolute' = world coordinates in "
+                    f"scene units, as list_scene reports them; 'bounds_offset' = "
+                    f"meters from the asset's bounds)."
+                )
+                raise ValueError(msg)
             translate = resolve_position_in_asset(
                 stage, ref_prim_path, asset_dir,
-                PositionMode(params.get("position_mode", PositionMode.BOUNDS_OFFSET.value)),
+                PositionMode(mode),
                 given,
                 current_local=current_translate,
                 current_world=world_position(prim),
@@ -222,10 +235,12 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         stage_utils.save_stage(stage)
 
     state.touch_project()
+    unused = newly_unused(project_dir, watched, project_unused_files(project_dir, asset_dir))
     logger.info("Updated light at %s", prim_path)
     return {
         "prim_path": prim_path,
-        "message": f"Updated light at {prim_path}",
+        "unused_files": unused,
+        "message": f"Updated light at {prim_path}." + unused_files_note(unused),
     }
 
 
@@ -235,6 +250,9 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     prim_path = params["prim_path"]
     light_utils.require_light(stage, prim_path)
     asset_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
+
+    project_dir = state.require_project().path
+    watched = project_unused_files(project_dir, asset_dir)
 
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
@@ -247,6 +265,7 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             )
             raise ValueError(msg)
         scrubbed = drop_refs_to_vanished(state.reopen_stage(), before)
+        unused = newly_unused(project_dir, watched, project_unused_files(project_dir, asset_dir))
         logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
         return {
             "prim_path": prim_path,
@@ -255,24 +274,25 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "suspect_variant_sets": variants.suspects.suspect_variant_sets_in_asset(
                 asset_dir,
             ),
-            "message": f"Removed asset light {light_name} from {asset_dir.name}",
+            "unused_files": unused,
+            "message": (
+                f"Removed asset light {light_name} from {asset_dir.name}."
+                + unused_files_note(unused)
+            ),
         }
 
-    texture_file = light_utils.get_light_texture(stage, prim_path)
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
     scrubbed = remove_scene_prim(stage, prim_path)
     state.touch_project()
+    unused = newly_unused(project_dir, watched, project_unused_files(project_dir, None))
 
     logger.info("Removed scene light at %s", prim_path)
-    data: dict[str, Any] = {
+    return {
         "prim_path": prim_path,
         "scrubbed_dangling_refs": scrubbed,
         "suspect_variant_sets": variants.suspects.suspect_variant_sets_on_scene_carrier(
             stage, carrier_path,
         ),
-        "message": f"Removed light at {prim_path}",
+        "unused_files": unused,
+        "message": f"Removed light at {prim_path}." + unused_files_note(unused),
     }
-    if texture_file:
-        data["texture_file"] = texture_file
-        data["texture_name"] = Path(texture_file).name
-    return data

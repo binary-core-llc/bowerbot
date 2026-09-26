@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom, UsdShade
 
-from tests._helpers import exec_tool, make_state
+from tests._helpers import exec_tool, library_state, make_state
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -403,3 +403,32 @@ def test_bind_material_brings_the_material_textures_into_the_asset():
         value = layer.GetAttributeAtPath("/chair/mtl/woodmat/tex.inputs:file").default
         assert value.path == "./maps/wood.png"
         assert Path(layer.ComputeAbsolutePath(value.path)).is_file()
+
+
+def test_removing_a_textured_material_lists_its_texture():
+    """The copied texture is reported, then deleted on request; the asset folder stays."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        assets_dir = state.require_project().assets_dir
+        table = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "table", "asset_name": "Table", "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })).data["prim_path"]
+        bound = asyncio.run(exec_tool(state, "bind_material", {
+            "prim_path": f"{table}/asset/Top", "material_asset": "woodmat",
+            "material_prim_path": "/Materials/wood",
+        }))
+        assert bound.success, bound.error
+
+        removed = asyncio.run(exec_tool(state, "remove_material", {
+            "prim_path": f"{table}/asset/Top",
+        }))
+        assert removed.success, removed.error
+        assert removed.data["unused_files"] == ["assets/table/maps/wood.png"]
+
+        deleted = asyncio.run(exec_tool(state, "delete_project_texture", {
+            "file_name": "assets/table/maps/wood.png",
+        }))
+        assert deleted.success, deleted.error
+        assert not (assets_dir / "table" / "maps").exists()
+        assert (assets_dir / "table" / "table.usda").exists()

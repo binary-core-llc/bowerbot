@@ -9,6 +9,7 @@ from typing import Any
 
 from pxr import Sdf, Sdr, Usd, UsdGeom, UsdShade
 
+from bowerbot.schemas import MaterialXShaders, PreviewSurfaceShader
 from bowerbot.utils.core.overrides import prune_empty_overrides
 from bowerbot.utils.core.values import infer_sdf_type, json_to_usd, usd_to_json
 
@@ -51,9 +52,7 @@ def set_prim_attribute(
     separate composition (e.g. variant body authoring against an asset's
     composed stage) should pass it to avoid the wrong type being authored.
     """
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim or not prim.IsValid():
-        raise ValueError(f"Prim not found: {prim_path}")
+    prim = _require_prim(stage, prim_path)
 
     if value is None:
         layer = stage.GetEditTarget().GetLayer()
@@ -66,6 +65,95 @@ def set_prim_attribute(
             prune_empty_overrides(layer, prim_path)
         return
 
+    attr, new_type, type_name, converted = _typed_value(
+        prim, attribute_name, value, expected_type,
+    )
+    if new_type is not None:
+        attr = _create_attribute(prim, attribute_name, new_type)
+    try:
+        attr.Set(converted)
+    except (TypeError, RuntimeError):
+        msg = (
+            f"value {value!r} does not match {attribute_name}'s "
+            f"declared type {type_name}."
+        )
+        raise ValueError(msg) from None
+
+
+def attribute_type(
+    stage: Usd.Stage, prim_path: str, attribute_name: str,
+) -> Sdf.ValueTypeName | None:
+    """The type *attribute_name* has on the prim, or would get from its schema; else ``None``."""
+    prim = _require_prim(stage, prim_path)
+    attr = prim.GetAttribute(attribute_name)
+    if attr.IsValid():
+        return attr.GetTypeName()
+    if attribute_name.startswith("inputs:") and prim.IsA(UsdShade.Shader):
+        return _resolve_shader_input_type(
+            UsdShade.Shader(prim), attribute_name[len("inputs:"):],
+        )
+    return None
+
+
+def check_attribute_value(
+    stage: Usd.Stage, prim_path: str, attribute_name: str, value: object,
+) -> None:
+    """Raise ``ValueError`` if :func:`set_prim_attribute` would refuse *value*; author nothing."""
+    prim = _require_prim(stage, prim_path)
+    if value is not None:
+        _typed_value(prim, attribute_name, value, None)
+
+
+def twin_shader_input(
+    stage: Usd.Stage, prim_path: str, attribute_name: str,
+) -> tuple[str, str] | None:
+    """The same value's input on the other network of a BowerBot hybrid material.
+
+    *prim_path* is the material's ``standard_surface`` or ``preview_surface``
+    shader; ``None`` when it isn't, or when the input has no twin.
+    """
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim.IsValid() or not prim.IsA(UsdShade.Shader):
+        return None
+    material = prim.GetParent()
+    if not material.IsA(UsdShade.Material):
+        return None
+    name = attribute_name.removeprefix("inputs:")
+    if name == attribute_name:
+        return None
+    to_preview = MaterialXShaders.PREVIEW_TWIN_INPUTS
+    to_standard = {preview: standard for standard, preview in to_preview.items()}
+    shader_id = UsdShade.Shader(prim).GetIdAttr().Get()
+    if shader_id == MaterialXShaders.STANDARD_SURFACE and name in to_preview:
+        twin = material.GetChild(PreviewSurfaceShader.SURFACE_PRIM)
+        twin_id, twin_name = PreviewSurfaceShader.SURFACE_ID, to_preview[name]
+    elif shader_id == PreviewSurfaceShader.SURFACE_ID and name in to_standard:
+        twin = material.GetChild(MaterialXShaders.STANDARD_SURFACE_PRIM)
+        twin_id, twin_name = MaterialXShaders.STANDARD_SURFACE, to_standard[name]
+    else:
+        return None
+    if not twin.IsA(UsdShade.Shader) or UsdShade.Shader(twin).GetIdAttr().Get() != twin_id:
+        return None
+    return str(twin.GetPath()), f"inputs:{twin_name}"
+
+
+def _require_prim(stage: Usd.Stage, prim_path: str) -> Usd.Prim:
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim or not prim.IsValid():
+        raise ValueError(f"Prim not found: {prim_path}")
+    return prim
+
+
+def _typed_value(
+    prim: Usd.Prim,
+    attribute_name: str,
+    value: object,
+    expected_type: Sdf.ValueTypeName | None,
+) -> tuple[Usd.Attribute, Sdf.ValueTypeName | None, Sdf.ValueTypeName, Any]:
+    """The attribute, the type to create it with (if missing), its type and *value* converted.
+
+    Converting before anything is created means a bad value leaves the prim untouched.
+    """
     attr = prim.GetAttribute(attribute_name)
     new_type = (
         None if attr.IsValid()
@@ -77,21 +165,10 @@ def set_prim_attribute(
         type_name = new_type
     else:
         type_name = attr.GetTypeName()
-
-    # Convert before creating anything, so a bad value leaves the prim untouched.
     converted = json_to_usd(value, type_name)
     if attr.IsValid():
         _require_allowed_tokens(attr, converted)
-    if new_type is not None:
-        attr = _create_attribute(prim, attribute_name, new_type)
-    try:
-        attr.Set(converted)
-    except (TypeError, RuntimeError):
-        msg = (
-            f"value {value!r} does not match {attribute_name}'s "
-            f"declared type {type_name}."
-        )
-        raise ValueError(msg) from None
+    return attr, new_type, type_name, converted
 
 
 def _require_allowed_tokens(attr: Usd.Attribute, value: Any) -> None:

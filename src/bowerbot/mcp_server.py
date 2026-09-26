@@ -23,9 +23,10 @@ from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.routing import Route
 
-from bowerbot import tool_router
+from bowerbot import dispatcher, tool_router
 from bowerbot.config import McpSettings, Settings, Transport
 from bowerbot.prompts import load_prompt
+from bowerbot.skills.base import Tool, ToolEffect
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
 
@@ -40,19 +41,29 @@ def _server_version() -> str:
         return "0.0.0"
 
 
-def _to_mcp_tools(schemas: list[dict[str, Any]]) -> list[types.Tool]:
-    """Convert litellm function schemas into MCP tool definitions."""
-    tools: list[types.Tool] = []
-    for schema in schemas:
-        fn = schema["function"]
-        tools.append(types.Tool(
-            name=fn["name"],
-            description=fn.get("description", ""),
-            inputSchema=fn.get(
-                "parameters", {"type": "object", "properties": {}},
+def _to_mcp_tools(tools: list[Tool]) -> list[types.Tool]:
+    """Convert tool definitions into MCP tools, with hints on what each one changes.
+
+    Core tools touch only the local project and library, so they are
+    closed-world; a skill's reach is unknown, so its tools leave that open.
+    """
+    core = dispatcher.get_tool_names()
+    return [
+        types.Tool(
+            name=tool.name,
+            description=tool.description,
+            inputSchema=tool.parameters or {"type": "object", "properties": {}},
+            annotations=types.ToolAnnotations(
+                readOnlyHint=tool.effect is ToolEffect.READ,
+                destructiveHint=(
+                    None if tool.effect is ToolEffect.READ
+                    else tool.effect is ToolEffect.CHANGE
+                ),
+                openWorldHint=False if tool.name in core else None,
             ),
-        ))
-    return tools
+        )
+        for tool in tools
+    ]
 
 
 def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
@@ -63,7 +74,7 @@ def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
 
     @server.list_tools()
     async def list_tools() -> list[types.Tool]:
-        return _to_mcp_tools(tool_router.combined_tool_schemas(skill_registry))
+        return _to_mcp_tools(tool_router.combined_tools(skill_registry))
 
     @server.call_tool()
     async def call_tool(
@@ -114,7 +125,7 @@ def build_app(settings: Settings) -> Starlette:
         async with manager.run():
             logger.info(
                 "MCP server ready: %d tool(s), %d skill(s) on %s",
-                len(tool_router.combined_tool_schemas(skill_registry)),
+                len(tool_router.combined_tools(skill_registry)),
                 skill_registry.skill_count,
                 settings.mcp.path,
             )
@@ -137,7 +148,7 @@ async def _run_stdio(settings: Settings) -> None:
     server = _build_server(state, skill_registry)
     logger.info(
         "MCP server ready over stdio: %d tool(s), %d skill(s)",
-        len(tool_router.combined_tool_schemas(skill_registry)),
+        len(tool_router.combined_tools(skill_registry)),
         skill_registry.skill_count,
     )
     async with stdio_server() as (read, write):

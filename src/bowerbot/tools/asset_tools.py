@@ -9,7 +9,7 @@ from typing import Any
 
 from bowerbot.schemas import LayoutPattern, LayoutRules, PositionMode
 from bowerbot.services import asset_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -108,6 +108,7 @@ _ROTATE_Z = {
 TOOLS: list[Tool] = [
     Tool(
         name="place_asset",
+        effect=ToolEffect.ADD,
         description=(
             "Place a 3D asset into the current scene. The asset is added as a "
             "USD reference at the specified prim path with the given transform. "
@@ -203,6 +204,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="place_layout",
+        effect=ToolEffect.ADD,
         description=(
             "Place MANY assets into the scene in a single call, the batch form "
             "of place_asset. Provide EXACTLY ONE of 'placements' (inline "
@@ -396,6 +398,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="place_asset_inside",
+        effect=ToolEffect.ADD,
         description=(
             "Place a 3D asset NESTED INSIDE another asset (the container). "
             "The asset becomes part of the container's asset folder; if the "
@@ -438,9 +441,11 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "description": (
                         "The container's placement path as list_scene reports "
-                        "it (e.g. '/Scene/Architecture/Building_01'), not its "
-                        "/asset child or a part. The nested asset will be "
-                        "written into this container's contents.usda."
+                        "it (e.g. '/Scene/Architecture/Building_01'; its /asset "
+                        "child means the same placement). A part inside it, or "
+                        "a placement that is itself nested, is refused. The "
+                        "nested asset is written into this container's "
+                        "contents.usda."
                     ),
                 },
                 "group": {
@@ -521,6 +526,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_project_assets",
+        effect=ToolEffect.READ,
         description=(
             "List asset folders in the current project's assets directory. "
             "Each entry reports in_scene (used by the scene in any variant, "
@@ -567,9 +573,11 @@ TOOLS: list[Tool] = [
     Tool(
         name="delete_project_texture",
         description=(
-            "Delete a texture file from the project's textures/ directory. "
-            "Scans all USD files in the project to ensure the texture is "
-            "not referenced elsewhere before deleting."
+            "Delete a texture file from the project: one in textures/ or "
+            "one in an asset folder (e.g. a maps/ file), as a removal's "
+            "unused_files lists it. Refuses while any USD file in the "
+            "project still uses it (variant bodies included). Never touches "
+            "the asset library. Only when the user agrees."
         ),
         parameters={
             "type": "object",
@@ -577,7 +585,10 @@ TOOLS: list[Tool] = [
                 "file_name": {
                     "type": "string",
                     "description": (
-                        "Name of the texture file to delete (e.g. 'studio.exr')."
+                        "The texture to delete: a file name in textures/ "
+                        "(e.g. 'studio.exr') or a path relative to the "
+                        "project as unused_files reports it (e.g. "
+                        "'assets/table/maps/wood.png')."
                     ),
                 },
             },

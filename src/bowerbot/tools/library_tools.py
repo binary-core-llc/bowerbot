@@ -9,7 +9,7 @@ from typing import Any
 
 from bowerbot.schemas import LibraryDefaults, LibraryRules
 from bowerbot.services import library_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -34,6 +34,7 @@ def list_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
 TOOLS: list[Tool] = [
     Tool(
         name="search_assets",
+        effect=ToolEffect.READ,
         description=(
             "Search the user's asset library by name across every category. "
             "Returns {results: [...], total_matches: int, truncated: bool}. "
@@ -68,6 +69,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_assets",
+        effect=ToolEffect.READ,
         description=(
             "Browse the user's asset library, optionally filtered by "
             "category. Returns {results: [...], total_matches: int, "

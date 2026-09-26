@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot.services import camera_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -66,6 +66,7 @@ _LOOK_AT = {
 TOOLS: list[Tool] = [
     Tool(
         name="list_camera_properties",
+        effect=ToolEffect.READ,
         description=(
             "Live UsdGeom schema view of every attribute the Camera prim "
             "declares: name, type, default, documentation, and "
@@ -79,6 +80,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="create_camera",
+        effect=ToolEffect.ADD,
         description=(
             "Create a USD camera in /Scene/Cameras. Aim it with at most "
             "one of look_at (a point the camera faces; BowerBot computes "

@@ -12,7 +12,12 @@ from pxr import Sdf
 
 from bowerbot.schemas import AssetScopeNames, LayoutDefaults, PositionMode, SceneNamespace
 from bowerbot.state import SceneState
-from bowerbot.utils import assets, inspection_utils, stage_utils
+from bowerbot.utils import (
+    assets,
+    inspection_utils,
+    stage_utils,
+    texture_utils,
+)
 from bowerbot.utils.core import attributes
 from bowerbot.utils.core.asset_folder import parse_nested_contents_path, resolve_asset_dir_for_prim
 from bowerbot.utils.core.integrity import (
@@ -25,6 +30,13 @@ from bowerbot.utils.core.integrity import (
 )
 from bowerbot.utils.core.metrics import axis_index
 from bowerbot.utils.core.naming import clean_prim_path, safe_file_name
+from bowerbot.utils.core.references import (
+    enclosing_placement,
+    newly_unused,
+    placement_of,
+    unused_files_note,
+    unused_scene_textures,
+)
 from bowerbot.utils.core.transforms import (
     asset_axes_rotation,
     read_translate_rotate,
@@ -143,6 +155,8 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove an object from the scene, scrubbing every rel that targeted it."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
+    project_dir = state.require_project().path
+    unused_before = unused_scene_textures(project_dir)
 
     nested = parse_nested_contents_path(prim_path)
     if nested is not None:
@@ -162,17 +176,19 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         message = f"Removed {prim_path}"
     elif prim_path == SceneNamespace.ROOT:
         scrubbed = clear_scene_prim(stage, prim_path)
-        message = f"Cleared {prim_path}: everything under it was removed; the scene root stays."
+        message = f"Cleared {prim_path}: everything under it was removed; the scene root stays"
     else:
         scrubbed = remove_scene_prim(stage, prim_path)
         message = f"Removed {prim_path}"
 
     state.touch_project()
+    unused = newly_unused(project_dir, unused_before, unused_scene_textures(project_dir))
     logger.info("Removed %s", prim_path)
     return {
         "prim_path": prim_path,
         "scrubbed_dangling_refs": scrubbed,
-        "message": message,
+        "unused_files": unused,
+        "message": message + "." + unused_files_note(unused),
     }
 
 
@@ -183,6 +199,9 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     prim = stage.GetPrimAtPath(prim_path)
     if not prim.IsValid():
         raise ValueError(f"Prim not found: {prim_path}")
+    if enclosing_placement(stage, prim_path) is not None:
+        prim_path = placement_of(stage, prim_path)
+        prim = stage.GetPrimAtPath(prim_path)
     current_translate, current_rotate = read_translate_rotate(prim)
 
     nested = parse_nested_contents_path(prim_path)
@@ -253,29 +272,45 @@ def list_prim_attributes(
 def set_prim_attribute(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Author or clear an attribute opinion on a prim, in scene.usda."""
+    """Author or clear an attribute opinion on a prim, in scene.usda.
+
+    A texture file is copied into the project's ``textures/`` first. A value
+    on one network of a BowerBot hybrid material goes to its twin input too.
+    """
     stage = state.require_stage()
     stage_path = state.require_stage_path()
     prim_path = params["prim_path"]
     attribute_name = params["attribute_name"]
     value = params.get("value")
 
-    attributes.set_prim_attribute(
-        stage, prim_path, attribute_name, value,
-    )
+    project_dir = state.require_project().path
+    unused_before = unused_scene_textures(project_dir)
+    twin = attributes.twin_shader_input(stage, prim_path, attribute_name)
+    targets = [(prim_path, attribute_name), *([twin] if twin else [])]
+    for path, name in targets:
+        attributes.check_attribute_value(stage, path, name, value)
+    asset_typed = attributes.attribute_type(stage, prim_path, attribute_name)
+    if isinstance(value, str) and asset_typed == Sdf.ValueTypeNames.Asset:
+        value = texture_utils.stage_asset_value(value, project_dir, state.library_dir)
+    for path, name in targets:
+        attributes.set_prim_attribute(stage, path, name, value)
     stage_utils.save_stage(stage)
     state.touch_project()
+    unused = newly_unused(project_dir, unused_before, unused_scene_textures(project_dir))
     action = "Cleared" if value is None else "Authored"
     logger.info(
         "%s %s.%s in %s", action, prim_path, attribute_name, stage_path,
     )
+    also = f" and its twin {twin[0]}.{twin[1]}" if twin else ""
     return {
         "prim_path": prim_path,
         "attribute_name": attribute_name,
         "value": value,
+        "twin": {"prim_path": twin[0], "attribute_name": twin[1]} if twin else None,
+        "unused_files": unused,
         "message": (
-            f"{action} {prim_path}.{attribute_name} in "
-            f"{stage_path.name}."
+            f"{action} {prim_path}.{attribute_name}{also} in "
+            f"{stage_path.name}." + unused_files_note(unused)
         ),
     }
 

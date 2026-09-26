@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot.services import material_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -209,6 +209,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_materials",
+        effect=ToolEffect.READ,
         description=(
             "List all materials across the project's ASWF asset folders and "
             "which prims each is bound to. Use this to show current material "
@@ -228,7 +229,9 @@ TOOLS: list[Tool] = [
             "(dropping the mtl.usda layer if it becomes empty). A prim with no "
             "binding in mtl.usda (e.g. a material from the asset's own files) "
             "is refused. Use list_prim_children first to find the exact mesh "
-            "prim path."
+            "prim path. "
+            "A texture it leaves unused is listed in unused_files (it stays "
+            "in the project)."
         ),
         parameters={
             "type": "object",
@@ -253,7 +256,9 @@ TOOLS: list[Tool] = [
             "or remove unused / orphaned / leftover materials. If "
             "asset_prim_path is provided, cleans only that asset's folder; "
             "if omitted, sweeps every ASWF asset folder in the project. "
-            "Returns the list of removed material names."
+            "Returns the list of removed material names. "
+            "A texture it leaves unused is listed in unused_files (it stays "
+            "in the project)."
         ),
         parameters={
             "type": "object",

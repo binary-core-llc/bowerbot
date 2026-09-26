@@ -184,9 +184,9 @@ override in `scene.usda` on one placement's composed light prim.
 
 - **Position / rotation / texture** → `update_light`. Pass only
   what changes: omitted translate / rotate axes keep their current
-  values. For an asset light `position_mode` is not remembered from
-  `create_light`: it defaults to `bounds_offset` on every call, so pass
-  `position_mode: "absolute"` again when you give world coordinates.
+  values. Moving an asset light requires `position_mode` (`absolute`
+  for world coordinates, `bounds_offset` for meters from the asset's
+  bounds); the call is refused without it.
   Handles xform-op management and texture staging (asset `maps/` for an
   asset RectLight, `<project>/textures/` for a scene DomeLight).
 - **Any UsdLux input** (intensity, exposure, color, radius, angle,
@@ -201,12 +201,14 @@ BowerBot added (a light that comes from the asset's own files is
 refused) — provide the `prim_path`. It accepts lights only; to remove
 the whole `/Scene/Lighting` group or any other prim, use `remove_prim`.
 
-If the result includes a `texture_file` field (DomeLight with HDRI),
-the texture file still exists in the project's `textures/` folder.
-Ask the user if they want to delete it. If they confirm, call
-`delete_project_texture(file_name=<the result's texture_name>)` (e.g.
-`studio.exr`); it deletes only the project's copy, never the user's
-library, and refuses while another file (e.g. a snapshot) still uses it.
+A texture the light used stays in the project; the result lists it
+in `unused_files` (e.g. `textures/studio.exr` for a DomeLight's HDRI,
+`assets/lamp/maps/screen.png` for an asset RectLight's). Ask the user
+if they want to delete it. If they confirm, call
+`delete_project_texture(file_name=<that entry>)`; it deletes only the
+project's copy, never the user's library, and refuses while another
+file (e.g. a snapshot) still uses it. `update_light` lists a texture it
+replaced the same way.
 
 ### CRITICAL: Do NOT switch light levels
 If a light was created as an **asset light**, it MUST stay an asset

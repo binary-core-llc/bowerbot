@@ -826,7 +826,7 @@ def test_scatter_is_authored_in_the_scene_like_placements():
         assert instancer.GetPrimStack()[0].layer == stage.GetRootLayer()
         proto_asset = stage.GetPrimAtPath("/Scene/Nature/Stones/Prototypes/stone/asset")
         refs = proto_asset.GetMetadata("references").prependedItems
-        assert [r.assetPath for r in refs] == ["assets/stone/stone.usda"]
+        assert [r.assetPath for r in refs] == ["./assets/stone/stone.usda"]
 
         moved = asyncio.run(exec_tool(
             state, "move_asset", {"prim_path": "/Scene/Nature/Stones", "translate_x": 1.0},

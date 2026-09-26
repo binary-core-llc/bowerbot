@@ -9,7 +9,7 @@ from typing import Any
 
 from bowerbot.schemas import PhysicsApiName, PhysicsJointType
 from bowerbot.services import physics_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -156,6 +156,7 @@ def list_collision_groups(
 TOOLS: list[Tool] = [
     Tool(
         name="list_physics_api_properties",
+        effect=ToolEffect.READ,
         description=(
             "Discover the attributes and relationships a UsdPhysics applied "
             "API declares. Returns each property's name, kind "
@@ -454,6 +455,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_physics_scenes",
+        effect=ToolEffect.READ,
         description=(
             "List every UsdPhysics.Scene prim under /Scene/Physics. "
             "Shows name, gravity magnitude, and gravity direction for "
@@ -486,6 +488,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="get_physics_summary",
+        effect=ToolEffect.READ,
         description=(
             "Inspect every authored physics opinion on a prim and its "
             "descendants. Returns two sections: 'asset' (every opinion "
@@ -624,6 +627,7 @@ TOOLS.append(Tool(
 ))
 TOOLS.append(Tool(
     name="list_joint_properties",
+    effect=ToolEffect.READ,
     description=(
         "Schema-registry introspection for a UsdPhysics typed joint "
         "prim. Returns every attribute and relationship the joint "
@@ -792,6 +796,7 @@ TOOLS.append(Tool(
 ))
 TOOLS.append(Tool(
     name="list_joints",
+    effect=ToolEffect.READ,
     description=(
         "List every typed joint prim. For scope='scene', returns "
         "joints found across the open scene (optionally under a "
@@ -829,6 +834,7 @@ TOOLS.append(Tool(
 ))
 TOOLS.append(Tool(
     name="list_collision_groups",
+    effect=ToolEffect.READ,
     description=(
         "Return every UsdPhysicsCollisionGroup under /Scene/Physics "
         "(flat siblings of the PhysicsScene prim) with its membership "

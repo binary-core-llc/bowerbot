@@ -204,7 +204,8 @@ retry with the exact carrier path.
 ### `remove_asset_variant` / `remove_asset_variant_set`
 Idempotent removal. Removing the default variant selects a remaining
 one (reported as `default_variant`); payload files no variant uses any
-more are listed in `unused_files` and stay in the asset folder. If the
+more (and textures only the removed variant used) are listed in
+`unused_files` and stay in the asset folder. If the
 last variant in a set is removed, the set is auto-removed; if the last
 variant set is removed, `variants.usda` is auto-deleted and the
 reference scrubbed.

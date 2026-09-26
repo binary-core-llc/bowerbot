@@ -9,7 +9,7 @@ from typing import Any
 
 from bowerbot.schemas import TextureCategory
 from bowerbot.services import texture_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -34,6 +34,7 @@ def list_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
 TOOLS: list[Tool] = [
     Tool(
         name="search_textures",
+        effect=ToolEffect.READ,
         description=(
             "Search the asset library for texture files by keyword. "
             "Finds HDRIs (.hdr, .exr) for dome lights and material maps "
@@ -70,6 +71,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_textures",
+        effect=ToolEffect.READ,
         description=(
             "List every texture in the asset library. Use this to see "
             "what HDRIs and material maps are available. Returns a list of "

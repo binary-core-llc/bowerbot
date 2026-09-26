@@ -5,12 +5,13 @@
 
 import asyncio
 import json
+import shutil
 import tempfile
 from pathlib import Path
 
 from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdShade
 
-from tests._helpers import exec_tool, make_state
+from tests._helpers import exec_tool, library_state, make_state
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -1430,3 +1431,60 @@ def test_placements_are_models_and_nested_assets_are_subcomponents():
             assert Usd.ModelAPI(stage.GetPrimAtPath(path)).GetKind() == "group", path
         assert stage.GetPrimAtPath(f"{shelf}/asset").IsModel()
         assert Usd.ModelAPI(stage.GetPrimAtPath(f"{nested}/asset")).GetKind() == "subcomponent"
+
+
+# ── nesting paths and project textures ──
+
+
+def _run(state, tool, **params):
+    return asyncio.run(exec_tool(state, tool, params))
+
+
+def test_nesting_takes_the_container_or_its_asset_child_and_writes_nothing_when_refused():
+    """A part or a nested placement as the container is refused before any write or copy."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        assets_dir = state.require_project().assets_dir
+        table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                     translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+        nest = {"group": "Props", "translate_x": 0.0, "translate_y": 0.1, "translate_z": 0.0}
+
+        crate = _run(state, "place_asset_inside", asset="crate", asset_name="Crate",
+                     container_prim_path=f"{table}/asset", **nest)
+        assert crate.success, crate.error
+        assert crate.data["prim_path"].startswith(f"{table}/asset/contents/Props/")
+        contents = (assets_dir / "table" / "contents.usda").read_text()
+
+        for container in (f"{table}/asset/Top", crate.data["prim_path"]):
+            refused = _run(state, "place_asset_inside", asset="stone", asset_name="Stone",
+                           container_prim_path=container, **nest)
+            assert not refused.success, container
+            assert (assets_dir / "table" / "contents.usda").read_text() == contents
+        assert not (assets_dir / "stone").exists()
+
+
+def test_delete_project_texture_counts_every_use_and_stays_in_the_project():
+    """A texture only an unselected variant uses is in use; paths outside textures are refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        project = state.require_project()
+        sky = _run(state, "create_light", light_type="DomeLight", light_name="Sky",
+                   texture="hdri/sky.png").data["prim_path"]
+        shutil.copy(state.library_dir / "textures" / "glow.png", project.path / "textures")
+        stage = state.require_stage()
+        moods = stage.GetPrimAtPath("/Scene/Lighting").GetVariantSets().AddVariantSet("mood")
+        for mood, texture in (("day", "./textures/sky.png"), ("night", "./textures/glow.png")):
+            moods.AddVariant(mood)
+            moods.SetVariantSelection(mood)
+            with moods.GetVariantEditContext():
+                stage.GetPrimAtPath(sky).GetAttribute("inputs:texture:file").Set(texture)
+        moods.SetVariantSelection("day")
+        stage.Save()
+
+        for location in ("glow.png", "textures/sky.png"):
+            used = _run(state, "delete_project_texture", file_name=location)
+            assert not used.success, location
+            assert "scene.usda" in used.error
+        for location in ("../scene.usda", "scene.usda", str(project.path / "textures/glow.png")):
+            assert not _run(state, "delete_project_texture", file_name=location).success
+        assert (project.path / "textures" / "glow.png").exists()

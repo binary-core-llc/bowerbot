@@ -95,7 +95,7 @@ def _route_intake(
         geometry_file=asset_path,
     )
     report = IntakeReport(
-        scene_ref_path=f"assets/{folder_name}/{root_file.name}",
+        scene_ref_path=f"./assets/{folder_name}/{root_file.name}",
         asset_folder_name=folder_name,
         root_original_name=asset_path.name,
         root_canonical_name=root_file.name,
@@ -131,7 +131,9 @@ def _reuse_project_asset(
 ) -> IntakeReport:
     """Use an asset already in the project as it is: re-checked, never re-copied."""
     report = IntakeReport(
-        scene_ref_path=asset_path.absolute().relative_to(assets_dir.parent.absolute()).as_posix(),
+        scene_ref_path="./" + asset_path.absolute().relative_to(
+            assets_dir.parent.absolute(),
+        ).as_posix(),
         asset_folder_name=entry.stem if entry.is_file() else entry.name,
         root_original_name=asset_path.name,
         root_canonical_name=asset_path.name,
@@ -201,7 +203,7 @@ def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
         shutil.copy2(asset_path, local_copy)
         copied = 1
     return IntakeReport(
-        scene_ref_path=f"assets/{asset_path.name}",
+        scene_ref_path=f"./assets/{asset_path.name}",
         asset_folder_name=asset_path.stem,
         root_original_name=asset_path.name,
         root_canonical_name=asset_path.name,

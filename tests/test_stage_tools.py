@@ -12,7 +12,7 @@ from pathlib import Path
 from pxr import Sdf, Usd, UsdGeom
 
 from bowerbot.state import SceneState
-from tests._helpers import exec_tool, make_state
+from tests._helpers import exec_tool, library_state, make_state
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -830,3 +830,97 @@ def test_a_group_left_empty_goes_with_its_last_prim():
         stage = Usd.Stage.Open(str(project.scene_path))
         assert stage.GetPrimAtPath("/Scene/Props").IsValid()
         assert stage.GetPrimAtPath("/Scene").IsValid()
+
+
+# ── enforced in code: textures, material twins, placement paths ──
+
+
+def _run(state, tool, **params):
+    return asyncio.run(exec_tool(state, tool, params))
+
+
+def _authored(state, prim_path, attribute):
+    return state.require_stage().GetPrimAtPath(prim_path).GetAttribute(attribute).Get()
+
+
+def test_set_prim_attribute_copies_a_texture_into_the_project():
+    """A library texture is staged into textures/; an unresolvable one is refused unwritten."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        project = state.require_project()
+        sky = _run(state, "create_light", light_type="DomeLight",
+                   light_name="Sky").data["prim_path"]
+        attr = "inputs:texture:file"
+
+        r = _run(state, "set_prim_attribute", prim_path=sky, attribute_name=attr,
+                 value="hdri/sky.png")
+        assert r.success, r.error
+        assert r.data["value"] == "./textures/sky.png"
+        assert (project.path / "textures" / "sky.png").exists()
+        assert _authored(state, sky, attr).path == "./textures/sky.png"
+
+        missing = _run(state, "set_prim_attribute", prim_path=sky, attribute_name=attr,
+                       value="hdri/nope.png")
+        assert not missing.success
+        assert _authored(state, sky, attr).path == "./textures/sky.png"
+
+        swapped = _run(state, "set_prim_attribute", prim_path=sky, attribute_name=attr,
+                       value="textures/glow.png")
+        assert swapped.success, swapped.error
+        assert swapped.data["unused_files"] == ["textures/sky.png"]
+
+
+def test_a_bowerbot_material_value_goes_to_both_shaders():
+    """Either shader of a hybrid material carries the change to its twin; clearing clears both."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                     translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+        made = _run(state, "create_material", prim_path=f"{table}/asset/Top", material_name="paint",
+                    base_color_r=1.0, base_color_g=0.0, base_color_b=0.0)
+        assert made.success, made.error
+        standard = f"{table}/asset/mtl/paint/standard_surface"
+        preview = f"{table}/asset/mtl/paint/preview_surface"
+
+        r = _run(state, "set_prim_attribute", prim_path=preview,
+                 attribute_name="inputs:diffuseColor", value=[0.0, 0.0, 1.0])
+        assert r.success, r.error
+        assert r.data["twin"] == {"prim_path": standard, "attribute_name": "inputs:base_color"}
+        assert tuple(_authored(state, standard, "inputs:base_color")) == (0.0, 0.0, 1.0)
+
+        _run(state, "set_prim_attribute", prim_path=standard,
+             attribute_name="inputs:specular_roughness", value=0.25)
+        assert _authored(state, preview, "inputs:roughness") == 0.25
+
+        _run(state, "set_prim_attribute", prim_path=standard,
+             attribute_name="inputs:base_color", value=None)
+        assert tuple(_authored(state, preview, "inputs:diffuseColor")) == (1.0, 0.0, 0.0)
+        assert tuple(_authored(state, standard, "inputs:base_color")) == (1.0, 0.0, 0.0)
+
+
+def test_move_asset_takes_a_placement_s_asset_child_but_not_a_part():
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                     translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+
+        moved = _run(state, "move_asset", prim_path=f"{table}/asset", translate_x=2.0)
+        assert moved.success, moved.error
+        assert moved.data["prim_path"] == table
+        assert moved.data["position"]["x"] == 2.0
+
+        part = _run(state, "move_asset", prim_path=f"{table}/asset/Top", translate_x=3.0)
+        assert not part.success
+        assert f"pass the placement itself ({table})" in part.error
+
+
+def test_remove_prim_lists_the_scene_textures_it_leaves_unused():
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        _run(state, "create_light", light_type="DomeLight", light_name="Sky",
+             texture="hdri/sky.png")
+
+        removed = _run(state, "remove_prim", prim_path="/Scene/Lighting")
+        assert removed.success, removed.error
+        assert removed.data["unused_files"] == ["textures/sky.png"]
+        assert (state.require_project().path / "textures" / "sky.png").exists()

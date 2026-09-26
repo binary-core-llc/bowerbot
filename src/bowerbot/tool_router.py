@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from bowerbot import dispatcher
-from bowerbot.skills.base import ToolResult
+from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 
 if TYPE_CHECKING:
@@ -23,6 +23,11 @@ if TYPE_CHECKING:
 def combined_tool_schemas(skill_registry: SkillRegistry) -> list[dict[str, Any]]:
     """Every tool the client can call: core tools plus enabled skills."""
     return dispatcher.get_tool_schemas() + skill_registry.get_all_tools()
+
+
+def combined_tools(skill_registry: SkillRegistry) -> list[Tool]:
+    """Every tool definition the client can call: core tools plus enabled skills."""
+    return dispatcher.get_tools() + skill_registry.get_tool_definitions()
 
 
 async def route(

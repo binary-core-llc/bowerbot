@@ -21,7 +21,7 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.state import SceneState
-from bowerbot.utils import assets, layout_utils, library_utils, stage_utils
+from bowerbot.utils import assets, layout_utils, library_utils, stage_utils, texture_utils
 from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
     require_folder_entry,
@@ -33,7 +33,11 @@ from bowerbot.utils.core.references import (
     add_references,
     assets_used_from,
     count_scene_refs_to_asset_dir,
+    enclosing_placement,
+    files_named_by,
     files_referencing,
+    layer_files,
+    placement_of,
     project_asset_references,
 )
 from bowerbot.utils.core.transforms import (
@@ -43,7 +47,6 @@ from bowerbot.utils.core.transforms import (
     world_position,
 )
 from bowerbot.utils.core.values import read_axes, unpack_vec3
-from bowerbot.utils.texture_utils import find_texture_references
 
 logger = logging.getLogger(__name__)
 
@@ -295,7 +298,14 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         project_assets_dir=state.require_project().assets_dir,
     )
     asset_name = params["asset_name"]
-    container_prim_path = params["container_prim_path"]
+    container_prim_path = placement_of(stage, params["container_prim_path"])
+    outer = enclosing_placement(stage, container_prim_path)
+    if outer is not None:
+        msg = (
+            f"{container_prim_path} is itself nested inside {outer}; nesting goes "
+            f"one level deep. Place into {outer}, or into a scene placement."
+        )
+        raise ValueError(msg)
     group = clean_group(params["group"])
     rotate = unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z") or (0.0, 0.0, 0.0)
 
@@ -570,34 +580,30 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
 
 
 def delete_project_texture(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Delete a texture from the project's ``textures/`` dir (if unreferenced)."""
-    project_dir = state.require_project().path
+    """Delete a texture from the project (``textures/`` or an asset folder) nothing uses."""
+    project = state.require_project()
     file_name = params["file_name"]
-    tex_dir = project_dir / ASWFLayerNames.TEXTURES
-    tex_file = require_folder_entry(tex_dir, file_name)
+    target = texture_utils.project_texture_file(project.path, project.assets_dir, file_name)
 
-    if not tex_file.exists():
-        msg = f"Texture file not found: {ASWFLayerNames.TEXTURES}/{file_name}"
+    users = files_named_by(layer_files(project.path)).get(target, [])
+    if users:
+        names = ", ".join(sorted({str(user.relative_to(project.path)) for user in users}))
+        msg = f"Texture '{file_name}' is still used by: {names}. Remove those uses first."
         raise ValueError(msg)
 
-    referencing = find_texture_references(project_dir, file_name)
-    if referencing:
-        files_list = ", ".join(referencing)
-        msg = (
-            f"Texture '{file_name}' is still referenced by: {files_list}. "
-            f"Remove those references first."
-        )
-        raise ValueError(msg)
-
-    tex_file.unlink()
-    logger.info("Deleted project texture: %s", file_name)
-
-    if tex_dir.exists() and not any(tex_dir.iterdir()):
-        tex_dir.rmdir()
-
+    target.unlink()
+    textures = project.path / ASWFLayerNames.TEXTURES
+    in_asset = target.is_relative_to(project.assets_dir.resolve())
+    stop = (
+        project.assets_dir / target.relative_to(project.assets_dir.resolve()).parts[0]
+        if in_asset else textures.parent
+    )
+    texture_utils.remove_empty_folders(target.parent, stop)
+    location = target.relative_to(project.path.resolve()).as_posix()
+    logger.info("Deleted project texture: %s", location)
     return {
-        "file": file_name,
-        "message": f"Deleted texture '{file_name}' from project textures.",
+        "file": location,
+        "message": f"Deleted texture {location} from the project.",
     }
 
 

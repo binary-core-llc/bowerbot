@@ -18,13 +18,21 @@ from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     list_alternate_geo_files,
     normalize_asset_prim_path,
-    require_asset_context,
+    require_placement_asset,
     resolve_default_prim_name,
+    unused_asset_files,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.metrics import asset_conform
 from bowerbot.utils.core.naming import clean_prim_name, clean_variant_name
-from bowerbot.utils.core.references import author_conform, get_prim_ref_paths
+from bowerbot.utils.core.references import (
+    author_conform,
+    get_prim_ref_paths,
+    newly_unused,
+    placement_of,
+    unused_files_note,
+    unused_scene_textures,
+)
 
 # ── Category orchestrators ──
 
@@ -34,7 +42,7 @@ def add_asset_material_variant(
 ) -> dict[str, Any]:
     """Author a material-binding variant on the asset's root prim."""
     stage = state.require_stage()
-    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
+    asset_dir, ref_prim_path = require_placement_asset(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variants.checks.require_dict_param(
@@ -94,7 +102,7 @@ def add_asset_geometry_variant(
 ) -> dict[str, Any]:
     """Author a geometry/LOD variant via payload arc overrides."""
     stage = state.require_stage()
-    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
+    asset_dir, ref_prim_path = require_placement_asset(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variants.checks.require_dict_param(
@@ -159,7 +167,7 @@ def setup_asset_geometry_variants(
 ) -> dict[str, Any]:
     """Initial setup of an LOD variant set in Pixar's canonical pattern."""
     stage = state.require_stage()
-    asset_dir, _ = require_asset_context(stage, params["prim_path"])
+    asset_dir, _ = require_placement_asset(stage, params["prim_path"])
     set_name = clean_prim_name(params["variant_set"], "Variant set")
     default_variant = clean_variant_name(params["default_variant"])
     requested = variants.checks.require_dict_param(
@@ -194,7 +202,7 @@ def add_asset_attribute_variant(
 ) -> dict[str, Any]:
     """Author an attribute-override variant on the asset's root prim."""
     stage = state.require_stage()
-    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
+    asset_dir, ref_prim_path = require_placement_asset(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variants.checks.require_dict_param(
@@ -203,10 +211,10 @@ def add_asset_attribute_variant(
         "(e.g. {'lgt/Bulb': {'inputs:color': [0.2, 0.4, 1.0]}}).",
     )
     default_prim = resolve_default_prim_name(asset_dir)
-    overrides = {
+    overrides = variants.attributes.add_twin_shader_inputs(asset_dir, {
         normalize_asset_prim_path(k, ref_prim_path, default_prim): dict(v)
         for k, v in raw.items()
-    }
+    })
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
@@ -265,7 +273,7 @@ def add_asset_configuration_variant(
 ) -> dict[str, Any]:
     """Author a configuration variant via prim activation toggles."""
     stage = state.require_stage()
-    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
+    asset_dir, ref_prim_path = require_placement_asset(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variants.checks.require_dict_param(
@@ -457,14 +465,9 @@ def add_scene_model_selection_variant(
     variant_name = clean_variant_name(variant_name)
     project = state.require_project()
 
+    prim_path = placement_of(stage, prim_path)
     wrapper = stage.GetPrimAtPath(prim_path)
-    if not wrapper or not wrapper.IsValid():
-        raise ValueError(f"Scene placement not found: {prim_path}")
     asset_child = f"{prim_path}/{SceneNamespace.ASSET_CHILD}"
-    if not stage.GetPrimAtPath(asset_child).IsValid():
-        raise ValueError(
-            f"{prim_path} has no '/asset' child — not a valid placement wrapper.",
-        )
 
     resolved_path = library_utils.find_asset(
         params["asset"],
@@ -477,7 +480,7 @@ def add_scene_model_selection_variant(
         fix_root_prim=bool(params.get("fix_root_prim", False)),
         fix_root_transforms=bool(params.get("fix_root_transforms", False)),
     )
-    new_ref = f"./{report.scene_ref_path}"
+    new_ref = report.scene_ref_path
 
     def author_refs(refs: list[str]) -> Callable[[Usd.Stage, str], None]:
         def fn(stage: Usd.Stage, _carrier: str) -> None:
@@ -542,7 +545,7 @@ def list_asset_geo_files(
 ) -> dict[str, Any]:
     """List alternate geometry files available for geometry variants."""
     stage = state.require_stage()
-    asset_dir = require_asset_context(stage, params["prim_path"])[0]
+    asset_dir = require_placement_asset(stage, params["prim_path"])[0]
     files = list_alternate_geo_files(asset_dir)
     return {
         "asset_path": str(asset_dir),
@@ -571,7 +574,7 @@ def list_variants(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 def select_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Set the asset's ship default variant selection."""
     stage = state.require_stage()
-    asset_dir = require_asset_context(stage, params["prim_path"])[0]
+    asset_dir = require_placement_asset(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     set_name = clean_prim_name(set_name, "Variant set")
@@ -594,7 +597,7 @@ def select_asset_variant_for_instance(
 ) -> dict[str, Any]:
     """Override variant selection on one scene placement (authoring-layer routing)."""
     stage = state.require_stage()
-    prim_path = params["prim_path"]
+    prim_path = placement_of(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     set_name = clean_prim_name(set_name, "Variant set")
@@ -643,18 +646,15 @@ def select_asset_variant_for_instance(
 def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a single variant from a variant set."""
     stage = state.require_stage()
-    asset_dir = require_asset_context(stage, params["prim_path"])[0]
+    asset_dir = require_placement_asset(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
 
-    removed_payload = variants.inspection.get_variant_payload_refs(asset_dir, set_name).get(
-        variant_name,
-    )
+    unused_before = unused_asset_files(asset_dir)
     removed = variants.asset.remove_variant(asset_dir, set_name, variant_name)
     new_default: str | None = None
-    unused_files: list[str] = []
     if removed:
         summary = variants.inspection.get_variant_summary(asset_dir)
         remaining = next((s for s in summary.variant_sets if s.name == set_name), None)
@@ -669,8 +669,9 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
         )
         variants.asset.restore_canonical_geo_if_needed(asset_dir)
         variants.asset.remove_variants_layer_if_empty(asset_dir)
-        if removed_payload:
-            unused_files = variants.asset.unused_asset_files(asset_dir, [removed_payload])
+    unused = newly_unused(
+        state.require_project().path, unused_before, unused_asset_files(asset_dir),
+    )
 
     state.reopen_stage()
     message = (
@@ -679,18 +680,14 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
     )
     if new_default:
         message += f"; it was the default, so '{new_default}' is selected now"
-    if unused_files:
-        message += (
-            f". {', '.join(unused_files)} is no longer used by the asset; "
-            "it stays in the asset folder"
-        )
+    message += "." + unused_files_note(unused)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
         "variant_name": variant_name,
         "removed": removed,
         "default_variant": new_default,
-        "unused_files": unused_files,
+        "unused_files": unused,
         "message": message,
     }
 
@@ -737,9 +734,12 @@ def remove_scene_variant(
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
 
+    project_dir = state.require_project().path
+    unused_before = unused_scene_textures(project_dir)
     removed = variants.scene.remove_scene_variant(
         stage, prim_path, set_name, variant_name,
     )
+    unused = newly_unused(project_dir, unused_before, unused_scene_textures(project_dir))
     suspects: list[dict[str, Any]] = []
     if removed:
         suspects = variants.suspects.suspect_variant_sets_on_scene_carrier(
@@ -753,11 +753,12 @@ def remove_scene_variant(
         "removed": removed,
         "scope": "scene",
         "suspect_variant_sets": suspects,
+        "unused_files": unused,
         "message": (
             f"Removed '{variant_name}' from '{set_name}' on {prim_path}"
             if removed else
             f"Variant '{variant_name}' not found in '{set_name}' on {prim_path}"
-        ),
+        ) + "." + unused_files_note(unused),
     }
 
 
@@ -770,12 +771,15 @@ def remove_scene_variant_set(
     set_name = params["variant_set"]
     set_name = clean_prim_name(set_name, "Variant set")
 
+    project_dir = state.require_project().path
+    unused_before = unused_scene_textures(project_dir)
     demoted = variants.scene.restore_active_scene_variant_references_to_direct_ref(
         stage, prim_path, set_name,
     )
     removed = variants.scene.remove_scene_variant_set(
         stage, prim_path, set_name,
     )
+    unused = newly_unused(project_dir, unused_before, unused_scene_textures(project_dir))
     state.reopen_stage()
     suffix = f" (restored '{demoted}' as direct reference)" if demoted else ""
     return {
@@ -784,11 +788,12 @@ def remove_scene_variant_set(
         "removed": removed,
         "demoted_to_direct_ref": demoted,
         "scope": "scene",
+        "unused_files": unused,
         "message": (
             f"Removed variant set '{set_name}' from {prim_path}{suffix}"
             if removed else
             f"Variant set '{set_name}' not found on {prim_path}"
-        ),
+        ) + "." + unused_files_note(unused),
     }
 
 
@@ -797,10 +802,11 @@ def remove_asset_variant_set(
 ) -> dict[str, Any]:
     """Remove an entire variant set from one asset."""
     stage = state.require_stage()
-    asset_dir = require_asset_context(stage, params["prim_path"])[0]
+    asset_dir = require_placement_asset(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     set_name = clean_prim_name(set_name, "Variant set")
 
+    unused_before = unused_asset_files(asset_dir)
     removed = variants.asset.remove_variant_set(asset_dir, set_name)
     if removed:
         variants.asset.clear_default_variant(asset_dir, set_name)
@@ -809,15 +815,19 @@ def remove_asset_variant_set(
         )
         variants.asset.restore_canonical_geo_if_needed(asset_dir)
         variants.asset.remove_variants_layer_if_empty(asset_dir)
+    unused = newly_unused(
+        state.require_project().path, unused_before, unused_asset_files(asset_dir),
+    )
 
     state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
         "removed": removed,
+        "unused_files": unused,
         "message": (
             f"Removed variant set '{set_name}' from {asset_dir.name}"
             if removed else
             f"Variant set '{set_name}' not found in {asset_dir.name}"
-        ),
+        ) + "." + unused_files_note(unused),
     }

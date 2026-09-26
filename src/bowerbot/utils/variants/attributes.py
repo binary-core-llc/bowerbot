@@ -10,6 +10,7 @@ from pathlib import Path
 from pxr import Sdf, Usd
 
 from bowerbot.utils.core.asset_folder import find_root_file
+from bowerbot.utils.core.attributes import twin_shader_input
 from bowerbot.utils.texture_utils import stage_asset_texture, stage_asset_value
 
 
@@ -46,6 +47,23 @@ def stage_asset_typed_overrides(
             else:
                 staged[attr_name] = value
         out[prim_path] = staged
+    return out
+
+
+def add_twin_shader_inputs(
+    asset_dir: Path, overrides: dict[str, dict[str, object]],
+) -> dict[str, dict[str, object]]:
+    """*overrides* plus each hybrid-material value on its twin input (unless given too)."""
+    root = find_root_file(asset_dir)
+    if root is None:
+        return overrides
+    stage = Usd.Stage.Open(str(root))
+    out = {path: dict(attrs) for path, attrs in overrides.items()}
+    for path, attrs in overrides.items():
+        for attr_name, value in attrs.items():
+            twin = twin_shader_input(stage, path, attr_name)
+            if twin is not None:
+                out.setdefault(twin[0], {}).setdefault(twin[1], value)
     return out
 
 

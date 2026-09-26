@@ -294,10 +294,9 @@ def get_physics_summary(
 
 
 def list_joint_properties(
-    state: SceneState, params: dict[str, Any],
+    _state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Return every property the given joint typed prim declares."""
-    state.require_stage()
     joint_type = PhysicsJointType(params["joint_type"])
     return physics.schema_info.list_joint_properties(joint_type).model_dump()
 
@@ -381,7 +380,12 @@ def remove_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     scope = physics.scope.validate_scope(params.get("scope", "scene"))
 
     if scope == "scene":
-        prim_path = params["prim_path"]
+        prim_path = params.get("prim_path")
+        if not prim_path:
+            raise ValueError(
+                "scope='scene' requires prim_path, the joint's scene path "
+                "(e.g. /Scene/Physics/door_hinge).",
+            )
         removed = physics.joints.remove_joint_scene(stage, prim_path)
         if removed:
             state.touch_project()
@@ -396,8 +400,13 @@ def remove_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "scope='asset' requires asset_anchor_prim_path (a scene "
             "placement of the asset) to locate the asset folder.",
         )
+    name = params.get("name")
+    if not name:
+        raise ValueError(
+            "scope='asset' requires name, the joint's name under "
+            "/<defaultPrim>/joints/ in the asset.",
+        )
     asset_dir, _ = require_asset_context(stage, asset_anchor)
-    name = params["name"]
     removed = physics.joints.remove_joint_asset(asset_dir, name)
     if removed:
         physics.summary.remove_physics_layer_if_empty(asset_dir)

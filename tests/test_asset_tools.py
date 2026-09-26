@@ -434,6 +434,66 @@ def test_place_layout_rejects_folder_asset():
         assert "root file" in r.error
 
 
+def test_place_layout_rejects_non_usd_asset_at_lint():
+    """A non-USD file fails layout validation instead of failing at intake."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        notes = tmp_path / "notes.txt"
+        notes.write_text("not usd")
+        r = asyncio.run(exec_tool(state, "place_layout", {
+            "placements": [{
+                "asset": str(notes), "group": "Props",
+                "transforms": [{"translate": [0, 0, 0]}],
+            }],
+            "validate_only": True,
+        }))
+        assert not r.success
+        assert "not a USD file" in r.error
+
+
+def _place_path(state, path):
+    return asyncio.run(exec_tool(state, "place_asset", {
+        "asset_file_path": str(path), "asset_name": "Lamp", "group": "Props",
+        "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+    }))
+
+
+def test_place_asset_folder_names_its_root_file():
+    """A folder is refused naming its root file, leaves nothing behind, and the retry works."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        folder = tmp_path / "lamp"
+        folder.mkdir()
+        root = _asset(folder, "lamp")
+
+        r = _place_path(state, folder)
+        assert not r.success
+        assert str(root) in r.error
+        assert not (project.assets_dir / "lamp").exists()
+
+        r = _place_path(state, root)
+        assert r.success, r.error
+
+
+def test_place_asset_refuses_non_usd_and_missing_files():
+    """Inputs that are not an existing USD file are refused before intake creates anything."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        notes = tmp_path / "notes.txt"
+        notes.write_text("not usd")
+
+        r = _place_path(state, notes)
+        assert not r.success
+        assert "not a USD file" in r.error
+
+        r = _place_path(state, tmp_path / "missing.usda")
+        assert not r.success
+        assert "not found" in r.error
+
+        assert not (project.assets_dir / "notes").exists()
+        assert not (project.assets_dir / "missing").exists()
+
+
 def test_place_layout_rejects_3d_count_with_2d_spacing():
     """A grid with a 3-axis count and a 2-axis spacing is refused."""
     with tempfile.TemporaryDirectory() as tmp:

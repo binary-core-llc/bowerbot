@@ -17,6 +17,7 @@ from bowerbot.schemas import (
 )
 from bowerbot.utils.assets.aswf import create_asset_folder, ensure_aswf_compliance
 from bowerbot.utils.assets.folders import intake_folder
+from bowerbot.utils.core.asset_folder import validate_asset_file
 from bowerbot.utils.library_utils import find_package_for
 from bowerbot.utils.validation.compliance import run_usd_compliance_checker
 
@@ -32,6 +33,7 @@ def prepare_asset(
     fix_root_transforms: bool = False,
 ) -> IntakeReport:
     """Route an input file to USDZ / library-package / loose-file intake."""
+    validate_asset_file(asset_path)
     if asset_path.suffix.lower() == AssetFormat.USDZ:
         return intake_usdz(asset_path, assets_dir)
 

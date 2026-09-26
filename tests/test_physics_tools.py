@@ -297,6 +297,16 @@ def test_list_joint_properties_fixed():
         assert r.success, r.error
 
 
+def test_list_joint_properties_without_a_scene():
+    """Reading a joint schema needs no open scene, like the other list_*_properties tools."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, _ = make_state(Path(tmp))
+        r = asyncio.run(exec_tool(state, "list_joint_properties", {
+            "joint_type": "PhysicsRevoluteJoint",
+        }))
+        assert r.success, r.error
+
+
 # ── create_joint / remove_joint / list_joints ──
 
 
@@ -383,6 +393,23 @@ def test_remove_joint():
         }))
         assert r.success, r.error
         assert r.data["removed"] is True
+
+
+def test_remove_joint_names_the_missing_parameter():
+    """Without its target, remove_joint says which parameter each scope needs."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        placed = _place(tmp_path, state, "g")
+
+        r = asyncio.run(exec_tool(state, "remove_joint", {"scope": "scene"}))
+        assert not r.success
+        assert "prim_path" in r.error
+
+        r = asyncio.run(exec_tool(state, "remove_joint", {
+            "scope": "asset", "asset_anchor_prim_path": placed.data["prim_path"],
+        }))
+        assert not r.success
+        assert "requires name" in r.error
 
 
 # ── collision groups ──

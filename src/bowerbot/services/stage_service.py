@@ -28,7 +28,7 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create or reopen the project's scene file."""
     project = state.require_project()
 
-    safe_name = safe_file_name(params["filename"]) or "scene"
+    safe_name = safe_file_name(params.get("filename", "")) or "scene"
     logger.debug("create_stage filename=%s", safe_name)
 
     state.stage_path = project.scene_path
@@ -150,10 +150,10 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"Prim not found: {prim_path}")
 
     cur_tx, cur_ty, cur_tz, cur_ry = read_translate_and_rotate_y(prim)
-    tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
-    ty = float(params["translate_y"]) if params.get("translate_y") is not None else cur_ty
-    tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
-    ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
+    tx = float(params.get("translate_x", cur_tx))
+    ty = float(params.get("translate_y", cur_ty))
+    tz = float(params.get("translate_z", cur_tz))
+    ry = float(params.get("rotate_y", cur_ry))
 
     nested = parse_nested_contents_path(prim_path)
     if nested is not None:

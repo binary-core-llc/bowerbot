@@ -14,12 +14,16 @@
   something logs.
 - One guard: only ``SceneState`` checks whether a scene, project or configured
   folder exists. Services call ``state.require_*()``; tools never touch state.
+- Optional params: a service reads a parameter its tool does not require with
+  ``params.get()``, never ``params[...]``.
 """
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
+
+from bowerbot import dispatcher
 
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS_DIR = ROOT / "src" / "bowerbot" / "tools"
@@ -76,6 +80,28 @@ def test_tools_only_pass_state_to_their_service() -> None:
             ):
                 offenders.append(f"{path.name}:{node.lineno}")
     assert not offenders, f"tools must pass state straight to their service: {offenders}"
+
+
+def test_services_read_optional_params_with_get() -> None:
+    """A parameter the tool does not require may be absent, so ``params[...]`` would raise."""
+    schemas = {tool.name: tool.parameters or {} for tool in dispatcher.TOOLS}
+    offenders = []
+    for path in sorted(SERVICES_DIR.glob("*_service.py")):
+        for fn in ast.parse(path.read_text(encoding="utf-8")).body:
+            if not isinstance(fn, ast.FunctionDef) or fn.name not in schemas:
+                continue
+            required = set(schemas[fn.name].get("required") or [])
+            offenders += [
+                f"{path.name}:{node.lineno} {fn.name} params[{node.slice.value!r}]"
+                for node in ast.walk(fn)
+                if isinstance(node, ast.Subscript)
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "params"
+                and isinstance(node.slice, ast.Constant)
+                and isinstance(node.ctx, ast.Load)
+                and node.slice.value not in required
+            ]
+    assert not offenders, f"read optional params with params.get(): {offenders}"
 
 
 def test_services_never_guard_state_themselves() -> None:

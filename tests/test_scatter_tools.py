@@ -135,7 +135,7 @@ def _setup(tmp, *, up: UpAxis = UpAxis.Y, mpu: float = 1.0):
 def _place(state: SceneState, asset: str, name: str, group: str = "Architecture",
            at=(0.0, 0.0, 0.0)) -> str:
     result = asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": asset, "asset_name": name, "group": group,
+        "asset": asset, "asset_name": name, "group": group,
         "translate_x": at[0], "translate_y": at[1], "translate_z": at[2],
     }))
     assert result.success, result.error

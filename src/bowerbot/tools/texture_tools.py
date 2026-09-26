@@ -38,9 +38,10 @@ TOOLS: list[Tool] = [
             "Search the asset library for texture files by keyword. "
             "Finds HDRIs (.hdr, .exr) for dome lights and material maps "
             "(.png, .jpg, .tif) for surfaces. Returns a list of "
-            "{name, path, format, category} entries; 'format' is the "
+            "{name, location, format, category} entries; 'format' is the "
             "lowercased extension (e.g. '.hdr') and 'category' is 'hdri' "
-            "or 'material'. Pass a result's 'path' to the appropriate tool."
+            "or 'material'. Pass a result's 'location' (its place in the "
+            "library; names repeat) as the texture to the appropriate tool."
         ),
         parameters={
             "type": "object",
@@ -72,9 +73,9 @@ TOOLS: list[Tool] = [
         description=(
             "List every texture in the asset library. Use this to see "
             "what HDRIs and material maps are available. Returns a list of "
-            "{name, path, format, category} entries; 'format' is the "
-            "lowercased extension (e.g. '.hdr', '.png') and 'category' is "
-            "'hdri' or 'material'."
+            "{name, location, format, category} entries; 'location' is what "
+            "texture inputs take; 'format' is the lowercased extension (e.g. "
+            "'.hdr', '.png') and 'category' is 'hdri' or 'material'."
         ),
         parameters={
             "type": "object",

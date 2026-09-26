@@ -66,7 +66,14 @@ def _route_intake(
     fix_root_prim: bool,
     fix_root_transforms: bool,
 ) -> IntakeReport:
-    """Route an input file to USDZ / library-package / loose-file intake."""
+    """Route an input file to project-asset / USDZ / library-package / loose-file intake."""
+    entry = _project_entry(asset_path, assets_dir)
+    if entry is not None:
+        return _reuse_project_asset(
+            entry, asset_path, assets_dir,
+            fix_root_prim=fix_root_prim,
+            fix_root_transforms=fix_root_transforms,
+        )
     if asset_path.suffix.lower() == AssetFormat.USDZ:
         return intake_usdz(asset_path, assets_dir)
 
@@ -105,8 +112,46 @@ def _route_intake(
     return report
 
 
-def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
+def _project_entry(asset_path: Path, assets_dir: Path) -> Path | None:
+    """The project assets/ entry *asset_path* belongs to, or ``None`` if it comes from outside."""
+    try:
+        relative = asset_path.absolute().relative_to(assets_dir.absolute())
+    except ValueError:
+        return None
+    return assets_dir / relative.parts[0] if relative.parts else None
+
+
+def _reuse_project_asset(
+    entry: Path,
+    asset_path: Path,
+    assets_dir: Path,
+    *,
+    fix_root_prim: bool,
+    fix_root_transforms: bool,
+) -> IntakeReport:
+    """Use an asset already in the project as it is: re-checked, never re-copied."""
+    report = IntakeReport(
+        scene_ref_path=asset_path.absolute().relative_to(assets_dir.parent.absolute()).as_posix(),
+        asset_folder_name=entry.stem if entry.is_file() else entry.name,
+        root_original_name=asset_path.name,
+        root_canonical_name=asset_path.name,
+        was_renamed=False,
+        files_copied=0,
+    )
+    if entry.is_dir():
+        _validate_intake(
+            report, assets_dir,
+            fix_root_prim=fix_root_prim,
+            fix_root_transforms=fix_root_transforms,
+        )
+    return report
+
+
+def intake_target_name(asset_path: Path, library_dir: Path | None, assets_dir: Path) -> str:
     """Return the assets/ entry name prepare_asset would stage for *asset_path*."""
+    entry = _project_entry(asset_path, assets_dir)
+    if entry is not None:
+        return entry.name
     if asset_path.suffix.lower() == AssetFormat.USDZ:
         return asset_path.name
     if library_dir is not None:

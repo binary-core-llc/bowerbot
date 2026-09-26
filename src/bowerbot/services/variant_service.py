@@ -13,14 +13,13 @@ from pxr import Sdf, Usd, UsdShade
 
 from bowerbot.schemas import SceneNamespace, VariantCategory
 from bowerbot.state import SceneState
-from bowerbot.utils import assets, variants
+from bowerbot.utils import assets, library_utils, variants
 from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     list_alternate_geo_files,
     normalize_asset_prim_path,
     require_asset_context,
     resolve_default_prim_name,
-    resolve_library_file,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.naming import safe_variant_name, validate_variant_name
@@ -458,10 +457,10 @@ def add_scene_model_selection_variant(
             f"{prim_path} has no '/asset' child — not a valid placement wrapper.",
         )
 
-    resolved_path = resolve_library_file(
-        params["asset_file_path"],
+    resolved_path = library_utils.find_asset(
+        params["asset"],
         library_dir=state.library_dir,
-        project_dir=project.path,
+        project_assets_dir=project.assets_dir,
     )
     report = assets.intake.prepare_asset(
         resolved_path, state.resolve_assets_dir(),

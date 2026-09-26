@@ -100,14 +100,14 @@ TOOLS: list[Tool] = [
         parameters={
             "type": "object",
             "properties": {
-                "asset_file_path": {
+                "asset": {
                     "type": "string",
                     "description": (
-                        "The asset's root .usda/.usdc/.usdz file in the asset library, "
-                        "as search_assets / list_assets return it (absolute or "
-                        "library-relative), or a file already in the project's assets/. "
-                        "Files outside the asset library are refused: copy them into "
-                        "the library first."
+                        "The asset's name exactly as search_assets, list_assets or "
+                        "list_project_assets report it (e.g. 'SM_BarelPlastic_B_01'). "
+                        "The project's copy is used first, then the library asset. If "
+                        "two library assets share a name, pass the library 'location' "
+                        "of the one you mean. File paths are refused."
                     ),
                 },
                 "asset_name": {
@@ -165,7 +165,7 @@ TOOLS: list[Tool] = [
                 },
             },
             "required": [
-                "asset_file_path", "asset_name", "group",
+                "asset", "asset_name", "group",
                 "translate_x", "translate_y", "translate_z",
             ],
         },
@@ -211,11 +211,11 @@ TOOLS: list[Tool] = [
                             "asset": {
                                 "type": "string",
                                 "description": (
-                                    "The asset's root FILE in the asset library, "
-                                    "absolute or relative to the layout-file/project/"
-                                    "library dirs (e.g. "
-                                    "'SM_floor02/SM_floor02.usda'). Files outside "
-                                    "the library are refused."
+                                    "The asset's name as search_assets or "
+                                    "list_project_assets report it (e.g. "
+                                    "'SM_floor02'), or its library location "
+                                    "when two assets share a name. File paths "
+                                    "are refused."
                                 ),
                             },
                             "group": {
@@ -340,9 +340,9 @@ TOOLS: list[Tool] = [
                     "description": (
                         "Path to a layout JSON file: {\"version\": 1, "
                         "\"placements\": [...]} with the same entries as the "
-                        "inline form. It must be in the asset library or the "
-                        "project (absolute or relative). Use INSTEAD of "
-                        "'placements' for bulk layouts."
+                        "inline form, saved in the project folder and passed "
+                        "by its location there (e.g. 'layouts/farm.json'). Use "
+                        "INSTEAD of 'placements' for bulk layouts."
                     ),
                 },
                 "validate_only": {
@@ -382,14 +382,14 @@ TOOLS: list[Tool] = [
         parameters={
             "type": "object",
             "properties": {
-                "asset_file_path": {
+                "asset": {
                     "type": "string",
                     "description": (
-                        "The asset's root .usda/.usdc/.usdz file in the asset library, "
-                        "as search_assets / list_assets return it (absolute or "
-                        "library-relative), or a file already in the project's assets/. "
-                        "Files outside the asset library are refused: copy them into "
-                        "the library first."
+                        "The asset's name exactly as search_assets, list_assets or "
+                        "list_project_assets report it (e.g. 'SM_BarelPlastic_B_01'). "
+                        "The project's copy is used first, then the library asset. If "
+                        "two library assets share a name, pass the library 'location' "
+                        "of the one you mean. File paths are refused."
                     ),
                 },
                 "asset_name": {
@@ -473,7 +473,7 @@ TOOLS: list[Tool] = [
                 },
             },
             "required": [
-                "asset_file_path", "asset_name", "container_prim_path", "group",
+                "asset", "asset_name", "container_prim_path", "group",
                 "translate_x", "translate_y", "translate_z",
             ],
         },

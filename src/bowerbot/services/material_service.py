@@ -10,11 +10,10 @@ from typing import Any
 
 from bowerbot.schemas import ASWFLayerNames, ProceduralMaterialParams
 from bowerbot.state import SceneState
-from bowerbot.utils import material_utils
+from bowerbot.utils import library_utils, material_utils
 from bowerbot.utils.core.asset_folder import (
     check_shared_modification,
     resolve_asset_dir_for_prim,
-    resolve_library_file,
     to_asset_local,
 )
 
@@ -77,10 +76,10 @@ def bind_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Copy a material from a file into the asset and bind it to a prim."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
-    material_file = resolve_library_file(
-        params["material_file"],
+    material_file = library_utils.find_asset(
+        params["material_asset"],
         library_dir=state.library_dir,
-        project_dir=state.project_dir,
+        project_assets_dir=None,
     )
     material_prim_path = params.get("material_prim_path")
 

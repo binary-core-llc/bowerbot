@@ -21,19 +21,23 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.schemas.transforms import Vec3
-from bowerbot.utils.core.asset_folder import (
-    asset_folder_hint,
-    resolve_library_file,
-    validate_asset_file,
-)
+from bowerbot.utils.core.asset_folder import refuse_file_path, validate_asset_file
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.library_utils import find_asset
 
 
-def resolve_layout_file(raw: str, project_dir: Path | None, library_dir: Path | None) -> Path:
-    """Resolve a layout_file argument to a file in the asset library or the project."""
-    path = resolve_library_file(raw, library_dir=library_dir, project_dir=project_dir)
+def resolve_layout_file(raw: str, project_dir: Path | None) -> Path:
+    """The layout JSON file *raw* names inside the project (a project-relative location)."""
+    if project_dir is None:
+        msg = "No project is open; a layout file lives in the project folder."
+        raise ValueError(msg)
+    refuse_file_path(raw, None)
+    path = project_dir / raw
     if not path.is_file():
-        msg = f"layout_file '{raw}' is not a file: {path}"
+        msg = (
+            f"layout_file '{raw}' is not a file in the project ({project_dir}). "
+            f"Put the layout JSON in the project folder and pass its name."
+        )
         raise ValueError(msg)
     return path
 
@@ -85,17 +89,13 @@ def validate_layout_entries(
 def resolve_layout_asset(
     raw: str,
     *,
-    layout_dir: Path | None,
-    project_dir: Path | None,
+    project_assets_dir: Path | None,
     library_dir: Path | None,
 ) -> Path:
-    """Resolve an entry's asset to a root file in the library or project, never the CWD."""
-    path = resolve_library_file(
-        raw, library_dir=library_dir, project_dir=project_dir, first_dir=layout_dir,
+    """Resolve an entry's asset name (or library location) to its root file."""
+    return validate_asset_file(
+        find_asset(raw, library_dir=library_dir, project_assets_dir=project_assets_dir),
     )
-    if path.is_dir():
-        raise ValueError(asset_folder_hint(path))
-    return validate_asset_file(path)
 
 
 def scene_group_path(group: str) -> str:

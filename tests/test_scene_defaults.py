@@ -139,7 +139,7 @@ def test_y_asset_stands_up_in_z_scene():
 
         asset = _make_asset(tmp_path, "widget", "Y")
         r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Widget",
+            "asset": asset.stem, "asset_name": "Widget",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -166,7 +166,7 @@ def test_matching_axis_adds_no_correction():
 
         asset = _make_asset(tmp_path, "widget", "Y")
         r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Widget",
+            "asset": asset.stem, "asset_name": "Widget",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))

@@ -21,14 +21,13 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.state import SceneState
-from bowerbot.utils import assets, layout_utils, stage_utils
+from bowerbot.utils import assets, layout_utils, library_utils, stage_utils
 from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
     get_geometry_bounds,
     get_mpu,
     require_folder_entry,
     resolve_asset_dir_for_prim,
-    resolve_library_file,
 )
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 from bowerbot.utils.core.references import (
@@ -51,10 +50,10 @@ logger = logging.getLogger(__name__)
 def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bring an asset into the project and add it to the scene."""
     stage = state.require_stage()
-    asset_path = resolve_library_file(
-        params["asset_file_path"],
+    asset_path = library_utils.find_asset(
+        params["asset"],
         library_dir=state.library_dir,
-        project_dir=state.project_dir,
+        project_assets_dir=state.require_project().assets_dir,
     )
     asset_name = params["asset_name"]
     group = params["group"]
@@ -118,12 +117,10 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         msg = "place_layout needs exactly one of 'placements' or 'layout_file'."
         raise ValueError(msg)
 
-    project_dir = state.project_dir
-    layout_dir = None
+    project = state.require_project()
     if layout_file is not None:
-        file_path = layout_utils.resolve_layout_file(layout_file, project_dir, state.library_dir)
+        file_path = layout_utils.resolve_layout_file(layout_file, project.path)
         raw_entries = layout_utils.parse_layout_file(file_path)
-        layout_dir = file_path.parent
     if not raw_entries:
         raise ValueError("place_layout needs a non-empty 'placements' list.")
 
@@ -135,8 +132,7 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         try:
             asset_path = layout_utils.resolve_layout_asset(
                 entry.asset,
-                layout_dir=layout_dir,
-                project_dir=project_dir,
+                project_assets_dir=project.assets_dir,
                 library_dir=state.library_dir,
             )
             group_path = layout_utils.scene_group_path(entry.group)
@@ -152,12 +148,18 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             )
             continue
         target = assets.intake.intake_target_name(
-            asset_path, state.library_dir,
+            asset_path, state.library_dir, project.assets_dir,
         )
         prior = folder_sources.setdefault(target, asset_path)
         if prior != asset_path:
+            here, there = (
+                library_utils.asset_location(
+                    p, library_dir=state.library_dir, project_dir=project.path,
+                )
+                for p in (asset_path, prior)
+            )
             problems.append(
-                f"placements[{idx}]: '{asset_path}' and '{prior}' would both "
+                f"placements[{idx}]: '{here}' and '{there}' would both "
                 f"stage to assets/{target}; rename one source.",
             )
             continue
@@ -186,7 +188,10 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         by_asset[item["target"]] = by_asset.get(item["target"], 0) + item["count"]
         groups.add(item["group_path"])
     sources = {
-        target: str(path) for target, path in folder_sources.items()
+        target: library_utils.asset_location(
+            path, library_dir=state.library_dir, project_dir=project.path,
+        )
+        for target, path in folder_sources.items()
     }
 
     if params.get("validate_only", False):
@@ -279,10 +284,10 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Nest an asset inside an ASWF container's ``contents.usda``."""
     stage = state.require_stage()
-    asset_path = resolve_library_file(
-        params["asset_file_path"],
+    asset_path = library_utils.find_asset(
+        params["asset"],
         library_dir=state.library_dir,
-        project_dir=state.project_dir,
+        project_assets_dir=state.require_project().assets_dir,
     )
     asset_name = params["asset_name"]
     container_prim_path = params["container_prim_path"]

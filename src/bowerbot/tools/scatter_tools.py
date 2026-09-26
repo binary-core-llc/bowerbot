@@ -57,9 +57,9 @@ _ASSETS = {
     "type": "array",
     "minItems": 1,
     "description": (
-        "The asset mix. Each item: { asset: root FILE path in the asset library "
-        "(absolute, project- or library-relative, e.g. 'pebble/pebble.usda'; "
-        "files outside the library are refused), weight?: relative "
+        "The asset mix. Each item: { asset: the asset's name as search_assets "
+        "reports it (e.g. 'pebble'; its library location when two share a name; "
+        "file paths are refused), weight?: relative "
         "share (default 1), fix_root_prim?, fix_root_transforms? (intake "
         "fixes; only with user confirmation) }."
     ),

@@ -19,7 +19,8 @@ You have tools for finding texture files in the user's asset library.
 2. If the search returns nothing, use `list_textures` to see what's available
 3. Use the `category` filter to narrow results (`hdri` for dome lights,
    `material` for surfaces, `all` to see both)
-4. Pass the returned `path` to the appropriate tool:
+4. Pass the returned `location` (not the name: texture names repeat
+   across the library) to the appropriate tool:
    - HDRI files → `create_light` with `light_type: DomeLight` and the
      `texture` parameter
    - Material maps (diffuse / normal / roughness / etc.) are inputs to
@@ -29,8 +30,10 @@ You have tools for finding texture files in the user's asset library.
 
 ## Notes
 - `search_textures` and `list_textures` both return a list of
-  `{name, path, format, category}` entries. `path` is the file path to
-  pass downstream, `format` is the lowercased extension (e.g. `.hdr`),
+  `{name, location, format, category}` entries. `location` is where the
+  texture sits in the library and what texture inputs take (a texture
+  already in the project is `textures/<file>`); file paths are refused.
+  `format` is the lowercased extension (e.g. `.hdr`),
   and `category` is `hdri` or `material` — route by `category` rather
   than re-inspecting the extension.
 - Textures live in the user's asset library (`assets_dir` from

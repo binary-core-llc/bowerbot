@@ -608,14 +608,14 @@ TOOLS: list[Tool] = [
                 },
                 "variant_set": _VARIANT_SET,
                 "variant_name": _VARIANT_NAME,
-                "asset_file_path": {
+                "asset": {
                     "type": "string",
                     "description": (
-                        "The asset file in the asset library (.usda / .usdz "
-                        "/ loose geometry), absolute or library-relative. "
-                        "Will be staged into <project>/assets/ via the "
-                        "same intake path as place_asset. Files outside the "
-                        "library are refused."
+                        "The asset's name as search_assets or "
+                        "list_project_assets report it (or its library "
+                        "location when two assets share a name). Staged into "
+                        "<project>/assets/ via the same intake as place_asset. "
+                        "File paths are refused."
                     ),
                 },
                 "set_as_default": _SET_AS_DEFAULT,
@@ -637,7 +637,7 @@ TOOLS: list[Tool] = [
                 },
             },
             "required": [
-                "prim_path", "variant_set", "variant_name", "asset_file_path",
+                "prim_path", "variant_set", "variant_name", "asset",
             ],
         },
     ),

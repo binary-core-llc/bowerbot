@@ -160,7 +160,7 @@ def test_create_dome_light_with_texture():
         r = asyncio.run(exec_tool(state, "create_light", {
             "light_type": "DomeLight",
             "light_name": "Env",
-            "texture": str(hdri),
+            "texture": hdri.name,
             "attributes": {"inputs:intensity": 1.0},
         }))
         assert r.success, r.error
@@ -180,7 +180,7 @@ def test_remove_dome_light_names_the_texture_to_delete():
         hdri = tmp_path / "studio.hdr"
         hdri.write_bytes(b"fake-hdri")
         made = asyncio.run(exec_tool(state, "create_light", {
-            "light_type": "DomeLight", "light_name": "Env", "texture": str(hdri),
+            "light_type": "DomeLight", "light_name": "Env", "texture": hdri.name,
         }))
         assert made.success, made.error
 
@@ -273,7 +273,7 @@ def test_create_light_with_light_linking():
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "hero")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Hero",
+            "asset": asset.stem, "asset_name": "Hero",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -301,7 +301,7 @@ def test_create_asset_light():
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "lamp")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "asset": asset.stem, "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -325,7 +325,7 @@ def test_create_asset_scene_only_light_refused():
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "lamp")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "asset": asset.stem, "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -407,7 +407,7 @@ def test_update_light_texture():
 
         r = asyncio.run(exec_tool(state, "update_light", {
             "prim_path": created.data["prim_path"],
-            "texture": str(hdri),
+            "texture": hdri.name,
         }))
         assert r.success, r.error
         assert (project.path / "textures" / "sunset.hdr").exists()
@@ -419,7 +419,7 @@ def test_update_asset_rect_light_texture_into_asset():
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "panel")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Panel",
+            "asset": asset.stem, "asset_name": "Panel",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -434,7 +434,7 @@ def test_update_asset_rect_light_texture_into_asset():
         tex.write_bytes(b"fake-png")
         r = asyncio.run(exec_tool(state, "update_light", {
             "prim_path": created.data["prim_path"],
-            "texture": str(tex),
+            "texture": tex.name,
         }))
         assert r.success, r.error
 
@@ -486,7 +486,7 @@ def test_remove_asset_light():
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "lamp")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "asset": asset.stem, "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -533,7 +533,7 @@ def test_remove_asset_light_drops_targets_in_every_placement():
         asset = _asset(tmp_path, "lamp")
         placements = [
             asyncio.run(exec_tool(state, "place_asset", {
-                "asset_file_path": str(asset), "asset_name": "Lamp",
+                "asset": asset.stem, "asset_name": "Lamp",
                 "group": "Props",
                 "translate_x": x, "translate_y": 0.0, "translate_z": 0.0,
             })).data["prim_path"]
@@ -567,7 +567,7 @@ def test_remove_light_refuses_light_from_asset_files():
         UsdLux.SphereLight.Define(asset_stage, "/lamp/Bulb")
         asset_stage.Save()
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "asset": asset.stem, "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -612,7 +612,7 @@ def test_create_asset_light_spatial_string_coerced():
         tmp_path, state, project = _setup(tmp)
         asset = _cm_asset(tmp_path, "cmlamp")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "asset": asset.stem, "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -636,7 +636,7 @@ def test_create_asset_light_spatial_garbage_refused():
         tmp_path, state, _ = _setup(tmp)
         asset = _cm_asset(tmp_path, "cmlamp2")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "asset": asset.stem, "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -656,7 +656,7 @@ def test_asset_light_offset_uses_asset_units():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(_asset(tmp_path, "block")), "asset_name": "Block",
+            "asset": _asset(tmp_path, "block").stem, "asset_name": "Block",
             "group": "Props", "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         light = asyncio.run(exec_tool(state, "create_light", {

@@ -176,10 +176,11 @@ TOOLS: list[Tool] = [
                 "texture": {
                     "type": "string",
                     "description": (
-                        "DomeLight / RectLight only. An HDRI or texture file "
-                        "in the asset library, as search_textures / "
-                        "list_textures return it; files outside the library "
-                        "are refused. BowerBot copies the "
+                        "DomeLight / RectLight only. The HDRI or texture's "
+                        "'location' as search_textures / list_textures report "
+                        "it (e.g. 'hdrs/studio.exr'), or a texture already in "
+                        "the project ('textures/studio.exr'). File paths are "
+                        "refused. BowerBot copies the "
                         "file into the project's textures/ (scene light) or "
                         "the asset's maps/ (asset light) and authors the "
                         "relative reference into inputs:texture:file. "
@@ -265,8 +266,8 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "description": (
                         "DomeLight / RectLight only (the light types that "
-                        "carry inputs:texture:file). An HDRI or texture file "
-                        "in the asset library (files outside it are refused), "
+                        "carry inputs:texture:file). The texture's 'location' "
+                        "as search_textures reports it (file paths are refused), "
                         "set as inputs:texture:file. For a "
                         "scene light the file is copied into "
                         "<project>/textures/; for an asset light (a textured "

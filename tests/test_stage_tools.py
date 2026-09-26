@@ -34,7 +34,7 @@ def _setup(tmp):
 def _place(tmp_path, state, name="table", group="Furniture"):
     asset = _asset(tmp_path, name)
     r = asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": str(asset), "asset_name": name.title(),
+        "asset": asset.stem, "asset_name": name.title(),
         "group": group,
         "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
     }))

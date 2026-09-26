@@ -9,10 +9,10 @@ answering questions about asset availability. If the first search
 returns no results, try broader keywords or `list_assets` to show
 everything available.
 
-The library is the only place BowerBot takes source files from.
-Placing, scattering, binding a material or staging a texture from a
-path outside it is refused: if the user names a file elsewhere, ask
-them to copy it into the library first, then use the library path.
+The library is the only place BowerBot takes source files from, and
+tools take names, never paths. If the user has a file somewhere else,
+ask them to copy it into the library first, then search for it and use
+its name.
 
 ## When to Use
 - When the user asks "what do I have", "do I have a table", etc.
@@ -26,10 +26,15 @@ USD-family files: `.usd`, `.usda`, `.usdc`, `.usdz`
 
 ## Asset Categories
 
-Every result is `{name, path, format, category}`. Use `category` to pick
-the next tool, and forward the result's `path` verbatim as that tool's
-file argument: `path` -> `place_asset`'s `asset_file_path` for
-`package`/`geo`, or `path` -> `bind_material`'s `material_file` for `mtl`.
+Every result is `{name, location, format, category}`. Use `category` to
+pick the next tool, and pass the result's `name`: `name` ->
+`place_asset`'s `asset` (and every placing tool: `place_layout`,
+scatter, model-selection variants) for `package`/`geo`, or `name` ->
+`bind_material`'s `material_asset` for `mtl`. `location` is where the
+asset sits inside the library; pass it instead of the name only when
+two results share a name. Never pass a file path: tools refuse them.
+After a skill downloads a model into the library (e.g. Sketchfab), place
+it by its name: the file name without its extension.
 
 | Category | What it is | Which tool to use |
 |----------|-----------|-------------------|

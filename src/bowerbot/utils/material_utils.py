@@ -26,7 +26,7 @@ from bowerbot.utils.core.asset_folder import (
     to_layer_local_path,
 )
 from bowerbot.utils.core.overrides import clear_orphan_variant_overs
-from bowerbot.utils.variant_utils import remove_variants_layer_if_empty
+from bowerbot.utils.variants.asset import remove_variants_layer_if_empty
 
 logger = logging.getLogger(__name__)
 

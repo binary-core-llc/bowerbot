@@ -16,6 +16,13 @@ class Severity(StrEnum):
     INFO = "info"
 
 
+class UsdValidatorNames:
+    """Names of USD ValidationFramework validators BowerBot refers to."""
+
+    # Checks each shader's id and inputs against the Sdr shader registry.
+    SHADER_SDR_COMPLIANCE = "usdShadeValidators:ShaderSdrCompliance"
+
+
 class ValidationIssue(BaseModel):
     """A single validation finding."""
 

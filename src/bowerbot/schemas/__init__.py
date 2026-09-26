@@ -102,7 +102,12 @@ from bowerbot.schemas.transforms import (
     SceneObject,
     TransformParams,
 )
-from bowerbot.schemas.validation import Severity, ValidationIssue, ValidationResult
+from bowerbot.schemas.validation import (
+    Severity,
+    UsdValidatorNames,
+    ValidationIssue,
+    ValidationResult,
+)
 from bowerbot.schemas.variants import (
     SceneVariantsSummary,
     VariantCarrier,
@@ -191,6 +196,7 @@ __all__ = [
     "SurfaceTuning",
     "TextureCategory",
     "TransformParams",
+    "UsdValidatorNames",
     "ValidationIssue",
     "ValidationResult",
     "VariantCarrier",

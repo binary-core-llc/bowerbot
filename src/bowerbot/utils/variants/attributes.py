@@ -10,7 +10,7 @@ from pathlib import Path
 from pxr import Sdf, Usd
 
 from bowerbot.utils.core.asset_folder import find_root_file
-from bowerbot.utils.texture_utils import stage_asset_value
+from bowerbot.utils.texture_utils import stage_asset_texture, stage_asset_value
 
 
 def stage_asset_typed_overrides(
@@ -18,8 +18,15 @@ def stage_asset_typed_overrides(
     resolved_types: dict[str, dict[str, Sdf.ValueTypeName | None]],
     project_dir: Path | None,
     library_dir: Path | None,
+    *,
+    asset_dir: Path | None = None,
 ) -> dict[str, dict[str, object]]:
-    """Return a new overrides dict with Asset-typed string values staged into the project."""
+    """Return a new overrides dict with Asset-typed string values staged.
+
+    An asset variant (*asset_dir* given) stages into the asset's ``maps/``, so
+    the path resolves from its ``variants.usda``; a scene variant stages into
+    the project's ``textures/``.
+    """
     if project_dir is None:
         return overrides
     asset_type = Sdf.ValueTypeNames.Asset
@@ -29,8 +36,12 @@ def stage_asset_typed_overrides(
         staged: dict[str, object] = {}
         for attr_name, value in attrs.items():
             if types.get(attr_name) == asset_type and isinstance(value, str):
-                staged[attr_name] = stage_asset_value(
-                    value, project_dir, library_dir,
+                staged[attr_name] = (
+                    stage_asset_texture(
+                        asset_dir, value, library_dir=library_dir, project_dir=project_dir,
+                    )
+                    if asset_dir is not None
+                    else stage_asset_value(value, project_dir, library_dir)
                 )
             else:
                 staged[attr_name] = value

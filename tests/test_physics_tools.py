@@ -1382,3 +1382,57 @@ def test_remove_joint_drops_targets_at_it():
         stage = Usd.Stage.Open(str(project.scene_path))
         assert stage.GetPrimAtPath("/Scene/Rig").GetRelationship("watch").GetTargets() == []
 
+
+# ── removals leave nothing behind ──
+
+
+def test_remove_physics_api_leaves_no_empty_overs():
+    """Removing the only API on a prim drops its over, at scene and asset scope."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        box = _place(tmp_path, state).data["prim_path"]
+        mesh = f"{box}/asset/Mesh"
+        before = project.scene_path.read_text()
+        for step in (
+            ("apply_physics_api", {"prim_path": mesh, "api_name": "PhysicsMassAPI",
+                                   "scope": "scene", "attributes": {"physics:mass": 2.0}}),
+            ("remove_physics_api", {"prim_path": mesh, "api_name": "PhysicsMassAPI",
+                                    "scope": "scene"}),
+        ):
+            r = asyncio.run(exec_tool(state, *step))
+            assert r.success, r.error
+        assert 'over "Mesh"' not in project.scene_path.read_text()
+        assert project.scene_path.read_text().count("over") == before.count("over")
+
+        for api in ("PhysicsCollisionAPI", "PhysicsMassAPI"):
+            r = asyncio.run(exec_tool(state, "apply_physics_api", {
+                "prim_path": box if api == "PhysicsMassAPI" else mesh, "api_name": api,
+            }))
+            assert r.success, r.error
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": mesh, "api_name": "PhysicsCollisionAPI",
+        }))
+        assert r.success, r.error
+        assert 'over "Mesh"' not in (project.assets_dir / "box" / "phy.usda").read_text()
+
+
+def test_removing_a_rigid_body_reports_the_joints_it_strands():
+    """Joints that no longer reach a rigid body are named in the result."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        a = _place(tmp_path, state, "a").data["prim_path"]
+        b = _place(tmp_path, state, "b").data["prim_path"]
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": a, "api_name": "PhysicsRigidBodyAPI", "scope": "scene",
+        }))
+        joint = asyncio.run(exec_tool(state, "create_joint", {
+            "joint_type": "PhysicsFixedJoint", "name": "weld", "body0": a, "body1": b,
+            "scope": "scene",
+        })).data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+            "prim_path": a, "api_name": "PhysicsRigidBodyAPI", "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert r.data["joints_without_rigid_body"] == [joint]
+        assert joint in r.data["message"]

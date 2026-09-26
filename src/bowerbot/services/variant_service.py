@@ -66,8 +66,10 @@ def add_asset_material_variant(
     def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
         for mesh_path, material_path in bindings.items():
             mesh_over = stage.OverridePrim(mesh_path)
-            binding_api = UsdShade.MaterialBindingAPI.Apply(mesh_over)
-            binding_api.GetDirectBindingRel().SetTargets([Sdf.Path(material_path)])
+            UsdShade.MaterialBindingAPI.Apply(mesh_over)
+            mesh_over.CreateRelationship("material:binding", False).SetTargets(
+                [Sdf.Path(material_path)],
+            )
 
     variants.asset.apply_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
@@ -227,6 +229,7 @@ def add_asset_attribute_variant(
         overrides, resolved_types,
         state.project_dir,
         state.library_dir,
+        asset_dir=asset_dir,
     )
 
     def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
@@ -646,37 +649,49 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
 
+    removed_payload = variants.inspection.get_variant_payload_refs(asset_dir, set_name).get(
+        variant_name,
+    )
     removed = variants.asset.remove_variant(asset_dir, set_name, variant_name)
+    new_default: str | None = None
+    unused_files: list[str] = []
     if removed:
         summary = variants.inspection.get_variant_summary(asset_dir)
-        still_has_set = any(s.name == set_name for s in summary.variant_sets)
-        scrub_target = None if not still_has_set else variant_name
-        if not still_has_set:
+        remaining = next((s for s in summary.variant_sets if s.name == set_name), None)
+        scrub_target = None if remaining is None else variant_name
+        if remaining is None:
             variants.asset.clear_default_variant(asset_dir, set_name)
-        else:
-            current = next(
-                (s.selection for s in summary.variant_sets if s.name == set_name),
-                None,
-            )
-            if current == variant_name:
-                variants.asset.clear_default_variant(asset_dir, set_name)
+        elif remaining.selection == variant_name:
+            new_default = remaining.variants[0]
+            variants.asset.set_default_variant(asset_dir, set_name, new_default)
         variants.scene.clear_scene_variant_selections(
             stage, asset_dir, set_name, scrub_target,
         )
         variants.asset.restore_canonical_geo_if_needed(asset_dir)
         variants.asset.remove_variants_layer_if_empty(asset_dir)
+        if removed_payload:
+            unused_files = variants.asset.unused_asset_files(asset_dir, [removed_payload])
 
     state.reopen_stage()
+    message = (
+        f"Removed '{variant_name}' from '{set_name}' in {asset_dir.name}"
+        if removed else f"Variant '{variant_name}' not found in '{set_name}'"
+    )
+    if new_default:
+        message += f"; it was the default, so '{new_default}' is selected now"
+    if unused_files:
+        message += (
+            f". {', '.join(unused_files)} is no longer used by the asset; "
+            "it stays in the asset folder"
+        )
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
         "variant_name": variant_name,
         "removed": removed,
-        "message": (
-            f"Removed '{variant_name}' from '{set_name}' in {asset_dir.name}"
-            if removed else
-            f"Variant '{variant_name}' not found in '{set_name}'"
-        ),
+        "default_variant": new_default,
+        "unused_files": unused_files,
+        "message": message,
     }
 
 

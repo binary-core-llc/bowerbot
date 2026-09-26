@@ -23,11 +23,17 @@ from bowerbot.utils.core.asset_folder import (
     ensure_root_reference,
     ensure_side_layer,
     find_root_file,
+    keep_root_over,
     remove_empty_layer,
     resolve_default_prim_name,
     to_layer_local_path,
 )
-from bowerbot.utils.core.overrides import clear_orphan_variant_overs
+from bowerbot.utils.core.overrides import (
+    clear_orphan_variant_overs,
+    drop_api_schema,
+    prune_empty_overrides,
+)
+from bowerbot.utils.texture_utils import copy_file_into
 from bowerbot.utils.variants.asset import remove_variants_layer_if_empty
 
 logger = logging.getLogger(__name__)
@@ -48,12 +54,13 @@ def add_material_to_folder(
             msg = f"No Material prim found in {material_file.name}"
             raise ValueError(msg)
 
-    mtl_layer = Sdf.Layer.FindOrOpen(str(ensure_side_layer(asset_dir, ASWFLayerNames.MTL)))
-
     source_layer = Sdf.Layer.FindOrOpen(str(material_file))
     if source_layer is None:
         msg = f"Cannot open material file: {material_file}"
         raise RuntimeError(msg)
+    files = _material_files(source_layer, Sdf.Path(material_prim_path))
+
+    mtl_layer = Sdf.Layer.FindOrOpen(str(ensure_side_layer(asset_dir, ASWFLayerNames.MTL)))
 
     default_prim_name = resolve_default_prim_name(asset_dir)
     ensure_layer_scope(mtl_layer, default_prim_name, AssetScopeNames.MATERIALS, "Scope")
@@ -64,6 +71,7 @@ def add_material_to_folder(
         source_layer, Sdf.Path(material_prim_path),
         mtl_layer, dest_mat_path,
     )
+    _stage_material_files(mtl_layer, dest_mat_path, files, asset_dir)
 
     mtl_layer.defaultPrim = default_prim_name
     mtl_layer.Save()
@@ -87,6 +95,68 @@ def add_material_to_folder(
         composed_mat_path, prim_path, asset_dir.name,
     )
     return composed_mat_path
+
+
+def _material_files(layer: Sdf.Layer, material_path: Sdf.Path) -> dict[str, Path]:
+    """Every file the material's asset-valued inputs name, resolved next to *layer*.
+
+    Refuses a file that does not resolve, before anything is written.
+    """
+    found: dict[str, Path] = {}
+    missing: list[str] = []
+
+    def visit(path: Sdf.Path) -> None:
+        spec = layer.GetAttributeAtPath(path) if path.IsPropertyPath() else None
+        if spec is None:
+            return
+        for asset_path in _asset_paths(spec.default):
+            resolved = Path(layer.ComputeAbsolutePath(asset_path))
+            if resolved.is_file():
+                found[asset_path] = resolved
+            else:
+                missing.append(asset_path)
+
+    layer.Traverse(material_path, visit)
+    if missing:
+        msg = (
+            f"The material uses file(s) that do not resolve next to "
+            f"{Path(layer.realPath).name}: {sorted(set(missing))}. Fix the library material first."
+        )
+        raise ValueError(msg)
+    return found
+
+
+def _stage_material_files(
+    layer: Sdf.Layer, material_path: Sdf.Path, files: dict[str, Path], asset_dir: Path,
+) -> None:
+    """Copy the material's files into the asset's ``maps/`` and point its inputs at them."""
+    staged = {
+        asset_path: f"./{ASWFLayerNames.MAPS}/"
+        f"{copy_file_into(source, asset_dir / ASWFLayerNames.MAPS).name}"
+        for asset_path, source in files.items()
+    }
+
+    def visit(path: Sdf.Path) -> None:
+        spec = layer.GetAttributeAtPath(path) if path.IsPropertyPath() else None
+        if spec is None or not _asset_paths(spec.default):
+            return
+        if isinstance(spec.default, Sdf.AssetPath):
+            spec.default = Sdf.AssetPath(staged.get(spec.default.path, spec.default.path))
+        else:
+            spec.default = Sdf.AssetPathArray(
+                [Sdf.AssetPath(staged.get(a.path, a.path)) for a in spec.default],
+            )
+
+    layer.Traverse(material_path, visit)
+
+
+def _asset_paths(value: object) -> list[str]:
+    """The non-empty paths of an asset-valued attribute default."""
+    if isinstance(value, Sdf.AssetPath):
+        return [value.path] if value.path else []
+    if isinstance(value, Sdf.AssetPathArray):
+        return [a.path for a in value if a.path]
+    return []
 
 
 def create_procedural_material_in_folder(
@@ -119,6 +189,7 @@ def create_procedural_material_in_folder(
     target_prim = stage.OverridePrim(local_prim_path)
     UsdShade.MaterialBindingAPI.Apply(target_prim).Bind(material)
 
+    keep_root_over(stage.GetRootLayer())
     stage.Save()
     ensure_root_reference(asset_dir, ASWFLayerNames.MTL)
 
@@ -187,25 +258,34 @@ def _author_usd_preview_surface(
     material.CreateSurfaceOutput().ConnectToSource(out)
 
 
-def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None:
-    """Clear a binding and garbage-collect unused materials + the layer."""
+def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> bool:
+    """Remove the binding ``mtl.usda`` authors on *prim_path*; garbage-collect what it leaves.
+
+    The binding relationships and the MaterialBindingAPI go, an ``over`` left
+    empty goes, then unused materials (and an empty layer). Returns whether
+    ``mtl.usda`` bound anything there.
+    """
     mtl_path = asset_dir / ASWFLayerNames.MTL
     if not mtl_path.exists():
-        return
+        return False
+    layer = Sdf.Layer.FindOrOpen(str(mtl_path))
+    if layer is None:
+        return False
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    local_path = to_layer_local_path(prim_path, default_prim_name)
-
-    stage = Usd.Stage.Open(str(mtl_path))
-    if stage is None:
-        return
-
-    prim = stage.GetPrimAtPath(local_path)
-    if prim.IsValid():
-        UsdShade.MaterialBindingAPI(prim).UnbindAllBindings()
-
-    stage.Save()
+    local_path = to_layer_local_path(prim_path, resolve_default_prim_name(asset_dir))
+    spec = layer.GetPrimAtPath(local_path)
+    bindings = [] if spec is None else [
+        rel for rel in spec.relationships
+        if rel.name == "material:binding" or rel.name.startswith("material:binding:")
+    ]
+    for rel in bindings:
+        spec.RemoveProperty(rel)
+    if bindings:
+        drop_api_schema(spec, "MaterialBindingAPI")
+        prune_empty_overrides(layer, str(local_path))
+        layer.Save()
     cleanup_unused_in_folder(asset_dir)
+    return bool(bindings)
 
 
 def list_materials_in_folder(asset_dir: Path) -> list[dict[str, Any]]:

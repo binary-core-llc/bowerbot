@@ -23,7 +23,7 @@ from bowerbot.utils.core.asset_folder import (
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.integrity import require_prims
-from bowerbot.utils.core.overrides import prune_empty_overrides
+from bowerbot.utils.core.overrides import drop_api_schema, prune_empty_overrides
 from bowerbot.utils.core.schema_registry import schema_class
 from bowerbot.utils.physics.scene import ensure_physics_scene
 from bowerbot.utils.physics.schema_info import (
@@ -327,7 +327,7 @@ def _remove_api_from_layer(
             if name in PhysicsRules.MULTI_APPLY_APIS and instance_name
             else name.value
         )
-        if _drop_from_api_listop(prim_spec, token):
+        if drop_api_schema(prim_spec, token):
             touched = True
         props = list_api_properties(
             name,
@@ -344,37 +344,6 @@ def _remove_api_from_layer(
                 touched = True
 
     if touched:
-        layer.Save()
         prune_empty_overrides(layer, prim_path)
+        layer.Save()
     return touched
-
-
-def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
-    """Drop *api_name* from prim's apiSchemas list-op; True if changed.
-
-    The op keeps its kind. An explicit list stays explicit; a prepend/append
-    list never becomes one, because an explicit list in this layer would wipe
-    every API schema weaker layers apply to the prim. An op left empty is
-    cleared.
-    """
-    list_op = prim_spec.GetInfo("apiSchemas")
-    if list_op is None:
-        return False
-    if list_op.isExplicit:
-        if api_name not in list_op.explicitItems:
-            return False
-        new_op = Sdf.TokenListOp.CreateExplicit(
-            [item for item in list_op.explicitItems if item != api_name],
-        )
-    else:
-        if api_name not in list_op.prependedItems and api_name not in list_op.appendedItems:
-            return False
-        new_op = Sdf.TokenListOp()
-        new_op.prependedItems = [item for item in list_op.prependedItems if item != api_name]
-        new_op.appendedItems = [item for item in list_op.appendedItems if item != api_name]
-        new_op.deletedItems = list(list_op.deletedItems)
-    if new_op.isExplicit or new_op.prependedItems or new_op.appendedItems or new_op.deletedItems:
-        prim_spec.SetInfo("apiSchemas", new_op)
-    else:
-        prim_spec.ClearInfo("apiSchemas")
-    return True

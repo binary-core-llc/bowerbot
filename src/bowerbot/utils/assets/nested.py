@@ -21,6 +21,7 @@ from bowerbot.utils.core.asset_folder import (
     ensure_root_reference,
     ensure_side_layer,
     get_mpu,
+    keep_root_over,
     read_stage_metadata_from_dir,
     remove_empty_layer,
     resolve_default_prim_name,
@@ -81,6 +82,7 @@ def add_nested_asset_reference(
     )
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
+    keep_root_over(stage.GetRootLayer())
     stage.Save()
     ensure_root_reference(container_dir, ASWFLayerNames.CONTENTS)
 

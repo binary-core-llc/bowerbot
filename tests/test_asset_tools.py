@@ -1340,3 +1340,51 @@ def test_shared_names_ask_for_a_location_and_downloads_place_by_name():
         r = _place_from(state, "Lamp", "Lamp")
         assert r.success, r.error
         assert (project.assets_dir / "Lamp.usdz").exists()
+
+
+# ── side layers are clean ASWF layers ──
+
+
+def test_side_layers_state_units_and_keep_their_root_an_over():
+    """lgt/mtl/phy/contents/variants.usda state the asset's units and only over its root,
+    and an older side layer without units gets them on the next edit."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _asset(tmp_path, "cabinet")
+        _asset(tmp_path, "cup")
+        cabinet = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "cabinet", "asset_name": "Cabinet", "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })).data["prim_path"]
+        mesh = f"{cabinet}/asset/Mesh"
+        for tool, params in (
+            ("create_light", {"asset_prim_path": cabinet, "light_type": "SphereLight",
+                              "light_name": "Bulb"}),
+            ("create_material", {"prim_path": mesh, "material_name": "oak"}),
+            ("apply_physics_api", {"prim_path": mesh, "api_name": "PhysicsCollisionAPI"}),
+            ("place_asset_inside", {"asset": "cup", "asset_name": "Cup",
+                                    "container_prim_path": cabinet, "group": "Props",
+                                    "translate_x": 0.0, "translate_y": 0.5, "translate_z": 0.0}),
+            ("add_asset_attribute_variant", {"prim_path": cabinet, "variant_set": "size",
+                                             "variant_name": "big",
+                                             "overrides": {mesh: {"size": 2.0}}}),
+        ):
+            r = asyncio.run(exec_tool(state, tool, params))
+            assert r.success, (tool, r.error)
+
+        asset_dir = project.assets_dir / "cabinet"
+        for name in ("lgt.usda", "mtl.usda", "phy.usda", "contents.usda", "variants.usda"):
+            layer = Sdf.Layer.FindOrOpen(str(asset_dir / name))
+            assert layer.pseudoRoot.GetInfo("metersPerUnit") == 1.0, name
+            assert layer.pseudoRoot.GetInfo("upAxis") == "Y", name
+            assert layer.GetPrimAtPath("/cabinet").specifier == Sdf.SpecifierOver, name
+
+        lgt = Sdf.Layer.FindOrOpen(str(asset_dir / "lgt.usda"))
+        lgt.pseudoRoot.ClearInfo("metersPerUnit")
+        lgt.Save()
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": cabinet, "light_type": "SphereLight", "light_name": "Fill",
+        }))
+        assert r.success, r.error
+        lgt.Reload()
+        assert lgt.pseudoRoot.GetInfo("metersPerUnit") == 1.0

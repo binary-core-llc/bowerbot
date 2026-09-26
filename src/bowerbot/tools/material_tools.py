@@ -151,8 +151,10 @@ TOOLS: list[Tool] = [
         name="bind_material",
         description=(
             "Bind a material to a prim. Copies the material into the asset's "
-            "mtl.usda (referenced by the asset root) and binds it to the "
-            "target prim. Use this for individual material assignments. "
+            "mtl.usda (referenced by the asset root), copies the texture files "
+            "it uses into the asset's maps/, and binds it to the target prim. "
+            "A material whose texture does not resolve in the library is "
+            "refused. Use this for individual material assignments. "
             "Returns the bound material's composed prim path (field "
             "'material', asset-local /<defaultPrim>/mtl/<name>) and "
             "asset_folder."
@@ -216,10 +218,12 @@ TOOLS: list[Tool] = [
         name="remove_material",
         description=(
             "Remove a material binding from a prim inside an ASWF asset. "
-            "Clears the binding in the asset's mtl.usda and garbage-collects "
-            "any now-unused material definitions (dropping the mtl.usda layer "
-            "if it becomes empty). Use list_prim_children first to find the "
-            "exact mesh prim path."
+            "Removes the binding BowerBot authored in the asset's mtl.usda "
+            "and garbage-collects any now-unused material definitions "
+            "(dropping the mtl.usda layer if it becomes empty). A prim with no "
+            "binding in mtl.usda (e.g. a material from the asset's own files) "
+            "is refused. Use list_prim_children first to find the exact mesh "
+            "prim path."
         ),
         parameters={
             "type": "object",

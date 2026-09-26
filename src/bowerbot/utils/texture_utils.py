@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import filecmp
 import shutil
 from pathlib import Path
 
@@ -15,19 +16,44 @@ from bowerbot.utils.core.asset_folder import resolve_library_file
 from bowerbot.utils.library_utils import asset_location
 
 
-def copy_texture_to_project(source: Path, project_dir: Path) -> str:
-    """Copy *source* into the project's ``textures/`` dir; return the rel path.
+def copy_file_into(source: Path, folder: Path) -> Path:
+    """Copy *source* into *folder* and return the copy.
 
-    Skips the copy if the destination already exists.
+    An identical file already there is reused; a different file with the same
+    name (texture names repeat across a library) makes this copy ``name_2``.
     """
-    tex_dir = project_dir / ASWFLayerNames.TEXTURES
-    tex_dir.mkdir(parents=True, exist_ok=True)
-
-    dest = tex_dir / source.name
+    folder.mkdir(parents=True, exist_ok=True)
+    dest = folder / source.name
+    n = 2
+    while dest.exists() and not filecmp.cmp(source, dest, shallow=False):
+        dest = folder / f"{source.stem}_{n}{source.suffix}"
+        n += 1
     if not dest.exists():
         shutil.copy2(source, dest)
+    return dest
 
-    return f"./{ASWFLayerNames.TEXTURES}/{source.name}"
+
+def copy_texture_to_project(source: Path, project_dir: Path) -> str:
+    """Copy *source* into the project's ``textures/`` dir; return the rel path."""
+    dest = copy_file_into(source, project_dir / ASWFLayerNames.TEXTURES)
+    return f"./{ASWFLayerNames.TEXTURES}/{dest.name}"
+
+
+def stage_asset_texture(
+    asset_dir: Path,
+    texture: str | None,
+    *,
+    library_dir: Path | None,
+    project_dir: Path | None,
+) -> str | None:
+    """Copy a texture from the library into the asset's ``maps/`` dir; return the ref path."""
+    if not texture:
+        return texture
+    if not Path(texture).is_absolute() and (asset_dir / texture).is_file():
+        return texture  # already staged inside the asset (e.g. ./maps/foo.hdr)
+    source = resolve_library_file(texture, library_dir=library_dir, project_dir=project_dir)
+    dest = copy_file_into(source, asset_dir / ASWFLayerNames.MAPS)
+    return f"./{ASWFLayerNames.MAPS}/{dest.name}"
 
 
 def stage_scene_texture(

@@ -99,8 +99,9 @@ def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
                 severity=Severity.WARNING,
                 message=(
                     f"Variant set {vset.name!r} on {asset_dir.name} has "
-                    "no default selection; consumers will see whatever "
-                    "the first authored variant is."
+                    "no default selection, so USD applies none of its "
+                    "variants: whatever they author is missing until one is "
+                    "selected."
                 ),
             ))
         elif vset.selection not in vset.variants:

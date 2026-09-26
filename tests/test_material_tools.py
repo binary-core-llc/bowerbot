@@ -7,7 +7,7 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Usd, UsdGeom, UsdShade
+from pxr import Sdf, Usd, UsdGeom, UsdShade
 
 from tests._helpers import exec_tool, make_state
 
@@ -298,3 +298,108 @@ def test_list_materials_has_prim_path():
         mat = r.data["materials"][0]
         assert "material_path" in mat
         assert "material_name" in mat
+
+
+# ── clean authoring: no residue, no writes on refusal, textures travel ──
+
+
+def _two_part_asset(directory: Path, name: str) -> Path:
+    path = directory / f"{name}.usda"
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    stage.SetDefaultPrim(stage.DefinePrim(f"/{name}", "Xform"))
+    for part in ("Top", "Leg"):
+        UsdGeom.Cube.Define(stage, f"/{name}/{part}")
+    stage.Save()
+    return path
+
+
+def _textured_material(library: Path, name: str, texture: str | None) -> None:
+    """A library material folder whose texture input names ./maps/<texture>."""
+    folder = library / name
+    (folder / "maps").mkdir(parents=True)
+    if texture:
+        (folder / "maps" / texture).write_bytes(b"\x89PNG\r\n\x1a\n" + name.encode() * 8)
+    stage = Usd.Stage.CreateNew(str(folder / f"{name}.usda"))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    stage.SetDefaultPrim(stage.DefinePrim("/Materials", "Scope"))
+    material = UsdShade.Material.Define(stage, f"/Materials/{name}")
+    tex = UsdShade.Shader.Define(stage, f"/Materials/{name}/tex")
+    tex.CreateIdAttr("UsdUVTexture")
+    tex.CreateInput("file", Sdf.ValueTypeNames.Asset).Set("./maps/wood.png")
+    surface = UsdShade.Shader.Define(stage, f"/Materials/{name}/surface")
+    surface.CreateIdAttr("UsdPreviewSurface")
+    material.CreateSurfaceOutput().ConnectToSource(surface.ConnectableAPI(), "surface")
+    stage.Save()
+
+
+def test_remove_material_leaves_no_binding_behind():
+    """Removing one part's material drops its binding and API; the other stays, and it validates."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _two_part_asset(tmp_path, "desk")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "desk", "asset_name": "Desk", "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })).data["prim_path"]
+        for part, material in (("Top", "oak"), ("Leg", "steel")):
+            r = asyncio.run(exec_tool(state, "create_material", {
+                "prim_path": f"{placed}/asset/{part}", "material_name": material,
+            }))
+            assert r.success, r.error
+
+        r = asyncio.run(exec_tool(state, "remove_material", {"prim_path": f"{placed}/asset/Top"}))
+        assert r.success, r.error
+        mtl = Sdf.Layer.FindOrOpen(str(project.assets_dir / "desk" / "mtl.usda"))
+        mtl.Reload()
+        assert mtl.GetPrimAtPath("/desk/Top") is None
+        assert mtl.GetPrimAtPath("/desk/mtl/steel") is not None
+        validation = asyncio.run(exec_tool(state, "validate_scene"))
+        assert validation.data["error_count"] == 0, validation.data["issues"]
+
+        r = asyncio.run(exec_tool(state, "remove_material", {"prim_path": f"{placed}/asset/Top"}))
+        assert not r.success
+
+
+def test_material_tools_refuse_a_missing_prim_and_write_nothing():
+    """A part that does not exist is refused before mtl.usda is created."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state).data["prim_path"]
+        _textured_material(tmp_path, "woodmat", "wood.png")
+        for tool, params in (
+            ("create_material", {"prim_path": f"{placed}/asset/Nope", "material_name": "x"}),
+            ("bind_material", {"prim_path": f"{placed}/asset/Nope", "material_asset": "woodmat"}),
+            ("remove_material", {"prim_path": f"{placed}/asset/Nope"}),
+        ):
+            r = asyncio.run(exec_tool(state, tool, params))
+            assert not r.success, tool
+            assert "Prim not found" in r.error
+        assert not (project.assets_dir / "chair" / "mtl.usda").exists()
+
+
+def test_bind_material_brings_the_material_textures_into_the_asset():
+    """A library material's textures are copied into the asset's maps/ and resolve;
+    a material whose texture is missing is refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state).data["prim_path"]
+        _textured_material(tmp_path, "woodmat", "wood.png")
+        _textured_material(tmp_path, "brokenmat", None)
+
+        r = asyncio.run(exec_tool(state, "bind_material", {
+            "prim_path": f"{placed}/asset/Mesh", "material_asset": "brokenmat",
+        }))
+        assert not r.success
+        assert not (project.assets_dir / "chair" / "mtl.usda").exists()
+
+        r = asyncio.run(exec_tool(state, "bind_material", {
+            "prim_path": f"{placed}/asset/Mesh", "material_asset": "woodmat",
+        }))
+        assert r.success, r.error
+        mtl = project.assets_dir / "chair" / "mtl.usda"
+        layer = Sdf.Layer.FindOrOpen(str(mtl))
+        value = layer.GetAttributeAtPath("/chair/mtl/woodmat/tex.inputs:file").default
+        assert value.path == "./maps/wood.png"
+        assert Path(layer.ComputeAbsolutePath(value.path)).is_file()

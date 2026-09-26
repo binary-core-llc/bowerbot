@@ -23,6 +23,7 @@ from bowerbot.utils.core.asset_folder import (
     ensure_root_reference,
     ensure_side_layer,
     find_root_file,
+    keep_root_over,
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
@@ -104,6 +105,7 @@ def create_joint_asset(
     _set_body_rel(joint, "physics:body1", body1)
     _author_joint_attributes(joint, attributes, joint_type)
 
+    keep_root_over(stage.GetRootLayer())
     stage.Save()
     ensure_root_reference(asset_dir, ASWFLayerNames.PHY)
 
@@ -165,7 +167,7 @@ def list_joints_scene(
     if not root or not root.IsValid():
         return JointsSummary()
     joints: list[JointSummary] = []
-    for prim in Usd.PrimRange(root):
+    for prim in Usd.PrimRange(root, Usd.PrimAllPrimsPredicate):
         if is_joint(prim):
             joints.append(_summarize_joint(prim))
     return JointsSummary(joints=joints)
@@ -258,6 +260,33 @@ def _author_joint_attributes(
             prim.GetStage(), str(prim.GetPath()), name, value,
             expected_type=attr.GetTypeName(),
         )
+
+
+def joints_reaching_rigid_body(stage: Usd.Stage) -> set[str]:
+    """Every joint whose body0 or body1 reaches a PhysicsRigidBodyAPI (self or ancestor)."""
+    reaching: set[str] = set()
+    for prim in stage.Traverse():
+        if not is_joint(prim):
+            continue
+        for name in ("physics:body0", "physics:body1"):
+            rel = prim.GetRelationship(name)
+            targets = rel.GetTargets() if rel else []
+            bodies = [stage.GetPrimAtPath(t) for t in targets]
+            if any(_ancestor_has_api(body, "PhysicsRigidBodyAPI") for body in bodies):
+                reaching.add(str(prim.GetPath()))
+                break
+    return reaching
+
+
+def broken_joints_note(joints: list[str]) -> str:
+    """A message suffix naming joints that no longer reach a rigid body, or ``""``."""
+    if not joints:
+        return ""
+    return (
+        f". {len(joints)} joint(s) no longer connect to a rigid body and will fail "
+        f"validate_scene: {joints}. Remove them (remove_joint) or re-apply "
+        "PhysicsRigidBodyAPI"
+    )
 
 
 def _ancestor_has_api(prim: Usd.Prim, api_name: str) -> bool:

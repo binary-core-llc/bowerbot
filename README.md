@@ -833,6 +833,7 @@ src/bowerbot/
     lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
     naming.py         #   NamingRules (valid prim and variant names)
+    overrides.py      #   OverrideRules, OpinionKind, MaskingOpinion
     physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
                       #   PhysicsApiSchemaInfo, joint/collision-group summaries
     scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
@@ -901,7 +902,8 @@ src/bowerbot/
       bounds.py                #     The one bounding-box cache, world bounds of prims
       transforms.py            #     Xform ops, world <-> local, positions inside assets
       references.py            #     Read and author the references that place assets
-      asset_folder.py          #     ASWF asset folders: root file, layers, bounds, units
+      asset_folder.py          #     ASWF asset folders: root file, side layers, bounds, units
+      overrides.py             #     Scene opinions that mask asset layers; empty-over cleanup
       dependencies.py          #     USD dependency walker (sublayers, references, payloads)
       integrity.py             #     Scrub or rewrite relationship targets after edits
     stage_utils.py             #   USD-stage primitives: open/save, snapshots,

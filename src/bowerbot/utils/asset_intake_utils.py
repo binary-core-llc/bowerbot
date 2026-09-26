@@ -30,6 +30,7 @@ from bowerbot.utils.core.asset_folder import (
     detect_folder_root,
     ensure_layer_scope,
     ensure_root_reference,
+    ensure_side_layer,
     get_mpu,
     rebuild_root_references,
     remove_empty_layer,
@@ -504,14 +505,9 @@ def add_nested_asset_reference(
     transform: TransformParams,
 ) -> str:
     """Author a nested asset reference inside a container's ``contents.usda``."""
-    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    contents_path = ensure_side_layer(container_dir, ASWFLayerNames.CONTENTS)
     default_prim_name = resolve_default_prim_name(container_dir)
-
-    if contents_path.exists():
-        contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
-    else:
-        contents_layer = Sdf.Layer.CreateNew(str(contents_path))
-        contents_layer.defaultPrim = default_prim_name
+    contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
 
     ensure_layer_scope(contents_layer, default_prim_name, "contents", "Xform")
     _ensure_group_scope(contents_layer, default_prim_name, group)

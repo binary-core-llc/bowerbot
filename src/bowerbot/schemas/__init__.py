@@ -46,6 +46,7 @@ from bowerbot.schemas.materials import (
     ProceduralMaterialParams,
 )
 from bowerbot.schemas.naming import NamingRules
+from bowerbot.schemas.overrides import OverrideRules
 from bowerbot.schemas.physics import (
     AssetPhysicsSummary,
     CollisionGroupsSummary,
@@ -131,6 +132,7 @@ __all__ = [
     "LinearPattern",
     "MaterialXShaders",
     "NamingRules",
+    "OverrideRules",
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",
     "PhysicsJointType",

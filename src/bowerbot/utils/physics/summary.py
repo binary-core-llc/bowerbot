@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 from pxr import Sdf, Usd
@@ -16,12 +15,8 @@ from bowerbot.schemas import (
     PhysicsPrimSummary,
     ScenePhysicsSummary,
 )
-from bowerbot.utils.core.asset_folder import (
-    delete_side_layer,
-)
+from bowerbot.utils.core.asset_folder import delete_side_layer
 from bowerbot.utils.core.values import usd_to_json
-
-logger = logging.getLogger(__name__)
 
 
 def get_physics_summary(asset_dir: Path) -> AssetPhysicsSummary:

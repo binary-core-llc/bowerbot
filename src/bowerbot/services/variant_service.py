@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any
 
@@ -25,9 +24,6 @@ from bowerbot.utils.core.asset_folder import (
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.naming import safe_variant_name, validate_variant_name
 from bowerbot.utils.core.references import get_prim_ref_paths
-
-logger = logging.getLogger(__name__)
-
 
 # ── Category orchestrators ──
 

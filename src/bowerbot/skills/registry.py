@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from bowerbot.config import Settings
 from bowerbot.logging_setup import log_tool_result
+from bowerbot.schemas import SkillRules
 from bowerbot.skills.base import (
     Skill,
     SkillConfigError,
@@ -23,8 +24,6 @@ if TYPE_CHECKING:
     from bowerbot.state import SceneState
 
 logger = logging.getLogger(__name__)
-
-ENTRY_POINT_GROUP = "bowerbot.skills"
 
 
 class SkillRegistry:
@@ -43,7 +42,7 @@ class SkillRegistry:
         """Discover and load all enabled skills from entry points."""
         self._library_dir = Path(settings.assets_dir)
 
-        discovered = entry_points(group=ENTRY_POINT_GROUP)
+        discovered = entry_points(group=SkillRules.ENTRY_POINT_GROUP)
         for ep in discovered:
             self._load_one_entry_point(ep, settings)
 

@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 
 from pxr import Usd
@@ -17,8 +16,6 @@ from bowerbot.schemas import (
     PhysicsRules,
 )
 from bowerbot.utils.core.schema_registry import schema_properties
-
-logger = logging.getLogger(__name__)
 
 
 def list_api_properties(

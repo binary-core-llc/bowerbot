@@ -5,24 +5,19 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
 from pxr import Usd
 
-from bowerbot.schemas import (
-    PhysicsApiName,
-)
+from bowerbot.schemas import PhysicsApiName
 from bowerbot.schemas.overrides import MaskingOpinion, OpinionKind
 from bowerbot.utils.core.overrides import (
     find_masking_opinions,
     placement_paths,
     settle_masking,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def enforce_masking_policy(

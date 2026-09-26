@@ -31,15 +31,10 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from bowerbot.config import BOWERBOT_HOME, Settings
+from bowerbot.config import Settings
+from bowerbot.schemas import ConfigPaths, LoggingRules
 
-_LOGGER_ROOT = "bowerbot"
 _SESSION_ID = uuid.uuid4().hex[:12]
-_SECRET_PATTERN = re.compile(
-    r"(api[_-]?key|token|password|secret|auth(?:oriz)?)",
-    re.IGNORECASE,
-)
-_MAX_SCALAR_LEN = 200  # truncate long string values in sanitized payloads
 
 
 def session_id() -> str:
@@ -53,7 +48,7 @@ def configure_logging(settings: Settings) -> Path | None:
     Returns ``None`` when logging is disabled in settings.
     """
     cfg = settings.logging
-    root = logging.getLogger(_LOGGER_ROOT)
+    root = logging.getLogger(LoggingRules.LOGGER_ROOT)
     for handler in list(root.handlers):
         root.removeHandler(handler)
         handler.close()
@@ -66,7 +61,7 @@ def configure_logging(settings: Settings) -> Path | None:
 
     root.setLevel(logging.DEBUG)
 
-    log_dir = BOWERBOT_HOME / "logs"
+    log_dir = ConfigPaths.HOME / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "bowerbot.log"
 
@@ -119,15 +114,16 @@ def sanitize(value: Any) -> Any:
         return {
             str(k): (
                 "[REDACTED]"
-                if _SECRET_PATTERN.search(str(k))
+                if re.search(LoggingRules.SECRET_KEY_PATTERN, str(k), re.IGNORECASE)
                 else sanitize(v)
             )
             for k, v in value.items()
         }
     if isinstance(value, list | tuple):
         return [sanitize(v) for v in value]
-    if isinstance(value, str) and len(value) > _MAX_SCALAR_LEN:
-        return value[:_MAX_SCALAR_LEN] + f"...[+{len(value) - _MAX_SCALAR_LEN}]"
+    limit = LoggingRules.MAX_STRING_LENGTH
+    if isinstance(value, str) and len(value) > limit:
+        return value[:limit] + f"...[+{len(value) - limit}]"
     return value
 
 

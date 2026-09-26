@@ -772,6 +772,7 @@ BowerBot runs a loop where the LLM requests tool calls, BowerBot executes them, 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `max_tool_rounds` | `25` | Maximum LLM ↔ tool exchange rounds per request. Increase if BowerBot stops with "Reached maximum tool-calling rounds" on legitimate workflows. |
+| `max_validation_retries` | `2` | Times per request BowerBot asks the LLM to fix the errors `validate_scene` reported before it stops asking. |
 
 ### Error Recovery
 
@@ -824,14 +825,17 @@ src/bowerbot/
     scatter.md
     textures.md
     variants.md
+    summary.md        # Internal: how old conversation history is summarized
 
   schemas/            # Pydantic models and enums, grouped by domain
     assets.py         #   Asset formats, categories, ASWF layer names, metadata
     cameras.py        #   CameraParams, CameraDefaults, CameraSchemaInfo
+    config.py         #   ConfigPaths (the ~/.bowerbot folder and its config.json)
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
     library.py        #   LibraryRules, LibraryDefaults (what a library scan returns)
     lights.py         #   LightType, LightParams, LightTypeSchemaInfo
+    logging.py        #   LoggingRules (logger root, redacted keys, logged string length)
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
     naming.py         #   NamingRules (valid prim and variant names)
     overrides.py      #   OverrideRules, OpinionKind, MaskingOpinion
@@ -841,6 +845,7 @@ src/bowerbot/
                       #   ScatterAsset/Region, ScatterPrototype, ScatterInstanceSet
     scene.py          #   SceneNamespace (canonical /Scene/* layout)
     schema_registry.py #  SchemaPropertySpec (one property a USD schema declares)
+    skills.py         #   SkillRules (the entry-point group skills register under)
     surface.py        #   SurfaceTriangles, SurfaceIndex
     textures.py       #   HDRI / image / texture-category enums
     transforms.py     #   TransformParams, PositionMode, SceneObject

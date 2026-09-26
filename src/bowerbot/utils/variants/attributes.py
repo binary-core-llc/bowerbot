@@ -9,9 +9,7 @@ from pathlib import Path
 
 from pxr import Sdf, Usd
 
-from bowerbot.utils.core.asset_folder import (
-    find_root_file,
-)
+from bowerbot.utils.core.asset_folder import find_root_file
 from bowerbot.utils.texture_utils import stage_asset_value
 
 

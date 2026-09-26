@@ -16,6 +16,7 @@ from bowerbot.logging_setup import (
     sanitize,
     session_id,
 )
+from bowerbot.schemas import ConfigPaths
 from bowerbot.skills.base import ToolResult
 
 
@@ -33,7 +34,7 @@ def _reset_bowerbot_logging():
 
 def _settings_with_logging(tmp_path, monkeypatch, **logging_kwargs) -> Settings:
     """Build a Settings instance with logging routed under *tmp_path*."""
-    monkeypatch.setattr("bowerbot.logging_setup.BOWERBOT_HOME", tmp_path)
+    monkeypatch.setattr(ConfigPaths, "HOME", tmp_path)
     return Settings(
         llm=LLMSettings(model="gpt-4.1", api_key="dummy"),
         logging=LoggingSettings(**logging_kwargs),

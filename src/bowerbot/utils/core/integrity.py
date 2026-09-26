@@ -5,12 +5,9 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from pxr import Sdf, Usd
-
-logger = logging.getLogger(__name__)
 
 
 def scrub_dangling_refs(stage: Usd.Stage) -> dict[str, Any]:

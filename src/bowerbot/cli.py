@@ -20,8 +20,6 @@ from rich.theme import Theme
 from bowerbot import __version__, dispatcher, mcp_server
 from bowerbot.agent import AgentRuntime
 from bowerbot.config import (
-    BOWERBOT_HOME,
-    GLOBAL_CONFIG_PATH,
     LinearUnit,
     LLMSettings,
     McpSettings,
@@ -35,17 +33,17 @@ from bowerbot.config import (
 )
 from bowerbot.logging_setup import configure_logging
 from bowerbot.project import Project
+from bowerbot.schemas import ConfigPaths
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
 from bowerbot.utils import inspection_utils
 from bowerbot.utils.core.naming import safe_project_name
 
-theme = Theme({
+console = Console(theme=Theme({
     "sf": "bold green",
     "user": "bold cyan",
     "info": "dim",
-})
-console = Console(theme=theme)
+}))
 
 
 def _build_state(
@@ -424,13 +422,13 @@ def onboard() -> None:
     console.print(Panel(
         "[sf]BowerBot[/]: First Time Setup\n\n"
         "This will create your global configuration at:\n"
-        f"  [info]{BOWERBOT_HOME}[/]",
+        f"  [info]{ConfigPaths.HOME}[/]",
         title="[sf]Setup[/]",
         border_style="green",
     ))
 
-    if GLOBAL_CONFIG_PATH.exists():
-        console.print(f"\n[info]Config already exists at {GLOBAL_CONFIG_PATH}[/]")
+    if ConfigPaths.CONFIG_FILE.exists():
+        console.print(f"\n[info]Config already exists at {ConfigPaths.CONFIG_FILE}[/]")
         overwrite = console.input("Overwrite? (y/N): ").strip().lower()
         if overwrite != "y":
             console.print("[info]Keeping existing config.[/]")
@@ -496,7 +494,7 @@ def onboard() -> None:
 
     save_settings(settings)
 
-    console.print(f"\n[sf]Config saved to {GLOBAL_CONFIG_PATH}[/]")
+    console.print(f"\n[sf]Config saved to {ConfigPaths.CONFIG_FILE}[/]")
     console.print(
         "\n[info]Skills are extension packages you install separately. "
         "After installing one (e.g. [sf]pip install bowerbot-skill-sketchfab[/]), "

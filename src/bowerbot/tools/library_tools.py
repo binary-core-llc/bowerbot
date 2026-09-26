@@ -12,8 +12,6 @@ from bowerbot.services import library_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 
-_CATEGORY_VALUES: list[str] = [c.value for c in LibraryRules.CATEGORIES] + [LibraryRules.ALL]
-
 
 def search_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Search the user's asset library for USDs matching a query."""
@@ -82,7 +80,7 @@ TOOLS: list[Tool] = [
             "properties": {
                 "category": {
                     "type": "string",
-                    "enum": _CATEGORY_VALUES,
+                    "enum": [c.value for c in LibraryRules.CATEGORIES] + [LibraryRules.ALL],
                     "description": "Filter by asset category.",
                     "default": "all",
                 },

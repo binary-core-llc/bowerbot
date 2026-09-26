@@ -5,16 +5,11 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 from pxr import Gf, Usd, UsdGeom
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-)
-
-logger = logging.getLogger(__name__)
+from bowerbot.schemas import ASWFLayerNames
 
 
 def freeze_one_asset(assets_dir: Path, name: str) -> dict:

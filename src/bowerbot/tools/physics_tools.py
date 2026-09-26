@@ -153,10 +153,6 @@ def list_collision_groups(
     return ToolResult(success=True, data=data)
 
 
-_API_VALUES = [a.value for a in PhysicsApiName]
-_JOINT_TYPE_VALUES = [j.value for j in PhysicsJointType]
-
-
 TOOLS: list[Tool] = [
     Tool(
         name="list_physics_api_properties",
@@ -181,7 +177,7 @@ TOOLS: list[Tool] = [
             "properties": {
                 "api_name": {
                     "type": "string",
-                    "enum": _API_VALUES,
+                    "enum": [a.value for a in PhysicsApiName],
                     "description": (
                         "Which UsdPhysics applied API to introspect. "
                         "PhysicsRigidBodyAPI, PhysicsMassAPI, "
@@ -269,7 +265,7 @@ TOOLS: list[Tool] = [
                 },
                 "api_name": {
                     "type": "string",
-                    "enum": _API_VALUES,
+                    "enum": [a.value for a in PhysicsApiName],
                     "description": "Which UsdPhysics applied API to apply.",
                 },
                 "instance_name": {
@@ -361,7 +357,7 @@ TOOLS: list[Tool] = [
                 },
                 "api_name": {
                     "type": "string",
-                    "enum": _API_VALUES,
+                    "enum": [a.value for a in PhysicsApiName],
                     "description": "Which UsdPhysics applied API to remove.",
                 },
                 "instance_name": {
@@ -622,7 +618,7 @@ TOOLS.append(Tool(
         "properties": {
             "joint_type": {
                 "type": "string",
-                "enum": _JOINT_TYPE_VALUES,
+                "enum": [j.value for j in PhysicsJointType],
                 "description": "Which typed joint to introspect.",
             },
         },
@@ -667,7 +663,7 @@ TOOLS.append(Tool(
         "properties": {
             "joint_type": {
                 "type": "string",
-                "enum": _JOINT_TYPE_VALUES,
+                "enum": [j.value for j in PhysicsJointType],
                 "description": "Which typed joint to create.",
             },
             "name": {

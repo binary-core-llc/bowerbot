@@ -154,3 +154,19 @@ def test_bounding_boxes_come_from_core_bounds() -> None:
         and node.func.attr == "BBoxCache"
     ]
     assert not offenders, f"use core.bounds.bbox_cache(): {offenders}"
+
+
+def test_services_never_call_a_same_named_function_unqualified() -> None:
+    """A service named like its util must call the util through its module."""
+    offenders = []
+    for path in sorted(SERVICES_DIR.glob("*_service.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        names = {f.name for f in tree.body if isinstance(f, ast.FunctionDef)}
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id in names
+            ):
+                offenders.append(f"{path.name}:{node.lineno} {node.func.id}()")
+    assert not offenders, f"call the util as <module>.{{name}}() instead: {offenders}"

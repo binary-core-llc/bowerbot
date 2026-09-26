@@ -827,18 +827,19 @@ src/bowerbot/
 
   schemas/            # Pydantic models and enums, grouped by domain
     assets.py         #   Asset formats, categories, ASWF layer names, metadata
-    cameras.py        #   CameraParams, CameraPropertySpec, CameraSchemaInfo
+    cameras.py        #   CameraParams, CameraDefaults, CameraSchemaInfo
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
-    lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
+    lights.py         #   LightType, LightParams, LightTypeSchemaInfo
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
     naming.py         #   NamingRules (valid prim and variant names)
     overrides.py      #   OverrideRules, OpinionKind, MaskingOpinion
-    physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
+    physics.py        #   PhysicsApiName, PhysicsJointType,
                       #   PhysicsApiSchemaInfo, joint/collision-group summaries
     scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
                       #   ScatterAsset/Region, ScatterPrototype, ScatterInstanceSet
     scene.py          #   SceneNamespace (canonical /Scene/* layout)
+    schema_registry.py #  SchemaPropertySpec (one property a USD schema declares)
     surface.py        #   SurfaceTriangles, SurfaceIndex
     textures.py       #   HDRI / image / texture-category enums
     transforms.py     #   TransformParams, PositionMode, SceneObject
@@ -904,10 +905,12 @@ src/bowerbot/
       references.py            #     Read and author the references that place assets
       asset_folder.py          #     ASWF asset folders: root file, side layers, bounds, units
       overrides.py             #     Scene opinions that mask asset layers; empty-over cleanup
+      attributes.py            #     Read and author prim attributes from JSON-shaped values
+      schema_registry.py       #     Properties a USD prim or API schema declares
       dependencies.py          #     USD dependency walker (sublayers, references, payloads)
       integrity.py             #     Scrub or rewrite relationship targets after edits
     stage_utils.py             #   USD-stage primitives: open/save, snapshots,
-                               #   namespace edits, set/list_prim_attribute
+                               #   namespace edits, prim children
     inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
     asset_intake_utils.py      #   intake_folder, intake_usdz, create_asset_folder, ASWF
@@ -932,8 +935,6 @@ src/bowerbot/
                                #   apply_variant, set/clear_default, removal + cleanup
     layout_utils.py            #   place_layout expansion: grid/linear patterns,
                                #   asset resolution, suggested grid layouts
-    usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
-                               #   (used by both physics_utils and light_utils)
 ```
 
 **Design principles**

@@ -7,12 +7,11 @@ from __future__ import annotations
 
 from pxr import Gf, Usd, UsdGeom
 
-from bowerbot.schemas import CameraParams, CameraPropertySpec, CameraSchemaInfo
+from bowerbot.schemas import CameraParams, CameraSchemaInfo
 from bowerbot.schemas.transforms import Vec3
+from bowerbot.utils.core.attributes import set_prim_attribute
+from bowerbot.utils.core.schema_registry import schema_properties
 from bowerbot.utils.core.transforms import extract_position
-from bowerbot.utils.core.values import usd_to_json
-from bowerbot.utils.stage_utils import set_prim_attribute
-from bowerbot.utils.usd_schema_utils import property_doc
 
 _UP_VECTORS = {"Y": Gf.Vec3d(0, 1, 0), "Z": Gf.Vec3d(0, 0, 1)}
 _UP_ALIGNED_DOT = 0.999
@@ -26,25 +25,8 @@ def list_camera_properties() -> CameraSchemaInfo:
             "USD schema registry does not know Camera. "
             "USD build is missing UsdGeom.",
         )
-
-    properties: list[CameraPropertySpec] = []
-    for prop_name in UsdGeom.Camera.GetSchemaAttributeNames(False):
-        name = str(prop_name)
-        attr_spec = prim_def.GetSchemaAttributeSpec(name)
-        if attr_spec is None:
-            continue
-        properties.append(CameraPropertySpec(
-            name=name,
-            kind="attribute",
-            type_name=str(attr_spec.typeName),
-            default=usd_to_json(attr_spec.default),
-            allowed_tokens=[
-                str(t) for t in (attr_spec.allowedTokens or [])
-            ],
-            documentation=property_doc(prim_def, name, attr_spec),
-        ))
-
-    return CameraSchemaInfo(properties=properties)
+    names = [str(n) for n in UsdGeom.Camera.GetSchemaAttributeNames(False)]
+    return CameraSchemaInfo(properties=schema_properties(prim_def, names))
 
 
 def look_at_rotation(eye: Vec3, target: Vec3, up_axis: str) -> Vec3:

@@ -10,6 +10,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from bowerbot.schemas.schema_registry import SchemaPropertySpec
+
 
 class LightType(StrEnum):
     """Supported USD light types."""
@@ -22,22 +24,11 @@ class LightType(StrEnum):
     CYLINDER = "CylinderLight"
 
 
-class LightPropertySpec(BaseModel):
-    """One UsdLux property discovered from the schema registry."""
-
-    name: str
-    kind: str
-    type_name: str | None = None
-    default: Any = None
-    allowed_tokens: list[str] = []
-    documentation: str = ""
-
-
 class LightTypeSchemaInfo(BaseModel):
     """Live introspection of a UsdLux concrete-prim schema."""
 
     light_type: str
-    properties: list[LightPropertySpec] = []
+    properties: list[SchemaPropertySpec] = []
 
 
 class LightParams(BaseModel):

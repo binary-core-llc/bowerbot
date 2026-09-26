@@ -15,7 +15,6 @@ from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux
 from bowerbot.schemas import (
     ASWFLayerNames,
     LightParams,
-    LightPropertySpec,
     LightType,
     LightTypeSchemaInfo,
 )
@@ -28,13 +27,11 @@ from bowerbot.utils.core.asset_folder import (
     resolve_default_prim_name,
     unit_factor,
 )
+from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.overrides import clear_orphan_variant_overs
+from bowerbot.utils.core.schema_registry import schema_properties
 from bowerbot.utils.core.transforms import update_rotate_op, update_translate_op
-from bowerbot.utils.core.values import coerce_number, usd_to_json
-from bowerbot.utils.stage_utils import (
-    set_prim_attribute,
-)
-from bowerbot.utils.usd_schema_utils import property_doc
+from bowerbot.utils.core.values import coerce_number
 from bowerbot.utils.variant_utils import remove_variants_layer_if_empty
 
 LIGHT_CLASSES: dict[str, type] = {
@@ -70,28 +67,10 @@ def list_light_type_properties(light_type: LightType) -> LightTypeSchemaInfo:
             f"USD schema registry does not know {light_type.value}. "
             "USD build is missing UsdLux.",
         )
-
-    properties: list[LightPropertySpec] = []
-    for prop_name in prim_def.GetPropertyNames():
-        if not prop_name.startswith("inputs:"):
-            continue
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is None:
-            continue
-        properties.append(LightPropertySpec(
-            name=prop_name,
-            kind="attribute",
-            type_name=str(attr_spec.typeName),
-            default=usd_to_json(attr_spec.default),
-            allowed_tokens=[
-                str(t) for t in (attr_spec.allowedTokens or [])
-            ],
-            documentation=property_doc(prim_def, prop_name, attr_spec),
-        ))
-
+    names = [n for n in prim_def.GetPropertyNames() if n.startswith("inputs:")]
     return LightTypeSchemaInfo(
         light_type=light_type.value,
-        properties=properties,
+        properties=schema_properties(prim_def, names),
     )
 
 

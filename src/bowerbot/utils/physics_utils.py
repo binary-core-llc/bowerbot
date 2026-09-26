@@ -35,12 +35,10 @@ from bowerbot.schemas import (
     PhysicsApiSchemaInfo,
     PhysicsJointType,
     PhysicsPrimSummary,
-    PhysicsPropertySpec,
     SceneNamespace,
     ScenePhysicsSummary,
 )
 from bowerbot.schemas.overrides import MaskingOpinion, OpinionKind
-from bowerbot.utils import stage_utils
 from bowerbot.utils.core.asset_folder import (
     delete_side_layer,
     ensure_root_reference,
@@ -49,6 +47,7 @@ from bowerbot.utils.core.asset_folder import (
     require_asset_context,
     resolve_default_prim_name,
 )
+from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.naming import validate_prim_name
 from bowerbot.utils.core.overrides import (
     find_masking_opinions,
@@ -56,8 +55,8 @@ from bowerbot.utils.core.overrides import (
     prune_empty_overrides,
     settle_masking,
 )
+from bowerbot.utils.core.schema_registry import schema_properties
 from bowerbot.utils.core.values import usd_to_json
-from bowerbot.utils.usd_schema_utils import property_doc
 
 logger = logging.getLogger(__name__)
 
@@ -165,36 +164,14 @@ def list_api_properties(
             "USD build is missing UsdPhysics.",
         )
 
-    properties: list[PhysicsPropertySpec] = []
-    for prop_name in prim_def.GetPropertyNames():
-        real_name = (
-            prop_name.replace(_INSTANCE_NAME_PLACEHOLDER, instance_name)
-            if instance_name else prop_name
-        )
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is not None:
-            properties.append(PhysicsPropertySpec(
-                name=real_name,
-                kind="attribute",
-                type_name=str(attr_spec.typeName),
-                default=usd_to_json(attr_spec.default),
-                allowed_tokens=[
-                    str(t) for t in (attr_spec.allowedTokens or [])
-                ],
-                documentation=property_doc(
-                    prim_def, prop_name, attr_spec,
-                ),
-            ))
-            continue
-        rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
-        if rel_spec is not None:
-            properties.append(PhysicsPropertySpec(
-                name=real_name,
-                kind="relationship",
-                documentation=property_doc(
-                    prim_def, prop_name, rel_spec,
-                ),
-            ))
+    properties = schema_properties(
+        prim_def,
+        prim_def.GetPropertyNames(),
+        rename=(
+            (lambda name: name.replace(_INSTANCE_NAME_PLACEHOLDER, instance_name))
+            if instance_name else None
+        ),
+    )
 
     target_req = (
         "UsdPhysics joint prim" if api_name in MULTI_APPLY_APIS
@@ -261,8 +238,8 @@ def apply_api(
     schema_info = list_api_properties(
         api_name, instance_name=instance_name,
     )
-    _refuse_unknown(api_name, attributes, schema_info, "attribute")
-    _refuse_unknown(api_name, relationships, schema_info, "relationship")
+    _refuse_unknown(schema_info, attributes, "attribute")
+    _refuse_unknown(schema_info, relationships, "relationship")
 
     root_file = find_root_file(asset_dir)
     if root_file is None:
@@ -300,7 +277,7 @@ def apply_api(
 
     for name, value in attributes.items():
         attr = prim.GetAttribute(name)
-        stage_utils.set_prim_attribute(
+        set_prim_attribute(
             stage, target_path, name, value,
             expected_type=attr.GetTypeName(),
         )
@@ -451,8 +428,8 @@ def apply_api_scene(
     schema_info = list_api_properties(
         api_name, instance_name=instance_name,
     )
-    _refuse_unknown(api_name, attributes, schema_info, "attribute")
-    _refuse_unknown(api_name, relationships, schema_info, "relationship")
+    _refuse_unknown(schema_info, attributes, "attribute")
+    _refuse_unknown(schema_info, relationships, "relationship")
     ensure_physics_scene(stage)
 
     prim = stage.GetPrimAtPath(prim_path)
@@ -481,7 +458,7 @@ def apply_api_scene(
 
     for name, value in attributes.items():
         attr = target.GetAttribute(name)
-        stage_utils.set_prim_attribute(
+        set_prim_attribute(
             stage, target_path, name, value,
             expected_type=attr.GetTypeName(),
         )
@@ -838,20 +815,16 @@ def resolve_typed_target(
 
 
 def _refuse_unknown(
-    api_name: PhysicsApiName,
-    provided: dict[str, Any],
-    schema_info: PhysicsApiSchemaInfo,
-    kind: str,
+    schema: PhysicsApiSchemaInfo, provided: Iterable[str], kind: str,
 ) -> None:
     """Refuse property names the schema does not declare."""
-    valid = {p.name for p in schema_info.properties if p.kind == kind}
+    valid = {p.name for p in schema.properties if p.kind == kind}
     unknown = sorted(n for n in provided if n not in valid)
-    if not unknown:
-        return
-    raise ValueError(
-        f"{api_name.value} does not declare {kind}(s) {unknown}. "
-        f"Allowed: {sorted(valid)}",
-    )
+    if unknown:
+        raise ValueError(
+            f"{schema.api_name} does not declare {kind}(s) {unknown}. "
+            f"Allowed: {sorted(valid)}",
+        )
 
 
 def _read_api_schemas(prim_spec: Sdf.PrimSpec) -> list[str]:
@@ -876,34 +849,10 @@ def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
             f"USD schema registry does not know {joint_type.value}. "
             "USD build is missing UsdPhysics.",
         )
-
-    properties: list[PhysicsPropertySpec] = []
-    for prop_name in prim_def.GetPropertyNames():
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is not None:
-            properties.append(PhysicsPropertySpec(
-                name=prop_name,
-                kind="attribute",
-                type_name=str(attr_spec.typeName),
-                default=usd_to_json(attr_spec.default),
-                allowed_tokens=[
-                    str(t) for t in (attr_spec.allowedTokens or [])
-                ],
-                documentation=property_doc(prim_def, prop_name, attr_spec),
-            ))
-            continue
-        rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
-        if rel_spec is not None:
-            properties.append(PhysicsPropertySpec(
-                name=prop_name,
-                kind="relationship",
-                documentation=property_doc(prim_def, prop_name, rel_spec),
-            ))
-
     return PhysicsApiSchemaInfo(
         api_name=joint_type.value,
         target_requirement="(typed prim)",
-        properties=properties,
+        properties=schema_properties(prim_def, prim_def.GetPropertyNames()),
     )
 
 
@@ -919,7 +868,7 @@ def create_joint_scene(
     validate_prim_name(name, "Joint")
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
-    _refuse_unknown_joint_properties(joint_type, attributes)
+    _refuse_unknown(list_joint_properties(joint_type), attributes, "attribute")
 
     ensure_physics_scene(stage)
     prim_path = f"{SceneNamespace.PHYSICS}/{name}"
@@ -955,7 +904,7 @@ def create_joint_asset(
     """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``."""
     validate_prim_name(name, "Joint")
     attributes = attributes or {}
-    _refuse_unknown_joint_properties(joint_type, attributes)
+    _refuse_unknown(list_joint_properties(joint_type), attributes, "attribute")
 
     root_file = find_root_file(asset_dir)
     if root_file is None:
@@ -1093,25 +1042,6 @@ def _validate_joint_bodies(
         )
 
 
-def _refuse_unknown_joint_properties(
-    joint_type: PhysicsJointType, attributes: dict[str, Any],
-) -> None:
-    """Refuse attribute names the joint schema does not declare."""
-    info = list_joint_properties(joint_type)
-    valid = {
-        p.name for p in info.properties
-        if p.kind == "attribute" and not p.name.startswith(
-            ("physics:body0", "physics:body1"),
-        )
-    }
-    unknown = sorted(n for n in attributes if n not in valid)
-    if unknown:
-        raise ValueError(
-            f"{joint_type.value} does not declare attribute(s) {unknown}. "
-            f"Allowed: {sorted(valid)}",
-        )
-
-
 def _set_body_rel(joint, rel_name: str, target_path: str | None) -> None:
     """Author the body0 / body1 rel. Empty/None target = world (no targets set)."""
     rel = joint.GetPrim().GetRelationship(rel_name)
@@ -1135,7 +1065,7 @@ def _author_joint_attributes(
                 f"Attribute {name!r} not resolvable on {joint_type.value} "
                 f"at {prim.GetPath()}",
             )
-        stage_utils.set_prim_attribute(
+        set_prim_attribute(
             prim.GetStage(), str(prim.GetPath()), name, value,
             expected_type=attr.GetTypeName(),
         )

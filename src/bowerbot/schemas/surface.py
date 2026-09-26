@@ -16,6 +16,21 @@ type IntArray = NDArray[np.signedinteger[Any]]
 type BoolArray = NDArray[np.bool_]
 
 
+class SurfaceTuning:
+    """Internal settings of surface triangulation and queries."""
+
+    # Tolerance for geometric comparisons.
+    EPS = 1e-9
+    # How far outside a triangle (barycentric) a point may sit and still hit it.
+    BARY_EPS = 1e-7
+    # Longitude and latitude segments when tessellating a sphere.
+    SPHERE_SEGMENTS = (32, 16)
+    # Most cells in a surface's plan-view grid.
+    MAX_GRID_CELLS = 1 << 20
+    # Points queried per batch.
+    QUERY_CHUNK = 200_000
+
+
 class SurfaceTriangles(BaseModel):
     """World-space triangles with unit normals (double-sided faces up) and areas."""
 

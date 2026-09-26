@@ -10,24 +10,10 @@ from pathlib import Path
 
 from pxr import Usd, UsdShade
 
-from bowerbot.schemas import AssetCategory, AssetFormat, DetectionOutcome
+from bowerbot.schemas import AssetCategory, AssetFormat, DetectionOutcome, LibraryRules
 from bowerbot.utils.core.asset_folder import detect_folder_root
 
 logger = logging.getLogger(__name__)
-
-_USD_EXTENSIONS: frozenset[str] = frozenset(f.value for f in AssetFormat)
-_NON_ASSET_DIRS: frozenset[str] = frozenset({"cache", "maps", "materials"})
-ALL: str = "all"
-DEFAULT_SEARCH_LIMIT: int = 25
-
-# The only categories scan_library assigns: package roots, loose materials,
-# loose geometry. Source of truth for the listable-category filter; 'lgt' is
-# an ASWF layer kind, never a library result.
-LIBRARY_CATEGORIES: tuple[AssetCategory, ...] = (
-    AssetCategory.PACKAGE,
-    AssetCategory.MTL,
-    AssetCategory.GEO,
-)
 
 
 def truncate_with_total(
@@ -47,7 +33,7 @@ def scan_library(
     library_dir: Path,
     *,
     query: str | None = None,
-    category: str = ALL,
+    category: str = LibraryRules.ALL,
 ) -> list[dict[str, str]]:
     """Return matching assets in *library_dir*.
 
@@ -76,13 +62,13 @@ def scan_library(
             "format": root_file.suffix,
             "category": AssetCategory.PACKAGE.value,
         }
-        if category == ALL or category == entry["category"]:
+        if category == LibraryRules.ALL or category == entry["category"]:
             results.append(entry)
 
     for f in library_dir.rglob("*"):
         if not f.is_file():
             continue
-        if f.suffix.lower() not in _USD_EXTENSIONS:
+        if f.suffix.lower() not in AssetFormat:
             continue
         if _is_inside_package(f, package_dirs):
             continue
@@ -94,7 +80,7 @@ def scan_library(
             "format": f.suffix,
             "category": _classify_loose(f),
         }
-        if category == ALL or category == entry["category"]:
+        if category == LibraryRules.ALL or category == entry["category"]:
             results.append(entry)
 
     return results
@@ -109,7 +95,7 @@ def _find_top_level_packages(library_dir: Path) -> dict[Path, Path]:
     """Return ``{folder_path: root_file}`` for every package at the top level."""
     packages: dict[Path, Path] = {}
     for entry in library_dir.iterdir():
-        if not entry.is_dir() or entry.name in _NON_ASSET_DIRS:
+        if not entry.is_dir() or entry.name in LibraryRules.NON_ASSET_DIRS:
             continue
         detection = detect_folder_root(entry)
         if detection.outcome is DetectionOutcome.UNAMBIGUOUS and detection.root:

@@ -41,6 +41,50 @@ class PhysicsJointType(StrEnum):
     DISTANCE = "PhysicsDistanceJoint"
 
 
+class PhysicsRules:
+    """How UsdPhysics APIs apply to prims and depend on each other."""
+
+    MULTI_APPLY_APIS = frozenset({PhysicsApiName.DRIVE, PhysicsApiName.LIMIT})
+    # Placeholder the schema registry uses for a multi-apply instance name.
+    INSTANCE_NAME_PLACEHOLDER = "__INSTANCE_NAME__"
+    # Instance names each multi-apply API accepts, per joint type.
+    INSTANCE_NAMES = {
+        PhysicsApiName.DRIVE: {
+            PhysicsJointType.REVOLUTE: frozenset({"angular"}),
+            PhysicsJointType.PRISMATIC: frozenset({"linear"}),
+            PhysicsJointType.SPHERICAL: frozenset(),
+            PhysicsJointType.FIXED: frozenset(),
+            PhysicsJointType.DISTANCE: frozenset(),
+        },
+        PhysicsApiName.LIMIT: {
+            PhysicsJointType.REVOLUTE: frozenset({"angular"}),
+            PhysicsJointType.PRISMATIC: frozenset({"linear"}),
+            PhysicsJointType.SPHERICAL: frozenset({"rotX", "rotY", "rotZ"}),
+            PhysicsJointType.FIXED: frozenset(),
+            PhysicsJointType.DISTANCE: frozenset({"distance"}),
+        },
+    }
+    # Prim base type each single-apply API requires per the UsdPhysics spec
+    # (USD schema type names). Multi-apply APIs (Drive, Limit) target joint prims.
+    TARGET_TYPES = {
+        PhysicsApiName.RIGID_BODY: "Xformable",
+        PhysicsApiName.MASS: "Xformable",
+        PhysicsApiName.COLLISION: "Gprim",
+        PhysicsApiName.MESH_COLLISION: "Mesh",
+        PhysicsApiName.ARTICULATION_ROOT: "Xformable",
+    }
+    # MeshCollisionAPI is meaningless without CollisionAPI per the spec.
+    COMPANIONS = {PhysicsApiName.MESH_COLLISION: PhysicsApiName.COLLISION}
+    # Dropping CollisionAPI also drops MeshCollisionAPI.
+    DEPENDENTS = {PhysicsApiName.COLLISION: (PhysicsApiName.MESH_COLLISION,)}
+
+
+class PhysicsNamespace:
+    """Canonical names BowerBot uses when authoring physics."""
+
+    JOINTS_SCOPE = "joints"
+
+
 class PhysicsApiSchemaInfo(BaseModel):
     """Live introspection of a UsdPhysics applied-API schema."""
 

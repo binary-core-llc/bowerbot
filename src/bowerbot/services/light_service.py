@@ -10,7 +10,7 @@ from typing import Any
 
 from pxr import Sdf
 
-from bowerbot.schemas import LightParams, LightType, PositionMode, SceneNamespace
+from bowerbot.schemas import LightParams, LightRules, LightType, PositionMode, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import light_utils, stage_utils, texture_utils, variant_utils
 from bowerbot.utils.core.asset_folder import (
@@ -51,7 +51,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     asset_prim_path = params.get("asset_prim_path")
     if asset_prim_path:
-        if light_type in light_utils.SCENE_ONLY_LIGHT_TYPES:
+        if light_type in LightRules.SCENE_ONLY_TYPES:
             msg = (
                 f"{light_type.value} is a scene-level environment light and "
                 f"cannot be nested in an asset. Create it without "

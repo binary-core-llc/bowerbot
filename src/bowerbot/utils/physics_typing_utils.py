@@ -1,24 +1,21 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Type predicates for UsdPhysics-typed prims; leaf module, safe to import anywhere."""
+"""Type predicates for UsdPhysics-typed prims."""
 
 from __future__ import annotations
 
 from pxr import Usd, UsdPhysics
 
-JOINT_CLASSES: tuple[type, ...] = (
-    UsdPhysics.RevoluteJoint,
-    UsdPhysics.PrismaticJoint,
-    UsdPhysics.SphericalJoint,
-    UsdPhysics.FixedJoint,
-    UsdPhysics.DistanceJoint,
-)
+from bowerbot.schemas import PhysicsJointType
+from bowerbot.utils.core.schema_registry import schema_class
 
 
 def is_joint(prim: Usd.Prim | None) -> bool:
     """Whether *prim* is one of the supported UsdPhysics joint typed prims."""
-    return prim is not None and any(prim.IsA(c) for c in JOINT_CLASSES)
+    return prim is not None and any(
+        prim.IsA(schema_class(joint_type)) for joint_type in PhysicsJointType
+    )
 
 
 def is_physics_scene(prim: Usd.Prim | None) -> bool:

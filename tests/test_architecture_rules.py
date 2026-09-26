@@ -3,9 +3,9 @@
 
 """Enforce the code rules in CONTRIBUTING.md.
 
-- One home per concept: ``utils/core`` imports no domain module, and holds
-  functions only (plus the standard module logger); its named values live in
-  schema classes.
+- One home per concept: ``utils/core`` imports no domain module.
+- Utils hold functions only (plus the standard module logger); named values
+  live in schema classes.
 - Bounding boxes come from ``core.bounds``; nothing else builds a ``BBoxCache``.
 - No loose values: ``schemas`` hold classes and ``type`` declarations only
   (plus the package ``__all__``).
@@ -114,14 +114,25 @@ def test_core_imports_no_domain() -> None:
 MODULE_LOGGER = "logger = logging.getLogger(__name__)"
 
 
-def test_core_has_no_module_constants() -> None:
+UTILS_DIR = ROOT / "src" / "bowerbot" / "utils"
+
+
+def test_utils_hold_only_functions() -> None:
+    """Utils modules: imports, functions and the module logger, nothing else."""
+    allowed = (ast.Import, ast.ImportFrom, ast.FunctionDef)
     offenders = []
-    for path in sorted(CORE_DIR.glob("*.py")):
-        for node in ast.parse(path.read_text(encoding="utf-8")).body:
-            if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
-                if ast.unparse(node) != MODULE_LOGGER:
-                    offenders.append(f"{path.name}:{node.lineno}")
-    assert not offenders, f"named values belong in a schema class, not utils/core: {offenders}"
+    for path in sorted(UTILS_DIR.rglob("*.py")):
+        body = ast.parse(path.read_text(encoding="utf-8")).body
+        for index, node in enumerate(body):
+            docstring = (
+                index == 0
+                and isinstance(node, ast.Expr)
+                and isinstance(node.value, ast.Constant)
+            )
+            if docstring or isinstance(node, allowed) or ast.unparse(node) == MODULE_LOGGER:
+                continue
+            offenders.append(f"{path.relative_to(UTILS_DIR)}:{node.lineno} {type(node).__name__}")
+    assert not offenders, f"utils hold functions only; values go in schema classes: {offenders}"
 
 
 SCHEMAS_DIR = ROOT / "src" / "bowerbot" / "schemas"

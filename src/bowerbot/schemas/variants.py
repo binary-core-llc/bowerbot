@@ -20,6 +20,13 @@ class VariantCategory(StrEnum):
     CUSTOM = "custom"
 
 
+class VariantRules:
+    """What variant checks treat as geometry."""
+
+    # Prim types a geometry variant's namespace check skips.
+    NON_GEOMETRY_TYPES = frozenset({"Material", "Shader", "NodeGraph"})
+
+
 class VariantSetSummary(BaseModel):
     """Summary of one variant set on an asset's root prim."""
 

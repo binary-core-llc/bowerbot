@@ -18,6 +18,13 @@ class CameraDefaults:
     CLIPPING_RANGE_METERS = (0.01, 100_000.0)
 
 
+class CameraTuning:
+    """Internal settings of camera aiming."""
+
+    # Aim closer than this (cosine) to the up axis switches to the other up axis.
+    UP_ALIGNED_DOT = 0.999
+
+
 class CameraSchemaInfo(BaseModel):
     """Live introspection of the UsdGeom Camera prim schema."""
 

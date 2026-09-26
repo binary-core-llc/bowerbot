@@ -15,13 +15,13 @@ from typing import Any
 
 import mcp.types as types
 import uvicorn
+from mcp.server.fastmcp.server import StreamableHTTPASGIApp
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
-from starlette.routing import Mount
-from starlette.types import Receive, Scope, Send
+from starlette.routing import Route
 
 from bowerbot import tool_router
 from bowerbot.config import McpSettings, Settings, Transport
@@ -106,9 +106,6 @@ def build_app(settings: Settings) -> Starlette:
         security_settings=_security_settings(settings.mcp),
     )
 
-    async def handle(scope: Scope, receive: Receive, send: Send) -> None:
-        await manager.handle_request(scope, receive, send)
-
     @contextlib.asynccontextmanager
     async def lifespan(_app: Starlette) -> AsyncIterator[None]:
         async with manager.run():
@@ -120,8 +117,11 @@ def build_app(settings: Settings) -> Starlette:
             )
             yield
 
+    # A Route (not a Mount) answers the configured path itself; a Mount
+    # 307-redirects /mcp to /mcp/ on every request. The endpoint is an ASGI
+    # app instance, as in the SDK's own FastMCP, so Starlette passes it through.
     return Starlette(
-        routes=[Mount(settings.mcp.path, app=handle)],
+        routes=[Route(settings.mcp.path, endpoint=StreamableHTTPASGIApp(manager))],
         lifespan=lifespan,
     )
 

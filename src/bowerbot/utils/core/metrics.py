@@ -58,16 +58,23 @@ def asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | Non
     asset_stage = Usd.Stage.Open(asset_path, Usd.Stage.LoadNone)
     if asset_stage is None:
         return 1.0, None
+    return conform_between(
+        UsdGeom.GetStageMetersPerUnit(stage), UsdGeom.GetStageUpAxis(stage),
+        UsdGeom.GetStageMetersPerUnit(asset_stage), UsdGeom.GetStageUpAxis(asset_stage),
+    )
 
-    asset_mpu = UsdGeom.GetStageMetersPerUnit(asset_stage)
-    scene_mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    unit_scale = 1.0 if scene_mpu == 0 else asset_mpu / scene_mpu
 
-    asset_up = UsdGeom.GetStageUpAxis(asset_stage)
-    scene_up = UsdGeom.GetStageUpAxis(stage)
+def conform_between(
+    parent_mpu: float, parent_up: str, asset_mpu: float, asset_up: str,
+) -> tuple[float, float | None]:
+    """(unit scale, up-axis X-rotation or None) conforming an asset to its parent.
+
+    A Y-up asset under a Z-up parent turns +90 degrees about X; Z-up under Y-up turns -90.
+    """
+    unit_scale = 1.0 if parent_mpu == 0 else asset_mpu / parent_mpu
     correction = None
-    if asset_up == UsdGeom.Tokens.y and scene_up == UsdGeom.Tokens.z:
+    if asset_up == "Y" and parent_up == "Z":
         correction = 90.0
-    elif asset_up == UsdGeom.Tokens.z and scene_up == UsdGeom.Tokens.y:
+    elif asset_up == "Z" and parent_up == "Y":
         correction = -90.0
     return unit_scale, correction

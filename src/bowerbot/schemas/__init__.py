@@ -32,6 +32,7 @@ from bowerbot.schemas.intake import (
 )
 from bowerbot.schemas.layout import (
     GridPattern,
+    LayoutDefaults,
     LayoutEntry,
     LayoutRules,
     LayoutTransform,
@@ -143,6 +144,7 @@ __all__ = [
     "IntakeRules",
     "JointSummary",
     "JointsSummary",
+    "LayoutDefaults",
     "LayoutEntry",
     "LayoutPattern",
     "LayoutRules",

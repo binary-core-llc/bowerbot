@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import numpy as np
 from pxr import Gf
@@ -14,6 +13,7 @@ from pxr import Gf
 from bowerbot.schemas import ScatterAlign
 from bowerbot.schemas.surface import FloatArray
 from bowerbot.utils.core.metrics import horizontal_axes, up_vector
+from bowerbot.utils.core.transforms import rotation_to_rotate_xyz
 
 
 def quat_axis_angle(axis: FloatArray, angle: FloatArray) -> FloatArray:
@@ -118,30 +118,7 @@ def surface_orientations(
 
 def quat_to_rotate_xyz(q: FloatArray) -> list[tuple[float, float, float]]:
     """Convert ``(w, x, y, z)`` quaternions to xformOp:rotateXYZ degrees."""
-    out: list[tuple[float, float, float]] = []
-    for w, x, y, z in q.tolist():
-        rotation = Gf.Rotation(Gf.Quatd(w, Gf.Vec3d(x, y, z)))
-        rz, ry, rx = rotation.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
-        out.append(_smallest_rotate_xyz(rx, ry, rz))
-    return out
-
-
-def _smallest_rotate_xyz(rx: float, ry: float, rz: float) -> tuple[float, float, float]:
-    """Smaller of the two equivalent rotateXYZ triples, so a yaw stays (0, yaw, 0)."""
-    def wrap(angle: float) -> float:
-        wrapped = (angle + 180.0) % 360.0 - 180.0
-        return 0.0 if abs(wrapped) < 1e-6 else round(wrapped, 4)
-
-    first = (wrap(rx), wrap(ry), wrap(rz))
-    second = (wrap(rx + 180.0), wrap(180.0 - ry), wrap(rz + 180.0))
-    return min(first, second, key=lambda angles: sum(abs(a) for a in angles))
-
-
-def rotate_xyz_rotation(value: Any) -> Gf.Rotation:
-    """Gf.Rotation equal to an xformOp:rotateXYZ value (X applied first)."""
-    rx, ry, rz = (float(v) for v in (value or (0.0, 0.0, 0.0)))
-    return (
-        Gf.Rotation(Gf.Vec3d.XAxis(), rx)
-        * Gf.Rotation(Gf.Vec3d.YAxis(), ry)
-        * Gf.Rotation(Gf.Vec3d.ZAxis(), rz)
-    )
+    return [
+        rotation_to_rotate_xyz(Gf.Rotation(Gf.Quatd(w, Gf.Vec3d(x, y, z))))
+        for w, x, y, z in q.tolist()
+    ]

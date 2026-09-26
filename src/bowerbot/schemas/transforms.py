@@ -36,12 +36,13 @@ class PositionDefaults:
 class PositionMode(StrEnum):
     """Coordinate system used when placing a prim inside an asset.
 
-    * ``absolute`` — translate values are world-space coordinates (as
-      returned by ``list_scene`` / ``list_prim_children``). Converted
-      into the asset's internal coordinate frame automatically.
-    * ``bounds_offset`` — translate values are offsets from the asset's
-      bounding box surfaces (center for X/Z, top/bottom for Y). Use
-      for "above/below/next to" placements like a bulb above a lamp.
+    * ``absolute`` — translate values are world coordinates in scene units
+      (as returned by ``list_scene`` / ``list_prim_children``). Converted
+      into the asset's own frame automatically.
+    * ``bounds_offset`` — translate values are meters from the asset's
+      bounds along the scene's axes: the up-axis value from the top (or the
+      bottom when negative), the other two from the center. Use for
+      "above/below/next to" placements like a bulb above a lamp.
     """
 
     ABSOLUTE = "absolute"

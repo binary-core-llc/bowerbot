@@ -24,8 +24,6 @@ from bowerbot.state import SceneState
 from bowerbot.utils import assets, layout_utils, library_utils, stage_utils
 from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
-    get_geometry_bounds,
-    get_mpu,
     require_folder_entry,
     resolve_asset_dir_for_prim,
 )
@@ -38,7 +36,13 @@ from bowerbot.utils.core.references import (
     files_referencing,
     project_asset_references,
 )
-from bowerbot.utils.core.transforms import get_container_world_inverse, resolve_asset_position
+from bowerbot.utils.core.transforms import (
+    asset_axes_rotation,
+    resolve_position_in_asset,
+    scene_correction,
+    world_position,
+)
+from bowerbot.utils.core.values import read_axes, unpack_vec3
 from bowerbot.utils.texture_utils import find_texture_references
 
 logger = logging.getLogger(__name__)
@@ -60,7 +64,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
+    rotate = unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z") or (0.0, 0.0, 0.0)
 
     prim_path, number = next_placement_path(
         stage, layout_utils.scene_group_path(group), clean_prim_name(asset_name, "Asset"),
@@ -90,7 +94,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             file_path=report.scene_ref_path,
         ),
         translate=(tx, ty, tz),
-        rotate=(0.0, ry, 0.0),
+        rotate=rotate,
     )
 
     add_reference(stage, scene_object)
@@ -102,7 +106,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "prim_path": prim_path,
         "asset": asset_name,
         "position": {"x": tx, "y": ty, "z": tz},
-        "rotation_y": ry,
+        "rotation": dict(zip("xyz", rotate, strict=True)),
         "intake": assets.intake.intake_summary(report),
         "message": assets.intake.placement_message(asset_name, prim_path, report),
     }
@@ -293,10 +297,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     asset_name = params["asset_name"]
     container_prim_path = params["container_prim_path"]
     group = clean_group(params["group"])
-    tx = float(params["translate_x"])
-    ty = float(params["translate_y"])
-    tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
+    rotate = unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z") or (0.0, 0.0, 0.0)
 
     container_dir, _ = resolve_asset_dir_for_prim(stage, container_prim_path)
     if container_dir is None:
@@ -334,18 +335,10 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         fix_root_transforms=params.get("fix_root_transforms", False),
     )
 
-    mode = PositionMode(
-        params.get("position_mode", PositionMode.ABSOLUTE.value),
-    )
-    tx, ty, tz = resolve_asset_position(
-        mode,
-        get_geometry_bounds(container_dir),
-        tx, ty, tz,
-        has_explicit_y=params.get("translate_y") is not None,
-        world_to_local_mat=get_container_world_inverse(
-            stage, container_prim_path,
-        ),
-        asset_mpu=get_mpu(container_dir),
+    local = resolve_position_in_asset(
+        stage, container_prim_path, container_dir,
+        PositionMode(params.get("position_mode", PositionMode.ABSOLUTE.value)),
+        read_axes(params, "translate_x", "translate_y", "translate_z"),
     )
 
     ref_asset_path = compute_ref_asset_path(
@@ -369,20 +362,21 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
             prim_name=prim_name,
             ref_asset_path=ref_asset_path,
             transform=TransformParams(
-                translate=(tx, ty, tz),
-                rotate=(0.0, ry, 0.0),
+                translate=local,
+                rotate=asset_axes_rotation(rotate, scene_correction(stage, container_dir)),
             ),
         )
     except (ValueError, RuntimeError):
         state.object_count = counter_before
         raise
 
-    state.reopen_stage()
+    stage = state.reopen_stage()
     state.touch_project()
 
     composed_path = (
         f"{container_prim_path}/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/{group}/{prim_name}"
     )
+    wx, wy, wz = world_position(stage.GetPrimAtPath(composed_path))
     logger.info(
         "Placed %s inside %s at %s",
         asset_name, container_dir.name, composed_path,
@@ -391,8 +385,8 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "prim_path": composed_path,
         "asset": asset_name,
         "container": container_dir.name,
-        "position": {"x": tx, "y": ty, "z": tz},
-        "rotation_y": ry,
+        "position": {"x": round(wx, 4), "y": round(wy, 4), "z": round(wz, 4)},
+        "rotation": dict(zip("xyz", rotate, strict=True)),
         "intake": assets.intake.intake_summary(report),
         "message": (
             f"Placed {asset_name} inside {container_dir.name} at {composed_path}"

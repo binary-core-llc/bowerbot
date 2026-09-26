@@ -9,6 +9,7 @@ from typing import Any
 
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
+from bowerbot.schemas import SceneNamespace
 from bowerbot.utils.camera_utils import format_camera_prim
 from bowerbot.utils.core.bounds import bbox_cache, world_bounds
 from bowerbot.utils.core.references import get_prim_ref_paths
@@ -44,7 +45,6 @@ def list_prims(stage: Usd.Stage) -> list[dict[str, Any]]:
         results.append(entry)
     return results
 
-
 def _classify(
     prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
 ) -> dict[str, Any] | None:
@@ -57,7 +57,6 @@ def _classify(
         return format_collision_group_prim(prim)
     if prim.IsA(UsdGeom.Camera):
         return format_camera_prim(prim)
-
     is_light = prim.HasAPI(UsdLux.LightAPI)
     has_refs = prim.GetMetadata("references") is not None
     scene_gprim = (
@@ -65,17 +64,27 @@ def _classify(
     )
     if not (has_refs or is_light or scene_gprim):
         return None
-
     target = (
         _placement_ancestor(prim)
         if scene_gprim and not has_refs and not is_light
         else prim
     )
-    position = extract_position(target)
     if is_light:
-        return format_light_prim(target, position)
-    return _format_geometry_prim(target, position, bbox_cache)
+        return format_light_prim(target, extract_position(target))
+    if has_refs and _is_placement_child(prim):
+        target = prim.GetParent()
+    return _format_geometry_prim(
+        target, get_prim_ref_paths(prim), extract_position(target), bbox_cache,
+    )
 
+def _is_placement_child(prim: Usd.Prim) -> bool:
+    """Whether *prim* is the ``asset`` child of a placement wrapper (reported as the wrapper)."""
+    parent = prim.GetParent()
+    return bool(
+        prim.GetName() == SceneNamespace.ASSET_CHILD
+        and parent.IsValid()
+        and parent.IsA(UsdGeom.Xformable),
+    )
 
 def _placement_ancestor(prim: Usd.Prim) -> Usd.Prim:
     """Walk up to the topmost Xform ancestor whose parent is ``/Scene``."""
@@ -91,7 +100,6 @@ def _placement_ancestor(prim: Usd.Prim) -> Usd.Prim:
         cursor = cursor.GetParent()
     return candidate
 
-
 def _has_referenced_ancestor(prim: Usd.Prim) -> bool:
     """Whether any ancestor of *prim* carries an authored references arc."""
     cursor = prim.GetParent()
@@ -104,14 +112,13 @@ def _has_referenced_ancestor(prim: Usd.Prim) -> bool:
         cursor = cursor.GetParent()
     return False
 
-
 def _format_geometry_prim(
     prim: Usd.Prim,
+    ref_paths: list[str],
     position: dict[str, float] | None,
     bbox_cache: UsdGeom.BBoxCache,
 ) -> dict[str, Any]:
-    """Format a referenced-asset or scene-authored Gprim for ``list_prims``."""
-    ref_paths = get_prim_ref_paths(prim)
+    """Format a placement (its referenced asset) or a scene-authored Gprim for ``list_prims``."""
     return {
         "prim_path": str(prim.GetPath()),
         "kind": "asset" if ref_paths else "geometry",

@@ -85,6 +85,26 @@ def delete_project_texture(state: SceneState, params: dict[str, Any]) -> ToolRes
     return ToolResult(success=True, data=data)
 
 
+_ROTATE_X = {
+    "type": "number",
+    "description": "Rotation about the scene's X axis in degrees (default 0).",
+}
+_ROTATE_Y = {
+    "type": "number",
+    "description": (
+        "Rotation about the scene's Y axis in degrees (default 0). In a Y-up "
+        "scene this turns the asset on the floor."
+    ),
+}
+_ROTATE_Z = {
+    "type": "number",
+    "description": (
+        "Rotation about the scene's Z axis in degrees (default 0). In a Z-up "
+        "scene this turns the asset on the floor."
+    ),
+}
+
+
 TOOLS: list[Tool] = [
     Tool(
         name="place_asset",
@@ -92,7 +112,13 @@ TOOLS: list[Tool] = [
             "Place a 3D asset into the current scene. The asset is added as a "
             "USD reference at the specified prim path with the given transform. "
             "Use the standard hierarchy: Architecture, Furniture, Products, "
-            "Lighting, Props. Returns the prim_path, position, and an intake "
+            "Lighting, Props. Positions are world coordinates in scene units "
+            "(meters when the project's metersPerUnit is 1); the up axis is "
+            "Y or Z as the project was created (open_project reports it). "
+            "The asset is conformed to the scene's units and up axis "
+            "automatically. To turn it on the floor, rotate about the up "
+            "axis: rotate_y in a Y-up scene, rotate_z in a Z-up scene. "
+            "Returns the prim_path, position, rotation, and an intake "
             "summary (asset_folder, whether the root was renamed to the ASWF "
             "canonical name, files_copied, localized dependencies, compliance "
             "warnings)."
@@ -123,25 +149,25 @@ TOOLS: list[Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters. 0 = left edge of room.",
+                    "description": "X position in scene units.",
                 },
                 "translate_y": {
                     "type": "number",
                     "description": (
-                        "Y position in meters. 0 = floor, 2.7 = typical ceiling."
+                        "Y position in scene units. In a Y-up scene this is "
+                        "the height (0 = floor)."
                     ),
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters. 0 = back wall.",
-                },
-                "rotate_y": {
-                    "type": "number",
                     "description": (
-                        "Rotation around Y axis in degrees. 0 = facing forward."
+                        "Z position in scene units. In a Z-up scene this is "
+                        "the height (0 = floor)."
                     ),
-                    "default": 0.0,
                 },
+                "rotate_x": _ROTATE_X,
+                "rotate_y": _ROTATE_Y,
+                "rotate_z": _ROTATE_Z,
                 "fix_root_prim": {
                     "type": "boolean",
                     "description": (
@@ -370,12 +396,12 @@ TOOLS: list[Tool] = [
             "four sofa instances), use place_asset instead. If the container "
             "is shared by 2+ scene instances, this tool will refuse the call "
             "with a clear error unless confirm_shared_modification=true is "
-            "passed. Translate values are in the container's coordinate space; "
-            "use position_mode='absolute' with coordinates from list_prim_children "
-            "bounds, or 'bounds_offset' where X/Z are offsets from the container's "
-            "bounding-box CENTER and Y is an offset from its TOP surface (or BOTTOM "
-            "for negative Y; default 0.5 m above the top if Y is omitted). Returns "
-            "the composed prim_path, the resolved container-local position, and an "
+            "passed. Translate values follow position_mode: 'absolute' (default) "
+            "takes world coordinates in scene units, as list_scene and "
+            "list_prim_children bounds report them; 'bounds_offset' takes meters "
+            "from the container's bounds along the scene's axes. Rotations are "
+            "about the scene's axes, relative to the container. Returns the "
+            "composed prim_path, its world position and rotation, and an "
             "intake summary (asset_folder, renamed root, files_copied, localized "
             "dependencies, compliance warnings)."
         ),
@@ -413,33 +439,31 @@ TOOLS: list[Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters (container-local).",
+                    "description": "X position; see position_mode.",
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "Y position in meters (container-local).",
+                    "description": "Y position; see position_mode.",
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters (container-local).",
+                    "description": "Z position; see position_mode.",
                 },
-                "rotate_y": {
-                    "type": "number",
-                    "description": "Rotation around Y axis in degrees.",
-                    "default": 0.0,
-                },
+                "rotate_x": _ROTATE_X,
+                "rotate_y": _ROTATE_Y,
+                "rotate_z": _ROTATE_Z,
                 "position_mode": {
                     "type": "string",
                     "enum": [m.value for m in PositionMode],
                     "description": (
                         "How to interpret translate values: 'absolute' = "
-                        "world-space coordinates (as returned by list_scene / "
-                        "list_prim_children) — BowerBot converts to the "
-                        "container's internal coordinate frame; 'bounds_offset' "
-                        "= X and Z are offsets from the container's bounding-box "
-                        "CENTER, Y is an offset from the TOP surface (or BOTTOM "
-                        "for negative Y); if translate_y is omitted the asset is "
-                        "placed 0.5 m above the top surface."
+                        "world coordinates in scene units (as list_scene / "
+                        "list_prim_children report them); BowerBot converts them "
+                        "into the container's own frame. 'bounds_offset' = meters "
+                        "from the container's bounds along the scene's axes: the "
+                        "up-axis value (Y in a Y-up scene, Z in a Z-up scene) from "
+                        "the TOP surface (or the BOTTOM when negative), the other "
+                        "two from the bounding-box CENTER."
                     ),
                     "default": PositionMode.ABSOLUTE.value,
                 },

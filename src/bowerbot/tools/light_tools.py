@@ -96,10 +96,12 @@ TOOLS: list[Tool] = [
             "angle, colorTemperature, etc.) are passed via the attributes "
             "dict using their full inputs:* names. Call "
             "list_light_type_properties FIRST to discover the attribute names "
-            "and defaults for the chosen light type. For asset lights, use "
-            "position_mode to choose between absolute asset-local coordinates "
-            "(e.g. from list_prim_children bounds) or bounds_offset "
-            "(relative to the asset's surfaces)."
+            "and defaults for the chosen light type. Scene lights take world "
+            "coordinates in scene units. For asset lights, position_mode "
+            "chooses between absolute world coordinates (e.g. from "
+            "list_prim_children bounds) and bounds_offset (relative to the "
+            "asset's surfaces). Rotations are about the scene's axes for both. "
+            "Returns the light's prim_path and world position."
         ),
         parameters={
             "type": "object",
@@ -134,29 +136,29 @@ TOOLS: list[Tool] = [
                     "enum": [m.value for m in PositionMode],
                     "description": (
                         "Asset-level lights only. How to interpret translate "
-                        "values: 'absolute' = world-space coordinates (as "
-                        "returned by list_scene / list_prim_children) — "
-                        "BowerBot converts to the asset's internal "
-                        "coordinate frame automatically; 'bounds_offset' = "
-                        "offsets from the asset's bounding box surfaces "
-                        "(e.g. a bulb 0.5m above a lamp)."
+                        "values: 'absolute' = world coordinates in scene units "
+                        "(as list_scene / list_prim_children report them); "
+                        "BowerBot converts them into the asset's own frame. "
+                        "'bounds_offset' = meters from the asset's bounds along "
+                        "the scene's axes: the up-axis value (Y in a Y-up scene, "
+                        "Z in a Z-up scene) from the TOP surface (or the BOTTOM "
+                        "when negative; 0.5 m above the top when omitted), the "
+                        "other two from the bounding-box CENTER (e.g. a bulb "
+                        "0.2 m above a lamp)."
                     ),
                     "default": PositionMode.BOUNDS_OFFSET.value,
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters.",
-                    "default": 0.0,
+                    "description": "X position (scene units; see position_mode for asset lights).",
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "Y position in meters.",
-                    "default": 0.0,
+                    "description": "Y position (scene units; see position_mode for asset lights).",
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters.",
-                    "default": 0.0,
+                    "description": "Z position (scene units; see position_mode for asset lights).",
                 },
                 "rotate_x": {
                     "type": "number",
@@ -250,11 +252,16 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "enum": [m.value for m in PositionMode],
                     "description": (
-                        "Asset-level lights only. How to interpret "
-                        "translate values: 'absolute' = world-space "
-                        "coordinates (BowerBot converts to asset-internal "
-                        "frame); 'bounds_offset' = offsets from the "
-                        "asset's bounding box surfaces."
+                        "Asset-level lights only. How to interpret translate "
+                        "values: 'absolute' = world coordinates in scene units "
+                        "(as list_scene / list_prim_children report them); "
+                        "BowerBot converts them into the asset's own frame. "
+                        "'bounds_offset' = meters from the asset's bounds along "
+                        "the scene's axes: the up-axis value (Y in a Y-up scene, "
+                        "Z in a Z-up scene) from the TOP surface (or the BOTTOM "
+                        "when negative; 0.5 m above the top when omitted), the "
+                        "other two from the bounding-box CENTER (e.g. a bulb "
+                        "0.2 m above a lamp)."
                     ),
                     "default": PositionMode.BOUNDS_OFFSET.value,
                 },

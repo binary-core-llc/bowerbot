@@ -23,6 +23,7 @@ from bowerbot.schemas import (
 )
 from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils.core.asset_folder import refuse_file_path, validate_asset_file
+from bowerbot.utils.core.metrics import horizontal_axes
 from bowerbot.utils.core.naming import clean_group
 from bowerbot.utils.library_utils import find_asset
 
@@ -191,31 +192,25 @@ def _pad3[T](values: tuple[T, T] | tuple[T, T, T], fill: T) -> tuple[T, T, T]:
 
 
 def suggest_grid_layout(
-    count: int,
-    *,
-    spacing: float = 2.0,
-    room_bounds: tuple[float, float, float] = (10.0, 3.0, 8.0),
-    center: tuple[float, float] | None = None,
-) -> list[tuple[float, float, float]]:
-    """Compute ``(x, y, z)`` positions for *count* objects in a grid."""
+    count: int, *, spacing: float, width: float, depth: float, up: int,
+) -> list[Vec3]:
+    """Positions for *count* objects in a grid on the ground plane of up axis *up*.
+
+    The grid is centered in a *width* x *depth* room whose corner is the origin:
+    width runs along X, depth along the other ground axis (Z when Y is up, Y when Z is up).
+    """
     if count <= 0:
         return []
-
-    room_width, _, room_depth = room_bounds
+    across, along = horizontal_axes(up)
     cols = math.ceil(math.sqrt(count))
     rows = math.ceil(count / cols)
+    first_col = width / 2 - (cols - 1) * spacing / 2
+    first_row = depth / 2 - (rows - 1) * spacing / 2
 
-    cx = center[0] if center else room_width / 2
-    cz = center[1] if center else room_depth / 2
-
-    x_offset = cx - (cols - 1) * spacing / 2
-    z_offset = cz - (rows - 1) * spacing / 2
-
-    placements: list[tuple[float, float, float]] = []
+    placements: list[Vec3] = []
     for i in range(count):
-        row = i // cols
-        col = i % cols
-        x = x_offset + col * spacing
-        z = z_offset + row * spacing
-        placements.append((x, 0.0, z))
+        point = [0.0, 0.0, 0.0]
+        point[across] = first_col + (i % cols) * spacing
+        point[along] = first_row + (i // cols) * spacing
+        placements.append((point[0], point[1], point[2]))
     return placements

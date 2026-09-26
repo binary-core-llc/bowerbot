@@ -12,6 +12,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from bowerbot.schemas.transforms import LayoutPattern, Vec3
 
 
+class LayoutDefaults:
+    """Fallbacks compute_grid_layout uses when the request leaves them out, in meters."""
+
+    ROOM_WIDTH_METERS = 10.0
+    ROOM_DEPTH_METERS = 8.0
+    GRID_SPACING_METERS = 2.0
+
+
 class LayoutRules:
     """What place_layout accepts: the layout-file version and the placement limit."""
 

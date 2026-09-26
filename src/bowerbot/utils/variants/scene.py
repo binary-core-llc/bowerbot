@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from pxr import Sdf, Usd
+from pxr import Gf, Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import SceneNamespace
 from bowerbot.utils.core.overrides import prune_empty_overrides
@@ -247,9 +247,43 @@ def restore_active_scene_variant_references_to_direct_ref(
         return None
     for ref in refs:
         target_prim.GetReferences().AddReference(ref)
+    direct = Sdf.Path(target_path)
+    for prop in list(child_spec.properties):
+        if _is_xform_op_property(prop.name):
+            Sdf.CopySpec(layer, prop.path, layer, direct.AppendProperty(prop.name))
     stage.Save()
     variant_name: str = target_variant.name
     return variant_name
+
+
+def move_direct_conform_out(stage: Usd.Stage, asset_child: str, unit_scale: float) -> None:
+    """Drop the conform ops authored directly on a placement's ``asset`` child.
+
+    They move into the model-selection variants, one conform per variant. A
+    placement authored before the conform lived on the child carries the unit
+    scale in its wrapper's scale op; that is divided out, leaving the user's scale.
+    """
+    layer = stage.GetRootLayer()
+    spec = layer.GetPrimAtPath(asset_child)
+    if spec is None:
+        return
+    had_scale = "xformOp:scale" in spec.properties
+    for prop in list(spec.properties):
+        if _is_xform_op_property(prop.name):
+            spec.RemoveProperty(prop)
+    if unit_scale != 1.0 and not had_scale:
+        wrapper = stage.GetPrimAtPath(Sdf.Path(asset_child).GetParentPath())
+        for op in UsdGeom.Xformable(wrapper).GetOrderedXformOps():
+            if op.GetOpType() == UsdGeom.XformOp.TypeScale:
+                sx, sy, sz = op.Get()
+                op.Set(Gf.Vec3f(sx / unit_scale, sy / unit_scale, sz / unit_scale))
+                break
+    stage.Save()
+
+
+def _is_xform_op_property(name: str) -> bool:
+    """Whether a property name is an xform op or the op order."""
+    return name == "xformOpOrder" or name.startswith("xformOp:")
 
 
 def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:

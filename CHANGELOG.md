@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.14.0](https://github.com/binary-core-llc/bowerbot/compare/v1.13.0...v1.14.0) (2026-09-26)
+
+
+### Features
+
+* **assets:** tools take asset names and library locations, never file paths ([#233](https://github.com/binary-core-llc/bowerbot/issues/233)) ([ed1011d](https://github.com/binary-core-llc/bowerbot/commit/ed1011d6ea666b4db5db23de43737ac3d759a18a))
+* **scatter:** scatter assets over surfaces and along paths, resting on real geometry ([#206](https://github.com/binary-core-llc/bowerbot/issues/206)) ([5b12990](https://github.com/binary-core-llc/bowerbot/commit/5b129906f6f305c463f28dcf48266b98eb97e4bd))
+
+
+### Bug Fixes
+
+* **assets:** delete and freeze tools never reach outside their project folder ([#230](https://github.com/binary-core-llc/bowerbot/issues/230)) ([b32ff43](https://github.com/binary-core-llc/bowerbot/commit/b32ff430e6f78078ce605911e1710ac730c98592))
+* **assets:** exact, variant-aware asset usage in list_project_assets and the delete guard ([#227](https://github.com/binary-core-llc/bowerbot/issues/227)) ([76ff24c](https://github.com/binary-core-llc/bowerbot/commit/76ff24c9d6850a4809e1db33162b12c219ef8e3b))
+* **assets:** intake keeps everything the source composes; source files come only from the library ([#232](https://github.com/binary-core-llc/bowerbot/issues/232)) ([9d64093](https://github.com/binary-core-llc/bowerbot/commit/9d64093c862f4655b8acb84726b0191a9ca13b22))
+* **attributes:** set vector arrays, quaternions and matrices; no partial state on failure ([#225](https://github.com/binary-core-llc/bowerbot/issues/225)) ([72f1227](https://github.com/binary-core-llc/bowerbot/commit/72f12275edfba0ec682db930d732a60ca785a5f8))
+* **intake:** all-or-nothing asset intake that never deletes existing assets ([#224](https://github.com/binary-core-llc/bowerbot/issues/224)) ([6c8d68f](https://github.com/binary-core-llc/bowerbot/commit/6c8d68f3586d9c2cd65b9c252d85ed47b200daf9))
+* **mcp:** serve /mcp directly instead of redirecting every request ([#229](https://github.com/binary-core-llc/bowerbot/issues/229)) ([ded5e41](https://github.com/binary-core-llc/bowerbot/commit/ded5e41fc6b819e65e0811ce367b77fb06027178))
+* **physics:** keep authored gravity and API schemas; removals drop only their own rel targets ([#231](https://github.com/binary-core-llc/bowerbot/issues/231)) ([51ad4f4](https://github.com/binary-core-llc/bowerbot/commit/51ad4f4cca95876b65264d056f6597d8ae0727b5))
+* **state:** reload when any layer the scene uses changes on disk ([#228](https://github.com/binary-core-llc/bowerbot/issues/228)) ([a7f9c1a](https://github.com/binary-core-llc/bowerbot/commit/a7f9c1a273b199d4fba89fa54d9020459a1433f8))
+* **tools:** clear errors instead of crashes for missing params and non-USD asset paths ([#223](https://github.com/binary-core-llc/bowerbot/issues/223)) ([eec4369](https://github.com/binary-core-llc/bowerbot/commit/eec436952c8dbf073f44bc1a1e936d624a3c0dd9))
+* **validation:** no false MaterialX errors, stable issue order ([#226](https://github.com/binary-core-llc/bowerbot/issues/226)) ([197e4fa](https://github.com/binary-core-llc/bowerbot/commit/197e4fa83bd6bb92322bc4c9f65d7a77da7913ec))
+
 ## [1.13.0](https://github.com/binary-core-llc/bowerbot/compare/v1.12.0...v1.13.0) (2026-06-19)
 
 

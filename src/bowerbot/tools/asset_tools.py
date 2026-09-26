@@ -468,9 +468,11 @@ TOOLS: list[Tool] = [
         name="list_project_assets",
         description=(
             "List asset folders in the current project's assets directory. "
-            "Shows which ones are referenced in the scene and which are "
-            "unused. Use this to find asset folders that can be cleaned up. "
-            "Optionally filter by name."
+            "Each entry reports in_scene (used by the scene in any variant, "
+            "directly or nested inside another asset) and referenced_by "
+            "(every project file that references it, snapshots included). "
+            "Unused entries are referenced by no file and can be deleted "
+            "with delete_project_asset. Optionally filter by name."
         ),
         parameters={
             "type": "object",

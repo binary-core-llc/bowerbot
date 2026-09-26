@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pxr import Gf, Sdf, Usd, UsdGeom
+from pxr import Ar, Gf, Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import AssetFormat, SceneObject
 from bowerbot.utils.core.metrics import asset_conform
@@ -32,14 +32,6 @@ def get_prim_ref_paths(prim: Usd.Prim) -> list[str]:
     return paths
 
 
-def get_all_ref_paths(stage: Usd.Stage) -> set[str]:
-    """Collect every reference asset path authored on the stage."""
-    refs: set[str] = set()
-    for prim in stage.Traverse():
-        refs.update(get_prim_ref_paths(prim))
-    return refs
-
-
 def find_asset_placements(stage: Usd.Stage, asset_dir: Path) -> list[str]:
     """Return scene prim paths of every wrapper-asset child referencing *asset_dir*."""
     root_path = stage.GetRootLayer().realPath
@@ -62,37 +54,60 @@ def count_scene_refs_to_asset_dir(stage: Usd.Stage, asset_dir: Path) -> int:
     return len(find_asset_placements(stage, asset_dir))
 
 
-def find_asset_references(
-    project_dir: Path,
-    folder_name: str,
-    skip_dir: Path | None = None,
-) -> list[str]:
-    """Scan *project_dir* for USD files referencing *folder_name* in any variant body or payload."""
-    referencing: list[str] = []
-    for usd_file in project_dir.rglob("*"):
+def project_asset_references(project_dir: Path, assets_dir: Path) -> dict[str, set[str]]:
+    """Map each project USD file to the ``assets/`` entries it references from outside itself.
+
+    Every layer is scanned once, variant bodies and payloads included. A
+    reference matches the entry its resolved path lies in (a whole
+    ``assets/<entry>`` component), never by name substring. Keys are paths
+    relative to *project_dir*.
+    """
+    assets_root = assets_dir.resolve()
+    references: dict[str, set[str]] = {}
+    for usd_file in sorted(project_dir.rglob("*")):
         if usd_file.suffix not in AssetFormat.layer_formats():
             continue
-        if skip_dir is not None:
-            try:
-                usd_file.relative_to(skip_dir)
-                continue
-            except ValueError:
-                pass
         layer = Sdf.Layer.FindOrOpen(str(usd_file))
         if layer is None:
             continue
-        if _layer_references_folder(layer, folder_name):
-            referencing.append(str(usd_file.relative_to(project_dir)))
-    return referencing
+        own_entry = _assets_entry(usd_file.resolve(), assets_root)
+        entries = {
+            entry
+            for asset_path in _layer_arc_paths(layer)
+            if (entry := _assets_entry(_resolve_arc(usd_file, asset_path), assets_root))
+            and entry != own_entry
+        }
+        if entries:
+            references[str(usd_file.relative_to(project_dir))] = entries
+    return references
 
 
-def _layer_references_folder(layer: Sdf.Layer, folder_name: str) -> bool:
-    """Whether any prim spec in *layer* (including variant bodies) references *folder_name*."""
-    found = [False]
+def files_referencing(references: dict[str, set[str]], entry: str) -> list[str]:
+    """The project files (relative paths, sorted) that reference the ``assets/`` *entry*."""
+    return sorted(file for file, entries in references.items() if entry in entries)
+
+
+def assets_used_from(
+    references: dict[str, set[str]], root_file: str, assets_prefix: str,
+) -> set[str]:
+    """Entries *root_file* uses, directly or through the assets it uses (nested contents)."""
+    used: set[str] = set()
+    frontier = set(references.get(root_file, set()))
+    while frontier:
+        entry = frontier.pop()
+        used.add(entry)
+        folder = f"{assets_prefix}/{entry}/"
+        for file, entries in references.items():
+            if file.startswith(folder):
+                frontier |= entries - used
+    return used
+
+
+def _layer_arc_paths(layer: Sdf.Layer) -> list[str]:
+    """Every reference and payload asset path authored in *layer*, variant bodies included."""
+    paths: list[str] = []
 
     def visit(path: Sdf.Path) -> None:
-        if found[0]:
-            return
         spec = layer.GetObjectAtPath(path)
         if not isinstance(spec, Sdf.PrimSpec):
             return
@@ -104,13 +119,24 @@ def _layer_references_folder(layer: Sdf.Layer, folder_name: str) -> bool:
                 proxy.explicitItems,
                 proxy.orderedItems,
             ):
-                for arc in items:
-                    if folder_name in arc.assetPath:
-                        found[0] = True
-                        return
+                paths.extend(arc.assetPath for arc in items if arc.assetPath)
 
     layer.Traverse(Sdf.Path.absoluteRootPath, visit)
-    return found[0]
+    return paths
+
+
+def _resolve_arc(layer_file: Path, asset_path: str) -> Path:
+    """The file an arc's asset path points at, resolved against its layer's folder."""
+    outer, _ = Ar.SplitPackageRelativePathOuter(asset_path)
+    target = Path(outer)
+    return target if target.is_absolute() else (layer_file.parent / target).resolve()
+
+
+def _assets_entry(path: Path, assets_root: Path) -> str | None:
+    """The ``assets/`` entry (folder or .usdz) *path* lies in, or ``None``."""
+    if not path.is_relative_to(assets_root) or path == assets_root:
+        return None
+    return path.relative_to(assets_root).parts[0]
 
 
 def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:

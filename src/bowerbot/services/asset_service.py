@@ -31,9 +31,10 @@ from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 from bowerbot.utils.core.references import (
     add_reference,
     add_references,
+    assets_used_from,
     count_scene_refs_to_asset_dir,
-    find_asset_references,
-    get_all_ref_paths,
+    files_referencing,
+    project_asset_references,
 )
 from bowerbot.utils.core.transforms import get_container_world_inverse, resolve_asset_position
 from bowerbot.utils.texture_utils import find_texture_references
@@ -388,13 +389,17 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
 
 
 def list_project_assets(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """List every asset in the project's assets dir, with in-scene flags."""
+    """List every asset in the project's assets dir, with where each one is referenced."""
+    project = state.require_project()
     assets_dir = state.resolve_assets_dir()
     if not assets_dir.exists():
         return {"assets": [], "message": "No assets directory found."}
 
-    referenced = (
-        get_all_ref_paths(state.stage) if state.stage else set()
+    references = project_asset_references(project.path, assets_dir)
+    in_scene = assets_used_from(
+        references,
+        str(project.scene_path.relative_to(project.path)),
+        str(assets_dir.relative_to(project.path)),
     )
     query = (params.get("query") or "").lower()
 
@@ -405,10 +410,11 @@ def list_project_assets(state: SceneState, params: dict[str, Any]) -> dict[str, 
         results.append({
             "name": entry.name,
             "type": "folder" if entry.is_dir() else "file",
-            "in_scene": any(entry.name in r for r in referenced),
+            "in_scene": entry.name in in_scene,
+            "referenced_by": files_referencing(references, entry.name),
         })
 
-    unused = [a for a in results if not a["in_scene"]]
+    unused = [a for a in results if not a["referenced_by"]]
     return {
         "total": len(results),
         "unused_count": len(unused),
@@ -528,9 +534,8 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
         msg = f"Asset not found: {name}"
         raise ValueError(msg)
 
-    skip_dir = asset_path if asset_path.is_dir() else None
-    referencing = find_asset_references(
-        project.path, name, skip_dir=skip_dir,
+    referencing = files_referencing(
+        project_asset_references(project.path, assets_dir), name,
     )
     if referencing:
         files_list = ", ".join(referencing)

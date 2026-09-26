@@ -275,9 +275,14 @@ in their project or when an asset reference has gone stale.
 
 - `list_project_assets()` — list every asset under the project's
   `assets/` directory; each entry reports its `name`, `type` (`folder`
-  or `file`), and `in_scene` (whether it is referenced in the current
-  scene). Use this to answer "what assets do I have?" or before
-  suggesting a `place_asset` call.
+  or `file`), `in_scene` (used by the scene in any variant, not only
+  the selected one, directly or nested inside another asset) and
+  `referenced_by` (every project file that references it, snapshots
+  included). `unused_count` counts entries no file references; only
+  those can be deleted. An asset kept only by a snapshot shows
+  `in_scene: false` with the snapshot in `referenced_by`. Use this to
+  answer "what assets do I have?" or before suggesting a `place_asset`
+  call.
 - `delete_project_asset(name=...)` — remove an asset folder. Refuses
   by default if the asset is still referenced anywhere in the project;
   the error names the referencing USD files (relative to the project)

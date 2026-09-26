@@ -55,6 +55,14 @@ class ASWFLayerNames:
     REFERENCE_ORDER = (VARIANTS, CONTENTS, LGT, MTL, PHY)
 
 
+class AssetScopeNames:
+    """Scope prims BowerBot authors under an asset's default prim, one per side layer."""
+
+    MATERIALS = "mtl"
+    LIGHTS = "lgt"
+    CONTENTS = "contents"
+
+
 class AppleUSDZConstraints:
     """Apple consumer USDZ subset (AR Quick Look on iOS Files/Safari/iMessage).
 

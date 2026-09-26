@@ -19,8 +19,8 @@ from bowerbot.utils.core.asset_folder import (
     list_alternate_geo_files,
     normalize_asset_prim_path,
     require_asset_context,
-    resolve_asset_file_path,
     resolve_default_prim_name,
+    resolve_library_file,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.naming import safe_variant_name, validate_variant_name
@@ -458,10 +458,10 @@ def add_scene_model_selection_variant(
             f"{prim_path} has no '/asset' child — not a valid placement wrapper.",
         )
 
-    resolved_path = resolve_asset_file_path(
+    resolved_path = resolve_library_file(
         params["asset_file_path"],
-        project.path,
-        state.library_dir,
+        library_dir=state.library_dir,
+        project_dir=project.path,
     )
     report = assets.intake.prepare_asset(
         resolved_path, state.resolve_assets_dir(),

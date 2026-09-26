@@ -12,6 +12,7 @@ from typing import Any
 from pxr import Gf, Sdf, Usd, UsdShade
 
 from bowerbot.schemas import (
+    AssetScopeNames,
     ASWFLayerNames,
     MaterialXShaders,
     PreviewSurfaceShader,
@@ -55,10 +56,10 @@ def add_material_to_folder(
         raise RuntimeError(msg)
 
     default_prim_name = resolve_default_prim_name(asset_dir)
-    ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
+    ensure_layer_scope(mtl_layer, default_prim_name, AssetScopeNames.MATERIALS, "Scope")
 
     mat_name = Sdf.Path(material_prim_path).name
-    dest_mat_path = Sdf.Path(f"/{default_prim_name}/mtl/{mat_name}")
+    dest_mat_path = Sdf.Path(f"/{default_prim_name}/{AssetScopeNames.MATERIALS}/{mat_name}")
     Sdf.CopySpec(
         source_layer, Sdf.Path(material_prim_path),
         mtl_layer, dest_mat_path,
@@ -68,7 +69,7 @@ def add_material_to_folder(
     mtl_layer.Save()
 
     local_prim_path = to_layer_local_path(prim_path, default_prim_name)
-    composed_mat_path = f"/{default_prim_name}/mtl/{mat_name}"
+    composed_mat_path = f"/{default_prim_name}/{AssetScopeNames.MATERIALS}/{mat_name}"
 
     stage = Usd.Stage.Open(str(mtl_path))
     if stage is not None:
@@ -99,7 +100,7 @@ def create_procedural_material_in_folder(
 
     mtl_layer = Sdf.Layer.FindOrOpen(str(ensure_side_layer(asset_dir, ASWFLayerNames.MTL)))
 
-    ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
+    ensure_layer_scope(mtl_layer, default_prim_name, AssetScopeNames.MATERIALS, "Scope")
     mtl_layer.defaultPrim = default_prim_name
     mtl_layer.Save()
 
@@ -108,7 +109,7 @@ def create_procedural_material_in_folder(
         msg = f"Cannot open mtl layer: {mtl_path}"
         raise RuntimeError(msg)
 
-    mat_prim_path = f"/{default_prim_name}/mtl/{params.material_name}"
+    mat_prim_path = f"/{default_prim_name}/{AssetScopeNames.MATERIALS}/{params.material_name}"
     material = UsdShade.Material.Define(stage, mat_prim_path)
 
     _author_materialx_standard_surface(stage, mat_prim_path, material, params)

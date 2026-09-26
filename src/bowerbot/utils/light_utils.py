@@ -13,6 +13,7 @@ from typing import Any
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux
 
 from bowerbot.schemas import (
+    AssetScopeNames,
     ASWFLayerNames,
     LightParams,
     LightRules,
@@ -26,6 +27,7 @@ from bowerbot.utils.core.asset_folder import (
     find_root_file,
     remove_empty_layer,
     resolve_default_prim_name,
+    resolve_library_file,
     unit_factor,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
@@ -189,8 +191,8 @@ def add_light_to_folder(
     default_prim_name = resolve_default_prim_name(asset_dir)
     lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
 
-    lgt_scope_path = Sdf.Path(f"/{default_prim_name}/lgt")
-    ensure_layer_scope(lgt_layer, default_prim_name, "lgt", "Xform")
+    lgt_scope_path = Sdf.Path(f"/{default_prim_name}/{AssetScopeNames.LIGHTS}")
+    ensure_layer_scope(lgt_layer, default_prim_name, AssetScopeNames.LIGHTS, "Xform")
     lgt_layer.Save()
 
     _apply_inverse_transform(asset_dir, lgt_path, lgt_scope_path)
@@ -200,7 +202,7 @@ def add_light_to_folder(
         msg = f"Cannot open lgt layer: {lgt_path}"
         raise RuntimeError(msg)
 
-    light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
+    light_prim_path = f"/{default_prim_name}/{AssetScopeNames.LIGHTS}/{light_name}"
     light_cls = schema_class(light.light_type)
 
     light_prim = light_cls.Define(stage, light_prim_path).GetPrim()
@@ -252,7 +254,7 @@ def update_light_in_folder(
         raise ValueError(msg)
 
     default_prim_name = resolve_default_prim_name(asset_dir)
-    light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
+    light_prim_path = f"/{default_prim_name}/{AssetScopeNames.LIGHTS}/{light_name}"
 
     stage = Usd.Stage.Open(str(lgt_path))
     if stage is None:
@@ -303,7 +305,7 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> bool:
         return False
 
     default_prim_name = resolve_default_prim_name(asset_dir)
-    light_prim_path = Sdf.Path(f"/{default_prim_name}/lgt/{light_name}")
+    light_prim_path = Sdf.Path(f"/{default_prim_name}/{AssetScopeNames.LIGHTS}/{light_name}")
 
     lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
     if lgt_layer is None or not lgt_layer.GetPrimAtPath(light_prim_path):
@@ -352,20 +354,25 @@ def list_lights_in_folder(asset_dir: Path) -> list[dict[str, Any]]:
     ]
 
 
-def stage_asset_texture(asset_dir: Path, texture: str | None) -> str | None:
-    """Copy an HDRI into the asset's ``maps/`` dir; return the ref path."""
+def stage_asset_texture(
+    asset_dir: Path,
+    texture: str | None,
+    *,
+    library_dir: Path | None,
+    project_dir: Path | None,
+) -> str | None:
+    """Copy a texture from the library into the asset's ``maps/`` dir; return the ref path."""
     if not texture:
         return texture
-
+    if not Path(texture).is_absolute() and (asset_dir / texture).is_file():
+        return texture  # already staged inside the asset (e.g. ./maps/foo.hdr)
+    source = resolve_library_file(texture, library_dir=library_dir, project_dir=project_dir)
     maps_dir = asset_dir / ASWFLayerNames.MAPS
     maps_dir.mkdir(exist_ok=True)
-    tex_path = Path(texture)
-    if tex_path.exists():
-        dest = maps_dir / tex_path.name
-        if not dest.exists():
-            shutil.copy2(tex_path, dest)
-        return f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
-    return texture
+    dest = maps_dir / source.name
+    if not dest.exists():
+        shutil.copy2(source, dest)
+    return f"./{ASWFLayerNames.MAPS}/{source.name}"
 
 
 # ── Internal helpers ──

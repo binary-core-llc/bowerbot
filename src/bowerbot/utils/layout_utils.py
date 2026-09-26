@@ -21,25 +21,21 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.schemas.transforms import Vec3
-from bowerbot.utils.core.asset_folder import asset_folder_hint, validate_asset_file
+from bowerbot.utils.core.asset_folder import (
+    asset_folder_hint,
+    resolve_library_file,
+    validate_asset_file,
+)
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 
 
-def resolve_layout_file(raw: str, project_dir: Path | None) -> Path:
-    """Resolve a layout_file argument to an existing file, absolute or project-relative."""
-    path = Path(raw)
-    candidates = [path] if path.is_absolute() else (
-        [project_dir / raw] if project_dir is not None else []
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    searched = ", ".join(str(c) for c in candidates) or "no project open"
-    msg = (
-        f"layout_file '{raw}' not found (searched: {searched}). "
-        f"Pass an absolute path or a project-relative path."
-    )
-    raise ValueError(msg)
+def resolve_layout_file(raw: str, project_dir: Path | None, library_dir: Path | None) -> Path:
+    """Resolve a layout_file argument to a file in the asset library or the project."""
+    path = resolve_library_file(raw, library_dir=library_dir, project_dir=project_dir)
+    if not path.is_file():
+        msg = f"layout_file '{raw}' is not a file: {path}"
+        raise ValueError(msg)
+    return path
 
 
 def parse_layout_file(file: Path) -> list[Any]:
@@ -93,22 +89,13 @@ def resolve_layout_asset(
     project_dir: Path | None,
     library_dir: Path | None,
 ) -> Path:
-    """Resolve an entry's asset to an existing root file, never falling back to the CWD."""
-    path = Path(raw)
-    if path.is_absolute():
-        candidates = [path]
-    else:
-        roots = (layout_dir, project_dir, library_dir)
-        candidates = [root / raw for root in roots if root is not None]
-    for candidate in candidates:
-        if candidate.is_file():
-            return validate_asset_file(candidate.resolve())
-    for candidate in candidates:
-        if candidate.is_dir():
-            raise ValueError(asset_folder_hint(candidate))
-    searched = ", ".join(str(c) for c in candidates) or "no roots available"
-    msg = f"asset '{raw}' not found (searched: {searched})."
-    raise ValueError(msg)
+    """Resolve an entry's asset to a root file in the library or project, never the CWD."""
+    path = resolve_library_file(
+        raw, library_dir=library_dir, project_dir=project_dir, first_dir=layout_dir,
+    )
+    if path.is_dir():
+        raise ValueError(asset_folder_hint(path))
+    return validate_asset_file(path)
 
 
 def scene_group_path(group: str) -> str:

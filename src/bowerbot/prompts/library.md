@@ -9,6 +9,11 @@ answering questions about asset availability. If the first search
 returns no results, try broader keywords or `list_assets` to show
 everything available.
 
+The library is the only place BowerBot takes source files from.
+Placing, scattering, binding a material or staging a texture from a
+path outside it is refused: if the user names a file elsewhere, ask
+them to copy it into the library first, then use the library path.
+
 ## When to Use
 - When the user asks "what do I have", "do I have a table", etc.
 - When the user asks for assets without specifying a source
@@ -45,9 +50,10 @@ single_table/
 Detection is composition-aware: a folder still counts as a `package`
 when the root filename does not match the folder name (e.g.
 `wall/root.usd` next to `wall/geo.usd`). Internal layer files (geo,
-mtl, lgt, contents) are NOT listed separately. When placing a package,
-`place_asset` copies the entire folder and makes it self-contained
-inside the project.
+mtl, lgt, contents, phy, variants) are NOT listed separately. When
+placing a package, `place_asset` copies its root and every file the
+root depends on (files it never references are left out) and makes the
+copy self-contained inside the project.
 
 Loose files at the library root (e.g. `library/table.usda`) are
 classified individually and wrapped into a fresh ASWF folder when

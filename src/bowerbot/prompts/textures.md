@@ -5,7 +5,9 @@ You have tools for finding texture files in the user's asset library.
 - When the user asks for an HDRI or environment map for a `DomeLight`
 - When the user asks for material maps (diffuse, normal, roughness, etc.)
 - Before asking the user for a file path — check whether the texture
-  already exists locally
+  already exists locally. BowerBot only takes files from the asset
+  library: if the user has one elsewhere, ask them to copy it into the
+  library first
 
 ## Supported Formats
 - **HDRI**: `.hdr`, `.hdri`, `.exr` — for dome lights and environment lighting

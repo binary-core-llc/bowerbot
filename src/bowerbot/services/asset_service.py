@@ -12,9 +12,11 @@ from typing import Any
 
 from bowerbot.schemas import (
     AssetMetadata,
+    AssetScopeNames,
     ASWFLayerNames,
     LayoutRules,
     PositionMode,
+    SceneNamespace,
     SceneObject,
     TransformParams,
 )
@@ -26,7 +28,7 @@ from bowerbot.utils.core.asset_folder import (
     get_mpu,
     require_folder_entry,
     resolve_asset_dir_for_prim,
-    resolve_asset_file_path,
+    resolve_library_file,
 )
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 from bowerbot.utils.core.references import (
@@ -49,10 +51,10 @@ logger = logging.getLogger(__name__)
 def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bring an asset into the project and add it to the scene."""
     stage = state.require_stage()
-    asset_path = resolve_asset_file_path(
+    asset_path = resolve_library_file(
         params["asset_file_path"],
-        state.project_dir,
-        state.library_dir,
+        library_dir=state.library_dir,
+        project_dir=state.project_dir,
     )
     asset_name = params["asset_name"]
     group = params["group"]
@@ -119,7 +121,7 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     project_dir = state.project_dir
     layout_dir = None
     if layout_file is not None:
-        file_path = layout_utils.resolve_layout_file(layout_file, project_dir)
+        file_path = layout_utils.resolve_layout_file(layout_file, project_dir, state.library_dir)
         raw_entries = layout_utils.parse_layout_file(file_path)
         layout_dir = file_path.parent
     if not raw_entries:
@@ -277,10 +279,10 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Nest an asset inside an ASWF container's ``contents.usda``."""
     stage = state.require_stage()
-    asset_path = resolve_asset_file_path(
+    asset_path = resolve_library_file(
         params["asset_file_path"],
-        state.project_dir,
-        state.library_dir,
+        library_dir=state.library_dir,
+        project_dir=state.project_dir,
     )
     asset_name = params["asset_name"]
     container_prim_path = params["container_prim_path"]
@@ -367,7 +369,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     state.touch_project()
 
     composed_path = (
-        f"{container_prim_path}/asset/contents/{group}/{prim_name}"
+        f"{container_prim_path}/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/{group}/{prim_name}"
     )
     logger.info(
         "Placed %s inside %s at %s",

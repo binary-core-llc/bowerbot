@@ -21,9 +21,13 @@ def make_state(
     tmp_path: Path,
     project_name: str = "test",
 ) -> tuple[SceneState, Project]:
-    """Create a fresh project and a ``SceneState`` bound to it."""
+    """Create a fresh project and a ``SceneState`` bound to it.
+
+    *tmp_path* doubles as the asset library, so assets the tests write there
+    can be placed.
+    """
     project = Project.create(tmp_path, project_name)
-    state = SceneState()
+    state = SceneState(library_dir=tmp_path)
     state.project = project
     state.stage_path = project.scene_path
     return state, project

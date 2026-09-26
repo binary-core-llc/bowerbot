@@ -79,7 +79,9 @@ When the source is an existing scene, write a small script that
 extracts `(asset, transform, group)` per placement and dumps that file —
 never transcribe transforms by hand. Entry asset paths resolve in
 order: absolute → layout-file dir → project dir → library dir, and must
-name the asset's root file (e.g. `SM_floor02/SM_floor02.usda`).
+name the asset's root file (e.g. `SM_floor02/SM_floor02.usda`). Every
+asset, and the layout file itself, must be in the asset library or the
+project; anything else is refused.
 
 The whole plan is validated before anything is placed: every invalid
 entry and every unresolvable asset is reported at once, with entry
@@ -174,24 +176,30 @@ BowerBot follows ASWF USD Working Group guidelines for asset structure.
 - `place_asset` with a loose .usda file automatically creates an ASWF folder:
   ```
   project/assets/chair/
-    chair.usda   <- root (references geo.usda)
-    geo.usda     <- geometry
+    chair.usda   <- root (payloads geo.usda)
+    geo.usda     <- the source file, copied whole (units included)
+    part.usda    <- anything the source references, copied alongside
   ```
 - `bind_material` adds materials incrementally:
   ```
   project/assets/chair/
-    chair.usda   <- root (references geo.usda + mtl.usda)
+    chair.usda   <- root (payloads geo.usda, references mtl.usda)
     geo.usda     <- geometry
     mtl.usda     <- materials defined inline + bindings
   ```
-- `place_asset` with an existing ASWF folder copies the entire folder
+- `place_asset` with the root file of a library folder copies the root
+  (as `<folder>.usda`) and every file it depends on
 - `place_asset` with a USDZ copies the single file (no folder)
 
 ### Key rules
 - Loose geometry is wrapped in ASWF folders on placement
 - USDZ files stay as-is (self-contained)
 - The scene.usda only contains references — no material sublayers
-- Existing ASWF folders are copied whole, preserving structure
+- Intake copies what the root depends on, not every file in the folder:
+  a file the root never references (an unused LOD, a README) is not
+  copied. Dependencies outside the folder are copied in and re-pathed.
+- Intake refuses a source whose dependencies don't resolve, and a loose
+  file with geometry outside its defaultPrim (a reference would drop it)
 
 ### Composition arcs: payload for geo, references for everything else
 
@@ -200,13 +208,14 @@ canonical root composes its heavy data via PAYLOAD and its lighter
 sublayers via REFERENCES:
 - `geo.usda` → payload (lazy-load; lets large stages open quickly,
   works with population masks and partial loading)
-- `mtl.usda` / `lgt.usda` / `contents.usda` → references (composed
-  immediately; lighter and usually needed)
+- `variants.usda` / `contents.usda` / `lgt.usda` / `mtl.usda` /
+  `phy.usda` → references (composed immediately; lighter and usually
+  needed)
 
-BowerBot enforces this at intake: the canonical root authored by
-`create_asset_folder` and rebuilt after layer changes always uses
-this arc split, and `intake_folder` re-normalises imported folder
-packages to match. No separate flag required.
+The root BowerBot writes for a loose file uses this split. A library
+folder's root keeps the arcs its author wrote (a `geo.usdc` payload,
+extra references); BowerBot only adds or removes its own side-layer
+references, first in the list so they are the strongest.
 
 ### Class prim + inherits (shot-level broadcast hook)
 

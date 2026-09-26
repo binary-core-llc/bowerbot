@@ -11,6 +11,7 @@ from pathlib import Path
 from pxr import Gf, Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import (
+    AssetScopeNames,
     ASWFLayerNames,
     SceneNamespace,
     TransformParams,
@@ -40,7 +41,7 @@ def add_nested_asset_reference(
     default_prim_name = resolve_default_prim_name(container_dir)
     contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
 
-    ensure_layer_scope(contents_layer, default_prim_name, "contents", "Xform")
+    ensure_layer_scope(contents_layer, default_prim_name, AssetScopeNames.CONTENTS, "Xform")
     _ensure_group_scope(contents_layer, default_prim_name, group)
     contents_layer.Save()
 
@@ -197,7 +198,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
         return []
 
     default_prim_name = resolve_default_prim_name(container_dir)
-    contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
+    contents_scope_path = Sdf.Path(f"/{default_prim_name}/{AssetScopeNames.CONTENTS}")
     contents_spec = layer.GetPrimAtPath(contents_scope_path)
 
     removed: list[str] = []

@@ -6,8 +6,6 @@
 from __future__ import annotations
 
 import logging
-import shutil
-import tempfile
 from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom
@@ -15,8 +13,10 @@ from pxr import Sdf, Usd, UsdGeom
 from bowerbot.schemas import (
     AssetFormat,
     ASWFLayerNames,
+    LocalizedCopy,
 )
 from bowerbot.utils.assets.freeze import bake_root_transforms, root_transform_is_identity
+from bowerbot.utils.assets.localize import localize
 from bowerbot.utils.core.metrics import read_stage_metadata
 
 logger = logging.getLogger(__name__)
@@ -26,23 +26,63 @@ def create_asset_folder(
     output_dir: Path,
     asset_name: str,
     geometry_file: Path,
-) -> Path:
-    """Create an ASWF asset folder with root + ``geo.usda``."""
+) -> tuple[Path, LocalizedCopy]:
+    """Wrap a loose USD file as an ASWF asset folder: ``geo.usda`` plus a root.
+
+    ``geo.usda`` is a full copy of *geometry_file* (layer metadata included)
+    and every file it depends on is copied next to it, so the asset composes
+    exactly like the source. Returns the root path and what was copied.
+    """
     asset_dir = output_dir / asset_name
     asset_dir.mkdir(parents=True, exist_ok=True)
 
     mpu, up = read_stage_metadata(geometry_file)
 
     geo_path = asset_dir / ASWFLayerNames.GEO
+    copy = LocalizedCopy(files_copied=0)
     if not geo_path.exists():
-        _create_geo_layer(geo_path, geometry_file)
+        copy = localize(geometry_file, geometry_file.parent, geo_path)
+        _require_geometry_under_default_prim(geo_path, geometry_file.name)
+        _state_units(geo_path, mpu, up)
 
     root_path = asset_dir / f"{asset_name}.usda"
     if not root_path.exists():
         _create_root_file(root_path, mpu, up)
 
     logger.info("Created ASWF asset folder: %s", asset_dir)
-    return root_path
+    return root_path, copy
+
+
+def _require_geometry_under_default_prim(geo_path: Path, source_name: str) -> None:
+    """Refuse a file whose geometry sits outside its defaultPrim: a reference would drop it."""
+    stage = Usd.Stage.Open(str(geo_path))
+    default_prim = stage.GetDefaultPrim()
+    if not default_prim:
+        return
+    root = default_prim.GetPath()
+    outside = [
+        str(prim.GetPath()) for prim in stage.Traverse()
+        if prim.IsA(UsdGeom.Gprim) and not prim.GetPath().HasPrefix(root)
+    ]
+    if outside:
+        msg = (
+            f"Asset '{source_name}' has geometry outside its defaultPrim {root} "
+            f"({len(outside)} prim(s), e.g. {', '.join(outside[:3])}). A reference "
+            f"loads only the defaultPrim, so that geometry would be missing. "
+            f"Export it with all geometry under the one root prim."
+        )
+        raise ValueError(msg)
+
+
+def _state_units(layer_path: Path, meters_per_unit: float, up_axis: str) -> None:
+    """Author *layer_path*'s ``metersPerUnit`` / ``upAxis`` where it leaves them to the fallback."""
+    layer = Sdf.Layer.FindOrOpen(str(layer_path))
+    stage = Usd.Stage.Open(layer)
+    if not stage.HasAuthoredMetadata(UsdGeom.Tokens.metersPerUnit):
+        UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
+    if not stage.HasAuthoredMetadata(UsdGeom.Tokens.upAxis):
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y if up_axis == "Y" else UsdGeom.Tokens.z)
+    layer.Save()
 
 
 def ensure_aswf_compliance(
@@ -146,22 +186,6 @@ def normalize_root_metadata(root_file: Path, asset_name: str) -> None:
     stage.Save()
 
 
-def _create_geo_layer(geo_dest: Path, geometry_source: Path) -> None:
-    """Copy geometry into ``geo.usda`` using Sdf layer copy."""
-    source_layer = Sdf.Layer.FindOrOpen(str(geometry_source))
-    if source_layer is None:
-        msg = f"Cannot open geometry source: {geometry_source}"
-        raise RuntimeError(msg)
-
-    dest_layer = Sdf.Layer.CreateNew(str(geo_dest))
-    for prim_spec in source_layer.rootPrims:
-        Sdf.CopySpec(
-            source_layer, prim_spec.path, dest_layer, prim_spec.path,
-        )
-    dest_layer.defaultPrim = source_layer.defaultPrim
-    dest_layer.Save()
-
-
 def _create_root_file(
     root_path: Path,
     meters_per_unit: float,
@@ -263,24 +287,14 @@ def _wrap_root_prim(geometry_file: Path) -> None:
     if root_spec is None or root_spec.typeName in ("Xform", ""):
         return
 
-    with tempfile.NamedTemporaryFile(suffix=AssetFormat.USDA, delete=False) as tmp:
-        tmp_path = Path(tmp.name)
-
-    try:
-        dest_layer = Sdf.Layer.CreateNew(str(tmp_path))
-
-        Sdf.CreatePrimInLayer(dest_layer, root_path)
-        wrapper = dest_layer.GetPrimAtPath(root_path)
-        wrapper.specifier = Sdf.SpecifierDef
-        wrapper.typeName = "Xform"
-
-        child_path = Sdf.Path(f"/{default_prim_name}/mesh")
-        Sdf.CopySpec(source_layer, root_path, dest_layer, child_path)
-
-        dest_layer.defaultPrim = default_prim_name
-        dest_layer.Save()
-
-        shutil.move(str(tmp_path), str(geometry_file))
-    finally:
-        if tmp_path.exists():
-            tmp_path.unlink()
+    # Work on a full copy so units, sublayers and other root prims are kept;
+    # CopySpec remaps paths inside the moved subtree.
+    wrapped = Sdf.Layer.CreateAnonymous(AssetFormat.USDA)
+    wrapped.TransferContent(source_layer)
+    remove = Sdf.BatchNamespaceEdit()
+    remove.Add(root_path, Sdf.Path.emptyPath)
+    wrapped.Apply(remove)
+    Sdf.PrimSpec(wrapped, default_prim_name, Sdf.SpecifierDef, "Xform")
+    Sdf.CopySpec(source_layer, root_path, wrapped, root_path.AppendChild("mesh"))
+    source_layer.TransferContent(wrapped)
+    source_layer.Save()

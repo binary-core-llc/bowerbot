@@ -80,7 +80,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box. BowerBot authors a single `scene.usda` as the live working layer; `save_scene_snapshot(name)` writes a flattened, DCC-stripped `<name>.usda` alongside whenever you want to publish a frozen version
 - 🎭 **USD variant sets**: asset-level (material, geometry/LOD, configuration, attribute) live in the asset's `variants.usda`; scene-level (lighting moods, light-type swap, model selection at a placement) live inline in `scene.usda`. Architectural invariants protect every mutation: auto-promote existing references into a model-selection variant on first add, auto-demote back to a direct ref when the set is removed, cascading orphan-opinion cleanup on prim delete/rename, automatic texture-asset staging for Asset-typed attribute values, and suspect-set detection that flags variants that collapse to a single choice
 - 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md). Heavy `geo.usda` composes via a **payload arc** for lazy-load (city-scale digital twins, robot fleets, large layouts open instantly); `mtl.usda` / `lgt.usda` / `contents.usda` use references
-- 🧳 **Self-contained intake**: non-canonical source folders are detected via USD composition, canonicalized (`root.usd` → `<folder>.usda`), and external dependencies (textures, sublayers) are localized into the asset folder so the project copy is always portable
+- 🧳 **Self-contained intake**: non-canonical source folders are detected via USD composition, canonicalized (`root.usd` → `<folder>.usda`), and every dependency (layers, textures, for folders and loose files alike) is copied and re-pathed into the asset folder, so the project copy composes exactly like the source and is always portable
 - 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts; procedural materials author hybrid MaterialX + UsdPreviewSurface outputs so they render across studio renderers (Renderman, Arnold), Hydra Storm, Apple RealityKit / AR Quick Look, and Isaac Sim
 - 💡 **Native USD lighting**: sun, dome, point, area, disk, and tube lights at scene or asset level, with optional UsdLux `light:link` collections so a rim light, kicker, or product-shot key only illuminates the prims you target
 - 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
@@ -313,7 +313,7 @@ BowerBot is conversational: you tell it what you want and it uses the right tool
 
 BowerBot searches for assets across all connected sources, prioritizing what's already available:
 
-1. **Local assets first**: BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers.
+1. **Local assets first**: BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers. BowerBot only reads source files from this directory (and the copies already in the project): assets, materials, textures and layout files anywhere else are refused, so copy them into `assets_dir` first.
 
 2. **Cloud providers if needed**: If the asset isn't found locally, BowerBot searches connected providers (any installed skill, e.g. Sketchfab) and downloads the asset to your local directory.
 
@@ -323,11 +323,11 @@ BowerBot searches for assets across all connected sources, prioritizing what's a
 
 When you ask BowerBot to place an asset, it routes by what the source looks like and always produces a self-contained ASWF folder in the project:
 
-- **Folder with a detectable root** (canonical `wall/wall.usda`, or non-canonical `wall/root.usd` + `wall/geo.usd` + `wall/mtl.usd`): the root is identified via USD composition (the file no sibling depends on), the folder is copied into the project, the root is canonicalized to `<folder>.usda`, sibling references are rewritten, and any externally-referenced textures or layers are localized into the folder so the output is portable.
-- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports): wrapped in a fresh ASWF folder named after the file stem, producing `<stem>/<stem>.usda` + `geo.usda`.
+- **A file inside a folder of your asset library** (canonical `wall/wall.usda`, or non-canonical `wall/root.usd` + `wall/geo.usd` + `wall/mtl.usd`): the root is identified via USD composition (the file no sibling depends on) and written as `<folder>.usda` (a binary root is converted to text). The root and every file it depends on are copied, keeping the arcs the author wrote; files outside the folder are localized into it and every path is rewritten, so the copy composes exactly like the source and is portable.
+- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports, sitting directly in the library rather than in one of its folders): wrapped in a fresh ASWF folder named after the file stem, producing `<stem>/<stem>.usda` + `geo.usda` (the file copied whole, units included). Files it references are copied alongside and re-pathed the same way.
 - **USDZ files** (from Sketchfab, DAMs, etc.): placed as-is since they're already self-contained.
 
-When an asset can't be safely intaken (missing external dependencies, or a folder with multiple independent USDs and no clear root), BowerBot refuses with a message naming the conflict instead of guessing.
+When an asset can't be safely intaken (a dependency that doesn't resolve, a folder with multiple independent USDs and no clear root, or a loose file with geometry outside its defaultPrim), BowerBot refuses with a message naming the conflict instead of guessing.
 
 ### Material Workflow
 
@@ -344,8 +344,8 @@ BowerBot: [searches local assets for "wood" materials]
 The result is a production-ready asset folder:
 ```
 assets/single_table/
-  single_table.usda   <- root (references geo + mtl)
-  geo.usda            <- geometry (untouched from source)
+  single_table.usda   <- root (payloads geo, references mtl)
+  geo.usda            <- geometry (the source file, untouched)
   mtl.usda            <- materials inline + bindings
 ```
 
@@ -402,7 +402,8 @@ exporter can target:
   number or `[sx, sy, sz]`) act as defaults for placements that do not
   set their own.
 - Relative asset paths resolve in order: **layout-file dir → project
-  dir → library dir**. There is no working-directory fallback.
+  dir → library dir**. There is no working-directory fallback, and every
+  asset (and the layout file itself) must be in the library or the project.
 - Translates are in scene units, and pattern axes map to world
   `[x, y, z]` (not up-axis aware — the example above is for a Z-up
   scene). Each asset is conformed (units + up-axis) on reference, same
@@ -828,10 +829,10 @@ src/bowerbot/
     summary.md        # Internal: how old conversation history is summarized
 
   schemas/            # Pydantic models and enums, grouped by domain
-    assets.py         #   Asset formats, categories, ASWF layer names, metadata
+    assets.py         #   Asset formats, categories, ASWF layer and scope names, metadata
     cameras.py        #   CameraParams, CameraDefaults, CameraSchemaInfo
     config.py         #   ConfigPaths (the ~/.bowerbot folder and its config.json)
-    intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
+    intake.py         #   DetectionOutcome, FolderDetection, LocalizedCopy, IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
     library.py        #   LibraryRules, LibraryDefaults (what a library scan returns)
     lights.py         #   LightType, LightParams, LightTypeSchemaInfo
@@ -921,7 +922,8 @@ src/bowerbot/
                                #   physics, placements, geometry)
     assets/                    #   Assets, split into small modules:
       intake.py                #     prepare_asset: bring a file or folder in as an ASWF asset
-      folders.py               #     whole-folder intake: copies, path rewrites, root detection
+      folders.py               #     library-folder intake: root detection, canonical root
+      localize.py              #     copy a file and its dependencies, re-path, verify
       aswf.py                  #     wrap loose files into ASWF folders; root metadata
       freeze.py  nested.py     #     bake root transforms; nested assets in contents.usda
     library_utils.py           #   scan_library, find_package_for

@@ -21,7 +21,12 @@ from bowerbot.schemas.cameras import (
     CameraPropertySpec,
     CameraSchemaInfo,
 )
-from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
+from bowerbot.schemas.intake import (
+    DetectionOutcome,
+    FolderDetection,
+    IntakeReport,
+    IntakeRules,
+)
 from bowerbot.schemas.layout import (
     GridPattern,
     LayoutEntry,
@@ -112,6 +117,7 @@ __all__ = [
     "GridPattern",
     "HDRIFormat",
     "IntakeReport",
+    "IntakeRules",
     "JointSummary",
     "JointsSummary",
     "LayoutEntry",

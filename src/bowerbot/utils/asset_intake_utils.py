@@ -26,7 +26,7 @@ from bowerbot.schemas import (
     IntakeReport,
     TransformParams,
 )
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils.core.asset_folder import (
     detect_folder_root,
     ensure_layer_scope,
     ensure_root_reference,

@@ -22,26 +22,14 @@ from bowerbot.schemas import (
     ASWFLayerNames,
     DetectionOutcome,
     FolderDetection,
+    IntakeRules,
 )
 from bowerbot.utils.core.bounds import bbox_cache, world_range
+from bowerbot.utils.core.dependencies import resolve as resolve_dependencies
 from bowerbot.utils.core.metrics import read_mpu, read_stage_metadata
-from bowerbot.utils.dependency_utils import resolve as resolve_dependencies
-from bowerbot.utils.stage_utils import (
-    count_scene_refs_to_asset_dir,
-    get_prim_ref_paths,
-)
+from bowerbot.utils.core.references import count_scene_refs_to_asset_dir, get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
-
-_ROOT_NAME_HINTS: tuple[str, ...] = ("root", "main", "asset")
-
-CANONICAL_REFERENCE_ORDER: tuple[str, ...] = (
-    ASWFLayerNames.VARIANTS,
-    ASWFLayerNames.CONTENTS,
-    ASWFLayerNames.LGT,
-    ASWFLayerNames.MTL,
-    ASWFLayerNames.PHY,
-)
 
 
 # ── Folder structure ──
@@ -359,7 +347,7 @@ def rebuild_root_references(asset_dir: Path) -> None:
     if geo_path.exists():
         root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
 
-    for layer_file in CANONICAL_REFERENCE_ORDER:
+    for layer_file in ASWFLayerNames.REFERENCE_ORDER:
         if (asset_dir / layer_file).exists():
             root_prim.GetReferences().AddReference(f"./{layer_file}")
 
@@ -479,7 +467,7 @@ def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:
 
 def _name_tiebreak(candidates: list[Path], folder_name: str) -> Path | None:
     """Pick the preferred candidate by filename convention, or ``None``."""
-    for stem in (folder_name, *_ROOT_NAME_HINTS):
+    for stem in (folder_name, *IntakeRules.ROOT_NAME_HINTS):
         matches = [p for p in candidates if p.stem == stem]
         if len(matches) == 1:
             return matches[0]
@@ -536,3 +524,35 @@ def unit_factor(asset_dir: Path) -> float:
     """Return the factor that converts meters into asset units."""
     mpu = get_mpu(asset_dir)
     return 1.0 / mpu if mpu > 0 else 1.0
+
+
+def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
+    """If *prim_path* is a nested-asset wrapper, return (group, prim_name)."""
+    marker = "/asset/contents/"
+    idx = prim_path.find(marker)
+    if idx >= 0:
+        suffix = prim_path[idx + len(marker):]
+        parts = [p for p in suffix.split("/") if p]
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        msg = (
+            f"Path {prim_path} is inside a nested asset's contents but "
+            f"not at the wrapper level. Only the wrapper "
+            f"(.../asset/contents/<group>/<name>) can be edited; deeper "
+            f"prims live inside the referenced nested asset and editing "
+            f"them at scene level would create per-instance overrides."
+        )
+        raise ValueError(msg)
+
+    if "/asset/" in prim_path or prim_path.endswith("/asset"):
+        msg = (
+            f"Path {prim_path} is inside a referenced top-level asset. "
+            f"Only the scene-level wrapper (/Scene/<Group>/<Name>) and "
+            f"nested wrappers (.../asset/contents/<group>/<name>) can be "
+            f"edited; everything else lives inside the referenced asset "
+            f"and editing it at scene level would create per-instance "
+            f"overrides."
+        )
+        raise ValueError(msg)
+
+    return None

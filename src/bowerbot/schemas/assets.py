@@ -51,6 +51,9 @@ class ASWFLayerNames:
     MAPS = "maps"
     TEXTURES = "textures"
 
+    # Order the root file lists its side-layer references in.
+    REFERENCE_ORDER = (VARIANTS, CONTENTS, LGT, MTL, PHY)
+
 
 class AppleUSDZConstraints:
     """Apple consumer USDZ subset (AR Quick Look on iOS Files/Safari/iMessage).

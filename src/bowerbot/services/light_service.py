@@ -12,13 +12,8 @@ from pxr import Sdf
 
 from bowerbot.schemas import LightParams, LightType, PositionMode, SceneNamespace
 from bowerbot.state import SceneState
-from bowerbot.utils import (
-    light_utils,
-    stage_utils,
-    texture_utils,
-    variant_utils,
-)
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils import light_utils, stage_utils, texture_utils, variant_utils
+from bowerbot.utils.core.asset_folder import (
     get_geometry_bounds,
     get_mpu,
     resolve_asset_dir_for_prim,

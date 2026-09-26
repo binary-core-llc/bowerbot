@@ -40,10 +40,12 @@ from bowerbot.schemas import (
 )
 from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
 from bowerbot.schemas.transforms import Vec3
-from bowerbot.utils import asset_intake_utils, layout_utils, stage_utils, surface_utils
+from bowerbot.utils import asset_intake_utils, layout_utils, surface_utils
+from bowerbot.utils.core.asset_folder import parse_nested_contents_path
 from bowerbot.utils.core.bounds import bbox_cache, prim_world_box, world_bounds, world_range
 from bowerbot.utils.core.metrics import asset_conform, axis_index, horizontal_axes, up_vector
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.references import add_references, get_prim_ref_paths
 from bowerbot.utils.core.transforms import extract_position, gf_matrix_to_numpy
 from bowerbot.utils.core.values import to_vec3
 
@@ -1345,7 +1347,7 @@ def write_scatter(
             raise ValueError(msg)
         stage.DefinePrim(prim_path, "Xform")
         local = to_local(stage, prim_path, instances)
-        stage_utils.add_references(
+        add_references(
             stage, placement_objects(prim_path, prototypes, local, first_index),
         )
         return {"placements": instances.count, "warnings": []}
@@ -1369,7 +1371,7 @@ def write_instancer(
 
     prototypes_path = f"{prim_path}/{ScatterNamespace.PROTOTYPES}"
     stage.DefinePrim(prototypes_path, "Scope")
-    stage_utils.add_references(stage, [
+    add_references(stage, [
         SceneObject(
             prim_path=f"{prototypes_path}/{proto.name}",
             asset=AssetMetadata(
@@ -1456,7 +1458,7 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
     for target in instancer.GetPrototypesRel().GetTargets():
         proto = stage.GetPrimAtPath(target)
         child = proto.GetChild("asset") if proto.IsValid() else proto
-        refs = stage_utils.get_prim_ref_paths(child) if child and child.IsValid() else []
+        refs = get_prim_ref_paths(child) if child and child.IsValid() else []
         prototypes.append(refs[0] if refs else str(target))
     return {
         "prim_path": str(prim.GetPath()),
@@ -1477,7 +1479,7 @@ def drop_targets(stage: Usd.Stage, prim_paths: list[str]) -> tuple[list[str], li
     wrappers: list[str] = []
     scatters: list[str] = []
     for prim_path in prim_paths:
-        if stage_utils.parse_nested_contents_path(prim_path) is not None:
+        if parse_nested_contents_path(prim_path) is not None:
             msg = (
                 f"{prim_path} is a nested placement inside an asset; "
                 "drop_to_surface moves scene-level placements only."
@@ -2053,7 +2055,7 @@ def _is_placement_wrapper(prim: Usd.Prim) -> bool:
     return (
         prim.IsA(UsdGeom.Xformable)
         and child.IsValid()
-        and bool(stage_utils.get_prim_ref_paths(child))
+        and bool(get_prim_ref_paths(child))
     )
 
 

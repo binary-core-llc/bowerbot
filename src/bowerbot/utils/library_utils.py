@@ -11,7 +11,7 @@ from pathlib import Path
 from pxr import Usd, UsdShade
 
 from bowerbot.schemas import AssetCategory, AssetFormat, DetectionOutcome
-from bowerbot.utils.asset_folder_utils import detect_folder_root
+from bowerbot.utils.core.asset_folder import detect_folder_root
 
 logger = logging.getLogger(__name__)
 

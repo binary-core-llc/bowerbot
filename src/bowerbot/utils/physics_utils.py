@@ -39,13 +39,14 @@ from bowerbot.schemas import (
     ScenePhysicsSummary,
 )
 from bowerbot.utils import stage_utils
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils.core.asset_folder import (
     ensure_root_reference,
     find_root_file,
     require_asset_context,
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.naming import validate_prim_name
+from bowerbot.utils.core.references import find_asset_placements
 from bowerbot.utils.core.values import usd_to_json
 from bowerbot.utils.usd_schema_utils import property_doc
 
@@ -561,7 +562,7 @@ def find_masking_scene_opinions(
     if not attr_names and not rel_names:
         return []
 
-    placements = stage_utils.find_asset_placements(stage, asset_dir)
+    placements = find_asset_placements(stage, asset_dir)
     if not placements:
         return []
 

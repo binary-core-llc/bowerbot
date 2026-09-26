@@ -23,7 +23,7 @@ from bowerbot.schemas import (
     VariantSetSummary,
     VariantsSummary,
 )
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     clear_root_payload,
     find_root_file,
@@ -31,9 +31,8 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.naming import validate_variant_name
+from bowerbot.utils.core.references import find_asset_placements, get_prim_ref_paths
 from bowerbot.utils.stage_utils import (
-    find_asset_placements,
-    get_prim_ref_paths,
     prune_empty_overrides,
 )
 from bowerbot.utils.texture_utils import stage_asset_value

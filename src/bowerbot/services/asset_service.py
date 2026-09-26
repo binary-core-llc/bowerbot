@@ -19,12 +19,8 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.state import SceneState
-from bowerbot.utils import (
-    asset_intake_utils,
-    layout_utils,
-    stage_utils,
-)
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils import asset_intake_utils, layout_utils, stage_utils
+from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
     get_geometry_bounds,
     get_mpu,
@@ -32,8 +28,14 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_asset_file_path,
 )
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.references import (
+    add_reference,
+    add_references,
+    count_scene_refs_to_asset_dir,
+    find_asset_references,
+    get_all_ref_paths,
+)
 from bowerbot.utils.core.transforms import get_container_world_inverse, resolve_asset_position
-from bowerbot.utils.stage_utils import find_asset_references
 from bowerbot.utils.texture_utils import find_texture_references
 
 logger = logging.getLogger(__name__)
@@ -85,7 +87,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         rotate=(0.0, ry, 0.0),
     )
 
-    stage_utils.add_reference(stage, scene_object)
+    add_reference(stage, scene_object)
     stage_utils.save_stage(stage)
     state.touch_project()
 
@@ -245,7 +247,7 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                     rotate=transform.rotate,
                     scale=transform.scale,
                 ))
-        stage_utils.add_references(stage, objects)
+        add_references(stage, objects)
         stage_utils.save_stage(stage)
     except Exception:
         state.object_count = object_count_snapshot
@@ -295,7 +297,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         )
         raise ValueError(msg)
 
-    instance_count = stage_utils.count_scene_refs_to_asset_dir(
+    instance_count = count_scene_refs_to_asset_dir(
         stage, container_dir,
     )
     confirmed = bool(params.get("confirm_shared_modification", False))
@@ -392,7 +394,7 @@ def list_project_assets(state: SceneState, params: dict[str, Any]) -> dict[str, 
         return {"assets": [], "message": "No assets directory found."}
 
     referenced = (
-        stage_utils.get_all_ref_paths(state.stage) if state.stage else set()
+        get_all_ref_paths(state.stage) if state.stage else set()
     )
     query = (params.get("query") or "").lower()
 

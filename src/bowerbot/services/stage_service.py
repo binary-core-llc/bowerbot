@@ -9,13 +9,9 @@ import logging
 from typing import Any
 
 from bowerbot.state import SceneState
-from bowerbot.utils import (
-    asset_intake_utils,
-    inspection_utils,
-    scene_integrity_utils,
-    stage_utils,
-)
-from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
+from bowerbot.utils import asset_intake_utils, inspection_utils, stage_utils
+from bowerbot.utils.core.asset_folder import parse_nested_contents_path, resolve_asset_dir_for_prim
+from bowerbot.utils.core.integrity import rewrite_refs, scrub_dangling_refs
 from bowerbot.utils.core.naming import safe_file_name
 from bowerbot.utils.core.transforms import (
     read_translate_and_rotate_y,
@@ -80,7 +76,7 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     old_path = params["old_path"]
     new_path = params["new_path"]
 
-    if stage_utils.parse_nested_contents_path(old_path) is not None:
+    if parse_nested_contents_path(old_path) is not None:
         msg = (
             f"Cannot rename {old_path}: it lives inside a referenced "
             "asset's contents.usda. Renaming at scene level would "
@@ -95,7 +91,7 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError(msg)
 
     stage = state.reopen_stage()
-    rewrites = scene_integrity_utils.rewrite_refs(
+    rewrites = rewrite_refs(
         stage, {old_path: new_path},
     )
     logger.info("Renamed %s -> %s", old_path, new_path)
@@ -112,7 +108,7 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     stage = state.require_stage()
     prim_path = params["prim_path"]
 
-    nested = stage_utils.parse_nested_contents_path(prim_path)
+    nested = parse_nested_contents_path(prim_path)
     if nested is not None:
         container_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
         if container_dir is None:
@@ -132,7 +128,7 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
 
-    scrubbed = scene_integrity_utils.scrub_dangling_refs(stage)
+    scrubbed = scrub_dangling_refs(stage)
 
     state.object_count = max(0, state.object_count - 1)
     state.touch_project()
@@ -158,7 +154,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
     ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
 
-    nested = stage_utils.parse_nested_contents_path(prim_path)
+    nested = parse_nested_contents_path(prim_path)
     if nested is not None:
         container_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
         if container_dir is None:

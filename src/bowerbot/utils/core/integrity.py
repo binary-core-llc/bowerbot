@@ -5,12 +5,67 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 from pxr import Sdf, Usd
 
+from bowerbot.schemas import SceneNamespace
+from bowerbot.utils.core.asset_folder import normalize_asset_prim_path
 from bowerbot.utils.core.overrides import clear_orphan_variant_overs
+
+
+def require_prim(stage: Usd.Stage, prim_path: str) -> Usd.Prim:
+    """The prim at *prim_path* on the composed stage, or ``ValueError``."""
+    prim = stage.GetPrimAtPath(prim_path) if Sdf.Path.IsValidPathString(prim_path) else None
+    if prim is None or not prim.IsValid():
+        msg = f"Prim not found: {prim_path}"
+        raise ValueError(msg)
+    return prim
+
+
+def require_prims(stage: Usd.Stage, prim_paths: Iterable[str], label: str) -> list[Sdf.Path]:
+    """Relationship targets as paths, refusing any that names no prim on the composed stage."""
+    paths = list(prim_paths)
+    missing = [
+        p for p in paths
+        if not Sdf.Path.IsValidPathString(p) or not stage.GetPrimAtPath(p).IsValid()
+    ]
+    if missing:
+        msg = (
+            f"{label}: no prim at {missing}. Use list_scene or list_prim_children "
+            "for the prim paths in the scene."
+        )
+        raise ValueError(msg)
+    return [Sdf.Path(p) for p in paths]
+
+
+def asset_local_targets(
+    stage: Usd.Stage,
+    targets: Iterable[str],
+    ref_prim_path: str,
+    default_prim_name: str,
+    label: str,
+) -> list[str]:
+    """Scene prim paths inside one placement, as paths inside its asset; refuse the rest.
+
+    What an asset folder holds is shared by every placement of the asset, so a
+    relationship authored there can only point at prims inside the asset: a
+    scene path outside it would not compose.
+    """
+    paths = list(targets)
+    require_prims(stage, paths, label)
+    ref = Sdf.Path(ref_prim_path)
+    wrapper = ref.GetParentPath() if ref.name == SceneNamespace.ASSET_CHILD else ref
+    outside = [p for p in paths if not Sdf.Path(p).HasPrefix(wrapper)]
+    if outside:
+        msg = (
+            f"{label}: {outside} are outside {wrapper}. The asset is shared by "
+            "every placement of it, so it can only point at prims inside the "
+            f"asset (under {ref_prim_path}); author at scene level to reach others."
+        )
+        raise ValueError(msg)
+    return [normalize_asset_prim_path(p, ref_prim_path, default_prim_name) for p in paths]
 
 
 def remove_scene_prim(stage: Usd.Stage, prim_path: str) -> dict[str, Any]:

@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pxr import Sdf, Sdr, Usd, UsdGeom, UsdShade
 
 from bowerbot.utils.core.overrides import prune_empty_overrides
@@ -21,12 +23,16 @@ def list_prim_attributes(
 
     out: list[dict[str, object]] = []
     for attr in prim.GetAttributes():
-        out.append({
+        entry: dict[str, object] = {
             "name": attr.GetName(),
             "type": str(attr.GetTypeName()),
             "value": usd_to_json(attr.Get()),
             "authored": attr.HasAuthoredValue(),
-        })
+        }
+        allowed = attr.GetMetadata("allowedTokens")
+        if allowed:
+            entry["allowed_tokens"] = [str(t) for t in allowed]
+        out.append(entry)
     return out
 
 
@@ -74,6 +80,8 @@ def set_prim_attribute(
 
     # Convert before creating anything, so a bad value leaves the prim untouched.
     converted = json_to_usd(value, type_name)
+    if attr.IsValid():
+        _require_allowed_tokens(attr, converted)
     if new_type is not None:
         attr = _create_attribute(prim, attribute_name, new_type)
     try:
@@ -84,6 +92,19 @@ def set_prim_attribute(
             f"declared type {type_name}."
         )
         raise ValueError(msg) from None
+
+
+def _require_allowed_tokens(attr: Usd.Attribute, value: Any) -> None:
+    """Refuse a token (or token array) outside the attribute's schema ``allowedTokens``."""
+    allowed = attr.GetMetadata("allowedTokens")
+    type_name = attr.GetTypeName()
+    if not allowed or type_name not in (Sdf.ValueTypeNames.Token, Sdf.ValueTypeNames.TokenArray):
+        return
+    values = [value] if type_name == Sdf.ValueTypeNames.Token else list(value)
+    bad = [v for v in values if v not in allowed]
+    if bad:
+        msg = f"{attr.GetName()} takes one of {list(allowed)}; got {value!r}."
+        raise ValueError(msg)
 
 
 def _new_attribute_type(

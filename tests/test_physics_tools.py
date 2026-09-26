@@ -371,6 +371,79 @@ def test_joint_and_collision_group_names_are_cleaned():
         assert stage.GetPrimAtPath(group.data["prim_path"]).IsValid()
 
 
+def test_physics_relationship_targets_must_exist():
+    """Relationship targets that name no prim are refused before anything is authored."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        box = _place(tmp_path, state).data["prim_path"]
+        before = project.scene_path.read_text()
+
+        for tool, params in (
+            ("apply_physics_api", {
+                "prim_path": box, "api_name": "PhysicsRigidBodyAPI", "scope": "scene",
+                "relationships": {"physics:simulationOwner": ["/Scene/Nope"]},
+            }),
+            ("create_or_update_collision_group", {"name": "g", "includes": ["/Scene/Nope"]}),
+            ("create_or_update_collision_group", {"name": "g", "excludes": ["/Scene/Nope"]}),
+            ("create_or_update_collision_group", {"name": "g", "filtered_groups": ["Nope"]}),
+        ):
+            r = asyncio.run(exec_tool(state, tool, params))
+            assert not r.success, (tool, params)
+        assert project.scene_path.read_text() == before
+
+
+def test_asset_scope_relationship_targets_point_inside_the_asset():
+    """Asset-scope targets inside the placement map into the asset; outside ones are refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        box = _place(tmp_path, state).data["prim_path"]
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": box, "api_name": "PhysicsRigidBodyAPI", "scope": "asset",
+            "relationships": {"physics:simulationOwner": ["/Scene/Physics/PhysicsScene"]},
+        }))
+        assert not r.success
+        assert "outside" in r.error
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": box, "api_name": "PhysicsRigidBodyAPI", "scope": "asset",
+            "relationships": {"physics:simulationOwner": [f"{box}/asset/Mesh"]},
+        }))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        rel = stage.GetPrimAtPath(f"{box}/asset").GetRelationship("physics:simulationOwner")
+        assert [str(t) for t in rel.GetTargets()] == [f"{box}/asset/Mesh"]
+
+
+def test_joint_attribute_tokens_are_checked():
+    """A joint attribute outside its allowedTokens is refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        p1 = _place(tmp_path, state, "a")
+        p2 = _place(tmp_path, state, "b")
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": p1.data["prim_path"], "api_name": "PhysicsRigidBodyAPI",
+            "scope": "scene",
+        }))
+        for axis, ok in (("W", False), ("Y", True)):
+            r = asyncio.run(exec_tool(state, "create_joint", {
+                "joint_type": "PhysicsPrismaticJoint", "name": f"slide_{axis}",
+                "body0": p1.data["prim_path"], "body1": p2.data["prim_path"],
+                "scope": "scene", "attributes": {"physics:axis": axis},
+            }))
+            assert r.success is ok, r.error
+
+
+def test_get_physics_summary_refuses_a_missing_prim():
+    """A prim that does not exist is refused, not summarized as empty."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "get_physics_summary", {"prim_path": "/Scene/Nope"}))
+        assert not r.success
+        assert "Prim not found" in r.error
+
+
 def test_list_joints_after_create():
     """Lists joints after creation."""
     with tempfile.TemporaryDirectory() as tmp:

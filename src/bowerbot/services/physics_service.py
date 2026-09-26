@@ -30,7 +30,11 @@ from bowerbot.utils.core.asset_folder import (
     resolve_asset_dir_for_prim,
     resolve_default_prim_name,
 )
-from bowerbot.utils.core.integrity import composed_prim_paths, drop_refs_to_vanished
+from bowerbot.utils.core.integrity import (
+    asset_local_targets,
+    composed_prim_paths,
+    drop_refs_to_vanished,
+)
 from bowerbot.utils.core.naming import clean_prim_name
 from bowerbot.utils.core.values import parse_vec3
 
@@ -82,9 +86,14 @@ def apply_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, An
             "an asset placement. Retry the call with scope='scene' to "
             "author physics on this prim directly in scene.usda.",
         ) from None
-    asset_local_path = normalize_asset_prim_path(
-        prim_path, ref_prim_path, resolve_default_prim_name(asset_dir),
-    )
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    asset_local_path = normalize_asset_prim_path(prim_path, ref_prim_path, default_prim_name)
+    relationships = {
+        name: asset_local_targets(
+            stage, targets, ref_prim_path, default_prim_name, f"relationships['{name}']",
+        )
+        for name, targets in relationships.items()
+    }
 
     cleared = physics.masking.enforce_masking_policy(
         stage, asset_dir, asset_local_path,

@@ -22,6 +22,7 @@ from bowerbot.utils.core.asset_folder import (
     find_root_file,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
+from bowerbot.utils.core.integrity import require_prims
 from bowerbot.utils.core.overrides import prune_empty_overrides
 from bowerbot.utils.core.schema_registry import schema_class
 from bowerbot.utils.physics.scene import ensure_physics_scene
@@ -160,11 +161,14 @@ def apply_api_scene(
     )
     refuse_unknown(schema_info, attributes, "attribute")
     refuse_unknown(schema_info, relationships, "relationship")
-    ensure_physics_scene(stage)
-
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Prim not found in scene: {prim_path}")
+    targets_by_name = {
+        name: require_prims(stage, targets, f"relationships['{name}']")
+        for name, targets in relationships.items()
+    }
+    ensure_physics_scene(stage)
 
     instance: str | None = None
     if is_multi:
@@ -194,10 +198,8 @@ def apply_api_scene(
             expected_type=attr.GetTypeName(),
         )
 
-    for name, targets in relationships.items():
-        target.GetRelationship(name).SetTargets(
-            [Sdf.Path(t) for t in targets],
-        )
+    for name, paths in targets_by_name.items():
+        target.GetRelationship(name).SetTargets(paths)
 
     stage.Save()
     logger.info(

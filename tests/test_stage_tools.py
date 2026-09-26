@@ -479,6 +479,22 @@ def test_set_prim_attribute_vector_arrays():
         assert "element 0 of float3[]" in r.error
 
 
+def test_set_prim_attribute_refuses_a_token_the_schema_does_not_allow():
+    """A token outside the attribute's allowedTokens is refused and nothing is written."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        path = _place(tmp_path, state).data["prim_path"]
+        before = project.scene_path.read_text()
+
+        r = _set(state, path, "visibility", "sideways")
+        assert not r.success
+        assert "inherited" in r.error and "invisible" in r.error
+        assert project.scene_path.read_text() == before
+
+        r = _set(state, path, "visibility", "invisible")
+        assert r.success, r.error
+
+
 def test_set_prim_attribute_bad_value_creates_nothing():
     """A value that does not fit leaves no new attribute or xform op behind."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -581,14 +597,14 @@ def test_list_prim_children():
 
 
 def test_list_prim_children_invalid_path():
-    """Returns empty for a nonexistent prim."""
+    """A prim that does not exist is refused, not reported as having no parts."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
         r = asyncio.run(exec_tool(state, "list_prim_children", {
             "prim_path": "/Scene/Nope",
         }))
-        assert r.success
-        assert r.data["parts"] == []
+        assert not r.success
+        assert "Prim not found" in r.error
 
 
 # ── compute_grid_layout ──
@@ -603,6 +619,15 @@ def test_compute_grid_layout():
         }))
         assert r.success, r.error
         assert len(r.data["positions"]) == 6
+
+
+def test_compute_grid_layout_refuses_empty_or_flat_grids():
+    """A count below 1 or a spacing of 0 or less is refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, _ = make_state(Path(tmp))
+        for params in ({"count": 0}, {"count": -3}, {"count": 4, "spacing": 0}):
+            r = asyncio.run(exec_tool(state, "compute_grid_layout", params))
+            assert not r.success, params
 
 
 def test_compute_grid_layout_single():

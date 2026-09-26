@@ -91,7 +91,14 @@ class Project:
         """Create a new project directory and initialize it."""
         safe_name = safe_project_name(name)
         if not safe_name:
-            safe_name = "untitled"
+            msg = f"Project name {name!r} has no letters or digits to name its folder."
+            raise ValueError(msg)
+        if meters_per_unit <= 0:
+            msg = (
+                f"meters_per_unit must be greater than 0 (1.0 = meters, "
+                f"0.01 = centimeters); got {meters_per_unit}."
+            )
+            raise ValueError(msg)
 
         project_path = projects_dir / safe_name
         if project_path.exists():

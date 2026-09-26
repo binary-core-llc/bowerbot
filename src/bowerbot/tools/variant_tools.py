@@ -288,7 +288,8 @@ TOOLS: list[Tool] = [
             "'bindings' maps a mesh prim path to the material prim path it "
             "should bind to when this variant is selected. Materials must "
             "already exist in the asset's mtl.usda; this tool only swaps "
-            "bindings, it does not create materials. Mesh and material "
+            "bindings, it does not create materials, and a mesh or material "
+            "that does not exist is refused. Mesh and material "
             "paths can be absolute under the asset (e.g. "
             "'/single_table/Geo/Top') or relative ('/Geo/Top'). "
             "REFUSES if any placement of the asset has an existing "
@@ -739,7 +740,8 @@ TOOLS: list[Tool] = [
             "override it. Use this when the user wants 'change the default' "
             "for the asset itself. For per-scene-instance overrides "
             "('make Table_01 wood but leave Table_02 alone') use "
-            "select_asset_variant_for_instance."
+            "select_asset_variant_for_instance. The set and variant must "
+            "exist (list_variants shows them)."
         ),
         parameters={
             "type": "object",

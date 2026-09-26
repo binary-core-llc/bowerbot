@@ -16,6 +16,7 @@ from bowerbot.schemas import (
     ScenePhysicsSummary,
 )
 from bowerbot.utils.core.asset_folder import delete_side_layer
+from bowerbot.utils.core.integrity import require_prim
 from bowerbot.utils.core.values import usd_to_json
 
 
@@ -60,6 +61,7 @@ def get_scene_physics_summary(
     stage: Usd.Stage, prim_path: str,
 ) -> ScenePhysicsSummary:
     """Scene-side physics opinions on *prim_path* and its descendants."""
+    require_prim(stage, prim_path)
     layer = stage.GetRootLayer()
     if layer.GetPrimAtPath(prim_path) is None:
         return ScenePhysicsSummary(prim_path=prim_path)

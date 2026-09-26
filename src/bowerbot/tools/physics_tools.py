@@ -301,7 +301,11 @@ TOOLS: list[Tool] = [
                         "Map of relationship name -> list of target prim "
                         "paths. Use for physics:simulationOwner (point at "
                         "/Scene/Physics/PhysicsScene) or "
-                        "material:binding:physics."
+                        "material:binding:physics. Every target must exist. "
+                        "At asset scope the targets must be inside the asset "
+                        "(what the asset holds is shared by every placement), "
+                        "so a simulationOwner pointing at the scene's "
+                        "PhysicsScene needs scope='scene'."
                     ),
                 },
                 "scope": {
@@ -540,7 +544,7 @@ TOOLS.append(Tool(
                 "description": (
                     "Scene prim paths to add to the group's colliders "
                     "collection (UsdCollectionAPI includes rel). "
-                    "Replaces the existing list."
+                    "Replaces the existing list. Every path must exist."
                 ),
             },
             "excludes": {
@@ -548,7 +552,8 @@ TOOLS.append(Tool(
                 "items": {"type": "string"},
                 "description": (
                     "Scene prim paths excluded from the colliders "
-                    "collection. Replaces the existing list."
+                    "collection. Replaces the existing list. Every path "
+                    "must exist."
                 ),
             },
             "filtered_groups": {

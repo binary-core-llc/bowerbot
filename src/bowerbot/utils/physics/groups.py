@@ -15,7 +15,7 @@ from bowerbot.schemas import (
     CollisionGroupSummary,
     SceneNamespace,
 )
-from bowerbot.utils.core.integrity import remove_scene_prim
+from bowerbot.utils.core.integrity import remove_scene_prim, require_prims
 from bowerbot.utils.physics.scene import ensure_physics_scene
 
 logger = logging.getLogger(__name__)
@@ -31,23 +31,13 @@ def create_or_update_collision_group(
     invert_filter: bool | None = None,
     merge_group: str | None = None,
 ) -> dict[str, Any]:
-    """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``."""
-    ensure_physics_scene(stage)
+    """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``.
 
-    prim_path = _group_prim_path(name)
-    group = UsdPhysics.CollisionGroup.Define(stage, prim_path)
-
-    if includes is not None or excludes is not None:
-        collection = group.GetCollidersCollectionAPI()
-        if includes is not None:
-            collection.CreateIncludesRel().SetTargets(
-                [Sdf.Path(p) for p in includes],
-            )
-        if excludes is not None:
-            collection.CreateExcludesRel().SetTargets(
-                [Sdf.Path(p) for p in excludes],
-            )
-
+    Every member and filtered group must exist; nothing is authored otherwise.
+    """
+    include_paths = None if includes is None else require_prims(stage, includes, "includes")
+    exclude_paths = None if excludes is None else require_prims(stage, excludes, "excludes")
+    filtered_paths = None
     if filtered_groups is not None:
         resolved = [_resolve_group_path(g) for g in filtered_groups]
         for path in resolved:
@@ -56,9 +46,21 @@ def create_or_update_collision_group(
                     f"filtered_groups references missing group at {path}. "
                     "Create that group first.",
                 )
-        group.CreateFilteredGroupsRel().SetTargets(
-            [Sdf.Path(p) for p in resolved],
-        )
+        filtered_paths = [Sdf.Path(p) for p in resolved]
+    ensure_physics_scene(stage)
+
+    prim_path = _group_prim_path(name)
+    group = UsdPhysics.CollisionGroup.Define(stage, prim_path)
+
+    if include_paths is not None or exclude_paths is not None:
+        collection = group.GetCollidersCollectionAPI()
+        if include_paths is not None:
+            collection.CreateIncludesRel().SetTargets(include_paths)
+        if exclude_paths is not None:
+            collection.CreateExcludesRel().SetTargets(exclude_paths)
+
+    if filtered_paths is not None:
+        group.CreateFilteredGroupsRel().SetTargets(filtered_paths)
 
     if invert_filter is not None:
         group.CreateInvertFilteredGroupsAttr().Set(bool(invert_filter))

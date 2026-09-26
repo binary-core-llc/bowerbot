@@ -25,7 +25,11 @@ from bowerbot.utils.variants.authoring import (
     open_variants_stage,
     scrub_variant_set_metadata,
 )
-from bowerbot.utils.variants.checks import validate_lod_namespace_stability, validate_payload_path
+from bowerbot.utils.variants.checks import (
+    require_variant,
+    validate_lod_namespace_stability,
+    validate_payload_path,
+)
 from bowerbot.utils.variants.inspection import get_variant_summary
 
 
@@ -110,9 +114,7 @@ def set_default_variant(
     if root_prim is None:
         raise ValueError(f"No defaultPrim in {root_file}")
 
-    vset = root_prim.GetVariantSets().GetVariantSet(set_name)
-    if not vset.IsValid():
-        raise ValueError(f"Variant set '{set_name}' not visible on root prim")
+    vset = require_variant(root_prim, set_name, variant_name, asset_dir.name)
     vset.SetVariantSelection(variant_name)
     stage.Save()
 

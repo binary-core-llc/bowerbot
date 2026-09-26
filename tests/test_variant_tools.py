@@ -311,6 +311,38 @@ def test_select_asset_variant():
         assert r.success, r.error
 
 
+def test_asset_variants_refuse_what_does_not_exist():
+    """A material variant needs an existing prim and material; selecting needs an
+    existing set and variant. Refusals leave the asset untouched."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state).data["prim_path"]
+        mesh_path = f"{placed}/asset/Mesh"
+        oak = _make_material(state, mesh_path, "oak").data["material"]
+        asset_dir = project.assets_dir / "chair"
+
+        for bindings in ({mesh_path: "/mtl/nope"}, {f"{placed}/asset/Nope": oak}):
+            r = asyncio.run(exec_tool(state, "add_asset_material_variant", {
+                "prim_path": placed, "variant_set": "look", "variant_name": "ghost",
+                "bindings": bindings,
+            }))
+            assert not r.success, bindings
+        assert not (asset_dir / "variants.usda").exists()
+
+        r = asyncio.run(exec_tool(state, "add_asset_material_variant", {
+            "prim_path": placed, "variant_set": "look", "variant_name": "oak",
+            "bindings": {mesh_path: oak},
+        }))
+        assert r.success, r.error
+        root_before = (asset_dir / "chair.usda").read_text()
+        for set_name, variant in (("look", "nope"), ("nope", "oak")):
+            r = asyncio.run(exec_tool(state, "select_asset_variant", {
+                "prim_path": placed, "variant_set": set_name, "variant_name": variant,
+            }))
+            assert not r.success, (set_name, variant)
+        assert (asset_dir / "chair.usda").read_text() == root_before
+
+
 # ── select_asset_variant_for_instance ──
 
 

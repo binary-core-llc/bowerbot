@@ -197,7 +197,8 @@ TOOLS: list[Tool] = [
                         "keyed by full attribute name "
                         "(e.g. 'inputs:intensity', 'inputs:color', "
                         "'inputs:radius'). Use list_light_type_properties to "
-                        "discover supported names and defaults. Spatial "
+                        "discover supported names and defaults; names the "
+                        "light type does not declare are refused. Spatial "
                         "inputs (radius, width, height, length) are given in "
                         "meters; BowerBot converts to the asset's native "
                         "units for asset lights."
@@ -213,7 +214,11 @@ TOOLS: list[Tool] = [
                         "prim (standard USD behavior). Populated = the "
                         "light only affects the listed prims and their "
                         "descendants. Authored as a UsdLux light:link "
-                        "collection."
+                        "collection. Every path must exist (see list_scene "
+                        "/ list_prim_children). An asset light is shared by "
+                        "every placement of its asset, so it can only link "
+                        "prims inside that asset (e.g. .../Lamp_01/asset/Shade); "
+                        "light other prims with a scene light."
                     ),
                 },
             },

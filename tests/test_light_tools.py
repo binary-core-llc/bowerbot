@@ -707,6 +707,72 @@ def test_create_light_cleans_the_name():
         assert stage.GetPrimAtPath("/Scene/Lighting/_3_Point_Fill").IsValid()
 
 
+def test_create_light_refuses_unknown_attributes_and_creates_nothing():
+    """An input the light type does not declare is refused, not silently dropped."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        before = project.scene_path.read_text()
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Key",
+            "attributes": {"inputs:intensity": 500.0, "inputs:nope": 1},
+        }))
+        assert not r.success
+        assert "inputs:nope" in r.error and "list_light_type_properties" in r.error
+        assert project.scene_path.read_text() == before
+
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Key",
+            "attributes": {"inputs:intensity": 500.0, "treatAsPoint": True},
+        }))
+        assert r.success, r.error
+
+
+def test_scene_light_link_targets_must_exist():
+    """A light link to a prim that does not exist is refused and nothing is created."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        before = project.scene_path.read_text()
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Rim",
+            "light_link_includes": ["/Scene/Nope"],
+        }))
+        assert not r.success
+        assert "/Scene/Nope" in r.error
+        assert project.scene_path.read_text() == before
+
+
+def test_asset_light_links_prims_inside_its_own_asset():
+    """An asset light's links point inside its asset (so they compose); others are refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _asset(tmp_path, "lamp")
+        placed = []
+        for x in (0.0, 3.0):
+            r = asyncio.run(exec_tool(state, "place_asset", {
+                "asset": "lamp", "asset_name": "Lamp", "group": "Props",
+                "translate_x": x, "translate_y": 0.0, "translate_z": 0.0,
+            }))
+            placed.append(r.data["prim_path"])
+        shade = f"{placed[0]}/asset/Mesh"
+
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Bulb",
+            "asset_prim_path": placed[0], "light_link_includes": [shade],
+        }))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        light = stage.GetPrimAtPath(r.data["prim_path"])
+        links = UsdLux.LightAPI(light).GetLightLinkCollectionAPI()
+        assert [str(t) for t in links.GetIncludesRel().GetTargets()] == [shade]
+
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Spill",
+            "asset_prim_path": placed[0], "light_link_includes": [f"{placed[1]}/asset/Mesh"],
+        }))
+        assert not r.success
+        assert "outside" in r.error
+
+
 def test_remove_light_nonexistent_prim():
     """Fails for a prim that does not exist."""
     with tempfile.TemporaryDirectory() as tmp:

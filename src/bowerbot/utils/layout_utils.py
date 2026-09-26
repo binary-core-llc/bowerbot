@@ -199,8 +199,12 @@ def suggest_grid_layout(
     The grid is centered in a *width* x *depth* room whose corner is the origin:
     width runs along X, depth along the other ground axis (Z when Y is up, Y when Z is up).
     """
-    if count <= 0:
-        return []
+    if count < 1:
+        msg = f"count must be at least 1; got {count}."
+        raise ValueError(msg)
+    if spacing <= 0:
+        msg = f"spacing must be greater than 0; got {spacing}."
+        raise ValueError(msg)
     across, along = horizontal_axes(up)
     cols = math.ceil(math.sqrt(count))
     rows = math.ceil(count / cols)

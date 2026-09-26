@@ -167,6 +167,14 @@ asset's namespace before writing. For `scope="scene"` the path is
 used verbatim against the open scene. Use `list_scene` and
 `list_prim_children` to discover the right scene paths.
 
+Relationship targets (`relationships`, collision-group `includes` /
+`excludes`) must name prims that exist. At `scope="asset"` they are
+translated into the asset too, so they must be inside it: what an asset
+holds is shared by every placement. A target outside the asset, such as
+`physics:simulationOwner` pointing at `/Scene/Physics/PhysicsScene`,
+needs `scope="scene"`. Token attributes (e.g. `physics:axis`,
+`physics:approximation`) take one of their allowed tokens.
+
 ## Tools
 
 ### `list_physics_api_properties(api_name)`

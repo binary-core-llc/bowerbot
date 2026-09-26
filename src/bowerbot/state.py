@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from pxr import Ar, Usd
 
 from bowerbot.config import Settings, UpAxis
+from bowerbot.schemas import ConfigPaths
 from bowerbot.utils import inspection_utils, stage_utils
 
 if TYPE_CHECKING:
@@ -31,6 +32,8 @@ class SceneState:
     object_count: int = 0
     library_dir: Path | None = None
     projects_dir: Path | None = None
+    # Where library scans remember file classifications; None keeps nothing.
+    library_index: Path | None = None
     layer_baselines: dict[Path, tuple[float, str | None]] = field(default_factory=dict)
 
     @classmethod
@@ -39,6 +42,7 @@ class SceneState:
         return cls(
             library_dir=Path(settings.assets_dir),
             projects_dir=Path(settings.projects_dir),
+            library_index=ConfigPaths.LIBRARY_INDEX,
         )
 
     @property

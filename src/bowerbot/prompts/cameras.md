@@ -1,8 +1,8 @@
 <!-- Copyright 2026 Binary Core LLC | SPDX-License-Identifier: Apache-2.0 -->
 Use `create_camera` to add USD cameras to the scene. Cameras live in
 `/Scene/Cameras` and are authored in `scene.usda`. They survive
-`save_scene_snapshot` and show up automatically in usdview's and
-Omniverse Kit's camera lists.
+`save_scene_snapshot` and show up in a USD viewer's camera list (e.g.
+usdview's).
 
 ### Camera workflow
 
@@ -23,7 +23,8 @@ focal length, and position.
 
 ### Aiming
 
-USD cameras face their local **-Z** axis. Pass EXACTLY ONE of:
+USD cameras face their local **-Z** axis. Pass at most one of these
+(with neither, the camera faces its local -Z unrotated):
 
 - `look_at`: a `[x, y, z]` point in scene units. BowerBot computes the
   rotation for the scene's up axis (Y-up and Z-up both work). Prefer

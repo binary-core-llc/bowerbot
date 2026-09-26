@@ -25,6 +25,7 @@ from starlette.routing import Route
 
 from bowerbot import tool_router
 from bowerbot.config import McpSettings, Settings, Transport
+from bowerbot.prompts import load_prompt
 from bowerbot.skills.registry import SkillRegistry
 from bowerbot.state import SceneState
 
@@ -56,7 +57,9 @@ def _to_mcp_tools(schemas: list[dict[str, Any]]) -> list[types.Tool]:
 
 def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
     """Wire the list-tools and call-tool handlers onto a new MCP server."""
-    server: Server = Server("bowerbot", version=_server_version())
+    server: Server = Server(
+        "bowerbot", version=_server_version(), instructions=load_prompt("mcp"),
+    )
 
     @server.list_tools()
     async def list_tools() -> list[types.Tool]:

@@ -45,11 +45,6 @@ dev = [
     "mypy>=1.10,<2",
     "pre-commit>=3.7,<5",
 ]
-api = [
-    "fastapi>=0.111,<1",
-    "uvicorn[standard]>=0.30,<1",
-    "websockets>=12.0,<17",
-]
 
 [project.scripts]
 bowerbot = "bowerbot.cli:main"
@@ -68,9 +63,11 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Live tests cost money and need credentials; a later -m on the command line replaces this.
+addopts = ["-m", "not integration and not agent_integration"]
 markers = [
-    "integration: tests that require live credentials or external services (Sketchfab token, LLM API keys, network calls). Excluded from CI by default; run locally with `pytest -m integration`.",
-    "agent_integration: end-to-end agent scenarios that drive the live LLM with the user's OpenAI key from ~/.bowerbot/config.json. Excluded from default test runs (cost money). Run locally with `pytest -m agent_integration tests/agent/`.",
+    "integration: tests that require live credentials or external services (Sketchfab token, LLM API keys, network calls). Excluded from default test runs; run locally with `pytest -m integration`.",
+    "agent_integration: end-to-end agent scenarios that drive the live LLM with the API key from ~/.bowerbot/config.json. Excluded from default test runs (cost money). Run locally with `pytest -m agent_integration tests/agent/`.",
     "agent_smoke: subset of agent_integration covering the highest-signal UX paths. Cheap; run before opening a PR with `pytest -m 'agent_integration and agent_smoke'`.",
     "agent_full: every agent_integration scenario including the heavier multi-step ones. Run on demand for a full UX sweep with `pytest -m 'agent_integration and agent_full'`.",
 ]

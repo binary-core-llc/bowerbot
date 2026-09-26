@@ -224,3 +224,31 @@ def test_mcp_call_error_is_flagged():
         server, _ = _server_and_state(tmp)
         result = asyncio.run(_call_tool(server, "open_project", {"name": "ghost"}))
         assert result.isError
+
+
+async def _instructions(server):
+    async with create_connected_server_and_client_session(server) as client:
+        return (await client.initialize()).instructions
+
+
+def test_mcp_client_receives_the_cross_tool_rules():
+    """A client gets BowerBot's cross-tool rules on connect; every name they cite exists."""
+    import re
+
+    from bowerbot.prompts import load_prompt
+
+    with tempfile.TemporaryDirectory() as tmp:
+        server, _ = _server_and_state(tmp)
+        instructions = asyncio.run(_instructions(server))
+        tools = asyncio.run(_list_tools(server))
+
+    assert instructions == load_prompt("mcp")
+    tool_names = {t.name for t in tools}
+    params = {p for t in tools for p in t.inputSchema.get("properties", {})}
+    mentioned = set(re.findall(r"`([a-z]+(?:_[a-z]+)+)", instructions))
+    fields_and_inputs = {
+        "suspect_variant_sets", "bounds_offset", "base_color", "specular_roughness",
+    }
+    assert mentioned - tool_names - params - fields_and_inputs == set()
+    assert {"remove_scene_variant_set", "validate_scene", "set_prim_attribute"} <= mentioned
+    assert "isaac" not in instructions.lower()

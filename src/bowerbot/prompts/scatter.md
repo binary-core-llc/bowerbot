@@ -20,8 +20,10 @@ grid-like layouts you fully specify.
 1. `list_scene` (and `list_prim_children` on a placement) to find the
    surface prims to scatter onto and anything to keep clear.
 2. For large or density-based requests, call with `validate_only=true`
-   first; it reports the estimated count and eligible area without
-   writing anything. Tell the user the count before writing more than
+   first; without writing anything, `scatter_on_surface` reports
+   `estimated_instances` and `eligible_area_m2`, and `scatter_along_path`
+   reports `path_length` and `estimated_instances` (null when spacing
+   comes from the assets' length). Tell the user the count before writing more than
    100,000 (each 100,000 instances adds about 12 MB to scene.usda).
 3. Scatter. The result reports `instances`, `by_asset`, the `seed`, and
    any `warnings` (e.g. fewer pieces fit than requested). Relay warnings.
@@ -72,7 +74,8 @@ scattered assets like any other.
   `scatter_on_surface` onto the ground, `density` (e.g. 8 per m²),
   `variation` 0.6-0.8, `align='surface'`, `scale_range` [0.7, 1.3],
   `embed` 0.1-0.3 for half-buried stones.
-- "a heap / pile of rocks by the gate" → `arrangement='pile'`, `count`,
+- "a heap / pile of rocks by the gate" → `arrangement='pile'`, `count`
+  (at most 20,000 pieces per pile),
   `region` { center_prim: the gate (or center), radius }. The radius is
   the heap's base: pieces fill a cone no steeper than `repose_degrees`
   (steeper heaps: 40-45), so it stands at most radius x tan(repose) plus

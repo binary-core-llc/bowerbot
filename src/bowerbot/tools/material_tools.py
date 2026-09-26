@@ -137,9 +137,11 @@ TOOLS: list[Tool] = [
                         "folder that is referenced by 2+ scene instances. "
                         "The material lives in the shared mtl.usda and "
                         "applies to every instance. Default false: refuse "
-                        "with an error so the LLM can choose between "
-                        "place_asset (per-instance independent material) "
-                        "or this flag (deliberate shared material)."
+                        "with an error so the user can choose between "
+                        "this flag (every instance gets it) and a "
+                        "per-instance alternative (add_asset_material_variant "
+                        "+ select_asset_variant_for_instance, or "
+                        "set_prim_attribute overrides)."
                     ),
                     "default": False,
                 },
@@ -155,9 +157,9 @@ TOOLS: list[Tool] = [
             "it uses into the asset's maps/, and binds it to the target prim. "
             "A material whose texture does not resolve in the library is "
             "refused. Use this for individual material assignments. "
-            "Returns the bound material's composed prim path (field "
-            "'material', asset-local /<defaultPrim>/mtl/<name>) and "
-            "asset_folder."
+            "Returns the material's asset-local prim path (field "
+            "'material', /<defaultPrim>/mtl/<name>; in the scene it is "
+            "<placement>/asset/mtl/<name>) and asset_folder."
         ),
         parameters={
             "type": "object",
@@ -193,9 +195,11 @@ TOOLS: list[Tool] = [
                         "folder that is referenced by 2+ scene instances. "
                         "The binding lives in the shared mtl.usda and "
                         "applies to every instance. Default false: refuse "
-                        "with an error so the LLM can choose between "
-                        "place_asset (per-instance independent binding) "
-                        "or this flag (deliberate shared binding)."
+                        "with an error so the user can choose between "
+                        "this flag (every instance gets it) and a "
+                        "per-instance alternative (add_asset_material_variant "
+                        "+ select_asset_variant_for_instance, or "
+                        "set_prim_attribute overrides)."
                     ),
                     "default": False,
                 },
@@ -209,8 +213,9 @@ TOOLS: list[Tool] = [
             "List all materials across the project's ASWF asset folders and "
             "which prims each is bound to. Use this to show current material "
             "assignments. Returns material_count and, per material, "
-            "material_path (the composed prim path under the asset), "
-            "material_name, asset_folder, and bound_prims."
+            "material_path (asset-local, /<defaultPrim>/mtl/<name>), "
+            "material_name, asset_folder, and bound_prims (asset-local "
+            "paths; in the scene each is under <placement>/asset)."
         ),
         parameters={"type": "object", "properties": {}},
     ),
@@ -232,7 +237,7 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "description": (
                         "Prim path to remove the material from "
-                        "(e.g. '.../single_table/table/table'). Use "
+                        "(e.g. '/Scene/Furniture/Table_01/asset/Top'). Use "
                         "list_prim_children to find the exact path."
                     ),
                 },

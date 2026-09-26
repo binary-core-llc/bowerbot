@@ -23,7 +23,7 @@ def agent_settings() -> Settings:
     settings = load_settings()
     if not settings.get_api_key():
         pytest.skip(
-            "No OpenAI API key in ~/.bowerbot/config.json; agent "
+            "No LLM API key in ~/.bowerbot/config.json; agent "
             "integration tests require one. Run `bowerbot onboard` "
             "to set it.",
         )

@@ -80,10 +80,11 @@ TOOLS: list[Tool] = [
     Tool(
         name="create_camera",
         description=(
-            "Create a USD camera in /Scene/Cameras. Aim it with EXACTLY "
-            "ONE of look_at (a point the camera faces; BowerBot computes "
+            "Create a USD camera in /Scene/Cameras. Aim it with at most "
+            "one of look_at (a point the camera faces; BowerBot computes "
             "the rotation for the scene's up axis) or rotate_x/y/z degrees "
-            "(USD cameras face local -Z). Camera attributes are passed via "
+            "(USD cameras face local -Z; with neither, the camera faces "
+            "its local -Z unrotated). Camera attributes are passed via "
             "the attributes dict using their exact UsdGeom names; call "
             "list_camera_properties FIRST to discover them. Units: "
             "focalLength and the apertures are millimeter-style values "

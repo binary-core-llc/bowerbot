@@ -123,7 +123,7 @@ def list_joints(state: SceneState, params: dict[str, Any]) -> ToolResult:
 def create_or_update_collision_group(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
-    """Create or update a UsdPhysicsCollisionGroup under /Scene/Physics/Groups."""
+    """Create or update a UsdPhysicsCollisionGroup under /Scene/Physics."""
     try:
         data = physics_service.create_or_update_collision_group(state, params)
     except (ValueError, RuntimeError) as e:
@@ -222,7 +222,9 @@ TOOLS: list[Tool] = [
             "If you pass an Xform whose subtree contains a unique prim "
             "of the required type, BowerBot resolves to that descendant "
             "automatically and returns both `prim_path` (resolved) and "
-            "`requested_prim_path`. PhysicsScene is auto-ensured.\n\n"
+            "`requested_prim_path`. A scope='scene' write creates a "
+            "PhysicsScene when the scene has none; an asset-scope write "
+            "does not (call setup_physics_scene first).\n\n"
             "LOAD-BEARING: when adding collision to a Mesh under a "
             "dynamic or kinematic PhysicsRigidBodyAPI subtree, you "
             "MUST use api_name='PhysicsMeshCollisionAPI' with "
@@ -256,8 +258,8 @@ TOOLS: list[Tool] = [
                     "description": (
                         "Scene-namespace prim path. For scope=asset the "
                         "path must resolve to a prim inside an asset "
-                        "placement (e.g. /Scene/Models/Chair_01/asset/Body "
-                        "or /Scene/Models/Chair_01 itself); BowerBot "
+                        "placement (e.g. /Scene/Furniture/Chair_01/asset/Body "
+                        "or /Scene/Furniture/Chair_01 itself); BowerBot "
                         "translates it to the asset's local namespace "
                         "before writing phy.usda. For scope=scene any "
                         "prim in the open scene is valid."
@@ -486,9 +488,13 @@ TOOLS: list[Tool] = [
         name="get_physics_summary",
         description=(
             "Inspect every authored physics opinion on a prim and its "
-            "descendants. Returns two sections: 'asset' (phy.usda "
-            "opinions, when the prim is inside an asset placement) and "
-            "'scene' (scene.usda opinions on the same path). Use to "
+            "descendants. Returns two sections: 'asset' (every opinion "
+            "in the asset's phy.usda, the whole asset rather than only "
+            "this prim's subtree; null when the prim is not in an asset "
+            "placement) and 'scene' (scene.usda physics opinions on this "
+            "prim and its descendants). Physics shipped in the asset's "
+            "own files is not reported; list_prim_attributes on "
+            "<placement>/asset shows it. Use to "
             "check what's already authored before applying new APIs, or "
             "to debug why a placement behaves differently from its asset "
             "default (scene.usda override masking phy.usda)."
@@ -516,7 +522,7 @@ TOOLS.append(Tool(
     description=(
         "Create or update a UsdPhysicsCollisionGroup typed prim at "
         "/Scene/Physics/<name>, as a flat sibling of the PhysicsScene "
-        "prim (matches the Pixar / Omniverse canonical layout). "
+        "prim. "
         "Collision groups declare WHICH colliders are in the group "
         "(via a UsdCollectionAPI on the group itself, NOT via an "
         "applied API on each collider) and WHICH other groups they "
@@ -718,10 +724,10 @@ TOOLS.append(Tool(
             "asset_anchor_prim_path": {
                 "type": "string",
                 "description": (
-                    "scope='asset' only. If body0 and body1 are both "
-                    "empty (world-attach), provide any scene prim "
-                    "path inside the asset placement so BowerBot can "
-                    "locate the asset folder."
+                    "scope='asset' only. Optional: any scene prim path "
+                    "inside the asset placement. The bodies already "
+                    "locate the asset, and a joint needs at least one "
+                    "body."
                 ),
             },
             "attributes": {
@@ -794,7 +800,7 @@ TOOLS.append(Tool(
         "asset_anchor_prim_path to locate the asset folder). Each "
         "joint entry includes joint_type, body0, body1, authored "
         "attributes, and applied APIs (e.g. DriveAPI / LimitAPI "
-        "instances once those land)."
+        "instances)."
     ),
     parameters={
         "type": "object",

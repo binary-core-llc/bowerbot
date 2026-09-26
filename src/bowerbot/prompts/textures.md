@@ -24,9 +24,10 @@ You have tools for finding texture files in the user's asset library.
    - HDRI files → `create_light` with `light_type: DomeLight` and the
      `texture` parameter
    - Material maps (diffuse / normal / roughness / etc.) are inputs to
-     materials. To apply a look, use `bind_material` for an existing
-     material `.usd` / `.usda` / `.usdc` file from the library, or
-     `create_material` for a procedural MaterialX material.
+     materials. To apply a textured look, use `bind_material` with a
+     library material that uses those maps (its textures are copied into
+     the asset's `maps/`). `create_material` makes an untextured hybrid
+     (MaterialX + UsdPreviewSurface) material from colors and values.
 
 ## Notes
 - `search_textures` and `list_textures` both return a list of

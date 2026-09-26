@@ -71,19 +71,6 @@ def set_scene_variant_default(
     stage.Save()
 
 
-def clear_scene_variant_default(
-    stage: Usd.Stage, carrier_prim_path: str, set_name: str,
-) -> None:
-    """Clear the variant selection on a scene carrier prim."""
-    layer = stage.GetRootLayer()
-    prim_spec = layer.GetPrimAtPath(carrier_prim_path)
-    if prim_spec is None:
-        return
-    if set_name in prim_spec.variantSelections:
-        del prim_spec.variantSelections[set_name]
-        layer.Save()
-
-
 def remove_scene_variant(
     stage: Usd.Stage,
     carrier_prim_path: str,

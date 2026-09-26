@@ -145,7 +145,12 @@ TOOLS: list[Tool] = [
                     "enum": [
                         "Architecture", "Furniture", "Products", "Lighting", "Props",
                     ],
-                    "description": "Which scene group to place the asset in.",
+                    "description": (
+                        "Which standard scene group to place the asset in "
+                        "(only these five). For another group, place here and "
+                        "move the result with rename_prim, or use place_layout, "
+                        "whose group is free-form."
+                    ),
                 },
                 "translate_x": {
                     "type": "number",
@@ -201,16 +206,20 @@ TOOLS: list[Tool] = [
         description=(
             "Place MANY assets into the scene in a single call, the batch form "
             "of place_asset. Provide EXACTLY ONE of 'placements' (inline "
-            "entries) or 'layout_file' (path to a JSON file with the same "
-            "entries: {\"version\": 1, \"placements\": [...]}; absolute or "
-            "project-relative). Use inline for small or parametric layouts; "
-            "use layout_file beyond a few dozen entries (e.g. a layout "
-            "extracted from an existing scene by a script or exported from a "
-            "DCC). Each entry references one asset and positions it many "
-            "times, via an enumerated 'transforms' list or a parametric "
-            "'pattern' (grid or linear). Entry asset paths resolve in order: "
-            "absolute, layout-file dir, project dir, library dir; they must "
-            "name the asset's root FILE. Authoring matches place_asset "
+            "entries) or 'layout_file' (a JSON file with the same entries, "
+            "{\"version\": 1, \"placements\": [...]}, saved in the project "
+            "folder and passed by its location there, e.g. "
+            "'layouts/floor.json'; absolute paths are refused). Use inline "
+            "for small or parametric layouts; use layout_file beyond a few "
+            "dozen entries (e.g. a layout extracted from an existing scene by "
+            "a script or exported from a DCC). Each entry places one asset "
+            "many times, via an enumerated 'transforms' list or a parametric "
+            "'pattern' (grid or linear), in any group (free-form, nested with "
+            "'/'). An entry's 'asset' is the asset's name as search_assets, "
+            "list_assets or list_project_assets report it (the project's copy "
+            "first, then the library), or its library location when two "
+            "library assets share a name; file paths are refused. Authoring "
+            "matches place_asset "
             "(grouped /asset reference wrappers, conformed to the scene "
             "up-axis and units) in one stage write; the whole plan is "
             "validated first and ALL problems are reported at once, nothing "
@@ -256,7 +265,8 @@ TOOLS: list[Tool] = [
                                 "type": "string",
                                 "description": (
                                     "Optional base name for the placed prims "
-                                    "(default: the asset file name)."
+                                    "(default: the asset's root file name; a "
+                                    "number is appended)."
                                 ),
                             },
                             "fix_root_prim": {
@@ -399,9 +409,11 @@ TOOLS: list[Tool] = [
             "passed. Translate values follow position_mode: 'absolute' (default) "
             "takes world coordinates in scene units, as list_scene and "
             "list_prim_children bounds report them; 'bounds_offset' takes meters "
-            "from the container's bounds along the scene's axes. Rotations are "
-            "about the scene's axes, relative to the container. Returns the "
-            "composed prim_path, its world position and rotation, and an "
+            "from the container's bounds along the scene's axes as the "
+            "container stands unrotated (on a turned container the offset "
+            "turns with it). Rotations are about the scene's axes, relative to "
+            "the container. Returns the composed prim_path, its world "
+            "position, its rotation relative to the container, and an "
             "intake summary (asset_folder, renamed root, files_copied, localized "
             "dependencies, compliance warnings)."
         ),
@@ -425,9 +437,10 @@ TOOLS: list[Tool] = [
                 "container_prim_path": {
                     "type": "string",
                     "description": (
-                        "Prim path of the ASWF container asset in the scene "
-                        "(e.g. '/Scene/Architecture/Building_01'). The nested "
-                        "asset will be written into this container's contents.usda."
+                        "The container's placement path as list_scene reports "
+                        "it (e.g. '/Scene/Architecture/Building_01'), not its "
+                        "/asset child or a part. The nested asset will be "
+                        "written into this container's contents.usda."
                     ),
                 },
                 "group": {
@@ -435,7 +448,10 @@ TOOLS: list[Tool] = [
                     "enum": [
                         "Architecture", "Furniture", "Products", "Lighting", "Props",
                     ],
-                    "description": "Logical grouping inside the container's contents.",
+                    "description": (
+                        "Logical grouping inside the container's contents "
+                        "(one of these five)."
+                    ),
                 },
                 "translate_x": {
                     "type": "number",
@@ -460,7 +476,8 @@ TOOLS: list[Tool] = [
                         "world coordinates in scene units (as list_scene / "
                         "list_prim_children report them); BowerBot converts them "
                         "into the container's own frame. 'bounds_offset' = meters "
-                        "from the container's bounds along the scene's axes: the "
+                        "from the container's bounds along the scene's axes as the "
+                        "container stands unrotated: the "
                         "up-axis value (Y in a Y-up scene, Z in a Z-up scene) from "
                         "the TOP surface (or the BOTTOM when negative), the other "
                         "two from the bounding-box CENTER."
@@ -595,10 +612,11 @@ TOOLS: list[Tool] = [
     Tool(
         name="cleanup_unused_contents",
         description=(
-            "Drop empty contents.usda layers from asset folders. Use this "
-            "when the user asks to clean up, prune, or remove leftover / "
-            "orphaned / empty nested-asset scaffolding (e.g. an empty "
-            "Props scope left after removing all nested pillows). If "
+            "Drop empty group scopes and empty contents.usda layers from "
+            "asset folders. remove_prim already does this when it removes a "
+            "nested asset; use this only when the user asks to clean up "
+            "leftover nested-asset scaffolding (e.g. from edits made outside "
+            "BowerBot). If "
             "asset_prim_path is provided, cleans only that asset's folder; "
             "if omitted, sweeps every ASWF asset folder in the project. "
             "Returns the list of removed group-scope names per folder."

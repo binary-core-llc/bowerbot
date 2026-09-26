@@ -120,18 +120,6 @@ def list_collision_groups(stage: Usd.Stage) -> CollisionGroupsSummary:
     return CollisionGroupsSummary(groups=summaries)
 
 
-def get_collision_group_summary(
-    stage: Usd.Stage, name: str,
-) -> CollisionGroupSummary | None:
-    """Return one group's summary, or ``None`` if not defined."""
-    prim = stage.GetPrimAtPath(_group_prim_path(name))
-    if not prim or not prim.IsValid():
-        return None
-    if not prim.IsA(UsdPhysics.CollisionGroup):
-        return None
-    return _summarize_group(prim)
-
-
 def format_collision_group_prim(prim: Usd.Prim) -> dict[str, Any]:
     """Format a ``UsdPhysics.CollisionGroup`` for ``list_prims``."""
     return {

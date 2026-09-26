@@ -127,13 +127,6 @@ class ScenePhysicsSummary(BaseModel):
     prims: list[PhysicsPrimSummary] = []
 
 
-class PhysicsSummary(BaseModel):
-    """Combined asset + scene physics opinions for a prim."""
-
-    asset: AssetPhysicsSummary | None = None
-    scene: ScenePhysicsSummary | None = None
-
-
 class CollisionGroupSummary(BaseModel):
     """One ``UsdPhysicsCollisionGroup`` and its authored state."""
 
@@ -147,7 +140,7 @@ class CollisionGroupSummary(BaseModel):
 
 
 class CollisionGroupsSummary(BaseModel):
-    """Every ``UsdPhysicsCollisionGroup`` defined under ``/Scene/Physics/Groups``."""
+    """Every ``UsdPhysicsCollisionGroup`` defined under ``/Scene/Physics``."""
 
     groups: list[CollisionGroupSummary] = []
 

@@ -9,17 +9,15 @@ from typing import Any
 
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
-from bowerbot.utils import physics_typing_utils
 from bowerbot.utils.camera_utils import format_camera_prim
 from bowerbot.utils.core.bounds import bbox_cache, world_bounds
 from bowerbot.utils.core.references import get_prim_ref_paths
 from bowerbot.utils.core.transforms import extract_position
 from bowerbot.utils.light_utils import format_light_prim
-from bowerbot.utils.physics_utils import (
-    format_collision_group_prim,
-    format_joint_prim,
-    format_physics_scene_prim,
-)
+from bowerbot.utils.physics.groups import format_collision_group_prim
+from bowerbot.utils.physics.joints import format_joint_prim
+from bowerbot.utils.physics.predicates import is_collision_group, is_joint, is_physics_scene
+from bowerbot.utils.physics.scene import format_physics_scene_prim
 from bowerbot.utils.scatter.authoring import format_scatter_prim
 
 
@@ -51,11 +49,11 @@ def _classify(
     prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
 ) -> dict | None:
     """Return the formatted ``list_prims`` entry for *prim*, or None."""
-    if physics_typing_utils.is_physics_scene(prim):
+    if is_physics_scene(prim):
         return format_physics_scene_prim(prim)
-    if physics_typing_utils.is_joint(prim):
+    if is_joint(prim):
         return format_joint_prim(prim)
-    if physics_typing_utils.is_collision_group(prim):
+    if is_collision_group(prim):
         return format_collision_group_prim(prim)
     if prim.IsA(UsdGeom.Camera):
         return format_camera_prim(prim)

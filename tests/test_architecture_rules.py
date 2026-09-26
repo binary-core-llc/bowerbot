@@ -3,8 +3,12 @@
 
 """Enforce the code rules in CONTRIBUTING.md.
 
-One guard: only ``SceneState`` checks whether a scene, project or configured
-folder exists. Services call ``state.require_*()``; tools never touch state.
+- One home per concept: ``utils/core`` imports no domain module, and holds
+  functions only; its named values live in schema classes.
+- No loose values: ``schemas`` hold classes and ``type`` declarations only
+  (plus the package ``__all__``).
+- One guard: only ``SceneState`` checks whether a scene, project or configured
+  folder exists. Services call ``state.require_*()``; tools never touch state.
 """
 
 from __future__ import annotations
@@ -80,3 +84,51 @@ def test_services_never_guard_state_themselves() -> None:
             ):
                 offenders.append(f"{path.name}:{node.lineno}")
     assert not offenders, f"use state.require_*() instead of checking and raising: {offenders}"
+
+
+
+CORE_DIR = ROOT / "src" / "bowerbot" / "utils" / "core"
+CORE_MAY_IMPORT = ("bowerbot.schemas", "bowerbot.utils.core")
+
+
+def test_core_imports_no_domain() -> None:
+    offenders = []
+    for path in sorted(CORE_DIR.glob("*.py")):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                modules = [node.module]
+            elif isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            else:
+                continue
+            offenders += [
+                f"{path.name}:{node.lineno} {module}"
+                for module in modules
+                if module.startswith("bowerbot") and not module.startswith(CORE_MAY_IMPORT)
+            ]
+    assert not offenders, f"utils/core must not import a domain: {offenders}"
+
+
+def test_core_has_no_module_constants() -> None:
+    offenders = []
+    for path in sorted(CORE_DIR.glob("*.py")):
+        for node in ast.parse(path.read_text(encoding="utf-8")).body:
+            if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                offenders.append(f"{path.name}:{node.lineno}")
+    assert not offenders, f"named values belong in a schema class, not utils/core: {offenders}"
+
+
+SCHEMAS_DIR = ROOT / "src" / "bowerbot" / "schemas"
+
+
+def test_schemas_hold_classes_and_type_declarations_only() -> None:
+    offenders = []
+    for path in sorted(SCHEMAS_DIR.glob("*.py")):
+        for node in ast.parse(path.read_text(encoding="utf-8")).body:
+            if not isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                continue
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            if path.name == "__init__.py" and [ast.unparse(t) for t in targets] == ["__all__"]:
+                continue
+            offenders.append(f"{path.name}:{node.lineno}")
+    assert not offenders, f"use a class for values and `type` for aliases: {offenders}"

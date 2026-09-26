@@ -22,6 +22,7 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_asset_file_path,
     resolve_default_prim_name,
 )
+from bowerbot.utils.core.naming import safe_variant_name, validate_variant_name
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +52,8 @@ def add_asset_material_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
         stage, asset_dir, default_prim,
@@ -105,8 +106,8 @@ def add_asset_geometry_variant(
         for k, v in raw.items()
     }
     set_as_default = bool(params.get("set_as_default", False))
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
     for payload_ref in payloads.values():
         variant_utils.validate_payload_path(asset_dir, payload_ref)
 
@@ -203,8 +204,8 @@ def add_asset_attribute_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
         stage, asset_dir, default_prim,
@@ -273,8 +274,8 @@ def add_asset_configuration_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
         stage, asset_dir, default_prim,
@@ -324,8 +325,8 @@ def add_scene_lighting_attribute_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     carrier = variant_utils.require_scene_lighting_carrier(stage)
     variant_utils.validate_scene_lighting_targets(
@@ -397,8 +398,8 @@ def add_scene_lighting_selection_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     carrier = variant_utils.require_scene_lighting_carrier(stage)
     variant_utils.validate_scene_lighting_targets(
@@ -445,8 +446,8 @@ def add_scene_model_selection_variant(
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     set_as_default = bool(params.get("set_as_default", False))
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
     project = state.require_project()
 
     wrapper = stage.GetPrimAtPath(prim_path)
@@ -487,15 +488,13 @@ def add_scene_model_selection_variant(
             raw = Path(existing[0]).parent.name or Path(existing[0]).stem
             if raw == "assets":
                 raw = Path(existing[0]).stem
-            promoted = "".join(
-                c if c not in " \t\n\r/\\" else "_" for c in raw
-            ) or "original"
+            promoted = safe_variant_name(raw) or "original"
             if promoted == variant_name:
                 raise ValueError(
                     f"variant_name='{variant_name}' collides with auto-promoted "
                     f"name '{promoted}'. Pick a different variant_name.",
                 )
-            variant_utils.validate_variant_name(promoted)
+            validate_variant_name(promoted)
             variant_utils.apply_scene_variant(
                 stage, prim_path, set_name, promoted,
                 author_refs(list(existing)), set_as_default=True,
@@ -565,8 +564,8 @@ def select_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
     asset_dir = require_asset_context(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     variant_utils.set_default_variant(asset_dir, set_name, variant_name)
     state.reopen_stage()
@@ -588,8 +587,8 @@ def select_asset_variant_for_instance(
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     carriers = variant_utils.find_variant_carriers(
         stage, prim_path, set_name,
@@ -637,8 +636,8 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
     asset_dir = require_asset_context(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     removed = variant_utils.remove_variant(asset_dir, set_name, variant_name)
     if removed:
@@ -682,8 +681,8 @@ def select_scene_variant(
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
@@ -722,8 +721,8 @@ def remove_scene_variant(
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    variant_utils.validate_variant_name(set_name, "variant set")
-    variant_utils.validate_variant_name(variant_name)
+    validate_variant_name(set_name, "variant set")
+    validate_variant_name(variant_name)
 
     removed = variant_utils.remove_scene_variant(
         stage, prim_path, set_name, variant_name,
@@ -756,7 +755,7 @@ def remove_scene_variant_set(
     stage = state.require_stage()
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
-    variant_utils.validate_variant_name(set_name, "variant set")
+    validate_variant_name(set_name, "variant set")
 
     demoted = variant_utils.restore_active_scene_variant_references_to_direct_ref(
         stage, prim_path, set_name,
@@ -787,7 +786,7 @@ def remove_asset_variant_set(
     stage = state.require_stage()
     asset_dir = require_asset_context(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
-    variant_utils.validate_variant_name(set_name, "variant set")
+    validate_variant_name(set_name, "variant set")
 
     removed = variant_utils.remove_variant_set(asset_dir, set_name)
     if removed:

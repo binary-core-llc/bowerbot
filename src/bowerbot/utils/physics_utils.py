@@ -45,7 +45,9 @@ from bowerbot.utils.asset_folder_utils import (
     require_asset_context,
     resolve_default_prim_name,
 )
-from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
+from bowerbot.utils.core.naming import validate_prim_name
+from bowerbot.utils.core.values import usd_to_json
+from bowerbot.utils.usd_schema_utils import property_doc
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +192,7 @@ def list_api_properties(
                 name=real_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=to_jsonable(attr_spec.default),
+                default=usd_to_json(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
@@ -681,7 +683,7 @@ def get_physics_summary(asset_dir: Path) -> AssetPhysicsSummary:
         if not isinstance(spec, Sdf.PrimSpec):
             return
         apis = _read_api_schemas(spec)
-        attrs = {a.name: to_jsonable(a.default) for a in spec.attributes}
+        attrs = {a.name: usd_to_json(a.default) for a in spec.attributes}
         rels = {
             r.name: [str(t) for t in r.targetPathList.explicitItems]
             for r in spec.relationships
@@ -716,7 +718,7 @@ def get_scene_physics_summary(
             return
         apis = _read_api_schemas(spec)
         attrs = {
-            a.name: to_jsonable(a.default)
+            a.name: usd_to_json(a.default)
             for a in spec.attributes
             if a.name.startswith("physics:")
         }
@@ -761,7 +763,7 @@ def create_or_update_collision_group(
     merge_group: str | None = None,
 ) -> dict[str, Any]:
     """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``."""
-    _validate_group_name(name)
+    validate_prim_name(name, "Collision group")
     ensure_physics_scene(stage)
 
     prim_path = _group_prim_path(name)
@@ -897,20 +899,6 @@ def autodetect_scope(stage: Usd.Stage, prim_path: str) -> str:
     return "asset"
 
 
-def parse_vec3(
-    value: Any, name: str = "vector",
-) -> tuple[float, float, float] | None:
-    """Coerce a JSON-shaped triple to ``(float, float, float)`` or None."""
-    if value is None:
-        return None
-    if not isinstance(value, (list, tuple)) or len(value) != 3:
-        raise ValueError(
-            f"{name!r} must be a list of 3 numbers; got {value!r}",
-        )
-    x, y, z = (stage_utils.coerce_number(v, name) for v in value)
-    return x, y, z
-
-
 def resolve_typed_target(
     prim: Usd.Prim, api_name: PhysicsApiName,
 ) -> Usd.Prim:
@@ -985,7 +973,7 @@ def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
                 name=prop_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=to_jsonable(attr_spec.default),
+                default=usd_to_json(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
@@ -1016,7 +1004,7 @@ def create_joint_scene(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a typed joint at ``/Scene/Physics/<name>``; auto-ensures a ``UsdPhysics.Scene``."""
-    _validate_joint_name(name)
+    validate_prim_name(name, "Joint")
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
@@ -1053,7 +1041,7 @@ def create_joint_asset(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``."""
-    _validate_joint_name(name)
+    validate_prim_name(name, "Joint")
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
 
@@ -1158,18 +1146,6 @@ def list_joints_asset(asset_dir: Path) -> JointsSummary:
     if stage is None:
         return JointsSummary()
     return list_joints_scene(stage)
-
-
-def _validate_joint_name(name: str) -> None:
-    """Refuse empty names or names with whitespace / path separators."""
-    if not name:
-        raise ValueError("Joint name cannot be empty.")
-    bad = [c for c in name if c in _GROUP_NAME_FORBIDDEN_CHARS]
-    if bad:
-        raise ValueError(
-            f"Joint name {name!r} has invalid characters "
-            f"{sorted(set(bad))}; use letters, digits, and underscores.",
-        )
 
 
 def _validate_joint_bodies(
@@ -1298,7 +1274,7 @@ def _summarize_joint(prim: Usd.Prim) -> JointSummary:
             continue
         if not a.HasAuthoredValue():
             continue
-        attrs[name] = to_jsonable(a.Get())
+        attrs[name] = usd_to_json(a.Get())
 
     return JointSummary(
         prim_path=str(prim.GetPath()),
@@ -1348,21 +1324,6 @@ def check_articulation_root_nesting(stage: Usd.Stage, prim_path: str) -> None:
                 "UsdPhysics spec forbids nesting two ArticulationRootAPIs "
                 "in the same subtree.",
             )
-
-
-_GROUP_NAME_FORBIDDEN_CHARS = frozenset(" \t\n\r/\\")
-
-
-def _validate_group_name(name: str) -> None:
-    """Refuse empty names or names with whitespace / path separators."""
-    if not name:
-        raise ValueError("Collision group name cannot be empty.")
-    bad = [c for c in name if c in _GROUP_NAME_FORBIDDEN_CHARS]
-    if bad:
-        raise ValueError(
-            f"Collision group name {name!r} has invalid characters "
-            f"{sorted(set(bad))}; use letters, digits, and underscores.",
-        )
 
 
 def _summarize_group(prim: Usd.Prim) -> CollisionGroupSummary:

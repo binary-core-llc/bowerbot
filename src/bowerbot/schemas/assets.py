@@ -3,6 +3,8 @@
 
 """Asset-level schemas: formats, categories, ASWF layer names, metadata."""
 
+from __future__ import annotations
+
 from enum import StrEnum
 
 from pydantic import BaseModel
@@ -15,6 +17,11 @@ class AssetFormat(StrEnum):
     USDA = ".usda"
     USDC = ".usdc"
     USDZ = ".usdz"
+
+    @classmethod
+    def layer_formats(cls) -> tuple[AssetFormat, ...]:
+        """Formats that open as a single USD layer (every one but ``.usdz``)."""
+        return (cls.USD, cls.USDA, cls.USDC)
 
 
 class AssetCategory(StrEnum):

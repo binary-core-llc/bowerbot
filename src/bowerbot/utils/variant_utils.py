@@ -30,6 +30,7 @@ from bowerbot.utils.asset_folder_utils import (
     rebuild_root_references,
     resolve_default_prim_name,
 )
+from bowerbot.utils.core.naming import validate_variant_name
 from bowerbot.utils.stage_utils import (
     find_asset_placements,
     get_prim_ref_paths,
@@ -529,21 +530,7 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     return True
 
 
-# ── Naming ──
-
-
-_FORBIDDEN_NAME_CHARS = frozenset(" \t\n\r/\\")
-
-
-def is_valid_variant_set_name(name: str) -> bool:
-    """Reject empty names or names with whitespace / path separators."""
-    return bool(name) and not any(c in _FORBIDDEN_NAME_CHARS for c in name)
-
-
-def validate_variant_name(name: str, label: str = "variant") -> None:
-    """Raise ``ValueError`` if ``name`` is not a valid variant identifier."""
-    if not is_valid_variant_set_name(name):
-        raise ValueError(f"Invalid {label} name: {name!r}")
+# ── Validation ──
 
 
 def require_dict_param(

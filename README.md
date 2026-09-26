@@ -832,6 +832,7 @@ src/bowerbot/
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
     lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
+    naming.py         #   NamingRules (valid prim and variant names)
     physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
                       #   PhysicsApiSchemaInfo, joint/collision-group summaries
     scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
@@ -893,6 +894,9 @@ src/bowerbot/
     registry.py            #   Entry-point discovery and tool routing
 
   utils/              # Pure-function primitives. One domain per file.
+    core/                      #   Shared by every domain; imports no domain module
+      values.py                #     JSON <-> USD values, number and 3-float parsing
+      naming.py                #     Prim/variant name rules, sanitizers, unique prim paths
     stage_utils.py             #   USD-stage primitives: open/save, references,
                                #   xform-op edits, namespace edits, set/list_prim_attribute
     inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, cameras,
@@ -924,7 +928,6 @@ src/bowerbot/
     layout_utils.py            #   place_layout expansion: grid/linear patterns,
                                #   asset resolution
     dependency_utils.py        #   USD dependency tree walker
-    naming_utils.py            #   Name sanitization for files, prims, projects
     usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
                                #   (used by both physics_utils and light_utils)
 ```

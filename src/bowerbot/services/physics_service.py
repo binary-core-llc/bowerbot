@@ -30,6 +30,7 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_asset_dir_for_prim,
     resolve_default_prim_name,
 )
+from bowerbot.utils.core.values import parse_vec3
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ def setup_physics_scene(
     stage = state.require_stage()
     name = params.get("name", "PhysicsScene")
     gravity_magnitude = params.get("gravity_magnitude")
-    gravity_direction = physics_utils.parse_vec3(
+    gravity_direction = parse_vec3(
         params.get("gravity_direction"), "gravity_direction",
     )
 

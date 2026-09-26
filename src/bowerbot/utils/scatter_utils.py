@@ -15,8 +15,6 @@ import numpy as np
 from pxr import Gf, Sdf, Usd, UsdGeom, Vt
 
 from bowerbot.schemas import (
-    MAX_SCATTER_INSTANCES,
-    MAX_SCATTER_PLACEMENTS,
     AssetMetadata,
     ScatterAlign,
     ScatterArrangement,
@@ -34,6 +32,7 @@ from bowerbot.schemas import (
     ScatterPrototype,
     ScatterRegion,
     ScatterRegionFalloff,
+    ScatterRules,
     ScatterSurfaceParams,
     SceneObject,
     SurfaceIndex,
@@ -42,7 +41,8 @@ from bowerbot.schemas import (
 from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
 from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils import asset_intake_utils, layout_utils, stage_utils, surface_utils
-from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.values import to_vec3
 
 # Keep-probability per sampled point, given its position and triangle.
 _Acceptance = Callable[[FloatArray, IntArray], FloatArray]
@@ -441,10 +441,10 @@ def scatter_surface_points(
         target = int(round(density * area * mpu * mpu))
     else:
         raise ValueError(_COUNT_OR_DENSITY)
-    if target > MAX_SCATTER_INSTANCES:
+    if target > ScatterRules.MAX_INSTANCES:
         msg = (
             f"this scatter would create about {target:,} instances; the maximum "
-            f"per call is {MAX_SCATTER_INSTANCES:,}. Lower the density or count, "
+            f"per call is {ScatterRules.MAX_INSTANCES:,}. Lower the density or count, "
             "or split the area with regions."
         )
         raise ValueError(msg)
@@ -519,10 +519,10 @@ def rows_plan_points(
     v = corners @ across
     us = np.arange(u.min(), u.max() + 1e-9, spacing, dtype=np.float64)
     vs = np.arange(v.min(), v.max() + 1e-9, row_spacing, dtype=np.float64)
-    if us.size * vs.size > MAX_SCATTER_INSTANCES:
+    if us.size * vs.size > ScatterRules.MAX_INSTANCES:
         msg = (
             f"rows would create {us.size * vs.size:,} lattice points; the maximum "
-            f"is {MAX_SCATTER_INSTANCES:,}. Increase spacing/row_spacing or add a region."
+            f"is {ScatterRules.MAX_INSTANCES:,}. Increase spacing/row_spacing or add a region."
         )
         raise ValueError(msg)
     uu, vv = np.meshgrid(us, vs, indexing="ij")
@@ -854,7 +854,7 @@ def path_stations(
     else:
         stations = np.arange(start_offset, length + 1e-9, spacing)
         step = spacing
-    if stations.size > MAX_SCATTER_INSTANCES:
+    if stations.size > ScatterRules.MAX_INSTANCES:
         msg = f"the path would create {stations.size:,} stations; increase spacing."
         raise ValueError(msg)
     return stations, np.full(stations.size, step / 2.0), length
@@ -1334,10 +1334,10 @@ def write_scatter(
     if stage.GetPrimAtPath(prim_path).IsValid():
         stage.RemovePrim(prim_path)
     if output is ScatterOutput.PLACEMENTS:
-        if instances.count > MAX_SCATTER_PLACEMENTS:
+        if instances.count > ScatterRules.MAX_PLACEMENTS:
             msg = (
                 f"{instances.count:,} instances is too many for output='placements' "
-                f"(max {MAX_SCATTER_PLACEMENTS:,}); use output='instancer'."
+                f"(max {ScatterRules.MAX_PLACEMENTS:,}); use output='instancer'."
             )
             raise ValueError(msg)
         stage.DefinePrim(prim_path, "Xform")
@@ -1429,9 +1429,9 @@ def placement_objects(
                 name=proto.name, source_skill="local", source_id=proto.source,
                 file_path=proto.scene_ref,
             ),
-            translate=_vec3(instances.positions[i]),
+            translate=to_vec3(instances.positions[i].tolist()),
             rotate=rotations[i],
-            scale=_vec3(instances.scales[i]),
+            scale=to_vec3(instances.scales[i].tolist()),
         ))
     return objects
 
@@ -1698,17 +1698,17 @@ def drop_prim(
 
 def _circle_center(
     stage: Usd.Stage, raw: dict[str, Any], up: int, label: str,
-) -> tuple[float, float, float]:
+) -> Vec3:
     """A circle's centre from ``center`` or from ``center_prim``."""
     if (raw.get("center") is None) == (raw.get("center_prim") is None):
         msg = f"{label} needs exactly one of 'center' or 'center_prim'."
         raise ValueError(msg)
     if raw.get("center") is not None:
-        return _vec3(raw["center"])
+        return to_vec3(raw["center"], "center")
     bmin, bmax = surface_utils.prim_world_box(stage, raw["center_prim"])
     center = (bmin + bmax) / 2.0
     center[up] = bmin[up]
-    return tuple(center.tolist())
+    return to_vec3(center.tolist(), "center_prim")
 
 
 def _conformed_extents(
@@ -2079,12 +2079,6 @@ def _rotate_xyz_rotation(value: Any) -> Gf.Rotation:
         * Gf.Rotation(Gf.Vec3d.YAxis(), ry)
         * Gf.Rotation(Gf.Vec3d.ZAxis(), rz)
     )
-
-
-def _vec3(values: Any) -> Vec3:
-    """Three floats from any length-3 sequence."""
-    x, y, z = (float(v) for v in values)
-    return x, y, z
 
 
 def _region_circle(region: ScatterRegion) -> tuple[FloatArray, float]:

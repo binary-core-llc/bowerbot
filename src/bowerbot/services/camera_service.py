@@ -10,14 +10,11 @@ from typing import Any
 
 from pxr import Sdf
 
-from bowerbot.schemas import (
-    DEFAULT_CLIPPING_RANGE_METERS,
-    CameraParams,
-    SceneNamespace,
-)
+from bowerbot.schemas import CameraDefaults, CameraParams, SceneNamespace
 from bowerbot.state import SceneState
-from bowerbot.utils import camera_utils, geometry_utils, stage_utils, variant_utils
-from bowerbot.utils.naming_utils import safe_prim_name
+from bowerbot.utils import camera_utils, stage_utils, variant_utils
+from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
+from bowerbot.utils.core.values import to_vec3, unpack_vec3
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +32,7 @@ def create_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     safe_name = safe_prim_name(params["camera_name"])
     attributes = dict(params.get("attributes") or {})
     look_at = params.get("look_at")
-    rotate = geometry_utils.unpack_vec3(
+    rotate = unpack_vec3(
         params, "rotate_x", "rotate_y", "rotate_z",
     )
     if look_at is not None and rotate is not None:
@@ -47,19 +44,19 @@ def create_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     if look_at is not None:
         rotate = camera_utils.look_at_rotation(
             (tx, ty, tz),
-            tuple(float(v) for v in look_at),
+            to_vec3(look_at, "look_at"),
             state.up_axis.value,
         )
     if rotate is None:
         rotate = (0.0, 0.0, 0.0)
 
-    near, far = DEFAULT_CLIPPING_RANGE_METERS
+    near, far = CameraDefaults.CLIPPING_RANGE_METERS
     attributes.setdefault(
         "clippingRange",
         [near / state.meters_per_unit, far / state.meters_per_unit],
     )
 
-    prim_path = stage_utils.unique_prim_path(
+    prim_path = unique_prim_path(
         stage, SceneNamespace.CAMERAS, safe_name,
     )
     camera = CameraParams(
@@ -90,10 +87,10 @@ def update_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Reposition or re-aim an existing scene camera."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
-    translate = geometry_utils.unpack_vec3(
+    translate = unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
     )
-    rotate = geometry_utils.unpack_vec3(
+    rotate = unpack_vec3(
         params, "rotate_x", "rotate_y", "rotate_z",
     )
     look_at = params.get("look_at")
@@ -108,7 +105,7 @@ def update_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         )
         rotate = camera_utils.look_at_rotation(
             eye,
-            tuple(float(v) for v in look_at),
+            to_vec3(look_at, "look_at"),
             state.up_axis.value,
         )
 

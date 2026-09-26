@@ -12,8 +12,12 @@ from pydantic import BaseModel, ConfigDict
 from bowerbot.schemas.surface import FloatArray, IntArray
 from bowerbot.schemas.transforms import Vec3
 
-MAX_SCATTER_INSTANCES = 1_000_000
-MAX_SCATTER_PLACEMENTS = 10_000
+
+class ScatterRules:
+    """Most instances one scatter call may create, per output."""
+
+    MAX_INSTANCES = 1_000_000
+    MAX_PLACEMENTS = 10_000
 
 
 class ScatterNamespace:

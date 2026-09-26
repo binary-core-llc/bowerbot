@@ -11,9 +11,9 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict
 
-FloatArray = NDArray[np.float64]
-IntArray = NDArray[np.signedinteger[Any]]
-BoolArray = NDArray[np.bool_]
+type FloatArray = NDArray[np.float64]
+type IntArray = NDArray[np.signedinteger[Any]]
+type BoolArray = NDArray[np.bool_]
 
 
 class SurfaceTriangles(BaseModel):

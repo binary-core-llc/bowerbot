@@ -9,7 +9,11 @@ from typing import Any
 
 from pydantic import BaseModel
 
-DEFAULT_CLIPPING_RANGE_METERS = (0.01, 100_000.0)
+
+class CameraDefaults:
+    """Values a camera gets when the request leaves them out."""
+
+    CLIPPING_RANGE_METERS = (0.01, 100_000.0)
 
 
 class CameraPropertySpec(BaseModel):

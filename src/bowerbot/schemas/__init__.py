@@ -16,17 +16,16 @@ from bowerbot.schemas.assets import (
     ASWFLayerNames,
 )
 from bowerbot.schemas.cameras import (
-    DEFAULT_CLIPPING_RANGE_METERS,
+    CameraDefaults,
     CameraParams,
     CameraPropertySpec,
     CameraSchemaInfo,
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.layout import (
-    LAYOUT_FILE_VERSION,
-    MAX_LAYOUT_PLACEMENTS,
     GridPattern,
     LayoutEntry,
+    LayoutRules,
     LayoutTransform,
     LinearPattern,
 )
@@ -41,6 +40,7 @@ from bowerbot.schemas.materials import (
     PreviewSurfaceShader,
     ProceduralMaterialParams,
 )
+from bowerbot.schemas.naming import NamingRules
 from bowerbot.schemas.physics import (
     AssetPhysicsSummary,
     CollisionGroupsSummary,
@@ -56,8 +56,6 @@ from bowerbot.schemas.physics import (
     ScenePhysicsSummary,
 )
 from bowerbot.schemas.scatter import (
-    MAX_SCATTER_INSTANCES,
-    MAX_SCATTER_PLACEMENTS,
     ScatterAlign,
     ScatterArrangement,
     ScatterAsset,
@@ -74,6 +72,7 @@ from bowerbot.schemas.scatter import (
     ScatterPrototype,
     ScatterRegion,
     ScatterRegionFalloff,
+    ScatterRules,
     ScatterSurfaceParams,
 )
 from bowerbot.schemas.scene import SceneNamespace
@@ -95,17 +94,13 @@ from bowerbot.schemas.variants import (
 )
 
 __all__ = [
-    "DEFAULT_CLIPPING_RANGE_METERS",
-    "LAYOUT_FILE_VERSION",
-    "MAX_LAYOUT_PLACEMENTS",
-    "MAX_SCATTER_INSTANCES",
-    "MAX_SCATTER_PLACEMENTS",
     "AppleUSDZConstraints",
     "ASWFLayerNames",
     "AssetCategory",
     "AssetFormat",
     "AssetMetadata",
     "AssetPhysicsSummary",
+    "CameraDefaults",
     "CameraParams",
     "CameraPropertySpec",
     "CameraSchemaInfo",
@@ -120,6 +115,7 @@ __all__ = [
     "JointsSummary",
     "LayoutEntry",
     "LayoutPattern",
+    "LayoutRules",
     "LayoutTransform",
     "LightParams",
     "LightPropertySpec",
@@ -127,6 +123,7 @@ __all__ = [
     "LightTypeSchemaInfo",
     "LinearPattern",
     "MaterialXShaders",
+    "NamingRules",
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",
     "PhysicsJointType",
@@ -152,6 +149,7 @@ __all__ = [
     "ScatterPrototype",
     "ScatterRegion",
     "ScatterRegionFalloff",
+    "ScatterRules",
     "ScatterSurfaceParams",
     "SceneNamespace",
     "SceneObject",

@@ -171,10 +171,15 @@ TOOLS: list[Tool] = [
         description=(
             "Move/rename a prim to a new path in the scene hierarchy. "
             "This changes the USD prim path, letting the user reorganize "
-            "the scene structure. The new path can be any valid USD path. "
-            "Also rewrites every relationship target across the scene that "
-            "pointed at the old path (material bindings, joint bodies, "
-            "collision-group members) so they follow the prim, and returns "
+            "the scene structure. The new path must stay under /Scene "
+            "(missing parent groups are created); each segment is cleaned "
+            "into a valid USD name (spaces and other characters become '_', "
+            "a leading digit gets a '_' prefix), and new_path in the result "
+            "is the final path. Refuses an existing target, /Scene itself, "
+            "and a move into the prim's own subtree. Also rewrites every "
+            "relationship target across the scene that pointed at the old "
+            "path (material bindings, joint bodies, collision-group members) "
+            "so they follow the prim, and returns "
             "rewritten_refs ({rels_touched: [...]}) listing the rebased "
             "relationships; report any rewrites to the user."
         ),
@@ -201,8 +206,9 @@ TOOLS: list[Tool] = [
             "anything under it, and returns scrubbed_dangling_refs "
             "({rels_touched: [...]}) listing them. Other targets, including "
             "ones into unselected variants, are kept. Handles top-level "
-            "placements and prims nested inside a referenced asset's "
-            "contents.usda."
+            "placements, whole groups, and prims nested inside a referenced "
+            "asset's contents.usda. Removing /Scene clears everything under "
+            "it and keeps the scene root."
         ),
         parameters={
             "type": "object",

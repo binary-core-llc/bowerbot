@@ -31,9 +31,15 @@ from bowerbot.utils.core.integrity import (
     drop_refs_to_vanished,
     remove_scene_prim,
 )
-from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
-from bowerbot.utils.core.transforms import get_container_world_inverse, resolve_asset_position
-from bowerbot.utils.core.values import unpack_vec3
+from bowerbot.utils.core.naming import clean_prim_name, unique_prim_path
+from bowerbot.utils.core.transforms import (
+    get_container_world_inverse,
+    read_translate_rotate,
+    resolve_asset_position,
+    resolve_asset_position_update,
+    world_position,
+)
+from bowerbot.utils.core.values import read_axes, unpack_vec3
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +56,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level or asset-level light."""
     stage = state.require_stage()
     light_type = LightType(params["light_type"])
-    safe_name = safe_prim_name(params["light_name"])
+    safe_name = clean_prim_name(params["light_name"], "Light")
     attributes = dict(params.get("attributes") or {})
     light_link_includes = params.get("light_link_includes") or []
     rotate = (
@@ -158,35 +164,34 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Update a light's xform / HDRI texture in its asset or in scene.usda."""
+    """Update a light's xform / HDRI texture in its asset or in scene.usda.
+
+    Translate and rotate axes left out keep their current values.
+    """
     stage = state.require_stage()
     prim_path = params["prim_path"]
-    asset_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
-
-    translate = unpack_vec3(
-        params, "translate_x", "translate_y", "translate_z",
-    )
-    rotate = unpack_vec3(
-        params, "rotate_x", "rotate_y", "rotate_z",
-    )
+    prim = light_utils.require_light(stage, prim_path)
+    asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
     texture = params.get("texture")
 
-    if asset_dir is not None:
-        if translate is not None:
-            mode = PositionMode(
-                params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
-            )
-            translate = resolve_asset_position(
-                mode,
+    if asset_dir is not None and ref_prim_path is not None:
+        light_name = prim_path.rstrip("/").split("/")[-1]
+        current_translate, current_rotate = light_utils.light_xform_in_folder(
+            asset_dir, light_name,
+        )
+        rotate = unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z", current_rotate)
+        given = read_axes(params, "translate_x", "translate_y", "translate_z")
+        translate = None
+        if any(axis is not None for axis in given):
+            translate = resolve_asset_position_update(
+                PositionMode(params.get("position_mode", PositionMode.BOUNDS_OFFSET.value)),
                 get_geometry_bounds(asset_dir),
-                *translate,
-                has_explicit_y=params.get("translate_y") is not None,
-                world_to_local_mat=get_container_world_inverse(
-                    stage, prim_path,
-                ),
+                given,
+                current_local=current_translate,
+                current_world=world_position(prim),
+                world_to_local_mat=get_container_world_inverse(stage, ref_prim_path),
                 asset_mpu=get_mpu(asset_dir),
             )
-        light_name = prim_path.rstrip("/").split("/")[-1]
         light_utils.update_light_in_folder(
             asset_dir,
             light_name,
@@ -199,11 +204,14 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         )
         state.reopen_stage()
     else:
+        current_translate, current_rotate = read_translate_rotate(prim)
         light_utils.update_light(
             stage,
             prim_path,
-            translate=translate,
-            rotate=rotate,
+            translate=unpack_vec3(
+                params, "translate_x", "translate_y", "translate_z", current_translate,
+            ),
+            rotate=unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z", current_rotate),
             texture=texture_utils.stage_scene_texture(
                 texture, library_dir=state.library_dir, project_dir=state.project_dir,
             ),
@@ -222,6 +230,7 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a scene-level or asset-level light."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
+    light_utils.require_light(stage, prim_path)
     asset_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
 
     if asset_dir is not None:

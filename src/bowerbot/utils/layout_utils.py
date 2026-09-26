@@ -18,11 +18,12 @@ from bowerbot.schemas import (
     LayoutPattern,
     LayoutRules,
     LinearPattern,
+    SceneNamespace,
     TransformParams,
 )
 from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils.core.asset_folder import refuse_file_path, validate_asset_file
-from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.naming import clean_group
 from bowerbot.utils.library_utils import find_asset
 
 
@@ -99,19 +100,8 @@ def resolve_layout_asset(
 
 
 def scene_group_path(group: str) -> str:
-    """Build the /Scene scope path for a group, sanitizing each nested segment."""
-    segments = [name for seg in group.split("/") if (name := safe_prim_name(seg))]
-    if not segments:
-        msg = "a layout entry 'group' must name a non-empty scene scope."
-        raise ValueError(msg)
-    for segment in segments:
-        if not is_valid_prim_name(segment):
-            msg = (
-                f"group segment '{segment}' is not a valid USD prim name "
-                f"(it must start with a letter or underscore)."
-            )
-            raise ValueError(msg)
-    return "/Scene/" + "/".join(segments)
+    """Build the /Scene scope path for a group, cleaning each nested segment into a prim name."""
+    return f"{SceneNamespace.ROOT}/{clean_group(group)}"
 
 
 def count_entry(entry: LayoutEntry) -> int:

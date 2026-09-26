@@ -208,6 +208,35 @@ def test_update_camera_translate():
         assert tuple(t) == (4.0, 5.0, 6.0)
 
 
+def test_update_camera_keeps_omitted_axes():
+    """Axes left out of an update keep their values, for translate and rotate."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        path = asyncio.run(exec_tool(state, "create_camera", {
+            "camera_name": "Cam",
+            "translate_x": 1.0, "translate_y": 2.0, "translate_z": 3.0,
+            "rotate_x": 10.0, "rotate_y": 20.0, "rotate_z": 30.0,
+        })).data["prim_path"]
+
+        for update in ({"translate_y": 9.0}, {"rotate_x": -5.0}):
+            r = asyncio.run(exec_tool(state, "update_camera", {"prim_path": path, **update}))
+            assert r.success, r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath(path)
+        assert tuple(prim.GetAttribute("xformOp:translate").Get()) == (1.0, 9.0, 3.0)
+        assert tuple(prim.GetAttribute("xformOp:rotateXYZ").Get()) == (-5.0, 20.0, 30.0)
+
+
+def test_create_camera_cleans_the_name():
+    """A name starting with a digit becomes a valid prim name."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, _ = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "create_camera", {"camera_name": "3D Hero Cam"}))
+        assert r.success, r.error
+        assert r.data["prim_path"].endswith("/_3D_Hero_Cam")
+
+
 def test_update_camera_rejects_non_camera():
     """Updating a non-camera prim is refused."""
     with tempfile.TemporaryDirectory() as tmp:

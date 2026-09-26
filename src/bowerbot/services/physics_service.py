@@ -31,6 +31,7 @@ from bowerbot.utils.core.asset_folder import (
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.integrity import composed_prim_paths, drop_refs_to_vanished
+from bowerbot.utils.core.naming import clean_prim_name
 from bowerbot.utils.core.values import parse_vec3
 
 logger = logging.getLogger(__name__)
@@ -216,7 +217,7 @@ def setup_physics_scene(
 ) -> dict[str, Any]:
     """Create or update a ``UsdPhysics.Scene``; only the gravity values given are authored."""
     stage = state.require_stage()
-    name = params.get("name", PhysicsNamespace.DEFAULT_SCENE_NAME)
+    name = clean_prim_name(params.get("name", PhysicsNamespace.DEFAULT_SCENE_NAME), "Physics scene")
     gravity_direction = parse_vec3(
         params.get("gravity_direction"), "gravity_direction",
     )
@@ -251,7 +252,7 @@ def remove_physics_scene(
 ) -> dict[str, Any]:
     """Remove a UsdPhysics.Scene prim by name."""
     stage = state.require_stage()
-    name = params["name"]
+    name = clean_prim_name(params["name"], "Physics scene")
     scrubbed = physics.scene.remove_physics_scene(stage, name)
     removed = scrubbed is not None
     if removed:
@@ -304,7 +305,7 @@ def create_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a typed joint connecting two bodies. Routes by ``scope``."""
     stage = state.require_stage()
     joint_type = PhysicsJointType(params["joint_type"])
-    name = params["name"]
+    name = clean_prim_name(params["name"], "Joint")
     body0 = params.get("body0")
     body1 = params.get("body1")
     attributes = params.get("attributes") or {}
@@ -411,6 +412,7 @@ def remove_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "scope='asset' requires name, the joint's name under "
             "/<defaultPrim>/joints/ in the asset.",
         )
+    name = clean_prim_name(name, "Joint")
     asset_dir, _ = require_asset_context(stage, asset_anchor)
     before = composed_prim_paths(stage)
     removed = physics.joints.remove_joint_asset(asset_dir, name)
@@ -454,7 +456,7 @@ def create_or_update_collision_group(
     stage = state.require_stage()
     result = physics.groups.create_or_update_collision_group(
         stage,
-        params["name"],
+        clean_prim_name(params["name"], "Collision group"),
         includes=params.get("includes"),
         excludes=params.get("excludes"),
         filtered_groups=params.get("filtered_groups"),
@@ -470,7 +472,7 @@ def remove_collision_group(
 ) -> dict[str, Any]:
     """Remove a collision group and the rel targets that named it."""
     stage = state.require_stage()
-    name = params["name"]
+    name = clean_prim_name(params["name"], "Collision group")
     force = bool(params.get("force", False))
     scrubbed = physics.groups.remove_collision_group(
         stage, name, force=force,

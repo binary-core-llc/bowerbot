@@ -29,7 +29,7 @@ from bowerbot.utils.core.asset_folder import (
     require_folder_entry,
     resolve_asset_dir_for_prim,
 )
-from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.naming import clean_group, clean_prim_name, next_placement_path
 from bowerbot.utils.core.references import (
     add_reference,
     add_references,
@@ -62,9 +62,12 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    state.object_count += 1
-    safe_asset_name = safe_prim_name(asset_name)
-    prim_path = f"/Scene/{group}/{safe_asset_name}_{state.object_count:02d}"
+    prim_path, number = next_placement_path(
+        stage, layout_utils.scene_group_path(group), clean_prim_name(asset_name, "Asset"),
+        state.object_count,
+    )
+    counter_before = state.object_count
+    state.object_count = number
 
     assets_dir = state.resolve_assets_dir()
     try:
@@ -75,7 +78,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             fix_root_transforms=params.get("fix_root_transforms", False),
         )
     except (ValueError, RuntimeError):
-        state.object_count -= 1
+        state.object_count = counter_before
         raise
 
     scene_object = SceneObject(
@@ -139,13 +142,13 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         except ValueError as e:
             problems.append(f"placements[{idx}]: {e}")
             continue
-        base_name = safe_prim_name(entry.name or asset_path.stem)
-        if not is_valid_prim_name(base_name):
-            problems.append(
-                f"placements[{idx}]: name '{base_name}' is not a valid USD "
-                f"prim name (it must start with a letter or underscore); "
-                f"set the entry's 'name'.",
+        try:
+            base_name = (
+                clean_prim_name(entry.name, "Placement") if entry.name
+                else clean_prim_name(asset_path.stem, "Placement", fallback="Placement")
             )
+        except ValueError as e:
+            problems.append(f"placements[{idx}]: {e}")
             continue
         target = assets.intake.intake_target_name(
             asset_path, state.library_dir, project.assets_dir,
@@ -239,10 +242,8 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         for item in items:
             report = reports[item["asset_path"]]
             for transform in layout_utils.expand_entry(item["entry"]):
-                state.object_count += 1
-                prim_path = (
-                    f"{item['group_path']}/"
-                    f"{item['base_name']}_{state.object_count:02d}"
+                prim_path, state.object_count = next_placement_path(
+                    stage, item["group_path"], item["base_name"], state.object_count,
                 )
                 objects.append(SceneObject(
                     prim_path=prim_path,
@@ -291,7 +292,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     )
     asset_name = params["asset_name"]
     container_prim_path = params["container_prim_path"]
-    group = params["group"]
+    group = clean_group(params["group"])
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
@@ -351,9 +352,15 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         report.scene_ref_path, assets_dir, container_dir,
     )
 
-    state.object_count += 1
-    safe_asset_name = safe_prim_name(asset_name)
-    prim_name = f"{safe_asset_name}_{state.object_count:02d}"
+    contents_group = (
+        f"{container_prim_path}/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/{group}"
+    )
+    nested_path, number = next_placement_path(
+        stage, contents_group, clean_prim_name(asset_name, "Asset"), state.object_count,
+    )
+    prim_name = nested_path.rsplit("/", 1)[-1]
+    counter_before = state.object_count
+    state.object_count = number
 
     try:
         assets.nested.add_nested_asset_reference(
@@ -367,7 +374,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
             ),
         )
     except (ValueError, RuntimeError):
-        state.object_count -= 1
+        state.object_count = counter_before
         raise
 
     state.reopen_stage()

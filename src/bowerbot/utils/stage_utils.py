@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +88,7 @@ def save_scene_snapshot(
         )
     default_name = composed_default.GetName()
 
-    flattened = UsdUtils.FlattenLayerStack(stage)
+    flattened = UsdUtils.FlattenLayerStack(stage, _snapshot_asset_path(snapshot_path.parent))
     if flattened is None:
         raise RuntimeError(f"Failed to flatten layer stack for {scene_path}")
     if not flattened.defaultPrim:
@@ -110,6 +112,26 @@ def save_scene_snapshot(
     _strip_dcc_artifacts(snapshot_layer)
     snapshot_layer.Save()
     return snapshot_path
+
+
+def _snapshot_asset_path(snapshot_dir: Path) -> Callable[[Sdf.Layer, str], str]:
+    """Re-anchor each relative asset path at the snapshot's folder, keeping it relative.
+
+    The default flatten resolver writes absolute paths, which break when the
+    project folder moves or is shared. Absolute paths and URLs stay as authored.
+    """
+
+    def resolve(layer: Sdf.Layer, asset_path: str) -> str:
+        if not asset_path or "://" in asset_path or os.path.isabs(asset_path):
+            return asset_path
+        absolute = str(layer.ComputeAbsolutePath(asset_path))
+        try:
+            relative = Path(os.path.relpath(absolute, snapshot_dir)).as_posix()
+        except ValueError:
+            return absolute
+        return relative if relative.startswith("../") else f"./{relative}"
+
+    return resolve
 
 
 def list_scene_snapshots(scene_path: Path) -> list[dict[str, object]]:

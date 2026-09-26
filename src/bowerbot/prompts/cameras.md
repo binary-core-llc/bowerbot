@@ -33,7 +33,8 @@ USD cameras face their local **-Z** axis. Pass EXACTLY ONE of:
   (e.g. a camera exported from a DCC).
 
 `update_camera` with `look_at` re-aims from the camera's current
-position unless you also pass new translate values.
+position unless you also pass new translate values. Pass only what
+changes: omitted translate / rotate axes keep their current values.
 
 ### Units (critical)
 

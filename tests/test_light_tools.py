@@ -392,6 +392,97 @@ def test_update_light_rotation():
         }))
         assert r.success, r.error
 
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath(created.data["prim_path"])
+        assert tuple(prim.GetAttribute("xformOp:rotateXYZ").Get()) == (-90.0, 0.0, 0.0)
+        assert list(UsdGeom.Xformable(prim).GetXformOpOrderAttr().Get()) == [
+            "xformOp:translate", "xformOp:rotateXYZ",
+        ]
+
+
+def test_update_light_keeps_omitted_axes():
+    """Axes left out of an update keep their values, for translate and rotate."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        path = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "RectLight", "light_name": "Panel",
+            "translate_x": 1.0, "translate_y": 2.0, "translate_z": 3.0,
+            "rotate_x": 10.0, "rotate_y": 20.0, "rotate_z": 30.0,
+        })).data["prim_path"]
+
+        for update in ({"translate_x": 5.0}, {"rotate_y": 45.0}):
+            r = asyncio.run(exec_tool(state, "update_light", {"prim_path": path, **update}))
+            assert r.success, r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath(path)
+        assert tuple(prim.GetAttribute("xformOp:translate").Get()) == (5.0, 2.0, 3.0)
+        assert tuple(prim.GetAttribute("xformOp:rotateXYZ").Get()) == (10.0, 45.0, 30.0)
+
+
+def _world_position(scene_path: Path, prim_path: str) -> tuple[float, ...]:
+    stage = Usd.Stage.Open(str(scene_path))
+    matrix = UsdGeom.XformCache().GetLocalToWorldTransform(stage.GetPrimAtPath(prim_path))
+    return tuple(round(v, 4) for v in matrix.ExtractTranslation())
+
+
+def test_update_asset_light_absolute_uses_the_placement_frame():
+    """An absolute update lands at the world position asked for, on a moved
+    and rotated placement, and omitted axes keep their world value."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "lamp")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": asset.stem, "asset_name": "Lamp", "group": "Props",
+            "translate_x": 10.0, "translate_y": 0.0, "translate_z": 0.0, "rotate_y": 90.0,
+        }))
+        light = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed.data["prim_path"],
+            "light_type": "SphereLight", "light_name": "Bulb", "position_mode": "absolute",
+            "translate_x": 10.0, "translate_y": 3.0, "translate_z": 1.0,
+        })).data["prim_path"]
+        assert _world_position(project.scene_path, light) == (10.0, 3.0, 1.0)
+
+        r = asyncio.run(exec_tool(state, "update_light", {
+            "prim_path": light, "position_mode": "absolute",
+            "translate_x": 10.0, "translate_y": 5.0, "translate_z": 1.0,
+        }))
+        assert r.success, r.error
+        assert _world_position(project.scene_path, light) == (10.0, 5.0, 1.0)
+
+        r = asyncio.run(exec_tool(state, "update_light", {
+            "prim_path": light, "position_mode": "absolute", "translate_y": 6.0,
+        }))
+        assert r.success, r.error
+        assert _world_position(project.scene_path, light) == (10.0, 6.0, 1.0)
+
+
+def test_update_asset_light_offset_keeps_omitted_axes():
+    """A bounds_offset update moves only the axes it names."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "lamp")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": asset.stem, "asset_name": "Lamp", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        light = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed.data["prim_path"],
+            "light_type": "SphereLight", "light_name": "Bulb",
+            "translate_x": 0.1, "translate_y": 0.5, "translate_z": -0.2,
+        })).data["prim_path"]
+        before = _world_position(project.scene_path, light)
+
+        r = asyncio.run(exec_tool(state, "update_light", {
+            "prim_path": light, "translate_x": 0.3, "rotate_z": 15.0,
+        }))
+        assert r.success, r.error
+        after = _world_position(project.scene_path, light)
+        assert after == (0.3, before[1], before[2])
+        lgt = Usd.Stage.Open(str(project.path / "assets" / "lamp" / "lgt.usda"))
+        bulb = lgt.GetPrimAtPath("/lamp/lgt/Bulb")
+        assert tuple(bulb.GetAttribute("xformOp:rotateXYZ").Get()) == (0.0, 0.0, 15.0)
+
 
 def test_update_light_texture():
     """Stages an HDRI on update and sets inputs:texture:file."""
@@ -579,6 +670,41 @@ def test_remove_light_refuses_light_from_asset_files():
 
         stage = Usd.Stage.Open(str(project.scene_path))
         assert stage.GetPrimAtPath(bulb).IsValid()
+
+
+def test_remove_light_refuses_anything_but_a_light():
+    """A camera or the Lighting group is refused (remove_prim removes them)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        light = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Key",
+        })).data["prim_path"]
+        camera = asyncio.run(exec_tool(state, "create_camera", {
+            "camera_name": "Cam",
+        })).data["prim_path"]
+
+        for path in (camera, "/Scene/Lighting"):
+            r = asyncio.run(exec_tool(state, "remove_light", {"prim_path": path}))
+            assert not r.success, path
+            assert "remove_prim" in r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(camera).IsValid()
+        assert stage.GetPrimAtPath(light).IsValid()
+
+
+def test_create_light_cleans_the_name():
+    """A name with spaces or a leading digit becomes a valid prim name."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        for name, expected in (("Key Light", "Key_Light"), ("3 Point Fill", "_3_Point_Fill")):
+            r = asyncio.run(exec_tool(state, "create_light", {
+                "light_type": "SphereLight", "light_name": name,
+            }))
+            assert r.success, r.error
+            assert r.data["prim_path"] == f"/Scene/Lighting/{expected}"
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath("/Scene/Lighting/_3_Point_Fill").IsValid()
 
 
 def test_remove_light_nonexistent_prim():

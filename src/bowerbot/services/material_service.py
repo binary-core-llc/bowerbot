@@ -16,6 +16,7 @@ from bowerbot.utils.core.asset_folder import (
     resolve_asset_dir_for_prim,
     to_asset_local,
 )
+from bowerbot.utils.core.naming import clean_prim_name
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def create_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
     """Author a procedural MaterialX material and bind it to a prim."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
-    material_name = params["material_name"]
+    material_name = clean_prim_name(params["material_name"], "Material")
 
     asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
     if asset_dir is None or ref_prim_path is None:

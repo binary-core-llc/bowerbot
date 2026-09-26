@@ -10,6 +10,8 @@ from pydantic import BaseModel
 from bowerbot.schemas.assets import AssetMetadata
 
 type Vec3 = tuple[float, float, float]
+# Three axes of which a request may leave any out (None).
+type PartialVec3 = tuple[float | None, float | None, float | None]
 
 
 class TransformParams(BaseModel):

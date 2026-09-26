@@ -14,7 +14,8 @@ from bowerbot.schemas import CameraDefaults, CameraParams, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import camera_utils, stage_utils, variants
 from bowerbot.utils.core.integrity import remove_scene_prim
-from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
+from bowerbot.utils.core.naming import clean_prim_name, unique_prim_path
+from bowerbot.utils.core.transforms import read_translate_rotate
 from bowerbot.utils.core.values import to_vec3, unpack_vec3
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def list_camera_properties(
 def create_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level camera, aimed via look_at or explicit rotation."""
     stage = state.require_stage()
-    safe_name = safe_prim_name(params["camera_name"])
+    safe_name = clean_prim_name(params["camera_name"], "Camera")
     attributes = dict(params.get("attributes") or {})
     look_at = params.get("look_at")
     rotate = unpack_vec3(
@@ -88,17 +89,18 @@ def update_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Reposition or re-aim an existing scene camera."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
+    prim = camera_utils.require_camera(stage, prim_path)
+    current_translate, current_rotate = read_translate_rotate(prim)
     translate = unpack_vec3(
-        params, "translate_x", "translate_y", "translate_z",
+        params, "translate_x", "translate_y", "translate_z", current_translate,
     )
     rotate = unpack_vec3(
-        params, "rotate_x", "rotate_y", "rotate_z",
+        params, "rotate_x", "rotate_y", "rotate_z", current_rotate,
     )
     look_at = params.get("look_at")
     if look_at is not None and rotate is not None:
         raise ValueError("pass exactly one of 'look_at' or rotate angles.")
 
-    prim = camera_utils.require_camera(stage, prim_path)
     if look_at is not None:
         eye = (
             translate if translate is not None

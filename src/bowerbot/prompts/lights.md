@@ -80,8 +80,9 @@ to the asset's native units for asset lights.
 `create_light` returns the **resolved** `position` (in bounds_offset /
 absolute modes the final asset-local coordinates differ from what you
 passed) and, for asset lights, the composed scene `prim_path` (also
-restated in the `message`). Pass that `prim_path` to `update_light` or
-`set_prim_attribute` for later per-placement tweaks.
+restated in the `message`). Pass that `prim_path` to `update_light`
+(moves, rotates or re-textures the shared light, on every placement) or
+to `set_prim_attribute` (a tweak on that one placement).
 
 ### Light types
 - **DistantLight** — sun/directional. Only rotation matters.
@@ -145,10 +146,12 @@ on the same asset.** When the user says any of:
    user it's already on all placements.
 2. **If the user wants to TWEAK the same param across every
    placement** (e.g., "make each table's light brighter") → call
-   `update_light` or `set_prim_attribute` ONCE PER PLACEMENT,
-   targeting each placement's composed light path
+   `set_prim_attribute` ONCE PER PLACEMENT, targeting each placement's
+   composed light path
    (`/Scene/.../<Placement_N>/asset/lgt/<light_name>`). Each call
-   writes a per-instance override to `scene.usda`.
+   writes a per-instance override to `scene.usda`. Position, rotation
+   and texture are different: ONE `update_light` call changes the
+   shared light in `lgt.usda`, so every placement follows.
 3. **If the user wants each placement to have a DIFFERENT light**
    → those are not asset lights anymore. Ask whether to switch to
    scene-level lights.
@@ -159,8 +162,9 @@ on the same asset.** When the user says any of:
 for a scene light. `set_prim_attribute` instead authors a per-instance
 override in `scene.usda` on one placement's composed light prim.
 
-- **Position / rotation / texture** → `update_light`. Handles
-  xform-op management, `position_mode: bounds_offset` math for
+- **Position / rotation / texture** → `update_light`. Pass only
+  what changes: omitted translate / rotate axes keep their current
+  values. Handles xform-op management, `position_mode` math for
   asset lights, and texture staging (asset `maps/` for an asset
   RectLight, `<project>/textures/` for a scene DomeLight).
 - **Any UsdLux input** (intensity, exposure, color, radius, angle,
@@ -171,7 +175,9 @@ override in `scene.usda` on one placement's composed light prim.
 
 ### Removing lights
 Use `remove_light` to delete a light. Works for both scene-level
-and asset-level lights — provide the `prim_path`.
+and asset-level lights — provide the `prim_path`. It accepts lights
+only; to remove the whole `/Scene/Lighting` group or any other prim,
+use `remove_prim`.
 
 If the result includes a `texture_file` field (DomeLight with HDRI),
 the texture file still exists in the project's `textures/` folder.

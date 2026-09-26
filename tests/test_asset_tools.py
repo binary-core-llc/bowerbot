@@ -146,6 +146,32 @@ def test_place_asset_inside_by_name():
         assert r.success, r.error
 
 
+def test_place_asset_cleans_the_name():
+    """Names with spaces or a leading digit are cleaned, top level and inside a
+    container, instead of failing in USD."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _asset(tmp_path, "shelf")
+        _asset(tmp_path, "book")
+        container = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "shelf", "asset_name": "2nd Shelf", "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert container.success, container.error
+        assert container.data["prim_path"].startswith("/Scene/Furniture/_2nd_Shelf_")
+
+        nested = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset": "book", "asset_name": "Red Book",
+            "container_prim_path": container.data["prim_path"],
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.3, "translate_z": 0.0,
+        }))
+        assert nested.success, nested.error
+        assert "/asset/contents/Props/Red_Book_" in nested.data["prim_path"]
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(nested.data["prim_path"]).IsValid()
+
+
 def test_place_asset_missing_stage():
     """Fails when no stage is open."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -559,20 +585,28 @@ def test_place_layout_rejects_3d_count_with_2d_spacing():
         assert "3-axis 'spacing'" in r.error
 
 
-def test_place_layout_rejects_invalid_prim_names():
-    """Digit-leading group segments and names fail validation, not authoring."""
+def test_place_layout_cleans_invalid_prim_names():
+    """Digit-leading or spaced group segments and names are cleaned, not refused."""
     with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, _ = _setup(tmp)
+        tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "tile")
+        placements = [{
+            "asset": asset.stem, "group": "2ndFloor/Wet Area", "name": "Floor Tile",
+            "transforms": [{"translate": [0, 0, 0]}],
+        }]
         r = asyncio.run(exec_tool(state, "place_layout", {
-            "validate_only": True,
-            "placements": [{
-                "asset": asset.stem, "group": "2ndFloor",
-                "transforms": [{"translate": [0, 0, 0]}],
-            }],
+            "validate_only": True, "placements": placements,
         }))
-        assert not r.success
-        assert "valid USD prim name" in r.error
+        assert r.success, r.error
+        assert r.data["groups"] == ["/Scene/_2ndFloor/Wet_Area"]
+
+        r = asyncio.run(exec_tool(state, "place_layout", {"placements": placements}))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        group = stage.GetPrimAtPath("/Scene/_2ndFloor/Wet_Area")
+        placed = [child.GetName() for child in group.GetChildren()]
+        assert len(placed) == 1
+        assert placed[0].startswith("Floor_Tile_")
 
 
 def test_place_layout_rejects_oversized_layout():

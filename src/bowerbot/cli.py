@@ -216,7 +216,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
         if project.scene_path.exists():
             status += (
                 f"[info]Scene:[/]   {project.meta.scene_file} "
-                f"({state.object_count} object(s))\n"
+                f"({state.count_objects()} object(s))\n"
             )
     else:
         status += "[info]Project:[/] none (use 'bowerbot new' to create one)\n"
@@ -228,7 +228,7 @@ def _start_chat(settings: Settings, project: Project | None = None) -> None:
         settings=settings, state=state, skill_registry=registry,
     )
 
-    if project and project.scene_path.exists() and state.object_count > 0:
+    if project and project.scene_path.exists() and state.count_objects() > 0:
         objects = inspection_utils.list_prims(state.stage)
         object_summary = "\n".join(
             _format_object_summary(o) for o in objects
@@ -283,7 +283,7 @@ async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
                 if now_focused is not None:
                     console.print(
                         f"\n[info]→ Now working on: {now_focused}  "
-                        f"({agent.state.object_count} object(s))[/]",
+                        f"({agent.state.count_objects()} object(s))[/]",
                     )
         except KeyboardInterrupt:
             console.print("\n[info]Interrupted. Type 'quit' to exit.[/]")

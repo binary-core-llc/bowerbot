@@ -771,3 +771,16 @@ def test_multiple_snapshots():
         assert r.success, r.error
         names = {s["name"] for s in r.data["snapshots"]}
         assert names == {"alpha", "beta", "gamma"}
+
+
+def test_renaming_into_a_new_group_keeps_the_placement_a_model():
+    """A placement moved under a group that did not exist stays in the model hierarchy."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        table = _place(tmp_path, state).data["prim_path"]
+        r = asyncio.run(exec_tool(state, "rename_prim", {
+            "old_path": table, "new_path": "/Scene/Dining/Tables/Table",
+        }))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath("/Scene/Dining/Tables/Table/asset").IsModel()

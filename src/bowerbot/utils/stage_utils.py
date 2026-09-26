@@ -16,6 +16,7 @@ from bowerbot.schemas import AssetFormat
 from bowerbot.utils.core.bounds import bbox_cache, world_bounds
 from bowerbot.utils.core.integrity import require_prim
 from bowerbot.utils.core.naming import safe_file_name
+from bowerbot.utils.core.references import join_model_hierarchy
 
 # ── Open / save ──
 
@@ -215,6 +216,8 @@ def rename_prim(stage: Usd.Stage, old_path: str, new_path: str) -> bool:
     success: bool = stage.GetRootLayer().Apply(edit)
     if success:
         rename_variant_overs(stage.GetRootLayer(), old_path, new_path)
+        if Usd.ModelAPI(stage.GetPrimAtPath(new_path)).GetKind():
+            join_model_hierarchy(stage, str(Sdf.Path(new_path).GetParentPath()))
         stage.Save()
     return success
 

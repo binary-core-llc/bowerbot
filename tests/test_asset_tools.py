@@ -8,7 +8,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdShade
+from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdShade
 
 from tests._helpers import exec_tool, make_state
 
@@ -1388,3 +1388,44 @@ def test_side_layers_state_units_and_keep_their_root_an_over():
         assert r.success, r.error
         lgt.Reload()
         assert lgt.pseudoRoot.GetInfo("metersPerUnit") == 1.0
+
+
+# ── model hierarchy ──
+
+
+def _not_models(stage: Usd.Stage) -> list[str]:
+    """Prims whose kind is a model kind but that are not models (an ancestor breaks the chain)."""
+    return [
+        str(prim.GetPath()) for prim in stage.Traverse()
+        if Kind.Registry.IsA(Usd.ModelAPI(prim).GetKind() or "", Kind.Tokens.model)
+        and not prim.IsModel()
+    ]
+
+
+def test_placements_are_models_and_nested_assets_are_subcomponents():
+    """Placed assets sit in an unbroken model hierarchy (groups and wrappers are groups);
+    an asset nested in another becomes a subcomponent of its container."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _asset(tmp_path, "shelf")
+        _asset(tmp_path, "book")
+        shelf = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "shelf", "asset_name": "Shelf", "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })).data["prim_path"]
+        r = asyncio.run(exec_tool(state, "place_layout", {"placements": [{
+            "asset": "book", "group": "Building/Racks",
+            "transforms": [{"translate": [2, 0, 0]}, {"translate": [3, 0, 0]}],
+        }]}))
+        assert r.success, r.error
+        nested = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset": "book", "asset_name": "Book", "container_prim_path": shelf,
+            "group": "Props", "translate_x": 0.0, "translate_y": 0.5, "translate_z": 0.0,
+        })).data["prim_path"]
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert _not_models(stage) == []
+        for path in ("/Scene/Furniture", shelf, "/Scene/Building", "/Scene/Building/Racks"):
+            assert Usd.ModelAPI(stage.GetPrimAtPath(path)).GetKind() == "group", path
+        assert stage.GetPrimAtPath(f"{shelf}/asset").IsModel()
+        assert Usd.ModelAPI(stage.GetPrimAtPath(f"{nested}/asset")).GetKind() == "subcomponent"

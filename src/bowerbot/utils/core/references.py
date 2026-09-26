@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pxr import Ar, Gf, Sdf, Usd, UsdGeom
+from pxr import Ar, Gf, Kind, Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import AssetFormat, SceneNamespace, SceneObject
 from bowerbot.utils.core.metrics import asset_conform
@@ -161,6 +161,7 @@ def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
         unit_scale, up_axis_correction = conform[asset_path]
 
         wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
+        join_model_hierarchy(stage, scene_object.prim_path)
         xformable = UsdGeom.Xformable(wrapper)
         xformable.AddTranslateOp().Set(Gf.Vec3d(*scene_object.translate))
         xformable.AddRotateXYZOp().Set(Gf.Vec3f(*scene_object.rotate))
@@ -171,6 +172,21 @@ def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
         )
         author_conform(asset_prim, unit_scale, up_axis_correction)
         asset_prim.GetReferences().AddReference(asset_path)
+
+
+def join_model_hierarchy(stage: Usd.Stage, prim_path: str) -> None:
+    """Make *prim_path* and every ancestor under the scene root a ``group`` model.
+
+    A placed asset (a component) is a model only when every prim above it is a
+    group or assembly; groups, wrappers and scatter prims carry no geometry of
+    their own, so they are groups. An ancestor that already has a kind keeps it.
+    """
+    path = Sdf.Path(prim_path)
+    while path.pathElementCount > 1:
+        model = Usd.ModelAPI(stage.GetPrimAtPath(path))
+        if not model.GetKind():
+            model.SetKind(Kind.Tokens.group)
+        path = path.GetParentPath()
 
 
 def author_conform(prim: Usd.Prim, unit_scale: float, correction: float | None) -> None:

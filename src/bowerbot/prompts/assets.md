@@ -237,7 +237,10 @@ Every asset BowerBot intakes gets the canonical ASWF identity authored
 on its root prim:
 - `kind = "component"` — terminal published asset (DCC outliners,
   Houdini Solaris, Omniverse Browser, Isaac Asset Library all use Kind
-  to identify the asset boundary)
+  to identify the asset boundary). In the scene, the groups and
+  placement wrappers above it are `group`s, so it stays a model; an asset
+  placed inside another with `place_asset_inside` becomes a
+  `subcomponent` of its container
 - `assetInfo` dictionary with `identifier` (relative path), `name`
   (asset folder name), and `version` (default `"1.0"`) — read by every
   asset-tracking pipeline (ftrack, ShotGrid, Omniverse Nucleus) for

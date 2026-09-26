@@ -14,13 +14,15 @@ from bowerbot.utils import texture_utils
 
 def list_textures(state: SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
     """List every texture in the user's library, optionally filtered."""
+    library_dir = state.require_library_dir()
     category = TextureCategory(params.get("category", "all"))
-    return texture_utils.find_textures(state.library_dir, category)
+    return texture_utils.find_textures(library_dir, category)
 
 
 def search_textures(state: SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
     """Search the user's library for textures matching a query."""
+    library_dir = state.require_library_dir()
     category = TextureCategory(params.get("category", "all"))
     return texture_utils.find_textures(
-        state.library_dir, category, query=params.get("query", ""),
+        library_dir, category, query=params.get("query", ""),
     )

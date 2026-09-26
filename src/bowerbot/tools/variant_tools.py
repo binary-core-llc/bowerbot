@@ -10,13 +10,10 @@ from typing import Any
 from bowerbot.services import variant_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
 
 
 def add_asset_material_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Author a material-binding variant on the asset's root prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.add_asset_material_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -28,8 +25,6 @@ def add_asset_material_variant(state: SceneState, params: dict[str, Any]) -> Too
 
 def add_asset_geometry_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Author a geometry/LOD variant via payload arc overrides."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.add_asset_geometry_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -41,8 +36,6 @@ def add_asset_geometry_variant(state: SceneState, params: dict[str, Any]) -> Too
 
 def setup_asset_geometry_variants(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Initial setup of an LOD variant set in Pixar's canonical pattern."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.setup_asset_geometry_variants(state, params)
     except (ValueError, RuntimeError) as e:
@@ -56,8 +49,6 @@ def add_asset_attribute_variant(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Author an attribute-override variant on the asset's root prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.add_asset_attribute_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -71,8 +62,6 @@ def add_asset_configuration_variant(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Author a configuration variant via prim activation toggles."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.add_asset_configuration_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -86,8 +75,6 @@ def add_scene_lighting_attribute_variant(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Author a scene-lighting attribute variant on /Scene/Lighting children."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.add_scene_lighting_attribute_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -101,8 +88,6 @@ def add_scene_lighting_selection_variant(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Author a scene-lighting selection variant via active toggles on /Scene/Lighting children."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.add_scene_lighting_selection_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -116,8 +101,6 @@ def add_scene_model_selection_variant(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Author a scene model-selection variant: swap which asset is referenced at a placement."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.add_scene_model_selection_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -131,8 +114,6 @@ def select_scene_variant(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Set the active variant on a scene-level carrier prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.select_scene_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -146,8 +127,6 @@ def remove_scene_variant(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Remove a single variant from a scene-level variant set on a carrier prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.remove_scene_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -161,8 +140,6 @@ def remove_scene_variant_set(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Remove an entire scene-level variant set from a carrier prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.remove_scene_variant_set(state, params)
     except (ValueError, RuntimeError) as e:
@@ -174,8 +151,6 @@ def remove_scene_variant_set(
 
 def list_variants(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List variant sets, variants, and selections on an asset."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.list_variants(state, params)
     except (ValueError, RuntimeError) as e:
@@ -187,8 +162,6 @@ def list_variants(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def list_asset_geo_files(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List alternate geometry files available for geometry variants."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.list_asset_geo_files(state, params)
     except (ValueError, RuntimeError) as e:
@@ -200,8 +173,6 @@ def list_asset_geo_files(state: SceneState, params: dict[str, Any]) -> ToolResul
 
 def select_asset_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Set the asset's ship default variant selection."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.select_asset_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -215,8 +186,6 @@ def select_asset_variant_for_instance(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Override variant selection on one scene placement."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.select_asset_variant_for_instance(state, params)
     except (ValueError, RuntimeError) as e:
@@ -228,8 +197,6 @@ def select_asset_variant_for_instance(
 
 def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove a single variant from a variant set on one asset."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.remove_asset_variant(state, params)
     except (ValueError, RuntimeError) as e:
@@ -241,8 +208,6 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> ToolResul
 
 def remove_asset_variant_set(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove an entire variant set from one asset."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = variant_service.remove_asset_variant_set(state, params)
     except (ValueError, RuntimeError) as e:

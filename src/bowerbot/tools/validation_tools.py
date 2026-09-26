@@ -10,13 +10,10 @@ from typing import Any
 from bowerbot.services import validation_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
 
 
 def validate_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Run scene validation against the active stage."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = validation_service.validate_scene(state, params)
     except (ValueError, RuntimeError) as e:
@@ -26,8 +23,6 @@ def validate_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def package_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Bundle the active scene into a ``.usdz``."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = validation_service.package_scene(state, params)
     except (ValueError, RuntimeError) as e:

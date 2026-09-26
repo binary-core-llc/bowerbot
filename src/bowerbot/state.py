@@ -56,11 +56,50 @@ class SceneState:
 
     def resolve_assets_dir(self) -> Path:
         """Return the project's assets directory, creating it on demand."""
-        if self.assets_dir is None:
-            msg = "No project set. Use 'bowerbot new' to create a project first."
+        assets_dir = self.require_project().assets_dir
+        assets_dir.mkdir(parents=True, exist_ok=True)
+        return assets_dir
+
+    def require_stage(self) -> Usd.Stage:
+        """The open scene's stage; raises if no scene is open."""
+        return self._open_scene()[0]
+
+    def require_stage_path(self) -> Path:
+        """The open scene's file; raises if no scene is open."""
+        return self._open_scene()[1]
+
+    def reopen_stage(self) -> Usd.Stage:
+        """Reopen the scene from disk so it sees edited asset layers."""
+        self.stage = stage_utils.open_stage(self.require_stage_path())
+        return self.stage
+
+    def require_project(self) -> Project:
+        """The open project; raises if none is open."""
+        if self.project is None:
+            msg = "No project is open. Create or open a project first."
             raise RuntimeError(msg)
-        self.assets_dir.mkdir(parents=True, exist_ok=True)
-        return self.assets_dir
+        return self.project
+
+    def require_library_dir(self) -> Path:
+        """The configured asset library; raises if none is configured."""
+        if self.library_dir is None:
+            msg = "No asset library configured. Set 'assets_dir' in config.json."
+            raise RuntimeError(msg)
+        return self.library_dir
+
+    def require_projects_dir(self) -> Path:
+        """The configured projects directory; raises if none is configured."""
+        if self.projects_dir is None:
+            msg = "No projects directory configured. Set 'projects_dir' in config.json."
+            raise RuntimeError(msg)
+        return self.projects_dir
+
+    def _open_scene(self) -> tuple[Usd.Stage, Path]:
+        """The open stage and its file; raises if no scene is open."""
+        if self.stage is None or self.stage_path is None:
+            msg = "No scene is open. Create or open a project first."
+            raise RuntimeError(msg)
+        return self.stage, self.stage_path
 
     def bind_project(self, project: Project) -> None:
         """Focus this state on *project*: open its scene and count objects."""

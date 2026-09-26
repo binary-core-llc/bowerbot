@@ -42,9 +42,10 @@ logger = logging.getLogger(__name__)
 
 def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bring an asset into the project and add it to the scene."""
+    stage = state.require_stage()
     asset_path = resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     asset_name = params["asset_name"]
@@ -82,8 +83,8 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         rotate=(0.0, ry, 0.0),
     )
 
-    stage_utils.add_reference(state.stage, scene_object)
-    stage_utils.save_stage(state.stage)
+    stage_utils.add_reference(stage, scene_object)
+    stage_utils.save_stage(stage)
     state.touch_project()
 
     logger.info("Placed %s at %s (%s, %s, %s)", asset_name, prim_path, tx, ty, tz)
@@ -102,13 +103,14 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Place many assets in one transactional batch from inline entries or a layout file."""
+    stage = state.require_stage()
     raw_entries = params.get("placements")
     layout_file = params.get("layout_file")
     if (raw_entries is None) == (layout_file is None):
         msg = "place_layout needs exactly one of 'placements' or 'layout_file'."
         raise ValueError(msg)
 
-    project_dir = state.project.path if state.project else None
+    project_dir = state.project_dir
     layout_dir = None
     if layout_file is not None:
         file_path = layout_utils.resolve_layout_file(layout_file, project_dir)
@@ -241,11 +243,11 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                     rotate=transform.rotate,
                     scale=transform.scale,
                 ))
-        stage_utils.add_references(state.stage, objects)
-        stage_utils.save_stage(state.stage)
+        stage_utils.add_references(stage, objects)
+        stage_utils.save_stage(stage)
     except Exception:
         state.object_count = object_count_snapshot
-        state.stage.Reload()
+        stage.Reload()
         raise
     state.touch_project()
 
@@ -268,9 +270,10 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Nest an asset inside an ASWF container's ``contents.usda``."""
+    stage = state.require_stage()
     asset_path = resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     asset_name = params["asset_name"]
@@ -281,7 +284,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    container_dir, _ = resolve_asset_dir_for_prim(state.stage, container_prim_path)
+    container_dir, _ = resolve_asset_dir_for_prim(stage, container_prim_path)
     if container_dir is None:
         msg = (
             f"Cannot find ASWF asset folder for {container_prim_path}. "
@@ -291,7 +294,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         raise ValueError(msg)
 
     instance_count = stage_utils.count_scene_refs_to_asset_dir(
-        state.stage, container_dir,
+        stage, container_dir,
     )
     confirmed = bool(params.get("confirm_shared_modification", False))
     if instance_count >= 2 and not confirmed:
@@ -326,7 +329,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         tx, ty, tz,
         has_explicit_y=params.get("translate_y") is not None,
         world_to_local_mat=stage_utils.get_container_world_inverse(
-            state.stage, container_prim_path,
+            stage, container_prim_path,
         ),
         asset_mpu=geometry_utils.get_mpu(container_dir),
     )
@@ -354,7 +357,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         state.object_count -= 1
         raise
 
-    state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     state.touch_project()
 
     composed_path = (
@@ -415,10 +418,12 @@ def list_project_assets(state: SceneState, params: dict[str, Any]) -> dict[str, 
 
 def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Drop empty ``contents.usda`` layers, per asset or project-wide."""
+    state.require_project()
+    stage = state.require_stage()
     asset_prim_path = params.get("asset_prim_path")
 
     if asset_prim_path:
-        asset_dir, _ = resolve_asset_dir_for_prim(state.stage, asset_prim_path)
+        asset_dir, _ = resolve_asset_dir_for_prim(stage, asset_prim_path)
         if asset_dir is None:
             msg = (
                 f"Cannot find ASWF asset folder for {asset_prim_path}. "
@@ -427,7 +432,7 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[s
             raise ValueError(msg)
 
         removed = asset_intake_utils.cleanup_unused_contents_in_folder(asset_dir)
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
         logger.info(
             "Cleaned %d empty group(s) from %s/contents",
             len(removed), asset_dir.name,
@@ -455,7 +460,7 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[s
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)
 
-    state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     logger.info(
         "Cleaned %d empty group(s) across %d asset folder(s)",
         total, len(per_folder),
@@ -489,7 +494,7 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     state.touch_project()
     if state.stage is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
 
     baked_count = sum(1 for r in results if r["baked"])
     logger.info(
@@ -510,6 +515,7 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Delete an asset folder/file from the project (only if unreferenced)."""
+    project = state.require_project()
     name = params["name"]
     assets_dir = state.resolve_assets_dir()
     asset_path = assets_dir / name
@@ -520,7 +526,7 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
 
     skip_dir = asset_path if asset_path.is_dir() else None
     referencing = find_asset_references(
-        state.project.path, name, skip_dir=skip_dir,
+        project.path, name, skip_dir=skip_dir,
     )
     if referencing:
         files_list = ", ".join(referencing)
@@ -547,8 +553,8 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
 
 def delete_project_texture(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Delete a texture from the project's ``textures/`` dir (if unreferenced)."""
+    project_dir = state.require_project().path
     file_name = params["file_name"]
-    project_dir = state.project.path
     tex_dir = project_dir / ASWFLayerNames.TEXTURES
     tex_file = tex_dir / file_name
 

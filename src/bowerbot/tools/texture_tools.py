@@ -11,15 +11,12 @@ from bowerbot.schemas import TextureCategory
 from bowerbot.services import texture_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_library_dir
 
 _CATEGORY_VALUES: list[str] = [c.value for c in TextureCategory]
 
 
 def search_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Search the user's asset library for textures matching a query."""
-    if (err := require_library_dir(state)):
-        return err
     try:
         data = texture_service.search_textures(state, params)
     except (ValueError, RuntimeError) as e:
@@ -29,8 +26,6 @@ def search_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def list_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every texture in the user's asset library, optionally filtered."""
-    if (err := require_library_dir(state)):
-        return err
     try:
         data = texture_service.list_textures(state, params)
     except (ValueError, RuntimeError) as e:

@@ -10,13 +10,10 @@ from typing import Any
 from bowerbot.services import material_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
 
 
 def create_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Author a procedural MaterialX material and bind it to a prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = material_service.create_material(state, params)
     except (ValueError, RuntimeError) as e:
@@ -26,8 +23,6 @@ def create_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def bind_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Copy a material from a file into the asset and bind it to a prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = material_service.bind_material(state, params)
     except (ValueError, RuntimeError) as e:
@@ -37,8 +32,6 @@ def bind_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def remove_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove a material binding from a prim inside an ASWF asset."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = material_service.remove_material(state, params)
     except (ValueError, RuntimeError) as e:
@@ -48,8 +41,6 @@ def remove_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def list_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every material across the project's asset folders."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = material_service.list_materials(state, params)
     except (ValueError, RuntimeError) as e:
@@ -59,8 +50,6 @@ def list_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete material definitions no prim binds to."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = material_service.cleanup_unused_materials(state, params)
     except (ValueError, RuntimeError) as e:

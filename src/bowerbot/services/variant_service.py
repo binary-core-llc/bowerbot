@@ -33,7 +33,8 @@ def add_asset_material_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a material-binding variant on the asset's root prim."""
-    asset_dir, ref_prim_path = require_asset_context(state.stage, params["prim_path"])
+    stage = state.require_stage()
+    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variant_utils.require_dict_param(
@@ -54,12 +55,12 @@ def add_asset_material_variant(
     variant_utils.validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
-        state.stage, asset_dir, default_prim,
+        stage, asset_dir, default_prim,
         {path: ["material:binding"] for path in bindings},
         "relationship", "material",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
 
     def author_fn(stage, _prim_path: str) -> None:
         for mesh_path, material_path in bindings.items():
@@ -70,8 +71,7 @@ def add_asset_material_variant(
     variant_utils.apply_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -90,7 +90,8 @@ def add_asset_geometry_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a geometry/LOD variant via payload arc overrides."""
-    asset_dir, ref_prim_path = require_asset_context(state.stage, params["prim_path"])
+    stage = state.require_stage()
+    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variant_utils.require_dict_param(
@@ -135,8 +136,7 @@ def add_asset_geometry_variant(
     variant_utils.apply_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -155,7 +155,8 @@ def setup_asset_geometry_variants(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Initial setup of an LOD variant set in Pixar's canonical pattern."""
-    asset_dir, _ = require_asset_context(state.stage, params["prim_path"])
+    stage = state.require_stage()
+    asset_dir, _ = require_asset_context(stage, params["prim_path"])
     set_name = params["variant_set"]
     default_variant = params["default_variant"]
     variants = variant_utils.require_dict_param(
@@ -167,8 +168,7 @@ def setup_asset_geometry_variants(
     variant_utils.setup_geometry_variant_set(
         asset_dir, set_name, variants, default_variant,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -186,7 +186,8 @@ def add_asset_attribute_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author an attribute-override variant on the asset's root prim."""
-    asset_dir, ref_prim_path = require_asset_context(state.stage, params["prim_path"])
+    stage = state.require_stage()
+    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variant_utils.require_dict_param(
@@ -206,12 +207,12 @@ def add_asset_attribute_variant(
     variant_utils.validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
-        state.stage, asset_dir, default_prim,
+        stage, asset_dir, default_prim,
         {path: list(attrs) for path, attrs in overrides.items()},
         "attribute", "attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
 
     resolved_types = variant_utils.resolve_attribute_types_for_overrides(
         asset_dir, overrides,
@@ -219,7 +220,7 @@ def add_asset_attribute_variant(
     variant_utils.refuse_unknown_asset_attributes(asset_dir, resolved_types)
     overrides = variant_utils.stage_asset_typed_overrides(
         overrides, resolved_types,
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
 
@@ -236,8 +237,7 @@ def add_asset_attribute_variant(
     variant_utils.apply_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -256,7 +256,8 @@ def add_asset_configuration_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a configuration variant via prim activation toggles."""
-    asset_dir, ref_prim_path = require_asset_context(state.stage, params["prim_path"])
+    stage = state.require_stage()
+    asset_dir, ref_prim_path = require_asset_context(stage, params["prim_path"])
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variant_utils.require_dict_param(
@@ -276,12 +277,12 @@ def add_asset_configuration_variant(
     variant_utils.validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
-        state.stage, asset_dir, default_prim,
+        stage, asset_dir, default_prim,
         {path: ["active"] for path in activations},
         "active", "configuration",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
 
     def author_fn(stage, _prim_path: str) -> None:
         for prim_path, active in activations.items():
@@ -291,8 +292,7 @@ def add_asset_configuration_variant(
     variant_utils.apply_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -311,6 +311,7 @@ def add_scene_lighting_attribute_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a scene-lighting attribute variant on UsdLux children of /Scene/Lighting."""
+    stage = state.require_stage()
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variant_utils.require_dict_param(
@@ -326,26 +327,26 @@ def add_scene_lighting_attribute_variant(
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
-    carrier = variant_utils.require_scene_lighting_carrier(state.stage)
+    carrier = variant_utils.require_scene_lighting_carrier(stage)
     variant_utils.validate_scene_lighting_targets(
-        state.stage, carrier, overrides.keys(),
+        stage, carrier, overrides.keys(),
     )
 
     if variant_utils.enforce_no_scene_masking_overrides(
-        state.stage,
+        stage,
         {p: list(a) for p, a in overrides.items()},
         "attribute", "lighting attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = stage_utils.open_stage(state.stage_path)
+        stage = state.reopen_stage()
 
     resolved_types = variant_utils.resolve_scene_attribute_types(
-        state.stage, overrides,
+        stage, overrides,
     )
-    variant_utils.refuse_unknown_attributes(state.stage, resolved_types)
+    variant_utils.refuse_unknown_attributes(stage, resolved_types)
     overrides = variant_utils.stage_asset_typed_overrides(
         overrides, resolved_types,
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
 
@@ -360,11 +361,10 @@ def add_scene_lighting_attribute_variant(
                 )
 
     variant_utils.apply_scene_variant(
-        state.stage, carrier, set_name, variant_name,
+        stage, carrier, set_name, variant_name,
         author_fn, set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "carrier_prim_path": carrier,
         "variant_set": set_name,
@@ -383,6 +383,7 @@ def add_scene_lighting_selection_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a scene-lighting variant: active toggles on UsdLux children of /Scene/Lighting."""
+    stage = state.require_stage()
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     raw = variant_utils.require_dict_param(
@@ -399,29 +400,28 @@ def add_scene_lighting_selection_variant(
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
-    carrier = variant_utils.require_scene_lighting_carrier(state.stage)
+    carrier = variant_utils.require_scene_lighting_carrier(stage)
     variant_utils.validate_scene_lighting_targets(
-        state.stage, carrier, activations.keys(),
+        stage, carrier, activations.keys(),
     )
 
     if variant_utils.enforce_no_scene_masking_overrides(
-        state.stage,
+        stage,
         {p: ["active"] for p in activations},
         "active", "lighting selection",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = stage_utils.open_stage(state.stage_path)
+        stage = state.reopen_stage()
 
     def author_fn(stage, _carrier: str) -> None:
         for path, active in activations.items():
             stage.OverridePrim(path).SetActive(active)
 
     variant_utils.apply_scene_variant(
-        state.stage, carrier, set_name, variant_name,
+        stage, carrier, set_name, variant_name,
         author_fn, set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "carrier_prim_path": carrier,
         "variant_set": set_name,
@@ -440,29 +440,27 @@ def add_scene_model_selection_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a scene model-selection variant; first call auto-promotes existing direct ref."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     set_as_default = bool(params.get("set_as_default", False))
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
-    if state.stage is None:
-        raise ValueError("No scene stage is open.")
-    if state.project is None:
-        raise ValueError("No project set; cannot stage assets for variant.")
+    project = state.require_project()
 
-    wrapper = state.stage.GetPrimAtPath(prim_path)
+    wrapper = stage.GetPrimAtPath(prim_path)
     if not wrapper or not wrapper.IsValid():
         raise ValueError(f"Scene placement not found: {prim_path}")
     asset_child = f"{prim_path}/asset"
-    if not state.stage.GetPrimAtPath(asset_child).IsValid():
+    if not stage.GetPrimAtPath(asset_child).IsValid():
         raise ValueError(
             f"{prim_path} has no '/asset' child — not a valid placement wrapper.",
         )
 
     resolved_path = resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        project.path,
         state.library_dir,
     )
     report = asset_intake_utils.prepare_asset(
@@ -483,8 +481,8 @@ def add_scene_model_selection_variant(
 
     promoted: str | None = None
     set_exists = set_name in wrapper.GetVariantSets().GetNames()
-    if not set_exists and variant_utils.has_direct_references(state.stage, asset_child):
-        existing = stage_utils.get_prim_ref_paths(state.stage.GetPrimAtPath(asset_child))
+    if not set_exists and variant_utils.has_direct_references(stage, asset_child):
+        existing = stage_utils.get_prim_ref_paths(stage.GetPrimAtPath(asset_child))
         if existing:
             raw = Path(existing[0]).parent.name or Path(existing[0]).stem
             if raw == "assets":
@@ -499,18 +497,17 @@ def add_scene_model_selection_variant(
                 )
             variant_utils.validate_variant_name(promoted)
             variant_utils.apply_scene_variant(
-                state.stage, prim_path, set_name, promoted,
+                stage, prim_path, set_name, promoted,
                 author_refs(list(existing)), set_as_default=True,
             )
-            variant_utils.clear_direct_references(state.stage, asset_child)
-            state.stage = stage_utils.open_stage(state.stage_path)
+            variant_utils.clear_direct_references(stage, asset_child)
+            stage = state.reopen_stage()
 
     variant_utils.apply_scene_variant(
-        state.stage, prim_path, set_name, variant_name,
+        stage, prim_path, set_name, variant_name,
         author_refs([new_ref]), set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     suffix = f" (auto-promoted existing as '{promoted}')" if promoted else ""
     return {
         "carrier_prim_path": prim_path,
@@ -535,7 +532,8 @@ def list_asset_geo_files(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """List alternate geometry files available for geometry variants."""
-    asset_dir = require_asset_context(state.stage, params["prim_path"])[0]
+    stage = state.require_stage()
+    asset_dir = require_asset_context(stage, params["prim_path"])[0]
     files = list_alternate_geo_files(asset_dir)
     return {
         "asset_path": str(asset_dir),
@@ -548,10 +546,9 @@ def list_asset_geo_files(
 
 def list_variants(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """List every variant carrier visible under a scene placement."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
-    if state.stage is None:
-        raise ValueError("No scene stage is open.")
-    summary = variant_utils.get_scene_variants_summary(state.stage, prim_path)
+    summary = variant_utils.get_scene_variants_summary(stage, prim_path)
     return {
         "prim_path": summary.prim_path,
         "carriers": [c.model_dump() for c in summary.carriers],
@@ -564,15 +561,15 @@ def list_variants(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def select_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Set the asset's ship default variant selection."""
-    asset_dir = require_asset_context(state.stage, params["prim_path"])[0]
+    stage = state.require_stage()
+    asset_dir = require_asset_context(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
     variant_utils.set_default_variant(asset_dir, set_name, variant_name)
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -587,16 +584,15 @@ def select_asset_variant_for_instance(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Override variant selection on one scene placement (authoring-layer routing)."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
-    if state.stage is None:
-        raise ValueError("No scene stage is open.")
     carriers = variant_utils.find_variant_carriers(
-        state.stage, prim_path, set_name,
+        stage, prim_path, set_name,
     )
     if not carriers:
         raise ValueError(
@@ -612,7 +608,7 @@ def select_asset_variant_for_instance(
         )
 
     target_path = carriers[0].prim_path
-    target = state.stage.GetPrimAtPath(target_path)
+    target = stage.GetPrimAtPath(target_path)
     vset = target.GetVariantSets().GetVariantSet(set_name)
     if variant_name not in vset.GetVariantNames():
         raise ValueError(
@@ -621,7 +617,7 @@ def select_asset_variant_for_instance(
         )
 
     vset.SetVariantSelection(variant_name)
-    state.stage.Save()
+    stage.Save()
 
     return {
         "prim_path": target_path,
@@ -637,7 +633,8 @@ def select_asset_variant_for_instance(
 
 def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a single variant from a variant set."""
-    asset_dir = require_asset_context(state.stage, params["prim_path"])[0]
+    stage = state.require_stage()
+    asset_dir = require_asset_context(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     variant_utils.validate_variant_name(set_name, "variant set")
@@ -658,13 +655,12 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
             if current == variant_name:
                 variant_utils.clear_default_variant(asset_dir, set_name)
         variant_utils.clear_scene_variant_selections(
-            state.stage, asset_dir, set_name, scrub_target,
+            stage, asset_dir, set_name, scrub_target,
         )
         variant_utils.restore_canonical_geo_if_needed(asset_dir)
         variant_utils.cleanup_if_empty(asset_dir)
 
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -682,15 +678,14 @@ def select_scene_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a variant selection on a scene-level carrier prim in scene.usda."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
-    if state.stage is None:
-        raise ValueError("No scene stage is open.")
-    prim = state.stage.GetPrimAtPath(prim_path)
+    prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Carrier prim not found: {prim_path}")
     vset = prim.GetVariantSets().GetVariantSet(set_name)
@@ -705,10 +700,9 @@ def select_scene_variant(
         )
 
     variant_utils.set_scene_variant_default(
-        state.stage, prim_path, set_name, variant_name,
+        stage, prim_path, set_name, variant_name,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "carrier_prim_path": prim_path,
         "variant_set": set_name,
@@ -724,24 +718,22 @@ def remove_scene_variant(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Remove a single variant from a scene-level variant set on a carrier prim."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     variant_utils.validate_variant_name(set_name, "variant set")
     variant_utils.validate_variant_name(variant_name)
 
-    if state.stage is None:
-        raise ValueError("No scene stage is open.")
     removed = variant_utils.remove_scene_variant(
-        state.stage, prim_path, set_name, variant_name,
+        stage, prim_path, set_name, variant_name,
     )
     suspects: list[dict] = []
     if removed:
         suspects = variant_utils.suspect_variant_sets_on_scene_carrier(
-            state.stage, prim_path,
+            stage, prim_path,
         )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "carrier_prim_path": prim_path,
         "variant_set": set_name,
@@ -761,20 +753,18 @@ def remove_scene_variant_set(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Remove a scene variant set; demote model-selection active variant back to direct ref."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_utils.validate_variant_name(set_name, "variant set")
 
-    if state.stage is None:
-        raise ValueError("No scene stage is open.")
     demoted = variant_utils.restore_active_scene_variant_references_to_direct_ref(
-        state.stage, prim_path, set_name,
+        stage, prim_path, set_name,
     )
     removed = variant_utils.remove_scene_variant_set(
-        state.stage, prim_path, set_name,
+        stage, prim_path, set_name,
     )
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     suffix = f" (restored '{demoted}' as direct reference)" if demoted else ""
     return {
         "carrier_prim_path": prim_path,
@@ -794,7 +784,8 @@ def remove_asset_variant_set(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Remove an entire variant set from one asset."""
-    asset_dir = require_asset_context(state.stage, params["prim_path"])[0]
+    stage = state.require_stage()
+    asset_dir = require_asset_context(stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_utils.validate_variant_name(set_name, "variant set")
 
@@ -802,13 +793,12 @@ def remove_asset_variant_set(
     if removed:
         variant_utils.clear_default_variant(asset_dir, set_name)
         variant_utils.clear_scene_variant_selections(
-            state.stage, asset_dir, set_name,
+            stage, asset_dir, set_name,
         )
         variant_utils.restore_canonical_geo_if_needed(asset_dir)
         variant_utils.cleanup_if_empty(asset_dir)
 
-    if state.stage_path is not None:
-        state.stage = stage_utils.open_stage(state.stage_path)
+    state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,

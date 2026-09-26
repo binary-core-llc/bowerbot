@@ -10,13 +10,10 @@ from typing import Any
 from bowerbot.services import stage_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_project, require_stage
 
 
 def create_stage(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Create or reopen the project's scene file."""
-    if (err := require_project(state)):
-        return err
     try:
         data = stage_service.create_stage(state, params)
     except (ValueError, RuntimeError) as e:
@@ -26,8 +23,6 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def list_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List the scene contents: every managed object, each tagged with its kind."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.list_scene(state, params)
     except (ValueError, RuntimeError) as e:
@@ -37,8 +32,6 @@ def list_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def rename_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Move/rename a prim to a new path in the scene hierarchy."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.rename_prim(state, params)
     except (ValueError, RuntimeError) as e:
@@ -48,8 +41,6 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def remove_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove an object from the scene by prim path."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.remove_prim(state, params)
     except (ValueError, RuntimeError) as e:
@@ -59,8 +50,6 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def move_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Move an existing prim to a new position/rotation."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.move_asset(state, params)
     except (ValueError, RuntimeError) as e:
@@ -70,8 +59,6 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def list_prim_attributes(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every attribute on a prim with type + current value."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.list_prim_attributes(state, params)
     except (ValueError, RuntimeError) as e:
@@ -81,8 +68,6 @@ def list_prim_attributes(state: SceneState, params: dict[str, Any]) -> ToolResul
 
 def set_prim_attribute(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Author an attribute opinion on a prim (per-instance, scene.usda)."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.set_prim_attribute(state, params)
     except (ValueError, RuntimeError) as e:
@@ -92,8 +77,6 @@ def set_prim_attribute(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def save_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Flatten the composed scene into a named, self-contained snapshot file."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.save_scene_snapshot(state, params)
     except (ValueError, RuntimeError) as e:
@@ -103,8 +86,6 @@ def save_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResult
 
 def list_scene_snapshots(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every snapshot .usda file alongside scene.usda."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.list_scene_snapshots(state, params)
     except (ValueError, RuntimeError) as e:
@@ -114,8 +95,6 @@ def list_scene_snapshots(state: SceneState, params: dict[str, Any]) -> ToolResul
 
 def delete_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete a named snapshot file."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.delete_scene_snapshot(state, params)
     except (ValueError, RuntimeError) as e:
@@ -125,8 +104,6 @@ def delete_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResu
 
 def list_prim_children(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List geometry parts under a prim path."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = stage_service.list_prim_children(state, params)
     except (ValueError, RuntimeError) as e:

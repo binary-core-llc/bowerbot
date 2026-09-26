@@ -11,7 +11,6 @@ from bowerbot.schemas import LightType, PositionMode
 from bowerbot.services import light_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
 
 
 def list_light_type_properties(
@@ -27,8 +26,6 @@ def list_light_type_properties(
 
 def create_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Create a scene-level or asset-level light."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = light_service.create_light(state, params)
     except (ValueError, RuntimeError) as e:
@@ -38,8 +35,6 @@ def create_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def update_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Update an existing scene-level or asset-level light."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = light_service.update_light(state, params)
     except (ValueError, RuntimeError) as e:
@@ -49,8 +44,6 @@ def update_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def remove_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove a scene-level or asset-level light."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = light_service.remove_light(state, params)
     except (ValueError, RuntimeError) as e:

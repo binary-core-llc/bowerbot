@@ -10,13 +10,10 @@ from typing import Any
 from bowerbot.services import project_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_projects_dir
 
 
 def list_projects(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every project in the projects directory."""
-    if (err := require_projects_dir(state)):
-        return err
     try:
         data = project_service.list_projects(state, params)
     except (ValueError, RuntimeError) as e:
@@ -26,8 +23,6 @@ def list_projects(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def create_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Create a new project and focus it."""
-    if (err := require_projects_dir(state)):
-        return err
     try:
         data = project_service.create_project(state, params)
     except (ValueError, RuntimeError) as e:
@@ -37,8 +32,6 @@ def create_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def open_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Open an existing project and focus it."""
-    if (err := require_projects_dir(state)):
-        return err
     try:
         data = project_service.open_project(state, params)
     except (ValueError, RuntimeError) as e:

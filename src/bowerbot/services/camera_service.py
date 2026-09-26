@@ -31,6 +31,7 @@ def list_camera_properties(
 
 def create_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level camera, aimed via look_at or explicit rotation."""
+    stage = state.require_stage()
     safe_name = safe_prim_name(params["camera_name"])
     attributes = dict(params.get("attributes") or {})
     look_at = params.get("look_at")
@@ -59,16 +60,16 @@ def create_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     )
 
     prim_path = stage_utils.unique_prim_path(
-        state.stage, SceneNamespace.CAMERAS, safe_name,
+        stage, SceneNamespace.CAMERAS, safe_name,
     )
     camera = CameraParams(
         translate=(tx, ty, tz), rotate=rotate, attributes=attributes,
     )
     try:
-        camera_utils.create_camera(state.stage, prim_path, camera)
-        stage_utils.save_stage(state.stage)
+        camera_utils.create_camera(stage, prim_path, camera)
+        stage_utils.save_stage(stage)
     except Exception:
-        state.stage.Reload()
+        stage.Reload()
         raise
     state.touch_project()
 
@@ -87,6 +88,7 @@ def create_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def update_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Reposition or re-aim an existing scene camera."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
     translate = geometry_utils.unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
@@ -98,7 +100,7 @@ def update_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     if look_at is not None and rotate is not None:
         raise ValueError("pass exactly one of 'look_at' or rotate angles.")
 
-    prim = camera_utils.require_camera(state.stage, prim_path)
+    prim = camera_utils.require_camera(stage, prim_path)
     if look_at is not None:
         eye = (
             translate if translate is not None
@@ -111,9 +113,9 @@ def update_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         )
 
     camera_utils.update_camera(
-        state.stage, prim_path, translate=translate, rotate=rotate,
+        stage, prim_path, translate=translate, rotate=rotate,
     )
-    stage_utils.save_stage(state.stage)
+    stage_utils.save_stage(stage)
     state.touch_project()
 
     logger.info("Updated camera at %s", prim_path)
@@ -125,23 +127,24 @@ def update_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def remove_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a scene camera."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
-    camera_utils.require_camera(state.stage, prim_path)
+    camera_utils.require_camera(stage, prim_path)
 
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
-    success = stage_utils.remove_prim(state.stage, prim_path)
+    success = stage_utils.remove_prim(stage, prim_path)
     if not success:
         msg = f"Failed to remove camera {prim_path}"
         raise RuntimeError(msg)
 
-    stage_utils.save_stage(state.stage)
+    stage_utils.save_stage(stage)
     state.touch_project()
 
     logger.info("Removed camera at %s", prim_path)
     return {
         "prim_path": prim_path,
         "suspect_variant_sets": variant_utils.suspect_variant_sets_on_scene_carrier(
-            state.stage, carrier_path,
+            stage, carrier_path,
         ),
         "message": f"Removed camera at {prim_path}",
     }

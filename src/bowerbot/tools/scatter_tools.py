@@ -23,15 +23,10 @@ from bowerbot.schemas import (
 from bowerbot.services import scatter_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_project, require_stage
 
 
 def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Distribute assets over surfaces, each resting on the surface it lands on."""
-    if (err := require_stage(state)):
-        return err
-    if (err := require_project(state)):
-        return err
     try:
         data = scatter_service.scatter_on_surface(state, params)
     except (ValueError, RuntimeError) as e:
@@ -41,10 +36,6 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def scatter_along_path(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Place assets along a path, circle or curve, resting on the surface below."""
-    if (err := require_stage(state)):
-        return err
-    if (err := require_project(state)):
-        return err
     try:
         data = scatter_service.scatter_along_path(state, params)
     except (ValueError, RuntimeError) as e:
@@ -54,8 +45,6 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def drop_to_surface(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Drop existing placements onto the surface beneath them."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = scatter_service.drop_to_surface(state, params)
     except (ValueError, RuntimeError) as e:

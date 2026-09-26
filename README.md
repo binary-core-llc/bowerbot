@@ -795,7 +795,7 @@ BowerBot is organized FastAPI-style:
 - **schemas/** describe data (pydantic models + enums)
 - **utils/** are pure-function primitives (no `SceneState`, no orchestration)
 - **services/** are state-aware orchestrators, one function per tool, signature `(state, params)`, calls utils and other services freely, raises on errors
-- **tools/** are the LLM-facing surface, thin adapters that guard preconditions, call ONE service, wrap the result in `ToolResult`
+- **tools/** are the LLM-facing surface, thin adapters that call ONE service and wrap its result or error in `ToolResult`
 
 Adding a feature is the same three-file change every time: schema, service, tool.
 
@@ -868,8 +868,6 @@ src/bowerbot/
 
   tools/              # LLM-facing API layer (tool defs + thin handlers).
                       # Every public function mirrors a service function 1:1.
-    _helpers.py            #   Precondition guards (require_stage / project / library /
-                           #   projects_dir)
     project_tools.py       #   create_project, open_project, list_projects,
                            #   get_current_project
     stage_tools.py         #   create_stage, list_scene, rename/remove_prim, move_asset,
@@ -935,10 +933,10 @@ src/bowerbot/
 
 - **Tool ↔ service ↔ prompt 1:1:1**: every public tool function has a same-named public service function and is described in some `prompts/*.md` file. A test in `tests/test_tool_service_prompt_invariant.py` fails the build if this ever drifts.
 - **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums) and a small set of state objects (`SceneState`, `Project`).
-- **Tools are thin**: guard preconditions, call ONE service, wrap in `ToolResult`. No business logic, no util calls, no cross-service routing.
+- **Tools are thin**: call ONE service, wrap its result or error in `ToolResult`. No guards, no business logic, no util calls, no cross-service routing.
 - **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
 - **Utils are pure primitives**: no `SceneState`, no other services. Composable building blocks.
-- **State lives in one place**: `SceneState` holds the open stage, the project binding, the asset library path, and the object counter; tool handlers thread it into service calls.
+- **State lives in one place**: `SceneState` holds the open stage, the project binding, the asset library path, and the object counter; tool handlers thread it into service calls. Services get what they need through its `require_*()` methods, which raise one clear error when it is missing, and reopen the scene with `reopen_stage()`.
 - **All `pxr` is in `services/` and `utils/`**: the rest of the codebase never imports `pxr` directly.
 - **Prompts are content**: editable `.md` files, not Python constants.
 - **Skills are external integrations**: new asset providers ship as Python packages discovered via entry points.

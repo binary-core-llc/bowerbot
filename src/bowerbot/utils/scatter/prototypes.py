@@ -19,7 +19,8 @@ from bowerbot.schemas import (
     SurfaceTuning,
 )
 from bowerbot.schemas.surface import FloatArray, IntArray
-from bowerbot.utils import asset_intake_utils, layout_utils, surface_utils
+from bowerbot.utils import layout_utils, surface_utils
+from bowerbot.utils.assets.intake import intake_target_name, prepare_asset
 from bowerbot.utils.core.bounds import bbox_cache, world_range
 from bowerbot.utils.core.metrics import asset_conform, axis_index
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
@@ -45,7 +46,7 @@ def resolve_asset_sources(
         except ValueError as e:
             problems.append(f"assets[{idx}]: {e}")
             continue
-        target = asset_intake_utils.intake_target_name(path, library_dir)
+        target = intake_target_name(path, library_dir)
         prior = targets.setdefault(target, path)
         if prior != path:
             problems.append(
@@ -79,7 +80,7 @@ def stage_prototypes(
     problems: list[str] = []
     for path in fix_prim:
         try:
-            reports[path] = asset_intake_utils.prepare_asset(
+            reports[path] = prepare_asset(
                 path, assets_dir, library_dir=library_dir,
                 fix_root_prim=fix_prim[path], fix_root_transforms=fix_xform[path],
             )

@@ -15,10 +15,10 @@ wheels/
 # copies it locally for debugging, don't commit it
 config.json
 
-# BowerBot — project outputs
-scenes/
-output/
-assets/
+# BowerBot — project outputs (at the repo root only; utils/assets/ is source)
+/scenes/
+/output/
+/assets/
 
 # BowerBot — agent integration test artifacts (transcripts, scenes, logs)
 tests/agent/artifacts/

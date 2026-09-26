@@ -13,7 +13,7 @@ from pxr import Sdf, Usd, UsdShade
 
 from bowerbot.schemas import VariantCategory
 from bowerbot.state import SceneState
-from bowerbot.utils import asset_intake_utils, variants
+from bowerbot.utils import assets, variants
 from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     list_alternate_geo_files,
@@ -466,7 +466,7 @@ def add_scene_model_selection_variant(
         project.path,
         state.library_dir,
     )
-    report = asset_intake_utils.prepare_asset(
+    report = assets.intake.prepare_asset(
         resolved_path, state.resolve_assets_dir(),
         library_dir=state.library_dir,
         fix_root_prim=bool(params.get("fix_root_prim", False)),

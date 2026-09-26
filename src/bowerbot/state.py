@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pxr import Usd
+from pxr import Ar, Usd
 
 from bowerbot.config import Settings, UpAxis
 from bowerbot.utils import inspection_utils, stage_utils
@@ -31,7 +31,7 @@ class SceneState:
     object_count: int = 0
     library_dir: Path | None = None
     projects_dir: Path | None = None
-    layer_baselines: dict[Path, tuple[float, str]] = field(default_factory=dict)
+    layer_baselines: dict[Path, tuple[float, str | None]] = field(default_factory=dict)
 
     @classmethod
     def from_settings(cls, settings: Settings) -> SceneState:
@@ -119,34 +119,53 @@ class SceneState:
             return hashlib.file_digest(f, lambda: hashlib.blake2b(digest_size=16)).hexdigest()
 
     def _watched_layer_paths(self) -> list[Path]:
-        """Return the scene's root layer for external-edit detection."""
+        """Every file the open scene reads: scene.usda and each layer it uses (assets included)."""
         if self.stage_path is None or not self.stage_path.exists():
             return []
-        return [self.stage_path]
+        if self.stage is None:
+            return [self.stage_path]
+        paths: set[Path] = set()
+        for layer in self.stage.GetUsedLayers():
+            if layer.realPath:
+                package_or_file, _ = Ar.SplitPackageRelativePathOuter(layer.realPath)
+                paths.add(Path(package_or_file))
+        return sorted(paths)
+
+    def _scene_layer_path(self) -> Path | None:
+        """The file of the scene's root layer, as the watched paths spell it."""
+        if self.stage is not None:
+            return Path(self.stage.GetRootLayer().realPath)
+        return self.stage_path
 
     def mark_saved(self) -> None:
-        """Snapshot mtime + hash of every layer in the scene's stack."""
+        """Snapshot every watched layer: its mtime, plus a content hash for scene.usda."""
         self.layer_baselines = {}
+        scene = self._scene_layer_path()
         for layer_path in self._watched_layer_paths():
             if layer_path.exists():
-                self.layer_baselines[layer_path] = (
-                    layer_path.stat().st_mtime,
-                    self._hash_file(layer_path),
-                )
+                digest = self._hash_file(layer_path) if layer_path == scene else None
+                self.layer_baselines[layer_path] = (layer_path.stat().st_mtime, digest)
 
     def detect_external_changes(self) -> bool:
-        """Return True if any watched layer changed since the last baseline."""
+        """Return True if any watched layer changed on disk since the last baseline.
+
+        Asset layers compare modification times only (some are tens of MB);
+        scene.usda also compares its hash, so touching it without an edit is ignored.
+        """
         if not self.layer_baselines:
             return False
         for layer_path in self._watched_layer_paths():
             baseline = self.layer_baselines.get(layer_path)
+            exists = layer_path.exists()
             if baseline is None:
-                return True
+                if exists:
+                    return True  # appeared since the last baseline
+                continue  # still missing, as it was at the last baseline
             mtime, digest = baseline
-            if not layer_path.exists():
+            if not exists:
                 return True
             if layer_path.stat().st_mtime <= mtime:
                 continue
-            if self._hash_file(layer_path) != digest:
+            if digest is None or self._hash_file(layer_path) != digest:
                 return True
         return False

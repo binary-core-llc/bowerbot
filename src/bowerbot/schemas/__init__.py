@@ -13,6 +13,7 @@ from bowerbot.schemas.assets import (
     AssetCategory,
     AssetFormat,
     AssetMetadata,
+    AssetScopeNames,
     ASWFLayerNames,
 )
 from bowerbot.schemas.cameras import (
@@ -27,6 +28,7 @@ from bowerbot.schemas.intake import (
     FolderDetection,
     IntakeReport,
     IntakeRules,
+    LocalizedCopy,
 )
 from bowerbot.schemas.layout import (
     GridPattern,
@@ -120,6 +122,7 @@ from bowerbot.schemas.variants import (
 
 __all__ = [
     "AppleUSDZConstraints",
+    "AssetScopeNames",
     "ASWFLayerNames",
     "AssetCategory",
     "AssetFormat",
@@ -151,6 +154,7 @@ __all__ = [
     "LightType",
     "LightTypeSchemaInfo",
     "LinearPattern",
+    "LocalizedCopy",
     "LoggingRules",
     "MaterialXShaders",
     "NamingRules",

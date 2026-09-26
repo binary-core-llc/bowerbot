@@ -649,3 +649,23 @@ def test_create_asset_light_spatial_garbage_refused():
         }))
         assert not r.success
         assert "spatial light input" in r.error
+
+
+def test_asset_light_offset_uses_asset_units():
+    """An asset light 0.1 m above a 1 m loose-file asset sits 0.1 m above its top."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(_asset(tmp_path, "block")), "asset_name": "Block",
+            "group": "Props", "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        light = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed.data["prim_path"], "light_type": "SphereLight",
+            "light_name": "Glow", "translate_y": 0.1,
+        }))
+        assert light.success, light.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        world = UsdGeom.Xformable(stage.GetPrimAtPath(light.data["prim_path"]))
+        y = world.ComputeLocalToWorldTransform(Usd.TimeCode.Default()).ExtractTranslation()[1]
+        assert abs(y - 0.6) < 1e-6

@@ -1005,3 +1005,269 @@ def test_list_project_assets_shows_name():
         assert r.success, r.error
         asset = r.data["assets"][0]
         assert "name" in asset
+
+
+# ── intake keeps everything the source composes ──
+
+
+def _gprims(project, prim_path):
+    stage = Usd.Stage.Open(str(project.scene_path))
+    return sorted(
+        p.GetName() for p in Usd.PrimRange(stage.GetPrimAtPath(prim_path))
+        if p.IsA(UsdGeom.Gprim)
+    )
+
+
+def _library_folder(lib: Path, name: str, arcs, *, geo_ext="usda") -> Path:
+    """A library folder <name>/<name>.usda whose root composes geo.<ext> through *arcs*."""
+    folder = lib / name
+    folder.mkdir(parents=True)
+    geo = _asset(folder, "geo_source")
+    Sdf.Layer.FindOrOpen(str(geo)).Export(str(folder / f"geo.{geo_ext}"))
+    geo.unlink()
+    rig = Usd.Stage.CreateNew(str(folder / "rig.usda"))
+    rig.SetDefaultPrim(rig.DefinePrim("/geo_source", "Xform"))
+    UsdGeom.Cube.Define(rig, "/geo_source/Handle")
+    rig.Save()
+    root = Usd.Stage.CreateNew(str(folder / f"{name}.usda"))
+    UsdGeom.SetStageMetersPerUnit(root, 1.0)
+    UsdGeom.SetStageUpAxis(root, UsdGeom.Tokens.y)
+    prim = root.DefinePrim("/geo_source", "Xform")
+    root.SetDefaultPrim(prim)
+    arcs(prim)
+    root.Save()
+    return folder / f"{name}.usda"
+
+
+def _place_from(state, path, name, x=0.0):
+    return asyncio.run(exec_tool(state, "place_asset", {
+        "asset_file_path": str(path), "asset_name": name, "group": "Props",
+        "translate_x": x, "translate_y": 0.0, "translate_z": 0.0,
+    }))
+
+
+def test_folder_with_usdc_geometry_keeps_its_geometry():
+    """A root that payloads geo.usdc is placed with its geometry, not hollow."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        state.library_dir = tmp_path / "lib"
+        root = _library_folder(
+            state.library_dir, "vase", lambda p: p.GetPayloads().AddPayload("./geo.usdc"),
+            geo_ext="usdc",
+        )
+        r = _place_from(state, root, "Vase")
+        assert r.success, r.error
+        assert _gprims(project, r.data["prim_path"]) == ["Mesh"]
+
+
+def test_folder_root_arcs_survive_intake_and_side_layers():
+    """An extra reference on the root survives intake, BowerBot side layers, and their removal."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        state.library_dir = tmp_path / "lib"
+        root = _library_folder(state.library_dir, "vase", lambda p: (
+            p.GetPayloads().AddPayload("./geo.usda"),
+            p.GetReferences().AddReference("./rig.usda"),
+        ))
+        r = _place_from(state, root, "Vase")
+        assert r.success, r.error
+        vase = r.data["prim_path"]
+        assert _gprims(project, vase) == ["Handle", "Mesh"]
+
+        for tool, params in (
+            ("create_material", {"prim_path": f"{vase}/asset/Mesh", "material_name": "red"}),
+            ("create_light", {"light_type": "SphereLight", "light_name": "Bulb",
+                              "asset_prim_path": vase}),
+            ("remove_light", {"prim_path": f"{vase}/asset/lgt/Bulb"}),
+            ("remove_material", {"prim_path": f"{vase}/asset/Mesh"}),
+            ("cleanup_unused_materials", {"asset_prim_path": vase}),
+        ):
+            done = asyncio.run(exec_tool(state, tool, params))
+            assert done.success, (tool, done.error)
+            assert _gprims(project, vase) == ["Handle", "Mesh"], tool
+
+
+def test_non_canonical_and_binary_roots_intake_whole():
+    """root.usd (text or binary) next to geo.usd is placed with its geometry."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = state.library_dir = tmp_path / "lib"
+        for fmt in ("usda", "usdc"):
+            folder = lib / f"pack_{fmt}"
+            folder.mkdir(parents=True)
+            geo = _asset(folder, "shelf")
+            geo.rename(folder / "geo.usd")
+            layer = Sdf.Layer.CreateAnonymous(".usda")
+            layer.ImportFromString(
+                '#usda 1.0\n(\n defaultPrim = "shelf"\n metersPerUnit = 1\n upAxis = "Y"\n)\n'
+                'def Xform "shelf" (\n prepend references = @./geo.usd@\n)\n{\n}\n',
+            )
+            layer.Export(str(folder / "root.usd"), args={"format": fmt})
+            r = _place_from(state, folder / "root.usd", f"Shelf_{fmt}")
+            assert r.success, (fmt, r.error)
+            assert _gprims(project, r.data["prim_path"]) == ["Mesh"], fmt
+
+
+def test_dependencies_are_localized():
+    """A library folder's texture outside it, and a loose file's sibling layer, are copied in."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = state.library_dir = tmp_path / "lib"
+        (lib / "shared").mkdir(parents=True)
+        (lib / "shared" / "grain.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+        _asset(lib, "part")
+        package = lib / "crate"
+        package.mkdir()
+        stage = Usd.Stage.CreateNew(str(package / "crate.usda"))
+        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+        stage.SetDefaultPrim(stage.DefinePrim("/crate", "Xform"))
+        UsdGeom.Cube.Define(stage, "/crate/Body")
+        shader = UsdShade.Shader.Define(stage, "/crate/Looks/tex")
+        shader.CreateInput("file", Sdf.ValueTypeNames.Asset).Set("../shared/grain.png")
+        stage.Save()
+        stage = Usd.Stage.CreateNew(str(lib / "assembly.usda"))
+        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+        stage.SetDefaultPrim(stage.DefinePrim("/assembly", "Xform"))
+        UsdGeom.Cube.Define(stage, "/assembly/Body")
+        stage.DefinePrim("/assembly/Knob").GetReferences().AddReference("./part.usda")
+        stage.Save()
+
+        crate = _place_from(state, package / "crate.usda", "Crate")
+        assert crate.success, crate.error
+        assembly = _place_from(state, lib / "assembly.usda", "Assembly", x=2.0)
+        assert assembly.success, assembly.error
+        assert _gprims(project, assembly.data["prim_path"]) == ["Body", "Mesh"]
+        assets_dir = project.path / "assets"
+        assert (assets_dir / "crate" / "textures" / "grain.png").exists()
+        assert (assets_dir / "assembly" / "part.usda").exists()
+        from pxr import UsdUtils
+        _, _, unresolved = UsdUtils.ComputeAllDependencies(str(project.scene_path))
+        assert unresolved == []
+
+
+def test_loose_file_keeps_units_in_geo_layer():
+    """geo.usda carries the source's metersPerUnit and upAxis."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        stage = Usd.Stage.CreateNew(str(tmp_path / "lamp.usda"))
+        UsdGeom.SetStageMetersPerUnit(stage, 0.01)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
+        stage.SetDefaultPrim(stage.DefinePrim("/lamp", "Xform"))
+        UsdGeom.Cube.Define(stage, "/lamp/Mesh")
+        stage.Save()
+        assert _place_from(state, tmp_path / "lamp.usda", "Lamp").success
+
+        geo = Usd.Stage.Open(str(project.path / "assets" / "lamp" / "geo.usda"))
+        assert UsdGeom.GetStageMetersPerUnit(geo) == 0.01
+        assert UsdGeom.GetStageUpAxis(geo) == UsdGeom.Tokens.z
+
+
+def test_loose_file_refusals_leave_nothing_behind():
+    """Geometry outside the defaultPrim, or a missing dependency, is refused cleanly."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        outside = Usd.Stage.CreateNew(str(tmp_path / "outside.usda"))
+        outside.SetDefaultPrim(outside.DefinePrim("/outside", "Xform"))
+        UsdGeom.Cube.Define(outside, "/Geometry/Box")
+        outside.Save()
+        missing = Usd.Stage.CreateNew(str(tmp_path / "missing.usda"))
+        missing.SetDefaultPrim(missing.DefinePrim("/missing", "Xform"))
+        UsdGeom.Cube.Define(missing, "/missing/Body")
+        missing.DefinePrim("/missing/Ghost").GetReferences().AddReference("./nowhere.usda")
+        missing.Save()
+
+        r = _place_from(state, tmp_path / "outside.usda", "Outside")
+        assert not r.success
+        assert "outside its defaultPrim" in r.error
+        r = _place_from(state, tmp_path / "missing.usda", "Missing")
+        assert not r.success
+        assert "did not resolve" in r.error
+        assert not any((project.path / "assets").iterdir())
+
+
+def test_fix_root_prim_keeps_layer_units():
+    """Wrapping a Mesh root in an Xform keeps the file's units."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        stage = Usd.Stage.CreateNew(str(tmp_path / "blob.usda"))
+        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+        mesh = UsdGeom.Mesh.Define(stage, "/blob")
+        mesh.GetPointsAttr().Set([Gf.Vec3f(0, 0, 0), Gf.Vec3f(1, 0, 0), Gf.Vec3f(0, 1, 0)])
+        mesh.GetFaceVertexCountsAttr().Set([3])
+        mesh.GetFaceVertexIndicesAttr().Set([0, 1, 2])
+        stage.SetDefaultPrim(mesh.GetPrim())
+        stage.Save()
+        r = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(tmp_path / "blob.usda"), "asset_name": "Blob",
+            "group": "Props", "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+            "fix_root_prim": True,
+        }))
+        assert r.success, r.error
+        geo = Sdf.Layer.FindOrOpen(str(project.path / "assets" / "blob" / "geo.usda"))
+        assert geo.pseudoRoot.GetInfo("metersPerUnit") == 1.0
+
+
+# ── source files come only from the asset library ──
+
+
+def test_file_inputs_outside_the_library_are_refused():
+    """Assets, layouts, scatter assets, materials and textures outside the library are refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        state.library_dir = tmp_path / "lib"
+        state.library_dir.mkdir()
+        outside = tmp_path / "downloads"
+        outside.mkdir()
+        chair = _asset(outside, "chair")
+        (outside / "sky.exr").write_bytes(b"v/1\x01")
+        materials = Usd.Stage.CreateNew(str(outside / "paint.usda"))
+        UsdShade.Material.Define(materials, "/Materials/red")
+        materials.Save()
+        layout = outside / "layout.json"
+        layout.write_text(json.dumps({"version": 1, "placements": [
+            {"asset": str(chair), "group": "Props", "transforms": [{"translate": [0, 0, 0]}]},
+        ]}))
+        table = _asset(state.library_dir, "table")
+        placed = _place_from(state, table, "Table")
+        assert placed.success, placed.error
+
+        calls = (
+            ("place_asset", {"asset_file_path": str(chair), "asset_name": "Chair", "group": "Props",
+                             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0}),
+            ("place_layout", {"placements": [{"asset": str(chair), "group": "Props",
+                                              "transforms": [{"translate": [0, 0, 0]}]}]}),
+            ("place_layout", {"layout_file": str(layout)}),
+            ("scatter_on_surface", {"name": "pile", "assets": [{"asset": str(chair)}],
+                                    "surfaces": [placed.data["prim_path"]], "count": 3}),
+            ("bind_material", {"prim_path": f"{placed.data['prim_path']}/asset/Mesh",
+                               "material_file": str(outside / "paint.usda")}),
+            ("create_light", {"light_type": "DomeLight", "light_name": "Sky",
+                              "texture": str(outside / "sky.exr")}),
+            ("create_light", {"light_type": "DomeLight", "light_name": "Sky",
+                              "texture": str(state.library_dir / "missing.exr")}),
+        )
+        for tool, params in calls:
+            r = asyncio.run(exec_tool(state, tool, params))
+            assert not r.success, tool
+            assert "asset library" in r.error, (tool, r.error)
+        assert sorted(p.name for p in (project.path / "assets").iterdir()) == ["table"]
+        assert not (project.path / "textures").exists()
+
+
+def test_library_and_project_files_are_accepted():
+    """A library path (absolute or relative) and a file already in the project both place."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        state.library_dir = tmp_path / "lib"
+        state.library_dir.mkdir()
+        _asset(state.library_dir, "table")
+        library_path = str(state.library_dir / "table.usda")
+        for path in (library_path, "table.usda", "assets/table/table.usda"):
+            r = asyncio.run(exec_tool(state, "place_asset", {
+                "asset_file_path": path, "asset_name": "Table", "group": "Props",
+                "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+            }))
+            assert r.success, (path, r.error)

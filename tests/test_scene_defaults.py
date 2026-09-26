@@ -33,7 +33,7 @@ def _make_asset(directory: Path, name: str, up_axis: str) -> Path:
 
 
 def _state(tmp: str) -> SceneState:
-    state = SceneState()
+    state = SceneState(library_dir=Path(tmp))
     state.projects_dir = Path(tmp)
     return state
 
@@ -132,7 +132,7 @@ def test_y_asset_stands_up_in_z_scene():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         project = Project.create(tmp_path, "wh", up_axis=UpAxis.Z)
-        state = SceneState(up_axis=UpAxis.Z)
+        state = SceneState(up_axis=UpAxis.Z, library_dir=tmp_path)
         state.project = project
         state.stage_path = project.scene_path
         asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
@@ -159,7 +159,7 @@ def test_matching_axis_adds_no_correction():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         project = Project.create(tmp_path, "studio", up_axis=UpAxis.Y)
-        state = SceneState(up_axis=UpAxis.Y)
+        state = SceneState(up_axis=UpAxis.Y, library_dir=tmp_path)
         state.project = project
         state.stage_path = project.scene_path
         asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))

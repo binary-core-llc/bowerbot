@@ -102,7 +102,13 @@ TOOLS: list[Tool] = [
             "properties": {
                 "asset_file_path": {
                     "type": "string",
-                    "description": "Local file path to the .usda/.usdc/.usdz asset.",
+                    "description": (
+                        "The asset's root .usda/.usdc/.usdz file in the asset library, "
+                        "as search_assets / list_assets return it (absolute or "
+                        "library-relative), or a file already in the project's assets/. "
+                        "Files outside the asset library are refused: copy them into "
+                        "the library first."
+                    ),
                 },
                 "asset_name": {
                     "type": "string",
@@ -205,10 +211,11 @@ TOOLS: list[Tool] = [
                             "asset": {
                                 "type": "string",
                                 "description": (
-                                    "Path to the asset's root FILE, absolute "
-                                    "or relative to the layout-file/project/"
+                                    "The asset's root FILE in the asset library, "
+                                    "absolute or relative to the layout-file/project/"
                                     "library dirs (e.g. "
-                                    "'SM_floor02/SM_floor02.usda')."
+                                    "'SM_floor02/SM_floor02.usda'). Files outside "
+                                    "the library are refused."
                                 ),
                             },
                             "group": {
@@ -333,8 +340,9 @@ TOOLS: list[Tool] = [
                     "description": (
                         "Path to a layout JSON file: {\"version\": 1, "
                         "\"placements\": [...]} with the same entries as the "
-                        "inline form. Absolute or project-relative. Use "
-                        "INSTEAD of 'placements' for bulk layouts."
+                        "inline form. It must be in the asset library or the "
+                        "project (absolute or relative). Use INSTEAD of "
+                        "'placements' for bulk layouts."
                     ),
                 },
                 "validate_only": {
@@ -376,7 +384,13 @@ TOOLS: list[Tool] = [
             "properties": {
                 "asset_file_path": {
                     "type": "string",
-                    "description": "Local file path to the .usda/.usdc/.usdz asset.",
+                    "description": (
+                        "The asset's root .usda/.usdc/.usdz file in the asset library, "
+                        "as search_assets / list_assets return it (absolute or "
+                        "library-relative), or a file already in the project's assets/. "
+                        "Files outside the asset library are refused: copy them into "
+                        "the library first."
+                    ),
                 },
                 "asset_name": {
                     "type": "string",

@@ -611,10 +611,11 @@ TOOLS: list[Tool] = [
                 "asset_file_path": {
                     "type": "string",
                     "description": (
-                        "Absolute path or library-relative path to the "
-                        "asset file (.usda / .usdz / loose geometry). "
+                        "The asset file in the asset library (.usda / .usdz "
+                        "/ loose geometry), absolute or library-relative. "
                         "Will be staged into <project>/assets/ via the "
-                        "same intake path as place_asset."
+                        "same intake path as place_asset. Files outside the "
+                        "library are refused."
                     ),
                 },
                 "set_as_default": _SET_AS_DEFAULT,

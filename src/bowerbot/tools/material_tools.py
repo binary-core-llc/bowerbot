@@ -169,7 +169,11 @@ TOOLS: list[Tool] = [
                 },
                 "material_file": {
                     "type": "string",
-                    "description": "Local file path to the material .usda file.",
+                    "description": (
+                        "The material .usda file in the asset library "
+                        "(absolute or library-relative). Files outside the asset "
+                        "library are refused: copy them into the library first."
+                    ),
                 },
                 "material_prim_path": {
                     "type": "string",

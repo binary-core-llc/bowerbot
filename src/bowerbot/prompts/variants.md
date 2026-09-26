@@ -276,9 +276,9 @@ variant body authors a different reference arc on the wrapper's
 
 The tool stages `asset_file_path` into `<project>/assets/` via the
 same intake path as `place_asset` (USDZ, library packages, loose
-geometry — all supported). Pass an **absolute path** or a path
-**inside the user's library** so library lookup works; bare
-filenames create a brand-new asset folder from scratch.
+geometry — all supported). Pass the asset's path **in the user's
+asset library** (absolute or library-relative, as `search_assets`
+returns it); a file outside the library is refused.
 
 **The first call auto-promotes the existing reference.** Every
 placement starts life with a direct `references` opinion on

@@ -1,28 +1,17 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Asset folders — intaking a whole folder: copies, path rewrites, root and self-containment."""
+"""Asset folders — intaking a whole library folder as a self-contained ASWF asset."""
 
 from __future__ import annotations
 
 import logging
-import os
-import shutil
-from collections.abc import Iterable
 from pathlib import Path
 
-from pxr import Sdf, UsdUtils
-
-from bowerbot.schemas import (
-    ASWFLayerNames,
-    DetectionOutcome,
-    IntakeReport,
-)
+from bowerbot.schemas import DetectionOutcome, IntakeReport
 from bowerbot.utils.assets.aswf import normalize_root_metadata
-from bowerbot.utils.core.asset_folder import (
-    detect_folder_root,
-    rebuild_root_references,
-)
+from bowerbot.utils.assets.localize import localize
+from bowerbot.utils.core.asset_folder import detect_folder_root
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +19,10 @@ logger = logging.getLogger(__name__)
 def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport:
     """Copy *source_folder* into *project_assets_dir* as a self-contained asset.
 
-    Every transitive dependency (including shader texture paths) is
-    localized so the output folder is portable. The root is canonicalized
-    to ``<folder>.usda`` and sibling references are rewritten.
+    The root is written as ``<folder>.usda`` (converted to text if it was a
+    binary file) and every file it depends on is copied and re-pathed, so
+    the copy composes exactly like the source. The root's own arcs are
+    kept as authored.
     """
     detection = detect_folder_root(source_folder)
     if detection.outcome is DetectionOutcome.AMBIGUOUS:
@@ -48,68 +38,29 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
         msg = f"No USD files found in {source_folder}"
         raise ValueError(msg)
 
-    source_folder = source_folder.resolve()
-    project_assets_dir = project_assets_dir.resolve()
     source_root = Path(detection.root)
-    target_folder = project_assets_dir / source_folder.name
-
+    target_folder = project_assets_dir.resolve() / source_folder.name
     if target_folder.exists():
         return _reuse_existing_target(target_folder, source_root)
 
-    layers, assets, unresolved = UsdUtils.ComputeAllDependencies(str(source_root))
-    if unresolved:
-        pretty = ", ".join(str(p) for p in unresolved)
-        msg = (
-            f"Cannot intake {source_folder.name}: {len(unresolved)} "
-            f"dependency path(s) did not resolve on disk ({pretty})."
-        )
-        raise ValueError(msg)
-
-    path_map, layer_targets, localized_layer_sources, localized_asset_sources = (
-        _plan_copies(
-            source_folder=source_folder,
-            target_folder=target_folder,
-            layer_sources=[Path(lyr.realPath).resolve() for lyr in layers],
-            asset_sources=[Path(a).resolve() for a in assets],
-        )
-    )
-
-    target_folder.mkdir(parents=True, exist_ok=False)
-    files_copied = 0
-    for src, dst in path_map.items():
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dst)
-        files_copied += 1
-
-    _rewrite_asset_paths(layer_targets, path_map)
-
     canonical_root = target_folder / f"{target_folder.name}.usda"
-    copied_root = path_map[source_root.resolve()]
-    was_renamed = _canonicalize_root(
-        copied_root=copied_root,
-        canonical_root=canonical_root,
-        sibling_layer_targets=[p for p in layer_targets if p != copied_root],
-    )
-
+    copy = localize(source_root, source_folder, canonical_root)
     normalize_root_metadata(canonical_root, target_folder.name)
-    rebuild_root_references(target_folder)
-    warnings = _validate_self_contained(canonical_root, target_folder)
 
     logger.info(
         "Intaked %s -> %s (%d file(s), %d localized)",
         source_folder.name, target_folder.name,
-        files_copied, len(localized_layer_sources) + len(localized_asset_sources),
+        copy.files_copied, len(copy.localized_layers) + len(copy.localized_assets),
     )
     return IntakeReport(
         scene_ref_path=f"assets/{target_folder.name}/{canonical_root.name}",
         asset_folder_name=target_folder.name,
         root_original_name=source_root.name,
         root_canonical_name=canonical_root.name,
-        was_renamed=was_renamed,
-        files_copied=files_copied,
-        localized_layers=localized_layer_sources,
-        localized_assets=localized_asset_sources,
-        warnings=warnings,
+        was_renamed=source_root.name != canonical_root.name,
+        files_copied=copy.files_copied,
+        localized_layers=copy.localized_layers,
+        localized_assets=copy.localized_assets,
     )
 
 
@@ -132,158 +83,3 @@ def _reuse_existing_target(target_folder: Path, source_root: Path) -> IntakeRepo
         files_copied=0,
         warnings=["target folder already existed; source was not re-copied"],
     )
-
-
-def _plan_copies(
-    source_folder: Path,
-    target_folder: Path,
-    layer_sources: Iterable[Path],
-    asset_sources: Iterable[Path],
-) -> tuple[dict[Path, Path], list[Path], list[str], list[str]]:
-    """Return ``(path_map, layer_targets, localized_layers, localized_assets)``."""
-    path_map: dict[Path, Path] = {}
-    layer_targets: list[Path] = []
-    localized_layer_sources: list[str] = []
-    localized_asset_sources: list[str] = []
-    used_targets: set[Path] = set()
-
-    for src in layer_sources:
-        if _is_inside(src, source_folder):
-            dst = target_folder / src.relative_to(source_folder)
-        else:
-            dst = target_folder / src.name
-            localized_layer_sources.append(str(src))
-        resolved = _dedupe(dst, used_targets)
-        used_targets.add(resolved)
-        path_map[src] = resolved
-        layer_targets.append(resolved)
-
-    for src in asset_sources:
-        if _is_inside(src, source_folder):
-            dst = target_folder / src.relative_to(source_folder)
-        else:
-            dst = target_folder / ASWFLayerNames.TEXTURES / src.name
-            localized_asset_sources.append(str(src))
-        resolved = _dedupe(dst, used_targets)
-        used_targets.add(resolved)
-        path_map[src] = resolved
-
-    return path_map, layer_targets, localized_layer_sources, localized_asset_sources
-
-
-def _is_inside(path: Path, folder: Path) -> bool:
-    """Return True if *path* is a descendant of *folder*."""
-    try:
-        path.relative_to(folder)
-    except ValueError:
-        return False
-    return True
-
-
-def _dedupe(candidate: Path, used: set[Path]) -> Path:
-    """Return *candidate*, or a ``stem_N.ext`` variant if already used."""
-    if candidate not in used:
-        return candidate
-    counter = 2
-    while True:
-        alt = candidate.with_name(f"{candidate.stem}_{counter}{candidate.suffix}")
-        if alt not in used:
-            return alt
-        counter += 1
-
-
-def _rewrite_asset_paths(
-    layer_targets: list[Path], path_map: dict[Path, Path],
-) -> None:
-    """Rewrite every asset path in *layer_targets* to point inside the target."""
-    resolved_map = {src.resolve(): dst.resolve() for src, dst in path_map.items()}
-
-    for layer_path in layer_targets:
-        layer = Sdf.Layer.FindOrOpen(str(layer_path))
-        if layer is None:
-            msg = f"Could not open copied layer for rewrite: {layer_path}"
-            raise RuntimeError(msg)
-
-        layer_dir = layer_path.parent.resolve()
-
-        def _rewrite(asset_path: str, _layer_dir: Path = layer_dir) -> str:
-            if not asset_path:
-                return asset_path
-            try:
-                resolved = (_layer_dir / asset_path).resolve()
-            except (OSError, ValueError):
-                return asset_path
-            target = resolved_map.get(resolved)
-            if target is None:
-                return asset_path
-            try:
-                relative = target.relative_to(_layer_dir)
-            except ValueError:
-                relative = Path(os.path.relpath(target, _layer_dir))
-            return "./" + relative.as_posix()
-
-        UsdUtils.ModifyAssetPaths(layer, _rewrite)
-        layer.Save()
-
-
-def _canonicalize_root(
-    copied_root: Path,
-    canonical_root: Path,
-    sibling_layer_targets: list[Path],
-) -> bool:
-    """Rename *copied_root* to *canonical_root* and update sibling refs."""
-    if copied_root.resolve() == canonical_root.resolve():
-        return False
-
-    shutil.move(str(copied_root), str(canonical_root))
-    old_name = copied_root.name
-    new_name = canonical_root.name
-
-    for sibling_path in sibling_layer_targets:
-        if not sibling_path.exists():
-            continue
-        layer = Sdf.Layer.FindOrOpen(str(sibling_path))
-        if layer is None:
-            continue
-
-        def _swap(asset_path: str, _old: str = old_name, _new: str = new_name) -> str:
-            if not asset_path or Path(asset_path).name != _old:
-                return asset_path
-            parent = Path(asset_path).parent
-            if str(parent) in (".", ""):
-                return f"./{_new}"
-            return (parent / _new).as_posix()
-
-        UsdUtils.ModifyAssetPaths(layer, _swap)
-        layer.Save()
-
-    return True
-
-
-def _validate_self_contained(
-    canonical_root: Path, target_folder: Path,
-) -> list[str]:
-    """Verify every dep of *canonical_root* resolves inside *target_folder*."""
-    layers, assets, unresolved = UsdUtils.ComputeAllDependencies(str(canonical_root))
-
-    if unresolved:
-        msg = (
-            f"Intake validation failed: {len(unresolved)} dependency "
-            f"path(s) became unresolved after localization."
-        )
-        raise RuntimeError(msg)
-
-    target_folder = target_folder.resolve()
-    leaks = [
-        str(Path(item).resolve())
-        for item in (*[lyr.realPath for lyr in layers], *assets)
-        if not _is_inside(Path(item).resolve(), target_folder)
-    ]
-    if leaks:
-        msg = (
-            f"Intake validation failed: {len(leaks)} dependency path(s) "
-            f"still point outside the asset folder after localization."
-        )
-        raise RuntimeError(msg)
-
-    return []

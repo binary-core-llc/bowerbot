@@ -1120,7 +1120,7 @@ def test_new_physics_scene_gravity_points_down_the_up_axis():
     """On a Z-up stage a new physics scene pulls along -Z, however it gets created."""
     with tempfile.TemporaryDirectory() as tmp:
         project = Project.create(Path(tmp), "zup", up_axis=UpAxis.Z)
-        state = SceneState()
+        state = SceneState(library_dir=Path(tmp))
         state.project = project
         state.stage_path = project.scene_path
         asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))

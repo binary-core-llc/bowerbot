@@ -12,14 +12,16 @@ detect the canonical root.
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd
+from pxr import Gf, Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import (
     AssetFormat,
+    AssetScopeNames,
     ASWFLayerNames,
     DetectionOutcome,
     FolderDetection,
@@ -37,24 +39,53 @@ logger = logging.getLogger(__name__)
 # ── Folder structure ──
 
 
-def resolve_asset_file_path(
+def resolve_library_file(
     raw: str,
-    project_dir: Path | None,
+    *,
     library_dir: Path | None,
+    project_dir: Path | None,
+    first_dir: Path | None = None,
 ) -> Path:
-    """Resolve a relative asset path against project dir, then library dir."""
-    p = Path(raw)
-    if p.is_absolute():
-        return p
-    if project_dir is not None:
-        candidate = project_dir / p
-        if candidate.exists():
-            return candidate
-    if library_dir is not None:
-        candidate = library_dir / p
-        if candidate.exists():
-            return candidate
-    return p.resolve()
+    """The existing file or folder *raw* names in the asset library or the project.
+
+    BowerBot takes source files only from the configured asset library, plus
+    files it already copied into the project. An absolute path must lie
+    inside one of them; a relative one is tried against *first_dir* (a
+    layout file's folder), the project, then the library. Anything else is
+    refused, and so is a path that exists nowhere.
+    """
+    roots = [_absolute(d) for d in (library_dir, project_dir) if d is not None]
+    if library_dir is None:
+        msg = "No asset library configured. Set 'assets_dir' in ~/.bowerbot/config.json."
+        raise ValueError(msg)
+    path = Path(raw).expanduser()
+    if path.is_absolute():
+        candidates = [path]
+    else:
+        candidates = [d / path for d in (first_dir, project_dir, library_dir) if d is not None]
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+        found = _absolute(candidate)
+        if not any(found == root or root in found.parents for root in roots):
+            msg = (
+                f"{found} is outside the asset library ({_absolute(library_dir)}). "
+                f"BowerBot only takes files from the library: copy it there first, "
+                f"then use the library path."
+            )
+            raise ValueError(msg)
+        return found
+    searched = ", ".join(str(_absolute(c)) for c in candidates)
+    msg = (
+        f"'{raw}' was not found in the asset library or the project "
+        f"(searched: {searched})."
+    )
+    raise ValueError(msg)
+
+
+def _absolute(path: Path) -> Path:
+    """*path* made absolute with '..' collapsed, without following symlinks."""
+    return Path(os.path.abspath(path.expanduser()))
 
 
 def require_folder_entry(folder: Path, name: str) -> Path:
@@ -389,25 +420,36 @@ def remove_root_reference(asset_dir: Path, layer_file: str) -> None:
 
 
 def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
-    """Ensure the asset's root file references *layer_file*."""
+    """Reference ``./<layer_file>`` from the asset root, leaving every other arc as authored.
+
+    BowerBot's side layers sit first in the root's reference list, in
+    ``ASWFLayerNames.REFERENCE_ORDER``, so they are stronger than any
+    reference the asset shipped with; payloads are never touched.
+    """
     root_file = find_root_file(asset_dir)
     if root_file is None:
         return
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
+    layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if layer is None:
+        return
+    prim_spec = layer.GetPrimAtPath(f"/{resolve_default_prim_name(asset_dir)}")
+    if prim_spec is None:
+        return
+    target = f"./{layer_file}"
+    references = prim_spec.referenceList
+    if any(ref.assetPath == target for ref in references.GetAddedOrExplicitItems()):
         return
 
-    root_prim = stage.GetDefaultPrim()
-    if root_prim is None:
-        return
-
-    ref_path = f"./{layer_file}"
-    if ref_path in get_prim_ref_paths(root_prim):
-        return
-
-    del stage
-    rebuild_root_references(asset_dir)
+    order = {f"./{name}": index for index, name in enumerate(ASWFLayerNames.REFERENCE_ORDER)}
+    items = list(references.explicitItems if references.isExplicit else references.prependedItems)
+    side_layers = [ref for ref in items if ref.assetPath in order] + [Sdf.Reference(target)]
+    side_layers.sort(key=lambda ref: order[ref.assetPath])
+    ordered = side_layers + [ref for ref in items if ref.assetPath not in order]
+    if references.isExplicit:
+        references.explicitItems = ordered
+    else:
+        references.prependedItems = ordered
+    layer.Save()
 
 
 def remove_empty_layer(
@@ -415,55 +457,30 @@ def remove_empty_layer(
     asset_dir: Path,
     has_content: Callable[[Usd.Prim], bool],
 ) -> None:
-    """Remove *layer_path* when no prim in it satisfies *has_content*."""
+    """Delete *layer_path* and its root reference when no prim in it satisfies *has_content*."""
     stage = Usd.Stage.Open(str(layer_path))
     if stage:
         for prim in stage.Traverse():
             if has_content(prim):
                 return
-
-    layer_path.unlink()
-    rebuild_root_references(asset_dir)
+    del stage
+    delete_side_layer(asset_dir, layer_path.name)
     logger.info("Removed empty %s from %s", layer_path.name, asset_dir.name)
-
-
-def rebuild_root_references(asset_dir: Path) -> None:
-    """Rebuild root composition arcs: geo via payload, others via references."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return
-
-    root_prim = stage.GetDefaultPrim()
-    if root_prim is None:
-        return
-
-    root_prim.GetReferences().ClearReferences()
-    root_prim.GetPayloads().ClearPayloads()
-
-    geo_path = asset_dir / ASWFLayerNames.GEO
-    if geo_path.exists():
-        root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
-
-    for layer_file in ASWFLayerNames.REFERENCE_ORDER:
-        if (asset_dir / layer_file).exists():
-            root_prim.GetReferences().AddReference(f"./{layer_file}")
-
-    stage.Save()
 
 
 # ── Stage metadata ──
 
 
 def read_stage_metadata_from_dir(asset_dir: Path) -> tuple[float, str]:
-    """Return ``(metersPerUnit, upAxis)`` from an asset's ``geo.usda``."""
-    geo_path = asset_dir / ASWFLayerNames.GEO
-    if geo_path.exists():
-        return read_stage_metadata(geo_path)
-    return 1.0, "Y"
+    """Return ``(metersPerUnit, upAxis)`` of the asset, read from its root file.
+
+    The root is what a scene references, so its metadata is what the
+    placement conforms to, whatever layers the asset keeps its geometry in.
+    """
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return 1.0, "Y"
+    return read_stage_metadata(root_file)
 
 
 # ── Root detection ──
@@ -579,20 +596,21 @@ def _name_tiebreak(candidates: list[Path], folder_name: str) -> Path | None:
 def get_geometry_bounds(
     asset_dir: Path,
 ) -> dict[str, dict[str, float]] | None:
-    """Return the asset's geometry bounds in meters, or ``None``."""
-    geo_path = asset_dir / ASWFLayerNames.GEO
-    if not geo_path.exists():
+    """Return the bounds of the asset's own geometry in meters, or ``None``.
+
+    Read from the composed root, so geometry in any layer counts (a
+    ``geo.usdc`` payload, the selected LOD variant); lights and nested
+    ``contents`` placements do not.
+    """
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return None
+    stage = Usd.Stage.Open(str(root_file))
+    root = stage.GetDefaultPrim() if stage is not None else None
+    if not root:
         return None
 
-    stage = Usd.Stage.Open(str(geo_path))
-    if stage is None:
-        return None
-
-    root = stage.GetDefaultPrim()
-    if root is None:
-        return None
-
-    rng = world_range(root, bbox_cache())
+    rng = _own_geometry_range(root, bbox_cache())
     if rng is None:
         return None
 
@@ -616,10 +634,27 @@ def get_geometry_bounds(
     }
 
 
+def _own_geometry_range(root: Usd.Prim, cache: UsdGeom.BBoxCache) -> Gf.Range3d | None:
+    """Union of the gprims and point instancers under *root*, skipping ``contents``."""
+    contents = root.GetPath().AppendChild(AssetScopeNames.CONTENTS)
+    total = Gf.Range3d()
+    prims = iter(Usd.PrimRange(root))
+    for prim in prims:
+        if prim.GetPath() == contents:
+            prims.PruneChildren()
+            continue
+        if prim.IsA(UsdGeom.Gprim) or prim.IsA(UsdGeom.PointInstancer):
+            rng = world_range(prim, cache)
+            if rng is not None:
+                total.UnionWith(rng)
+            prims.PruneChildren()
+    return None if total.IsEmpty() else total
+
+
 def get_mpu(asset_dir: Path) -> float:
-    """Return the asset's ``metersPerUnit`` (from ``geo.usda``), defaulting to 1.0."""
-    geo_path = asset_dir / ASWFLayerNames.GEO
-    return read_mpu(geo_path) if geo_path.exists() else 1.0
+    """Return the asset's ``metersPerUnit`` (from its root file), defaulting to 1.0."""
+    root_file = find_root_file(asset_dir)
+    return read_mpu(root_file) if root_file is not None else 1.0
 
 
 def unit_factor(asset_dir: Path) -> float:
@@ -630,7 +665,7 @@ def unit_factor(asset_dir: Path) -> float:
 
 def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
     """If *prim_path* is a nested-asset wrapper, return (group, prim_name)."""
-    marker = "/asset/contents/"
+    marker = f"/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/"
     idx = prim_path.find(marker)
     if idx >= 0:
         suffix = prim_path[idx + len(marker):]

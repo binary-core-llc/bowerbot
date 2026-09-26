@@ -33,6 +33,14 @@ class FolderDetection(BaseModel):
     reason: str = ""
 
 
+class LocalizedCopy(BaseModel):
+    """Files an intake copied; the lists name the ones from outside the source folder."""
+
+    files_copied: int
+    localized_layers: list[str] = Field(default_factory=list)
+    localized_assets: list[str] = Field(default_factory=list)
+
+
 class IntakeReport(BaseModel):
     """Outcome of copying a source folder into the project."""
 

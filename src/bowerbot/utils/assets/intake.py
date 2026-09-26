@@ -82,7 +82,7 @@ def _route_intake(
             return report
 
     folder_name = asset_path.stem
-    root_file = create_asset_folder(
+    root_file, copy = create_asset_folder(
         output_dir=assets_dir,
         asset_name=folder_name,
         geometry_file=asset_path,
@@ -93,7 +93,9 @@ def _route_intake(
         root_original_name=asset_path.name,
         root_canonical_name=root_file.name,
         was_renamed=asset_path.name != root_file.name,
-        files_copied=1,
+        files_copied=copy.files_copied,
+        localized_layers=copy.localized_layers,
+        localized_assets=copy.localized_assets,
     )
     _validate_intake(
         report, assets_dir,

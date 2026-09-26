@@ -11,6 +11,7 @@ from pathlib import Path
 from pxr import Usd
 
 from bowerbot.schemas import AssetFormat, ASWFLayerNames, HDRIFormat, TextureCategory
+from bowerbot.utils.core.asset_folder import resolve_library_file
 
 
 def copy_texture_to_project(source: Path, project_dir: Path) -> str:
@@ -29,17 +30,18 @@ def copy_texture_to_project(source: Path, project_dir: Path) -> str:
 
 
 def stage_scene_texture(
-    project_dir: Path | None, texture: str | None,
+    texture: str | None,
+    *,
+    library_dir: Path | None,
+    project_dir: Path | None,
 ) -> str | None:
-    """Copy a scene-level texture into ``<project>/textures/`` if it exists on disk."""
+    """Copy a scene-level texture from the library into ``<project>/textures/``; return its path."""
     if texture is None:
         return None
-    source = Path(texture)
-    if not source.exists():
-        return texture
     if project_dir is None:
         msg = "No project set; cannot copy scene-level texture."
         raise RuntimeError(msg)
+    source = resolve_library_file(texture, library_dir=library_dir, project_dir=project_dir)
     return copy_texture_to_project(source, project_dir)
 
 
@@ -60,9 +62,10 @@ def stage_asset_value(
     if (project_dir / ASWFLayerNames.TEXTURES / filename).exists():
         return project_rel
 
+    if src.is_absolute():
+        source = resolve_library_file(value, library_dir=library_dir, project_dir=project_dir)
+        return copy_texture_to_project(source, project_dir)
     candidates: list[Path] = []
-    if src.is_absolute() and src.exists():
-        candidates.append(src)
     if library_dir is not None and library_dir.exists():
         candidates.extend(library_dir.rglob(filename))
     for candidate in candidates:
@@ -70,9 +73,9 @@ def stage_asset_value(
             return copy_texture_to_project(candidate, project_dir)
 
     raise ValueError(
-        f"Cannot stage texture {value!r}: file not found in project's textures/, "
-        "in the library, or as an absolute path. Provide an absolute path to the "
-        "source file, or copy it into the library first.",
+        f"Cannot stage texture {value!r}: file not found in the project's textures/ "
+        "or in the asset library. Copy it into the library first, then pass its "
+        "library path.",
     )
 
 

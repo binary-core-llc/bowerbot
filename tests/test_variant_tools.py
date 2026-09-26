@@ -714,3 +714,28 @@ def test_select_scene_variant_unknown_set():
             "variant_name": "x",
         }))
         assert not r.success
+
+
+def test_side_layer_after_lod_setup_keeps_payloads_in_variants():
+    """Adding a material after the LOD setup never puts the geo payload back on the root."""
+    from pxr import Sdf
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state)
+        prim_path = placed.data["prim_path"]
+        asset_dir = project.path / "assets" / "chair"
+        (asset_dir / "geo_low.usda").write_text((asset_dir / "geo.usda").read_text())
+        r = asyncio.run(exec_tool(state, "setup_asset_geometry_variants", {
+            "prim_path": prim_path, "variant_set": "lod",
+            "variants": {"high": "./geo.usda", "low": "./geo_low.usda"},
+            "default_variant": "high",
+        }))
+        assert r.success, r.error
+
+        _make_material(state, f"{prim_path}/asset/Mesh")
+
+        root = Sdf.Layer.FindOrOpen(str(asset_dir / "chair.usda"))
+        root.Reload()
+        payloads = root.GetPrimAtPath("/chair").payloadList
+        assert not payloads.GetAddedOrExplicitItems()

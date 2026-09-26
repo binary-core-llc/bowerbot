@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 from bowerbot.schemas import ASWFLayerNames, ProceduralMaterialParams
@@ -15,6 +14,7 @@ from bowerbot.utils import material_utils
 from bowerbot.utils.core.asset_folder import (
     check_shared_modification,
     resolve_asset_dir_for_prim,
+    resolve_library_file,
     to_asset_local,
 )
 
@@ -77,12 +77,12 @@ def bind_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Copy a material from a file into the asset and bind it to a prim."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
-    material_file = Path(params["material_file"])
+    material_file = resolve_library_file(
+        params["material_file"],
+        library_dir=state.library_dir,
+        project_dir=state.project_dir,
+    )
     material_prim_path = params.get("material_prim_path")
-
-    if not material_file.exists():
-        msg = f"Material file not found: {material_file}"
-        raise ValueError(msg)
 
     asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
     if asset_dir is None or ref_prim_path is None:

@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from bowerbot.schemas import AssetScopeNames, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import assets, inspection_utils, stage_utils
 from bowerbot.utils.core import attributes
@@ -164,7 +165,8 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             raise RuntimeError(msg)
         group, prim_name = nested
 
-        container_prim_path = prim_path.split("/asset/contents/")[0]
+        contents_marker = f"/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/"
+        container_prim_path = prim_path.split(contents_marker)[0]
         local = world_to_local_point(
             stage, container_prim_path, tx, ty, tz,
         )

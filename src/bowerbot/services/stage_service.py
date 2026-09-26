@@ -9,7 +9,7 @@ import logging
 from typing import Any
 
 from bowerbot.state import SceneState
-from bowerbot.utils import asset_intake_utils, inspection_utils, stage_utils
+from bowerbot.utils import assets, inspection_utils, stage_utils
 from bowerbot.utils.core import attributes
 from bowerbot.utils.core.asset_folder import parse_nested_contents_path, resolve_asset_dir_for_prim
 from bowerbot.utils.core.integrity import rewrite_refs, scrub_dangling_refs
@@ -116,7 +116,7 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
         group, prim_name = nested
-        success = asset_intake_utils.remove_nested_asset_reference(
+        success = assets.nested.remove_nested_asset_reference(
             container_dir, group, prim_name,
         )
         if not success:
@@ -171,7 +171,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             msg = f"Failed to compute world-to-local for {container_prim_path}"
             raise RuntimeError(msg)
 
-        success = asset_intake_utils.update_nested_asset_transform(
+        success = assets.nested.update_nested_asset_transform(
             container_dir, group, prim_name,
             translate=local,
             rotate=(0.0, ry, 0.0),

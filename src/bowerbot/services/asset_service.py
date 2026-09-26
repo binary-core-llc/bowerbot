@@ -19,7 +19,7 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.state import SceneState
-from bowerbot.utils import asset_intake_utils, layout_utils, stage_utils
+from bowerbot.utils import assets, layout_utils, stage_utils
 from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
     get_geometry_bounds,
@@ -65,7 +65,7 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     assets_dir = state.resolve_assets_dir()
     try:
-        report = asset_intake_utils.prepare_asset(
+        report = assets.intake.prepare_asset(
             asset_path, assets_dir,
             library_dir=state.library_dir,
             fix_root_prim=params.get("fix_root_prim", False),
@@ -97,8 +97,8 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "asset": asset_name,
         "position": {"x": tx, "y": ty, "z": tz},
         "rotation_y": ry,
-        "intake": asset_intake_utils.intake_summary(report),
-        "message": asset_intake_utils.placement_message(asset_name, prim_path, report),
+        "intake": assets.intake.intake_summary(report),
+        "message": assets.intake.placement_message(asset_name, prim_path, report),
     }
 
 
@@ -147,7 +147,7 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                 f"set the entry's 'name'.",
             )
             continue
-        target = asset_intake_utils.intake_target_name(
+        target = assets.intake.intake_target_name(
             asset_path, state.library_dir,
         )
         prior = folder_sources.setdefault(target, asset_path)
@@ -212,7 +212,7 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     intake_problems: list[str] = []
     for path in folder_sources.values():
         try:
-            reports[path] = asset_intake_utils.prepare_asset(
+            reports[path] = assets.intake.prepare_asset(
                 path, assets_dir,
                 library_dir=state.library_dir,
                 fix_root_prim=fix_prim[path],
@@ -317,7 +317,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         raise ValueError(msg)
 
     assets_dir = state.resolve_assets_dir()
-    report = asset_intake_utils.prepare_asset(
+    report = assets.intake.prepare_asset(
         asset_path, assets_dir,
         library_dir=state.library_dir,
         fix_root_prim=params.get("fix_root_prim", False),
@@ -347,7 +347,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
     try:
-        asset_intake_utils.add_nested_asset_reference(
+        assets.nested.add_nested_asset_reference(
             container_dir=container_dir,
             group=group,
             prim_name=prim_name,
@@ -377,7 +377,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "container": container_dir.name,
         "position": {"x": tx, "y": ty, "z": tz},
         "rotation_y": ry,
-        "intake": asset_intake_utils.intake_summary(report),
+        "intake": assets.intake.intake_summary(report),
         "message": (
             f"Placed {asset_name} inside {container_dir.name} at {composed_path}"
         ),
@@ -435,7 +435,7 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[s
             )
             raise ValueError(msg)
 
-        removed = asset_intake_utils.cleanup_unused_contents_in_folder(asset_dir)
+        removed = assets.nested.cleanup_unused_contents_in_folder(asset_dir)
         state.reopen_stage()
         logger.info(
             "Cleaned %d empty group(s) from %s/contents",
@@ -459,7 +459,7 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[s
             continue
         if not (entry / ASWFLayerNames.CONTENTS).exists():
             continue
-        removed = asset_intake_utils.cleanup_unused_contents_in_folder(entry)
+        removed = assets.nested.cleanup_unused_contents_in_folder(entry)
         if removed:
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)
@@ -488,10 +488,10 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     name = params.get("name")
 
     if name:
-        results = [asset_intake_utils.freeze_one_asset(assets_dir, name)]
+        results = [assets.freeze.freeze_one_asset(assets_dir, name)]
     else:
         results = [
-            asset_intake_utils.freeze_one_asset(assets_dir, entry.name)
+            assets.freeze.freeze_one_asset(assets_dir, entry.name)
             for entry in sorted(assets_dir.iterdir())
             if entry.is_dir() and (entry / ASWFLayerNames.GEO).exists()
         ]

@@ -914,7 +914,11 @@ src/bowerbot/
                                #   namespace edits, prim children
     inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
-    asset_intake_utils.py      #   intake_folder, intake_usdz, create_asset_folder, ASWF
+    assets/                    #   Assets, split into small modules:
+      intake.py                #     prepare_asset: bring a file or folder in as an ASWF asset
+      folders.py               #     whole-folder intake: copies, path rewrites, root detection
+      aswf.py                  #     wrap loose files into ASWF folders; root metadata
+      freeze.py  nested.py     #     bake root transforms; nested assets in contents.usda
     library_utils.py           #   scan_library, find_package_for
     light_utils.py             #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle,

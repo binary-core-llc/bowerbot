@@ -7,6 +7,7 @@ import asyncio
 import tempfile
 from pathlib import Path
 
+import httpx
 from mcp.shared.memory import create_connected_server_and_client_session
 
 from bowerbot import mcp_server, tool_router
@@ -68,8 +69,8 @@ def test_http_security_locks_to_configured_origin():
     assert "http://evil.test" not in s.allowed_origins
 
 
-def test_mcp_app_mounts_configured_path():
-    """build_app mounts the server at the configured path."""
+def test_mcp_app_serves_configured_path():
+    """build_app serves the MCP endpoint at the configured path."""
     with tempfile.TemporaryDirectory() as tmp:
         settings = Settings(
             mode="mcp",
@@ -79,6 +80,36 @@ def test_mcp_app_mounts_configured_path():
         )
         app = mcp_server.build_app(settings)
         assert [r.path for r in app.routes] == ["/bowerbot"]
+
+
+def test_http_app_answers_the_configured_path_without_a_redirect():
+    """POST /mcp is served directly; a Mount 307-redirected every request to /mcp/."""
+    with tempfile.TemporaryDirectory() as tmp:
+        settings = Settings(
+            mode="mcp", mcp={"transport": "http"},
+            projects_dir=Path(tmp) / "scenes", assets_dir=Path(tmp) / "assets",
+        )
+        initialize = {
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18", "capabilities": {},
+                "clientInfo": {"name": "test", "version": "0"},
+            },
+        }
+        headers = {"Accept": "application/json, text/event-stream"}
+        app = mcp_server.build_app(settings)
+
+        async def post() -> httpx.Response:
+            async with app.router.lifespan_context(app):
+                transport = httpx.ASGITransport(app=app)
+                async with httpx.AsyncClient(
+                    transport=transport, base_url="http://127.0.0.1:8181",
+                ) as client:
+                    return await client.post("/mcp", json=initialize, headers=headers)
+
+        r = asyncio.run(post())
+        assert r.status_code == 200, (r.status_code, r.headers.get("location"))
+        assert "bowerbot" in r.text
 
 
 # ── tool_router ──

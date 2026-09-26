@@ -174,8 +174,10 @@ and asset-level lights — provide the `prim_path`.
 
 If the result includes a `texture_file` field (DomeLight with HDRI),
 the texture file still exists in the project's `textures/` folder.
-Ask the user if they want to delete it. If they confirm, use
-`delete_project_texture` with the file name.
+Ask the user if they want to delete it. If they confirm, call
+`delete_project_texture` with the result's `texture_name` (just the
+file name, e.g. `studio.exr`); it deletes only the project's copy,
+never the user's library.
 
 ### CRITICAL: Do NOT switch light levels
 If a light was created as an **asset light**, it MUST stay an asset

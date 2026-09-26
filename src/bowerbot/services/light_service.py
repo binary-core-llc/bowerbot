@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from pxr import Sdf
@@ -240,4 +241,5 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     }
     if texture_file:
         data["texture_file"] = texture_file
+        data["texture_name"] = Path(texture_file).name
     return data

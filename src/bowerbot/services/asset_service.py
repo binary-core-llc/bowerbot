@@ -24,6 +24,7 @@ from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
     get_geometry_bounds,
     get_mpu,
+    require_folder_entry,
     resolve_asset_dir_for_prim,
     resolve_asset_file_path,
 )
@@ -528,7 +529,7 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
     project = state.require_project()
     name = params["name"]
     assets_dir = state.resolve_assets_dir()
-    asset_path = assets_dir / name
+    asset_path = require_folder_entry(assets_dir, name)
 
     if not asset_path.exists():
         msg = f"Asset not found: {name}"
@@ -545,10 +546,10 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
         )
         raise ValueError(msg)
 
-    if asset_path.is_dir():
+    if asset_path.is_dir() and not asset_path.is_symlink():
         shutil.rmtree(asset_path)
     else:
-        asset_path.unlink()
+        asset_path.unlink()  # a file, or a link: never what a link points to
     logger.info("Deleted project asset: %s", asset_path)
 
     return {
@@ -565,7 +566,7 @@ def delete_project_texture(state: SceneState, params: dict[str, Any]) -> dict[st
     project_dir = state.require_project().path
     file_name = params["file_name"]
     tex_dir = project_dir / ASWFLayerNames.TEXTURES
-    tex_file = tex_dir / file_name
+    tex_file = require_folder_entry(tex_dir, file_name)
 
     if not tex_file.exists():
         msg = f"Texture file not found: {ASWFLayerNames.TEXTURES}/{file_name}"

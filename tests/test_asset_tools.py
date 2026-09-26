@@ -753,6 +753,67 @@ def test_delete_project_asset_refuses_when_referenced():
         assert not r.success
 
 
+def test_delete_project_asset_never_leaves_the_assets_folder():
+    """'..', a nested path or an absolute path is refused and nothing is deleted."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        (outside / "keep.txt").write_text("keep")
+
+        for name in ("..", "sub/../..", str(outside)):
+            r = asyncio.run(exec_tool(state, "delete_project_asset", {"name": name}))
+            assert not r.success, name
+            assert "is not an entry of" in r.error
+        assert project.scene_path.exists()
+        assert (outside / "keep.txt").exists()
+
+
+def test_delete_project_texture_never_leaves_the_textures_folder():
+    """A texture name that points outside textures/ is refused and nothing is deleted."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        (project.path / "textures").mkdir(exist_ok=True)
+        outside = tmp_path / "keep.txt"
+        outside.write_text("keep")
+
+        for name in ("../scene.usda", str(outside)):
+            r = asyncio.run(exec_tool(state, "delete_project_texture", {"file_name": name}))
+            assert not r.success, name
+        assert project.scene_path.exists()
+        assert outside.exists()
+
+
+def test_freeze_asset_refuses_a_folder_outside_the_project():
+    """freeze_asset never rewrites geo.usda outside the project's assets folder."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        library_asset = tmp_path / "library_chair"
+        library_asset.mkdir()
+        geo = _asset(library_asset, "geo")
+        before = geo.read_bytes()
+
+        r = asyncio.run(exec_tool(state, "freeze_asset", {"name": str(library_asset)}))
+        assert not r.success
+        assert geo.read_bytes() == before
+
+
+def test_delete_project_asset_removes_a_link_not_its_target():
+    """A symlinked entry is unlinked; the folder it points to is left alone."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        target = tmp_path / "library_chair"
+        target.mkdir()
+        (target / "keep.txt").write_text("keep")
+        project.assets_dir.mkdir(exist_ok=True)
+        (project.assets_dir / "linked").symlink_to(target, target_is_directory=True)
+
+        r = asyncio.run(exec_tool(state, "delete_project_asset", {"name": "linked"}))
+        assert r.success, r.error
+        assert not (project.assets_dir / "linked").exists()
+        assert (target / "keep.txt").exists()
+
+
 # ── cleanup_unused_contents ──
 
 

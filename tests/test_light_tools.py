@@ -173,6 +173,31 @@ def test_create_dome_light_with_texture():
         assert prim.GetTypeName() == "DomeLight"
 
 
+def test_remove_dome_light_names_the_texture_to_delete():
+    """remove_light hands back the name delete_project_texture takes; only the project copy goes."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        hdri = tmp_path / "studio.hdr"
+        hdri.write_bytes(b"fake-hdri")
+        made = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "DomeLight", "light_name": "Env", "texture": str(hdri),
+        }))
+        assert made.success, made.error
+
+        removed = asyncio.run(exec_tool(state, "remove_light", {
+            "prim_path": made.data["prim_path"],
+        }))
+        assert removed.success, removed.error
+        assert removed.data["texture_name"] == "studio.hdr"
+
+        deleted = asyncio.run(exec_tool(state, "delete_project_texture", {
+            "file_name": removed.data["texture_name"],
+        }))
+        assert deleted.success, deleted.error
+        assert not (project.path / "textures" / "studio.hdr").exists()
+        assert hdri.exists()
+
+
 def test_create_rect_light():
     """Creates a RectLight with width and height."""
     with tempfile.TemporaryDirectory() as tmp:

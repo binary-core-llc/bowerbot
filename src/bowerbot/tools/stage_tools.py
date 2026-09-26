@@ -210,8 +210,10 @@ TOOLS: list[Tool] = [
             "({rels_touched: [...]}) listing them. Other targets, including "
             "ones into unselected variants, are kept. Handles top-level "
             "placements, whole groups, and prims nested inside a referenced "
-            "asset's contents.usda. Removing /Scene clears everything under "
-            "it and keeps the scene root."
+            "asset's contents.usda. A group the removal leaves empty (e.g. "
+            "/Scene/Props after its last placement) is removed too, unless it "
+            "carries its own transform or other opinions. Removing /Scene "
+            "clears everything under it and keeps the scene root."
         ),
         parameters={
             "type": "object",

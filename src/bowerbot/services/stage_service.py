@@ -19,6 +19,7 @@ from bowerbot.utils.core.integrity import (
     clear_scene_prim,
     composed_prim_paths,
     drop_refs_to_vanished,
+    remove_empty_groups,
     remove_scene_prim,
     rewrite_refs,
 )
@@ -123,6 +124,8 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     rewrites = rewrite_refs(
         stage, {old_path: new_path},
     )
+    remove_empty_groups(stage, str(Sdf.Path(old_path).GetParentPath()))
+    stage_utils.save_stage(stage)
     logger.info("Renamed %s -> %s", old_path, new_path)
     return {
         "old_path": old_path,

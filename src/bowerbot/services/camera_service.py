@@ -13,6 +13,7 @@ from pxr import Sdf
 from bowerbot.schemas import CameraDefaults, CameraParams, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import camera_utils, stage_utils, variants
+from bowerbot.utils.core.integrity import remove_scene_prim
 from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
 from bowerbot.utils.core.values import to_vec3, unpack_vec3
 
@@ -129,17 +130,13 @@ def remove_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     camera_utils.require_camera(stage, prim_path)
 
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
-    success = stage_utils.remove_prim(stage, prim_path)
-    if not success:
-        msg = f"Failed to remove camera {prim_path}"
-        raise RuntimeError(msg)
-
-    stage_utils.save_stage(stage)
+    scrubbed = remove_scene_prim(stage, prim_path)
     state.touch_project()
 
     logger.info("Removed camera at %s", prim_path)
     return {
         "prim_path": prim_path,
+        "scrubbed_dangling_refs": scrubbed,
         "suspect_variant_sets": variants.suspects.suspect_variant_sets_on_scene_carrier(
             stage, carrier_path,
         ),

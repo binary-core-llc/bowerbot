@@ -18,6 +18,7 @@ from bowerbot.schemas import (
     ScatterPrototype,
     ScatterRules,
     ScatterTuning,
+    SceneNamespace,
     SceneObject,
 )
 from bowerbot.utils.core.bounds import world_bounds
@@ -181,7 +182,7 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
     prototypes = []
     for target in instancer.GetPrototypesRel().GetTargets():
         proto = stage.GetPrimAtPath(target)
-        child = proto.GetChild("asset") if proto.IsValid() else proto
+        child = proto.GetChild(SceneNamespace.ASSET_CHILD) if proto.IsValid() else proto
         refs = get_prim_ref_paths(child) if child and child.IsValid() else []
         prototypes.append(refs[0] if refs else str(target))
     return {

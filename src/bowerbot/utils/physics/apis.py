@@ -348,18 +348,31 @@ def _remove_api_from_layer(
 
 
 def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
-    """Drop *api_name* from prim's apiSchemas list-op; True if changed."""
+    """Drop *api_name* from prim's apiSchemas list-op; True if changed.
+
+    The op keeps its kind. An explicit list stays explicit; a prepend/append
+    list never becomes one, because an explicit list in this layer would wipe
+    every API schema weaker layers apply to the prim. An op left empty is
+    cleared.
+    """
     list_op = prim_spec.GetInfo("apiSchemas")
     if list_op is None:
         return False
-    new_op = Sdf.TokenListOp()
-    touched = False
-    for slot in ("prependedItems", "appendedItems", "explicitItems"):
-        items = list(getattr(list_op, slot, ()))
-        if api_name in items:
-            items.remove(api_name)
-            touched = True
-        setattr(new_op, slot, items)
-    if touched:
+    if list_op.isExplicit:
+        if api_name not in list_op.explicitItems:
+            return False
+        new_op = Sdf.TokenListOp.CreateExplicit(
+            [item for item in list_op.explicitItems if item != api_name],
+        )
+    else:
+        if api_name not in list_op.prependedItems and api_name not in list_op.appendedItems:
+            return False
+        new_op = Sdf.TokenListOp()
+        new_op.prependedItems = [item for item in list_op.prependedItems if item != api_name]
+        new_op.appendedItems = [item for item in list_op.appendedItems if item != api_name]
+        new_op.deletedItems = list(list_op.deletedItems)
+    if new_op.isExplicit or new_op.prependedItems or new_op.appendedItems or new_op.deletedItems:
         prim_spec.SetInfo("apiSchemas", new_op)
-    return touched
+    else:
+        prim_spec.ClearInfo("apiSchemas")
+    return True

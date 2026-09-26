@@ -7,8 +7,11 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Usd, UsdGeom, UsdPhysics
+from pxr import Gf, Usd, UsdGeom, UsdPhysics, UsdShade
 
+from bowerbot.config import UpAxis
+from bowerbot.project import Project
+from bowerbot.state import SceneState
 from tests._helpers import exec_tool, make_state
 
 
@@ -1098,3 +1101,179 @@ def test_remove_limit_api():
         }))
         assert r.success, r.error
         assert r.data["removed"] is True
+
+
+# ── gravity is authored only when asked ──
+
+
+def _gravity(project):
+    stage = Usd.Stage.Open(str(project.scene_path))
+    scene = UsdPhysics.Scene(stage.GetPrimAtPath("/Scene/Physics/PhysicsScene"))
+    direction = scene.GetGravityDirectionAttr().Get()
+    return (
+        round(scene.GetGravityMagnitudeAttr().Get(), 4),
+        tuple(round(v, 4) for v in direction),
+    )
+
+
+def test_new_physics_scene_gravity_points_down_the_up_axis():
+    """On a Z-up stage a new physics scene pulls along -Z, however it gets created."""
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Project.create(Path(tmp), "zup", up_axis=UpAxis.Z)
+        state = SceneState()
+        state.project = project
+        state.stage_path = project.scene_path
+        asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+        placed = _place(Path(tmp), state)
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": placed.data["prim_path"],
+            "api_name": "PhysicsCollisionAPI",
+            "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert _gravity(project) == (9.81, (0.0, 0.0, -1.0))
+
+        r = asyncio.run(exec_tool(state, "list_physics_scenes", {}))
+        assert r.data["scenes"][0]["gravity_magnitude"] == 9.81
+        assert r.data["scenes"][0]["gravity_direction"] == [0.0, 0.0, -1.0]
+
+
+def test_scene_scope_physics_keeps_authored_gravity():
+    """Applying a scene-scope API never resets the gravity the user set."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state)
+        asyncio.run(exec_tool(state, "setup_physics_scene", {
+            "gravity_magnitude": 1.62, "gravity_direction": [1.0, 0.0, 0.0],
+        }))
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": placed.data["prim_path"],
+            "api_name": "PhysicsRigidBodyAPI",
+            "scope": "scene",
+        }))
+        assert r.success, r.error
+        assert _gravity(project) == (1.62, (1.0, 0.0, 0.0))
+
+
+def test_setup_physics_scene_changes_only_the_values_given():
+    """Passing only a magnitude keeps the direction set earlier, and vice versa."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        asyncio.run(exec_tool(state, "setup_physics_scene", {
+            "gravity_direction": [1.0, 0.0, 0.0],
+        }))
+
+        r = asyncio.run(exec_tool(state, "setup_physics_scene", {
+            "gravity_magnitude": 3.0,
+        }))
+        assert r.success, r.error
+        assert r.data["gravity_direction"] == [1.0, 0.0, 0.0]
+        assert _gravity(project) == (3.0, (1.0, 0.0, 0.0))
+
+
+# ── asset scope on the placement wrapper ──
+
+
+def test_asset_scope_on_placement_wrapper_authors_on_asset_root():
+    """The wrapper path a placement returns maps onto the asset's root prim."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        wrapper = _place(tmp_path, state).data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": wrapper,
+            "api_name": "PhysicsRigidBodyAPI",
+            "scope": "asset",
+        }))
+        assert r.success, r.error
+        assert r.data["asset_prim_path"] == "/box"
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(f"{wrapper}/asset").HasAPI(UsdPhysics.RigidBodyAPI)
+
+
+# ── scene-scope API removal keeps the asset's own API schemas ──
+
+
+def test_remove_scene_scope_api_keeps_asset_api_schemas():
+    """Removing a scene-scope API leaves the asset's MaterialBindingAPI alone."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "crate")
+        asset_stage = Usd.Stage.Open(str(asset))
+        material = UsdShade.Material.Define(asset_stage, "/crate/Looks/Red")
+        UsdShade.MaterialBindingAPI.Apply(
+            asset_stage.GetPrimAtPath("/crate/Mesh"),
+        ).Bind(material)
+        asset_stage.Save()
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset), "asset_name": "Crate", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert placed.success, placed.error
+        mesh = f"{placed.data['prim_path']}/asset/Mesh"
+
+        for tool in ("apply_physics_api", "remove_physics_api"):
+            r = asyncio.run(exec_tool(state, tool, {
+                "prim_path": mesh,
+                "api_name": "PhysicsCollisionAPI",
+                "scope": "scene",
+            }))
+            assert r.success, r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(mesh).GetAppliedSchemas() == ["MaterialBindingAPI"]
+
+
+# ── removals drop the rel targets they leave dangling ──
+
+
+def test_remove_physics_scene_drops_simulation_owner():
+    """A body's simulationOwner at the removed scene is dropped and reported."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        body = _place(tmp_path, state).data["prim_path"]
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(exec_tool(state, "apply_physics_api", {
+            "prim_path": body,
+            "api_name": "PhysicsRigidBodyAPI",
+            "scope": "scene",
+            "relationships": {
+                "physics:simulationOwner": ["/Scene/Physics/PhysicsScene"],
+            },
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_physics_scene", {
+            "name": "PhysicsScene",
+        }))
+        assert r.success, r.error
+        touched = r.data["scrubbed_dangling_refs"]["rels_touched"]
+        assert [t["relationship"] for t in touched] == ["physics:simulationOwner"]
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        owner = stage.GetPrimAtPath(body).GetRelationship("physics:simulationOwner")
+        assert owner.GetTargets() == []
+
+
+def test_remove_joint_drops_targets_at_it():
+    """A rel that named the removed joint is dropped."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        joint_path = _joint_with_bodies(tmp_path, state)
+        stage = Usd.Stage.Open(str(project.scene_path))
+        stage.DefinePrim("/Scene/Rig", "Scope").CreateRelationship("watch").SetTargets(
+            [joint_path],
+        )
+        stage.Save()
+
+        r = asyncio.run(exec_tool(state, "remove_joint", {
+            "scope": "scene", "prim_path": joint_path,
+        }))
+        assert r.success, r.error
+        assert r.data["removed"] is True
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath("/Scene/Rig").GetRelationship("watch").GetTargets() == []
+

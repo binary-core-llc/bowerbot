@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import numpy as np
 from pxr import Gf, Sdf
 
 from bowerbot.schemas.transforms import Vec3
@@ -38,6 +39,15 @@ def usd_to_json(value: object) -> object:
         except (TypeError, ValueError):
             return [str(c) for c in items]
     return str(value)
+
+
+def from_float32(value: float) -> float:
+    """A float32 read from USD as the shortest decimal that is the same float32.
+
+    USD hands float attributes back widened to double (9.81 reads as
+    9.8100004196167); this gives back the 9.81 that was authored.
+    """
+    return float(str(np.float32(value)))
 
 
 def json_to_usd(value: object, type_name: Sdf.ValueTypeName) -> object:

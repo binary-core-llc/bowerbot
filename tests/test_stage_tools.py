@@ -150,6 +150,41 @@ def test_remove_prim():
         assert not stage.GetPrimAtPath(prim_path).IsValid()
 
 
+def test_remove_prim_keeps_links_into_unselected_variants():
+    """Removing one prim drops only the rel targets under it, never a link into
+    an unselected variant elsewhere; removing that prim drops them all."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        table = _place(tmp_path, state).data["prim_path"]
+        stage = Usd.Stage.Open(str(project.scene_path))
+        chest = stage.DefinePrim("/Scene/Props/Chest", "Xform")
+        variant_set = chest.GetVariantSets().AddVariantSet("state")
+        for name, child in (("open", "Lid"), ("closed", "Body")):
+            variant_set.AddVariant(name)
+            variant_set.SetVariantSelection(name)
+            with variant_set.GetVariantEditContext():
+                stage.DefinePrim(f"/Scene/Props/Chest/{child}", "Cube")
+        link = stage.DefinePrim("/Scene/Rig", "Scope").CreateRelationship("watch")
+        link.SetTargets(["/Scene/Props/Chest/Body", "/Scene/Props/Chest/Lid", table])
+        stage.Save()
+
+        r = asyncio.run(exec_tool(state, "remove_prim", {"prim_path": table}))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        watch = stage.GetPrimAtPath("/Scene/Rig").GetRelationship("watch")
+        assert [str(t) for t in watch.GetTargets()] == [
+            "/Scene/Props/Chest/Body", "/Scene/Props/Chest/Lid",
+        ]
+
+        r = asyncio.run(exec_tool(state, "remove_prim", {
+            "prim_path": "/Scene/Props/Chest",
+        }))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        watch = stage.GetPrimAtPath("/Scene/Rig").GetRelationship("watch")
+        assert watch.GetTargets() == []
+
+
 def test_remove_prim_invalid_path():
     """Fails for a nonexistent prim."""
     with tempfile.TemporaryDirectory() as tmp:

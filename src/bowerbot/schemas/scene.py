@@ -11,3 +11,5 @@ class SceneNamespace:
     CAMERAS = "/Scene/Cameras"
     LIGHTING = "/Scene/Lighting"
     PHYSICS = "/Scene/Physics"
+    # Child of every placement wrapper that carries the asset reference.
+    ASSET_CHILD = "asset"

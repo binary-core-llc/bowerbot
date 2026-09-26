@@ -196,11 +196,13 @@ TOOLS: list[Tool] = [
     Tool(
         name="remove_prim",
         description=(
-            "Remove an object from the scene by its prim path. Also scrubs "
-            "any relationship targets left dangling by the removal and "
-            "returns scrubbed_dangling_refs ({rels_touched: [...]}) listing "
-            "what was cleaned up. Handles top-level placements and prims "
-            "nested inside a referenced asset's contents.usda."
+            "Remove an object from the scene by its prim path. Also drops "
+            "the relationship targets that pointed at the removed prim or "
+            "anything under it, and returns scrubbed_dangling_refs "
+            "({rels_touched: [...]}) listing them. Other targets, including "
+            "ones into unselected variants, are kept. Handles top-level "
+            "placements and prims nested inside a referenced asset's "
+            "contents.usda."
         ),
         parameters={
             "type": "object",

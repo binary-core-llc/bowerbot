@@ -11,7 +11,7 @@ from typing import Any
 
 from pxr import Sdf, Usd, UsdShade
 
-from bowerbot.schemas import VariantCategory
+from bowerbot.schemas import SceneNamespace, VariantCategory
 from bowerbot.state import SceneState
 from bowerbot.utils import assets, variants
 from bowerbot.utils.core.asset_folder import (
@@ -452,7 +452,7 @@ def add_scene_model_selection_variant(
     wrapper = stage.GetPrimAtPath(prim_path)
     if not wrapper or not wrapper.IsValid():
         raise ValueError(f"Scene placement not found: {prim_path}")
-    asset_child = f"{prim_path}/asset"
+    asset_child = f"{prim_path}/{SceneNamespace.ASSET_CHILD}"
     if not stage.GetPrimAtPath(asset_child).IsValid():
         raise ValueError(
             f"{prim_path} has no '/asset' child — not a valid placement wrapper.",

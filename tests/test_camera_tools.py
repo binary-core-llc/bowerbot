@@ -243,6 +243,30 @@ def test_remove_camera():
         assert not stage.GetPrimAtPath(path).IsValid()
 
 
+def test_remove_camera_drops_targets_at_it():
+    """A render-settings camera rel at the removed camera is dropped and reported."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        path = asyncio.run(exec_tool(state, "create_camera", {
+            "camera_name": "Hero",
+        })).data["prim_path"]
+        stage = Usd.Stage.Open(str(project.scene_path))
+        stage.DefinePrim("/Render/Settings", "RenderSettings").CreateRelationship(
+            "camera",
+        ).SetTargets([path])
+        stage.Save()
+
+        r = asyncio.run(exec_tool(state, "remove_camera", {"prim_path": path}))
+        assert r.success, r.error
+        touched = r.data["scrubbed_dangling_refs"]["rels_touched"]
+        assert [t["prim_path"] for t in touched] == ["/Render/Settings"]
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath("/Render/Settings").GetRelationship(
+            "camera",
+        ).GetTargets() == []
+
+
 def test_remove_camera_rejects_non_camera():
     """Removing a non-camera prim via remove_camera is refused."""
     with tempfile.TemporaryDirectory() as tmp:

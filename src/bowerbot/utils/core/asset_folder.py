@@ -24,6 +24,7 @@ from bowerbot.schemas import (
     DetectionOutcome,
     FolderDetection,
     IntakeRules,
+    SceneNamespace,
 )
 from bowerbot.utils.core.bounds import bbox_cache, world_range
 from bowerbot.utils.core.dependencies import resolve as resolve_dependencies
@@ -299,8 +300,14 @@ def check_shared_modification(
 def normalize_asset_prim_path(
     prim_path: str, ref_prim_path: str, default_prim_name: str,
 ) -> str:
-    """Strip the scene namespace then anchor under the asset's default prim."""
-    if prim_path == ref_prim_path:
+    """Strip the scene namespace then anchor under the asset's default prim.
+
+    The prim carrying the reference and its parent (a placement's wrapper,
+    whose ``asset`` child references the asset) both map to the asset's root.
+    """
+    ref = Sdf.Path(ref_prim_path)
+    wrapper = ref.GetParentPath() if ref.name == SceneNamespace.ASSET_CHILD else ref
+    if prim_path in (ref_prim_path, str(wrapper)):
         return f"/{default_prim_name}"
     if prim_path.startswith(f"{ref_prim_path}/"):
         return to_layer_local_path(
@@ -639,7 +646,8 @@ def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
         )
         raise ValueError(msg)
 
-    if "/asset/" in prim_path or prim_path.endswith("/asset"):
+    marker = f"/{SceneNamespace.ASSET_CHILD}"
+    if f"{marker}/" in prim_path or prim_path.endswith(marker):
         msg = (
             f"Path {prim_path} is inside a referenced top-level asset. "
             f"Only the scene-level wrapper (/Scene/<Group>/<Name>) and "

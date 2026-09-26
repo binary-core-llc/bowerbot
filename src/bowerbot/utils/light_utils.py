@@ -292,27 +292,27 @@ def update_light_in_folder(
     )
 
 
-def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
+def remove_light_from_folder(asset_dir: Path, light_name: str) -> bool:
     """Remove *light_name* from *asset_dir*'s ``lgt.usda``.
 
-    Deletes the layer entirely when no lights remain.
+    Deletes the layer entirely when no lights remain. Returns False when
+    ``lgt.usda`` holds no light of that name.
     """
     lgt_path = asset_dir / ASWFLayerNames.LGT
     if not lgt_path.exists():
-        return
+        return False
 
     default_prim_name = resolve_default_prim_name(asset_dir)
     light_prim_path = Sdf.Path(f"/{default_prim_name}/lgt/{light_name}")
 
     lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
-    if lgt_layer is None:
-        return
+    if lgt_layer is None or not lgt_layer.GetPrimAtPath(light_prim_path):
+        return False
 
-    if lgt_layer.GetPrimAtPath(light_prim_path):
-        edit = Sdf.BatchNamespaceEdit()
-        edit.Add(light_prim_path, Sdf.Path.emptyPath)
-        lgt_layer.Apply(edit)
-        lgt_layer.Save()
+    edit = Sdf.BatchNamespaceEdit()
+    edit.Add(light_prim_path, Sdf.Path.emptyPath)
+    lgt_layer.Apply(edit)
+    lgt_layer.Save()
 
     variants_path = asset_dir / ASWFLayerNames.VARIANTS
     if variants_path.exists():
@@ -324,6 +324,7 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     remove_empty_layer(
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),
     )
+    return True
 
 
 def list_lights_in_folder(asset_dir: Path) -> list[dict[str, Any]]:

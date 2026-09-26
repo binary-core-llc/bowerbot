@@ -26,6 +26,7 @@ from bowerbot.utils.core.asset_folder import (
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
+from bowerbot.utils.core.integrity import remove_scene_prim
 from bowerbot.utils.core.naming import validate_prim_name
 from bowerbot.utils.core.schema_registry import schema_class
 from bowerbot.utils.core.values import usd_to_json
@@ -124,20 +125,16 @@ def create_joint_asset(
     }
 
 
-def remove_joint_scene(stage: Usd.Stage, prim_path: str) -> bool:
-    """Remove a scene-level joint prim from ``scene.usda``."""
-    layer = stage.GetRootLayer()
-    spec = layer.GetPrimAtPath(prim_path)
-    if spec is None:
-        return False
-    if not _is_supported_joint_spec(spec):
-        return False
-    edit = Sdf.BatchNamespaceEdit()
-    edit.Add(Sdf.Path(prim_path), Sdf.Path.emptyPath)
-    if not layer.Apply(edit):
-        return False
-    layer.Save()
-    return True
+def remove_joint_scene(stage: Usd.Stage, prim_path: str) -> dict[str, Any] | None:
+    """Remove a scene-level joint prim from ``scene.usda`` and the rel targets naming it.
+
+    Returns the dropped-targets report, or ``None`` if ``scene.usda``
+    holds no supported joint at ``prim_path``.
+    """
+    spec = stage.GetRootLayer().GetPrimAtPath(prim_path)
+    if spec is None or not _is_supported_joint_spec(spec):
+        return None
+    return remove_scene_prim(stage, prim_path)
 
 
 def remove_joint_asset(asset_dir: Path, name: str) -> bool:

@@ -8,7 +8,7 @@ from __future__ import annotations
 import numpy as np
 from pxr import Gf, Usd, UsdGeom
 
-from bowerbot.schemas import PositionDefaults, PositionMode
+from bowerbot.schemas import PositionDefaults, PositionMode, SceneNamespace
 from bowerbot.schemas.surface import FloatArray
 
 
@@ -97,7 +97,7 @@ def get_container_world_inverse(
         return None
 
     wrapper = prim
-    if prim.GetName() == "asset":
+    if prim.GetName() == SceneNamespace.ASSET_CHILD:
         parent = prim.GetParent()
         if parent and parent.IsValid():
             wrapper = parent

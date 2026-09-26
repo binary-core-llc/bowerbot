@@ -280,7 +280,8 @@ TOOLS: list[Tool] = [
         description=(
             "Remove a light from the scene. Works for both scene-level and "
             "asset-level lights. For asset lights, removes from the asset's "
-            "lgt.usda."
+            "lgt.usda. Relationship targets that named the light are dropped "
+            "and listed in scrubbed_dangling_refs."
         ),
         parameters={
             "type": "object",

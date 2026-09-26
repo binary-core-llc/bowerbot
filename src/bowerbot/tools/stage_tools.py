@@ -382,9 +382,13 @@ TOOLS: list[Tool] = [
                     "description": (
                         "Value matching the attribute's type (float for "
                         "Float, list of 3 numbers for Color3f / Vec3f, "
-                        "string for Token / Asset, bool for Bool). Pass "
-                        "the JSON value itself, not a string encoding of "
-                        "it. Pass null to clear the authored opinion."
+                        "[w, x, y, z] for a quaternion such as "
+                        "xformOp:orient, a list of rows for a matrix, "
+                        "string for Token / Asset, bool for Bool). An "
+                        "array type takes a list with one entry per "
+                        "element, e.g. [[x, y, z], ...] for point3f[]. "
+                        "Pass the JSON value itself, not a string encoding "
+                        "of it. Pass null to clear the authored opinion."
                     ),
                 },
             },

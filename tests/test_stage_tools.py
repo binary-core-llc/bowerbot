@@ -308,6 +308,85 @@ def test_set_prim_attribute_wrong_arity_refused():
         assert "list of 3 numbers" in r.error
 
 
+def _set(state, prim_path, name, value):
+    return asyncio.run(exec_tool(state, "set_prim_attribute", {
+        "prim_path": prim_path, "attribute_name": name, "value": value,
+    }))
+
+
+def _listed(state, prim_path, name):
+    r = asyncio.run(exec_tool(state, "list_prim_attributes", {"prim_path": prim_path}))
+    return next(a for a in r.data["attributes"] if a["name"] == name)
+
+
+def test_set_prim_attribute_orient_round_trips_as_wxyz():
+    """xformOp:orient takes [w, x, y, z], and list_prim_attributes returns the same form."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        path = _place(tmp_path, state).data["prim_path"]
+
+        r = _set(state, path, "xformOp:orient", [0.0, 0.0, 1.0, 0.0])
+        assert r.success, r.error
+        orient = _listed(state, path, "xformOp:orient")
+        assert orient["type"] == "quatf"
+        assert orient["value"] == [0.0, 0.0, 1.0, 0.0]
+
+
+def test_set_prim_attribute_transform_matrix_rows():
+    """xformOp:transform takes 4 rows of 4 numbers."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        path = _place(tmp_path, state).data["prim_path"]
+
+        rows = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [4, 5, 6, 1]]
+        r = _set(state, path, "xformOp:transform", rows)
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        matrix = stage.GetPrimAtPath(path).GetAttribute("xformOp:transform").Get()
+        assert tuple(matrix.ExtractTranslation()) == (4.0, 5.0, 6.0)
+
+
+def test_set_prim_attribute_vector_arrays():
+    """An array attribute takes one entry per element, e.g. [[x, y, z], ...] for float3[]."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        mesh = f"{_place(tmp_path, state).data['prim_path']}/asset/Mesh"
+
+        assert _set(state, mesh, "extent", [[-2, -2, -2], [2, 2, 2]]).success
+        assert _set(state, mesh, "primvars:displayColor", [[1, 0, 0]]).success
+        assert _listed(state, mesh, "extent")["value"] == [[-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]]
+        assert _listed(state, mesh, "primvars:displayColor")["value"] == [[1.0, 0.0, 0.0]]
+
+        r = _set(state, mesh, "extent", [1, 2, 3])
+        assert not r.success
+        assert "element 0 of float3[]" in r.error
+
+
+def test_set_prim_attribute_bad_value_creates_nothing():
+    """A value that does not fit leaves no new attribute or xform op behind."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        path = _place(tmp_path, state).data["prim_path"]
+
+        r = _set(state, path, "xformOp:orient", [1, 0, 0])
+        assert not r.success
+        assert "list of 4 numbers" in r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        prim = stage.GetPrimAtPath(path)
+        assert not prim.GetAttribute("xformOp:orient").IsValid()
+        assert "xformOp:orient" not in UsdGeom.Xformable(prim).GetXformOpOrderAttr().Get()
+
+
+def test_new_xform_op_uses_the_precision_bowerbot_authors():
+    """A rotate op added by set_prim_attribute is float3, like the ones BowerBot writes itself."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        path = _place(tmp_path, state).data["prim_path"]
+
+        assert _set(state, path, "xformOp:rotateZYX", [10, 20, 30]).success
+        assert _listed(state, path, "xformOp:rotateZYX")["type"] == "float3"
+
+
 # ── save/list/delete scene snapshots ──
 
 

@@ -4,7 +4,8 @@
 """Enforce the code rules in CONTRIBUTING.md.
 
 - One home per concept: ``utils/core`` imports no domain module, and holds
-  functions only; its named values live in schema classes.
+  functions only (plus the standard module logger); its named values live in
+  schema classes.
 - Bounding boxes come from ``core.bounds``; nothing else builds a ``BBoxCache``.
 - No loose values: ``schemas`` hold classes and ``type`` declarations only
   (plus the package ``__all__``).
@@ -110,12 +111,16 @@ def test_core_imports_no_domain() -> None:
     assert not offenders, f"utils/core must not import a domain: {offenders}"
 
 
+MODULE_LOGGER = "logger = logging.getLogger(__name__)"
+
+
 def test_core_has_no_module_constants() -> None:
     offenders = []
     for path in sorted(CORE_DIR.glob("*.py")):
         for node in ast.parse(path.read_text(encoding="utf-8")).body:
             if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
-                offenders.append(f"{path.name}:{node.lineno}")
+                if ast.unparse(node) != MODULE_LOGGER:
+                    offenders.append(f"{path.name}:{node.lineno}")
     assert not offenders, f"named values belong in a schema class, not utils/core: {offenders}"
 
 

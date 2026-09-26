@@ -12,6 +12,7 @@ from pxr import Sdf, Usd, UsdGeom, UsdLux
 from bowerbot.utils import physics_typing_utils
 from bowerbot.utils.camera_utils import format_camera_prim
 from bowerbot.utils.core.bounds import bbox_cache, world_bounds
+from bowerbot.utils.core.references import get_prim_ref_paths
 from bowerbot.utils.core.transforms import extract_position
 from bowerbot.utils.light_utils import format_light_prim
 from bowerbot.utils.physics_utils import (
@@ -20,9 +21,6 @@ from bowerbot.utils.physics_utils import (
     format_physics_scene_prim,
 )
 from bowerbot.utils.scatter_utils import format_scatter_prim
-from bowerbot.utils.stage_utils import (
-    get_prim_ref_paths,
-)
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:

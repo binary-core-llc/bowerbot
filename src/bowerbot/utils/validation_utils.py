@@ -19,7 +19,7 @@ from bowerbot.schemas import (
     ValidationResult,
 )
 from bowerbot.utils.core.naming import is_valid_variant_name
-from bowerbot.utils.stage_utils import get_prim_ref_paths
+from bowerbot.utils.core.references import get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +280,7 @@ def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
     """Structural checks for variant authoring on a single asset folder."""
     from bowerbot.schemas import ASWFLayerNames
     from bowerbot.utils import variant_utils
-    from bowerbot.utils.asset_folder_utils import (
+    from bowerbot.utils.core.asset_folder import (
         find_root_file,
         resolve_default_prim_name,
     )

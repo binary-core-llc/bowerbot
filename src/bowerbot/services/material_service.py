@@ -12,7 +12,7 @@ from typing import Any
 from bowerbot.schemas import ASWFLayerNames, ProceduralMaterialParams
 from bowerbot.state import SceneState
 from bowerbot.utils import material_utils
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils.core.asset_folder import (
     check_shared_modification,
     resolve_asset_dir_for_prim,
     to_asset_local,

@@ -900,13 +900,15 @@ src/bowerbot/
       metrics.py               #     Up axis, meters per unit, conforming an asset to a scene
       bounds.py                #     The one bounding-box cache, world bounds of prims
       transforms.py            #     Xform ops, world <-> local, positions inside assets
-    stage_utils.py             #   USD-stage primitives: open/save, references, snapshots,
+      references.py            #     Read and author the references that place assets
+      asset_folder.py          #     ASWF asset folders: root file, layers, bounds, units
+      dependencies.py          #     USD dependency walker (sublayers, references, payloads)
+      integrity.py             #     Scrub or rewrite relationship targets after edits
+    stage_utils.py             #   USD-stage primitives: open/save, snapshots,
                                #   namespace edits, set/list_prim_attribute
     inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
     asset_intake_utils.py      #   intake_folder, intake_usdz, create_asset_folder, ASWF
-    asset_folder_utils.py      #   ASWF folder primitives (detect root, layer scopes,
-                               #   resolve_asset_dir_for_prim, asset bounds and units)
     library_utils.py           #   scan_library, find_package_for
     light_utils.py             #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle,
@@ -923,13 +925,11 @@ src/bowerbot/
                                #   orientation, PointInstancer + placement authoring
     surface_utils.py           #   World-space triangles from gprims, vertical ray
                                #   queries, plan coverage, area sampling (numpy)
-    scene_integrity_utils.py   #   Generic dangling-rel/target scrubbers
     validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants
     variant_utils.py           #   variants.usda lifecycle, author_in_variant keystone,
                                #   apply_variant, set/clear_default, removal + cleanup
     layout_utils.py            #   place_layout expansion: grid/linear patterns,
                                #   asset resolution, suggested grid layouts
-    dependency_utils.py        #   USD dependency tree walker
     usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
                                #   (used by both physics_utils and light_utils)
 ```

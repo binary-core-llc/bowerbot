@@ -14,7 +14,7 @@ from pxr import Sdf, Usd, UsdShade
 from bowerbot.schemas import VariantCategory
 from bowerbot.state import SceneState
 from bowerbot.utils import asset_intake_utils, stage_utils, variant_utils
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     list_alternate_geo_files,
     normalize_asset_prim_path,
@@ -23,6 +23,7 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.naming import safe_variant_name, validate_variant_name
+from bowerbot.utils.core.references import get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
 
@@ -483,7 +484,7 @@ def add_scene_model_selection_variant(
     promoted: str | None = None
     set_exists = set_name in wrapper.GetVariantSets().GetNames()
     if not set_exists and variant_utils.has_direct_references(stage, asset_child):
-        existing = stage_utils.get_prim_ref_paths(stage.GetPrimAtPath(asset_child))
+        existing = get_prim_ref_paths(stage.GetPrimAtPath(asset_child))
         if existing:
             raw = Path(existing[0]).parent.name or Path(existing[0]).stem
             if raw == "assets":

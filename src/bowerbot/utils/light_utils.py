@@ -19,7 +19,7 @@ from bowerbot.schemas import (
     LightType,
     LightTypeSchemaInfo,
 )
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils.core.asset_folder import (
     ensure_layer_scope,
     ensure_root_reference,
     find_root_file,

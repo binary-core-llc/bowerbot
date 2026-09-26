@@ -8,6 +8,13 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 
+class IntakeRules:
+    """How intake picks a folder's root file."""
+
+    # Root-file stems tried, in order, after the folder's own name.
+    ROOT_NAME_HINTS = ("root", "main", "asset")
+
+
 class DetectionOutcome(StrEnum):
     """Classification for ``detect_folder_root``."""
 

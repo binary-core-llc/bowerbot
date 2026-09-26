@@ -23,13 +23,14 @@ from typing import Any
 
 from bowerbot.schemas import PhysicsApiName, PhysicsJointType
 from bowerbot.state import SceneState
-from bowerbot.utils import physics_utils, scene_integrity_utils
-from bowerbot.utils.asset_folder_utils import (
+from bowerbot.utils import physics_utils
+from bowerbot.utils.core.asset_folder import (
     normalize_asset_prim_path,
     require_asset_context,
     resolve_asset_dir_for_prim,
     resolve_default_prim_name,
 )
+from bowerbot.utils.core.integrity import scrub_dangling_refs
 from bowerbot.utils.core.values import parse_vec3
 
 logger = logging.getLogger(__name__)
@@ -458,7 +459,7 @@ def remove_collision_group(
         stage, name, force=force,
     )
     scrubbed = (
-        scene_integrity_utils.scrub_dangling_refs(stage) if removed else {}
+        scrub_dangling_refs(stage) if removed else {}
     )
     if removed:
         state.touch_project()

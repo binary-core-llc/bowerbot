@@ -201,8 +201,10 @@ TOOLS: list[Tool] = [
     Tool(
         name="remove_camera",
         description=(
-            "Remove a camera from the scene. Reports variant sets that "
-            "may have lost their purpose after the removal."
+            "Remove a camera from the scene. Relationship targets that "
+            "named it are dropped and listed in scrubbed_dangling_refs. "
+            "Reports variant sets that may have lost their purpose after "
+            "the removal."
         ),
         parameters={
             "type": "object",

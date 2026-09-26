@@ -208,12 +208,15 @@ PhysicsCollisionAPI cascades to PhysicsMeshCollisionAPI.
 
 ### `setup_physics_scene(name?, gravity_magnitude?, gravity_direction?)`
 Create the scene's PhysicsScene singleton at `/Scene/Physics/<name>`
-(default name `PhysicsScene`). Gravity defaults to `9.81 /
-metersPerUnit` in stage units, direction `(0, -1, 0)`. Call once per
-scene before authoring rigid bodies; static colliders work without
-it. Returns the resolved `gravity_magnitude` and `gravity_direction`
-that were authored (the defaults when omitted), so you can report the
-actual gravity back to the user.
+(default name `PhysicsScene`), or change an existing one. A new scene's
+gravity defaults to `9.81 / metersPerUnit` in stage units, pointing
+down the stage's up axis: `(0, 0, -1)` on a Z-up stage, `(0, -1, 0)`
+on a Y-up stage. Calling it again changes only the values you pass;
+the others keep what the scene has. Other physics tools never change
+gravity. Call once per scene before authoring rigid bodies; static
+colliders work without it. Returns the `gravity_magnitude` and
+`gravity_direction` the scene now has, so you can report the actual
+gravity back to the user.
 
 ### `list_physics_scenes()`
 List every `UsdPhysics.Scene` prim under `/Scene/Physics` with name,

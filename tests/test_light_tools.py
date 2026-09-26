@@ -504,6 +504,83 @@ def test_remove_asset_light():
         assert r.data["asset_folder"] == "lamp"
 
 
+def test_remove_scene_light_drops_targets_at_it():
+    """A dome light's portals rel at the removed light is dropped."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        dome = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "DomeLight", "light_name": "Sky",
+        })).data["prim_path"]
+        window = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "RectLight", "light_name": "Window",
+        })).data["prim_path"]
+        stage = Usd.Stage.Open(str(project.scene_path))
+        stage.GetPrimAtPath(dome).CreateRelationship("portals").SetTargets([window])
+        stage.Save()
+
+        r = asyncio.run(exec_tool(state, "remove_light", {"prim_path": window}))
+        assert r.success, r.error
+        assert r.data["scrubbed_dangling_refs"]["rels_touched"]
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(dome).GetRelationship("portals").GetTargets() == []
+
+
+def test_remove_asset_light_drops_targets_in_every_placement():
+    """Removing an asset light drops the targets at it under each placement only."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "lamp")
+        placements = [
+            asyncio.run(exec_tool(state, "place_asset", {
+                "asset_file_path": str(asset), "asset_name": "Lamp",
+                "group": "Props",
+                "translate_x": x, "translate_y": 0.0, "translate_z": 0.0,
+            })).data["prim_path"]
+            for x in (0.0, 3.0)
+        ]
+        bulb = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placements[0],
+            "light_type": "SphereLight", "light_name": "Bulb",
+        })).data["prim_path"]
+        bulbs = [bulb, bulb.replace(placements[0], placements[1])]
+        stage = Usd.Stage.Open(str(project.scene_path))
+        stage.DefinePrim("/Scene/Rig", "Scope").CreateRelationship("watch").SetTargets(
+            [*bulbs, placements[0]],
+        )
+        stage.Save()
+
+        r = asyncio.run(exec_tool(state, "remove_light", {"prim_path": bulb}))
+        assert r.success, r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        watch = stage.GetPrimAtPath("/Scene/Rig").GetRelationship("watch")
+        assert [str(t) for t in watch.GetTargets()] == [placements[0]]
+
+
+def test_remove_light_refuses_light_from_asset_files():
+    """A light that ships in the asset's own files is refused, not falsely reported removed."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset = _asset(tmp_path, "lamp")
+        asset_stage = Usd.Stage.Open(str(asset))
+        UsdLux.SphereLight.Define(asset_stage, "/lamp/Bulb")
+        asset_stage.Save()
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset_file_path": str(asset), "asset_name": "Lamp",
+            "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        bulb = f"{placed.data['prim_path']}/asset/Bulb"
+
+        r = asyncio.run(exec_tool(state, "remove_light", {"prim_path": bulb}))
+        assert not r.success
+        assert "asset's own files" in r.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(bulb).IsValid()
+
+
 def test_remove_light_nonexistent_prim():
     """Fails for a prim that does not exist."""
     with tempfile.TemporaryDirectory() as tmp:

@@ -13,7 +13,6 @@ from pxr import Kind, Sdf, Usd, UsdGeom, UsdShade, UsdUtils
 from bowerbot.schemas import AssetFormat
 from bowerbot.utils.core.bounds import bbox_cache, world_bounds
 from bowerbot.utils.core.naming import safe_file_name
-from bowerbot.utils.core.overrides import clear_orphan_variant_overs
 
 # ── Open / save ──
 
@@ -245,20 +244,6 @@ def _rename_descendant_spec(
             return True
         cursor = cursor.nameChildren[name]
     return False
-
-
-def remove_prim(stage: Usd.Stage, prim_path: str) -> bool:
-    """Remove a prim, clean any orphan variant body specs, and save on success."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim.IsValid():
-        msg = f"Prim not found: {prim_path}"
-        raise ValueError(msg)
-
-    removed: bool = stage.RemovePrim(prim_path)
-    if removed:
-        clear_orphan_variant_overs(stage.GetRootLayer(), prim_path)
-        stage.Save()
-    return removed
 
 
 # ── Inspection ──

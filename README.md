@@ -914,7 +914,7 @@ src/bowerbot/
       attributes.py            #     Read and author prim attributes from JSON-shaped values
       schema_registry.py       #     Properties a USD prim or API schema declares
       dependencies.py          #     USD dependency walker (sublayers, references, payloads)
-      integrity.py             #     Scrub or rewrite relationship targets after edits
+      integrity.py             #     Drop or rewrite relationship targets after removals and renames
     stage_utils.py             #   USD-stage primitives: open/save, snapshots,
                                #   namespace edits, prim children
     inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, cameras,

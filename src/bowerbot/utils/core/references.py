@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pxr import Ar, Gf, Sdf, Usd, UsdGeom
 
-from bowerbot.schemas import AssetFormat, SceneObject
+from bowerbot.schemas import AssetFormat, SceneNamespace, SceneObject
 from bowerbot.utils.core.metrics import asset_conform
 
 
@@ -168,7 +168,7 @@ def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
         xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
 
         asset_prim = stage.DefinePrim(
-            f"{scene_object.prim_path}/asset", "Xform",
+            f"{scene_object.prim_path}/{SceneNamespace.ASSET_CHILD}", "Xform",
         )
         if up_axis_correction is not None:
             UsdGeom.Xformable(asset_prim).AddRotateXOp().Set(up_axis_correction)

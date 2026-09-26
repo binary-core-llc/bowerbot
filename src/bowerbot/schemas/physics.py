@@ -83,6 +83,15 @@ class PhysicsNamespace:
     """Canonical names BowerBot uses when authoring physics."""
 
     JOINTS_SCOPE = "joints"
+    # Name of the physics scene BowerBot creates when a scene has none.
+    DEFAULT_SCENE_NAME = "PhysicsScene"
+
+
+class PhysicsDefaults:
+    """Values a new physics scene gets when the request gives none."""
+
+    # Earth gravity in m/s²; divided by metersPerUnit to get stage units.
+    EARTH_GRAVITY = 9.81
 
 
 class PhysicsApiSchemaInfo(BaseModel):

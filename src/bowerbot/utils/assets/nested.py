@@ -12,6 +12,7 @@ from pxr import Gf, Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import (
     ASWFLayerNames,
+    SceneNamespace,
     TransformParams,
 )
 from bowerbot.utils.core.asset_folder import (
@@ -78,7 +79,7 @@ def add_nested_asset_reference(
     xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
     xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
 
-    asset_inner = stage.DefinePrim(f"{wrapper_path}/asset", "Xform")
+    asset_inner = stage.DefinePrim(f"{wrapper_path}/{SceneNamespace.ASSET_CHILD}", "Xform")
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()

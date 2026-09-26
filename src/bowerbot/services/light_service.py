@@ -11,13 +11,25 @@ from typing import Any
 
 from pxr import Sdf
 
-from bowerbot.schemas import LightParams, LightRules, LightType, PositionMode, SceneNamespace
+from bowerbot.schemas import (
+    ASWFLayerNames,
+    LightParams,
+    LightRules,
+    LightType,
+    PositionMode,
+    SceneNamespace,
+)
 from bowerbot.state import SceneState
 from bowerbot.utils import light_utils, stage_utils, texture_utils, variants
 from bowerbot.utils.core.asset_folder import (
     get_geometry_bounds,
     get_mpu,
     resolve_asset_dir_for_prim,
+)
+from bowerbot.utils.core.integrity import (
+    composed_prim_paths,
+    drop_refs_to_vanished,
+    remove_scene_prim,
 )
 from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
 from bowerbot.utils.core.transforms import get_container_world_inverse, resolve_asset_position
@@ -209,12 +221,20 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
-        light_utils.remove_light_from_folder(asset_dir, light_name)
-        state.reopen_stage()
+        before = composed_prim_paths(stage)
+        if not light_utils.remove_light_from_folder(asset_dir, light_name):
+            msg = (
+                f"{prim_path} is not a light in {asset_dir.name}'s "
+                f"{ASWFLayerNames.LGT}, so it can't be removed: it comes "
+                "from the asset's own files."
+            )
+            raise ValueError(msg)
+        scrubbed = drop_refs_to_vanished(state.reopen_stage(), before)
         logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
         return {
             "prim_path": prim_path,
             "asset_folder": asset_dir.name,
+            "scrubbed_dangling_refs": scrubbed,
             "suspect_variant_sets": variants.suspects.suspect_variant_sets_in_asset(
                 asset_dir,
             ),
@@ -223,17 +243,13 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     texture_file = light_utils.get_light_texture(stage, prim_path)
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
-    success = stage_utils.remove_prim(stage, prim_path)
-    if not success:
-        msg = f"Failed to remove light {prim_path}"
-        raise RuntimeError(msg)
-
-    stage_utils.save_stage(stage)
+    scrubbed = remove_scene_prim(stage, prim_path)
     state.touch_project()
 
     logger.info("Removed scene light at %s", prim_path)
     data: dict[str, Any] = {
         "prim_path": prim_path,
+        "scrubbed_dangling_refs": scrubbed,
         "suspect_variant_sets": variants.suspects.suspect_variant_sets_on_scene_carrier(
             stage, carrier_path,
         ),

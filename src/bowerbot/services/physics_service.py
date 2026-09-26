@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from bowerbot.schemas import PhysicsApiName, PhysicsJointType
+from bowerbot.schemas import PhysicsApiName, PhysicsJointType, PhysicsNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import physics
 from bowerbot.utils.core.asset_folder import (
@@ -30,7 +30,7 @@ from bowerbot.utils.core.asset_folder import (
     resolve_asset_dir_for_prim,
     resolve_default_prim_name,
 )
-from bowerbot.utils.core.integrity import scrub_dangling_refs
+from bowerbot.utils.core.integrity import composed_prim_paths, drop_refs_to_vanished
 from bowerbot.utils.core.values import parse_vec3
 
 logger = logging.getLogger(__name__)
@@ -214,23 +214,20 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
 def setup_physics_scene(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Create ``/Scene/Physics`` and a ``UsdPhysics.Scene`` child."""
+    """Create or update a ``UsdPhysics.Scene``; only the gravity values given are authored."""
     stage = state.require_stage()
-    name = params.get("name", "PhysicsScene")
-    gravity_magnitude = params.get("gravity_magnitude")
+    name = params.get("name", PhysicsNamespace.DEFAULT_SCENE_NAME)
     gravity_direction = parse_vec3(
         params.get("gravity_direction"), "gravity_direction",
     )
 
-    scene_path = physics.scene.ensure_physics_scene(
+    scene_path = physics.scene.author_physics_scene(
         stage,
-        name=name,
-        gravity_magnitude=gravity_magnitude,
+        name,
+        gravity_magnitude=params.get("gravity_magnitude"),
         gravity_direction=gravity_direction,
     )
-    resolved_magnitude, resolved_direction = physics.scene.resolve_gravity(
-        stage, gravity_magnitude, gravity_direction,
-    )
+    resolved_magnitude, resolved_direction = physics.scene.scene_gravity(stage, scene_path)
     state.touch_project()
     logger.info("setup_physics_scene -> %s", scene_path)
     return {
@@ -255,12 +252,14 @@ def remove_physics_scene(
     """Remove a UsdPhysics.Scene prim by name."""
     stage = state.require_stage()
     name = params["name"]
-    removed = physics.scene.remove_physics_scene(stage, name)
+    scrubbed = physics.scene.remove_physics_scene(stage, name)
+    removed = scrubbed is not None
     if removed:
         state.touch_project()
     return {
         "name": name,
         "removed": removed,
+        "scrubbed_dangling_refs": scrubbed or {"rels_touched": []},
         "message": (
             f"Removed PhysicsScene '{name}'"
             if removed
@@ -386,10 +385,16 @@ def remove_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                 "scope='scene' requires prim_path, the joint's scene path "
                 "(e.g. /Scene/Physics/door_hinge).",
             )
-        removed = physics.joints.remove_joint_scene(stage, prim_path)
+        scrubbed = physics.joints.remove_joint_scene(stage, prim_path)
+        removed = scrubbed is not None
         if removed:
             state.touch_project()
-        return {"scope": "scene", "prim_path": prim_path, "removed": removed}
+        return {
+            "scope": "scene",
+            "prim_path": prim_path,
+            "removed": removed,
+            "scrubbed_dangling_refs": scrubbed or {"rels_touched": []},
+        }
 
     asset_anchor = (
         params.get("asset_anchor_prim_path")
@@ -407,16 +412,19 @@ def remove_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "/<defaultPrim>/joints/ in the asset.",
         )
     asset_dir, _ = require_asset_context(stage, asset_anchor)
+    before = composed_prim_paths(stage)
     removed = physics.joints.remove_joint_asset(asset_dir, name)
     if removed:
         physics.summary.remove_physics_layer_if_empty(asset_dir)
-        state.reopen_stage()
+        stage = state.reopen_stage()
         state.touch_project()
+    scrubbed = drop_refs_to_vanished(stage, before)
     return {
         "scope": "asset",
         "asset_folder": asset_dir.name,
         "name": name,
         "removed": removed,
+        "scrubbed_dangling_refs": scrubbed,
     }
 
 
@@ -460,22 +468,20 @@ def create_or_update_collision_group(
 def remove_collision_group(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Remove a collision group; relies on scene_integrity to scrub dangling rels."""
+    """Remove a collision group and the rel targets that named it."""
     stage = state.require_stage()
     name = params["name"]
     force = bool(params.get("force", False))
-    removed = physics.groups.remove_collision_group(
+    scrubbed = physics.groups.remove_collision_group(
         stage, name, force=force,
     )
-    scrubbed = (
-        scrub_dangling_refs(stage) if removed else {}
-    )
+    removed = scrubbed is not None
     if removed:
         state.touch_project()
     return {
         "name": name,
         "removed": removed,
-        "scrubbed_dangling_refs": scrubbed,
+        "scrubbed_dangling_refs": scrubbed or {"rels_touched": []},
     }
 
 

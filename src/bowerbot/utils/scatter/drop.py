@@ -13,6 +13,7 @@ from pxr import Gf, Usd, UsdGeom, Vt
 from bowerbot.schemas import (
     ScatterDropAlign,
     ScatterTuning,
+    SceneNamespace,
     SurfaceIndex,
 )
 from bowerbot.utils import surface_utils
@@ -259,7 +260,7 @@ def drop_prim(
 
 def _is_placement_wrapper(prim: Usd.Prim) -> bool:
     """A scene placement wrapper: an Xformable whose ``asset`` child carries a reference."""
-    child = prim.GetChild("asset")
+    child = prim.GetChild(SceneNamespace.ASSET_CHILD)
     return (
         prim.IsA(UsdGeom.Xformable)
         and child.IsValid()

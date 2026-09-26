@@ -15,6 +15,7 @@ from bowerbot.schemas import (
     CollisionGroupSummary,
     SceneNamespace,
 )
+from bowerbot.utils.core.integrity import remove_scene_prim
 from bowerbot.utils.core.naming import validate_prim_name
 from bowerbot.utils.physics.scene import ensure_physics_scene
 
@@ -82,12 +83,15 @@ def create_or_update_collision_group(
 
 def remove_collision_group(
     stage: Usd.Stage, name: str, *, force: bool = False,
-) -> bool:
-    """Remove a collision group; refuses if other groups depend on it unless ``force``."""
+) -> dict[str, Any] | None:
+    """Remove a collision group and the rel targets naming it.
+
+    Refuses if other groups depend on it unless ``force``. Returns the
+    dropped-targets report, or ``None`` if no group has that name.
+    """
     prim_path = _group_prim_path(name)
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim or not prim.IsValid():
-        return False
+    if not stage.GetPrimAtPath(prim_path).IsValid():
+        return None
 
     if not force:
         dependents = _find_dependent_groups(stage, prim_path)
@@ -99,10 +103,7 @@ def remove_collision_group(
                 "(BowerBot scrubs the dangling references afterwards).",
             )
 
-    removed: bool = stage.RemovePrim(prim_path)
-    if removed:
-        stage.Save()
-    return removed
+    return remove_scene_prim(stage, prim_path)
 
 
 def list_collision_groups(stage: Usd.Stage) -> CollisionGroupsSummary:

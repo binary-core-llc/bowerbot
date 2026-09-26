@@ -401,11 +401,14 @@ TOOLS: list[Tool] = [
             "to a PhysicsScene; without one, the simulator picks an "
             "engine default. Call once per scene before authoring "
             "physics, unless you only need static colliders (no rigid "
-            "bodies). Gravity magnitude defaults to 9.81 / "
-            "metersPerUnit (Earth gravity in stage units); direction "
-            "defaults to (0, -1, 0) (negative Y). Returns prim_path and "
-            "the resolved gravity_magnitude and gravity_direction actually "
-            "authored (the defaults when you omit them, never null)."
+            "bodies). A new scene's gravity magnitude defaults to 9.81 / "
+            "metersPerUnit (Earth gravity in stage units) and its direction "
+            "to straight down the stage's up axis ((0, 0, -1) when Z-up, "
+            "(0, -1, 0) when Y-up). Calling it again on an existing scene "
+            "changes only the values you pass; the others keep what they "
+            "have. Other physics tools never change gravity. Returns "
+            "prim_path and the gravity_magnitude and gravity_direction the "
+            "scene simulates with (never null)."
         ),
         parameters={
             "type": "object",
@@ -433,8 +436,8 @@ TOOLS: list[Tool] = [
                     "minItems": 3,
                     "maxItems": 3,
                     "description": (
-                        "Unit-vector gravity direction. Defaults to "
-                        "(0, -1, 0) which matches USD's Y-up convention."
+                        "Unit-vector gravity direction. A new scene defaults "
+                        "to straight down the stage's up axis."
                     ),
                 },
             },
@@ -454,7 +457,9 @@ TOOLS: list[Tool] = [
         name="remove_physics_scene",
         description=(
             "Remove a UsdPhysics.Scene prim by name from /Scene/Physics. "
-            "Use when the user asks to delete or clean up a physics scene."
+            "Use when the user asks to delete or clean up a physics scene. "
+            "Relationship targets that named it (physics:simulationOwner) "
+            "are dropped and listed in scrubbed_dangling_refs."
         ),
         parameters={
             "type": "object",
@@ -579,8 +584,9 @@ TOOLS.append(Tool(
     description=(
         "Remove a UsdPhysicsCollisionGroup. Refuses if other groups "
         "reference it via filteredGroups unless force=true is passed. "
-        "Returns scrubbed_dangling_refs describing any now-dangling "
-        "filteredGroups references BowerBot cleaned up after removal."
+        "Returns scrubbed_dangling_refs listing the relationship "
+        "targets that named the group (filteredGroups included), which "
+        "BowerBot drops with it."
     ),
     parameters={
         "type": "object",
@@ -733,7 +739,9 @@ TOOLS.append(Tool(
         "full prim_path. For scope='asset', pass the joint name "
         "plus asset_anchor_prim_path (a scene placement of the "
         "asset). Joints are leaves (no cascade); ArticulationRootAPI "
-        "is independent and is not affected by joint removal."
+        "is independent and is not affected by joint removal. "
+        "Relationship targets that named the joint are dropped and "
+        "listed in scrubbed_dangling_refs."
     ),
     parameters={
         "type": "object",

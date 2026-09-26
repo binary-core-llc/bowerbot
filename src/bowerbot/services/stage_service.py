@@ -12,7 +12,12 @@ from bowerbot.state import SceneState
 from bowerbot.utils import assets, inspection_utils, stage_utils
 from bowerbot.utils.core import attributes
 from bowerbot.utils.core.asset_folder import parse_nested_contents_path, resolve_asset_dir_for_prim
-from bowerbot.utils.core.integrity import rewrite_refs, scrub_dangling_refs
+from bowerbot.utils.core.integrity import (
+    composed_prim_paths,
+    drop_refs_to_vanished,
+    remove_scene_prim,
+    rewrite_refs,
+)
 from bowerbot.utils.core.naming import safe_file_name
 from bowerbot.utils.core.transforms import (
     read_translate_and_rotate_y,
@@ -116,20 +121,16 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
         group, prim_name = nested
+        before = composed_prim_paths(stage)
         success = assets.nested.remove_nested_asset_reference(
             container_dir, group, prim_name,
         )
         if not success:
             msg = f"Failed to remove nested {prim_path}"
             raise RuntimeError(msg)
-        stage = state.reopen_stage()
+        scrubbed = drop_refs_to_vanished(state.reopen_stage(), before)
     else:
-        success = stage_utils.remove_prim(stage, prim_path)
-        if not success:
-            msg = f"Failed to remove {prim_path}"
-            raise RuntimeError(msg)
-
-    scrubbed = scrub_dangling_refs(stage)
+        scrubbed = remove_scene_prim(stage, prim_path)
 
     state.object_count = max(0, state.object_count - 1)
     state.touch_project()

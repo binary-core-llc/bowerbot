@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -133,7 +134,7 @@ def _collect_geometry_prim_paths(payload_path: Path) -> set[str]:
 
 
 def validate_scene_lighting_targets(
-    stage: Usd.Stage, carrier: str, paths,
+    stage: Usd.Stage, carrier: str, paths: Iterable[str],
 ) -> None:
     """Refuse target paths outside the carrier or not UsdLux lights."""
     for path in paths:

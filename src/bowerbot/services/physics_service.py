@@ -170,7 +170,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         api_name, instance_name=instance_name,
     ).properties
     attr_names = {p.name: None for p in api_props if p.kind == "attribute"}
-    rel_names = {p.name: [] for p in api_props if p.kind == "relationship"}
+    rel_names: dict[str, list[str]] = {p.name: [] for p in api_props if p.kind == "relationship"}
 
     cleared = physics.masking.enforce_masking_policy(
         stage, asset_dir, asset_local_path,

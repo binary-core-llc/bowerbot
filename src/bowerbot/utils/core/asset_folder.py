@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from pxr import Sdf, Usd
 
@@ -232,7 +233,7 @@ def to_asset_local(prim_path: str, ref_prim_path: str) -> str:
 
 
 def check_shared_modification(
-    stage: Usd.Stage, asset_dir: Path, params: dict, *, op_label: str,
+    stage: Usd.Stage, asset_dir: Path, params: dict[str, Any], *, op_label: str,
 ) -> None:
     """Refuse if *asset_dir* is referenced by 2+ scene instances and not confirmed."""
     instance_count = count_scene_refs_to_asset_dir(stage, asset_dir)
@@ -497,7 +498,8 @@ def _get_default_prim_name(asset_dir: Path) -> str | None:
     if geo_path.exists():
         layer = Sdf.Layer.FindOrOpen(str(geo_path))
         if layer and layer.defaultPrim:
-            return layer.defaultPrim
+            default_prim: str = layer.defaultPrim
+            return default_prim
     return None
 
 

@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from pxr import Kind, Sdf, Usd, UsdGeom, UsdShade, UsdUtils
 
@@ -189,7 +190,7 @@ def rename_prim(stage: Usd.Stage, old_path: str, new_path: str) -> bool:
 
     edit = Sdf.BatchNamespaceEdit()
     edit.Add(old_path, new_path)
-    success = stage.GetRootLayer().Apply(edit)
+    success: bool = stage.GetRootLayer().Apply(edit)
     if success:
         rename_variant_overs(stage.GetRootLayer(), old_path, new_path)
         stage.Save()
@@ -253,7 +254,7 @@ def remove_prim(stage: Usd.Stage, prim_path: str) -> bool:
         msg = f"Prim not found: {prim_path}"
         raise ValueError(msg)
 
-    removed = stage.RemovePrim(prim_path)
+    removed: bool = stage.RemovePrim(prim_path)
     if removed:
         clear_orphan_variant_overs(stage.GetRootLayer(), prim_path)
         stage.Save()
@@ -263,7 +264,7 @@ def remove_prim(stage: Usd.Stage, prim_path: str) -> bool:
 # ── Inspection ──
 
 
-def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
+def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict[str, Any]]:
     """Return every bindable Gprim at or under *prim_path*."""
     root_prim = stage.GetPrimAtPath(prim_path)
     if not root_prim.IsValid():
@@ -271,7 +272,7 @@ def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
 
     cache = bbox_cache()
 
-    results: list[dict] = []
+    results: list[dict[str, Any]] = []
     for prim in Usd.PrimRange(root_prim):
         if not prim.IsA(UsdGeom.Gprim):
             continue

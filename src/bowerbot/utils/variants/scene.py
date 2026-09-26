@@ -248,7 +248,8 @@ def restore_active_scene_variant_references_to_direct_ref(
     for ref in refs:
         target_prim.GetReferences().AddReference(ref)
     stage.Save()
-    return target_variant.name
+    variant_name: str = target_variant.name
+    return variant_name
 
 
 def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:
@@ -257,7 +258,8 @@ def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:
     spec = layer.GetPrimAtPath(prim_path)
     if spec is None:
         return False
-    return spec.HasInfo("references")
+    has_references: bool = spec.HasInfo("references")
+    return has_references
 
 
 def clear_direct_references(stage: Usd.Stage, prim_path: str) -> None:

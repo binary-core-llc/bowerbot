@@ -145,7 +145,7 @@ def list_materials(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     state.require_stage()
     del params
     assets_dir = state.resolve_assets_dir()
-    all_materials: list[dict] = []
+    all_materials: list[dict[str, Any]] = []
 
     for entry in assets_dir.iterdir():
         if not entry.is_dir():

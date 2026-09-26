@@ -78,3 +78,17 @@ markers = [
 [tool.mypy]
 python_version = "3.12"
 strict = true
+# The mcp 1.x low-level Server's handler decorators (list_tools, call_tool)
+# carry no annotations; calls into that one module are allowed untyped.
+untyped_calls_exclude = ["mcp.server.lowlevel.server"]
+
+# Libraries without bundled type information are typed as Any: usd-core (pxr)
+# and jsonschema (its stubs are the separate types-jsonschema package).
+[[tool.mypy.overrides]]
+module = ["pxr", "pxr.*", "jsonschema", "jsonschema.*"]
+ignore_missing_imports = true
+
+# mcp_server registers its handlers with those unannotated decorators.
+[[tool.mypy.overrides]]
+module = ["bowerbot.mcp_server"]
+disallow_untyped_decorators = false

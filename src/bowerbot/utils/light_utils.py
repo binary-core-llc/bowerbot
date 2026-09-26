@@ -156,9 +156,9 @@ def get_light_texture(stage: Usd.Stage, prim_path: str) -> str | None:
 
 def format_light_prim(
     prim: Usd.Prim, position: dict[str, float] | None,
-) -> dict:
+) -> dict[str, Any]:
     """Format a light prim for ``list_prims``."""
-    data: dict = {
+    data: dict[str, Any] = {
         "prim_path": str(prim.GetPath()),
         "kind": "light",
         "light_type": prim.GetTypeName(),
@@ -326,7 +326,7 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     )
 
 
-def list_lights_in_folder(asset_dir: Path) -> list[dict]:
+def list_lights_in_folder(asset_dir: Path) -> list[dict[str, Any]]:
     """List all lights declared in *asset_dir*'s ``lgt.usda``."""
     lgt_path = asset_dir / ASWFLayerNames.LGT
     if not lgt_path.exists():

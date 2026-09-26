@@ -27,5 +27,8 @@ jobs:
       - name: Lint with ruff
         run: uv run ruff check src/ tests/
 
+      - name: Type-check with mypy
+        run: uv run mypy src/
+
       - name: Run tests
         run: uv run pytest -v -m "not integration"

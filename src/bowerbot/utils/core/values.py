@@ -21,9 +21,13 @@ def usd_to_json(value: object) -> object:
         return value
     if isinstance(value, Sdf.AssetPath):
         return value.path or str(value)
-    # Gf.Vec3f / Vec3d have no __iter__ but list() works via __getitem__.
-    if hasattr(value, "__len__") and not isinstance(value, bytes):
-        items = list(value)
+    # Gf vectors and matrices have no __iter__; iter() walks them by index.
+    if (
+        hasattr(value, "__len__")
+        and hasattr(value, "__getitem__")
+        and not isinstance(value, bytes)
+    ):
+        items = list(iter(value))
         if items and hasattr(items[0], "__len__") and not isinstance(
             items[0], str | bytes,
         ):

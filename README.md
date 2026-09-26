@@ -355,13 +355,14 @@ The scene file (`scene.usda`) contains only references and lights: no material d
 
 ```usda
 def Xform "Scene" (kind = "assembly") {
-    def Xform "Furniture" {
-        def Xform "Table_01" {
+    def "Furniture" (kind = "group") {
+        def Xform "Table_01" (kind = "group") {
             xformOp:translate = (5, 0, 4)
-            xformOp:scale = (0.01, 0.01, 0.01)
             def Xform "asset" (
-                references = @assets/single_table/single_table.usda@
-            ) { }
+                references = @./assets/single_table/single_table.usda@
+            ) {
+                xformOp:scale = (0.01, 0.01, 0.01)   # conform: a centimeter asset in a meter scene
+            }
         }
     }
     def Xform "Lighting" {
@@ -998,6 +999,7 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 **Scene level**
 - `upAxis` (`Y` or `Z`) and `metersPerUnit` chosen per project at `create_project`; `defaultPrim` always set
 - Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Cameras`, `/Scene/Props`, `/Scene/Physics`
+- Unbroken model hierarchy: `/Scene` is an `assembly`, and the groups and placement wrappers above every placed asset are `group`s, so each placed component is a model that outliners and asset tools recognise; an asset nested inside another becomes a `subcomponent` of its container
 - References only: no inline geometry, no scattered material sublayers
 - Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched: the wrapper holds the placement (translate, rotate, scale), and its `asset` child conforms the asset to the scene's units and up axis and holds the reference (each model-selection variant carries its own conform)
 - Pre-packaging validator checks `defaultPrim`, units, up-axis, reference resolution, and material bindings

@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from pxr import Gf, Sdf, Usd, UsdGeom
+from pxr import Gf, Kind, Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import (
     AssetScopeNames,
@@ -77,6 +77,8 @@ def add_nested_asset_reference(
     xformable.AddScaleOp().Set(Gf.Vec3f(*transform.scale))
 
     asset_inner = stage.DefinePrim(f"{wrapper_path}/{SceneNamespace.ASSET_CHILD}", "Xform")
+    # A component holds no components: the nested asset becomes part of its container.
+    Usd.ModelAPI(asset_inner).SetKind(Kind.Tokens.subcomponent)
     author_conform(
         asset_inner, *conform_between(container_mpu, container_up, nested_mpu, nested_up),
     )

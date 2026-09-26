@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 import numpy as np
-from pxr import Gf, Usd, UsdGeom, Vt
+from pxr import Gf, Kind, Usd, UsdGeom, Vt
 
 from bowerbot.config import UpAxis
 from bowerbot.project import Project
@@ -1206,3 +1206,26 @@ def test_parameter_rules_are_reported_clearly():
             "points": [[0, 0, 0], [1, 0, 0]], "circle": {"center": [0, 0, 0], "radius": 1},
         }))
         assert "exactly one of 'points', 'circle', or 'curve_prim'" in path.error
+
+
+def test_scattered_pieces_are_models():
+    """Instancer prototypes and scattered placements sit in an unbroken model hierarchy."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, project, lib = _setup(tmp)
+        _box_asset(lib / "ground.usda", (10.0, 0.1, 10.0))
+        _box_asset(lib / "stone.usda", (0.2, 0.2, 0.2))
+        ground = _place(state, "ground.usda", "Ground")
+        for name, output in (("Stones", "instancer"), ("Rocks", "placements")):
+            result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+                "name": name, "group": "Nature", "assets": [{"asset": "stone.usda"}],
+                "surfaces": [ground], "count": 3, "seed": 1, "output": output,
+            }))
+            assert result.success, result.error
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        broken = [
+            str(prim.GetPath()) for prim in stage.Traverse()
+            if Kind.Registry.IsA(Usd.ModelAPI(prim).GetKind() or "", Kind.Tokens.model)
+            and not prim.IsModel()
+        ]
+        assert broken == []

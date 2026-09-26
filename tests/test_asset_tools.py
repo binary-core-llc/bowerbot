@@ -650,6 +650,69 @@ def test_list_project_assets_after_placement():
         assert r.data["total"] >= 1
 
 
+def _listed_assets(state):
+    r = asyncio.run(exec_tool(state, "list_project_assets"))
+    assert r.success, r.error
+    return r.data, {a["name"]: a for a in r.data["assets"]}
+
+
+def test_unselected_scene_variants_count_as_used():
+    """Every model in a scene variant set is in the scene, not only the selected one."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        slot = _place(tmp_path, state, "crate").data["prim_path"]
+        added = asyncio.run(exec_tool(state, "add_scene_model_selection_variant", {
+            "prim_path": slot, "variant_set": "model", "variant_name": "chest",
+            "asset_file_path": str(_asset(tmp_path, "chest")),
+        }))
+        assert added.success, added.error
+        selected = asyncio.run(exec_tool(state, "select_scene_variant", {
+            "prim_path": slot, "variant_set": "model", "variant_name": "chest",
+        }))
+        assert selected.success, selected.error
+
+        data, assets = _listed_assets(state)
+        assert assets["crate"]["in_scene"]
+        assert assets["chest"]["in_scene"]
+        assert data["unused_count"] == 0
+
+
+def test_name_prefixes_do_not_count_as_references():
+    """An unused 'rock' is not kept alive by a referenced 'rock_big'."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        _place(tmp_path, state, "rock_big", "Props")
+        rock = _place(tmp_path, state, "rock", "Props").data["prim_path"]
+        asyncio.run(exec_tool(state, "remove_prim", {"prim_path": rock}))
+
+        data, assets = _listed_assets(state)
+        assert not assets["rock"]["in_scene"]
+        assert assets["rock"]["referenced_by"] == []
+        assert assets["rock_big"]["in_scene"]
+        assert data["unused_count"] == 1
+
+        r = asyncio.run(exec_tool(state, "delete_project_asset", {"name": "rock"}))
+        assert r.success, r.error
+
+
+def test_asset_kept_only_by_a_snapshot():
+    """A snapshot keeps an asset referenced: not in the scene, but not deletable either."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        ghost = _place(tmp_path, state, "ghost", "Props").data["prim_path"]
+        asyncio.run(exec_tool(state, "save_scene_snapshot", {"name": "keep"}))
+        asyncio.run(exec_tool(state, "remove_prim", {"prim_path": ghost}))
+
+        data, assets = _listed_assets(state)
+        assert not assets["ghost"]["in_scene"]
+        assert assets["ghost"]["referenced_by"] == ["keep.usda"]
+        assert data["unused_count"] == 0
+
+        r = asyncio.run(exec_tool(state, "delete_project_asset", {"name": "ghost"}))
+        assert not r.success
+        assert "keep.usda" in r.error
+
+
 # ── delete_project_asset ──
 
 

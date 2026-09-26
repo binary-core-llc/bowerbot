@@ -896,7 +896,7 @@ src/bowerbot/
                            #   SkillCategory, Tool, ToolResult
     registry.py            #   Entry-point discovery and tool routing
 
-  utils/              # Pure-function primitives. One domain per file.
+  utils/              # Pure functions. One domain per file; a large domain is a package.
     core/                      #   Shared by every domain; imports no domain module
       values.py                #     JSON <-> USD values, number and 3-float parsing
       naming.py                #     Prim/variant name rules, sanitizers, unique prim paths
@@ -927,8 +927,19 @@ src/bowerbot/
     physics_utils.py           #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
     physics_typing_utils.py    #   is_joint / is_physics_scene / is_collision_group / ...
-    scatter_utils.py           #   Distributions (random/rows/pile/path), resting,
-                               #   orientation, PointInstancer + placement authoring
+    scatter/                   #   Scatter, split into small modules:
+      on_surface.py            #     random / rows / pile pipelines over surfaces
+      along_path.py            #     placing along polylines, circles and curves
+      drop.py                  #     drop_to_surface: settle placements, reseat scatters
+      inputs.py                #     prim paths, seeds, region/circle/scale parsing
+      prototypes.py            #     staging assets, their bounds, bases and points
+      sampling.py              #     random surface points, spacing, acceptance
+      rows.py  pile.py         #     row lattices; heaps under a repose cone
+      paths.py                 #     path stations, tangents and facing
+      regions.py  noise.py     #     plan-view regions; density variation
+      orientation.py           #     quaternions, headings, surface alignment
+      resting.py               #     seating pieces on the ground
+      authoring.py             #     PointInstancer / placements, list_scene entries
     surface_utils.py           #   World-space triangles from gprims, vertical ray
                                #   queries, plan coverage, area sampling (numpy)
     validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants

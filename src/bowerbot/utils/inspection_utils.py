@@ -20,7 +20,7 @@ from bowerbot.utils.physics_utils import (
     format_joint_prim,
     format_physics_scene_prim,
 )
-from bowerbot.utils.scatter_utils import format_scatter_prim
+from bowerbot.utils.scatter.authoring import format_scatter_prim
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:

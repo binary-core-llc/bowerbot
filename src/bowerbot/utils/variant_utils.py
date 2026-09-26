@@ -586,7 +586,7 @@ def enforce_no_masking_overrides(
     ])
     return settle_masking(
         stage, masking, clear=clear, confirm=confirm,
-        refusal=format_masking_override_error(variant_kind, masking),
+        refusal=variant_masking_error(variant_kind, masking),
     )
 
 
@@ -605,7 +605,7 @@ def enforce_no_scene_masking_overrides(
     )
     return settle_masking(
         stage, masking, clear=clear, confirm=confirm,
-        refusal=format_masking_override_error(variant_kind, masking),
+        refusal=variant_masking_error(variant_kind, masking),
     )
 
 
@@ -618,7 +618,7 @@ def remove_variants_layer_if_empty(asset_dir: Path) -> bool:
     return True
 
 
-def format_masking_override_error(
+def variant_masking_error(
     variant_kind: str, masking: list[MaskingOpinion],
 ) -> str:
     """Render a masking-override conflict into a user-facing error message."""

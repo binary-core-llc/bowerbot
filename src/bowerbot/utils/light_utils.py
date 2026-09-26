@@ -22,19 +22,20 @@ from bowerbot.schemas import (
 from bowerbot.utils.core.asset_folder import (
     ensure_layer_scope,
     ensure_root_reference,
+    ensure_side_layer,
     find_root_file,
     remove_empty_layer,
     resolve_default_prim_name,
     unit_factor,
 )
+from bowerbot.utils.core.overrides import clear_orphan_variant_overs
 from bowerbot.utils.core.transforms import update_rotate_op, update_translate_op
 from bowerbot.utils.core.values import coerce_number, usd_to_json
 from bowerbot.utils.stage_utils import (
-    clear_orphan_variant_overs,
     set_prim_attribute,
 )
 from bowerbot.utils.usd_schema_utils import property_doc
-from bowerbot.utils.variant_utils import cleanup_if_empty
+from bowerbot.utils.variant_utils import remove_variants_layer_if_empty
 
 LIGHT_CLASSES: dict[str, type] = {
     LightType.DISTANT: UsdLux.DistantLight,
@@ -225,14 +226,9 @@ def add_light_to_folder(
     light: LightParams,
 ) -> str:
     """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path."""
-    lgt_path = asset_dir / ASWFLayerNames.LGT
+    lgt_path = ensure_side_layer(asset_dir, ASWFLayerNames.LGT)
     default_prim_name = resolve_default_prim_name(asset_dir)
-
-    if lgt_path.exists():
-        lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
-    else:
-        lgt_layer = Sdf.Layer.CreateNew(str(lgt_path))
-        lgt_layer.defaultPrim = default_prim_name
+    lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
 
     lgt_scope_path = Sdf.Path(f"/{default_prim_name}/lgt")
     ensure_layer_scope(lgt_layer, default_prim_name, "lgt", "Xform")
@@ -367,7 +363,7 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
         variants_layer = Sdf.Layer.FindOrOpen(str(variants_path))
         if variants_layer is not None:
             clear_orphan_variant_overs(variants_layer, str(light_prim_path))
-        cleanup_if_empty(asset_dir)
+        remove_variants_layer_if_empty(asset_dir)
 
     remove_empty_layer(
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),

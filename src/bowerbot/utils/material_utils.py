@@ -19,13 +19,14 @@ from bowerbot.schemas import (
 from bowerbot.utils.core.asset_folder import (
     ensure_layer_scope,
     ensure_root_reference,
+    ensure_side_layer,
     find_root_file,
     remove_empty_layer,
     resolve_default_prim_name,
     to_layer_local_path,
 )
-from bowerbot.utils.stage_utils import clear_orphan_variant_overs
-from bowerbot.utils.variant_utils import cleanup_if_empty
+from bowerbot.utils.core.overrides import clear_orphan_variant_overs
+from bowerbot.utils.variant_utils import remove_variants_layer_if_empty
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +46,7 @@ def add_material_to_folder(
             msg = f"No Material prim found in {material_file.name}"
             raise ValueError(msg)
 
-    mtl_layer = (
-        Sdf.Layer.FindOrOpen(str(mtl_path))
-        if mtl_path.exists()
-        else Sdf.Layer.CreateNew(str(mtl_path))
-    )
+    mtl_layer = Sdf.Layer.FindOrOpen(str(ensure_side_layer(asset_dir, ASWFLayerNames.MTL)))
 
     source_layer = Sdf.Layer.FindOrOpen(str(material_file))
     if source_layer is None:
@@ -99,11 +96,7 @@ def create_procedural_material_in_folder(
     mtl_path = asset_dir / ASWFLayerNames.MTL
     default_prim_name = resolve_default_prim_name(asset_dir)
 
-    mtl_layer = (
-        Sdf.Layer.FindOrOpen(str(mtl_path))
-        if mtl_path.exists()
-        else Sdf.Layer.CreateNew(str(mtl_path))
-    )
+    mtl_layer = Sdf.Layer.FindOrOpen(str(ensure_side_layer(asset_dir, ASWFLayerNames.MTL)))
 
     ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
     mtl_layer.defaultPrim = default_prim_name
@@ -303,7 +296,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
 
     mtl_layer.Save()
     if removed and variants_layer is not None:
-        cleanup_if_empty(asset_dir)
+        remove_variants_layer_if_empty(asset_dir)
 
     remove_empty_layer(
         mtl_path, asset_dir, lambda p: p.IsA(UsdShade.Material),

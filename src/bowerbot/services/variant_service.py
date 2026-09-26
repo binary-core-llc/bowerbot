@@ -57,7 +57,7 @@ def add_asset_material_variant(
     validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
-        stage, asset_dir, default_prim,
+        stage, asset_dir,
         {path: ["material:binding"] for path in bindings},
         "relationship", "material",
         clear=clear_masking, confirm=confirm_masked,
@@ -209,7 +209,7 @@ def add_asset_attribute_variant(
     validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
-        stage, asset_dir, default_prim,
+        stage, asset_dir,
         {path: list(attrs) for path, attrs in overrides.items()},
         "attribute", "attribute",
         clear=clear_masking, confirm=confirm_masked,
@@ -279,7 +279,7 @@ def add_asset_configuration_variant(
     validate_variant_name(variant_name)
 
     if variant_utils.enforce_no_masking_overrides(
-        stage, asset_dir, default_prim,
+        stage, asset_dir,
         {path: ["active"] for path in activations},
         "active", "configuration",
         clear=clear_masking, confirm=confirm_masked,
@@ -658,7 +658,7 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
             stage, asset_dir, set_name, scrub_target,
         )
         variant_utils.restore_canonical_geo_if_needed(asset_dir)
-        variant_utils.cleanup_if_empty(asset_dir)
+        variant_utils.remove_variants_layer_if_empty(asset_dir)
 
     state.reopen_stage()
     return {
@@ -796,7 +796,7 @@ def remove_asset_variant_set(
             stage, asset_dir, set_name,
         )
         variant_utils.restore_canonical_geo_if_needed(asset_dir)
-        variant_utils.cleanup_if_empty(asset_dir)
+        variant_utils.remove_variants_layer_if_empty(asset_dir)
 
     state.reopen_stage()
     return {

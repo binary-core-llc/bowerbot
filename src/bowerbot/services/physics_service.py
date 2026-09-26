@@ -184,7 +184,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         instance_name=instance_name,
     )
     if changed:
-        physics_utils.cleanup_if_empty(asset_dir)
+        physics_utils.remove_physics_layer_if_empty(asset_dir)
     state.reopen_stage()
     state.touch_project()
 
@@ -400,7 +400,7 @@ def remove_joint(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     name = params["name"]
     removed = physics_utils.remove_joint_asset(asset_dir, name)
     if removed:
-        physics_utils.cleanup_if_empty(asset_dir)
+        physics_utils.remove_physics_layer_if_empty(asset_dir)
         state.reopen_stage()
         state.touch_project()
     return {

@@ -18,6 +18,7 @@ Validation against the asset's composed types is a separate read pass.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -38,15 +39,23 @@ from bowerbot.schemas import (
     SceneNamespace,
     ScenePhysicsSummary,
 )
+from bowerbot.schemas.overrides import MaskingOpinion, OpinionKind
 from bowerbot.utils import stage_utils
 from bowerbot.utils.core.asset_folder import (
+    delete_side_layer,
     ensure_root_reference,
+    ensure_side_layer,
     find_root_file,
     require_asset_context,
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.naming import validate_prim_name
-from bowerbot.utils.core.references import find_asset_placements
+from bowerbot.utils.core.overrides import (
+    find_masking_opinions,
+    placement_paths,
+    prune_empty_overrides,
+    settle_masking,
+)
 from bowerbot.utils.core.values import usd_to_json
 from bowerbot.utils.usd_schema_utils import property_doc
 
@@ -125,31 +134,6 @@ _DEPENDENTS: dict[PhysicsApiName, tuple[PhysicsApiName, ...]] = {
 
 
 # ── Layer lifecycle ──
-
-
-def _phy_layer_path(asset_dir: Path) -> Path:
-    """Path to the asset's ``phy.usda``."""
-    return asset_dir / ASWFLayerNames.PHY
-
-
-def ensure_physics_layer(asset_dir: Path) -> Path:
-    """Create ``phy.usda`` if missing."""
-    path = _phy_layer_path(asset_dir)
-    if path.exists():
-        return path
-
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    layer = Sdf.Layer.CreateNew(str(path))
-    layer.defaultPrim = default_prim_name
-    over = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
-    over.specifier = Sdf.SpecifierOver
-    layer.Save()
-    return path
-
-
-def ensure_physics_referenced(asset_dir: Path) -> None:
-    """Ensure the asset root references ``phy.usda``."""
-    ensure_root_reference(asset_dir, ASWFLayerNames.PHY)
 
 
 # ── Schema introspection ──
@@ -303,8 +287,7 @@ def apply_api(
             check_articulation_root_nesting(composed, target_path)
     del composed
 
-    ensure_physics_layer(asset_dir)
-    stage = Usd.Stage.Open(str(_phy_layer_path(asset_dir)))
+    stage = Usd.Stage.Open(str(ensure_side_layer(asset_dir, ASWFLayerNames.PHY)))
     prim = stage.OverridePrim(Sdf.Path(target_path))
 
     companion = _COMPANION.get(api_name)
@@ -328,7 +311,7 @@ def apply_api(
         )
 
     stage.Save()
-    ensure_physics_referenced(asset_dir)
+    ensure_root_reference(asset_dir, ASWFLayerNames.PHY)
 
     logger.info(
         "Applied %s%s on %s in %s/phy.usda",
@@ -358,7 +341,7 @@ def remove_api(
     instance_name: str | None = None,
 ) -> bool:
     """Remove ``api_name`` (and any dependent APIs) from *prim_path*."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = asset_dir / ASWFLayerNames.PHY
     if not phy_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
@@ -544,74 +527,6 @@ def remove_api_scene(
 # ── Scene masking detection (refuse-or-acknowledge) ──
 
 
-def find_masking_scene_opinions(
-    stage: Usd.Stage,
-    asset_dir: Path,
-    asset_local_path: str,
-    attributes: dict[str, Any] | None = None,
-    relationships: dict[str, list[str]] | None = None,
-) -> list[tuple[str, str, str]]:
-    """Scene.usda opinions on placements that would mask a phy.usda write.
-
-    Returns ``(placement_prim_path, kind, key)`` tuples; ``kind`` is
-    ``"attribute"`` or ``"relationship"``. Empty list when no masking
-    opinions exist or the asset has no placements in the open scene.
-    """
-    attr_names = set((attributes or {}).keys())
-    rel_names = set((relationships or {}).keys())
-    if not attr_names and not rel_names:
-        return []
-
-    placements = find_asset_placements(stage, asset_dir)
-    if not placements:
-        return []
-
-    default_prim = resolve_default_prim_name(asset_dir)
-    asset_prefix = f"/{default_prim}"
-    tail = (
-        asset_local_path[len(asset_prefix):]
-        if asset_local_path.startswith(asset_prefix)
-        else asset_local_path
-    )
-
-    layer = stage.GetRootLayer()
-    masking: list[tuple[str, str, str]] = []
-    for placement in placements:
-        scene_path = f"{placement}{tail}" if tail else placement
-        spec = layer.GetPrimAtPath(scene_path)
-        if spec is None:
-            continue
-        for name in attr_names:
-            if name in spec.attributes:
-                masking.append((scene_path, "attribute", name))
-        for name in rel_names:
-            if name in spec.relationships:
-                masking.append((scene_path, "relationship", name))
-    return masking
-
-
-def clear_masking_scene_opinions(
-    stage: Usd.Stage,
-    masking: list[tuple[str, str, str]],
-) -> None:
-    """Remove every masking opinion in *masking* from scene.usda."""
-    layer = stage.GetRootLayer()
-    touched_paths: set[str] = set()
-    for prim_path, kind, key in masking:
-        spec = layer.GetPrimAtPath(prim_path)
-        if spec is None:
-            continue
-        container = spec.attributes if kind == "attribute" else spec.relationships
-        prop_spec = container.get(key)
-        if prop_spec is not None:
-            spec.RemoveProperty(prop_spec)
-            touched_paths.add(prim_path)
-    for prim_path in touched_paths:
-        stage_utils.prune_empty_overrides(layer, prim_path)
-    if touched_paths:
-        layer.Save()
-
-
 def enforce_masking_policy(
     stage: Usd.Stage,
     asset_dir: Path,
@@ -622,29 +537,31 @@ def enforce_masking_policy(
     *,
     clear: bool,
     confirm: bool,
-) -> list[tuple[str, str, str]]:
+) -> list[MaskingOpinion]:
     """Detect / clear / refuse scene.usda opinions that would mask a phy.usda write.
 
     Returns the list of opinions that were cleared (empty when none or when
     *confirm* was used). Raises ``ValueError`` with a per-opinion breakdown
     when masking exists and neither *clear* nor *confirm* is set.
     """
-    masking = find_masking_scene_opinions(
-        stage, asset_dir, asset_local_path,
-        attributes=attributes, relationships=relationships,
+    attr_names = set((attributes or {}).keys())
+    rel_names = set((relationships or {}).keys())
+    if not attr_names and not rel_names:
+        return []
+    targets: list[tuple[str, OpinionKind, Iterable[str]]] = []
+    for _, path in placement_paths(stage, asset_dir, [asset_local_path]):
+        targets.append((path, "attribute", attr_names))
+        targets.append((path, "relationship", rel_names))
+    masking = find_masking_opinions(stage, targets)
+    cleared = settle_masking(
+        stage, masking, clear=clear, confirm=confirm,
+        refusal=format_masking_override_error(api_name, masking),
     )
-    if not masking:
-        return []
-    if clear:
-        clear_masking_scene_opinions(stage, masking)
-        return masking
-    if confirm:
-        return []
-    raise ValueError(format_masking_override_error(api_name, masking))
+    return masking if cleared else []
 
 
 def format_masking_override_error(
-    api_name: PhysicsApiName, masking: list[tuple[str, str, str]],
+    api_name: PhysicsApiName, masking: list[MaskingOpinion],
 ) -> str:
     """Render a refuse-or-acknowledge error listing every masking opinion."""
     lines = [
@@ -668,7 +585,7 @@ def format_masking_override_error(
 
 def get_physics_summary(asset_dir: Path) -> AssetPhysicsSummary:
     """Every authored physics opinion in the asset's ``phy.usda``."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = asset_dir / ASWFLayerNames.PHY
     if not phy_path.exists():
         return AssetPhysicsSummary(asset_path=str(asset_dir))
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
@@ -863,19 +780,13 @@ def get_collision_group_summary(
     return _summarize_group(prim)
 
 
-def cleanup_if_empty(asset_dir: Path) -> bool:
+def remove_physics_layer_if_empty(asset_dir: Path) -> bool:
     """Delete ``phy.usda`` and drop its reference when no opinions remain."""
-    phy_path = _phy_layer_path(asset_dir)
-    if not phy_path.exists():
+    if not (asset_dir / ASWFLayerNames.PHY).exists():
         return False
     if get_physics_summary(asset_dir).prims:
         return False
-
-    _drop_physics_reference(asset_dir)
-    layer = Sdf.Layer.FindOrOpen(str(phy_path))
-    if layer is not None:
-        layer.Clear()
-    phy_path.unlink()
+    delete_side_layer(asset_dir, ASWFLayerNames.PHY)
     return True
 
 
@@ -1053,8 +964,7 @@ def create_joint_asset(
     _validate_joint_bodies(composed, body0, body1)
     del composed
 
-    ensure_physics_layer(asset_dir)
-    stage = Usd.Stage.Open(str(_phy_layer_path(asset_dir)))
+    stage = Usd.Stage.Open(str(ensure_side_layer(asset_dir, ASWFLayerNames.PHY)))
     default_prim_name = resolve_default_prim_name(asset_dir)
     joints_scope_path = f"/{default_prim_name}/{_JOINTS_SCOPE_NAME}"
     if not stage.GetPrimAtPath(joints_scope_path).IsValid():
@@ -1068,7 +978,7 @@ def create_joint_asset(
     _author_joint_attributes(joint, attributes, joint_type)
 
     stage.Save()
-    ensure_physics_referenced(asset_dir)
+    ensure_root_reference(asset_dir, ASWFLayerNames.PHY)
 
     logger.info(
         "Created %s asset-level at %s in %s/phy.usda",
@@ -1103,7 +1013,7 @@ def remove_joint_scene(stage: Usd.Stage, prim_path: str) -> bool:
 
 def remove_joint_asset(asset_dir: Path, name: str) -> bool:
     """Remove an asset-level joint prim from ``phy.usda``."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = asset_dir / ASWFLayerNames.PHY
     if not phy_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
@@ -1140,7 +1050,7 @@ def list_joints_scene(
 
 def list_joints_asset(asset_dir: Path) -> JointsSummary:
     """Return every joint prim authored in the asset's ``phy.usda``."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = asset_dir / ASWFLayerNames.PHY
     if not phy_path.exists():
         return JointsSummary()
     stage = Usd.Stage.Open(str(phy_path))
@@ -1415,7 +1325,7 @@ def _remove_api_from_layer(
 
     if touched:
         layer.Save()
-        stage_utils.prune_empty_overrides(layer, prim_path)
+        prune_empty_overrides(layer, prim_path)
     return touched
 
 
@@ -1435,33 +1345,6 @@ def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
     if touched:
         prim_spec.SetInfo("apiSchemas", new_op)
     return touched
-
-
-def _drop_physics_reference(asset_dir: Path) -> None:
-    """Remove ``./phy.usda`` from the asset root's reference list."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return
-    prim_spec = layer.GetPrimAtPath(
-        f"/{resolve_default_prim_name(asset_dir)}",
-    )
-    if prim_spec is None:
-        return
-    target = f"./{ASWFLayerNames.PHY}"
-    ref_list = prim_spec.referenceList
-    for items in (
-        ref_list.prependedItems,
-        ref_list.appendedItems,
-        ref_list.addedItems,
-        ref_list.explicitItems,
-        ref_list.orderedItems,
-    ):
-        for r in [x for x in items if x.assetPath == target]:
-            items.remove(r)
-    layer.Save()
 
 
 def format_physics_scene_prim(prim: Usd.Prim) -> dict:

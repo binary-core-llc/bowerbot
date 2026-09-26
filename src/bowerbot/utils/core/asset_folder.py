@@ -287,6 +287,57 @@ def ensure_layer_scope(
         scope.typeName = scope_type
 
 
+def ensure_side_layer(asset_dir: Path, layer_file: str) -> Path:
+    """Create *layer_file* in *asset_dir* (default prim ``over``) if missing; return its path."""
+    path = asset_dir / layer_file
+    if path.exists():
+        return path
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    layer = Sdf.Layer.CreateNew(str(path))
+    layer.defaultPrim = default_prim_name
+    root = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
+    root.specifier = Sdf.SpecifierOver
+    layer.Save()
+    return path
+
+
+def delete_side_layer(asset_dir: Path, layer_file: str) -> None:
+    """Drop *layer_file* from the root's references and delete it from disk."""
+    remove_root_reference(asset_dir, layer_file)
+    path = asset_dir / layer_file
+    if not path.exists():
+        return
+    layer = Sdf.Layer.FindOrOpen(str(path))
+    if layer is not None:
+        layer.Clear()
+    path.unlink()
+
+
+def remove_root_reference(asset_dir: Path, layer_file: str) -> None:
+    """Remove ``./<layer_file>`` from the asset root's reference list."""
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return
+    layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if layer is None:
+        return
+    prim_spec = layer.GetPrimAtPath(f"/{resolve_default_prim_name(asset_dir)}")
+    if prim_spec is None:
+        return
+    target = f"./{layer_file}"
+    ref_list = prim_spec.referenceList
+    for items in (
+        ref_list.prependedItems,
+        ref_list.appendedItems,
+        ref_list.addedItems,
+        ref_list.explicitItems,
+        ref_list.orderedItems,
+    ):
+        for ref in [r for r in items if r.assetPath == target]:
+            items.remove(ref)
+    layer.Save()
+
+
 def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
     """Ensure the asset's root file references *layer_file*."""
     root_file = find_root_file(asset_dir)

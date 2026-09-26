@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pxr import Sdf, Usd, UsdLux
 
@@ -23,18 +23,24 @@ from bowerbot.schemas import (
     VariantSetSummary,
     VariantsSummary,
 )
+from bowerbot.schemas.overrides import MaskingOpinion, OpinionKind
 from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     clear_root_payload,
+    delete_side_layer,
+    ensure_root_reference,
+    ensure_side_layer,
     find_root_file,
-    rebuild_root_references,
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.naming import validate_variant_name
-from bowerbot.utils.core.references import find_asset_placements, get_prim_ref_paths
-from bowerbot.utils.stage_utils import (
+from bowerbot.utils.core.overrides import (
+    find_masking_opinions,
+    placement_paths,
     prune_empty_overrides,
+    settle_masking,
 )
+from bowerbot.utils.core.references import find_asset_placements
 from bowerbot.utils.texture_utils import stage_asset_value
 
 VariantAuthorFn = Callable[[Usd.Stage, str], None]
@@ -43,80 +49,12 @@ VariantAuthorFn = Callable[[Usd.Stage, str], None]
 # ── Layer lifecycle ──
 
 
-def _variants_layer_path(asset_dir: Path) -> Path:
-    """Return the canonical ``variants.usda`` path."""
-    return asset_dir / ASWFLayerNames.VARIANTS
-
-
-def ensure_variants_layer(asset_dir: Path) -> Path:
-    """Create ``variants.usda`` if missing."""
-    path = _variants_layer_path(asset_dir)
-    if path.exists():
-        return path
-
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    layer = Sdf.Layer.CreateNew(str(path))
-    layer.defaultPrim = default_prim_name
-    Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
-    layer.GetPrimAtPath(f"/{default_prim_name}").specifier = Sdf.SpecifierOver
-    layer.Save()
-    return path
-
-
-def ensure_variants_referenced(asset_dir: Path) -> None:
-    """Ensure the asset root references ``variants.usda``."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return
-    root_prim = stage.GetDefaultPrim()
-    if root_prim is None:
-        return
-
-    if f"./{ASWFLayerNames.VARIANTS}" in get_prim_ref_paths(root_prim):
-        return
-
-    del stage
-    rebuild_root_references(asset_dir)
-
-
-def _remove_variants_reference(asset_dir: Path) -> None:
-    """Remove the ``variants.usda`` reference from the asset root."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return
-
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
-    if prim_spec is None:
-        return
-
-    target = f"./{ASWFLayerNames.VARIANTS}"
-    ref_list = prim_spec.referenceList
-    for items in (
-        ref_list.prependedItems,
-        ref_list.appendedItems,
-        ref_list.addedItems,
-        ref_list.explicitItems,
-        ref_list.orderedItems,
-    ):
-        for r in [x for x in items if x.assetPath == target]:
-            items.remove(r)
-    layer.Save()
-
-
 # ── Variant set + variant declaration ──
 
 
 def open_variants_stage(asset_dir: Path) -> Usd.Stage:
     """Open ``variants.usda`` as a stage."""
-    path = ensure_variants_layer(asset_dir)
+    path = ensure_side_layer(asset_dir, ASWFLayerNames.VARIANTS)
     stage = Usd.Stage.Open(str(path))
     if stage is None:
         raise RuntimeError(f"Failed to open variants layer: {path}")
@@ -172,8 +110,8 @@ def setup_geometry_variant_set(
         validate_payload_path(asset_dir, payload_ref)
     validate_lod_namespace_stability(asset_dir, variants)
 
-    ensure_variants_layer(asset_dir)
-    ensure_variants_referenced(asset_dir)
+    ensure_side_layer(asset_dir, ASWFLayerNames.VARIANTS)
+    ensure_root_reference(asset_dir, ASWFLayerNames.VARIANTS)
     stage = open_variants_stage(asset_dir)
     root_prim_path = f"/{resolve_default_prim_name(asset_dir)}"
 
@@ -204,8 +142,8 @@ def apply_variant(
     set_as_default: bool = False,
 ) -> None:
     """End-to-end variant authoring: layer, reference, opinions, default selection."""
-    ensure_variants_layer(asset_dir)
-    ensure_variants_referenced(asset_dir)
+    ensure_side_layer(asset_dir, ASWFLayerNames.VARIANTS)
+    ensure_root_reference(asset_dir, ASWFLayerNames.VARIANTS)
     stage = open_variants_stage(asset_dir)
     author_in_variant(
         stage, f"/{resolve_default_prim_name(asset_dir)}",
@@ -336,7 +274,7 @@ def _read_variant_set(prim: Usd.Prim, name: str) -> VariantSetSummary:
 def get_variant_summary(asset_dir: Path) -> VariantsSummary:
     """Return all variant sets, variants, and selections."""
     root_file = find_root_file(asset_dir)
-    has_layer = _variants_layer_path(asset_dir).exists()
+    has_layer = (asset_dir / ASWFLayerNames.VARIANTS).exists()
 
     if root_file is None:
         return VariantsSummary(
@@ -372,7 +310,7 @@ def remove_variant(
     asset_dir: Path, set_name: str, variant_name: str,
 ) -> bool:
     """Remove one variant from a variant set."""
-    variants_path = _variants_layer_path(asset_dir)
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -420,7 +358,7 @@ def remove_variant(
 
 def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
     """Remove an entire variant set."""
-    variants_path = _variants_layer_path(asset_dir)
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -442,7 +380,7 @@ def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
 
 def _has_variant_sets(asset_dir: Path) -> bool:
     """Return whether ``variants.usda`` declares any variant sets."""
-    variants_path = _variants_layer_path(asset_dir)
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -459,7 +397,7 @@ def _has_variant_sets(asset_dir: Path) -> bool:
 
 def _variants_have_any_payload(asset_dir: Path) -> bool:
     """Whether any variant body in ``variants.usda`` authors a payload."""
-    variants_path = _variants_layer_path(asset_dir)
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -508,24 +446,6 @@ def restore_canonical_geo_if_needed(asset_dir: Path) -> bool:
         return False
     root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
     stage.Save()
-    return True
-
-
-def cleanup_if_empty(asset_dir: Path) -> bool:
-    """Delete ``variants.usda`` and scrub references when no variant sets remain."""
-    if _has_variant_sets(asset_dir):
-        return False
-
-    _remove_variants_reference(asset_dir)
-    _clear_all_default_variants(asset_dir)
-
-    variants_path = _variants_layer_path(asset_dir)
-    if variants_path.exists():
-        layer = Sdf.Layer.FindOrOpen(str(variants_path))
-        if layer is not None:
-            layer.Clear()
-        variants_path.unlink()
-
     return True
 
 
@@ -654,51 +574,9 @@ def validate_lod_namespace_stability(
     raise ValueError("\n".join(lines))
 
 
-OpinionKind = Literal["attribute", "relationship", "active"]
-
-
-def find_masking_scene_opinions(
-    stage: Usd.Stage,
-    asset_dir: Path,
-    default_prim: str,
-    target_map: dict[str, Iterable[str]],
-    kind: OpinionKind,
-) -> list[tuple[str, str]]:
-    """Return (scene_prim_path, key) pairs in scene.usda that would mask a variant body opinion.
-
-    *target_map* maps asset-local prim path -> iterable of keys the variant
-    is about to author at that path. *kind* names which spec slot to inspect:
-    ``"attribute"`` (key is attribute name), ``"relationship"`` (key is
-    relationship name, typically ``"material:binding"``), or ``"active"``
-    (key is always ``"active"`` — the prim's active metadata).
-    """
-    placements = find_asset_placements(stage, asset_dir)
-    if not placements:
-        return []
-    layer = stage.GetRootLayer()
-    asset_prefix = f"/{default_prim}"
-    masking: list[tuple[str, str]] = []
-    for asset_path, keys in target_map.items():
-        tail = (
-            asset_path[len(asset_prefix):]
-            if asset_path.startswith(asset_prefix)
-            else asset_path
-        )
-        for placement in placements:
-            scene_path = f"{placement}{tail}" if tail else placement
-            spec = layer.GetPrimAtPath(scene_path)
-            if spec is None:
-                continue
-            for key in keys:
-                if _has_authored_opinion(spec, key, kind):
-                    masking.append((scene_path, key))
-    return masking
-
-
 def enforce_no_masking_overrides(
     stage: Usd.Stage,
     asset_dir: Path,
-    default_prim: str,
     target_map: dict[str, Iterable[str]],
     kind: OpinionKind,
     variant_kind: str,
@@ -707,49 +585,46 @@ def enforce_no_masking_overrides(
     confirm: bool,
 ) -> bool:
     """Detect/clear/refuse masking scene opinions; return True if stage needs reload."""
-    masking = find_masking_scene_opinions(
-        stage, asset_dir, default_prim, target_map, kind,
+    masking = find_masking_opinions(stage, [
+        (scene_path, kind, target_map[asset_path])
+        for asset_path, scene_path in placement_paths(stage, asset_dir, target_map)
+    ])
+    return settle_masking(
+        stage, masking, clear=clear, confirm=confirm,
+        refusal=format_masking_override_error(variant_kind, masking),
     )
-    if not masking:
-        return False
-    if clear:
-        clear_masking_scene_opinions(stage, masking, kind)
-        return True
-    if not confirm:
-        raise ValueError(format_masking_override_error(variant_kind, masking))
-    return False
 
 
-def clear_masking_scene_opinions(
+def enforce_no_scene_masking_overrides(
     stage: Usd.Stage,
-    opinions: list[tuple[str, str]],
+    target_map: dict[str, Iterable[str]],
     kind: OpinionKind,
-) -> None:
-    """Remove the listed masking opinions from the stage's root layer."""
-    layer = stage.GetRootLayer()
-    touched_paths: set[str] = set()
-    for prim_path, key in opinions:
-        spec = layer.GetPrimAtPath(prim_path)
-        if spec is None:
-            continue
-        if kind == "attribute":
-            attr_spec = spec.attributes.get(key)
-            if attr_spec is not None:
-                spec.RemoveProperty(attr_spec)
-        elif kind == "relationship":
-            rel_spec = spec.relationships.get(key)
-            if rel_spec is not None:
-                spec.RemoveProperty(rel_spec)
-        elif kind == "active":
-            spec.ClearInfo("active")
-        touched_paths.add(prim_path)
-    for prim_path in touched_paths:
-        prune_empty_overrides(layer, prim_path)
-    layer.Save()
+    variant_kind: str,
+    *,
+    clear: bool,
+    confirm: bool,
+) -> bool:
+    """Refuse / clear direct scene opinions that mask a scene-level variant body."""
+    masking = find_masking_opinions(
+        stage, [(scene_path, kind, keys) for scene_path, keys in target_map.items()],
+    )
+    return settle_masking(
+        stage, masking, clear=clear, confirm=confirm,
+        refusal=format_masking_override_error(variant_kind, masking),
+    )
+
+
+def remove_variants_layer_if_empty(asset_dir: Path) -> bool:
+    """Delete ``variants.usda`` and scrub references when no variant sets remain."""
+    if _has_variant_sets(asset_dir):
+        return False
+    _clear_all_default_variants(asset_dir)
+    delete_side_layer(asset_dir, ASWFLayerNames.VARIANTS)
+    return True
 
 
 def format_masking_override_error(
-    variant_kind: str, masking: list[tuple[str, str]],
+    variant_kind: str, masking: list[MaskingOpinion],
 ) -> str:
     """Render a masking-override conflict into a user-facing error message."""
     lines = [
@@ -758,7 +633,7 @@ def format_masking_override_error(
         "variant body would be silently overridden at composition time. "
         "Conflicting (placement, opinion):",
     ]
-    for prim_path, key in masking:
+    for prim_path, _kind, key in masking:
         lines.append(f"  {prim_path}.{key}")
     lines.append(
         "Retry with clear_masking_overrides=true to remove these scene "
@@ -766,19 +641,6 @@ def format_masking_override_error(
         "will only take effect on placements without prior overrides).",
     )
     return "\n".join(lines)
-
-
-def _has_authored_opinion(
-    spec: Sdf.PrimSpec, key: str, kind: OpinionKind,
-) -> bool:
-    """Whether *spec* has an authored opinion at *key* for the given *kind*."""
-    if kind == "attribute":
-        return key in spec.attributes
-    if kind == "relationship":
-        return key in spec.relationships
-    if kind == "active":
-        return spec.HasInfo("active")
-    return False
 
 
 # ── Scene-level variant authoring ──
@@ -851,45 +713,6 @@ def clear_scene_variant_default(
     if set_name in prim_spec.variantSelections:
         del prim_spec.variantSelections[set_name]
         layer.Save()
-
-
-def find_masking_scene_opinions_direct(
-    stage: Usd.Stage,
-    target_map: dict[str, Iterable[str]],
-    kind: OpinionKind,
-) -> list[tuple[str, str]]:
-    """Return direct scene opinions that would mask a scene-level variant body."""
-    layer = stage.GetRootLayer()
-    masking: list[tuple[str, str]] = []
-    for scene_path, keys in target_map.items():
-        spec = layer.GetPrimAtPath(scene_path)
-        if spec is None:
-            continue
-        for key in keys:
-            if _has_authored_opinion(spec, key, kind):
-                masking.append((scene_path, key))
-    return masking
-
-
-def enforce_no_scene_masking_overrides(
-    stage: Usd.Stage,
-    target_map: dict[str, Iterable[str]],
-    kind: OpinionKind,
-    variant_kind: str,
-    *,
-    clear: bool,
-    confirm: bool,
-) -> bool:
-    """Refuse / clear direct scene opinions that mask a scene-level variant body."""
-    masking = find_masking_scene_opinions_direct(stage, target_map, kind)
-    if not masking:
-        return False
-    if clear:
-        clear_masking_scene_opinions(stage, masking, kind)
-        return True
-    if not confirm:
-        raise ValueError(format_masking_override_error(variant_kind, masking))
-    return False
 
 
 def remove_scene_variant(
@@ -1326,7 +1149,7 @@ def refuse_unknown_asset_attributes(
 
 def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:
     """Read each variant's authored payload asset path from variants.usda."""
-    variants_path = _variants_layer_path(asset_dir)
+    variants_path = asset_dir / ASWFLayerNames.VARIANTS
     if not variants_path.exists():
         return {}
     layer = Sdf.Layer.FindOrOpen(str(variants_path))

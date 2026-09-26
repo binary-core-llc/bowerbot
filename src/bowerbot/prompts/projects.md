@@ -33,7 +33,7 @@ operates on the focused project.
 ### When nothing is focused
 
 If the user asks to author something (place an asset, add a light) and
-no project is open, the authoring tool will refuse with "No stage open"
-or "No project open". Resolve it by calling `open_project` (to resume an
+no project is open, the authoring tool will refuse with "No scene is open"
+or "No project is open". Resolve it by calling `open_project` (to resume an
 existing one) or `create_project` (to start fresh) FIRST, then retry the
 authoring call. Ask the user which they want if it is ambiguous.

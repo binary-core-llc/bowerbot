@@ -15,7 +15,7 @@ from bowerbot.utils.library_utils import DEFAULT_SEARCH_LIMIT
 def list_assets(state: SceneState, params: dict[str, Any]) -> dict[str, object]:
     """List library assets with optional category filter; truncated to *limit*."""
     matches = library_utils.scan_library(
-        state.library_dir, category=params.get("category", "all"),
+        state.require_library_dir(), category=params.get("category", "all"),
     )
     return library_utils.truncate_with_total(
         matches, params.get("limit", DEFAULT_SEARCH_LIMIT),
@@ -25,7 +25,7 @@ def list_assets(state: SceneState, params: dict[str, Any]) -> dict[str, object]:
 def search_assets(state: SceneState, params: dict[str, Any]) -> dict[str, object]:
     """Search the user's library by name across every category; truncated to *limit*."""
     matches = library_utils.scan_library(
-        state.library_dir, query=params.get("query", ""), category="all",
+        state.require_library_dir(), query=params.get("query", ""), category="all",
     )
     return library_utils.truncate_with_total(
         matches, params.get("limit", DEFAULT_SEARCH_LIMIT),

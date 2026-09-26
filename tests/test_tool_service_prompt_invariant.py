@@ -18,7 +18,7 @@ TOOLS_DIR = ROOT / "src" / "bowerbot" / "tools"
 SERVICES_DIR = ROOT / "src" / "bowerbot" / "services"
 PROMPTS_DIR = ROOT / "src" / "bowerbot" / "prompts"
 
-SKIP_TOOL_FILES = {"__init__.py", "_helpers.py"}
+SKIP_TOOL_FILES = {"__init__.py"}
 SKIP_SERVICE_FILES = {"__init__.py"}
 
 

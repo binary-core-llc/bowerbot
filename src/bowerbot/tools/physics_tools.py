@@ -11,7 +11,6 @@ from bowerbot.schemas import PhysicsApiName, PhysicsJointType
 from bowerbot.services import physics_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
 
 
 def list_physics_api_properties(
@@ -27,8 +26,6 @@ def list_physics_api_properties(
 
 def apply_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Apply a UsdPhysics applied API to a prim and author opinions."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.apply_physics_api(state, params)
     except (ValueError, RuntimeError) as e:
@@ -38,8 +35,6 @@ def apply_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def remove_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove a UsdPhysics applied API from a prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.remove_physics_api(state, params)
     except (ValueError, RuntimeError) as e:
@@ -49,8 +44,6 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def setup_physics_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Create the scene's PhysicsScene singleton with gravity attributes."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.setup_physics_scene(state, params)
     except (ValueError, RuntimeError) as e:
@@ -62,8 +55,6 @@ def list_physics_scenes(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Return every UsdPhysics.Scene prim under /Scene/Physics."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.list_physics_scenes(state, params)
     except (ValueError, RuntimeError) as e:
@@ -75,8 +66,6 @@ def remove_physics_scene(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Remove a UsdPhysics.Scene prim by name."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.remove_physics_scene(state, params)
     except (ValueError, RuntimeError) as e:
@@ -86,8 +75,6 @@ def remove_physics_scene(
 
 def get_physics_summary(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Return asset-side and scene-side physics opinions for a prim path."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.get_physics_summary(state, params)
     except (ValueError, RuntimeError) as e:
@@ -99,8 +86,6 @@ def list_joint_properties(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Schema-registry introspection for a typed joint prim."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.list_joint_properties(state, params)
     except (ValueError, RuntimeError) as e:
@@ -110,8 +95,6 @@ def list_joint_properties(
 
 def create_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Create a typed joint connecting two bodies."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.create_joint(state, params)
     except (ValueError, RuntimeError) as e:
@@ -121,8 +104,6 @@ def create_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def remove_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove a joint prim (asset-level or scene-level)."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.remove_joint(state, params)
     except (ValueError, RuntimeError) as e:
@@ -132,8 +113,6 @@ def remove_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def list_joints(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List joints scene-wide, scoped under a prim, or inside an asset folder."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.list_joints(state, params)
     except (ValueError, RuntimeError) as e:
@@ -145,8 +124,6 @@ def create_or_update_collision_group(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Create or update a UsdPhysicsCollisionGroup under /Scene/Physics/Groups."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.create_or_update_collision_group(state, params)
     except (ValueError, RuntimeError) as e:
@@ -158,8 +135,6 @@ def remove_collision_group(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """Remove a collision group; refuses if other groups depend on it."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.remove_collision_group(state, params)
     except (ValueError, RuntimeError) as e:
@@ -171,8 +146,6 @@ def list_collision_groups(
     state: SceneState, params: dict[str, Any],
 ) -> ToolResult:
     """List every collision group with membership, filters, and merge token."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = physics_service.list_collision_groups(state, params)
     except (ValueError, RuntimeError) as e:

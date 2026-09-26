@@ -80,12 +80,18 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 
 - **`schemas/`**: pydantic models and enums.
 - **`utils/`**: pure-function primitives. The only place `pxr` is imported.
-- **`services/`**: orchestrators with signature `(state, params)`. One per tool. Call utils and other services, mutate state, raise on errors.
-- **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
-- **`state.py`**: `SceneState`, threaded through every tool handler.
+- **`services/`**: orchestrators with signature `(state, params)`. One per tool. Get the scene, project and folders through `state.require_*()`, call utils, mutate state, raise on errors.
+- **`tools/`**: thin adapters. Call ONE service, wrap its result or error in `ToolResult`.
+- **`state.py`**: `SceneState`, threaded through every tool handler. The only place that checks for an open scene, project or configured folder.
 - **`dispatcher.py`**: tool registry and router.
 - **`skills/`**: the skill SDK (the `Skill` contract and the `SkillRegistry`). Skills themselves ship as separate pip packages and are discovered at runtime via entry points; they do not live in this directory.
 - **`prompts/`**: LLM instructions as `.md` files.
+
+## Code Rules
+
+`tests/test_architecture_rules.py` enforces these, so breaking one fails the build.
+
+- **One guard.** Only `SceneState` checks whether a scene, project or configured folder exists. Services ask for what they need with `state.require_stage()`, `require_stage_path()`, `require_project()`, `require_library_dir()` or `require_projects_dir()`, which raise one clear error when it is missing, and reopen the scene with `state.reopen_stage()`. Tools never check.
 
 ## Writing a Skill
 

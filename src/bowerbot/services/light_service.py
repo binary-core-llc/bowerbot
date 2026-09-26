@@ -35,6 +35,7 @@ def list_light_type_properties(
 
 def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level or asset-level light."""
+    stage = state.require_stage()
     light_type = LightType(params["light_type"])
     safe_name = safe_prim_name(params["light_name"])
     attributes = dict(params.get("attributes") or {})
@@ -58,7 +59,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             )
             raise ValueError(msg)
         asset_dir, ref_prim_path = resolve_asset_dir_for_prim(
-            state.stage, asset_prim_path,
+            stage, asset_prim_path,
         )
         if asset_dir is None or ref_prim_path is None:
             msg = (
@@ -76,7 +77,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             tx, ty, tz,
             has_explicit_y=params.get("translate_y") is not None,
             world_to_local_mat=stage_utils.get_container_world_inverse(
-                state.stage, asset_prim_path,
+                stage, asset_prim_path,
             ),
             asset_mpu=geometry_utils.get_mpu(asset_dir),
         )
@@ -95,7 +96,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             asset_dir=asset_dir, light_name=safe_name, light=light,
         )
 
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
 
         asset_local_tail = composed_path.lstrip("/").split("/", 1)[1]
         scene_light_path = f"{ref_prim_path}/{asset_local_tail}"
@@ -115,21 +116,21 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         }
 
     prim_path = stage_utils.unique_prim_path(
-        state.stage, SceneNamespace.LIGHTING, safe_name,
+        stage, SceneNamespace.LIGHTING, safe_name,
     )
     light = LightParams(
         light_type=light_type,
         translate=(tx, ty, tz),
         rotate=rotate,
         texture=texture_utils.stage_scene_texture(
-            state.project.path if state.project else None,
+            state.project_dir,
             params.get("texture"),
         ),
         light_link_includes=light_link_includes,
         attributes=attributes,
     )
-    light_utils.create_light(state.stage, prim_path, light)
-    stage_utils.save_stage(state.stage)
+    light_utils.create_light(stage, prim_path, light)
+    stage_utils.save_stage(stage)
     state.touch_project()
 
     logger.info("Created %s at %s", light_type.value, prim_path)
@@ -143,8 +144,9 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Update a light's xform / HDRI texture in its asset or in scene.usda."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
-    asset_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
+    asset_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
 
     translate = geometry_utils.unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
@@ -165,7 +167,7 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                 *translate,
                 has_explicit_y=params.get("translate_y") is not None,
                 world_to_local_mat=stage_utils.get_container_world_inverse(
-                    state.stage, prim_path,
+                    stage, prim_path,
                 ),
                 asset_mpu=geometry_utils.get_mpu(asset_dir),
             )
@@ -177,18 +179,18 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             rotate=rotate,
             texture=light_utils.stage_asset_texture(asset_dir, texture),
         )
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
     else:
         light_utils.update_light(
-            state.stage,
+            stage,
             prim_path,
             translate=translate,
             rotate=rotate,
             texture=texture_utils.stage_scene_texture(
-                state.project.path if state.project else None, texture,
+                state.project_dir, texture,
             ),
         )
-        stage_utils.save_stage(state.stage)
+        stage_utils.save_stage(stage)
 
     state.touch_project()
     logger.info("Updated light at %s", prim_path)
@@ -200,13 +202,14 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a scene-level or asset-level light."""
+    stage = state.require_stage()
     prim_path = params["prim_path"]
-    asset_dir, _ = resolve_asset_dir_for_prim(state.stage, prim_path)
+    asset_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
 
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
         light_utils.remove_light_from_folder(asset_dir, light_name)
-        state.stage = stage_utils.open_stage(state.stage_path)
+        state.reopen_stage()
         logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
         return {
             "prim_path": prim_path,
@@ -217,21 +220,21 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "message": f"Removed asset light {light_name} from {asset_dir.name}",
         }
 
-    texture_file = light_utils.get_light_texture(state.stage, prim_path)
+    texture_file = light_utils.get_light_texture(stage, prim_path)
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
-    success = stage_utils.remove_prim(state.stage, prim_path)
+    success = stage_utils.remove_prim(stage, prim_path)
     if not success:
         msg = f"Failed to remove light {prim_path}"
         raise RuntimeError(msg)
 
-    stage_utils.save_stage(state.stage)
+    stage_utils.save_stage(stage)
     state.touch_project()
 
     logger.info("Removed scene light at %s", prim_path)
     data: dict[str, Any] = {
         "prim_path": prim_path,
         "suspect_variant_sets": variant_utils.suspect_variant_sets_on_scene_carrier(
-            state.stage, carrier_path,
+            stage, carrier_path,
         ),
         "message": f"Removed light at {prim_path}",
     }

@@ -10,7 +10,6 @@ from typing import Any
 from bowerbot.services import camera_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
 
 
 def list_camera_properties(
@@ -26,8 +25,6 @@ def list_camera_properties(
 
 def create_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Create a scene-level camera."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = camera_service.create_camera(state, params)
     except (ValueError, RuntimeError) as e:
@@ -37,8 +34,6 @@ def create_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def update_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Reposition or re-aim an existing scene camera."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = camera_service.update_camera(state, params)
     except (ValueError, RuntimeError) as e:
@@ -48,8 +43,6 @@ def update_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def remove_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Remove a scene camera."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = camera_service.remove_camera(state, params)
     except (ValueError, RuntimeError) as e:

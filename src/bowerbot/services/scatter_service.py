@@ -31,10 +31,8 @@ logger = logging.getLogger(__name__)
 
 def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Distribute assets over surface prims, each piece resting on the surface it lands on."""
-    if state.stage is None or state.project is None:
-        msg = "No scene is open."
-        raise ValueError(msg)
-    stage = state.stage
+    stage = state.require_stage()
+    project = state.require_project()
     up = surface_utils.axis_index(state.up_axis.value)
     arrangement = ScatterArrangement(params.get("arrangement", ScatterArrangement.RANDOM))
     count = params.get("count")
@@ -98,7 +96,7 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, A
         params.get("group", ScatterNamespace.DEFAULT_GROUP), params["name"],
     )
     scatter_utils.check_target(stage, prim_path, replace=params.get("replace", False))
-    project_dir = state.project.path
+    project_dir = project.path
     sources = scatter_utils.resolve_asset_sources(
         [ScatterAsset(**asset) for asset in params["assets"]],
         project_dir=project_dir, library_dir=state.library_dir,
@@ -182,10 +180,8 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, A
 
 def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Place assets along a polyline, circle or curve, resting each on the surface below."""
-    if state.stage is None or state.project is None:
-        msg = "No scene is open."
-        raise ValueError(msg)
-    stage = state.stage
+    stage = state.require_stage()
+    project = state.require_project()
     up = surface_utils.axis_index(state.up_axis.value)
     given = [key for key in ("points", "circle", "curve_prim") if params.get(key) is not None]
     if len(given) != 1:
@@ -235,7 +231,7 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, A
         params.get("group", ScatterNamespace.DEFAULT_GROUP), params["name"],
     )
     scatter_utils.check_target(stage, prim_path, replace=params.get("replace", False))
-    project_dir = state.project.path
+    project_dir = project.path
     sources = scatter_utils.resolve_asset_sources(
         [ScatterAsset(**asset) for asset in params["assets"]],
         project_dir=project_dir, library_dir=state.library_dir,
@@ -313,10 +309,7 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, A
 
 def drop_to_surface(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Drop existing placements, and reseat scatters, onto the surface beneath them."""
-    if state.stage is None:
-        msg = "No scene is open."
-        raise ValueError(msg)
-    stage = state.stage
+    stage = state.require_stage()
     up = surface_utils.axis_index(state.up_axis.value)
     align = ScatterDropAlign(params.get("align", ScatterDropAlign.KEEP))
     wrappers, scatters = scatter_utils.drop_targets(stage, params["prim_paths"])

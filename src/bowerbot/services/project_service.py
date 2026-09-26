@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def list_projects(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """List every project in the projects directory."""
-    projects = Project.list_projects(state.projects_dir)
+    projects = Project.list_projects(state.require_projects_dir())
     return {
         "projects": [
             {
@@ -35,6 +35,7 @@ def list_projects(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a new project and focus it."""
+    projects_dir = state.require_projects_dir()
     name = params["name"]
     if "up_axis" not in params or "meters_per_unit" not in params:
         msg = (
@@ -44,10 +45,10 @@ def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(msg)
     up_axis = UpAxis(params["up_axis"])
     meters_per_unit = float(params["meters_per_unit"])
-    state.projects_dir.mkdir(parents=True, exist_ok=True)
+    projects_dir.mkdir(parents=True, exist_ok=True)
     try:
         project = Project.create(
-            state.projects_dir, name,
+            projects_dir, name,
             up_axis=up_axis, meters_per_unit=meters_per_unit,
         )
     except FileExistsError:
@@ -73,10 +74,11 @@ def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 def open_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Open an existing project and focus it."""
+    projects_dir = state.require_projects_dir()
     name = params["name"]
-    project_path = state.projects_dir / safe_project_name(name)
+    project_path = projects_dir / safe_project_name(name)
     if not (project_path / "project.json").exists():
-        available = [p.name for p in Project.list_projects(state.projects_dir)]
+        available = [p.name for p in Project.list_projects(projects_dir)]
         msg = (
             f"Project '{name}' not found. "
             f"Available projects: {available or 'none'}."

@@ -11,13 +11,10 @@ from bowerbot.schemas import MAX_LAYOUT_PLACEMENTS, LayoutPattern, PositionMode
 from bowerbot.services import asset_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_project, require_stage
 
 
 def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Add an asset reference to the scene at the given group/position."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = asset_service.place_asset(state, params)
     except (ValueError, RuntimeError) as e:
@@ -27,8 +24,6 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Nest an asset inside an ASWF container's ``contents.usda``."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = asset_service.place_asset_inside(state, params)
     except (ValueError, RuntimeError) as e:
@@ -38,8 +33,6 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def place_layout(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Place many assets in one batch from enumerated or parametric layout entries."""
-    if (err := require_stage(state)):
-        return err
     try:
         data = asset_service.place_layout(state, params)
     except (ValueError, RuntimeError) as e:
@@ -49,8 +42,6 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def list_project_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """List every asset in the project directory, with in-scene flags."""
-    if (err := require_project(state)):
-        return err
     try:
         data = asset_service.list_project_assets(state, params)
     except (ValueError, RuntimeError) as e:
@@ -60,8 +51,6 @@ def list_project_assets(state: SceneState, params: dict[str, Any]) -> ToolResult
 
 def delete_project_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete an asset folder/file from the project, if unreferenced."""
-    if (err := require_project(state)):
-        return err
     try:
         data = asset_service.delete_project_asset(state, params)
     except (ValueError, RuntimeError) as e:
@@ -71,8 +60,6 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> ToolResul
 
 def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Drop empty contents.usda layers from asset folders, per asset or project-wide."""
-    if (err := require_project(state)):
-        return err
     try:
         data = asset_service.cleanup_unused_contents(state, params)
     except (ValueError, RuntimeError) as e:
@@ -82,8 +69,6 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> ToolRe
 
 def freeze_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Bake an existing project asset's root transforms into vertex data."""
-    if (err := require_project(state)):
-        return err
     try:
         data = asset_service.freeze_asset(state, params)
     except (ValueError, RuntimeError) as e:
@@ -93,8 +78,6 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
 
 def delete_project_texture(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete a texture from the project's ``textures/`` dir, if unreferenced."""
-    if (err := require_project(state)):
-        return err
     try:
         data = asset_service.delete_project_texture(state, params)
     except (ValueError, RuntimeError) as e:

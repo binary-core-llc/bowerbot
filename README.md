@@ -948,8 +948,13 @@ src/bowerbot/
     surface_utils.py           #   World-space triangles from gprims, vertical ray
                                #   queries, plan coverage, area sampling (numpy)
     validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants
-    variant_utils.py           #   variants.usda lifecycle, author_in_variant keystone,
-                               #   apply_variant, set/clear_default, removal + cleanup
+    variants/                  #   Variants, split into small modules:
+      authoring.py             #     author_in_variant, the edit context every variant uses
+      asset.py  scene.py       #     asset variants (variants.usda); scene variants (scene.usda)
+      inspection.py            #     variant sets, carriers, payload references
+      checks.py                #     payload paths, LOD namespace stability, lighting targets
+      attributes.py            #     typing and checking attribute overrides
+      masking.py  suspects.py  #     scene-override policy; collapsed variant sets
     layout_utils.py            #   place_layout expansion: grid/linear patterns,
                                #   asset resolution, suggested grid layouts
 ```
@@ -995,7 +1000,7 @@ Two layers of authority. The naming convention makes routing explicit.
 - **Asset-level** variants live in `<asset>/variants.usda`, referenced (not sublayered) into the asset root. Four orchestrators: material bindings, geometry/LOD payloads, configuration activations, and attribute overrides. The asset's "ship default" lives on the root prim in `<asset>.usda`, never inside `variants.usda`.
 - **Scene-level** variants live inline in `scene.usda` on a carrier prim. Three orchestrators: lighting attribute swaps and lighting selection on `/Scene/Lighting`, plus model selection on the placement wrapper. Lighting selection swaps which UsdLux is active across pre-placed siblings (DiskLight vs RectLight). Model selection swaps which asset reference loads at a placement (chair vs stool).
 - Tool names carry an explicit `asset_` or `scene_` prefix so the LLM never has to guess which layer of authority a call writes to.
-- Foundation: `utils/variant_utils.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
+- Foundation: `utils/variants/authoring.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
 - Per-instance overrides: any placement can author `variants = { "set" = "value" }` inline in `scene.usda` to pick a different variant from the asset's default.
 - Validation runs on `validate_scene` before packaging (referenced not sublayered, default selection present, no orphan reference, naming).
 

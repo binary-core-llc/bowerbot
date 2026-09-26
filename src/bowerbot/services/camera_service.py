@@ -12,7 +12,7 @@ from pxr import Sdf
 
 from bowerbot.schemas import CameraDefaults, CameraParams, SceneNamespace
 from bowerbot.state import SceneState
-from bowerbot.utils import camera_utils, stage_utils, variant_utils
+from bowerbot.utils import camera_utils, stage_utils, variants
 from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
 from bowerbot.utils.core.values import to_vec3, unpack_vec3
 
@@ -140,7 +140,7 @@ def remove_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     logger.info("Removed camera at %s", prim_path)
     return {
         "prim_path": prim_path,
-        "suspect_variant_sets": variant_utils.suspect_variant_sets_on_scene_carrier(
+        "suspect_variant_sets": variants.suspects.suspect_variant_sets_on_scene_carrier(
             stage, carrier_path,
         ),
         "message": f"Removed camera at {prim_path}",

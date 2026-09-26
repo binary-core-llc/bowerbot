@@ -280,11 +280,11 @@ def _check_sublayers(stage: Usd.Stage) -> list[ValidationIssue]:
 def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
     """Structural checks for variant authoring on a single asset folder."""
     from bowerbot.schemas import ASWFLayerNames
-    from bowerbot.utils import variant_utils
     from bowerbot.utils.core.asset_folder import (
         find_root_file,
         resolve_default_prim_name,
     )
+    from bowerbot.utils.variants.inspection import get_variant_summary
 
     issues: list[ValidationIssue] = []
     root_file = find_root_file(asset_dir)
@@ -343,7 +343,7 @@ def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
     if not variants_path.exists():
         return issues
 
-    summary = variant_utils.get_variant_summary(asset_dir)
+    summary = get_variant_summary(asset_dir)
     for vset in summary.variant_sets:
         if not is_valid_variant_name(vset.name):
             issues.append(ValidationIssue(

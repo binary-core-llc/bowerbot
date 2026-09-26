@@ -11,11 +11,12 @@ from typing import Any
 from pxr import Gf, Usd, UsdGeom
 
 from bowerbot.schemas import ASWFLayerNames
+from bowerbot.utils.core.asset_folder import require_folder_entry
 
 
 def freeze_one_asset(assets_dir: Path, name: str) -> dict[str, Any]:
     """Bake root transforms in a single asset folder; raise if folder/geo missing."""
-    asset_dir = assets_dir / name
+    asset_dir = require_folder_entry(assets_dir, name)
     if not asset_dir.exists() or not asset_dir.is_dir():
         msg = f"Asset folder not found: {name}"
         raise ValueError(msg)

@@ -56,6 +56,22 @@ def resolve_asset_file_path(
     return p.resolve()
 
 
+def require_folder_entry(folder: Path, name: str) -> Path:
+    """The file or folder *name* directly inside *folder*; refuses a name that leads elsewhere.
+
+    Every tool that deletes or rewrites something named by the caller goes
+    through this: an empty name, '.', '..', or a nested or absolute path
+    never reaches outside *folder*.
+    """
+    if name in ("", ".", "..") or Path(name).name != name:
+        msg = (
+            f"{name!r} is not an entry of {folder}: pass the name of a file or "
+            f"folder directly inside it (e.g. 'chair')."
+        )
+        raise ValueError(msg)
+    return folder / name
+
+
 def validate_asset_file(path: Path) -> Path:
     """Return *path* when it is a USD file BowerBot can place; raise a clear error otherwise."""
     if path.is_dir():

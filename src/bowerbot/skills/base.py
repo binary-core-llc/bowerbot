@@ -41,6 +41,20 @@ class SkillCategory(StrEnum):
     SIMULATION = "simulation"
 
 
+class ToolEffect(StrEnum):
+    """What a tool does to the project, as MCP clients see it in the tool's hints.
+
+    ``READ`` changes nothing; ``ADD`` never modifies or removes what exists
+    (it adds prims, files or projects, or opens a project); ``CHANGE`` may
+    modify or remove what exists, which is also what a client assumes when
+    a tool says nothing.
+    """
+
+    READ = "read"
+    ADD = "add"
+    CHANGE = "change"
+
+
 @dataclass
 class Tool:
     """A single tool/function that a skill exposes to the LLM."""
@@ -48,6 +62,7 @@ class Tool:
     name: str
     description: str
     parameters: dict[str, Any] = field(default_factory=dict)
+    effect: ToolEffect = ToolEffect.CHANGE
 
     def to_llm_schema(self) -> dict[str, Any]:
         """Convert to the OpenAI function-calling schema format."""

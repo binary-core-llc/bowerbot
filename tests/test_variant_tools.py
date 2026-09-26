@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pxr import Usd, UsdGeom
 
-from tests._helpers import exec_tool, make_state
+from tests._helpers import exec_tool, library_state, make_state
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -864,7 +864,66 @@ def test_removing_the_default_lod_selects_another():
         }))
         assert r.success, r.error
         assert r.data["default_variant"] == "low"
-        assert r.data["unused_files"] == ["geo.usda"]
+        assert r.data["unused_files"] == ["assets/chair/geo.usda"]
         stage = Usd.Stage.Open(str(project.scene_path))
         gprims = [p for p in Usd.PrimRange(stage.GetPrimAtPath(placed)) if p.IsA(UsdGeom.Gprim)]
         assert gprims
+
+
+# ── placement paths, material twins and leftover textures ──
+
+
+def _run(state, tool, **params):
+    return asyncio.run(exec_tool(state, tool, params))
+
+
+def test_model_selection_takes_a_placement_s_asset_child():
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                     translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+
+        r = _run(state, "add_scene_model_selection_variant", prim_path=f"{table}/asset",
+                 variant_set="model", variant_name="chair", asset="chair")
+        assert r.success, r.error
+        assert "model" in state.require_stage().GetPrimAtPath(table).GetVariantSets().GetNames()
+
+
+def test_an_attribute_variant_on_a_bowerbot_shader_carries_its_twin():
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                     translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+        _run(state, "create_material", prim_path=f"{table}/asset/Top", material_name="paint",
+             base_color_r=1.0, base_color_g=0.0, base_color_b=0.0)
+
+        r = _run(state, "add_asset_attribute_variant", prim_path=table, variant_set="paint",
+                 variant_name="blue", set_as_default=True, overrides={
+                     f"{table}/asset/mtl/paint/standard_surface": {
+                         "inputs:base_color": [0.0, 0.0, 1.0],
+                     },
+                 })
+        assert r.success, r.error
+        assert r.data["overrides"]["/table/mtl/paint/preview_surface"] == {
+            "inputs:diffuseColor": [0.0, 0.0, 1.0],
+        }
+        preview = state.require_stage().GetPrimAtPath(f"{table}/asset/mtl/paint/preview_surface")
+        assert tuple(preview.GetAttribute("inputs:diffuseColor").Get()) == (0.0, 0.0, 1.0)
+
+
+def test_removing_a_textured_attribute_variant_lists_its_texture():
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        lamp = _run(state, "place_asset", asset="lamp", asset_name="Lamp", group="Props",
+                    translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+        _run(state, "create_light", light_type="RectLight", light_name="Screen",
+             asset_prim_path=lamp, texture="textures/glow.png")
+        added = _run(state, "add_asset_attribute_variant", prim_path=lamp, variant_set="screen",
+                     variant_name="sky",
+                     overrides={"lgt/Screen": {"inputs:texture:file": "hdri/sky.png"}})
+        assert added.success, added.error
+
+        removed = _run(state, "remove_asset_variant", prim_path=lamp, variant_set="screen",
+                       variant_name="sky")
+        assert removed.success, removed.error
+        assert removed.data["unused_files"] == ["assets/lamp/maps/sky.png"]

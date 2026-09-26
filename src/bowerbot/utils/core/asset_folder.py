@@ -32,7 +32,14 @@ from bowerbot.schemas import (
 from bowerbot.utils.core.bounds import bbox_cache, world_range
 from bowerbot.utils.core.dependencies import resolve as resolve_dependencies
 from bowerbot.utils.core.metrics import read_mpu, read_stage_metadata
-from bowerbot.utils.core.references import count_scene_refs_to_asset_dir, get_prim_ref_paths
+from bowerbot.utils.core.references import (
+    count_scene_refs_to_asset_dir,
+    get_prim_ref_paths,
+    layer_files,
+    placement_of,
+    unused_files,
+    unused_scene_textures,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +236,27 @@ def require_asset_context(
             "Operation only works on assets placed as ASWF folders (not USDZ).",
         )
     return asset_dir, ref_prim_path
+
+
+def require_placement_asset(stage: Usd.Stage, prim_path: str) -> tuple[Path, str]:
+    """Like :func:`require_asset_context`, for a path that must name a placement."""
+    return require_asset_context(stage, placement_of(stage, prim_path))
+
+
+def unused_asset_files(asset_dir: Path) -> set[Path]:
+    """Files in *asset_dir* (resolved) that none of its own layers names, the root aside."""
+    root = find_root_file(asset_dir)
+    return unused_files(
+        asset_dir, layer_files(asset_dir), keep=[root] if root is not None else [],
+    )
+
+
+def project_unused_files(project_dir: Path, asset_dir: Path | None) -> set[Path]:
+    """Files nothing uses in the project's ``textures/`` and, when given, in *asset_dir*."""
+    unused = unused_scene_textures(project_dir)
+    if asset_dir is not None:
+        unused |= unused_asset_files(asset_dir)
+    return unused
 
 
 def asset_has_root_payload(asset_dir: Path) -> bool:

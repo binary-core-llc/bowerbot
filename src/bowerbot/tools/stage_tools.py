@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot.services import stage_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -123,6 +123,7 @@ def compute_grid_layout(state: SceneState, params: dict[str, Any]) -> ToolResult
 TOOLS: list[Tool] = [
     Tool(
         name="create_stage",
+        effect=ToolEffect.ADD,
         description=(
             "Create or reopen the project's scene file. Creates an empty "
             "/Scene root prim if the scene file is missing, or reopens it "
@@ -149,6 +150,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_scene",
+        effect=ToolEffect.READ,
         description=(
             "List the contents of the scene. Returns object_count and an "
             "objects array; every object BowerBot manages is included, of "
@@ -214,7 +216,9 @@ TOOLS: list[Tool] = [
             "asset's contents.usda. A group the removal leaves empty (e.g. "
             "/Scene/Props after its last placement) is removed too, unless it "
             "carries its own transform or other opinions. Removing /Scene "
-            "clears everything under it and keeps the scene root."
+            "clears everything under it and keeps the scene root. "
+            "A texture it leaves unused is listed in unused_files (it stays "
+            "in the project)."
         ),
         parameters={
             "type": "object",
@@ -242,7 +246,9 @@ TOOLS: list[Tool] = [
             "scene). For a prim nested inside a referenced asset's contents "
             "(path containing '/asset/contents/'), the move is converted into "
             "the asset's own frame and written into that asset folder's "
-            "contents.usda. Returns the resulting world position and rotation."
+            "contents.usda. Returns the resulting world position and rotation. "
+            "A placement's /asset child means the placement itself; a part "
+            "inside a placement is refused."
         ),
         parameters={
             "type": "object",
@@ -285,6 +291,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_prim_children",
+        effect=ToolEffect.READ,
         description=(
             "List all geometry parts inside a referenced asset. "
             "Use this BEFORE bind_material to discover the internal "
@@ -310,6 +317,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="compute_grid_layout",
+        effect=ToolEffect.READ,
         description=(
             "Compute evenly spaced positions for N objects in a grid on the "
             "scene's ground plane (the plane across the up axis), centered in "
@@ -336,6 +344,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_prim_attributes",
+        effect=ToolEffect.READ,
         description=(
             "List every attribute on a USD prim with type and current "
             "value. Use this to discover what is settable when the user "
@@ -377,8 +386,13 @@ TOOLS: list[Tool] = [
             "instead (update_light for an asset light's position, rotation "
             "or texture; create_material / bind_material; the "
             "add_asset_*_variant tools; apply_physics_api). An asset-valued "
-            "input (a texture file) is written exactly as given: BowerBot "
-            "does not copy or check the file. "
+            "input (a texture file) takes a location as search_textures "
+            "reports it (or a file already in the project's textures/); "
+            "BowerBot copies it into textures/ and writes that path. On a "
+            "BowerBot material, base color, metalness, roughness and opacity "
+            "set on either shader go to the other shader's twin input too "
+            "(reported as twin). A texture the change left unused is listed "
+            "in unused_files. "
             "Works for any UsdLux / UsdShade / UsdGeom attribute (sheen, "
             "coat, specular, colorTemperature, treatAsLine, intensity, "
             "exposure, radius, angle, etc.). A token attribute with "
@@ -467,6 +481,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_scene_snapshots",
+        effect=ToolEffect.READ,
         description=(
             "List every snapshot .usda file alongside scene.usda in the "
             "project folder. Returns name, path, and size "

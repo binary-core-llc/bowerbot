@@ -108,14 +108,19 @@ def log_tool_result(
         logger.info("tool-error name=%s error=%s", tool_name, result.error)
 
 
+def is_secret_key(key: str) -> bool:
+    """Whether *key* names a secret: one of its words (or two adjacent ones) is a secret word."""
+    words = [w.lower() for w in re.findall(LoggingRules.KEY_WORD_PATTERN, key)]
+    pairs = [a + b for a, b in zip(words, words[1:], strict=False)]
+    return any(word in LoggingRules.SECRET_KEY_WORDS for word in words + pairs)
+
+
 def sanitize(value: Any) -> Any:
     """Recursively redact secret-looking keys and truncate long scalars."""
     if isinstance(value, Mapping):
         return {
             str(k): (
-                "[REDACTED]"
-                if re.search(LoggingRules.SECRET_KEY_PATTERN, str(k), re.IGNORECASE)
-                else sanitize(v)
+                "[REDACTED]" if is_secret_key(str(k)) else sanitize(v)
             )
             for k, v in value.items()
         }

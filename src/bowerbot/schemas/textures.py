@@ -44,3 +44,12 @@ class TextureCategory(StrEnum):
                 return image
             case _:
                 return hdri | image
+
+
+class TextureRules:
+    """How texture paths are written."""
+
+    # The token a UDIM texture path carries in place of the tile number.
+    UDIM_TOKEN = "<UDIM>"
+    # A UDIM tile number is four digits (1001, 1002, ...).
+    UDIM_TILE_GLOB = "[0-9][0-9][0-9][0-9]"

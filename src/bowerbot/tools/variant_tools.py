@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot.services import variant_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -220,10 +220,12 @@ def remove_asset_variant_set(state: SceneState, params: dict[str, Any]) -> ToolR
 _PRIM_PATH = {
     "type": "string",
     "description": (
-        "Scene prim path of any placement of the asset, e.g. "
-        "'/Scene/Furniture/Table_01'. The asset folder is resolved "
-        "from this. Use list_scene to find the path. When multiple "
-        "assets could match, ASK the user which one before calling."
+        "Scene path of any placement of the asset, e.g. "
+        "'/Scene/Furniture/Table_01' (its /asset child means the same "
+        "placement; a part inside it is refused). The asset folder is "
+        "resolved from this. Use list_scene to find the path. When "
+        "multiple assets could match, ASK the user which one before "
+        "calling."
     ),
 }
 
@@ -604,9 +606,9 @@ TOOLS: list[Tool] = [
                 "prim_path": {
                     "type": "string",
                     "description": (
-                        "Scene placement wrapper, e.g. "
-                        "'/Scene/Furniture/Table_01'. Must have an "
-                        "'/asset' child (created by place_asset)."
+                        "Scene placement, e.g. '/Scene/Furniture/Table_01' "
+                        "(its /asset child means the same placement; a part "
+                        "inside it is refused)."
                     ),
                 },
                 "variant_set": _VARIANT_SET,
@@ -671,7 +673,9 @@ TOOLS: list[Tool] = [
             "a carrier prim (e.g. '/Scene/Lighting'). Idempotent. If "
             "this leaves the variant set empty, the variant set is "
             "auto-removed from the carrier. Operates on scene.usda only "
-            "— asset-level variants are untouched."
+            "— asset-level variants are untouched. "
+            "A texture it leaves unused is listed in unused_files (it stays "
+            "in the project)."
         ),
         parameters={
             "type": "object",
@@ -694,7 +698,9 @@ TOOLS: list[Tool] = [
             "before the set is dropped, and that variant name is returned "
             "as demoted_to_direct_ref (None otherwise) so you can confirm "
             "which asset survived. Also returns removed (bool) and scope "
-            "('scene')."
+            "('scene'). "
+            "A texture it leaves unused is listed in unused_files (it stays "
+            "in the project)."
         ),
         parameters={
             "type": "object",
@@ -707,6 +713,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_asset_geo_files",
+        effect=ToolEffect.READ,
         description=(
             "List alternate geometry files (LODs, swap geometry, "
             "alt states) inside an asset folder. Canonical layers "
@@ -723,6 +730,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="list_variants",
+        effect=ToolEffect.READ,
         description=(
             "List all variant sets, their variants, and the current "
             "composed (effective) variant selection at each carrier under "
@@ -776,9 +784,10 @@ TOOLS: list[Tool] = [
                 "prim_path": {
                     "type": "string",
                     "description": (
-                        "Absolute scene prim path of the specific "
-                        "placement to override, e.g. "
-                        "'/Scene/Furniture/Table_01'."
+                        "Scene path of the specific placement to override, "
+                        "e.g. '/Scene/Furniture/Table_01' (its /asset child "
+                        "means the same placement; a part inside it is "
+                        "refused)."
                     ),
                 },
                 "variant_set": _VARIANT_SET,
@@ -794,8 +803,9 @@ TOOLS: list[Tool] = [
             "Idempotent: returns cleanly if the target is not present. "
             "If the removed variant was the default, a remaining one becomes "
             "the default (reported as default_variant), so the asset keeps "
-            "its content. Payload files no variant uses any more are listed "
-            "in unused_files; they stay in the asset folder. "
+            "its content. Files the asset no longer uses (a payload no "
+            "variant loads, a texture only the removed variant used) are "
+            "listed in unused_files; they stay in the asset folder. "
             "If this leaves the variant set empty, the variant set is "
             "auto-removed; if this leaves no variant sets at all, "
             "variants.usda is auto-deleted and the reference scrubbed."
@@ -816,7 +826,9 @@ TOOLS: list[Tool] = [
             "Remove an entire variant set (all its variants) from one "
             "asset. Idempotent. Operates on this asset only; variants "
             "composed from referenced assets remain. When multiple assets "
-            "are in scope, ASK the user which asset before calling."
+            "are in scope, ASK the user which asset before calling. "
+            "A texture it leaves unused is listed in unused_files (it stays "
+            "in the project)."
         ),
         parameters={
             "type": "object",

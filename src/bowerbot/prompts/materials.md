@@ -78,10 +78,11 @@ variants live in `variants.usda`.
    clear the override. The asset's published value (in `mtl.usda`)
    takes over again.
 
-For hybrid materials (every material BowerBot creates is hybrid),
-author on BOTH shaders so the override renders consistently across
-MaterialX renderers and Hydra Storm / Apple AR Quick Look. The
-input-name mapping for the common params:
+Every material BowerBot creates is hybrid. Setting one of these
+inputs on either shader also sets its twin on the other (the result's
+`twin` names it), so the override renders the same in MaterialX
+renderers and in Hydra Storm / Apple AR Quick Look. Attribute variants
+on these inputs carry the twin too. The mapping:
 
 | Param         | standard_surface          | preview_surface     |
 |---------------|---------------------------|---------------------|
@@ -97,6 +98,11 @@ own scene-level override.
 `create_material` / `bind_material` are the right tools for the
 FIRST creation of a material network in `mtl.usda`. Once it exists,
 all value tweaks go through `set_prim_attribute`.
+
+`remove_material` and `cleanup_unused_materials` list the textures a
+removed material leaves unused in `unused_files` (e.g.
+`assets/table/maps/wood.png`); they stay in the asset folder until the
+user agrees to `delete_project_texture`.
 
 ### Multi-instance containers: the shared-material trap
 

@@ -97,7 +97,7 @@ from bowerbot.schemas.surface import (
     SurfaceTriangles,
     SurfaceTuning,
 )
-from bowerbot.schemas.textures import HDRIFormat, TextureCategory
+from bowerbot.schemas.textures import HDRIFormat, TextureCategory, TextureRules
 from bowerbot.schemas.transforms import (
     LayoutPattern,
     PositionDefaults,
@@ -201,6 +201,7 @@ __all__ = [
     "SurfaceTriangles",
     "SurfaceTuning",
     "TextureCategory",
+    "TextureRules",
     "TransformParams",
     "UsdValidatorNames",
     "ValidationIssue",

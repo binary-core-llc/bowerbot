@@ -16,6 +16,14 @@ class MaterialXShaders:
     NODE_DEF_PREFIX = "ND_"
     # Sdr source type a USD build with MaterialX support registers.
     SDR_SOURCE_TYPE = "mtlx"
+    # A BowerBot material authors each value on both networks; a value change
+    # on one input goes to its twin: standard_surface input -> preview input.
+    PREVIEW_TWIN_INPUTS = {
+        "base_color": "diffuseColor",
+        "metalness": "metallic",
+        "specular_roughness": "roughness",
+        "opacity": "opacity",
+    }
 
 
 class PreviewSurfaceShader:

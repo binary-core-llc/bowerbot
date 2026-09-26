@@ -15,30 +15,40 @@ from bowerbot.utils import validation
 def validate_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Run the validator against the active stage file."""
     del params
-    result = validation.stage.validate_stage(
+    return validation.stage.stage_report(
         state.require_stage_path(),
         expected_meters_per_unit=state.meters_per_unit,
         expected_up_axis=state.up_axis,
     )
-    return {
-        "is_valid": result.is_valid,
-        "error_count": result.error_count,
-        "issues": [
-            {"severity": i.severity.value, "message": i.message, "prim": i.prim_path}
-            for i in result.issues
-        ],
-        "message": (
-            "Scene is valid!"
-            if result.is_valid
-            else f"Found {result.error_count} error(s)."
-        ),
-    }
 
 
 def package_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Bundle the active scene into a ``.usdz`` alongside the stage file."""
+    """Validate the active scene, then bundle it into a ``.usdz`` beside the stage file.
+
+    Errors from ``validate_scene`` refuse the package unless ``force`` is set.
+    """
     stage_path = state.require_stage_path()
     for_apple = bool(params.get("for_apple_ar_quick_look", False))
+    force = bool(params.get("force", False))
+
+    checked = validation.stage.stage_report(
+        stage_path,
+        expected_meters_per_unit=state.meters_per_unit,
+        expected_up_axis=state.up_axis,
+    )
+    if checked["error_count"] and not force:
+        return {
+            "usdz_path": None,
+            "for_apple_ar_quick_look": for_apple,
+            "is_valid_for_apple": False,
+            "apple_issues": [],
+            "validation": checked,
+            "message": (
+                f"validate_scene found {checked['error_count']} error(s); refusing "
+                f"to package. Fix them, or ask the user whether to package anyway "
+                f"(force=true)."
+            ),
+        }
 
     apple_issues: list[dict[str, Any]] = []
     apple_errors: list[dict[str, Any]] = []
@@ -55,6 +65,7 @@ def package_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                 "for_apple_ar_quick_look": True,
                 "is_valid_for_apple": False,
                 "apple_issues": apple_issues,
+                "validation": checked,
                 "message": (
                     f"Apple AR Quick Look validation failed with "
                     f"{len(apple_errors)} error(s); refusing to package. "
@@ -71,5 +82,11 @@ def package_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "for_apple_ar_quick_look": for_apple,
         "is_valid_for_apple": for_apple and not apple_errors,
         "apple_issues": apple_issues,
-        "message": f"Scene packaged to {result_path}",
+        "validation": checked,
+        "message": (
+            f"Scene packaged to {result_path}"
+            + (f" despite {checked['error_count']} validation error(s)"
+               if checked["error_count"] else "")
+            + "."
+        ),
     }

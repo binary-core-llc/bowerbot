@@ -17,6 +17,7 @@ Skill authors import from here, not from submodules:
         SkillConfigError,
         SkillContext,
         Tool,
+        ToolEffect,
         ToolResult,
     )
 
@@ -31,6 +32,7 @@ from bowerbot.skills.base import (
     SkillConfigError,
     SkillContext,
     Tool,
+    ToolEffect,
     ToolResult,
 )
 from bowerbot.skills.registry import SkillRegistry
@@ -42,5 +44,6 @@ __all__ = [
     "SkillContext",
     "SkillRegistry",
     "Tool",
+    "ToolEffect",
     "ToolResult",
 ]

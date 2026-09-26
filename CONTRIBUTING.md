@@ -98,6 +98,7 @@ BowerBot is organized FastAPI-style. Adding a feature touches the same places ev
 - **No loose values.** `schemas/` holds classes and `type` declarations only, and `utils/` holds functions only (plus the standard `logger = logging.getLogger(__name__)`). A named value goes in a schema class named for what it holds: `<Domain>Rules` for what input is accepted (`NamingRules`, `LayoutRules`, `ScatterRules`), `<Domain>Defaults` for values used when the request gives none (`CameraDefaults`), `<Domain>Tuning` for internal algorithm settings (`ScatterTuning`), `<Domain>Namespace` for canonical prim paths. Schemas never import `pxr`: they name USD types by their registered schema name (`LightType.DISTANT` is `"DistantLight"`), and utils get the class with `core.schema_registry.schema_class()`. Type aliases use `type Vec3 = tuple[float, float, float]`. Outside `schemas/` and `utils/`, a module-level value is a registry (`TOOLS`, `HANDLERS`, and the JSON-schema pieces several tools in one file share) or runtime state (the CLI `console`, the session id, the validator cache); a value a user may change is a field in `config.py` settings (`LLMSettings.max_tool_rounds`), and LLM text is a `prompts/*.md` file. A module defines `logger` only when it logs.
 - **Optional params.** A service reads a parameter its tool does not require with `params.get()`. `params[...]` is only for required ones, which the dispatcher validates before the call.
 - **OpenUSD only.** The core builds on `pxr` and the ASWF asset guidelines, nothing else: no vendor runtime (`omni`, `isaacsim`, `carb`, `warp`, `physx`), no vendor schema (`PhysxSchema`, `Physx*API`), and no rule justified by one vendor's tool. Naming a DCC as a place a scene is opened is fine; building behavior around it is not. Vendor integrations ship as skills.
+- **Tools say what they change.** A core tool declares its `effect`: `READ` for `list_*`, `get_*`, `search_*`, `validate_scene` and `compute_grid_layout` (and nothing else), `ADD` for a tool that only adds, `CHANGE` otherwise (every `remove_*`, `delete_*` and `cleanup_*`). MCP clients read it as the tool's hints, and a test ties it to the name.
 - **One guard.** Only `SceneState` checks whether a scene, project or configured folder exists. Services ask for what they need with `state.require_stage()`, `require_stage_path()`, `require_project()`, `require_library_dir()` or `require_projects_dir()`, which raise one clear error when it is missing, and reopen the scene with `state.reopen_stage()`. Tools never check.
 
 ## Writing a Skill
@@ -128,7 +129,7 @@ See [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill
 
 A skill subclasses `bowerbot.skills.Skill` and implements three methods:
 
-- `get_tools() -> list[Tool]`: declares what the LLM sees.
+- `get_tools() -> list[Tool]`: declares what the LLM sees. Give each `Tool` an `effect` (`ToolEffect.READ` for a tool that changes nothing, `ToolEffect.ADD` for one that only adds; the default `ToolEffect.CHANGE` means it may modify or remove things). MCP clients see it as the tool's read-only / destructive hints.
 - `async execute(tool_name, params, ctx) -> ToolResult`: routes to a service.
 - `validate_config() -> None`: verifies the skill is properly configured. Raises `SkillConfigError` with an actionable message when something is missing or invalid.
 
@@ -182,11 +183,12 @@ from bowerbot.skills import (
     SkillConfigError,
     SkillContext,
     Tool,
+    ToolEffect,
     ToolResult,
 )
 ```
 
-These six names are the contract a skill implements (`bowerbot.skills` also exports `SkillRegistry`, which BowerBot uses to load skills). They follow semver: breaking changes are reserved for major version bumps. External skill packages should pin a compatible bowerbot range in their own `pyproject.toml`:
+These seven names are the contract a skill implements (`bowerbot.skills` also exports `SkillRegistry`, which BowerBot uses to load skills). They follow semver: breaking changes are reserved for major version bumps. External skill packages should pin a compatible bowerbot range in their own `pyproject.toml`:
 
 ```toml
 dependencies = ["bowerbot>=1.5,<2"]

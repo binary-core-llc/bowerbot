@@ -53,7 +53,7 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
         copy.files_copied, len(copy.localized_layers) + len(copy.localized_assets),
     )
     return IntakeReport(
-        scene_ref_path=f"assets/{target_folder.name}/{canonical_root.name}",
+        scene_ref_path=f"./assets/{target_folder.name}/{canonical_root.name}",
         asset_folder_name=target_folder.name,
         root_original_name=source_root.name,
         root_canonical_name=canonical_root.name,

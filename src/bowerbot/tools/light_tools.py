@@ -9,7 +9,7 @@ from typing import Any
 
 from bowerbot.schemas import LightType, PositionMode
 from bowerbot.services import light_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -54,6 +54,7 @@ def remove_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
 TOOLS: list[Tool] = [
     Tool(
         name="list_light_type_properties",
+        effect=ToolEffect.READ,
         description=(
             "Live UsdLux schema view of every inputs:* attribute the given "
             "light type declares: name, type, default, documentation, and "
@@ -84,6 +85,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="create_light",
+        effect=ToolEffect.ADD,
         description=(
             "Create a USD light. By default creates a scene-level light in "
             "/Scene/Lighting. If asset_prim_path is provided, creates an "
@@ -127,7 +129,8 @@ TOOLS: list[Tool] = [
                     "description": (
                         "Optional: the placement path of an asset in the "
                         "scene (/Scene/<Group>/<Name>, as list_scene reports "
-                        "it; not a part inside it) to attach the light to. "
+                        "it; its /asset child means the same placement, a "
+                        "part inside it is refused) to attach the light to. "
                         "If provided, the light is "
                         "created in the asset's lgt.usda (not allowed for "
                         "DomeLight or DistantLight, which are scene-level). "
@@ -246,7 +249,8 @@ TOOLS: list[Tool] = [
             "(intensity, exposure, "
             "color, radius, angle, width, height, length, colorTemperature, "
             "diffuse, specular, normalize, etc.), use set_prim_attribute on "
-            "the light prim directly."
+            "the light prim directly. "
+            "A texture the update replaced is listed in unused_files."
         ),
         parameters={
             "type": "object",
@@ -262,20 +266,18 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "enum": [m.value for m in PositionMode],
                     "description": (
-                        "Asset-level lights only. How to read the translate "
-                        "values you pass; not remembered from create_light, so "
-                        "pass 'absolute' again for world coordinates. "
+                        "Asset-level lights: required whenever you pass "
+                        "translate values, to say how to read them. "
                         "'absolute' = world coordinates in scene units (as "
                         "list_scene / list_prim_children report them), "
                         "converted into the asset's own frame. 'bounds_offset' "
-                        "(default) = meters from the asset's bounds along the "
-                        "scene's axes as the asset stands unrotated: the "
-                        "up-axis value (Y in a Y-up scene, Z in a Z-up scene) "
-                        "from the TOP surface (or the BOTTOM when negative), "
-                        "the other two from the bounding-box CENTER. Axes you "
-                        "omit keep their current values."
+                        "= meters from the asset's bounds along the scene's "
+                        "axes as the asset stands unrotated: the up-axis value "
+                        "(Y in a Y-up scene, Z in a Z-up scene) from the TOP "
+                        "surface (or the BOTTOM when negative), the other two "
+                        "from the bounding-box CENTER. Axes you omit keep their "
+                        "current values. Scene lights ignore it."
                     ),
-                    "default": PositionMode.BOUNDS_OFFSET.value,
                 },
                 "translate_x": {
                     "type": "number", "description": "New X position. Omit to keep current X.",
@@ -320,7 +322,9 @@ TOOLS: list[Tool] = [
             "lgt.usda. Lights only: any other prim (a camera, the Lighting "
             "group) is refused; remove those with remove_prim. Relationship "
             "targets that named the light are dropped and listed in "
-            "scrubbed_dangling_refs."
+            "scrubbed_dangling_refs. "
+            "A texture it leaves unused is listed in unused_files (it stays "
+            "in the project)."
         ),
         parameters={
             "type": "object",

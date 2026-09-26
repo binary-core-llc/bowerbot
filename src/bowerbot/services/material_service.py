@@ -15,9 +15,11 @@ from bowerbot.utils.core.asset_folder import (
     check_shared_modification,
     resolve_asset_dir_for_prim,
     to_asset_local,
+    unused_asset_files,
 )
 from bowerbot.utils.core.integrity import require_prim
 from bowerbot.utils.core.naming import clean_prim_name
+from bowerbot.utils.core.references import newly_unused, unused_files_note
 
 logger = logging.getLogger(__name__)
 
@@ -133,19 +135,24 @@ def remove_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
         raise ValueError(msg)
 
     asset_local_path = to_asset_local(prim_path, ref_prim_path)
+    unused_before = unused_asset_files(asset_dir)
     if not material_utils.remove_material_binding_from_folder(asset_dir, asset_local_path):
         msg = (
             f"{prim_path} has no binding in {asset_dir.name}/{ASWFLayerNames.MTL} "
             "to remove; a material from the asset's own files stays."
         )
         raise ValueError(msg)
+    unused = newly_unused(
+        state.require_project().path, unused_before, unused_asset_files(asset_dir),
+    )
     state.reopen_stage()
 
     logger.info("Removed material from %s", prim_path)
     return {
         "prim_path": prim_path,
         "asset_folder": asset_dir.name,
-        "message": f"Removed material binding from {prim_path}",
+        "unused_files": unused,
+        "message": f"Removed material binding from {prim_path}." + unused_files_note(unused),
     }
 
 
@@ -187,7 +194,11 @@ def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> dict[
             )
             raise ValueError(msg)
 
+        unused_before = unused_asset_files(asset_dir)
         removed = material_utils.cleanup_unused_in_folder(asset_dir)
+        left = newly_unused(
+            state.require_project().path, unused_before, unused_asset_files(asset_dir),
+        )
         state.reopen_stage()
         logger.info(
             "Cleaned %d unused material(s) from %s", len(removed), asset_dir.name,
@@ -196,23 +207,29 @@ def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> dict[
             "asset_folder": asset_dir.name,
             "removed_count": len(removed),
             "removed": removed,
+            "unused_files": left,
             "message": (
                 f"Removed {len(removed)} unused material(s) from {asset_dir.name}."
+                + unused_files_note(left)
             ),
         }
 
     assets_dir = state.resolve_assets_dir()
+    project_dir = state.require_project().path
     per_folder: list[dict[str, Any]] = []
+    unused: list[str] = []
     total = 0
     for entry in sorted(assets_dir.iterdir()):
         if not entry.is_dir():
             continue
         if not (entry / ASWFLayerNames.MTL).exists():
             continue
+        unused_before = unused_asset_files(entry)
         removed = material_utils.cleanup_unused_in_folder(entry)
         if removed:
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)
+            unused += newly_unused(project_dir, unused_before, unused_asset_files(entry))
 
     state.reopen_stage()
     logger.info(
@@ -222,9 +239,10 @@ def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> dict[
     return {
         "total_removed": total,
         "per_folder": per_folder,
+        "unused_files": unused,
         "message": (
             f"Removed {total} unused material(s) across "
-            f"{len(per_folder)} asset folder(s)."
+            f"{len(per_folder)} asset folder(s)." + unused_files_note(unused)
         ),
     }
 

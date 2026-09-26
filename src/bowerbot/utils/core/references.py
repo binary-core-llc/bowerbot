@@ -5,11 +5,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 
 from pxr import Ar, Gf, Kind, Sdf, Usd, UsdGeom
 
-from bowerbot.schemas import AssetFormat, SceneNamespace, SceneObject
+from bowerbot.schemas import (
+    AssetFormat,
+    ASWFLayerNames,
+    SceneNamespace,
+    SceneObject,
+    TextureRules,
+)
 from bowerbot.utils.core.metrics import asset_conform
 
 
@@ -49,6 +56,54 @@ def find_asset_placements(stage: Usd.Stage, asset_dir: Path) -> list[str]:
     return placements
 
 
+def is_placement(stage: Usd.Stage, prim_path: str | Sdf.Path) -> bool:
+    """Whether *prim_path* is a placement: a wrapper whose ``asset`` child holds the asset."""
+    path = Sdf.Path(prim_path)
+    prim = stage.GetPrimAtPath(path)
+    return bool(
+        path.name != SceneNamespace.ASSET_CHILD
+        and prim.IsValid()
+        and prim.GetChild(SceneNamespace.ASSET_CHILD).IsValid(),
+    )
+
+
+def enclosing_placement(stage: Usd.Stage, prim_path: str) -> str | None:
+    """The deepest placement whose ``asset`` child is *prim_path* or holds it, else ``None``."""
+    path = Sdf.Path(prim_path)
+    for prefix in reversed(path.GetPrefixes()[:-1]):
+        inner = prefix.AppendChild(SceneNamespace.ASSET_CHILD)
+        if path.HasPrefix(inner) and is_placement(stage, prefix):
+            return str(prefix)
+    return None
+
+
+def placement_of(stage: Usd.Stage, prim_path: str) -> str:
+    """The placement *prim_path* names: the placement itself or its ``asset`` child.
+
+    A part inside a placement, and a prim outside every placement, are refused
+    with the path to pass instead.
+    """
+    if not stage.GetPrimAtPath(prim_path).IsValid():
+        msg = f"Prim not found: {prim_path}"
+        raise ValueError(msg)
+    if is_placement(stage, prim_path):
+        return prim_path
+    owner = enclosing_placement(stage, prim_path)
+    if owner is not None and prim_path == f"{owner}/{SceneNamespace.ASSET_CHILD}":
+        return owner
+    if owner is not None:
+        msg = (
+            f"{prim_path} is inside the placement {owner}; pass the placement "
+            f"itself ({owner})."
+        )
+        raise ValueError(msg)
+    msg = (
+        f"{prim_path} is not a placement; pass one as list_scene reports it "
+        f"(/Scene/<Group>/<Name>)."
+    )
+    raise ValueError(msg)
+
+
 def count_scene_refs_to_asset_dir(stage: Usd.Stage, asset_dir: Path) -> int:
     """Count how many prims in the scene reference *asset_dir*."""
     return len(find_asset_placements(stage, asset_dir))
@@ -82,6 +137,83 @@ def project_asset_references(project_dir: Path, assets_dir: Path) -> dict[str, s
     return references
 
 
+def files_named_by(layer_files: Iterable[Path]) -> dict[Path, list[Path]]:
+    """Each file the layers name (resolved) -> the layers naming it.
+
+    A layer names a file through a sublayer, a reference or payload, or an
+    asset-valued attribute (default or time sample), variant bodies included.
+    A ``<UDIM>`` path names every tile on disk.
+    """
+    named: dict[Path, list[Path]] = {}
+    for layer_file in layer_files:
+        layer = Sdf.Layer.FindOrOpen(str(layer_file))
+        if layer is None:
+            continue
+        paths = [
+            *layer.subLayerPaths, *_layer_arc_paths(layer), *_layer_attribute_asset_paths(layer),
+        ]
+        for asset_path in paths:
+            target = _resolve_arc(layer_file, asset_path)
+            udim = TextureRules.UDIM_TOKEN
+            tiles = (
+                target.parent.glob(target.name.replace(udim, TextureRules.UDIM_TILE_GLOB))
+                if udim in target.name else (target,)
+            )
+            for tile in tiles:
+                named.setdefault(tile.resolve(), []).append(layer_file)
+    return named
+
+
+def unused_files(
+    folder: Path, layer_files: Iterable[Path], *, keep: Iterable[Path] = (),
+) -> set[Path]:
+    """Files under *folder* (resolved) that none of *layer_files* names, *keep* aside."""
+    if not folder.is_dir():
+        return set()
+    named = files_named_by(layer_files)
+    kept = {path.resolve() for path in keep}
+    return {
+        path.resolve()
+        for path in folder.rglob("*")
+        if path.is_file() and not path.name.startswith(".")
+        and path.resolve() not in named and path.resolve() not in kept
+    }
+
+
+def layer_files(folder: Path) -> list[Path]:
+    """Every USD layer file under *folder*, sorted."""
+    return sorted(
+        path for path in folder.rglob("*")
+        if path.is_file() and path.suffix in AssetFormat.layer_formats()
+    )
+
+
+def project_layers(project_dir: Path) -> list[Path]:
+    """The project's own scene layers: ``scene.usda`` and its snapshots."""
+    return sorted(
+        path for path in project_dir.iterdir()
+        if path.is_file() and path.suffix in AssetFormat.layer_formats()
+    )
+
+
+def unused_scene_textures(project_dir: Path) -> set[Path]:
+    """Files in the project's ``textures/`` that neither the scene nor a snapshot names."""
+    return unused_files(project_dir / ASWFLayerNames.TEXTURES, project_layers(project_dir))
+
+
+def newly_unused(project_dir: Path, before: set[Path], after: set[Path]) -> list[str]:
+    """What an edit left unused: *after* minus *before*, relative to the project, sorted."""
+    root = project_dir.resolve()
+    return sorted(path.relative_to(root).as_posix() for path in after - before)
+
+
+def unused_files_note(unused: list[str]) -> str:
+    """The sentence a result message adds for files an edit left unused (empty if none)."""
+    if not unused:
+        return ""
+    return f" No longer used, kept in the project: {', '.join(unused)}."
+
+
 def files_referencing(references: dict[str, set[str]], entry: str) -> list[str]:
     """The project files (relative paths, sorted) that reference the ``assets/`` *entry*."""
     return sorted(file for file, entries in references.items() if entry in entries)
@@ -109,6 +241,8 @@ def _layer_arc_paths(layer: Sdf.Layer) -> list[str]:
 
     def visit(path: Sdf.Path) -> None:
         spec = layer.GetObjectAtPath(path)
+        if isinstance(spec, Sdf.VariantSpec):
+            spec = spec.primSpec  # arcs authored on the variant itself
         if not isinstance(spec, Sdf.PrimSpec):
             return
         for proxy in (spec.referenceList, spec.payloadList):
@@ -120,6 +254,29 @@ def _layer_arc_paths(layer: Sdf.Layer) -> list[str]:
                 proxy.orderedItems,
             ):
                 paths.extend(arc.assetPath for arc in items if arc.assetPath)
+
+    layer.Traverse(Sdf.Path.absoluteRootPath, visit)
+    return paths
+
+
+def _layer_attribute_asset_paths(layer: Sdf.Layer) -> list[str]:
+    """Every asset path an asset-valued attribute in *layer* authors, variant bodies included."""
+    asset_types = {Sdf.ValueTypeNames.Asset, Sdf.ValueTypeNames.AssetArray}
+    paths: list[str] = []
+
+    def visit(path: Sdf.Path) -> None:
+        if not path.IsPropertyPath():
+            return
+        spec = layer.GetAttributeAtPath(path)
+        if spec is None or spec.typeName not in asset_types:
+            return
+        values = [spec.default] if spec.HasDefaultValue() else []
+        values += [layer.QueryTimeSample(path, t) for t in layer.ListTimeSamplesForPath(path)]
+        for value in values:
+            items = value if isinstance(value, Sdf.AssetPathArray) else [value]
+            paths.extend(
+                item.path for item in items if isinstance(item, Sdf.AssetPath) and item.path
+            )
 
     layer.Traverse(Sdf.Path.absoluteRootPath, visit)
     return paths

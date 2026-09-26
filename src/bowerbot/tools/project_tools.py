@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot.services import project_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -51,6 +51,7 @@ def get_current_project(state: SceneState, params: dict[str, Any]) -> ToolResult
 TOOLS: list[Tool] = [
     Tool(
         name="list_projects",
+        effect=ToolEffect.READ,
         description=(
             "List every BowerBot project. Each entry has the project's "
             "name, path, and updated_at (ISO timestamp of last edit); the "
@@ -63,6 +64,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="create_project",
+        effect=ToolEffect.ADD,
         description=(
             "Create a new BowerBot project and immediately focus it. "
             "Every subsequent tool call (place_asset, create_light, ...) "
@@ -108,6 +110,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="open_project",
+        effect=ToolEffect.ADD,
         description=(
             "Open an existing BowerBot project and focus it. Every "
             "subsequent tool call operates on this project until another "
@@ -134,6 +137,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="get_current_project",
+        effect=ToolEffect.READ,
         description=(
             "Report which project is currently focused, including its "
             "path, up_axis, meters_per_unit and object count. Returns current=null (with an "

@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from pxr import Usd, UsdGeom, UsdShade
 
@@ -46,6 +47,28 @@ def validate_stage(
 
     is_valid = not any(i.severity == Severity.ERROR for i in issues)
     return ValidationResult(is_valid=is_valid, issues=issues)
+
+
+def stage_report(
+    stage_path: str | Path, *, expected_meters_per_unit: float, expected_up_axis: str,
+) -> dict[str, Any]:
+    """:func:`validate_stage` as the JSON a tool returns: validity, error count, issues."""
+    result = validate_stage(
+        stage_path,
+        expected_meters_per_unit=expected_meters_per_unit,
+        expected_up_axis=expected_up_axis,
+    )
+    return {
+        "is_valid": result.is_valid,
+        "error_count": result.error_count,
+        "issues": [
+            {"severity": i.severity.value, "message": i.message, "prim": i.prim_path}
+            for i in result.issues
+        ],
+        "message": (
+            "Scene is valid!" if result.is_valid else f"Found {result.error_count} error(s)."
+        ),
+    }
 
 
 def _check_default_prim(stage: Usd.Stage) -> list[ValidationIssue]:

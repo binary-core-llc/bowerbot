@@ -247,8 +247,22 @@ def test_mcp_client_receives_the_cross_tool_rules():
     params = {p for t in tools for p in t.inputSchema.get("properties", {})}
     mentioned = set(re.findall(r"`([a-z]+(?:_[a-z]+)+)", instructions))
     fields_and_inputs = {
-        "suspect_variant_sets", "bounds_offset", "base_color", "specular_roughness",
+        "suspect_variant_sets", "unused_files",
     }
     assert mentioned - tool_names - params - fields_and_inputs == set()
-    assert {"remove_scene_variant_set", "validate_scene", "set_prim_attribute"} <= mentioned
+    assert {"remove_scene_variant_set", "delete_project_texture", "set_prim_attribute"} <= mentioned
     assert "isaac" not in instructions.lower()
+
+
+def test_mcp_tools_say_what_they_change():
+    """Clients see read-only, additive and destructive tools apart; core tools stay local."""
+    with tempfile.TemporaryDirectory() as tmp:
+        server, _ = _server_and_state(tmp)
+        tools = {t.name: t.annotations for t in asyncio.run(_list_tools(server))}
+
+    assert tools["list_scene"].readOnlyHint is True
+    assert tools["place_asset"].readOnlyHint is False
+    assert tools["place_asset"].destructiveHint is False
+    assert tools["remove_prim"].destructiveHint is True
+    assert tools["set_prim_attribute"].destructiveHint is True
+    assert all(a.openWorldHint is False for a in tools.values())

@@ -184,7 +184,7 @@ bowerbot build "a reading nook with a chair, lamp, and bookshelf"
 
 In MCP mode BowerBot has no LLM of its own. An MCP client is the brain and BowerBot is the tool provider, exposing its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...). The client opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`). No LLM API key is read; skills still use their own config (the Sketchfab token, the Kit `base_url`) from the same `config.json`.
 
-On connect, BowerBot sends the client short **instructions** (`prompts/mcp.md`): the rules that span several tools, such as when to ask the user before a destructive follow-up, which paths to pass, what is shared by every placement of an asset, and which values are in meters. Each tool's own description covers the rest. The longer agent-mode prompts are not sent.
+On connect, BowerBot sends the client short **instructions** (`prompts/mcp.md`): the decisions that belong to the user (destructive follow-ups, flags that override a refusal), what is shared by every placement of an asset, and unit conversion. Rules that protect the scene are enforced by the tools themselves, and each tool's description covers its own use. Every tool also carries MCP hints (read-only, additive, or may change what exists; core tools touch only local files) so a client can auto-approve reads and confirm the rest. The longer agent-mode prompts are not sent.
 
 MCP mode speaks one of two transports, chosen by `mcp.transport`:
 
@@ -364,7 +364,7 @@ def Xform "Scene" (kind = "assembly") {
         def Xform "Table_01" (kind = "group") {
             xformOp:translate = (5, 0, 4)
             def Xform "asset" (
-                prepend references = @assets/single_table/single_table.usda@
+                prepend references = @./assets/single_table/single_table.usda@
             ) {
                 xformOp:scale = (0.01, 0.01, 0.01)   # conform: a centimeter asset in a meter scene
             }
@@ -460,7 +460,7 @@ path.
 | `list_scene` | Show current scene with positions and bounding boxes |
 | `list_prim_children` | Discover mesh parts inside a referenced asset |
 | `list_prim_attributes` | Enumerate every attribute on a prim with type, value, authored flag |
-| `set_prim_attribute` | Author or clear an attribute opinion (per-instance overrides; `value=null` clears) |
+| `set_prim_attribute` | Author or clear an attribute opinion (per-instance overrides; `value=null` clears; a texture is copied into `textures/`; on a BowerBot material the twin input on the other shader follows) |
 | `move_asset` | Reposition an existing object without creating duplicates |
 | `rename_prim` | Move/rename objects in the hierarchy (cascades into variant bodies) |
 | `remove_prim` | Delete objects from the scene (cascades orphan-opinion cleanup; a group left empty goes too; `/Scene` clears its children and keeps the root) |
@@ -476,7 +476,7 @@ path.
 | `place_asset_inside` | Nest an asset inside an ASWF container's `contents.usda` |
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (scans variant bodies in every layer first) |
-| `delete_project_texture` | Remove a texture file (checks references first) |
+| `delete_project_texture` | Remove a texture from the project (`textures/` or an asset folder, as a removal's `unused_files` lists it) once nothing uses it |
 | `cleanup_unused_contents` | Drop empty group scopes left in asset `contents.usda` layers, deleting a layer that ends up empty (removals already do this) |
 | `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data |
 
@@ -567,7 +567,7 @@ carry an `asset_` or `scene_` prefix so the LLM never has to guess.
 | Tool | Description |
 |------|-------------|
 | `validate_scene` | Check for USD errors (USD's `UsdValidation` framework + BowerBot's invariants) |
-| `package_scene` | Bundle as `.usdz` (with optional Apple AR Quick Look strict-subset pre-validation) |
+| `package_scene` | Validate, then bundle as `.usdz`; refuses while `validate_scene` finds errors unless `force` (with optional Apple AR Quick Look strict-subset pre-validation) |
 
 ### Extension Skills
 
@@ -1028,7 +1028,7 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 - Unbroken model hierarchy: `/Scene` is an `assembly`, and the groups and placement wrappers above every placed asset are `group`s, so each placed component is a model that outliners and asset tools recognise; an asset nested inside another becomes a `subcomponent` of its container
 - References only: no inline geometry, no scattered material sublayers
 - Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched: the wrapper holds the placement (translate, rotate, scale), and its `asset` child conforms the asset to the scene's units and up axis and holds the reference (each model-selection variant carries its own conform)
-- `validate_scene` (run it before `package_scene`, which does not run it for you) checks `defaultPrim`, units, up-axis, reference resolution, and material bindings
+- `validate_scene` checks `defaultPrim`, units, up-axis, reference resolution, and material bindings; `package_scene` runs it and refuses to package while it finds errors (`force` overrides, on the user's say-so)
 
 **Asset level**
 - References (not sublayers) per ASWF guidelines, for predictable opinion strength
@@ -1053,13 +1053,14 @@ Two layers of authority. The naming convention makes routing explicit.
 
 1. **Orphan opinion cleanup cascade.** When a prim is removed, every variant body spec authored at the same path is dropped. Empty intermediate `over` specs are pruned. Empty variant bodies remove via `Sdf.VariantSetSpec.RemoveVariant`. Empty variant sets drop along with their `variantSetNames` and `variantSelections` metadata. When `variants.usda` becomes empty, the file is auto-deleted and the root reference scrubbed.
 2. **Rename invariant.** Renaming a prim follows the rename through every variant body opinion, preserving authored values.
-3. **Asset-staging for `Sdf.ValueTypeNames.Asset` attributes.** Variant bodies that author texture or HDRI paths automatically stage the source file where the variant lives: an asset variant into the asset's `maps/`, a scene variant into `<project>/textures/`, each written as a path relative to its layer. `bind_material` brings a library material's textures into the asset's `maps/` the same way. Two different files with the same name keep separate copies. Refuses if the source cannot be resolved (no silent broken paths).
+3. **Asset-staging for `Sdf.ValueTypeNames.Asset` attributes.** Variant bodies that author texture or HDRI paths automatically stage the source file where the variant lives: an asset variant into the asset's `maps/`, a scene variant into `<project>/textures/`, each written as a path relative to its layer. `set_prim_attribute` stages into `<project>/textures/` the same way, and `bind_material` brings a library material's textures into the asset's `maps/`. Two different files with the same name keep separate copies. Refuses if the source cannot be resolved (no silent broken paths).
 4. **Suspect-set detection.** After `remove_scene_variant`, `remove_light` or `remove_camera`, variant sets that have collapsed to a single model-selection variant (or 2+ variants converging on one prim with active-only opinions) are flagged via `suspect_variant_sets` on the result. BowerBot's guidance tells the LLM to surface the suspect to the user and ask before deleting the set.
 5. **Model-selection symmetry.** `add_scene_model_selection_variant`'s first call auto-promotes the placement's existing direct reference into a variant body (named after the source asset folder). Removing the entire set auto-demotes the active variant's reference back to a direct reference on `/asset`. No data loss, no dead-slot placements.
 6. **Layer-level reference scanning.** `delete_project_asset`'s safety check scans variant bodies in any layer, not just the composed stage view. An asset referenced only by a non-active variant body still blocks deletion.
 
 **Removal scope**
 - Removal operations are scoped to one carrier. Removing a variant set from one asset never affects other assets, even when they reference each other.
+- A removal never deletes files silently. Files it leaves unused (a texture only the removed material, light or variant used, a payload no variant loads) are listed in `unused_files`; `delete_project_texture` deletes a texture on request, once no USD file in the project uses it.
 - When multiple assets are in scope, BowerBot asks which asset before calling the removal tool. It never guesses.
 - Variants composed in via referenced assets stay visible after removal because they are authored elsewhere. Navigate to that asset and remove them there.
 

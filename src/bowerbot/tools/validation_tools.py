@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot.services import validation_service
-from bowerbot.skills.base import Tool, ToolResult
+from bowerbot.skills.base import Tool, ToolEffect, ToolResult
 from bowerbot.state import SceneState
 
 
@@ -33,6 +33,7 @@ def package_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
 TOOLS: list[Tool] = [
     Tool(
         name="validate_scene",
+        effect=ToolEffect.READ,
         description=(
             "Run validation checks on the current scene. Checks: "
             "defaultPrim, metersPerUnit, upAxis, reference and sublayer "
@@ -53,7 +54,9 @@ TOOLS: list[Tool] = [
         name="package_scene",
         description=(
             "Package the current scene into a .usdz file for distribution. "
-            "Call validate_scene first to ensure correctness. "
+            "It runs validate_scene first and, when that finds errors, does "
+            "not package (usdz_path null, the findings in 'validation'); "
+            "force=true packages anyway, and is the user's decision. "
             "If the user is shipping the .usdz to Apple consumer paths "
             "(iOS Files / Safari / iMessage AR Quick Look, macOS Quick "
             "Look, Vision Pro), pass for_apple_ar_quick_look=true so "
@@ -61,11 +64,11 @@ TOOLS: list[Tool] = [
             "UsdPreviewSurface required, no UDIM, etc.) before packaging. "
             "Default off — the standard USDZ output works for Omniverse, "
             "Isaac Sim, Unreal, Unity, web viewers, and most other USD "
-            "consumers without restriction. Returns {usdz_path (or null if "
-            "Apple validation refused on errors), for_apple_ar_quick_look "
-            "(echo of the flag), is_valid_for_apple (bool), apple_issues "
-            "(list of {severity, message, prim}, empty unless the flag was "
-            "set), message}."
+            "consumers without restriction. Returns {usdz_path (or null when "
+            "validation refused), for_apple_ar_quick_look (echo of the "
+            "flag), is_valid_for_apple (bool), apple_issues (list of "
+            "{severity, message, prim}, empty unless the flag was set), "
+            "validation (the validate_scene result), message}."
         ),
         parameters={
             "type": "object",
@@ -77,6 +80,14 @@ TOOLS: list[Tool] = [
                         "(AR Quick Look subset) before packaging and "
                         "refuse on errors. Ask the user about the target "
                         "before flipping this on."
+                    ),
+                    "default": False,
+                },
+                "force": {
+                    "type": "boolean",
+                    "description": (
+                        "Package even when validate_scene finds errors. Only "
+                        "after the user has seen the errors and agreed."
                     ),
                     "default": False,
                 },

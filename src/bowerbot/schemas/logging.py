@@ -9,7 +9,13 @@ class LoggingRules:
 
     # Root of BowerBot's logger tree: every module logs under it.
     LOGGER_ROOT = "bowerbot"
-    # Keys whose values are redacted from logged payloads (matched ignoring case).
-    SECRET_KEY_PATTERN = r"(api[_-]?key|token|password|secret|auth(?:oriz)?)"
+    # A key naming one of these words (split on _ - and camelCase, ignoring
+    # case; "api key" counts as "apikey") has its value redacted in logs.
+    SECRET_KEY_WORDS = frozenset({
+        "apikey", "token", "password", "passwd", "secret", "auth", "authorization",
+        "credential", "credentials",
+    })
+    # Splits a key into words: runs of lower case/digits, or capitals.
+    KEY_WORD_PATTERN = r"[A-Z]?[a-z0-9]+|[A-Z]+(?![a-z])"
     # String values longer than this are truncated in logged payloads.
     MAX_STRING_LENGTH = 200

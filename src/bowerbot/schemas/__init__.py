@@ -80,6 +80,7 @@ from bowerbot.schemas.surface import SurfaceIndex, SurfaceTriangles
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
 from bowerbot.schemas.transforms import (
     LayoutPattern,
+    PositionDefaults,
     PositionMode,
     SceneObject,
     TransformParams,
@@ -130,6 +131,7 @@ __all__ = [
     "PhysicsPrimSummary",
     "PhysicsPropertySpec",
     "PhysicsSummary",
+    "PositionDefaults",
     "PositionMode",
     "PreviewSurfaceShader",
     "ProceduralMaterialParams",

@@ -5,6 +5,7 @@
 
 - One home per concept: ``utils/core`` imports no domain module, and holds
   functions only; its named values live in schema classes.
+- Bounding boxes come from ``core.bounds``; nothing else builds a ``BBoxCache``.
 - No loose values: ``schemas`` hold classes and ``type`` declarations only
   (plus the package ``__all__``).
 - One guard: only ``SceneState`` checks whether a scene, project or configured
@@ -132,3 +133,19 @@ def test_schemas_hold_classes_and_type_declarations_only() -> None:
                 continue
             offenders.append(f"{path.name}:{node.lineno}")
     assert not offenders, f"use a class for values and `type` for aliases: {offenders}"
+
+
+BOWERBOT_DIR = ROOT / "src" / "bowerbot"
+
+
+def test_bounding_boxes_come_from_core_bounds() -> None:
+    offenders = [
+        f"{path.relative_to(BOWERBOT_DIR)}:{node.lineno}"
+        for path in sorted(BOWERBOT_DIR.rglob("*.py"))
+        if path != CORE_DIR / "bounds.py"
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "BBoxCache"
+    ]
+    assert not offenders, f"use core.bounds.bbox_cache(): {offenders}"

@@ -21,16 +21,18 @@ from bowerbot.schemas import (
 from bowerbot.state import SceneState
 from bowerbot.utils import (
     asset_intake_utils,
-    geometry_utils,
     layout_utils,
     stage_utils,
 )
 from bowerbot.utils.asset_folder_utils import (
     compute_ref_asset_path,
+    get_geometry_bounds,
+    get_mpu,
     resolve_asset_dir_for_prim,
     resolve_asset_file_path,
 )
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.transforms import get_container_world_inverse, resolve_asset_position
 from bowerbot.utils.stage_utils import find_asset_references
 from bowerbot.utils.texture_utils import find_texture_references
 
@@ -323,15 +325,15 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     mode = PositionMode(
         params.get("position_mode", PositionMode.ABSOLUTE.value),
     )
-    tx, ty, tz = geometry_utils.resolve_asset_position(
+    tx, ty, tz = resolve_asset_position(
         mode,
-        geometry_utils.get_geometry_bounds(container_dir),
+        get_geometry_bounds(container_dir),
         tx, ty, tz,
         has_explicit_y=params.get("translate_y") is not None,
-        world_to_local_mat=stage_utils.get_container_world_inverse(
+        world_to_local_mat=get_container_world_inverse(
             stage, container_prim_path,
         ),
-        asset_mpu=geometry_utils.get_mpu(container_dir),
+        asset_mpu=get_mpu(container_dir),
     )
 
     ref_asset_path = compute_ref_asset_path(

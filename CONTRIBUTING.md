@@ -91,7 +91,7 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 
 `tests/test_architecture_rules.py` enforces these, so breaking one fails the build.
 
-- **One home per concept.** Helpers more than one domain needs live once, in `utils/core/`. Domains import core; core never imports a domain (only the standard library, `pxr`, `numpy`, `bowerbot.schemas` and other core modules). Core modules hold functions only: their named values live in a schema class, like `NamingRules` in `schemas/naming.py`.
+- **One home per concept.** Helpers more than one domain needs live once, in `utils/core/`. Domains import core; core never imports a domain (only the standard library, `pxr`, `numpy`, `bowerbot.schemas` and other core modules). Core modules hold functions only: their named values live in a schema class, like `NamingRules` in `schemas/naming.py`. Bounding boxes always come from `core/bounds.py`.
 - **No loose values in schemas.** `schemas/` holds classes and `type` declarations only. A named value goes in a class named for what it holds: `<Domain>Rules` for what input is accepted (`NamingRules`, `LayoutRules`, `ScatterRules`), `<Domain>Defaults` for values used when the request gives none (`CameraDefaults`), `<Domain>Namespace` for canonical prim paths. Type aliases use `type Vec3 = tuple[float, float, float]`.
 - **One guard.** Only `SceneState` checks whether a scene, project or configured folder exists. Services ask for what they need with `state.require_stage()`, `require_stage_path()`, `require_project()`, `require_library_dir()` or `require_projects_dir()`, which raise one clear error when it is missing, and reopen the scene with `state.reopen_stage()`. Tools never check.
 

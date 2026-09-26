@@ -15,7 +15,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdGeom
+from pxr import Sdf, Usd
 
 from bowerbot.schemas import (
     AssetFormat,
@@ -23,6 +23,8 @@ from bowerbot.schemas import (
     DetectionOutcome,
     FolderDetection,
 )
+from bowerbot.utils.core.bounds import bbox_cache, world_range
+from bowerbot.utils.core.metrics import read_mpu, read_stage_metadata
 from bowerbot.utils.dependency_utils import resolve as resolve_dependencies
 from bowerbot.utils.stage_utils import (
     count_scene_refs_to_asset_dir,
@@ -367,30 +369,12 @@ def rebuild_root_references(asset_dir: Path) -> None:
 # ── Stage metadata ──
 
 
-def read_stage_metadata(file_path: Path) -> tuple[float, str]:
-    """Return ``(metersPerUnit, upAxis)`` for *file_path*."""
-    stage = Usd.Stage.Open(str(file_path))
-    if stage is None:
-        return 1.0, "Y"
-
-    mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    up = UsdGeom.GetStageUpAxis(stage)
-    up_str = "Y" if up == UsdGeom.Tokens.y else "Z"
-    return mpu, up_str
-
-
 def read_stage_metadata_from_dir(asset_dir: Path) -> tuple[float, str]:
     """Return ``(metersPerUnit, upAxis)`` from an asset's ``geo.usda``."""
     geo_path = asset_dir / ASWFLayerNames.GEO
     if geo_path.exists():
         return read_stage_metadata(geo_path)
     return 1.0, "Y"
-
-
-def read_asset_mpu_from_file(asset_file: Path) -> float:
-    """Return ``metersPerUnit`` from any USD file. Defaults to 1.0."""
-    mpu, _ = read_stage_metadata(asset_file)
-    return mpu if mpu > 0 else 1.0
 
 
 # ── Root detection ──
@@ -500,3 +484,55 @@ def _name_tiebreak(candidates: list[Path], folder_name: str) -> Path | None:
         if len(matches) == 1:
             return matches[0]
     return None
+
+
+def get_geometry_bounds(
+    asset_dir: Path,
+) -> dict[str, dict[str, float]] | None:
+    """Return the asset's geometry bounds in meters, or ``None``."""
+    geo_path = asset_dir / ASWFLayerNames.GEO
+    if not geo_path.exists():
+        return None
+
+    stage = Usd.Stage.Open(str(geo_path))
+    if stage is None:
+        return None
+
+    root = stage.GetDefaultPrim()
+    if root is None:
+        return None
+
+    rng = world_range(root, bbox_cache())
+    if rng is None:
+        return None
+
+    mpu, _ = read_stage_metadata_from_dir(asset_dir)
+    mn = rng.GetMin()
+    mx = rng.GetMax()
+
+    return {
+        "min": {"x": mn[0] * mpu, "y": mn[1] * mpu, "z": mn[2] * mpu},
+        "max": {"x": mx[0] * mpu, "y": mx[1] * mpu, "z": mx[2] * mpu},
+        "center": {
+            "x": (mn[0] + mx[0]) / 2 * mpu,
+            "y": (mn[1] + mx[1]) / 2 * mpu,
+            "z": (mn[2] + mx[2]) / 2 * mpu,
+        },
+        "size": {
+            "x": (mx[0] - mn[0]) * mpu,
+            "y": (mx[1] - mn[1]) * mpu,
+            "z": (mx[2] - mn[2]) * mpu,
+        },
+    }
+
+
+def get_mpu(asset_dir: Path) -> float:
+    """Return the asset's ``metersPerUnit`` (from ``geo.usda``), defaulting to 1.0."""
+    geo_path = asset_dir / ASWFLayerNames.GEO
+    return read_mpu(geo_path) if geo_path.exists() else 1.0
+
+
+def unit_factor(asset_dir: Path) -> float:
+    """Return the factor that converts meters into asset units."""
+    mpu = get_mpu(asset_dir)
+    return 1.0 / mpu if mpu > 0 else 1.0

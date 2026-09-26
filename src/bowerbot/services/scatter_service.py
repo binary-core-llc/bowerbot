@@ -25,6 +25,7 @@ from bowerbot.schemas import (
 )
 from bowerbot.state import SceneState
 from bowerbot.utils import scatter_utils, stage_utils, surface_utils
+from bowerbot.utils.core.metrics import axis_index
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, A
     """Distribute assets over surface prims, each piece resting on the surface it lands on."""
     stage = state.require_stage()
     project = state.require_project()
-    up = surface_utils.axis_index(state.up_axis.value)
+    up = axis_index(state.up_axis.value)
     arrangement = ScatterArrangement(params.get("arrangement", ScatterArrangement.RANDOM))
     count = params.get("count")
     density = params.get("density")
@@ -182,7 +183,7 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, A
     """Place assets along a polyline, circle or curve, resting each on the surface below."""
     stage = state.require_stage()
     project = state.require_project()
-    up = surface_utils.axis_index(state.up_axis.value)
+    up = axis_index(state.up_axis.value)
     given = [key for key in ("points", "circle", "curve_prim") if params.get(key) is not None]
     if len(given) != 1:
         msg = (
@@ -310,7 +311,7 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, A
 def drop_to_surface(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Drop existing placements, and reseat scatters, onto the surface beneath them."""
     stage = state.require_stage()
-    up = surface_utils.axis_index(state.up_axis.value)
+    up = axis_index(state.up_axis.value)
     align = ScatterDropAlign(params.get("align", ScatterDropAlign.KEEP))
     wrappers, scatters = scatter_utils.drop_targets(stage, params["prim_paths"])
     index = surface_utils.build_vertical_index(

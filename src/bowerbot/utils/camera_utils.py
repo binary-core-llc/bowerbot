@@ -9,8 +9,9 @@ from pxr import Gf, Usd, UsdGeom
 
 from bowerbot.schemas import CameraParams, CameraPropertySpec, CameraSchemaInfo
 from bowerbot.schemas.transforms import Vec3
+from bowerbot.utils.core.transforms import extract_position
 from bowerbot.utils.core.values import usd_to_json
-from bowerbot.utils.stage_utils import extract_position, set_prim_attribute
+from bowerbot.utils.stage_utils import set_prim_attribute
 from bowerbot.utils.usd_schema_utils import property_doc
 
 _UP_VECTORS = {"Y": Gf.Vec3d(0, 1, 0), "Z": Gf.Vec3d(0, 0, 1)}

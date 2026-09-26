@@ -5,12 +5,13 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from pxr import Gf, Kind, Sdf, Sdr, Usd, UsdGeom, UsdShade, UsdUtils
 
 from bowerbot.schemas import AssetFormat, SceneObject
+from bowerbot.utils.core.bounds import bbox_cache, world_bounds
+from bowerbot.utils.core.metrics import asset_conform
 from bowerbot.utils.core.naming import safe_file_name
 from bowerbot.utils.core.values import infer_sdf_type, json_to_usd, usd_to_json
 
@@ -479,55 +480,6 @@ def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
 # ── Transforms / namespace edits ──
 
 
-def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, float]:
-    """Return ``(tx, ty, tz, ry)`` resolved on ``prim``; missing ops read as 0."""
-    xformable = UsdGeom.Xformable(prim)
-    tx = ty = tz = ry = 0.0
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
-            value = op.Get()
-            if value is not None:
-                tx, ty, tz = float(value[0]), float(value[1]), float(value[2])
-        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            value = op.Get()
-            if value is not None:
-                ry = float(value[1])
-    return tx, ty, tz, ry
-
-
-def set_transform(
-    stage: Usd.Stage,
-    prim_path: str,
-    translate: tuple[float, float, float],
-    rotate: tuple[float, float, float] = (0.0, 0.0, 0.0),
-) -> None:
-    """Update translate/rotate on an existing prim in place."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim.IsValid():
-        msg = f"Prim not found: {prim_path}"
-        raise ValueError(msg)
-
-    xformable = UsdGeom.Xformable(prim)
-    tx, ty, tz = translate
-    rx, ry, rz = rotate
-
-    found_translate = False
-    found_rotate = False
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
-            if op.GetOpName() == "xformOp:translate":
-                op.Set(Gf.Vec3d(tx, ty, tz))
-                found_translate = True
-        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            op.Set(Gf.Vec3f(rx, ry, rz))
-            found_rotate = True
-
-    if not found_translate:
-        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-    if not found_rotate and any(v != 0.0 for v in (rx, ry, rz)):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
-
-
 def rename_prim(stage: Usd.Stage, old_path: str, new_path: str) -> bool:
     """Rename/move a prim. Caller should reopen the stage afterwards."""
     old_prim = stage.GetPrimAtPath(old_path)
@@ -717,9 +669,7 @@ def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
     if not root_prim.IsValid():
         return []
 
-    bbox_cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
+    cache = bbox_cache()
 
     results: list[dict] = []
     for prim in Usd.PrimRange(root_prim):
@@ -734,7 +684,7 @@ def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
             "is_mesh": type_name == "Mesh",
             "is_bindable": True,
             "current_material": str(bound_mat.GetPath()) if bound_mat else None,
-            "bounds": world_bounds(prim, bbox_cache),
+            "bounds": world_bounds(prim, cache),
         })
     return results
 
@@ -769,24 +719,6 @@ def find_asset_placements(stage: Usd.Stage, asset_dir: Path) -> list[str]:
     return placements
 
 
-def get_container_world_inverse(
-    stage: Usd.Stage, container_prim_path: str,
-) -> Gf.Matrix4d | None:
-    """Return the inverse world transform of a container's wrapper Xform."""
-    prim = stage.GetPrimAtPath(container_prim_path)
-    if not prim or not prim.IsValid():
-        return None
-
-    wrapper = prim
-    if prim.GetName() == "asset":
-        parent = prim.GetParent()
-        if parent and parent.IsValid():
-            wrapper = parent
-
-    xform_cache = UsdGeom.XformCache()
-    return xform_cache.GetLocalToWorldTransform(wrapper).GetInverse()
-
-
 def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
     """If *prim_path* is a nested-asset wrapper, return (group, prim_name)."""
     marker = "/asset/contents/"
@@ -819,84 +751,6 @@ def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
     return None
 
 
-def world_to_local_point(
-    stage: Usd.Stage,
-    container_prim_path: str,
-    x: float, y: float, z: float,
-) -> tuple[float, float, float] | None:
-    """Convert a world-space point into a container's local frame."""
-    inv = get_container_world_inverse(stage, container_prim_path)
-    if inv is None:
-        return None
-    local = inv.Transform(Gf.Vec3d(x, y, z))
-    return float(local[0]), float(local[1]), float(local[2])
-
-
 # ── Internal helpers ──
-
-
-def update_translate_op(prim: Usd.Prim, value: Gf.Vec3d) -> None:
-    """Update the first translate xform op on *prim*."""
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpName() == "xformOp:translate":
-            op.Set(value)
-            return
-
-
-def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
-    """Update the first rotateXYZ xform op on *prim*."""
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            op.Set(value)
-            return
-
-
-def asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | None]:
-    """Return (unit scale, up-axis X-rotation or None) conforming an asset to the stage."""
-    if not os.path.isabs(asset_path):
-        stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
-        asset_path = os.path.join(stage_dir, asset_path)
-
-    asset_stage = Usd.Stage.Open(asset_path, Usd.Stage.LoadNone)
-    if asset_stage is None:
-        return 1.0, None
-
-    asset_mpu = UsdGeom.GetStageMetersPerUnit(asset_stage)
-    scene_mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    unit_scale = 1.0 if scene_mpu == 0 else asset_mpu / scene_mpu
-
-    asset_up = UsdGeom.GetStageUpAxis(asset_stage)
-    scene_up = UsdGeom.GetStageUpAxis(stage)
-    correction = None
-    if asset_up == UsdGeom.Tokens.y and scene_up == UsdGeom.Tokens.z:
-        correction = 90.0
-    elif asset_up == UsdGeom.Tokens.z and scene_up == UsdGeom.Tokens.y:
-        correction = -90.0
-    return unit_scale, correction
-
-
-def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
-    """Return the translate component of a prim's local transform."""
-    xformable = UsdGeom.Xformable(prim)
-    if not xformable:
-        return None
-    t = xformable.GetLocalTransformation().ExtractTranslation()
-    return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
-
-
-def world_bounds(
-    prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
-) -> dict | None:
-    """Compute world-aligned AABB for a prim, rounded to 4 decimals."""
-    rng = bbox_cache.ComputeWorldBound(prim).ComputeAlignedRange()
-    if rng.IsEmpty():
-        return None
-    mn, mx = rng.GetMin(), rng.GetMax()
-    return {
-        "min": {"x": round(mn[0], 4), "y": round(mn[1], 4), "z": round(mn[2], 4)},
-        "max": {"x": round(mx[0], 4), "y": round(mx[1], 4), "z": round(mx[2], 4)},
-    }
 
 

@@ -8,33 +8,19 @@ from __future__ import annotations
 import math
 
 import numpy as np
-from pxr import Gf, Sdf, Usd, UsdGeom
+from pxr import Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import SurfaceIndex, SurfaceTriangles
 from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
+from bowerbot.utils.core.bounds import bbox_cache
+from bowerbot.utils.core.metrics import horizontal_axes
+from bowerbot.utils.core.transforms import gf_matrix_to_numpy
 
 _EPS = 1e-9
 _BARY_EPS = 1e-7
 _SPHERE_SEGMENTS = (32, 16)
 _MAX_GRID_CELLS = 1 << 20
 _QUERY_CHUNK = 200_000
-
-
-def axis_index(up_axis: str) -> int:
-    """World axis index of an up-axis name: ``"Y"`` -> 1, ``"Z"`` -> 2."""
-    return 2 if up_axis == "Z" else 1
-
-
-def horizontal_axes(up: int) -> tuple[int, int]:
-    """The two world axes spanning the ground plane for up axis *up*."""
-    return (0, 2) if up == 1 else (0, 1)
-
-
-def up_vector(up: int) -> FloatArray:
-    """Unit vector along the world up axis."""
-    vec = np.zeros(3)
-    vec[up] = 1.0
-    return vec
 
 
 def collect_triangles(
@@ -275,29 +261,6 @@ def plan_bounds(triangles: SurfaceTriangles, up: int) -> tuple[FloatArray, Float
     return pts.min(axis=0), pts.max(axis=0)
 
 
-def prim_world_box(
-    stage: Usd.Stage, prim_path: str,
-) -> tuple[FloatArray, FloatArray]:
-    """World-aligned bounding box ``(min, max)`` of a prim; raises if empty."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim.IsValid():
-        msg = f"Prim not found: {prim_path}"
-        raise ValueError(msg)
-    cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render],
-    )
-    rng = cache.ComputeWorldBound(prim).ComputeAlignedRange()
-    if rng.IsEmpty():
-        msg = f"Prim {prim_path} has no geometry bounds."
-        raise ValueError(msg)
-    return np.array(rng.GetMin()), np.array(rng.GetMax())
-
-
-def gf_matrix_to_numpy(matrix: Gf.Matrix4d) -> FloatArray:
-    """A Gf.Matrix4d as a (4, 4) float64 array (row-vector convention)."""
-    return np.array(matrix, dtype=np.float64)
-
-
 # ── internals ──
 
 
@@ -435,7 +398,7 @@ def _instancer_footprints(
     keep = np.asarray(mask, dtype=bool) if mask else np.ones(proto_idx.size, dtype=bool)
 
     stage = instancer.GetPrim().GetStage()
-    cache = UsdGeom.BBoxCache(time, [UsdGeom.Tokens.default_, UsdGeom.Tokens.render])
+    cache = bbox_cache(include_render=True, time=time)
     targets = instancer.GetPrototypesRel().GetTargets()
     lo = np.full((len(targets), 3), np.nan)
     hi = np.full((len(targets), 3), np.nan)

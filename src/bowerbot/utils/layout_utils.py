@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -203,3 +204,34 @@ def _expand_pattern(pattern: GridPattern | LinearPattern) -> list[Vec3]:
 def _pad3(values: tuple, fill: float | int) -> tuple:
     """Pad a 2-tuple to 3 with the identity value for the missing axis."""
     return (*values, fill) if len(values) == 2 else tuple(values)
+
+
+def suggest_grid_layout(
+    count: int,
+    *,
+    spacing: float = 2.0,
+    room_bounds: tuple[float, float, float] = (10.0, 3.0, 8.0),
+    center: tuple[float, float] | None = None,
+) -> list[tuple[float, float, float]]:
+    """Compute ``(x, y, z)`` positions for *count* objects in a grid."""
+    if count <= 0:
+        return []
+
+    room_width, _, room_depth = room_bounds
+    cols = math.ceil(math.sqrt(count))
+    rows = math.ceil(count / cols)
+
+    cx = center[0] if center else room_width / 2
+    cz = center[1] if center else room_depth / 2
+
+    x_offset = cx - (cols - 1) * spacing / 2
+    z_offset = cz - (rows - 1) * spacing / 2
+
+    placements: list[tuple[float, float, float]] = []
+    for i in range(count):
+        row = i // cols
+        col = i % cols
+        x = x_offset + col * spacing
+        z = z_offset + row * spacing
+        placements.append((x, 0.0, z))
+    return placements

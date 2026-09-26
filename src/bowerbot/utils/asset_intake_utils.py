@@ -30,13 +30,12 @@ from bowerbot.utils.asset_folder_utils import (
     detect_folder_root,
     ensure_layer_scope,
     ensure_root_reference,
-    read_asset_mpu_from_file,
-    read_stage_metadata,
+    get_mpu,
     rebuild_root_references,
     remove_empty_layer,
     resolve_default_prim_name,
 )
-from bowerbot.utils.geometry_utils import get_mpu
+from bowerbot.utils.core.metrics import read_mpu, read_stage_metadata
 from bowerbot.utils.library_utils import find_package_for
 from bowerbot.utils.validation_utils import run_usd_compliance_checker
 
@@ -531,7 +530,7 @@ def add_nested_asset_reference(
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
     nested_mpu = (
-        read_asset_mpu_from_file(ref_full_path)
+        read_mpu(ref_full_path)
         if ref_full_path.exists() else container_mpu
     )
     unit_scale = (

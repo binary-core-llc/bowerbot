@@ -13,14 +13,18 @@ from pxr import Sdf
 from bowerbot.schemas import LightParams, LightType, PositionMode, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import (
-    geometry_utils,
     light_utils,
     stage_utils,
     texture_utils,
     variant_utils,
 )
-from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
+from bowerbot.utils.asset_folder_utils import (
+    get_geometry_bounds,
+    get_mpu,
+    resolve_asset_dir_for_prim,
+)
 from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
+from bowerbot.utils.core.transforms import get_container_world_inverse, resolve_asset_position
 from bowerbot.utils.core.values import unpack_vec3
 
 logger = logging.getLogger(__name__)
@@ -72,15 +76,15 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         mode = PositionMode(
             params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
         )
-        tx, ty, tz = geometry_utils.resolve_asset_position(
+        tx, ty, tz = resolve_asset_position(
             mode,
-            geometry_utils.get_geometry_bounds(asset_dir),
+            get_geometry_bounds(asset_dir),
             tx, ty, tz,
             has_explicit_y=params.get("translate_y") is not None,
-            world_to_local_mat=stage_utils.get_container_world_inverse(
+            world_to_local_mat=get_container_world_inverse(
                 stage, asset_prim_path,
             ),
-            asset_mpu=geometry_utils.get_mpu(asset_dir),
+            asset_mpu=get_mpu(asset_dir),
         )
 
         light = LightParams(
@@ -162,15 +166,15 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             mode = PositionMode(
                 params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
             )
-            translate = geometry_utils.resolve_asset_position(
+            translate = resolve_asset_position(
                 mode,
-                geometry_utils.get_geometry_bounds(asset_dir),
+                get_geometry_bounds(asset_dir),
                 *translate,
                 has_explicit_y=params.get("translate_y") is not None,
-                world_to_local_mat=stage_utils.get_container_world_inverse(
+                world_to_local_mat=get_container_world_inverse(
                     stage, prim_path,
                 ),
-                asset_mpu=geometry_utils.get_mpu(asset_dir),
+                asset_mpu=get_mpu(asset_dir),
             )
         light_name = prim_path.rstrip("/").split("/")[-1]
         light_utils.update_light_in_folder(

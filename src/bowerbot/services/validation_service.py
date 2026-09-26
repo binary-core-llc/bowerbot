@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot.schemas import AssetFormat
 from bowerbot.state import SceneState
 from bowerbot.utils import validation_utils
 
@@ -63,7 +64,7 @@ def package_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                 ),
             }
 
-    output_path = stage_path.with_suffix(".usdz")
+    output_path = stage_path.with_suffix(AssetFormat.USDZ)
     result_path = validation_utils.package_to_usdz(stage_path, output_path)
     return {
         "usdz_path": str(result_path),

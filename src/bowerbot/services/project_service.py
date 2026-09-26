@@ -11,7 +11,7 @@ from typing import Any
 from bowerbot.config import UpAxis
 from bowerbot.project import Project
 from bowerbot.state import SceneState
-from bowerbot.utils.naming_utils import safe_project_name
+from bowerbot.utils.core.naming import safe_project_name
 
 logger = logging.getLogger(__name__)
 

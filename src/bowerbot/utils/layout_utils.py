@@ -12,16 +12,15 @@ from typing import Any
 from pydantic import ValidationError
 
 from bowerbot.schemas import (
-    LAYOUT_FILE_VERSION,
     GridPattern,
     LayoutEntry,
     LayoutPattern,
+    LayoutRules,
     LinearPattern,
     TransformParams,
 )
-from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
-
-Vec3 = tuple[float, float, float]
+from bowerbot.schemas.transforms import Vec3
+from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 
 
 def resolve_layout_file(raw: str, project_dir: Path | None) -> Path:
@@ -58,10 +57,10 @@ def parse_layout_file(file: Path) -> list[Any]:
         msg = 'layout_file must be an object: {"version": 1, "placements": [...]}.'
         raise ValueError(msg)
     version = data.get("version")
-    if version != LAYOUT_FILE_VERSION:
+    if version != LayoutRules.FILE_VERSION:
         msg = (
             f"unsupported layout_file version {version!r}; "
-            f"this BowerBot reads version {LAYOUT_FILE_VERSION}."
+            f"this BowerBot reads version {LayoutRules.FILE_VERSION}."
         )
         raise ValueError(msg)
     placements = data.get("placements")

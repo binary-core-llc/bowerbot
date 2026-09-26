@@ -20,6 +20,7 @@ from pathlib import Path
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdUtils
 
 from bowerbot.schemas import (
+    AssetFormat,
     ASWFLayerNames,
     DetectionOutcome,
     IntakeReport,
@@ -51,7 +52,7 @@ def prepare_asset(
     fix_root_transforms: bool = False,
 ) -> IntakeReport:
     """Route an input file to USDZ / library-package / loose-file intake."""
-    if asset_path.suffix.lower() == ".usdz":
+    if asset_path.suffix.lower() == AssetFormat.USDZ:
         return intake_usdz(asset_path, assets_dir)
 
     if library_dir is not None:
@@ -89,7 +90,7 @@ def prepare_asset(
 
 def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
     """Return the assets/ entry name prepare_asset would stage for *asset_path*."""
-    if asset_path.suffix.lower() == ".usdz":
+    if asset_path.suffix.lower() == AssetFormat.USDZ:
         return asset_path.name
     if library_dir is not None:
         package_dir = find_package_for(asset_path, library_dir)
@@ -1027,7 +1028,7 @@ def _wrap_root_prim(geometry_file: Path) -> None:
     if root_spec is None or root_spec.typeName in ("Xform", ""):
         return
 
-    with tempfile.NamedTemporaryFile(suffix=".usda", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=AssetFormat.USDA, delete=False) as tmp:
         tmp_path = Path(tmp.name)
 
     try:

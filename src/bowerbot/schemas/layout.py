@@ -9,13 +9,14 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from bowerbot.schemas.transforms import LayoutPattern
+from bowerbot.schemas.transforms import LayoutPattern, Vec3
 
-LAYOUT_FILE_VERSION = 1
-MAX_LAYOUT_PLACEMENTS = 100_000
 
-Vec3 = tuple[float, float, float]
+class LayoutRules:
+    """What place_layout accepts: the layout-file version and the placement limit."""
 
+    FILE_VERSION = 1
+    MAX_PLACEMENTS = 100_000
 
 class GridPattern(BaseModel):
     """Repeat an asset along the X/Y(/Z) axes from an origin."""

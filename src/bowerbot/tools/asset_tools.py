@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import MAX_LAYOUT_PLACEMENTS, LayoutPattern, PositionMode
+from bowerbot.schemas import LayoutPattern, LayoutRules, PositionMode
 from bowerbot.services import asset_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
@@ -197,7 +197,7 @@ TOOLS: list[Tool] = [
                     "type": "array",
                     "description": (
                         "Each entry places one asset at many transforms; at "
-                        f"most {MAX_LAYOUT_PLACEMENTS} placements per call."
+                        f"most {LayoutRules.MAX_PLACEMENTS} placements per call."
                     ),
                     "items": {
                         "type": "object",

@@ -8,8 +8,6 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot.schemas import (
-    MAX_SCATTER_INSTANCES,
-    MAX_SCATTER_PLACEMENTS,
     ScatterAlign,
     ScatterArrangement,
     ScatterAssetOrder,
@@ -19,6 +17,7 @@ from bowerbot.schemas import (
     ScatterPathFacing,
     ScatterPathSide,
     ScatterRegionFalloff,
+    ScatterRules,
 )
 from bowerbot.services import scatter_service
 from bowerbot.skills.base import Tool, ToolResult
@@ -129,7 +128,7 @@ TOOLS: list[Tool] = [
         description=(
             "Distribute many copies of one or more assets over surface prims "
             "(ground, floors, terrain, rocks, hulls, shelves), from a handful to "
-            f"a million (max {MAX_SCATTER_INSTANCES:,}). Every piece rests on the "
+            f"a million (max {ScatterRules.MAX_INSTANCES:,}). Every piece rests on the "
             "actual triangles it lands on, however uneven, sloped or curved, "
             "conformed to the scene's up-axis and units. Arrangements: 'random' "
             "(count or density; optional min_spacing, patchy 'variation', "
@@ -140,7 +139,7 @@ TOOLS: list[Tool] = [
             "place_asset. Default output is one PointInstancer at "
             "/Scene/<group>/<name> whose prototypes reference the assets (light "
             "for large counts; the scatter moves or is removed as one prim); "
-            f"output='placements' writes up to {MAX_SCATTER_PLACEMENTS:,} "
+            f"output='placements' writes up to {ScatterRules.MAX_PLACEMENTS:,} "
             "individually editable placements, like place_layout. Lengths are "
             "scene units; density is instances per square meter. Use "
             "validate_only first for large densities."

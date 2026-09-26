@@ -13,10 +13,12 @@ from pxr import Sdf, Usd, UsdGeom, UsdShade, UsdUtils, UsdValidation
 
 from bowerbot.schemas import (
     AppleUSDZConstraints,
+    AssetFormat,
     Severity,
     ValidationIssue,
     ValidationResult,
 )
+from bowerbot.utils.core.naming import is_valid_variant_name
 from bowerbot.utils.stage_utils import get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
@@ -139,7 +141,7 @@ def _check_ar_quick_look_subdivision(stage: Usd.Stage) -> list[ValidationIssue]:
 def package_to_usdz(stage_path: str | Path, output_path: str | Path) -> Path:
     """Bundle a stage and its dependencies into a ``.usdz``."""
     stage_path = Path(stage_path)
-    output_path = Path(output_path).with_suffix(".usdz")
+    output_path = Path(output_path).with_suffix(AssetFormat.USDZ)
 
     devnull = os.open(os.devnull, os.O_WRONLY)
     old_stderr = os.dup(2)
@@ -342,7 +344,7 @@ def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
 
     summary = variant_utils.get_variant_summary(asset_dir)
     for vset in summary.variant_sets:
-        if not variant_utils.is_valid_variant_set_name(vset.name):
+        if not is_valid_variant_name(vset.name):
             issues.append(ValidationIssue(
                 severity=Severity.ERROR,
                 message=(
@@ -351,7 +353,7 @@ def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
                 ),
             ))
         for v in vset.variants:
-            if not variant_utils.is_valid_variant_set_name(v):
+            if not is_valid_variant_name(v):
                 issues.append(ValidationIssue(
                     severity=Severity.ERROR,
                     message=(

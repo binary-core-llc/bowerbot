@@ -20,7 +20,8 @@ from bowerbot.utils import (
     variant_utils,
 )
 from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
-from bowerbot.utils.naming_utils import safe_prim_name
+from bowerbot.utils.core.naming import safe_prim_name, unique_prim_path
+from bowerbot.utils.core.values import unpack_vec3
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +116,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             ),
         }
 
-    prim_path = stage_utils.unique_prim_path(
+    prim_path = unique_prim_path(
         stage, SceneNamespace.LIGHTING, safe_name,
     )
     light = LightParams(
@@ -148,10 +149,10 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     prim_path = params["prim_path"]
     asset_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
 
-    translate = geometry_utils.unpack_vec3(
+    translate = unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
     )
-    rotate = geometry_utils.unpack_vec3(
+    rotate = unpack_vec3(
         params, "rotate_x", "rotate_y", "rotate_z",
     )
     texture = params.get("texture")

@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any
 
 from bowerbot.schemas import (
-    MAX_LAYOUT_PLACEMENTS,
     AssetMetadata,
     ASWFLayerNames,
+    LayoutRules,
     PositionMode,
     SceneObject,
     TransformParams,
@@ -30,7 +30,7 @@ from bowerbot.utils.asset_folder_utils import (
     resolve_asset_dir_for_prim,
     resolve_asset_file_path,
 )
-from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 from bowerbot.utils.stage_utils import find_asset_references
 from bowerbot.utils.texture_utils import find_texture_references
 
@@ -163,10 +163,10 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         })
 
     placed = sum(item["count"] for item in items)
-    if placed > MAX_LAYOUT_PLACEMENTS:
+    if placed > LayoutRules.MAX_PLACEMENTS:
         problems.append(
             f"layout expands to {placed} placements; the maximum per call "
-            f"is {MAX_LAYOUT_PLACEMENTS}.",
+            f"is {LayoutRules.MAX_PLACEMENTS}.",
         )
     if problems:
         summary = f"layout validation failed ({len(problems)} problem(s)):"

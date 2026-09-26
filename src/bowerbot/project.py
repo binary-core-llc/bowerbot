@@ -23,7 +23,8 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from bowerbot.config import UpAxis
-from bowerbot.utils.naming_utils import safe_project_name
+from bowerbot.schemas import AssetFormat
+from bowerbot.utils.core.naming import safe_project_name
 from bowerbot.utils.stage_utils import create_empty_scene
 
 logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ class Project:
 
     @property
     def usdz_path(self) -> Path:
-        return self.scene_path.with_suffix(".usdz")
+        return self.scene_path.with_suffix(AssetFormat.USDZ)
 
     def save(self) -> None:
         """Save project metadata to project.json."""

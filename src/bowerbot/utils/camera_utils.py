@@ -8,10 +8,10 @@ from __future__ import annotations
 from pxr import Gf, Usd, UsdGeom
 
 from bowerbot.schemas import CameraParams, CameraPropertySpec, CameraSchemaInfo
+from bowerbot.schemas.transforms import Vec3
+from bowerbot.utils.core.values import usd_to_json
 from bowerbot.utils.stage_utils import extract_position, set_prim_attribute
-from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
-
-Vec3 = tuple[float, float, float]
+from bowerbot.utils.usd_schema_utils import property_doc
 
 _UP_VECTORS = {"Y": Gf.Vec3d(0, 1, 0), "Z": Gf.Vec3d(0, 0, 1)}
 _UP_ALIGNED_DOT = 0.999
@@ -36,7 +36,7 @@ def list_camera_properties() -> CameraSchemaInfo:
             name=name,
             kind="attribute",
             type_name=str(attr_spec.typeName),
-            default=to_jsonable(attr_spec.default),
+            default=usd_to_json(attr_spec.default),
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],

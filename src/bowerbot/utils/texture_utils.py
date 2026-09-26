@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pxr import Usd
 
-from bowerbot.schemas import ASWFLayerNames, HDRIFormat, TextureCategory
+from bowerbot.schemas import AssetFormat, ASWFLayerNames, HDRIFormat, TextureCategory
 
 
 def copy_texture_to_project(source: Path, project_dir: Path) -> str:
@@ -83,7 +83,7 @@ def find_texture_references(
     """Scan *project_dir* for USD files that reference *file_name*."""
     referencing: list[str] = []
     for usd_file in project_dir.rglob("*"):
-        if usd_file.suffix not in (".usd", ".usda", ".usdc"):
+        if usd_file.suffix not in AssetFormat.layer_formats():
             continue
         try:
             stage = Usd.Stage.Open(str(usd_file))

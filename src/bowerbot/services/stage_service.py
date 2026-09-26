@@ -17,7 +17,7 @@ from bowerbot.utils import (
     stage_utils,
 )
 from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
-from bowerbot.utils.naming_utils import safe_file_name
+from bowerbot.utils.core.naming import safe_file_name
 
 logger = logging.getLogger(__name__)
 

@@ -18,6 +18,7 @@ from pathlib import Path
 from pxr import Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import (
+    AssetFormat,
     ASWFLayerNames,
     DetectionOutcome,
     FolderDetection,
@@ -30,7 +31,6 @@ from bowerbot.utils.stage_utils import (
 
 logger = logging.getLogger(__name__)
 
-_USD_EXTS: frozenset[str] = frozenset({".usd", ".usda", ".usdc"})
 _ROOT_NAME_HINTS: tuple[str, ...] = ("root", "main", "asset")
 
 CANONICAL_REFERENCE_ORDER: tuple[str, ...] = (
@@ -84,7 +84,7 @@ def resolve_asset_dir_for_prim(
             if not resolved.exists() or not resolved.parent.is_dir():
                 continue
             folder = resolved.parent
-            for ext in _USD_EXTS:
+            for ext in AssetFormat.layer_formats():
                 if resolved.name == f"{folder.name}{ext}":
                     return folder, str(prim.GetPath())
         return None, None
@@ -118,7 +118,7 @@ def resolve_asset_dir_for_prim(
 
 def find_root_file(asset_dir: Path) -> Path | None:
     """Return the canonical ASWF root file in *asset_dir*, or ``None``."""
-    for ext in (".usd", ".usda", ".usdc"):
+    for ext in AssetFormat.layer_formats():
         candidate = asset_dir / f"{asset_dir.name}{ext}"
         if candidate.exists():
             return candidate
@@ -188,11 +188,11 @@ def list_alternate_geo_files(asset_dir: Path) -> list[str]:
         ASWFLayerNames.CONTENTS,
         ASWFLayerNames.VARIANTS,
     }
-    canonical |= {f"{asset_dir.name}{ext}" for ext in _USD_EXTS}
+    canonical |= {f"{asset_dir.name}{ext}" for ext in AssetFormat.layer_formats()}
     return sorted(
         p.name for p in asset_dir.iterdir()
         if p.is_file()
-        and p.suffix.lower() in _USD_EXTS
+        and p.suffix.lower() in AssetFormat.layer_formats()
         and p.name not in canonical
     )
 
@@ -413,7 +413,7 @@ def detect_folder_root(folder: Path) -> FolderDetection:
 
     usd_files = sorted(
         p for p in folder.iterdir()
-        if p.is_file() and p.suffix.lower() in _USD_EXTS
+        if p.is_file() and p.suffix.lower() in AssetFormat.layer_formats()
     )
     if not usd_files:
         return FolderDetection(

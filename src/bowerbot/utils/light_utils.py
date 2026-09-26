@@ -26,15 +26,15 @@ from bowerbot.utils.asset_folder_utils import (
     remove_empty_layer,
     resolve_default_prim_name,
 )
+from bowerbot.utils.core.values import coerce_number, usd_to_json
 from bowerbot.utils.geometry_utils import unit_factor
 from bowerbot.utils.stage_utils import (
     clear_orphan_variant_overs,
-    coerce_number,
     set_prim_attribute,
     update_rotate_op,
     update_translate_op,
 )
-from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
+from bowerbot.utils.usd_schema_utils import property_doc
 from bowerbot.utils.variant_utils import cleanup_if_empty
 
 LIGHT_CLASSES: dict[str, type] = {
@@ -82,7 +82,7 @@ def list_light_type_properties(light_type: LightType) -> LightTypeSchemaInfo:
             name=prop_name,
             kind="attribute",
             type_name=str(attr_spec.typeName),
-            default=to_jsonable(attr_spec.default),
+            default=usd_to_json(attr_spec.default),
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],

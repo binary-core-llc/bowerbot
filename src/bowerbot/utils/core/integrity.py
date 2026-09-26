@@ -87,8 +87,52 @@ def remove_scene_prim(stage: Usd.Stage, prim_path: str) -> dict[str, Any]:
         raise RuntimeError(msg)
     clear_orphan_variant_overs(stage.GetRootLayer(), prim_path)
     report = drop_refs_to_vanished(stage, before)
+    remove_empty_groups(stage, str(Sdf.Path(prim_path).GetParentPath()))
     stage.Save()
     return report
+
+
+def remove_empty_groups(stage: Usd.Stage, prim_path: str) -> list[str]:
+    """Remove *prim_path*, then each ancestor under the scene root, while it is an empty group.
+
+    Groups (``/Scene/Lighting``, ``/Scene/Furniture/Chairs``) are created as
+    containers when something is placed in them, so the one a removal or a
+    move empties goes too. Only a bare container goes: no children, no
+    properties, arcs or variant sets, and authored in the scene layer alone.
+    Relationship targets naming a removed group are dropped. Returns the
+    removed paths.
+    """
+    before = composed_prim_paths(stage)
+    removed: list[str] = []
+    path = Sdf.Path(prim_path)
+    while path.pathElementCount > 1 and _is_empty_group(stage, path):
+        stage.RemovePrim(path)
+        clear_orphan_variant_overs(stage.GetRootLayer(), str(path))
+        removed.append(str(path))
+        path = path.GetParentPath()
+    if removed:
+        drop_refs_to_vanished(stage, before)
+    return removed
+
+
+def _is_empty_group(stage: Usd.Stage, path: Sdf.Path) -> bool:
+    """Whether the prim at *path* is a bare container the scene layer alone authors."""
+    prim = stage.GetPrimAtPath(path)
+    if not prim.IsValid() or prim.GetAllChildren():
+        return False
+    stack = prim.GetPrimStack()
+    if len(stack) != 1 or stack[0].layer != stage.GetRootLayer():
+        return False
+    spec = stack[0]
+    arcs = (spec.referenceList, spec.payloadList, spec.inheritPathList, spec.specializesList)
+    return (
+        spec.specifier == Sdf.SpecifierDef
+        and spec.typeName in ("", "Xform", "Scope")
+        and not spec.properties
+        and not spec.variantSets
+        and not any(arc.GetAddedOrExplicitItems() for arc in arcs)
+        and not set(spec.ListInfoKeys()) - {"specifier", "typeName", "kind"}
+    )
 
 
 def clear_scene_prim(stage: Usd.Stage, prim_path: str) -> dict[str, Any]:

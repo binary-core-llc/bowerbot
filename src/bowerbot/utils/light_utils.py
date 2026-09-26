@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-import shutil
 from pathlib import Path
 from typing import Any
 
@@ -26,9 +25,9 @@ from bowerbot.utils.core.asset_folder import (
     ensure_root_reference,
     ensure_side_layer,
     find_root_file,
+    keep_root_over,
     remove_empty_layer,
     resolve_default_prim_name,
-    resolve_library_file,
     unit_factor,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
@@ -261,6 +260,7 @@ def add_light_to_folder(
     if any(v != 0.0 for v in light.rotate):
         xformable.AddRotateXYZOp().Set(Gf.Vec3f(*light.rotate))
 
+    keep_root_over(stage.GetRootLayer())
     stage.Save()
     ensure_root_reference(asset_dir, ASWFLayerNames.LGT)
 
@@ -374,27 +374,6 @@ def list_lights_in_folder(asset_dir: Path) -> list[dict[str, Any]]:
         for prim in stage.Traverse()
         if prim.HasAPI(UsdLux.LightAPI)
     ]
-
-
-def stage_asset_texture(
-    asset_dir: Path,
-    texture: str | None,
-    *,
-    library_dir: Path | None,
-    project_dir: Path | None,
-) -> str | None:
-    """Copy a texture from the library into the asset's ``maps/`` dir; return the ref path."""
-    if not texture:
-        return texture
-    if not Path(texture).is_absolute() and (asset_dir / texture).is_file():
-        return texture  # already staged inside the asset (e.g. ./maps/foo.hdr)
-    source = resolve_library_file(texture, library_dir=library_dir, project_dir=project_dir)
-    maps_dir = asset_dir / ASWFLayerNames.MAPS
-    maps_dir.mkdir(exist_ok=True)
-    dest = maps_dir / source.name
-    if not dest.exists():
-        shutil.copy2(source, dest)
-    return f"./{ASWFLayerNames.MAPS}/{source.name}"
 
 
 # ── Internal helpers ──

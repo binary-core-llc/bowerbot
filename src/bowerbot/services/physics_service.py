@@ -138,6 +138,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         else physics.scope.autodetect_scope(stage, prim_path)
     )
 
+    joints_before = physics.joints.joints_reaching_rigid_body(stage)
     if scope == "scene":
         changed = physics.apis.remove_api_scene(
             stage, prim_path, api_name,
@@ -149,17 +150,19 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
             f"{api_name.value}:{instance_name}" if instance_name
             else api_name.value
         )
+        broken = sorted(joints_before - physics.joints.joints_reaching_rigid_body(stage))
         return {
             "scope": "scene",
             "prim_path": prim_path,
             "api_name": api_name.value,
             "instance_name": instance_name,
             "removed": changed,
+            "joints_without_rigid_body": broken,
             "message": (
                 f"Removed {api_label} from {prim_path}"
                 if changed
                 else f"{api_label} was not present on {prim_path}"
-            ),
+            ) + physics.joints.broken_joints_note(broken),
         }
 
     try:
@@ -195,7 +198,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
     )
     if changed:
         physics.summary.remove_physics_layer_if_empty(asset_dir)
-    state.reopen_stage()
+    broken = sorted(joints_before - physics.joints.joints_reaching_rigid_body(state.reopen_stage()))
     state.touch_project()
 
     api_label = (
@@ -209,11 +212,12 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "asset_folder": asset_dir.name,
         "api_name": api_name.value,
         "removed": changed,
+        "joints_without_rigid_body": broken,
         "message": (
             f"Removed {api_label} from {asset_local_path}"
             if changed
             else f"{api_label} was not present on {asset_local_path}"
-        ),
+        ) + physics.joints.broken_joints_note(broken),
         "cleared_masking_opinions": [
             {"prim_path": p, "kind": k, "key": key}
             for p, k, key in cleared

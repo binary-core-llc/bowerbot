@@ -800,3 +800,71 @@ def test_side_layer_after_lod_setup_keeps_payloads_in_variants():
         root.Reload()
         payloads = root.GetPrimAtPath("/chair").payloadList
         assert not payloads.GetAddedOrExplicitItems()
+
+
+# ── clean variant authoring ──
+
+
+def test_texture_attribute_variant_stages_into_the_asset():
+    """A texture in an asset attribute variant lands in the asset's maps/ and resolves."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state).data["prim_path"]
+        (tmp_path / "hdri").mkdir()
+        (tmp_path / "hdri" / "glow.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 32)
+        light = asyncio.run(exec_tool(state, "create_light", {
+            "asset_prim_path": placed, "light_type": "RectLight", "light_name": "Screen",
+        })).data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "add_asset_attribute_variant", {
+            "prim_path": placed, "variant_set": "screen", "variant_name": "on",
+            "overrides": {light: {"inputs:texture:file": "hdri/glow.png"}},
+        }))
+        assert r.success, r.error
+        asset_dir = project.assets_dir / "chair"
+        assert (asset_dir / "maps" / "glow.png").is_file()
+        text = (asset_dir / "variants.usda").read_text()
+        assert "@./maps/glow.png@" in text
+        assert not (project.path / "textures" / "glow.png").exists()
+
+
+def test_material_variant_binding_is_a_schema_relationship():
+    """The variant's material:binding is authored like UsdShade does, not as a custom rel."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state).data["prim_path"]
+        mesh = f"{placed}/asset/Mesh"
+        oak = _make_material(state, mesh, "oak").data["material"]
+        r = asyncio.run(exec_tool(state, "add_asset_material_variant", {
+            "prim_path": placed, "variant_set": "look", "variant_name": "oak",
+            "bindings": {mesh: oak},
+        }))
+        assert r.success, r.error
+        text = (project.assets_dir / "chair" / "variants.usda").read_text()
+        assert "rel material:binding" in text
+        assert "custom rel material:binding" not in text
+
+
+def test_removing_the_default_lod_selects_another():
+    """Removing the selected LOD selects a remaining one (so the asset keeps its geometry)
+    and names the payload file nothing uses any more."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state).data["prim_path"]
+        asset_dir = project.path / "assets" / "chair"
+        (asset_dir / "geo_low.usda").write_text((asset_dir / "geo.usda").read_text())
+        asyncio.run(exec_tool(state, "setup_asset_geometry_variants", {
+            "prim_path": placed, "variant_set": "lod",
+            "variants": {"high": "./geo.usda", "low": "./geo_low.usda"},
+            "default_variant": "high",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_asset_variant", {
+            "prim_path": placed, "variant_set": "lod", "variant_name": "high",
+        }))
+        assert r.success, r.error
+        assert r.data["default_variant"] == "low"
+        assert r.data["unused_files"] == ["geo.usda"]
+        stage = Usd.Stage.Open(str(project.scene_path))
+        gprims = [p for p in Usd.PrimRange(stage.GetPrimAtPath(placed)) if p.IsA(UsdGeom.Gprim)]
+        assert gprims

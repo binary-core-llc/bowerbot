@@ -397,17 +397,45 @@ def ensure_layer_scope(
 
 
 def ensure_side_layer(asset_dir: Path, layer_file: str) -> Path:
-    """Create *layer_file* in *asset_dir* (default prim ``over``) if missing; return its path."""
+    """Create *layer_file* in *asset_dir* (default prim ``over``) if missing; return its path.
+
+    The layer states the asset root's ``metersPerUnit`` and ``upAxis``, so it
+    reads correctly on its own; an older layer without them gets them added.
+    """
     path = asset_dir / layer_file
-    if path.exists():
-        return path
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    layer = Sdf.Layer.CreateNew(str(path))
-    layer.defaultPrim = default_prim_name
-    root = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
-    root.specifier = Sdf.SpecifierOver
-    layer.Save()
+    if not path.exists():
+        default_prim_name = resolve_default_prim_name(asset_dir)
+        layer = Sdf.Layer.CreateNew(str(path))
+        layer.defaultPrim = default_prim_name
+        root = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
+        root.specifier = Sdf.SpecifierOver
+        layer.Save()
+    state_units(path, *read_stage_metadata_from_dir(asset_dir))
     return path
+
+
+def keep_root_over(layer: Sdf.Layer) -> None:
+    """Keep a side layer's root prim an ``over``.
+
+    Defining a prim under it through a stage promotes the root to a typeless
+    ``def``; a side layer only adds opinions to the root the asset defines.
+    """
+    if not layer.defaultPrim:
+        return
+    root = layer.GetPrimAtPath(Sdf.Path(f"/{layer.defaultPrim}"))
+    if root is not None and root.specifier == Sdf.SpecifierDef and not root.typeName:
+        root.specifier = Sdf.SpecifierOver
+
+
+def state_units(layer_path: Path, meters_per_unit: float, up_axis: str) -> None:
+    """Author *layer_path*'s ``metersPerUnit`` / ``upAxis`` where it leaves them to the fallback."""
+    layer = Sdf.Layer.FindOrOpen(str(layer_path))
+    stage = Usd.Stage.Open(layer)
+    if not stage.HasAuthoredMetadata(UsdGeom.Tokens.metersPerUnit):
+        UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
+    if not stage.HasAuthoredMetadata(UsdGeom.Tokens.upAxis):
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y if up_axis == "Y" else UsdGeom.Tokens.z)
+    layer.Save()
 
 
 def delete_side_layer(asset_dir: Path, layer_file: str) -> None:
@@ -485,10 +513,13 @@ def remove_empty_layer(
     asset_dir: Path,
     has_content: Callable[[Usd.Prim], bool],
 ) -> None:
-    """Delete *layer_path* and its root reference when no prim in it satisfies *has_content*."""
+    """Delete *layer_path* and its root reference when no prim in it satisfies *has_content*.
+
+    Every prim counts, ``over`` or not: a side layer's root is an ``over``.
+    """
     stage = Usd.Stage.Open(str(layer_path))
     if stage:
-        for prim in stage.Traverse():
+        for prim in stage.TraverseAll():
             if has_content(prim):
                 return
     del stage

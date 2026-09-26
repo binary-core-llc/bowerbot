@@ -17,6 +17,7 @@ from bowerbot.schemas import (
 )
 from bowerbot.utils.assets.freeze import bake_root_transforms, root_transform_is_identity
 from bowerbot.utils.assets.localize import localize
+from bowerbot.utils.core.asset_folder import state_units
 from bowerbot.utils.core.metrics import read_stage_metadata
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def create_asset_folder(
     if not geo_path.exists():
         copy = localize(geometry_file, geometry_file.parent, geo_path)
         _require_geometry_under_default_prim(geo_path, geometry_file.name)
-        _state_units(geo_path, mpu, up)
+        state_units(geo_path, mpu, up)
 
     root_path = asset_dir / f"{asset_name}.usda"
     if not root_path.exists():
@@ -72,17 +73,6 @@ def _require_geometry_under_default_prim(geo_path: Path, source_name: str) -> No
             f"Export it with all geometry under the one root prim."
         )
         raise ValueError(msg)
-
-
-def _state_units(layer_path: Path, meters_per_unit: float, up_axis: str) -> None:
-    """Author *layer_path*'s ``metersPerUnit`` / ``upAxis`` where it leaves them to the fallback."""
-    layer = Sdf.Layer.FindOrOpen(str(layer_path))
-    stage = Usd.Stage.Open(layer)
-    if not stage.HasAuthoredMetadata(UsdGeom.Tokens.metersPerUnit):
-        UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
-    if not stage.HasAuthoredMetadata(UsdGeom.Tokens.upAxis):
-        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y if up_axis == "Y" else UsdGeom.Tokens.z)
-    layer.Save()
 
 
 def ensure_aswf_compliance(

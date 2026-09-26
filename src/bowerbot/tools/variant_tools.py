@@ -788,6 +788,10 @@ TOOLS: list[Tool] = [
         description=(
             "Remove a single variant from a variant set on one asset. "
             "Idempotent: returns cleanly if the target is not present. "
+            "If the removed variant was the default, a remaining one becomes "
+            "the default (reported as default_variant), so the asset keeps "
+            "its content. Payload files no variant uses any more are listed "
+            "in unused_files; they stay in the asset folder. "
             "If this leaves the variant set empty, the variant set is "
             "auto-removed; if this leaves no variant sets at all, "
             "variants.usda is auto-deleted and the reference scrubbed."

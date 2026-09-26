@@ -20,7 +20,8 @@ folder's `mtl.usda` — never into the scene file.
 
 `bind_material` copies the source material verbatim — whatever shader
 network it has (MaterialX-only, UsdPreviewSurface-only, or hybrid)
-is preserved as-authored. If the user needs Apple RealityKit / AR
+is preserved as-authored, and the texture files it uses come along
+into the asset's `maps/`. If the user needs Apple RealityKit / AR
 Quick Look compatibility for a library material that is MaterialX-only,
 advise them to re-export from their DCC with both MaterialX and
 UsdPreviewSurface outputs. BowerBot does NOT auto-translate library

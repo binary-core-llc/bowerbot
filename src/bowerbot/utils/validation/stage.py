@@ -88,21 +88,28 @@ def _check_up_axis(
 
 
 def _check_references(stage: Usd.Stage) -> list[ValidationIssue]:
-    """All external references must resolve to existing files."""
-    issues: list[ValidationIssue] = []
-    stage_dir = Path(stage.GetRootLayer().realPath).parent
+    """All external references must resolve to existing files.
 
+    Each path resolves from the layer that authors it (a nested asset's
+    ``../crate/crate.usda`` lives in its container's ``contents.usda``).
+    """
+    issues: list[ValidationIssue] = []
     for prim in stage.Traverse():
-        for asset_path in get_prim_ref_paths(prim):
-            if Path(asset_path).exists():
-                continue
-            if (stage_dir / asset_path).exists():
-                continue
-            issues.append(ValidationIssue(
+        unresolved: list[str] = []
+        for spec in prim.GetPrimStack():
+            refs = spec.referenceList
+            for ref in (*refs.prependedItems, *refs.appendedItems, *refs.explicitItems):
+                resolved = spec.layer.ComputeAbsolutePath(ref.assetPath) if ref.assetPath else ""
+                if resolved and not Path(resolved).exists():
+                    unresolved.append(ref.assetPath)
+        issues.extend(
+            ValidationIssue(
                 severity=Severity.ERROR,
                 message=f"Unresolved reference: {asset_path}",
                 prim_path=str(prim.GetPath()),
-            ))
+            )
+            for asset_path in dict.fromkeys(unresolved)
+        )
     return issues
 
 

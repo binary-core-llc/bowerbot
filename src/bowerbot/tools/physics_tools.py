@@ -350,7 +350,10 @@ TOOLS: list[Tool] = [
             "Remove a UsdPhysics applied API and its authored opinions "
             "from a prim. Dropping PhysicsCollisionAPI cascades to "
             "PhysicsMeshCollisionAPI automatically. scope routing and "
-            "masking flags mirror apply_physics_api."
+            "masking flags mirror apply_physics_api. Returns "
+            "joints_without_rigid_body: joints that no longer connect to any "
+            "rigid body (they fail validate_scene); tell the user and remove "
+            "them or re-apply PhysicsRigidBodyAPI."
         ),
         parameters={
             "type": "object",

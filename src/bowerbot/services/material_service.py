@@ -16,6 +16,7 @@ from bowerbot.utils.core.asset_folder import (
     resolve_asset_dir_for_prim,
     to_asset_local,
 )
+from bowerbot.utils.core.integrity import require_prim
 from bowerbot.utils.core.naming import clean_prim_name
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ def create_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
     stage = state.require_stage()
     prim_path = params["prim_path"]
     material_name = clean_prim_name(params["material_name"], "Material")
+    require_prim(stage, prim_path)
 
     asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
     if asset_dir is None or ref_prim_path is None:
@@ -83,6 +85,7 @@ def bind_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         project_assets_dir=None,
     )
     material_prim_path = params.get("material_prim_path")
+    require_prim(stage, prim_path)
 
     asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
     if asset_dir is None or ref_prim_path is None:
@@ -123,13 +126,19 @@ def remove_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
     """Remove the material binding on a prim inside an ASWF asset."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
+    require_prim(stage, prim_path)
     asset_dir, ref_prim_path = resolve_asset_dir_for_prim(stage, prim_path)
     if asset_dir is None or ref_prim_path is None:
         msg = f"Cannot find ASWF asset folder for {prim_path}."
         raise ValueError(msg)
 
     asset_local_path = to_asset_local(prim_path, ref_prim_path)
-    material_utils.remove_material_binding_from_folder(asset_dir, asset_local_path)
+    if not material_utils.remove_material_binding_from_folder(asset_dir, asset_local_path):
+        msg = (
+            f"{prim_path} has no binding in {asset_dir.name}/{ASWFLayerNames.MTL} "
+            "to remove; a material from the asset's own files stays."
+        )
+        raise ValueError(msg)
     state.reopen_stage()
 
     logger.info("Removed material from %s", prim_path)

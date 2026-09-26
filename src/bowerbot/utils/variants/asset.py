@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from pxr import Sdf, Usd
+from pxr import Sdf, Usd, UsdUtils
 
 from bowerbot.schemas import ASWFLayerNames
 from bowerbot.utils.core.asset_folder import (
@@ -223,6 +223,23 @@ def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
     scrub_variant_set_metadata(prim_spec, set_name)
     layer.Save()
     return True
+
+
+def unused_asset_files(asset_dir: Path, asset_paths: list[str]) -> list[str]:
+    """Which of *asset_paths* (relative to the asset folder) exist but nothing composes any more."""
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return []
+    layers, assets, _ = UsdUtils.ComputeAllDependencies(str(root_file))
+    used = {Path(layer.realPath).resolve() for layer in layers} | {
+        Path(a).resolve() for a in assets
+    }
+    unused: list[str] = []
+    for asset_path in asset_paths:
+        path = (asset_dir / asset_path).resolve()
+        if path.is_file() and path not in used:
+            unused.append(path.name)
+    return unused
 
 
 def restore_canonical_geo_if_needed(asset_dir: Path) -> bool:

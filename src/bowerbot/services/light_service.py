@@ -104,7 +104,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             light_type=light_type,
             translate=(tx, ty, tz),
             rotate=orientation_in_asset(rotate, scene_correction(stage, asset_dir)),
-            texture=light_utils.stage_asset_texture(
+            texture=texture_utils.stage_asset_texture(
                 asset_dir, params.get("texture"),
                 library_dir=state.library_dir, project_dir=state.project_dir,
             ),
@@ -200,7 +200,7 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             light_name,
             translate=translate,
             rotate=None if rotate is None else orientation_in_asset(rotate, correction),
-            texture=light_utils.stage_asset_texture(
+            texture=texture_utils.stage_asset_texture(
                 asset_dir, texture,
                 library_dir=state.library_dir, project_dir=state.project_dir,
             ),

@@ -152,3 +152,23 @@ def test_package_scene_missing_stage():
         state, _ = make_state(Path(tmp))
         r = asyncio.run(exec_tool(state, "package_scene"))
         assert not r.success
+
+
+def test_validate_scene_resolves_nested_references_from_their_layer():
+    """A nested placement's ../crate/crate.usda resolves from contents.usda, so it is no error."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        _asset(tmp_path, "shelf")
+        _asset(tmp_path, "crate")
+        shelf = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "shelf", "asset_name": "Shelf", "group": "Furniture",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })).data["prim_path"]
+        r = asyncio.run(exec_tool(state, "place_asset_inside", {
+            "asset": "crate", "asset_name": "Crate", "container_prim_path": shelf,
+            "group": "Props", "translate_x": 0.0, "translate_y": 0.5, "translate_z": 0.0,
+        }))
+        assert r.success, r.error
+        r = asyncio.run(exec_tool(state, "validate_scene"))
+        assert r.success, r.error
+        assert not [i for i in r.data["issues"] if "Unresolved reference" in i["message"]]

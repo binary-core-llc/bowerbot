@@ -48,11 +48,12 @@ def scan_library(
     Detects ASWF asset folders at the top level, then scans loose files
     recursively. Each entry has ``name`` (what asset inputs take),
     ``location`` (its place inside the library), ``format``, and
-    ``category`` (``geo`` / ``mtl`` / ``package``).
+    ``category``: ``package`` (an asset folder), ``geo`` (a loose model) or
+    ``mtl`` (materials and no geometry, as a loose file or a folder).
 
-    Classifying a loose file means reading it, so each result is kept in
-    *index_file* (keyed by path, size and modification time) and a file is
-    read again only when it changes. Nothing is ever written into the library.
+    Classifying means reading a file, so each result is kept in *index_file*
+    (keyed by path, size and modification time) and a file is read again only
+    when it changes. Nothing is ever written into the library.
     """
     if not library_dir.exists():
         return []
@@ -61,6 +62,8 @@ def scan_library(
     packages = _find_top_level_packages(library_dir)
     package_names = {pkg_dir.name for pkg_dir in packages}
     needle = _normalize_for_search(query) if query else None
+    index = _load_index(index_file)
+    known = dict(index)
 
     for pkg_dir, root_file in packages.items():
         name = pkg_dir.name
@@ -73,15 +76,19 @@ def scan_library(
             "name": name,
             "location": asset_location(root_file, library_dir=library_dir, project_dir=None),
             "format": root_file.suffix,
-            "category": AssetCategory.PACKAGE.value,
+            "category": (
+                AssetCategory.MTL.value
+                if _classify_indexed(root_file, index) == AssetCategory.MTL
+                else AssetCategory.PACKAGE.value
+            ),
         }
         if category == LibraryRules.ALL or category == entry["category"]:
             results.append(entry)
     if category == AssetCategory.PACKAGE:
+        if index_file is not None and index != known:
+            _save_index(index_file, index)
         return results
 
-    index = _load_index(index_file)
-    known = dict(index)
     for f in library_dir.rglob("*"):
         if f.suffix.lower() not in AssetFormat or not f.is_file():
             continue

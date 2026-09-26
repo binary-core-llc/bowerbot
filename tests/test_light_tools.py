@@ -533,7 +533,7 @@ def test_update_asset_rect_light_texture_into_asset():
         assert not (project.path / "textures" / "screen.png").exists()
 
         stage = Usd.Stage.Open(str(project.path / "assets" / "panel" / "lgt.usda"))
-        rect = next(p for p in stage.Traverse() if p.GetName() == "Screen")
+        rect = next(p for p in stage.TraverseAll() if p.GetName() == "Screen")
         tex_val = rect.GetAttribute("inputs:texture:file").Get()
         path = tex_val.path if hasattr(tex_val, "path") else str(tex_val)
         assert "maps/screen.png" in path
@@ -861,3 +861,30 @@ def test_asset_light_offset_uses_asset_units():
         world = UsdGeom.Xformable(stage.GetPrimAtPath(light.data["prim_path"]))
         y = world.ComputeLocalToWorldTransform(Usd.TimeCode.Default()).ExtractTranslation()[1]
         assert abs(y - 0.6) < 1e-6
+
+
+def test_textures_that_share_a_name_do_not_overwrite_each_other():
+    """Two different files named screen.png each keep their own copy; the same file is reused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _asset(tmp_path, "panel")
+        placed = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "panel", "asset_name": "Panel", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })).data["prim_path"]
+        for folder, data in (("a", b"A"), ("b", b"B")):
+            (tmp_path / "tex" / folder).mkdir(parents=True)
+            (tmp_path / "tex" / folder / "screen.png").write_bytes(b"\x89PNG" + data * 32)
+
+        paths = []
+        for name, texture in (("S1", "tex/a/screen.png"), ("S2", "tex/b/screen.png"),
+                              ("S3", "tex/a/screen.png")):
+            r = asyncio.run(exec_tool(state, "create_light", {
+                "asset_prim_path": placed, "light_type": "RectLight", "light_name": name,
+                "texture": texture,
+            }))
+            assert r.success, r.error
+            stage = Usd.Stage.Open(str(project.scene_path))
+            light = stage.GetPrimAtPath(r.data["prim_path"])
+            paths.append(light.GetAttribute("inputs:texture:file").Get().path)
+        assert paths == ["./maps/screen.png", "./maps/screen_2.png", "./maps/screen.png"]

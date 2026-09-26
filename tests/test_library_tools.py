@@ -161,3 +161,15 @@ def test_runtime_state_keeps_the_index_in_bowerbot_home():
     state = SceneState.from_settings(Settings())
     assert state.library_index == ConfigPaths.LIBRARY_INDEX
     assert state.library_index.parent == ConfigPaths.HOME
+
+
+def test_a_material_folder_is_listed_as_mtl():
+    """A folder asset holding only materials is offered as a material ('mtl')."""
+    with tempfile.TemporaryDirectory() as tmp:
+        lib = Path(tmp)
+        (lib / "paints").mkdir()
+        _material_file(lib / "paints" / "paints.usda", with_geometry=False)
+        (lib / "sofa").mkdir()
+        _material_file(lib / "sofa" / "sofa.usda", with_geometry=True)
+        found = {e["name"]: e["category"] for e in scan_library(lib)}
+        assert found == {"paints": "mtl", "sofa": "package"}

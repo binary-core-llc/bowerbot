@@ -17,7 +17,7 @@ from bowerbot.schemas import (
 from bowerbot.utils.assets.aswf import create_asset_folder, ensure_aswf_compliance
 from bowerbot.utils.assets.folders import intake_folder
 from bowerbot.utils.library_utils import find_package_for
-from bowerbot.utils.validation_utils import run_usd_compliance_checker
+from bowerbot.utils.validation.compliance import run_usd_compliance_checker
 
 logger = logging.getLogger(__name__)
 

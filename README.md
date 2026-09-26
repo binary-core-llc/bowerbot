@@ -951,7 +951,12 @@ src/bowerbot/
       authoring.py             #     PointInstancer / placements, list_scene entries
     surface_utils.py           #   World-space triangles from gprims, vertical ray
                                #   queries, plan coverage, area sampling (numpy)
-    validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants
+    validation/                #   Validation and packaging, split into small modules:
+      stage.py                 #     validate_stage: defaultPrim, units, axis, refs, bindings
+      asset_variants.py        #     how an asset folder authors and references its variants
+      compliance.py            #     USD's ValidationFramework (the validators behind usdchecker)
+      ar_quick_look.py         #     Apple AR Quick Look strict-subset checks
+      packaging.py             #     package_to_usdz: a stage and its dependencies in one .usdz
     variants/                  #   Variants, split into small modules:
       authoring.py             #     author_in_variant, the edit context every variant uses
       asset.py  scene.py       #     asset variants (variants.usda); scene variants (scene.usda)

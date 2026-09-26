@@ -494,6 +494,67 @@ def test_place_asset_refuses_non_usd_and_missing_files():
         assert not (project.assets_dir / "missing").exists()
 
 
+def test_place_asset_corrupt_usda_leaves_nothing():
+    """A file USD cannot parse gets USD's own message and no assets/ entry."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        broken = tmp_path / "broken.usda"
+        broken.write_text("#usda 1.0\nthis is not valid usd (\n")
+
+        r = _place_path(state, broken)
+        assert not r.success
+        assert "Could not import broken.usda" in r.error
+        assert "parse error" in r.error
+        assert not (project.assets_dir / "broken").exists()
+
+
+def test_place_asset_corrupt_usdz_leaves_nothing():
+    """A .usdz USD cannot read is refused before it is copied into assets/."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        junk = tmp_path / "junk.usdz"
+        junk.write_bytes(b"not a zip")
+
+        r = _place_path(state, junk)
+        assert not r.success
+        assert "Could not import junk.usdz" in r.error
+        assert not (project.assets_dir / "junk.usdz").exists()
+
+
+def test_failed_placement_keeps_an_existing_asset():
+    """A failed re-placement never deletes the asset folder the scene already uses."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        source = _asset(tmp_path, "chair")
+        assert _place_path(state, source).success
+
+        geo = project.assets_dir / "chair" / "geo.usda"
+        layer = Sdf.Layer.FindOrOpen(str(geo))
+        layer.GetPrimAtPath("/chair").typeName = "Scope"
+        layer.Save()
+
+        r = _place_path(state, source)
+        assert not r.success
+        assert (project.assets_dir / "chair" / "chair.usda").exists()
+        assert geo.exists()
+
+
+def test_failed_compliance_on_a_new_asset_leaves_nothing():
+    """A new asset that fails the ASWF check is removed again, as before."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        path = tmp_path / "multi.usda"
+        stage = Usd.Stage.CreateNew(str(path))
+        UsdGeom.Xform.Define(stage, "/a")
+        UsdGeom.Xform.Define(stage, "/b")
+        stage.Save()
+
+        r = _place_path(state, path)
+        assert not r.success
+        assert "multiple root prims" in r.error
+        assert not (project.assets_dir / "multi").exists()
+
+
 def test_place_layout_rejects_3d_count_with_2d_spacing():
     """A grid with a 3-axis count and a 2-axis spacing is refused."""
     with tempfile.TemporaryDirectory() as tmp:

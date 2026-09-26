@@ -163,6 +163,10 @@ def test_services_never_call_a_same_named_function_unqualified() -> None:
         tree = ast.parse(path.read_text(encoding="utf-8"))
         names = {f.name for f in tree.body if isinstance(f, ast.FunctionDef)}
         for node in ast.walk(tree):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in names:
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id in names
+            ):
                 offenders.append(f"{path.name}:{node.lineno} {node.func.id}()")
     assert not offenders, f"call the util as <module>.{{name}}() instead: {offenders}"

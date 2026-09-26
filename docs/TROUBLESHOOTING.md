@@ -4,17 +4,17 @@ Common issues and how to resolve them.
 
 ## Working with BowerBot and a DCC at the same time
 
-BowerBot detects when you save changes to `scene.usda` from any external USD-aware tool (Omniverse, usdview, Isaac Sim, your DCC of choice, etc.) and reloads its in-memory copy automatically before the next tool call. You can switch back and forth between BowerBot and your DCC without losing edits, as long as you save and finish in one tool before switching to the other.
+BowerBot detects when you save changes to `scene.usda`, or to any file the scene uses (such as `assets/table/geo.usda` or `mtl.usda`), from any external USD-aware tool (Omniverse, usdview, Isaac Sim, your DCC of choice, etc.) and reloads its in-memory copy automatically before the next tool call. You can switch back and forth between BowerBot and your DCC without losing edits, as long as you save and finish in one tool before switching to the other.
 
 ### What works
 
 - Edit in BowerBot, save (automatic), switch to your DCC, load `scene.usda`, edit, save, switch back to BowerBot, ask for another change. BowerBot detects the external edits and reloads before its next tool call.
+- Re-export or edit an asset file the scene uses (for example `assets/table/geo.usda`) in your DCC and save. BowerBot's next tool call sees the new version, and its next edit to that file builds on what you saved instead of overwriting it.
 - Both directions, repeated as often as you want.
 
 ### What does not work yet
 
 - **Concurrent saves.** If BowerBot and your DCC save at the exact same moment, the last writer wins and the other edit is lost. Always save in one tool before switching to the other.
-- **Edits to referenced layers.** BowerBot watches `scene.usda`, not the assets it references. If you edit `assets/table/mtl.usda` directly in your DCC and save, BowerBot may not detect the change until you also touch `scene.usda`. Full layer-graph watching is on the roadmap.
 - **Network filesystem lag.** Some shared drives (NFS, SMB, cloud-sync folders) can serve stale file metadata for a few seconds. If you save in your DCC and BowerBot does not detect it, wait a moment and retry the BowerBot command.
 
 ### Best practice: clean handoffs

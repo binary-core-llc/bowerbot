@@ -7,6 +7,7 @@
 - Utils hold functions only (plus the standard module logger); named values
   live in schema classes.
 - Bounding boxes come from ``core.bounds``; nothing else builds a ``BBoxCache``.
+- One home per function: no public function name is defined twice in ``utils``.
 - No loose values: ``schemas`` hold classes and ``type`` declarations only
   (plus the package ``__all__``).
 - One guard: only ``SceneState`` checks whether a scene, project or configured
@@ -181,3 +182,13 @@ def test_services_never_call_a_same_named_function_unqualified() -> None:
             ):
                 offenders.append(f"{path.name}:{node.lineno} {node.func.id}()")
     assert not offenders, f"call the util as <module>.{{name}}() instead: {offenders}"
+
+
+def test_no_public_function_name_is_defined_twice_in_utils() -> None:
+    homes: dict[str, list[str]] = {}
+    for path in sorted(UTILS_DIR.rglob("*.py")):
+        for node in ast.parse(path.read_text(encoding="utf-8")).body:
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
+                homes.setdefault(node.name, []).append(str(path.relative_to(UTILS_DIR)))
+    dupes = {name: paths for name, paths in homes.items() if len(paths) > 1}
+    assert not dupes, f"one home per function: {dupes}"

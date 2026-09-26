@@ -464,12 +464,12 @@ def enforce_masking_policy(
     masking = find_masking_opinions(stage, targets)
     cleared = settle_masking(
         stage, masking, clear=clear, confirm=confirm,
-        refusal=format_masking_override_error(api_name, masking),
+        refusal=physics_masking_error(api_name, masking),
     )
     return masking if cleared else []
 
 
-def format_masking_override_error(
+def physics_masking_error(
     api_name: PhysicsApiName, masking: list[MaskingOpinion],
 ) -> str:
     """Render a refuse-or-acknowledge error listing every masking opinion."""

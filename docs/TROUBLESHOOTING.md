@@ -91,6 +91,18 @@ The LLM exceeded the per-request tool-call budget. Increase `max_tool_rounds` in
 
 `gpt-4o` skips tool calls and ignores SKILL.md. Use `gpt-4.1` (default), `gpt-4.1-mini`, or `anthropic/claude-sonnet-4-6`. See the Tested Models table in [README.md](../README.md#tested-models).
 
+## Asset library
+
+### The first `search_assets` / `list_assets` on a big library is slow
+
+To tell a loose model (`geo`) from a material library (`mtl`), BowerBot
+reads each loose USD file once. On a library with hundreds of large DCC
+exports the first scan can take tens of seconds. The result is kept in
+`~/.bowerbot/library_index.json`, keyed by each file's path, size and
+modification time, so later scans take a couple of seconds and only
+new or changed files are read again. BowerBot never writes into the
+library itself. Deleting the index is safe; the next scan rebuilds it.
+
 ## Logs
 
 BowerBot writes a structured log of every session to:

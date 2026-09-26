@@ -6,11 +6,12 @@
 from __future__ import annotations
 
 import glob
+import json
 import logging
 from difflib import get_close_matches
 from pathlib import Path
 
-from pxr import Usd, UsdShade
+from pxr import Usd, UsdGeom, UsdShade
 
 from bowerbot.schemas import AssetCategory, AssetFormat, DetectionOutcome, LibraryRules
 from bowerbot.utils.core.asset_folder import (
@@ -40,6 +41,7 @@ def scan_library(
     *,
     query: str | None = None,
     category: str = LibraryRules.ALL,
+    index_file: Path | None = None,
 ) -> list[dict[str, str]]:
     """Return matching assets in *library_dir*.
 
@@ -47,13 +49,17 @@ def scan_library(
     recursively. Each entry has ``name`` (what asset inputs take),
     ``location`` (its place inside the library), ``format``, and
     ``category`` (``geo`` / ``mtl`` / ``package``).
+
+    Classifying a loose file means reading it, so each result is kept in
+    *index_file* (keyed by path, size and modification time) and a file is
+    read again only when it changes. Nothing is ever written into the library.
     """
     if not library_dir.exists():
         return []
 
     results: list[dict[str, str]] = []
     packages = _find_top_level_packages(library_dir)
-    package_dirs = set(packages.keys())
+    package_names = {pkg_dir.name for pkg_dir in packages}
     needle = _normalize_for_search(query) if query else None
 
     for pkg_dir, root_file in packages.items():
@@ -71,13 +77,16 @@ def scan_library(
         }
         if category == LibraryRules.ALL or category == entry["category"]:
             results.append(entry)
+    if category == AssetCategory.PACKAGE:
+        return results
 
+    index = _load_index(index_file)
+    known = dict(index)
     for f in library_dir.rglob("*"):
-        if not f.is_file():
+        if f.suffix.lower() not in AssetFormat or not f.is_file():
             continue
-        if f.suffix.lower() not in AssetFormat:
-            continue
-        if _is_inside_package(f, package_dirs):
+        parts = f.relative_to(library_dir).parts
+        if len(parts) > 1 and parts[0] in package_names:
             continue
         if needle and needle not in _normalize_for_search(f.stem):
             continue
@@ -85,11 +94,12 @@ def scan_library(
             "name": f.stem,
             "location": asset_location(f, library_dir=library_dir, project_dir=None),
             "format": f.suffix,
-            "category": _classify_loose(f),
+            "category": _classify_indexed(f, index),
         }
         if category == LibraryRules.ALL or category == entry["category"]:
             results.append(entry)
-
+    if index_file is not None and index != known:
+        _save_index(index_file, index)
     return results
 
 
@@ -240,25 +250,55 @@ def find_package_for(file_path: Path, library_dir: Path) -> Path | None:
     return None
 
 
-def _is_inside_package(file_path: Path, package_dirs: set[Path]) -> bool:
-    """Return True if *file_path* lives inside one of *package_dirs*."""
-    for pkg_dir in package_dirs:
-        if pkg_dir in file_path.parents:
-            return True
-    return False
+def _classify_indexed(file_path: Path, index: dict[str, list[object]]) -> str:
+    """The category of *file_path*, from *index* while the file is unchanged, else read fresh."""
+    stat = file_path.stat()
+    key = str(file_path.absolute())
+    cached = index.get(key)
+    if cached is not None and cached[:2] == [stat.st_size, stat.st_mtime_ns]:
+        return str(cached[2])
+    category = _classify_loose(file_path)
+    index[key] = [stat.st_size, stat.st_mtime_ns, category]
+    return category
 
 
 def _classify_loose(file_path: Path) -> str:
-    """Classify a loose USD file as ``mtl`` (defines a Material) or ``geo``."""
+    """``mtl`` for a material library (materials and no geometry), else ``geo``.
+
+    A model that carries its own materials is geometry, not a material library.
+    """
+    has_material = False
     try:
         stage = Usd.Stage.Open(str(file_path))
         if stage is not None:
             for prim in stage.Traverse():
-                if prim.IsA(UsdShade.Material):
-                    return AssetCategory.MTL.value
+                if prim.IsA(UsdGeom.Gprim) or prim.IsA(UsdGeom.PointInstancer):
+                    return AssetCategory.GEO.value
+                has_material = has_material or prim.IsA(UsdShade.Material)
     except Exception:
         logger.debug(
             "Could not classify %s, defaulting to geo",
             file_path, exc_info=True,
         )
-    return AssetCategory.GEO.value
+    return AssetCategory.MTL.value if has_material else AssetCategory.GEO.value
+
+
+def _load_index(index_file: Path | None) -> dict[str, list[object]]:
+    """The classification index in *index_file*, or an empty one (missing or unreadable)."""
+    if index_file is None or not index_file.exists():
+        return {}
+    try:
+        data = json.loads(index_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    files = data.get("files") if isinstance(data, dict) else None
+    return files if isinstance(files, dict) else {}
+
+
+def _save_index(index_file: Path, index: dict[str, list[object]]) -> None:
+    """Write *index* to *index_file* atomically, dropping files that no longer exist."""
+    kept = {key: value for key, value in index.items() if Path(key).exists()}
+    index_file.parent.mkdir(parents=True, exist_ok=True)
+    tmp = index_file.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"files": kept}), encoding="utf-8")
+    tmp.replace(index_file)

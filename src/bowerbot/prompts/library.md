@@ -40,7 +40,7 @@ it by its name: the file name without its extension.
 |----------|-----------|-------------------|
 | `package` | ASWF asset folder (geo + mtl + textures) | `place_asset` |
 | `geo` | Geometry (3D meshes, models) | `place_asset` |
-| `mtl` | Material definitions (under `/mtl/`) | `bind_material` |
+| `mtl` | Material library: a file with materials and no geometry | `bind_material` |
 
 ### ASWF Asset Folders
 A typical asset folder follows the ASWF USD Working Group standard:

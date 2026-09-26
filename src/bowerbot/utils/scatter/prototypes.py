@@ -25,12 +25,13 @@ from bowerbot.utils.core.bounds import bbox_cache, world_range
 from bowerbot.utils.core.metrics import asset_conform, axis_index
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 from bowerbot.utils.core.transforms import gf_matrix_to_numpy
+from bowerbot.utils.library_utils import asset_location
 
 
 def resolve_asset_sources(
     assets: list[ScatterAsset],
     *,
-    project_dir: Path | None,
+    project_assets_dir: Path,
     library_dir: Path | None,
 ) -> list[tuple[ScatterAsset, Path]]:
     """Resolve every asset in the mix to a root file, reporting all problems at once."""
@@ -40,17 +41,20 @@ def resolve_asset_sources(
     for idx, entry in enumerate(assets):
         try:
             path = layout_utils.resolve_layout_asset(
-                entry.asset, layout_dir=None,
-                project_dir=project_dir, library_dir=library_dir,
+                entry.asset, project_assets_dir=project_assets_dir, library_dir=library_dir,
             )
         except ValueError as e:
             problems.append(f"assets[{idx}]: {e}")
             continue
-        target = intake_target_name(path, library_dir)
+        target = intake_target_name(path, library_dir, project_assets_dir)
         prior = targets.setdefault(target, path)
         if prior != path:
+            here, there = (
+                asset_location(p, library_dir=library_dir, project_dir=project_assets_dir.parent)
+                for p in (path, prior)
+            )
             problems.append(
-                f"assets[{idx}]: '{path}' and '{prior}' would both stage to "
+                f"assets[{idx}]: '{here}' and '{there}' would both stage to "
                 f"assets/{target}; rename one source.",
             )
             continue

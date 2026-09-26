@@ -101,7 +101,7 @@ def _placed_box(tmp: str) -> tuple[SceneState, Path, str]:
     UsdGeom.Cube.Define(stage, "/box/Mesh").GetSizeAttr().Set(1.0)
     stage.Save()
     placed = asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": str(source), "asset_name": "box", "group": "Props",
+        "asset": source.stem, "asset_name": "box", "group": "Props",
         "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
     }))
     assert placed.success, placed.error

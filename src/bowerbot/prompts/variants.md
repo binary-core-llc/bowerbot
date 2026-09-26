@@ -266,7 +266,7 @@ add_scene_lighting_selection_variant("lightSelection", "rect",
                "/Scene/Lighting/Key_Rect": true})
 ```
 
-### `add_scene_model_selection_variant(prim_path, variant_set, variant_name, asset_file_path, set_as_default?)`
+### `add_scene_model_selection_variant(prim_path, variant_set, variant_name, asset, set_as_default?)`
 
 For "swap which asset is referenced at this placement" — chair vs
 stool vs bench at a single Furniture slot, for example. Carrier is
@@ -274,11 +274,10 @@ the placement WRAPPER (e.g. `/Scene/Furniture/Table_01`); each
 variant body authors a different reference arc on the wrapper's
 `/asset` child.
 
-The tool stages `asset_file_path` into `<project>/assets/` via the
-same intake path as `place_asset` (USDZ, library packages, loose
-geometry — all supported). Pass the asset's path **in the user's
-asset library** (absolute or library-relative, as `search_assets`
-returns it); a file outside the library is refused.
+The tool stages `asset` into `<project>/assets/` via the same intake
+path as `place_asset` (USDZ, library packages, loose geometry — all
+supported). Pass the asset's **name** as `search_assets` or
+`list_project_assets` report it; file paths are refused.
 
 **The first call auto-promotes the existing reference.** Every
 placement starts life with a direct `references` opinion on
@@ -301,14 +300,14 @@ risk.
 add_scene_model_selection_variant(
   prim_path="/Scene/Furniture/Table_01",
   variant_set="modelType", variant_name="chair",
-  asset_file_path="/abs/path/to/chair.usda")
+  asset="chair")
 # result["promoted_existing_variant"] == "single_table"
 
 # Subsequent calls just extend the set.
 add_scene_model_selection_variant(
   prim_path="/Scene/Furniture/Table_01",
   variant_set="modelType", variant_name="stool",
-  asset_file_path="/abs/path/to/stool.usda")
+  asset="stool")
 ```
 
 **Name-collision guard.** If you pick a `variant_name` matching the

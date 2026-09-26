@@ -5,7 +5,6 @@
 
 import asyncio
 import json
-import shutil
 import tempfile
 from pathlib import Path
 
@@ -36,7 +35,7 @@ def _setup(tmp):
 def _place(tmp_path, state, name="table", group="Furniture"):
     asset = _asset(tmp_path, name)
     r = asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": str(asset), "asset_name": name.title(),
+        "asset": asset.stem, "asset_name": name.title(),
         "group": group,
         "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
     }))
@@ -90,68 +89,55 @@ def test_place_asset_creates_folder():
         )
 
 
-def test_place_asset_relative_path_from_project():
-    """Resolves a relative path against the project directory."""
+def test_place_asset_by_project_asset_name():
+    """A name already in the project's assets/ places that copy, even once the library lacks it."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "cup")
+        first = _place_from(state, "cup", "Cup")
+        assert first.success, first.error
+        asset.unlink()
 
-        project_sub = project.path / "my_assets"
-        project_sub.mkdir()
-        shutil.copy2(asset, project_sub / "cup.usda")
-
-        r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": "my_assets/cup.usda",
-            "asset_name": "Cup", "group": "Props",
-            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-        }))
-        assert r.success, r.error
+        again = _place_from(state, "cup", "Cup", x=2.0)
+        assert again.success, again.error
+        assert (project.assets_dir / "cup" / "cup.usda").exists()
 
 
-def test_place_asset_relative_path_from_library():
-    """Resolves a relative path against the library directory."""
+def test_place_asset_by_library_name():
+    """A library asset is placed by the name search_assets reports."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
-        asset = _asset(tmp_path, "mug")
-
-        lib_dir = tmp_path / "library"
+        lib_dir = state.library_dir = tmp_path / "library"
         lib_dir.mkdir()
-        shutil.copy2(asset, lib_dir / "mug.usda")
-        state.library_dir = lib_dir
+        _asset(lib_dir, "mug")
+        found = asyncio.run(exec_tool(state, "search_assets", {"query": "mug"}))
+        name = found.data["results"][0]["name"]
+        assert found.data["results"][0]["location"] == "mug.usda"
 
-        r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": "mug.usda",
-            "asset_name": "Mug", "group": "Products",
-            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-        }))
+        r = _place_from(state, name, "Mug")
         assert r.success, r.error
 
 
-def test_place_asset_relative_path_not_found():
-    """Fails when relative path doesn't exist in project or library."""
+def test_place_asset_unknown_name_is_refused():
+    """An unknown name is refused and points at search_assets (with a close match)."""
     with tempfile.TemporaryDirectory() as tmp:
-        _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": "nonexistent/ghost.usda",
-            "asset_name": "Ghost", "group": "Props",
-            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-        }))
+        tmp_path, state, _ = _setup(tmp)
+        _asset(tmp_path, "ghost")
+        r = _place_from(state, "ghots", "Ghost")
         assert not r.success
+        assert "search_assets" in r.error
+        assert "ghost" in r.error
 
 
-def test_place_asset_inside_relative_path():
-    """place_asset_inside resolves relative paths too."""
+def test_place_asset_inside_by_name():
+    """place_asset_inside takes the nested asset's name too."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         container = _place(tmp_path, state, "shelf", "Furniture")
-
-        nested = _asset(tmp_path, "book")
-        project_sub = project.path / "imports"
-        project_sub.mkdir()
-        shutil.copy2(nested, project_sub / "book.usda")
+        _asset(tmp_path, "book")
 
         r = asyncio.run(exec_tool(state, "place_asset_inside", {
-            "asset_file_path": "imports/book.usda",
+            "asset": "book",
             "asset_name": "Book",
             "container_prim_path": container.data["prim_path"],
             "group": "Props",
@@ -166,7 +152,7 @@ def test_place_asset_missing_stage():
         state, _ = make_state(Path(tmp))
         asset = _asset(Path(tmp), "x")
         r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "X",
+            "asset": asset.stem, "asset_name": "X",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -184,7 +170,7 @@ def test_place_asset_inside():
 
         nested_src = _asset(tmp_path, "counter")
         r = asyncio.run(exec_tool(state, "place_asset_inside", {
-            "asset_file_path": str(nested_src),
+            "asset": nested_src.stem,
             "asset_name": "Counter",
             "container_prim_path": container.data["prim_path"],
             "group": "Furniture",
@@ -206,7 +192,7 @@ def test_place_layout_grid_pattern():
         asset = _asset(tmp_path, "tile")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(asset),
+                "asset": asset.stem,
                 "group": "Building/Floor",
                 "pattern": {
                     "type": "grid", "origin": [0, 0, 0],
@@ -237,7 +223,7 @@ def test_place_layout_linear_pattern_intakes_once():
         asset = _asset(tmp_path, "barrel")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(asset),
+                "asset": asset.stem,
                 "group": "Props",
                 "pattern": {
                     "type": "linear", "origin": [0, 0, 0],
@@ -258,7 +244,7 @@ def test_place_layout_enumerated_transforms():
         asset = _asset(tmp_path, "crate")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(asset),
+                "asset": asset.stem,
                 "group": "Props",
                 "transforms": [
                     {"translate": [1, 0, 2]},
@@ -280,7 +266,7 @@ def test_place_layout_rejects_both_modes():
         asset = _asset(tmp_path, "thing")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(asset),
+                "asset": asset.stem,
                 "group": "Props",
                 "transforms": [{"translate": [0, 0, 0]}],
                 "pattern": {
@@ -300,7 +286,7 @@ def test_place_layout_missing_stage():
         asset = _asset(Path(tmp), "x")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(asset), "group": "Props",
+                "asset": asset.stem, "group": "Props",
                 "transforms": [{"translate": [0, 0, 0]}],
             }],
         }))
@@ -308,15 +294,16 @@ def test_place_layout_missing_stage():
 
 
 def test_place_layout_from_layout_file():
-    """A BOM'd layout file places its entries, resolving assets against its own dir."""
+    """A BOM'd layout file saved in the project places its entries by name or location."""
     with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, _ = _setup(tmp)
+        tmp_path, state, project = _setup(tmp)
         _asset(tmp_path, "tile")
-        layout = tmp_path / "layout.json"
+        layout = project.path / "layouts" / "floor.json"
+        layout.parent.mkdir()
         layout.write_text(json.dumps({
             "version": 1,
             "placements": [
-                {"asset": "tile.usda", "group": "Building/Floor",
+                {"asset": "tile", "group": "Building/Floor",
                  "pattern": {"type": "grid", "origin": [0, 0, 0],
                              "count": [2, 2], "spacing": [6, 6]}},
                 {"asset": "tile.usda", "group": "Props", "name": "Spare",
@@ -325,19 +312,19 @@ def test_place_layout_from_layout_file():
         }), encoding="utf-8-sig")
 
         r = asyncio.run(exec_tool(state, "place_layout", {
-            "layout_file": str(layout),
+            "layout_file": "layouts/floor.json",
         }))
         assert r.success, r.error
         assert r.data["placed"] == 5
-        assert r.data["sources"]["tile"] == str(tmp_path / "tile.usda")
+        assert r.data["sources"]["tile"] == "tile.usda"
 
 
 def test_place_layout_file_version_rejected():
     """A layout file with an unsupported version is refused."""
     with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, _ = _setup(tmp)
+        tmp_path, state, project = _setup(tmp)
         _asset(tmp_path, "tile")
-        layout = tmp_path / "layout.json"
+        layout = project.path / "layout.json"
         layout.write_text(json.dumps({
             "version": 2,
             "placements": [{"asset": "tile.usda", "group": "Props",
@@ -345,7 +332,7 @@ def test_place_layout_file_version_rejected():
         }), encoding="utf-8")
 
         r = asyncio.run(exec_tool(state, "place_layout", {
-            "layout_file": str(layout),
+            "layout_file": "layout.json",
         }))
         assert not r.success
         assert "version" in r.error
@@ -358,7 +345,7 @@ def test_place_layout_aggregates_all_problems():
         asset = _asset(tmp_path, "tile")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [
-                {"asset": str(asset), "group": "Props"},
+                {"asset": asset.stem, "group": "Props"},
                 {"asset": "ghost.usda", "group": "Props",
                  "transforms": [{"translate": [0, 0, 0]}]},
             ],
@@ -367,8 +354,8 @@ def test_place_layout_aggregates_all_problems():
         assert "placements[0]" in r.error
         assert "exactly one" in r.error
         assert "placements[1]" in r.error
-        assert "not found" in r.error
-        assert "searched" in r.error
+        assert "No asset named 'ghost.usda'" in r.error
+        assert "search_assets" in r.error
 
 
 def test_place_layout_validate_only():
@@ -379,7 +366,7 @@ def test_place_layout_validate_only():
         r = asyncio.run(exec_tool(state, "place_layout", {
             "validate_only": True,
             "placements": [{
-                "asset": str(asset), "group": "Props",
+                "asset": asset.stem, "group": "Props",
                 "pattern": {"type": "grid", "origin": [0, 0, 0],
                             "count": [2, 2], "spacing": [1, 1]},
             }],
@@ -406,7 +393,7 @@ def test_place_layout_rolls_back_on_failure(monkeypatch):
         )
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(asset), "group": "Props",
+                "asset": asset.stem, "group": "Props",
                 "pattern": {"type": "grid", "origin": [0, 0, 0],
                             "count": [2, 2], "spacing": [1, 1]},
             }],
@@ -419,60 +406,61 @@ def test_place_layout_rolls_back_on_failure(monkeypatch):
 
 
 def test_place_layout_rejects_folder_asset():
-    """An entry pointing at a folder is refused with root-file guidance."""
+    """An entry naming a folder with no USD asset in it is refused."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         folder = tmp_path / "tile"
         folder.mkdir()
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(folder), "group": "Props",
+                "asset": folder.name, "group": "Props",
                 "transforms": [{"translate": [0, 0, 0]}],
             }],
         }))
         assert not r.success
-        assert "root file" in r.error
+        assert "No asset named 'tile'" in r.error
 
 
 def test_place_layout_rejects_non_usd_asset_at_lint():
-    """A non-USD file fails layout validation instead of failing at intake."""
+    """A non-USD file is not an asset: layout validation refuses it before intake."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         notes = tmp_path / "notes.txt"
         notes.write_text("not usd")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(notes), "group": "Props",
+                "asset": notes.name, "group": "Props",
                 "transforms": [{"translate": [0, 0, 0]}],
             }],
             "validate_only": True,
         }))
         assert not r.success
-        assert "not a USD file" in r.error
+        assert "No asset named 'notes.txt'" in r.error
 
 
-def _place_path(state, path):
+def _place_named(state, name):
     return asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": str(path), "asset_name": "Lamp", "group": "Props",
+        "asset": name, "asset_name": "Lamp", "group": "Props",
         "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
     }))
 
 
-def test_place_asset_folder_names_its_root_file():
-    """A folder is refused naming its root file, leaves nothing behind, and the retry works."""
+def test_place_asset_library_folder_by_name():
+    """A library folder asset is placed by its folder name; a file path is refused, naming it."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         folder = tmp_path / "lamp"
         folder.mkdir()
         root = _asset(folder, "lamp")
 
-        r = _place_path(state, folder)
+        r = _place_named(state, str(root))
         assert not r.success
-        assert str(root) in r.error
+        assert "Use 'lamp'" in r.error
         assert not (project.assets_dir / "lamp").exists()
 
-        r = _place_path(state, root)
+        r = _place_named(state, "lamp")
         assert r.success, r.error
+        assert (project.assets_dir / "lamp" / "lamp.usda").exists()
 
 
 def test_place_asset_refuses_non_usd_and_missing_files():
@@ -482,13 +470,13 @@ def test_place_asset_refuses_non_usd_and_missing_files():
         notes = tmp_path / "notes.txt"
         notes.write_text("not usd")
 
-        r = _place_path(state, notes)
+        r = _place_named(state, "notes")
         assert not r.success
-        assert "not a USD file" in r.error
+        assert "No asset named 'notes'" in r.error
 
-        r = _place_path(state, tmp_path / "missing.usda")
+        r = _place_named(state, "missing")
         assert not r.success
-        assert "not found" in r.error
+        assert "No asset named 'missing'" in r.error
 
         assert not (project.assets_dir / "notes").exists()
         assert not (project.assets_dir / "missing").exists()
@@ -501,7 +489,7 @@ def test_place_asset_corrupt_usda_leaves_nothing():
         broken = tmp_path / "broken.usda"
         broken.write_text("#usda 1.0\nthis is not valid usd (\n")
 
-        r = _place_path(state, broken)
+        r = _place_named(state, "broken")
         assert not r.success
         assert "Could not import broken.usda" in r.error
         assert "parse error" in r.error
@@ -515,7 +503,7 @@ def test_place_asset_corrupt_usdz_leaves_nothing():
         junk = tmp_path / "junk.usdz"
         junk.write_bytes(b"not a zip")
 
-        r = _place_path(state, junk)
+        r = _place_named(state, "junk")
         assert not r.success
         assert "Could not import junk.usdz" in r.error
         assert not (project.assets_dir / "junk.usdz").exists()
@@ -525,15 +513,15 @@ def test_failed_placement_keeps_an_existing_asset():
     """A failed re-placement never deletes the asset folder the scene already uses."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        source = _asset(tmp_path, "chair")
-        assert _place_path(state, source).success
+        _asset(tmp_path, "chair")
+        assert _place_named(state, "chair").success
 
         geo = project.assets_dir / "chair" / "geo.usda"
         layer = Sdf.Layer.FindOrOpen(str(geo))
         layer.GetPrimAtPath("/chair").typeName = "Scope"
         layer.Save()
 
-        r = _place_path(state, source)
+        r = _place_named(state, "chair")
         assert not r.success
         assert (project.assets_dir / "chair" / "chair.usda").exists()
         assert geo.exists()
@@ -549,7 +537,7 @@ def test_failed_compliance_on_a_new_asset_leaves_nothing():
         UsdGeom.Xform.Define(stage, "/b")
         stage.Save()
 
-        r = _place_path(state, path)
+        r = _place_named(state, "multi")
         assert not r.success
         assert "multiple root prims" in r.error
         assert not (project.assets_dir / "multi").exists()
@@ -562,7 +550,7 @@ def test_place_layout_rejects_3d_count_with_2d_spacing():
         asset = _asset(tmp_path, "tile")
         r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [{
-                "asset": str(asset), "group": "Props",
+                "asset": asset.stem, "group": "Props",
                 "pattern": {"type": "grid", "origin": [0, 0, 0],
                             "count": [2, 2, 3], "spacing": [6, 6]},
             }],
@@ -579,7 +567,7 @@ def test_place_layout_rejects_invalid_prim_names():
         r = asyncio.run(exec_tool(state, "place_layout", {
             "validate_only": True,
             "placements": [{
-                "asset": str(asset), "group": "2ndFloor",
+                "asset": asset.stem, "group": "2ndFloor",
                 "transforms": [{"translate": [0, 0, 0]}],
             }],
         }))
@@ -595,7 +583,7 @@ def test_place_layout_rejects_oversized_layout():
         r = asyncio.run(exec_tool(state, "place_layout", {
             "validate_only": True,
             "placements": [{
-                "asset": str(asset), "group": "Props",
+                "asset": asset.stem, "group": "Props",
                 "pattern": {"type": "grid", "origin": [0, 0, 0],
                             "count": [400, 400], "spacing": [1, 1]},
             }],
@@ -605,22 +593,22 @@ def test_place_layout_rejects_oversized_layout():
 
 
 def test_place_layout_same_file_two_spellings_no_collision():
-    """The same asset via absolute and layout-relative paths is one source."""
+    """The same asset by name and by library location is one source."""
     with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, _ = _setup(tmp)
+        tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "tile")
-        layout = tmp_path / "layout.json"
+        layout = project.path / "layout.json"
         layout.write_text(json.dumps({
             "version": 1,
             "placements": [
-                {"asset": str(asset), "group": "Props",
+                {"asset": asset.stem, "group": "Props",
                  "transforms": [{"translate": [0, 0, 0]}]},
                 {"asset": "tile.usda", "group": "Props",
                  "transforms": [{"translate": [2, 0, 0]}]},
             ],
         }), encoding="utf-8")
         r = asyncio.run(exec_tool(state, "place_layout", {
-            "layout_file": str(layout),
+            "layout_file": "layout.json",
         }))
         assert r.success, r.error
         assert r.data["placed"] == 2
@@ -663,7 +651,7 @@ def test_unselected_scene_variants_count_as_used():
         slot = _place(tmp_path, state, "crate").data["prim_path"]
         added = asyncio.run(exec_tool(state, "add_scene_model_selection_variant", {
             "prim_path": slot, "variant_set": "model", "variant_name": "chest",
-            "asset_file_path": str(_asset(tmp_path, "chest")),
+            "asset": _asset(tmp_path, "chest").stem,
         }))
         assert added.success, added.error
         selected = asyncio.run(exec_tool(state, "select_scene_variant", {
@@ -901,7 +889,7 @@ def test_place_asset_with_rotation():
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "chair")
         r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Chair",
+            "asset": asset.stem, "asset_name": "Chair",
             "group": "Furniture",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
             "rotate_y": 90.0,
@@ -935,7 +923,7 @@ def test_place_asset_inside_nested_visible_in_scene():
 
         nested = _asset(tmp_path, "book")
         r = asyncio.run(exec_tool(state, "place_asset_inside", {
-            "asset_file_path": str(nested),
+            "asset": nested.stem,
             "asset_name": "Book",
             "container_prim_path": container.data["prim_path"],
             "group": "Props",
@@ -1039,9 +1027,9 @@ def _library_folder(lib: Path, name: str, arcs, *, geo_ext="usda") -> Path:
     return folder / f"{name}.usda"
 
 
-def _place_from(state, path, name, x=0.0):
+def _place_from(state, asset, name, x=0.0):
     return asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": str(path), "asset_name": name, "group": "Props",
+        "asset": asset, "asset_name": name, "group": "Props",
         "translate_x": x, "translate_y": 0.0, "translate_z": 0.0,
     }))
 
@@ -1055,7 +1043,7 @@ def test_folder_with_usdc_geometry_keeps_its_geometry():
             state.library_dir, "vase", lambda p: p.GetPayloads().AddPayload("./geo.usdc"),
             geo_ext="usdc",
         )
-        r = _place_from(state, root, "Vase")
+        r = _place_from(state, root.parent.name, "Vase")
         assert r.success, r.error
         assert _gprims(project, r.data["prim_path"]) == ["Mesh"]
 
@@ -1069,7 +1057,7 @@ def test_folder_root_arcs_survive_intake_and_side_layers():
             p.GetPayloads().AddPayload("./geo.usda"),
             p.GetReferences().AddReference("./rig.usda"),
         ))
-        r = _place_from(state, root, "Vase")
+        r = _place_from(state, root.parent.name, "Vase")
         assert r.success, r.error
         vase = r.data["prim_path"]
         assert _gprims(project, vase) == ["Handle", "Mesh"]
@@ -1103,7 +1091,7 @@ def test_non_canonical_and_binary_roots_intake_whole():
                 'def Xform "shelf" (\n prepend references = @./geo.usd@\n)\n{\n}\n',
             )
             layer.Export(str(folder / "root.usd"), args={"format": fmt})
-            r = _place_from(state, folder / "root.usd", f"Shelf_{fmt}")
+            r = _place_from(state, folder.name, f"Shelf_{fmt}")
             assert r.success, (fmt, r.error)
             assert _gprims(project, r.data["prim_path"]) == ["Mesh"], fmt
 
@@ -1134,9 +1122,9 @@ def test_dependencies_are_localized():
         stage.DefinePrim("/assembly/Knob").GetReferences().AddReference("./part.usda")
         stage.Save()
 
-        crate = _place_from(state, package / "crate.usda", "Crate")
+        crate = _place_from(state, "crate", "Crate")
         assert crate.success, crate.error
-        assembly = _place_from(state, lib / "assembly.usda", "Assembly", x=2.0)
+        assembly = _place_from(state, "assembly", "Assembly", x=2.0)
         assert assembly.success, assembly.error
         assert _gprims(project, assembly.data["prim_path"]) == ["Body", "Mesh"]
         assets_dir = project.path / "assets"
@@ -1157,7 +1145,7 @@ def test_loose_file_keeps_units_in_geo_layer():
         stage.SetDefaultPrim(stage.DefinePrim("/lamp", "Xform"))
         UsdGeom.Cube.Define(stage, "/lamp/Mesh")
         stage.Save()
-        assert _place_from(state, tmp_path / "lamp.usda", "Lamp").success
+        assert _place_from(state, "lamp", "Lamp").success
 
         geo = Usd.Stage.Open(str(project.path / "assets" / "lamp" / "geo.usda"))
         assert UsdGeom.GetStageMetersPerUnit(geo) == 0.01
@@ -1178,10 +1166,10 @@ def test_loose_file_refusals_leave_nothing_behind():
         missing.DefinePrim("/missing/Ghost").GetReferences().AddReference("./nowhere.usda")
         missing.Save()
 
-        r = _place_from(state, tmp_path / "outside.usda", "Outside")
+        r = _place_from(state, "outside", "Outside")
         assert not r.success
         assert "outside its defaultPrim" in r.error
-        r = _place_from(state, tmp_path / "missing.usda", "Missing")
+        r = _place_from(state, "missing", "Missing")
         assert not r.success
         assert "did not resolve" in r.error
         assert not any((project.path / "assets").iterdir())
@@ -1201,7 +1189,7 @@ def test_fix_root_prim_keeps_layer_units():
         stage.SetDefaultPrim(mesh.GetPrim())
         stage.Save()
         r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(tmp_path / "blob.usda"), "asset_name": "Blob",
+            "asset": "blob", "asset_name": "Blob",
             "group": "Props", "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
             "fix_root_prim": True,
         }))
@@ -1210,11 +1198,11 @@ def test_fix_root_prim_keeps_layer_units():
         assert geo.pseudoRoot.GetInfo("metersPerUnit") == 1.0
 
 
-# ── source files come only from the asset library ──
+# ── tools take names and library locations, never file paths ──
 
 
-def test_file_inputs_outside_the_library_are_refused():
-    """Assets, layouts, scatter assets, materials and textures outside the library are refused."""
+def test_file_paths_are_refused_everywhere():
+    """Assets, layouts, scatter, materials and textures refuse file paths, even library ones."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         state.library_dir = tmp_path / "lib"
@@ -1222,52 +1210,99 @@ def test_file_inputs_outside_the_library_are_refused():
         outside = tmp_path / "downloads"
         outside.mkdir()
         chair = _asset(outside, "chair")
-        (outside / "sky.exr").write_bytes(b"v/1\x01")
-        materials = Usd.Stage.CreateNew(str(outside / "paint.usda"))
+        inside = _asset(state.library_dir, "table")
+        (state.library_dir / "sky.exr").write_bytes(b"v/1\x01")
+        materials = Usd.Stage.CreateNew(str(state.library_dir / "paint.usda"))
         UsdShade.Material.Define(materials, "/Materials/red")
         materials.Save()
-        layout = outside / "layout.json"
-        layout.write_text(json.dumps({"version": 1, "placements": [
-            {"asset": str(chair), "group": "Props", "transforms": [{"translate": [0, 0, 0]}]},
-        ]}))
-        table = _asset(state.library_dir, "table")
-        placed = _place_from(state, table, "Table")
+        placed = _place_from(state, "table", "Table")
         assert placed.success, placed.error
+        layout = project.path / "layout.json"
+        layout.write_text(json.dumps({"version": 1, "placements": [
+            {"asset": "table", "group": "Props", "transforms": [{"translate": [0, 0, 0]}]},
+        ]}))
 
         calls = (
-            ("place_asset", {"asset_file_path": str(chair), "asset_name": "Chair", "group": "Props",
-                             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0}),
-            ("place_layout", {"placements": [{"asset": str(chair), "group": "Props",
-                                              "transforms": [{"translate": [0, 0, 0]}]}]}),
-            ("place_layout", {"layout_file": str(layout)}),
-            ("scatter_on_surface", {"name": "pile", "assets": [{"asset": str(chair)}],
-                                    "surfaces": [placed.data["prim_path"]], "count": 3}),
+            ("place_asset", {"asset": str(chair), "asset_name": "Chair", "group": "Props",
+                             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0},
+             "copy them into it first"),
+            ("place_asset", {"asset": str(inside), "asset_name": "Table", "group": "Props",
+                             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0},
+             "Use 'table'"),
+            ("place_layout", {"placements": [{"asset": str(inside), "group": "Props",
+                                              "transforms": [{"translate": [0, 0, 0]}]}]},
+             "Use 'table'"),
+            ("place_layout", {"layout_file": str(layout)}, "not a file path"),
+            ("scatter_on_surface", {"name": "pile", "assets": [{"asset": str(inside)}],
+                                    "surfaces": [placed.data["prim_path"]], "count": 3},
+             "Use 'table'"),
             ("bind_material", {"prim_path": f"{placed.data['prim_path']}/asset/Mesh",
-                               "material_file": str(outside / "paint.usda")}),
+                               "material_asset": str(state.library_dir / "paint.usda")},
+             "Use 'paint'"),
             ("create_light", {"light_type": "DomeLight", "light_name": "Sky",
-                              "texture": str(outside / "sky.exr")}),
+                              "texture": str(state.library_dir / "sky.exr")},
+             "Use its library location 'sky.exr'"),
             ("create_light", {"light_type": "DomeLight", "light_name": "Sky",
-                              "texture": str(state.library_dir / "missing.exr")}),
+                              "texture": "../downloads/sky.exr"},
+             "leaves its folder"),
         )
-        for tool, params in calls:
+        for tool, params, hint in calls:
             r = asyncio.run(exec_tool(state, tool, params))
             assert not r.success, tool
-            assert "asset library" in r.error, (tool, r.error)
-        assert sorted(p.name for p in (project.path / "assets").iterdir()) == ["table"]
+            assert hint in r.error, (tool, r.error)
+        assert sorted(p.name for p in project.assets_dir.iterdir()) == ["table"]
         assert not (project.path / "textures").exists()
 
 
-def test_library_and_project_files_are_accepted():
-    """A library path (absolute or relative) and a file already in the project both place."""
+def test_names_and_locations_are_accepted():
+    """A name, a library location, a layout file in the project and a texture location all work."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         state.library_dir = tmp_path / "lib"
-        state.library_dir.mkdir()
+        (state.library_dir / "hdrs").mkdir(parents=True)
+        (state.library_dir / "hdrs" / "sky.exr").write_bytes(b"v/1\x01")
         _asset(state.library_dir, "table")
-        library_path = str(state.library_dir / "table.usda")
-        for path in (library_path, "table.usda", "assets/table/table.usda"):
-            r = asyncio.run(exec_tool(state, "place_asset", {
-                "asset_file_path": path, "asset_name": "Table", "group": "Props",
-                "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-            }))
-            assert r.success, (path, r.error)
+        for asset in ("table", "table.usda"):
+            r = _place_from(state, asset, "Table")
+            assert r.success, (asset, r.error)
+        layout = project.path / "layout.json"
+        layout.write_text(json.dumps({"version": 1, "placements": [
+            {"asset": "table", "group": "Props", "transforms": [{"translate": [4, 0, 0]}]},
+        ]}))
+        r = asyncio.run(exec_tool(state, "place_layout", {"layout_file": "layout.json"}))
+        assert r.success, r.error
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "DomeLight", "light_name": "Sky", "texture": "hdrs/sky.exr",
+        }))
+        assert r.success, r.error
+        assert (project.path / "textures" / "sky.exr").exists()
+
+
+def test_shared_names_ask_for_a_location_and_downloads_place_by_name():
+    """Two library assets sharing a name are refused naming both; a location picks one.
+
+    A skill download in the library's cache (e.g. cache/sketchfab/Lamp.usdz) places by name.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = state.library_dir = tmp_path / "lib"
+        (lib / "chair").mkdir(parents=True)
+        _asset(lib / "chair", "chair")
+        _asset(lib, "chair")
+        (lib / "cache" / "sketchfab").mkdir(parents=True)
+        from pxr import UsdUtils
+        download = lib / "cache" / "sketchfab" / "Lamp.usdz"
+        UsdUtils.CreateNewUsdzPackage(str(_asset(tmp_path, "lamp")), str(download))
+
+        r = _place_from(state, "chair", "Chair")
+        assert not r.success
+        assert "(chair.usda, chair/chair.usda)" in r.error
+        found = asyncio.run(exec_tool(state, "search_assets", {"query": "chair"}))
+        locations = sorted(e["location"] for e in found.data["results"])
+        assert locations == ["chair.usda", "chair/chair.usda"]
+        r = _place_from(state, "chair.usda", "Chair")
+        assert r.success, r.error
+
+        r = _place_from(state, "Lamp", "Lamp")
+        assert r.success, r.error
+        assert (project.assets_dir / "Lamp.usdz").exists()

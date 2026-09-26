@@ -54,7 +54,7 @@ def _setup(tmp):
 def _place(tmp_path, state, name="box"):
     asset = _asset(tmp_path, name)
     r = asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": str(asset), "asset_name": name.title(),
+        "asset": asset.stem, "asset_name": name.title(),
         "group": "Props",
         "translate_x": 0.0, "translate_y": 1.0, "translate_z": 0.0,
     }))
@@ -142,7 +142,7 @@ def test_apply_collision_with_companion():
         tmp_path, state, _ = _setup(tmp)
         mesh_asset = _mesh_asset(tmp_path, "wall")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(mesh_asset), "asset_name": "Wall",
+            "asset": mesh_asset.stem, "asset_name": "Wall",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -541,7 +541,7 @@ def test_remove_collision_cascades_mesh_collision():
         tmp_path, state, _ = _setup(tmp)
         mesh_asset = _mesh_asset(tmp_path, "panel")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(mesh_asset),
+            "asset": mesh_asset.stem,
             "asset_name": "Panel", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -974,7 +974,7 @@ def test_remove_api_cascade_message():
         tmp_path, state, _ = _setup(tmp)
         mesh_asset = _mesh_asset(tmp_path, "slab")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(mesh_asset),
+            "asset": mesh_asset.stem,
             "asset_name": "Slab", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -1209,7 +1209,7 @@ def test_remove_scene_scope_api_keeps_asset_api_schemas():
         ).Bind(material)
         asset_stage.Save()
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Crate", "group": "Props",
+            "asset": asset.stem, "asset_name": "Crate", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         assert placed.success, placed.error

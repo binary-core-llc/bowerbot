@@ -313,7 +313,7 @@ BowerBot is conversational: you tell it what you want and it uses the right tool
 
 BowerBot searches for assets across all connected sources, prioritizing what's already available:
 
-1. **Local assets first**: BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers. BowerBot only reads source files from this directory (and the copies already in the project): assets, materials, textures and layout files anywhere else are refused, so copy them into `assets_dir` first.
+1. **Local assets first**: BowerBot checks your local asset directory (`assets_dir` in config.json) for USD files (`.usd`, `.usda`, `.usdc`, `.usdz`). This includes anything you've exported from Maya, Houdini, Blender, or any DCC tool, as well as assets previously downloaded from cloud providers. BowerBot only reads source files from this directory (and the copies already in the project), and its tools take names, never file paths: `search_assets` / `list_assets` report each asset's `name`, which is what placing tools take, and textures go by their `location` in the library. A file anywhere else must be copied into `assets_dir` first.
 
 2. **Cloud providers if needed**: If the asset isn't found locally, BowerBot searches connected providers (any installed skill, e.g. Sketchfab) and downloads the asset to your local directory.
 
@@ -384,26 +384,27 @@ exporter can target:
 {
   "version": 1,
   "placements": [
-    { "asset": "SM_floor02/SM_floor02.usda", "group": "Building/Floor",
+    { "asset": "SM_floor02", "group": "Building/Floor",
       "pattern": { "type": "grid", "origin": [0, 0, 0],
                    "count": [6, 5], "spacing": [6, 6] } },
-    { "asset": "forklift/forklift.usda", "group": "Props",
+    { "asset": "forklift", "group": "Props",
       "transforms": [ { "translate": [4.2, 0, 1.5], "rotate": [0, 90, 0] } ] }
   ]
 }
 ```
 
 - `version` is required; this BowerBot reads version `1`.
-- Each entry names one `asset` (the asset's **root file**) and one
-  `group`, plus either an enumerated `transforms` list or a parametric
+- Each entry names one `asset` (its **name** as `search_assets` or
+  `list_project_assets` report it, or its library location when two
+  assets share a name; file paths are refused) and one `group`, plus either an enumerated `transforms` list or a parametric
   `pattern` (`grid`: `origin`, `count` `[nx, ny]`/`[nx, ny, nz]`,
   `spacing`; `linear`: `origin`, integer `count`, `spacing` direction
   step). Optional per-entry `name`, `rotate`, and `scale` (a uniform
   number or `[sx, sy, sz]`) act as defaults for placements that do not
   set their own.
-- Relative asset paths resolve in order: **layout-file dir → project
-  dir → library dir**. There is no working-directory fallback, and every
-  asset (and the layout file itself) must be in the library or the project.
+- An asset name resolves to the project's copy first, then the library
+  asset. The layout file itself lives in the project folder and is passed
+  by its location there (e.g. `layouts/floor.json`).
 - Translates are in scene units, and pattern axes map to world
   `[x, y, z]` (not up-axis aware — the example above is for a Z-up
   scene). Each asset is conformed (units + up-axis) on reference, same
@@ -456,7 +457,7 @@ service function and is described in the LLM prompts under
 
 | Tool | Description |
 |------|-------------|
-| `place_asset` | Add an asset (auto-creates ASWF folder for loose geometry) |
+| `place_asset` | Add an asset by its library or project name (auto-creates ASWF folder for loose geometry) |
 | `place_layout` | Batch placement: many assets/transforms in one call, inline or from a layout JSON file |
 | `place_asset_inside` | Nest an asset inside an ASWF container's `contents.usda` |
 | `list_project_assets` | Show asset folders with scene usage status |
@@ -481,7 +482,7 @@ square meter. The same inputs and seed always give the same result.
 
 | Tool | Description |
 |------|-------------|
-| `search_assets` | Find USD assets in the user's library by keyword (geo, mtl, package) |
+| `search_assets` | Find USD assets in the user's library by keyword; each result's `name` is what placing tools take |
 | `list_assets` | List every USD asset in the user's library, classified by category |
 | `search_textures` | Find HDRIs and material maps in the asset library by keyword |
 | `list_textures` | List every HDRI and material map in the asset library |
@@ -926,7 +927,7 @@ src/bowerbot/
       localize.py              #     copy a file and its dependencies, re-path, verify
       aswf.py                  #     wrap loose files into ASWF folders; root metadata
       freeze.py  nested.py     #     bake root transforms; nested assets in contents.usda
-    library_utils.py           #   scan_library, find_package_for
+    library_utils.py           #   scan_library, find_asset (names -> root files), find_package_for
     light_utils.py             #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle,
                                #   HDRI staging

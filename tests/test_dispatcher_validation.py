@@ -21,7 +21,7 @@ def test_rejects_wrong_scalar_type():
     with tempfile.TemporaryDirectory() as tmp:
         state = _state(tmp)
         r = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": "x.usda", "asset_name": "X", "group": "Props",
+            "asset": "x", "asset_name": "X", "group": "Props",
             "translate_x": "abc", "translate_y": 0.0, "translate_z": 0.0,
         }))
         assert not r.success

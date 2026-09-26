@@ -37,10 +37,12 @@ TOOLS: list[Tool] = [
         description=(
             "Search the user's asset library by name across every category. "
             "Returns {results: [...], total_matches: int, truncated: bool}. "
-            "Each result is {name, path, format, category}: 'path' is the "
-            "local file path to load — pass it as asset_file_path to "
-            "place_asset for 'geo'/'package' results, or as material_file to "
-            "bind_material for 'mtl' results; 'format' is the file suffix "
+            "Each result is {name, location, format, category}: pass 'name' "
+            "as 'asset' to place_asset (and every placing tool) for "
+            "'geo'/'package' results, or as 'material_asset' to bind_material "
+            "for 'mtl' results; 'location' is where it sits in the library "
+            "(pass it instead only if two results share a name); 'format' is "
+            "the file suffix "
             "(e.g. '.usda', '.usdz'). If truncated is true, refine the query "
             "— do not ask the user to pick from a partial list."
         ),
@@ -68,10 +70,11 @@ TOOLS: list[Tool] = [
         description=(
             "Browse the user's asset library, optionally filtered by "
             "category. Returns {results: [...], total_matches: int, "
-            "truncated: bool}. Each result is {name, path, format, "
-            "category}: 'path' is the local file path you pass straight to "
-            "place_asset (asset_file_path) for 'geo'/'package' results or to "
-            "bind_material (material_file) for 'mtl' results; 'format' is the "
+            "truncated: bool}. Each result is {name, location, format, "
+            "category}: pass 'name' as 'asset' to place_asset for "
+            "'geo'/'package' results or as 'material_asset' to bind_material "
+            "for 'mtl' results ('location' only when two share a name); "
+            "'format' is the "
             "USD suffix (e.g. '.usda'). If truncated is true, narrow the "
             "category filter or use search_assets with a query instead."
         ),

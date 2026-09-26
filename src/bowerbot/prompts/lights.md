@@ -87,9 +87,9 @@ restated in the `message`). Pass that `prim_path` to `update_light` or
 - **DistantLight** — sun/directional. Only rotation matters.
   Use `rotate_x` for sun angle (-45 = afternoon).
   Per-type input: `inputs:angle` (0.53 = realistic sun).
-- **DomeLight** — environment/HDRI. Pass the HDRI's library path (from
-  `search_textures` / `list_textures`) as `texture` and BowerBot stages
-  it; a file outside the asset library is refused.
+- **DomeLight** — environment/HDRI. Pass the HDRI's `location` from
+  `search_textures` / `list_textures` as `texture` and BowerBot stages
+  it; file paths are refused.
   Per-type inputs: `inputs:texture:file`, `inputs:texture:format`.
 - **SphereLight** — point/omni. Emits in all directions.
   Per-type input: `inputs:radius` (0.05–0.1 for lamps, bulbs).

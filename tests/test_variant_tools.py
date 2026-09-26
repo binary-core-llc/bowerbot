@@ -34,7 +34,7 @@ def _setup(tmp):
 def _place(tmp_path, state, name="chair"):
     asset = _asset(tmp_path, name)
     r = asyncio.run(exec_tool(state, "place_asset", {
-        "asset_file_path": str(asset), "asset_name": name.title(),
+        "asset": asset.stem, "asset_name": name.title(),
         "group": "Furniture",
         "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
     }))
@@ -535,7 +535,7 @@ def test_add_scene_model_selection_variant():
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "seating",
                 "variant_name": "stool",
-                "asset_file_path": str(alt),
+                "asset": alt.stem,
             },
         ))
         assert r.success, r.error
@@ -654,7 +654,7 @@ def test_remove_model_selection_set_demotes():
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "seating",
                 "variant_name": "stool",
-                "asset_file_path": str(alt),
+                "asset": alt.stem,
             },
         ))
 

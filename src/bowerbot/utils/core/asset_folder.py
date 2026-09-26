@@ -26,6 +26,7 @@ from bowerbot.schemas import (
     DetectionOutcome,
     FolderDetection,
     IntakeRules,
+    LibraryRules,
     SceneNamespace,
 )
 from bowerbot.utils.core.bounds import bbox_cache, world_range
@@ -39,45 +40,72 @@ logger = logging.getLogger(__name__)
 # ── Folder structure ──
 
 
+def refuse_file_path(ref: str, library_dir: Path | None, *, by_name: bool = True) -> None:
+    """Raise if *ref* is a file path or climbs out with '..'; names and library locations pass.
+
+    The hint names the asset when *by_name* (asset inputs), else only its
+    library location (textures, whose names repeat).
+    """
+    path = Path(ref).expanduser()
+    if ".." in path.parts:
+        msg = f"'{ref}' leaves its folder; pass a name or a location inside the asset library."
+        raise ValueError(msg)
+    if not path.is_absolute():
+        return
+    msg = f"Pass a name or a library location, not a file path: {ref}."
+    location = _library_location(path, library_dir)
+    if location is None:
+        msg += " Files outside the asset library can't be used: copy them into it first."
+    elif by_name:
+        name = _library_name(location)
+        msg += f" Use '{name}' (or its library location '{location.as_posix()}')."
+    else:
+        msg += f" Use its library location '{location.as_posix()}'."
+    raise ValueError(msg)
+
+
+def _library_location(path: Path, library_dir: Path | None) -> Path | None:
+    """*path* relative to the library, or ``None`` when it lies outside it."""
+    if library_dir is None:
+        return None
+    try:
+        return path.relative_to(library_dir.expanduser().absolute())
+    except ValueError:
+        return None
+
+
+def _library_name(location: Path) -> str:
+    """The name ``scan_library`` reports for *location*: its package folder, or its stem."""
+    top = location.parts[0]
+    if len(location.parts) > 1 and top not in LibraryRules.NON_ASSET_DIRS:
+        return top
+    return location.stem
+
+
 def resolve_library_file(
     raw: str,
     *,
     library_dir: Path | None,
     project_dir: Path | None,
-    first_dir: Path | None = None,
 ) -> Path:
-    """The existing file or folder *raw* names in the asset library or the project.
+    """The existing file *raw* locates in the project or the asset library.
 
-    BowerBot takes source files only from the configured asset library, plus
-    files it already copied into the project. An absolute path must lie
-    inside one of them; a relative one is tried against *first_dir* (a
-    layout file's folder), the project, then the library. Anything else is
-    refused, and so is a path that exists nowhere.
+    *raw* is a location relative to them (a texture as ``search_textures``
+    reports it, or ``textures/sky.exr`` already in the project), tried
+    against the project, then the library. File paths, '..' and anything
+    that exists nowhere are refused.
     """
-    roots = [_absolute(d) for d in (library_dir, project_dir) if d is not None]
     if library_dir is None:
         msg = "No asset library configured. Set 'assets_dir' in ~/.bowerbot/config.json."
         raise ValueError(msg)
-    path = Path(raw).expanduser()
-    if path.is_absolute():
-        candidates = [path]
-    else:
-        candidates = [d / path for d in (first_dir, project_dir, library_dir) if d is not None]
+    refuse_file_path(raw, library_dir, by_name=False)
+    candidates = [root / raw for root in (project_dir, library_dir) if root is not None]
     for candidate in candidates:
-        if not candidate.exists():
-            continue
-        found = _absolute(candidate)
-        if not any(found == root or root in found.parents for root in roots):
-            msg = (
-                f"{found} is outside the asset library ({_absolute(library_dir)}). "
-                f"BowerBot only takes files from the library: copy it there first, "
-                f"then use the library path."
-            )
-            raise ValueError(msg)
-        return found
+        if candidate.is_file():
+            return _absolute(candidate)
     searched = ", ".join(str(_absolute(c)) for c in candidates)
     msg = (
-        f"'{raw}' was not found in the asset library or the project "
+        f"'{raw}' was not found in the project or the asset library "
         f"(searched: {searched})."
     )
     raise ValueError(msg)

@@ -68,8 +68,9 @@ with `list_scene` when you need them.
 
 For BULK layouts (more than a few dozen entries — e.g. rebuilding a
 layout extracted from an existing USD scene, or a DCC export), do not
-stream entries inline. Write them to a layout JSON file and pass its
-path as `layout_file` instead of `placements`:
+stream entries inline. Save them as a layout JSON file in the project
+folder and pass its location there (e.g. `layouts/floor.json`) as
+`layout_file` instead of `placements`:
 
 ```
 { "version": 1, "placements": [ ...same entries as inline... ] }
@@ -77,11 +78,10 @@ path as `layout_file` instead of `placements`:
 
 When the source is an existing scene, write a small script that
 extracts `(asset, transform, group)` per placement and dumps that file —
-never transcribe transforms by hand. Entry asset paths resolve in
-order: absolute → layout-file dir → project dir → library dir, and must
-name the asset's root file (e.g. `SM_floor02/SM_floor02.usda`). Every
-asset, and the layout file itself, must be in the asset library or the
-project; anything else is refused.
+never transcribe transforms by hand. Each entry's `asset` is the
+asset's name as `search_assets` / `list_project_assets` report it (e.g.
+`SM_floor02`), or its library location when two assets share a name.
+File paths are refused.
 
 The whole plan is validated before anything is placed: every invalid
 entry and every unresolvable asset is reported at once, with entry
@@ -98,10 +98,10 @@ patterns.
 Example — a 6×5 floor and a back wall in a Z-up scene:
 ```
 place_layout(placements=[
-  { "asset": "SM_floor02/SM_floor02.usda", "group": "Building/Floor",
+  { "asset": "SM_floor02", "group": "Building/Floor",
     "pattern": { "type": "grid", "origin": [0, 0, 0],
                  "count": [6, 5], "spacing": [6, 6] } },
-  { "asset": "SM_WallA_6M/SM_WallA_6M.usda", "group": "Building/Walls",
+  { "asset": "SM_WallA_6M", "group": "Building/Walls",
     "pattern": { "type": "linear", "origin": [0, 30, 0],
                  "count": 6, "spacing": [6, 0, 0] } }
 ])

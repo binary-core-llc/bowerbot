@@ -100,7 +100,7 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, A
     project_dir = project.path
     sources = scatter.prototypes.resolve_asset_sources(
         [ScatterAsset(**asset) for asset in params["assets"]],
-        project_dir=project_dir, library_dir=state.library_dir,
+        project_assets_dir=project.assets_dir, library_dir=state.library_dir,
     )
     triangles = surface_utils.collect_triangles(
         stage, params["surfaces"], up=up, exclude=[prim_path],
@@ -236,7 +236,7 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, A
     project_dir = project.path
     sources = scatter.prototypes.resolve_asset_sources(
         [ScatterAsset(**asset) for asset in params["assets"]],
-        project_dir=project_dir, library_dir=state.library_dir,
+        project_assets_dir=project.assets_dir, library_dir=state.library_dir,
     )
     seed = scatter.inputs.derive_seed(prim_path, params.get("seed"))
 

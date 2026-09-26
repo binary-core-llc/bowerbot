@@ -167,12 +167,13 @@ TOOLS: list[Tool] = [
                         "to (e.g. '/Scene/Furniture/Table_01')."
                     ),
                 },
-                "material_file": {
+                "material_asset": {
                     "type": "string",
                     "description": (
-                        "The material .usda file in the asset library "
-                        "(absolute or library-relative). Files outside the asset "
-                        "library are refused: copy them into the library first."
+                        "The material library's name as search_assets / "
+                        "list_assets report it (category 'mtl'), or its library "
+                        "location when two assets share a name. File paths are "
+                        "refused."
                     ),
                 },
                 "material_prim_path": {
@@ -197,7 +198,7 @@ TOOLS: list[Tool] = [
                     "default": False,
                 },
             },
-            "required": ["prim_path", "material_file"],
+            "required": ["prim_path", "material_asset"],
         },
     ),
     Tool(

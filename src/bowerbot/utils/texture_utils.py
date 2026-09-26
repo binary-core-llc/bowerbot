@@ -12,6 +12,7 @@ from pxr import Usd
 
 from bowerbot.schemas import AssetFormat, ASWFLayerNames, HDRIFormat, TextureCategory
 from bowerbot.utils.core.asset_folder import resolve_library_file
+from bowerbot.utils.library_utils import asset_location
 
 
 def copy_texture_to_project(source: Path, project_dir: Path) -> str:
@@ -50,33 +51,15 @@ def stage_asset_value(
     project_dir: Path,
     library_dir: Path | None = None,
 ) -> str:
-    """Resolve and stage an Asset-attr value into the project; raise if unresolvable."""
+    """Stage an Asset-attr value (a texture location) into the project; raise if unresolvable.
+
+    *value* locates the file in the project (``textures/wood.png``) or the
+    asset library, as ``search_textures`` reports it.
+    """
     if not value:
         return value
-    src = Path(value)
-    filename = src.name
-    if not filename:
-        return value
-
-    project_rel = f"./{ASWFLayerNames.TEXTURES}/{filename}"
-    if (project_dir / ASWFLayerNames.TEXTURES / filename).exists():
-        return project_rel
-
-    if src.is_absolute():
-        source = resolve_library_file(value, library_dir=library_dir, project_dir=project_dir)
-        return copy_texture_to_project(source, project_dir)
-    candidates: list[Path] = []
-    if library_dir is not None and library_dir.exists():
-        candidates.extend(library_dir.rglob(filename))
-    for candidate in candidates:
-        if candidate.is_file():
-            return copy_texture_to_project(candidate, project_dir)
-
-    raise ValueError(
-        f"Cannot stage texture {value!r}: file not found in the project's textures/ "
-        "or in the asset library. Copy it into the library first, then pass its "
-        "library path.",
-    )
+    source = resolve_library_file(value, library_dir=library_dir, project_dir=project_dir)
+    return copy_texture_to_project(source, project_dir)
 
 
 def find_texture_references(
@@ -122,7 +105,7 @@ def find_textures(
     extensions = category.extensions()
     needle = query.lower() if query else None
     return [
-        _format(p)
+        _format(p, library_dir)
         for p in library_dir.rglob("*")
         if p.is_file()
         and p.suffix.lower() in extensions
@@ -130,11 +113,11 @@ def find_textures(
     ]
 
 
-def _format(path: Path) -> dict[str, str]:
-    """Build the entry shape surfaced to the LLM."""
+def _format(path: Path, library_dir: Path) -> dict[str, str]:
+    """Build the entry shape surfaced to the LLM; ``location`` is what texture inputs take."""
     return {
         "name": path.stem,
-        "path": str(path),
+        "location": asset_location(path, library_dir=library_dir, project_dir=None),
         "format": path.suffix.lower(),
         "category": _classify(path),
     }

@@ -42,7 +42,7 @@ def test_validate_scene_passes():
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "item")
         asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Item",
+            "asset": asset.stem, "asset_name": "Item",
             "group": "Props",
             "translate_x": 1.0, "translate_y": 0.0, "translate_z": 1.0,
         }))
@@ -58,7 +58,7 @@ def test_validate_scene_after_create_material_has_no_errors():
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "item")
         placed = asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Item", "group": "Props",
+            "asset": asset.stem, "asset_name": "Item", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         for name in ("red", "blue"):
@@ -132,7 +132,7 @@ def test_package_scene_produces_usdz():
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "item")
         asyncio.run(exec_tool(state, "place_asset", {
-            "asset_file_path": str(asset), "asset_name": "Item",
+            "asset": asset.stem, "asset_name": "Item",
             "group": "Props",
             "translate_x": 1.0, "translate_y": 0.0, "translate_z": 1.0,
         }))

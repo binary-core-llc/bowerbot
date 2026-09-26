@@ -119,7 +119,7 @@ UTILS_DIR = ROOT / "src" / "bowerbot" / "utils"
 
 
 def test_utils_hold_only_functions() -> None:
-    """Utils modules: imports, functions and the module logger, nothing else."""
+    """Utils modules: imports, functions and the module logger (packages: ``__all__``)."""
     allowed = (ast.Import, ast.ImportFrom, ast.FunctionDef)
     offenders = []
     for path in sorted(UTILS_DIR.rglob("*.py")):
@@ -130,7 +130,9 @@ def test_utils_hold_only_functions() -> None:
                 and isinstance(node, ast.Expr)
                 and isinstance(node.value, ast.Constant)
             )
-            if docstring or isinstance(node, allowed) or ast.unparse(node) == MODULE_LOGGER:
+            code = ast.unparse(node)
+            exports = path.name == "__init__.py" and code.startswith("__all__ = ")
+            if docstring or exports or isinstance(node, allowed) or code == MODULE_LOGGER:
                 continue
             offenders.append(f"{path.relative_to(UTILS_DIR)}:{node.lineno} {type(node).__name__}")
     assert not offenders, f"utils hold functions only; values go in schema classes: {offenders}"

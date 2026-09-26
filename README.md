@@ -924,9 +924,14 @@ src/bowerbot/
     material_utils.py          #   material_in_folder primitives, find_first_material
     texture_utils.py           #   find_textures, copy_texture_to_project,
                                #   find_texture_references
-    physics_utils.py           #   All physics authoring: APIs, joints, collision groups,
-                               #   phy.usda lifecycle, masking-policy enforcement
-    physics_typing_utils.py    #   is_joint / is_physics_scene / is_collision_group / ...
+    physics/                   #   Physics, split into small modules:
+      apis.py                  #     apply/remove UsdPhysics APIs (asset or scene scope)
+      schema_info.py           #     what each API and joint declares and accepts
+      scene.py                 #     the PhysicsScene prim, scope and gravity
+      joints.py  groups.py     #     typed joints; collision groups
+      summary.py               #     physics an asset or scene carries; empty phy.usda cleanup
+      masking.py  scope.py     #     scene-override policy; asset vs scene scope
+      predicates.py            #     is_joint / is_physics_scene / is_collision_group / ...
     scatter/                   #   Scatter, split into small modules:
       on_surface.py            #     random / rows / pile pipelines over surfaces
       along_path.py            #     placing along polylines, circles and curves

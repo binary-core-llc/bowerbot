@@ -65,6 +65,15 @@ def test_create_stage_idempotent():
         assert r.success, r.error
 
 
+def test_create_stage_without_filename():
+    """filename is optional: the scene is always the project's scene.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        r = asyncio.run(exec_tool(state, "create_stage", {}))
+        assert r.success, r.error
+        assert r.data["stage_path"] == str(project.scene_path)
+
+
 # ── list_scene ──
 
 

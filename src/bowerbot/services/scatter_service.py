@@ -106,10 +106,11 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, A
         stage, params["surfaces"], up=up, exclude=[prim_path],
     )
     avoid = None
-    if params.get("avoid"):
+    avoid_paths = params.get("avoid")
+    if avoid_paths:
         avoid = surface_utils.build_vertical_index(
             surface_utils.collect_triangles(
-                stage, params["avoid"], up=up, exclude=[prim_path],
+                stage, avoid_paths, up=up, exclude=[prim_path],
                 instancer_footprints=True,
             ),
             up, pad=surface.avoid_margin,

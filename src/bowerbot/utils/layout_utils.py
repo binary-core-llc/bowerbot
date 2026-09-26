@@ -21,6 +21,7 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.schemas.transforms import Vec3
+from bowerbot.utils.core.asset_folder import asset_folder_hint, validate_asset_file
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 
 
@@ -101,14 +102,10 @@ def resolve_layout_asset(
         candidates = [root / raw for root in roots if root is not None]
     for candidate in candidates:
         if candidate.is_file():
-            return candidate.resolve()
+            return validate_asset_file(candidate.resolve())
     for candidate in candidates:
         if candidate.is_dir():
-            msg = (
-                f"'{raw}' is a folder ({candidate}); reference the asset's root "
-                f"file instead (e.g. '{candidate.name}/{candidate.name}.usda')."
-            )
-            raise ValueError(msg)
+            raise ValueError(asset_folder_hint(candidate))
     searched = ", ".join(str(c) for c in candidates) or "no roots available"
     msg = f"asset '{raw}' not found (searched: {searched})."
     raise ValueError(msg)

@@ -56,6 +56,32 @@ def resolve_asset_file_path(
     return p.resolve()
 
 
+def validate_asset_file(path: Path) -> Path:
+    """Return *path* when it is a USD file BowerBot can place; raise a clear error otherwise."""
+    if path.is_dir():
+        raise ValueError(asset_folder_hint(path))
+    if not path.is_file():
+        raise ValueError(f"Asset file not found: {path}")
+    if path.suffix.lower() not in AssetFormat:
+        formats = ", ".join(AssetFormat)
+        raise ValueError(f"{path} is not a USD file; BowerBot places {formats} assets.")
+    return path
+
+
+def asset_folder_hint(folder: Path) -> str:
+    """Explain that *folder* is not a placeable file, naming the file to pass instead."""
+    root_file = find_root_file(folder)
+    if root_file is not None:
+        return f"{folder} is a folder, not a USD file; pass its root file instead: {root_file}"
+    usd_files = sorted(p.name for p in folder.iterdir() if p.suffix.lower() in AssetFormat)
+    if usd_files:
+        return (
+            f"{folder} is a folder, not a USD file, and has no root file named after it; "
+            f"pass one of its USD files instead: {', '.join(usd_files)}"
+        )
+    return f"{folder} is a folder with no USD file in it; pass the asset's root file instead."
+
+
 def resolve_asset_dir_for_prim(
     stage: Usd.Stage,
     prim_path: str,

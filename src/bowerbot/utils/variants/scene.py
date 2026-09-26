@@ -28,8 +28,8 @@ def apply_scene_variant(
     prior_selection = ""
     prim = stage.GetPrimAtPath(carrier_prim_path)
     if prim and prim.IsValid():
-        vset = prim.GetVariantSets().GetVariantSet(variant_set)
-        if vset.IsValid():
+        if prim.GetVariantSets().HasVariantSet(variant_set):
+            vset = prim.GetVariantSets().GetVariantSet(variant_set)
             prior_selection = vset.GetVariantSelection() or ""
 
     author_in_variant(
@@ -39,7 +39,7 @@ def apply_scene_variant(
     prim = stage.GetPrimAtPath(carrier_prim_path)
     if not prim or not prim.IsValid():
         return
-    if not prim.GetVariantSets().GetVariantSet(variant_set).IsValid():
+    if not prim.GetVariantSets().HasVariantSet(variant_set):
         return
 
     if set_as_default:
@@ -63,12 +63,11 @@ def set_scene_variant_default(
     prim = stage.GetPrimAtPath(carrier_prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Carrier prim not found: {carrier_prim_path}")
-    vset = prim.GetVariantSets().GetVariantSet(set_name)
-    if not vset.IsValid():
+    if not prim.GetVariantSets().HasVariantSet(set_name):
         raise ValueError(
             f"Variant set '{set_name}' not on {carrier_prim_path}",
         )
-    vset.SetVariantSelection(variant_name)
+    prim.GetVariantSets().GetVariantSet(set_name).SetVariantSelection(variant_name)
     stage.Save()
 
 

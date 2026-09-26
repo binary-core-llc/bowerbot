@@ -136,6 +136,8 @@ def new(name: str) -> None:
         console.print("   bowerbot chat")
     except FileExistsError:
         console.print(f"[red]Project already exists:[/] {name}")
+    except ValueError as e:
+        console.print(f"[red]{e}[/]")
 
 
 @main.command(name="list")
@@ -329,6 +331,9 @@ def build(prompt: str) -> None:
     except FileExistsError:
         safe_name = safe_project_name(project_name)
         project = Project.load(projects_dir / safe_name)
+    except ValueError as e:
+        console.print(f"[red]{e}[/] Start the prompt with a word to name the project.")
+        raise SystemExit(1) from None
 
     console.print("[sf]BowerBot[/] Building scene...")
     console.print(f"  Prompt:   {prompt}")

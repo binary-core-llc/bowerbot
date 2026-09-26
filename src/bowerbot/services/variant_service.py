@@ -53,6 +53,7 @@ def add_asset_material_variant(
     clear_masking = bool(params.get("clear_masking_overrides", False))
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
+    variants.checks.validate_material_bindings(asset_dir, bindings)
 
     if variants.masking.enforce_no_masking_overrides(
         stage, asset_dir,
@@ -693,16 +694,7 @@ def select_scene_variant(
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Carrier prim not found: {prim_path}")
-    vset = prim.GetVariantSets().GetVariantSet(set_name)
-    if not vset.IsValid():
-        raise ValueError(
-            f"Variant set '{set_name}' not found on {prim_path}",
-        )
-    if variant_name not in vset.GetVariantNames():
-        raise ValueError(
-            f"Variant '{variant_name}' not in '{set_name}' on {prim_path}. "
-            f"Available: {list(vset.GetVariantNames())}",
-        )
+    variants.checks.require_variant(prim, set_name, variant_name, prim_path)
 
     variants.scene.set_scene_variant_default(
         stage, prim_path, set_name, variant_name,

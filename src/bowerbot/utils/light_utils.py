@@ -61,6 +61,19 @@ def list_light_type_properties(light_type: LightType) -> LightTypeSchemaInfo:
     )
 
 
+def refuse_unknown_light_attributes(light_type: LightType, attributes: dict[str, Any]) -> None:
+    """Raise if any attribute name is not a property the light type declares."""
+    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)
+    valid = set(prim_def.GetPropertyNames()) if prim_def is not None else set()
+    unknown = sorted(name for name in attributes if name not in valid)
+    if unknown:
+        msg = (
+            f"Unknown {light_type.value} input(s) {unknown}. "
+            "Call list_light_type_properties for the valid names."
+        )
+        raise ValueError(msg)
+
+
 def scale_spatial_attributes(
     attributes: dict[str, Any], factor: float,
 ) -> dict[str, Any]:

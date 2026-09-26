@@ -319,10 +319,12 @@ TOOLS: list[Tool] = [
             "properties": {
                 "count": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Number of objects to arrange.",
                 },
                 "spacing": {
                     "type": "number",
+                    "exclusiveMinimum": 0,
                     "description": "Distance between objects in scene units (default 2 m).",
                 },
             },
@@ -339,7 +341,8 @@ TOOLS: list[Tool] = [
             "colorTemperature; any UsdLux/UsdShade/UsdGeom schema "
             "attribute). After discovery, use set_prim_attribute to "
             "author overrides. Returns each attribute as "
-            "{name, type, value, authored}."
+            "{name, type, value, authored}, plus allowed_tokens for a token "
+            "attribute that only takes a fixed set of values."
         ),
         parameters={
             "type": "object",
@@ -371,7 +374,9 @@ TOOLS: list[Tool] = [
             "on multiple placements, call this once per placement. "
             "Works for any UsdLux / UsdShade / UsdGeom attribute (sheen, "
             "coat, specular, colorTemperature, treatAsLine, intensity, "
-            "exposure, radius, angle, etc.)."
+            "exposure, radius, angle, etc.). A token attribute with "
+            "allowed_tokens (see list_prim_attributes) takes one of them; "
+            "other values are refused."
         ),
         parameters={
             "type": "object",

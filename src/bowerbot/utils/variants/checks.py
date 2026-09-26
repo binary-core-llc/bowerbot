@@ -9,9 +9,10 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd, UsdLux
+from pxr import Sdf, Usd, UsdLux, UsdShade
 
 from bowerbot.schemas import VariantRules
+from bowerbot.utils.core.asset_folder import find_root_file
 
 
 def require_dict_param(
@@ -131,6 +132,43 @@ def _collect_geometry_prim_paths(payload_path: Path) -> set[str]:
 
     layer.Traverse(root_path, visit)
     return paths
+
+
+def require_variant(
+    prim: Usd.Prim, set_name: str, variant_name: str, where: str,
+) -> Usd.VariantSet:
+    """The variant set *set_name* on *prim*, refusing a missing set or variant."""
+    sets = prim.GetVariantSets()
+    if not sets.HasVariantSet(set_name):
+        msg = f"No variant set '{set_name}' on {where}. Sets: {sorted(sets.GetNames())}"
+        raise ValueError(msg)
+    vset = sets.GetVariantSet(set_name)
+    if variant_name not in vset.GetVariantNames():
+        msg = (
+            f"Variant '{variant_name}' is not in '{set_name}' on {where}. "
+            f"Variants: {list(vset.GetVariantNames())}"
+        )
+        raise ValueError(msg)
+    return vset
+
+
+def validate_material_bindings(asset_dir: Path, bindings: dict[str, str]) -> None:
+    """Refuse bindings whose prim or material does not exist in the asset."""
+    root_file = find_root_file(asset_dir)
+    stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
+    problems: list[str] = []
+    for prim_path, material_path in bindings.items():
+        if stage is None or not stage.GetPrimAtPath(prim_path).IsValid():
+            problems.append(f"{prim_path}: no such prim in {asset_dir.name}")
+        material = stage.GetPrimAtPath(material_path) if stage is not None else None
+        if material is None or not material.IsValid() or not material.IsA(UsdShade.Material):
+            problems.append(
+                f"{material_path}: no material there in {asset_dir.name}; create or "
+                "bind it first (create_material / bind_material)",
+            )
+    if problems:
+        msg = "Material variant bindings name prims that do not exist:\n" + "\n".join(problems)
+        raise ValueError(msg)
 
 
 def validate_scene_lighting_targets(

@@ -35,9 +35,11 @@ def author_in_variant(
     if not prim or not prim.IsValid():
         raise ValueError(f"Prim not found: {prim_path}")
 
-    vset = prim.GetVariantSets().GetVariantSet(set_name)
-    if not vset.IsValid():
-        vset = prim.GetVariantSets().AddVariantSet(set_name)
+    vset = (
+        prim.GetVariantSets().GetVariantSet(set_name)
+        if prim.GetVariantSets().HasVariantSet(set_name)
+        else prim.GetVariantSets().AddVariantSet(set_name)
+    )
     if variant_name not in vset.GetVariantNames():
         vset.AddVariant(variant_name)
 

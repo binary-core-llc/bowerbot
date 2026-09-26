@@ -79,9 +79,11 @@ TOOLS: list[Tool] = [
             "properties": {
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": (
                         "Human-readable project name (e.g. 'Coffee Shop'). "
-                        "The folder name is derived from it."
+                        "The folder name is derived from it, so it needs "
+                        "letters or digits."
                     ),
                 },
                 "up_axis": {
@@ -94,6 +96,7 @@ TOOLS: list[Tool] = [
                 },
                 "meters_per_unit": {
                     "type": "number",
+                    "exclusiveMinimum": 0,
                     "description": (
                         "Scene units as USD metersPerUnit: 1.0 = meters, "
                         "0.01 = centimeters, 0.001 = millimeters."

@@ -14,6 +14,7 @@ from pxr import Kind, Sdf, Usd, UsdGeom, UsdShade, UsdUtils
 
 from bowerbot.schemas import AssetFormat
 from bowerbot.utils.core.bounds import bbox_cache, world_bounds
+from bowerbot.utils.core.integrity import require_prim
 from bowerbot.utils.core.naming import safe_file_name
 
 # ── Open / save ──
@@ -273,9 +274,7 @@ def _rename_descendant_spec(
 
 def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict[str, Any]]:
     """Return every bindable Gprim at or under *prim_path*."""
-    root_prim = stage.GetPrimAtPath(prim_path)
-    if not root_prim.IsValid():
-        return []
+    root_prim = require_prim(stage, prim_path)
 
     cache = bbox_cache()
 

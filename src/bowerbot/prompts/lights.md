@@ -132,7 +132,11 @@ By default, a USD light affects every prim in the scene. To restrict
 a light to specific targets (e.g. "this rim light only on the hero
 prop"), pass `light_link_includes` as a list of prim paths when
 calling `create_light`. BowerBot authors a UsdLux `light:link`
-collection on the light with those targets.
+collection on the light with those targets. Every path must exist
+(`list_scene` / `list_prim_children`). An asset light can only link
+prims inside its own asset (e.g. its lamp's shade), because it is
+shared by every placement of the asset; to light other prims only,
+use a scene light.
 
 Leave `light_link_includes` empty (or omit it) for general
 illumination — the USD default.

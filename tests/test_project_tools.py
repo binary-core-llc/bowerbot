@@ -7,6 +7,7 @@ import asyncio
 import tempfile
 from pathlib import Path
 
+from bowerbot.project import Project
 from bowerbot.state import SceneState
 from tests._helpers import exec_tool
 
@@ -26,6 +27,26 @@ def _create(state, name):
 
 
 # ── create_project ──
+
+
+def test_create_project_refuses_units_and_names_it_cannot_use():
+    """metersPerUnit must be positive and the name must yield a folder name;
+    nothing is created otherwise, through the tool or directly."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state = _state(tmp)
+        for name, mpu in (("a", 0), ("b", -1), ("", 1.0), ("!!!", 1.0)):
+            r = asyncio.run(exec_tool(state, "create_project", {
+                "name": name, "up_axis": "Y", "meters_per_unit": mpu,
+            }))
+            assert not r.success, (name, mpu)
+        assert not state.projects_dir.exists() or not any(state.projects_dir.iterdir())
+
+        for name, mpu in (("c", 0.0), ("???", 1.0)):
+            try:
+                Project.create(state.projects_dir, name, meters_per_unit=mpu)
+            except ValueError:
+                continue
+            raise AssertionError(f"Project.create accepted {name!r}, {mpu}")
 
 
 def test_create_project_focuses_it():

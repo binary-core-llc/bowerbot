@@ -23,11 +23,14 @@ from bowerbot.state import SceneState
 from bowerbot.utils import light_utils, stage_utils, texture_utils, variants
 from bowerbot.utils.core.asset_folder import (
     resolve_asset_dir_for_prim,
+    resolve_default_prim_name,
 )
 from bowerbot.utils.core.integrity import (
+    asset_local_targets,
     composed_prim_paths,
     drop_refs_to_vanished,
     remove_scene_prim,
+    require_prims,
 )
 from bowerbot.utils.core.naming import clean_prim_name, unique_prim_path
 from bowerbot.utils.core.transforms import (
@@ -57,6 +60,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     light_type = LightType(params["light_type"])
     safe_name = clean_prim_name(params["light_name"], "Light")
     attributes = dict(params.get("attributes") or {})
+    light_utils.refuse_unknown_light_attributes(light_type, attributes)
     light_link_includes = params.get("light_link_includes") or []
     rotate = (
         float(params.get("rotate_x", 0.0)),
@@ -85,6 +89,10 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
                 f"Asset-level lights only work on ASWF folder assets."
             )
             raise ValueError(msg)
+        light_link_includes = asset_local_targets(
+            stage, light_link_includes, ref_prim_path,
+            resolve_default_prim_name(asset_dir), "light_link_includes",
+        )
 
         tx, ty, tz = resolve_position_in_asset(
             stage, asset_prim_path, asset_dir,
@@ -127,6 +135,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             ),
         }
 
+    require_prims(stage, light_link_includes, "light_link_includes")
     prim_path = unique_prim_path(
         stage, SceneNamespace.LIGHTING, safe_name,
     )

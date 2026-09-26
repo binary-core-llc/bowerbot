@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
 from bowerbot.utils import physics_typing_utils
@@ -15,6 +17,7 @@ from bowerbot.utils.physics_utils import (
     format_joint_prim,
     format_physics_scene_prim,
 )
+from bowerbot.utils.scatter_utils import format_scatter_prim
 from bowerbot.utils.stage_utils import (
     extract_position,
     get_prim_ref_paths,
@@ -30,8 +33,15 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
 
     results: list[dict] = []
     seen: set[str] = set()
-    for prim in stage.Traverse():
-        entry = _classify(prim, bbox_cache)
+    iterator = iter(stage.Traverse())
+    for prim in iterator:
+        entry: dict[str, Any] | None
+        if prim.IsA(UsdGeom.PointInstancer):
+            # Prototypes live under the instancer; they are not scene objects.
+            iterator.PruneChildren()
+            entry = format_scatter_prim(prim, bbox_cache)
+        else:
+            entry = _classify(prim, bbox_cache)
         if entry is None:
             continue
         if entry["prim_path"] in seen:

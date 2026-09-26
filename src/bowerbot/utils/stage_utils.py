@@ -569,7 +569,7 @@ def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
             scene_object.asset.file_path or scene_object.asset.source_id
         )
         if asset_path not in conform:
-            conform[asset_path] = _asset_conform(stage, asset_path)
+            conform[asset_path] = asset_conform(stage, asset_path)
         unit_scale, up_axis_correction = conform[asset_path]
 
         wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
@@ -987,7 +987,7 @@ def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
             return
 
 
-def _asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | None]:
+def asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | None]:
     """Return (unit scale, up-axis X-rotation or None) conforming an asset to the stage."""
     if not os.path.isabs(asset_path):
         stage_dir = os.path.dirname(stage.GetRootLayer().realPath)

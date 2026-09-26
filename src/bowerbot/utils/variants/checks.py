@@ -10,9 +10,7 @@ from typing import Any
 
 from pxr import Sdf, Usd, UsdLux
 
-from bowerbot.schemas import (
-    VariantRules,
-)
+from bowerbot.schemas import VariantRules
 
 
 def require_dict_param(

@@ -22,9 +22,7 @@ from bowerbot.utils.core.asset_folder import (
     find_root_file,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
-from bowerbot.utils.core.overrides import (
-    prune_empty_overrides,
-)
+from bowerbot.utils.core.overrides import prune_empty_overrides
 from bowerbot.utils.core.schema_registry import schema_class
 from bowerbot.utils.physics.scene import ensure_physics_scene
 from bowerbot.utils.physics.schema_info import (

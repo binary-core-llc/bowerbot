@@ -39,7 +39,7 @@ from bowerbot.tools import (
 
 logger = logging.getLogger(__name__)
 
-ToolHandler = Callable[[SceneState, dict[str, Any]], ToolResult | Awaitable[ToolResult]]
+type ToolHandler = Callable[[SceneState, dict[str, Any]], ToolResult | Awaitable[ToolResult]]
 
 
 def _collect_tools() -> list[Tool]:

@@ -21,9 +21,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
-# Global config directory
-BOWERBOT_HOME = Path.home() / ".bowerbot"
-GLOBAL_CONFIG_PATH = BOWERBOT_HOME / "config.json"
+from bowerbot.schemas import ConfigPaths
 
 
 class Mode(StrEnum):
@@ -80,6 +78,7 @@ class LLMSettings(BaseModel):
 
     # Tool-calling loop
     max_tool_rounds: int = 25  # max LLM <-> tool exchange rounds per request
+    max_validation_retries: int = 2  # max nudges to fix validate_scene errors per request
 
 
 class McpSettings(BaseModel):
@@ -142,15 +141,15 @@ class Settings(BaseSettings):
 
 def ensure_home() -> Path:
     """Create ~/.bowerbot/ if it doesn't exist. Returns the path."""
-    BOWERBOT_HOME.mkdir(parents=True, exist_ok=True)
-    return BOWERBOT_HOME
+    ConfigPaths.HOME.mkdir(parents=True, exist_ok=True)
+    return ConfigPaths.HOME
 
 
 def load_settings() -> Settings:
     """Load settings from ~/.bowerbot/config.json."""
     raw: dict[str, Any] = {}
-    if GLOBAL_CONFIG_PATH.exists():
-        raw = json.loads(GLOBAL_CONFIG_PATH.read_text(encoding="utf-8"))
+    if ConfigPaths.CONFIG_FILE.exists():
+        raw = json.loads(ConfigPaths.CONFIG_FILE.read_text(encoding="utf-8"))
 
     return Settings(**raw) if raw else Settings()
 
@@ -194,7 +193,7 @@ def save_settings(settings: Settings) -> None:
         "projects_dir": str(settings.projects_dir),
     }
 
-    GLOBAL_CONFIG_PATH.write_text(
+    ConfigPaths.CONFIG_FILE.write_text(
         json.dumps(data, indent=2) + "\n",
         encoding="utf-8",
     )

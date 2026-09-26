@@ -10,12 +10,8 @@ from pathlib import Path
 
 from pxr import Sdf, Usd
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-)
-from bowerbot.utils.core.asset_folder import (
-    ensure_side_layer,
-)
+from bowerbot.schemas import ASWFLayerNames
+from bowerbot.utils.core.asset_folder import ensure_side_layer
 
 
 def open_variants_stage(asset_dir: Path) -> Usd.Stage:

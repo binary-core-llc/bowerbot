@@ -10,12 +10,8 @@ from pathlib import Path
 
 from pxr import Sdf, Usd
 
-from bowerbot.schemas import (
-    SceneNamespace,
-)
-from bowerbot.utils.core.overrides import (
-    prune_empty_overrides,
-)
+from bowerbot.schemas import SceneNamespace
+from bowerbot.utils.core.overrides import prune_empty_overrides
 from bowerbot.utils.core.references import find_asset_placements
 from bowerbot.utils.variants.authoring import author_in_variant, scrub_variant_set_metadata
 

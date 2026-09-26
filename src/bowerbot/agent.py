@@ -29,8 +29,6 @@ from bowerbot.token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
 
-MAX_VALIDATION_RETRIES = 2
-
 
 @dataclass
 class AgentRuntime:
@@ -168,6 +166,7 @@ class AgentRuntime:
         self, tool_calls: list, retries: int,
     ) -> bool:
         """If ``validate_scene`` returned errors, nudge the LLM to fix them."""
+        max_retries = self.settings.llm.max_validation_retries
         for tool_call in tool_calls:
             if tool_call.function.name != "validate_scene":
                 continue
@@ -178,7 +177,7 @@ class AgentRuntime:
                     content = json.loads(msg["content"])
                 except (json.JSONDecodeError, TypeError):
                     return False
-                if content.get("is_valid", True) or retries >= MAX_VALIDATION_RETRIES:
+                if content.get("is_valid", True) or retries >= max_retries:
                     return False
                 self.conversation_history.append({
                     "role": "user",
@@ -189,7 +188,7 @@ class AgentRuntime:
                 })
                 logger.info(
                     "Validation retry nudge (%d/%d)",
-                    retries + 1, MAX_VALIDATION_RETRIES,
+                    retries + 1, max_retries,
                 )
                 return True
         return False

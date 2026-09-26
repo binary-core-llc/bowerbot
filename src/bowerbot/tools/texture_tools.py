@@ -12,8 +12,6 @@ from bowerbot.services import texture_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 
-_CATEGORY_VALUES: list[str] = [c.value for c in TextureCategory]
-
 
 def search_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Search the user's asset library for textures matching a query."""
@@ -57,7 +55,7 @@ TOOLS: list[Tool] = [
                 },
                 "category": {
                     "type": "string",
-                    "enum": _CATEGORY_VALUES,
+                    "enum": [c.value for c in TextureCategory],
                     "description": (
                         "Filter by category: 'hdri' = .hdr/.exr for dome "
                         "lights, 'material' = .png/.jpg for surfaces, "
@@ -83,7 +81,7 @@ TOOLS: list[Tool] = [
             "properties": {
                 "category": {
                     "type": "string",
-                    "enum": _CATEGORY_VALUES,
+                    "enum": [c.value for c in TextureCategory],
                     "description": "Filter by category.",
                     "default": "all",
                 },

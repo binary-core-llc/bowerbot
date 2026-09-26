@@ -5,15 +5,9 @@
 
 from __future__ import annotations
 
-import logging
-
 from pxr import Usd
 
-from bowerbot.utils.core.asset_folder import (
-    require_asset_context,
-)
-
-logger = logging.getLogger(__name__)
+from bowerbot.utils.core.asset_folder import require_asset_context
 
 
 def validate_scope(scope: str) -> str:

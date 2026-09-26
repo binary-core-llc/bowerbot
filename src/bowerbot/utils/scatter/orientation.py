@@ -11,9 +11,7 @@ from typing import Any
 import numpy as np
 from pxr import Gf
 
-from bowerbot.schemas import (
-    ScatterAlign,
-)
+from bowerbot.schemas import ScatterAlign
 from bowerbot.schemas.surface import FloatArray
 from bowerbot.utils.core.metrics import horizontal_axes, up_vector
 

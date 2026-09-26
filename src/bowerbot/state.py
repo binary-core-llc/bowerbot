@@ -19,9 +19,6 @@ if TYPE_CHECKING:
     from bowerbot.project import Project
 
 
-_HASH_CHUNK_SIZE = 65536
-
-
 @dataclass
 class SceneState:
     """Mutable scene-building context shared across tool handlers."""
@@ -117,12 +114,9 @@ class SceneState:
             self.project.save()
 
     def _hash_file(self, path: Path) -> str:
-        """Hash a file with blake2b in chunks."""
-        h = hashlib.blake2b(digest_size=16)
+        """Hash a file with blake2b."""
         with path.open("rb") as f:
-            for chunk in iter(lambda: f.read(_HASH_CHUNK_SIZE), b""):
-                h.update(chunk)
-        return h.hexdigest()
+            return hashlib.file_digest(f, lambda: hashlib.blake2b(digest_size=16)).hexdigest()
 
     def _watched_layer_paths(self) -> list[Path]:
         """Return the scene's root layer for external-edit detection."""

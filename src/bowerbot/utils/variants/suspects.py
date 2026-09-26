@@ -9,12 +9,8 @@ from pathlib import Path
 
 from pxr import Sdf, Usd
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-)
-from bowerbot.utils.core.asset_folder import (
-    resolve_default_prim_name,
-)
+from bowerbot.schemas import ASWFLayerNames
+from bowerbot.utils.core.asset_folder import resolve_default_prim_name
 
 
 def find_suspect_variant_sets(

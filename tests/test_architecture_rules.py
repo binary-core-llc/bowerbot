@@ -9,7 +9,9 @@
 - Bounding boxes come from ``core.bounds``; nothing else builds a ``BBoxCache``.
 - One home per function: no public function name is defined twice in ``utils``.
 - No loose values: ``schemas`` hold classes and ``type`` declarations only
-  (plus the package ``__all__``).
+  (plus the package ``__all__``). Elsewhere a module-level value is a
+  registry or runtime state, listed by name below; a logger only where
+  something logs.
 - One guard: only ``SceneState`` checks whether a scene, project or configured
   folder exists. Services call ``state.require_*()``; tools never touch state.
 """
@@ -89,7 +91,6 @@ def test_services_never_guard_state_themselves() -> None:
     assert not offenders, f"use state.require_*() instead of checking and raising: {offenders}"
 
 
-
 CORE_DIR = ROOT / "src" / "bowerbot" / "utils" / "core"
 CORE_MAY_IMPORT = ("bowerbot.schemas", "bowerbot.utils.core")
 
@@ -155,6 +156,62 @@ def test_schemas_hold_classes_and_type_declarations_only() -> None:
 
 
 BOWERBOT_DIR = ROOT / "src" / "bowerbot"
+
+# Outside schemas and utils, the only module-level values: registries and runtime state.
+RUNTIME_VALUES = {
+    "__init__.py": {"__version__"},
+    "cli.py": {"console"},
+    "dispatcher.py": {"TOOLS", "HANDLERS", "_TOOLS_BY_NAME", "_VALIDATORS"},
+    "logging_setup.py": {"_SESSION_ID"},
+}
+TOOL_REGISTRIES = {"TOOLS", "HANDLERS"}
+
+
+def _is_schema_fragment(name: str, node: ast.Assign | ast.AnnAssign) -> bool:
+    """A private JSON-schema piece several tools in one file share (``_PRIM_PATH``)."""
+    return name.startswith("_") and isinstance(node.value, ast.Dict)
+
+
+def test_module_level_values_have_a_home() -> None:
+    """Fixed values go in schema classes, user-tunable ones in ``config.py`` settings."""
+    offenders = []
+    for path in sorted(BOWERBOT_DIR.rglob("*.py")):
+        relative = path.relative_to(BOWERBOT_DIR)
+        if relative.parts[0] in ("schemas", "utils"):
+            continue
+        is_tool = relative.parts[0] == "tools"
+        allowed = RUNTIME_VALUES.get(str(relative), set())
+        for node in ast.parse(path.read_text(encoding="utf-8")).body:
+            if not isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                continue
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            names = [ast.unparse(t) for t in targets]
+            if ast.unparse(node) == MODULE_LOGGER or names == ["__all__"]:
+                continue
+            if all(name in allowed for name in names):
+                continue
+            if is_tool and not isinstance(node, ast.AugAssign) and all(
+                name in TOOL_REGISTRIES or _is_schema_fragment(name, node) for name in names
+            ):
+                continue
+            offenders.append(f"{relative}:{node.lineno} {', '.join(names)}")
+    assert not offenders, f"give each value a home (schema class or setting): {offenders}"
+
+
+def test_a_logger_is_defined_only_where_something_logs() -> None:
+    offenders = []
+    for path in sorted(BOWERBOT_DIR.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        defines = any(ast.unparse(node) == MODULE_LOGGER for node in tree.body)
+        logs = any(
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "logger"
+            for node in ast.walk(tree)
+        )
+        if defines and not logs:
+            offenders.append(str(path.relative_to(BOWERBOT_DIR)))
+    assert not offenders, f"remove the unused module logger: {offenders}"
 
 
 def test_bounding_boxes_come_from_core_bounds() -> None:

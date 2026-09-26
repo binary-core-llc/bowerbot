@@ -10,9 +10,7 @@ from typing import Any
 
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics
 
-from bowerbot.schemas import (
-    SceneNamespace,
-)
+from bowerbot.schemas import SceneNamespace
 
 logger = logging.getLogger(__name__)
 

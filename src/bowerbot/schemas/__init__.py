@@ -21,6 +21,7 @@ from bowerbot.schemas.cameras import (
     CameraSchemaInfo,
     CameraTuning,
 )
+from bowerbot.schemas.config import ConfigPaths
 from bowerbot.schemas.intake import (
     DetectionOutcome,
     FolderDetection,
@@ -41,6 +42,7 @@ from bowerbot.schemas.lights import (
     LightType,
     LightTypeSchemaInfo,
 )
+from bowerbot.schemas.logging import LoggingRules
 from bowerbot.schemas.materials import (
     MaterialXShaders,
     PreviewSurfaceShader,
@@ -86,6 +88,7 @@ from bowerbot.schemas.scatter import (
 )
 from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.schema_registry import SchemaPropertySpec
+from bowerbot.schemas.skills import SkillRules
 from bowerbot.schemas.surface import (
     SurfaceIndex,
     SurfaceTriangles,
@@ -122,6 +125,7 @@ __all__ = [
     "CameraTuning",
     "CollisionGroupSummary",
     "CollisionGroupsSummary",
+    "ConfigPaths",
     "DetectionOutcome",
     "FolderDetection",
     "GridPattern",
@@ -141,6 +145,7 @@ __all__ = [
     "LightType",
     "LightTypeSchemaInfo",
     "LinearPattern",
+    "LoggingRules",
     "MaterialXShaders",
     "NamingRules",
     "OverrideRules",
@@ -180,6 +185,7 @@ __all__ = [
     "SceneVariantsSummary",
     "SchemaPropertySpec",
     "Severity",
+    "SkillRules",
     "SurfaceIndex",
     "SurfaceTriangles",
     "SurfaceTuning",

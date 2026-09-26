@@ -23,23 +23,9 @@ from typing import Any
 import litellm
 
 from bowerbot.config import LLMSettings
+from bowerbot.prompts import load_prompt
 
 logger = logging.getLogger(__name__)
-
-# Internal prompt for the summarization call — same pattern as
-# CORE_PROMPT in agent.py. Tightly coupled to compaction logic,
-# not a user-facing skill prompt.
-SUMMARY_PROMPT = """\
-Summarize this conversation history for a 3D scene assembly agent.
-
-Preserve:
-- Current scene state (objects placed, their positions, hierarchy)
-- User preferences and style decisions
-- Pending tasks or unresolved requests
-
-Be concise. Use structured format with bullet points.
-Do NOT include raw coordinates unless they are critical to a pending task.
-"""
 
 
 @dataclass
@@ -264,7 +250,7 @@ class TokenManager:
         recent_messages = history[split:]
 
         summary_messages = [
-            {"role": "system", "content": SUMMARY_PROMPT},
+            {"role": "system", "content": load_prompt("summary")},
             {
                 "role": "user",
                 "content": self._format_history_for_summary(old_messages),

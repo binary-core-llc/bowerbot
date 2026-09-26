@@ -10,9 +10,7 @@ from pathlib import Path
 
 from pxr import Sdf, Usd
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-)
+from bowerbot.schemas import ASWFLayerNames
 from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     clear_root_payload,

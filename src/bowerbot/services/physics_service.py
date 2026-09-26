@@ -465,7 +465,7 @@ def list_joints(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 def create_or_update_collision_group(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Create or update a ``UsdPhysicsCollisionGroup`` under /Scene/Physics/Groups."""
+    """Create or update a ``UsdPhysicsCollisionGroup`` under /Scene/Physics."""
     stage = state.require_stage()
     result = physics.groups.create_or_update_collision_group(
         stage,

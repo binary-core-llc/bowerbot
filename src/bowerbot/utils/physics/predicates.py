@@ -26,21 +26,3 @@ def is_physics_scene(prim: Usd.Prim | None) -> bool:
 def is_collision_group(prim: Usd.Prim | None) -> bool:
     """Whether *prim* is a ``UsdPhysics.CollisionGroup``."""
     return prim is not None and prim.IsValid() and prim.IsA(UsdPhysics.CollisionGroup)
-
-
-def is_rigid_body(prim: Usd.Prim | None) -> bool:
-    """Whether *prim* carries ``PhysicsRigidBodyAPI``."""
-    return (
-        prim is not None
-        and prim.IsValid()
-        and "PhysicsRigidBodyAPI" in prim.GetAppliedSchemas()
-    )
-
-
-def is_articulation_root(prim: Usd.Prim | None) -> bool:
-    """Whether *prim* carries ``PhysicsArticulationRootAPI``."""
-    return (
-        prim is not None
-        and prim.IsValid()
-        and "PhysicsArticulationRootAPI" in prim.GetAppliedSchemas()
-    )

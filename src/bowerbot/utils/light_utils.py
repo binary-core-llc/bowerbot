@@ -24,7 +24,6 @@ from bowerbot.utils.core.asset_folder import (
     ensure_layer_scope,
     ensure_root_reference,
     ensure_side_layer,
-    find_root_file,
     keep_root_over,
     remove_empty_layer,
     resolve_default_prim_name,
@@ -349,31 +348,6 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> bool:
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),
     )
     return True
-
-
-def list_lights_in_folder(asset_dir: Path) -> list[dict[str, Any]]:
-    """List all lights declared in *asset_dir*'s ``lgt.usda``."""
-    lgt_path = asset_dir / ASWFLayerNames.LGT
-    if not lgt_path.exists():
-        return []
-
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return []
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return []
-
-    return [
-        {
-            "prim_path": str(prim.GetPath()),
-            "name": prim.GetName(),
-            "type": prim.GetTypeName(),
-        }
-        for prim in stage.Traverse()
-        if prim.HasAPI(UsdLux.LightAPI)
-    ]
 
 
 # ── Internal helpers ──

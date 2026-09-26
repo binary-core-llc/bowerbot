@@ -345,13 +345,14 @@ def check_shared_modification(
             f"Asset folder '{asset_dir.name}/' is referenced by "
             f"{instance_count} scene instances. {op_label} writes to the "
             f"shared {ASWFLayerNames.MTL}, so the binding would apply to "
-            f"all {instance_count} instances. Two ways forward: "
-            f"(1) For per-instance materials (different material per "
-            f"instance), use place_asset to make each instance independent, "
-            f"then bind a material on each. "
-            f"(2) For deliberate shared modification (every instance "
-            f"should get this material), retry with "
-            f"confirm_shared_modification=true."
+            f"all {instance_count} instances. Ask the user which they want: "
+            f"(1) Every instance gets it: retry with "
+            f"confirm_shared_modification=true. "
+            f"(2) Instances differ: add each material with the flag, make them "
+            f"variants with add_asset_material_variant and pick one per "
+            f"instance with select_asset_variant_for_instance; or keep one "
+            f"material and change its values per instance with "
+            f"set_prim_attribute."
         )
         raise ValueError(msg)
 

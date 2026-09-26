@@ -10,11 +10,12 @@ operates on the focused project.
   coffee shop"). `up_axis` (`Y` or `Z`) and `meters_per_unit` (1.0 =
   meters, 0.01 = centimeters, 0.001 = millimeters) are required and fix
   the scene at creation; every asset placed afterward is conformed to
-  them. Ask the user, or match the source you are reconstructing (an
-  Omniverse/Isaac scene is usually `Z`-up in meters; most Maya/web
-  content is `Y`-up).
+  them. Ask the user, or match the source you are reconstructing (use
+  its own `upAxis` and `metersPerUnit`; most Maya and web content is
+  `Y`-up).
 - `open_project(name)` — focus an existing project, returning its name,
-  path, and `object_count` (prims already in the scene). Use to resume or
+  path, `up_axis`, `meters_per_unit` and `object_count` (prims already in
+  the scene). Use to resume or
   switch ("keep working on my kitchen"). Call `list_projects` first if
   you are unsure of the exact name.
 - Both calls rebind the focus: from that point on, all authoring lands
@@ -26,8 +27,8 @@ operates on the focused project.
   `updated_at` (ISO timestamp of last edit). A top-level `current` field
   names the focused one (null if none). Use `updated_at` to resume the
   most recently edited project instead of reading any `project.json`.
-- `get_current_project` — report the focused project, its path, and its
-  object count. Returns `current` = null (with an explanatory message)
+- `get_current_project` — report the focused project, its path,
+  `up_axis`, `meters_per_unit` and object count. Returns `current` = null (with an explanatory message)
   when nothing is focused.
 
 ### When nothing is focused

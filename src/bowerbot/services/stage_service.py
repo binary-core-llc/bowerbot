@@ -62,7 +62,11 @@ def create_stage(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         }
 
     state.object_count = 0
-    state.stage = stage_utils.create_stage(state.stage_path)
+    state.stage = stage_utils.create_stage(
+        state.stage_path,
+        up_axis=project.meta.up_axis.value,
+        meters_per_unit=project.meta.meters_per_unit,
+    )
     stage_utils.save_stage(state.stage)
     state.touch_project()
 

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -31,6 +32,8 @@ class SkillRegistry:
 
     def __init__(self) -> None:
         self._skills: dict[str, Skill] = {}
+        self._not_configured: dict[str, str] = {}
+        self._disabled: list[str] = []
         self._library_dir: Path | None = None
 
     def register(self, skill: Skill) -> None:
@@ -39,7 +42,12 @@ class SkillRegistry:
         self._skills[skill.name] = skill
 
     def load_from_settings(self, settings: Settings) -> None:
-        """Discover and load all enabled skills from entry points."""
+        """Discover and load every installed skill that config doesn't disable.
+
+        An installed skill is on by default: a missing config block, or
+        a block without ``enabled``, loads it. Only ``"enabled": false``
+        turns it off.
+        """
         self._library_dir = Path(settings.assets_dir)
 
         discovered = entry_points(group=SkillRules.ENTRY_POINT_GROUP)
@@ -58,19 +66,30 @@ class SkillRegistry:
     def _load_one_entry_point(self, ep: Any, settings: Settings) -> None:
         """Instantiate and register a single discovered skill.
 
-        Skips with a clear log message on any of three failure modes:
-        the skill is disabled in config, the entry-point name does not
-        match the skill class's ``name`` attribute, or the skill is
-        misconfigured (``SkillConfigError``).
+        Skips it when config disables it, when the entry-point name
+        does not match the skill class's ``name`` attribute, or when
+        ``validate_config`` raises ``SkillConfigError``. A skill that
+        needs settings nobody gave it yet is noted quietly as not
+        configured; settings that fail validation are a warning.
         """
         ep_name = ep.name
         skill_config = settings.skills.get(ep_name)
         if skill_config and not skill_config.enabled:
+            self._disabled.append(ep_name)
             return
 
+        config = skill_config.config if skill_config else {}
         try:
             skill_cls = ep.load()
-            config = skill_config.config if skill_config else {}
+            if not config:
+                try:
+                    inspect.signature(skill_cls).bind()
+                except TypeError as e:
+                    self._not_configured[ep_name] = f"its settings are missing ({e})"
+                    logger.info(
+                        "Skill '%s' is installed but not configured: %s", ep_name, e,
+                    )
+                    return
             skill = skill_cls(**config)
         except Exception:
             logger.warning(
@@ -91,8 +110,15 @@ class SkillRegistry:
             self.register(skill)
             logger.info("Loaded skill: %s (%s)", ep_name, ep.value)
         except SkillConfigError as e:
-            logger.warning(
-                "Skill '%s' is misconfigured and will be skipped: %s",
+            if skill_config and skill_config.config:
+                logger.warning(
+                    "Skill '%s' is misconfigured and will be skipped: %s",
+                    ep_name, e,
+                )
+                return
+            self._not_configured[ep_name] = str(e)
+            logger.info(
+                "Skill '%s' is installed but not configured: %s",
                 ep_name, e,
             )
 
@@ -174,6 +200,16 @@ class SkillRegistry:
     @property
     def enabled_skills(self) -> list[str]:
         return list(self._skills.keys())
+
+    @property
+    def not_configured_skills(self) -> dict[str, str]:
+        """Installed skills that need settings, each with what is missing."""
+        return dict(self._not_configured)
+
+    @property
+    def disabled_skills(self) -> list[str]:
+        """Installed skills that config turns off with ``"enabled": false``."""
+        return list(self._disabled)
 
     @property
     def skill_count(self) -> int:

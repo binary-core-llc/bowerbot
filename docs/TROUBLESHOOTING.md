@@ -33,7 +33,7 @@ This guarantees no race conditions. BowerBot's auto-reload makes the casual back
 
 ### "BowerBot info" or other commands crash with `UnicodeEncodeError`
 
-Fixed in 1.5.2 (the CLI no longer emits non-ASCII characters). If you see this on an older version, upgrade:
+Current versions print only ASCII in BowerBot's own messages (1.12.0 and 1.13.0 printed an arrow after switching projects in chat). If you see this on an older version, upgrade:
 
 ```bash
 uv tool install bowerbot --reinstall
@@ -43,7 +43,7 @@ pip install --upgrade bowerbot
 
 ### Long paths render as `?` in `bowerbot list` on Windows
 
-Cosmetic only. Rich renders truncated paths with a Unicode ellipsis that the default Windows console (cp1252) cannot render. The full path is intact in `project.json`. To see it without truncation, set `PYTHONIOENCODING=utf-8` before running:
+Cosmetic only. Rich truncates long paths with a Unicode ellipsis that the default Windows console (cp1252) cannot render; the project folder itself is unaffected. To see the full path, set `PYTHONIOENCODING=utf-8` before running:
 
 ```powershell
 $env:PYTHONIOENCODING = "utf-8"
@@ -54,7 +54,7 @@ bowerbot list
 
 ### "Skill 'X' is enabled in config but not installed"
 
-The skill's config block exists in `~/.bowerbot/config.json` but the Python package is not in BowerBot's environment. Install it in the same environment as BowerBot:
+The skill has a block in `~/.bowerbot/config.json` (one without `"enabled": false`), but its Python package is not in BowerBot's environment. Install it in the same environment as BowerBot, or delete the block:
 
 ```bash
 # If you used 'uv tool install bowerbot':
@@ -66,7 +66,7 @@ pip install bowerbot-skill-X
 
 ### "bowerbot skills" does not show a skill that is pip-installed
 
-Two common causes:
+Three common causes:
 
 1. **Wrong environment.** The skill was installed in a different Python environment than BowerBot. Verify with `pip show bowerbot-skill-X`. If the location differs from BowerBot's environment, reinstall there.
 2. **Entry point missing or broken.** The skill's `pyproject.toml` is missing `[project.entry-points."bowerbot.skills"]`. Check with:
@@ -76,6 +76,7 @@ Two common causes:
    ```
 
    If your skill is missing from the output despite being pip-installed, file an issue on the skill's repo.
+3. **The skill is off or not set up.** `bowerbot skills` lists it under "Disabled in config" (remove `"enabled": false` from its block) or under "Installed but not configured" (add the settings it names under `skills.<name>.config`). If it is in neither list, its settings failed validation or it failed to load; the log names the reason.
 
 ### Sketchfab "401 Unauthorized" errors
 
@@ -89,7 +90,7 @@ The LLM exceeded the per-request tool-call budget. Increase `max_tool_rounds` in
 
 ### Models that do not work well
 
-`gpt-4o` skips tool calls and ignores SKILL.md. Use `gpt-4.1` (default), `gpt-4.1-mini`, or `anthropic/claude-sonnet-4-6`. See the Tested Models table in [README.md](../README.md#tested-models).
+`gpt-4o` skips tool calls and ignores SKILL.md. Use the default (`anthropic/claude-opus-5-5`) or a model the Tested Models table in [README.md](../README.md#tested-models) recommends, such as `anthropic/claude-sonnet-4-6` or `gpt-5`.
 
 ## Asset library
 
@@ -100,8 +101,10 @@ reads each loose USD file once. On a library with hundreds of large DCC
 exports the first scan can take tens of seconds. The result is kept in
 `~/.bowerbot/library_index.json`, keyed by each file's path, size and
 modification time, so later scans take a couple of seconds and only
-new or changed files are read again. BowerBot never writes into the
-library itself. Deleting the index is safe; the next scan rebuilds it.
+new or changed files are read again. The scan never writes into the
+library itself (a skill that downloads assets saves them into its own
+cache folder there). Deleting the index is safe; the next scan rebuilds
+it.
 
 ## Logs
 
@@ -111,18 +114,23 @@ BowerBot writes a structured log of every session to:
 ~/.bowerbot/logs/bowerbot.log
 ```
 
-The log rotates at 10 MB and keeps the 5 most recent files
-(`bowerbot.log.1`, `bowerbot.log.2`, ...). Each line is prefixed with
-a 12-character session ID so you can grep one chat session out of a
+The log rotates at 10 MB and keeps up to 5 rotated files
+(`bowerbot.log.1`, `bowerbot.log.2`, ...) next to the live
+`bowerbot.log`. Each line carries a 12-character session ID in brackets
+after the timestamp, so you can grep one session out of a
 multi-session file.
 
 What gets logged at the default `INFO` level:
 
-- Each LLM round (model, prompt / completion / total token counts).
-- Each tool call (name + parameters, with `api_key` / `token` / `password` /
-  `secret` / `auth` values redacted).
+- Each LLM round (model, prompt / completion / total token counts), in
+  agent mode.
+- Each tool call's name and parameters in agent mode, with values of
+  keys matching `api_key` / `token` / `password` / `secret` / `auth`
+  redacted and long strings shortened. In MCP mode only the tool name
+  and its result are logged.
 - Each tool result (success / error) and external-edit reloads.
-- Session start/end markers.
+- A `session-start` marker (model, log file, level) when BowerBot
+  starts.
 
 When filing a bug, paste the relevant session's log lines along with the
 session ID into the issue. Tune `logging.level` to `DEBUG` in

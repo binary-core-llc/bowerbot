@@ -22,9 +22,12 @@ auto-deleted when the last variant set is removed.
 
 ## How to identify the asset
 
-Every variant tool takes `prim_path`: a SCENE prim path of any
-placement of the asset (e.g. `/Scene/Furniture/Table_01`). BowerBot
-resolves the asset folder from that. Use `list_scene` to find
+Every asset-variant tool, and `add_scene_model_selection_variant`,
+takes `prim_path`: a SCENE placement path of the asset (e.g.
+`/Scene/Furniture/Table_01`), from which BowerBot resolves the asset
+folder. The scene-lighting variant tools take no prim_path (their
+carrier is always `/Scene/Lighting`); `select_scene_variant` and
+`remove_scene_variant*` take the carrier path. Use `list_scene` to find
 placement paths. Never pass disk paths or relative folder names.
 
 ## ASWF compliance (enforced)
@@ -52,9 +55,11 @@ tool only swaps bindings. Create materials first with
 `create_material` or `bind_material`.
 
 ### `list_asset_geo_files(prim_path)`
-Returns alternate `.usda` files in the asset folder, excluding
-canonical layers. Call before authoring geometry variants so you
-know which payload files are available.
+Returns the other USD files in the project's copy of the asset folder
+(not the canonical layers or the root). A package whose geometry file
+has another name (e.g. `geo.usd`) lists that file too — it is the
+current geometry, not an alternate. Call before authoring geometry
+variants so you know which payload files are available.
 
 ### `setup_asset_geometry_variants(prim_path, variant_set, variants, default_variant)` — REQUIRED FIRST CALL
 Initial setup of an LOD/geometry-swap variant set. BowerBot's intaken
@@ -83,8 +88,12 @@ Author arbitrary attribute opinions per variant. `overrides` is a
 map of prim path -> {attribute_name: value}. Use for ANY value swap
 that isn't a material binding, payload, or activation toggle:
 - Light color, intensity, exposure, colorTemperature, radius, etc.
-- Material parameter values (sheen, coat, roughness, base_color, ...)
-  when the material itself stays the same but a parameter changes
+- Material parameter values the shader already authors (on BowerBot
+  materials: `inputs:base_color`, `inputs:metalness`,
+  `inputs:specular_roughness` on `standard_surface` and
+  `inputs:diffuseColor`, `inputs:metallic`, `inputs:roughness` on
+  `preview_surface`, plus `inputs:opacity` when below 1) when the
+  material itself stays the same but a parameter changes
 - Any UsdGeom or UsdSkel attribute
 
 Each named attribute must already exist on the target prim; unknown
@@ -107,7 +116,7 @@ add_asset_attribute_variant(table, "light_colors", "red",
 | Swap which material is bound to a mesh | `add_asset_material_variant` |
 | Swap which geometry payload loads (LOD, kit variations) | `setup_asset_geometry_variants` / `add_asset_geometry_variant` |
 | Toggle whether a prim is active (open/closed, visible/hidden parts) | `add_asset_configuration_variant` |
-| Swap an attribute VALUE on an existing prim (light color, material sheen, intensity, etc.) | `add_asset_attribute_variant` |
+| Swap an attribute VALUE on an existing prim (light color, material roughness, intensity, etc.) | `add_asset_attribute_variant` |
 
 ### Masking scene overrides (enforced by all three variant orchestrators)
 
@@ -158,8 +167,9 @@ an earlier one.
 
 Before authoring an attribute variant, check whether any existing
 variant set on the same asset already authors the same attributes.
-Use `list_variants` and inspect the variants.usda content if
-unsure. If a conflict exists:
+`list_variants` shows the sets and variants but not what each variant
+authors; rely on what you authored earlier in the conversation and ASK
+the user if unsure. If a conflict exists:
 - Surface it: "The `<existing>` variant set already authors
   `inputs:intensity`. The new `<new>` variant won't change intensity
   while `<existing>` is selected."
@@ -192,9 +202,12 @@ the placement match, the tool returns an error listing them —
 retry with the exact carrier path.
 
 ### `remove_asset_variant` / `remove_asset_variant_set`
-Idempotent removal. If the last variant in a set is removed, the
-set is auto-removed; if the last variant set is removed,
-`variants.usda` is auto-deleted and the reference scrubbed.
+Idempotent removal. Removing the default variant selects a remaining
+one (reported as `default_variant`); payload files no variant uses any
+more are listed in `unused_files` and stay in the asset folder. If the
+last variant in a set is removed, the set is auto-removed; if the last
+variant set is removed, `variants.usda` is auto-deleted and the
+reference scrubbed.
 Operates on this asset only; variants composed in via referenced
 assets stay visible.
 
@@ -208,7 +221,7 @@ that don't belong to any single asset:
 | Want to swap | Use | Carrier |
 |---|---|---|
 | Lighting MOOD (warm/cool, day/night, intensity profile) | `add_scene_lighting_attribute_variant` | `/Scene/Lighting` |
-| Which LIGHT TYPE is active (DiskLight vs RectLight vs TubeLight) | `add_scene_lighting_selection_variant` | `/Scene/Lighting` |
+| Which LIGHT TYPE is active (DiskLight vs RectLight vs CylinderLight) | `add_scene_lighting_selection_variant` | `/Scene/Lighting` |
 | Which ASSET is referenced at a placement (chair vs stool vs bench) | `add_scene_model_selection_variant` | Individual placement wrapper |
 
 Lighting tools target UsdLux children of `/Scene/Lighting`. Model-
@@ -231,7 +244,11 @@ unknown-attribute rejection against the asset's own prims.
 Refuses if `scene.usda` has direct authored opinions on the target
 attributes (LIVRPS: local opinion masks same-layer variant body).
 Same `clear_masking_overrides=true` / `confirm_masked=true` bypass
-flags as the asset-side orchestrators.
+flags as the asset-side orchestrators. Values passed in
+`create_light`'s `attributes` (and later `set_prim_attribute` tweaks)
+are such opinions, so a mood variant on those attributes refuses;
+`clear_masking_overrides=true` (ask first) removes the created value
+and leaves only the variants to set it.
 
 ```
 add_scene_lighting_attribute_variant("lightingVariant", "warm",
@@ -247,7 +264,7 @@ add_scene_lighting_attribute_variant("lightingVariant", "warm",
 
 ### `add_scene_lighting_selection_variant(variant_set, variant_name, activations, set_as_default?)`
 
-For light-TYPE swaps (DiskLight vs RectLight vs TubeLight). USD
+For light-TYPE swaps (DiskLight vs RectLight vs CylinderLight). USD
 composition does NOT support changing `typeName` inside a variant
 body — that collides with the prim's authored type. The canonical
 pattern: pre-place the alternative lights as SIBLINGS under
@@ -360,7 +377,7 @@ to every scene, or stay scoped to this scene only.
 
 ## After removing a prim — proactive variant-set health check
 
-Removal tools (`remove_light`, etc.) return a
+`remove_light`, `remove_camera` and `remove_scene_variant` return a
 `suspect_variant_sets` field listing selection-style variant sets
 that, after the removal, now author opinions on only ONE remaining
 prim. These were likely designed to switch BETWEEN multiple prims
@@ -411,9 +428,7 @@ others. If `geo.usda` defines `/chair/seat`, `/chair/legs`,
 
 Why: material bindings, light-linking, collections, and per-instance
 overrides all target prim PATHS. Bindings authored in the shared
-`mtl.usda` only land on LODs whose prims match those paths. This is
-the consensus across ASWF guidelines, NVIDIA Omniverse, Pixar's
-`usdMakeFileVariantModelAsset`, and Unreal/Unity USD importers.
+`mtl.usda` only land on LODs whose prims match those paths.
 
 `setup_asset_geometry_variants` and `add_asset_geometry_variant` validate this
 automatically: if the incoming payload's geometry prim hierarchy
@@ -448,7 +463,11 @@ mechanics drive the validation.
 5. `add_asset_material_variant`(chair, "finish", "metal", bindings={mesh: metal}, set_as_default=true)
 
 **"Add an LOD low variant to the building"**
-1. `list_asset_geo_files`(building) -> e.g. `["geo_low.usda"]`
+1. `list_asset_geo_files`(building) -> e.g. `["geo_low.usda"]`. It
+   lists only files already in the project's copy of the asset; intake
+   copies what the asset's root references, so an LOD file the library
+   package never references is not there. If it is missing, tell the
+   user; never invent a file name.
 2. `setup_asset_geometry_variants`(building, "lod",
    variants={"high": "./geo.usda", "low": "./geo_low.usda"},
    default_variant="high")

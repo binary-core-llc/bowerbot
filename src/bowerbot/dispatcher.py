@@ -162,7 +162,7 @@ def _reject_unknown_params(
     return (
         f"{tool_name} does not accept parameter(s) {unknown}. "
         f"Allowed: {sorted(declared)}. If you need to set an "
-        "attribute the tool does not expose (e.g. rotation on the X or "
-        "Z axis, scale, colorTemperature), use set_prim_attribute with "
+        "attribute the tool does not expose (e.g. scale or "
+        "colorTemperature), use set_prim_attribute with "
         "the exact attribute name from list_prim_attributes."
     )

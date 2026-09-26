@@ -102,12 +102,20 @@ def new(name: str) -> None:
     settings = load_settings()
     projects_dir = Path(settings.projects_dir)
     projects_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        Project.new_path(projects_dir, name)
+    except FileExistsError:
+        console.print(f"[red]Project already exists:[/] {name}")
+        return
+    except ValueError as e:
+        console.print(f"[red]{e}[/]")
+        return
 
     up_axis = _choose(
         "World up-axis for this scene?",
         {
             UpAxis.Y: "Y-up (most DCCs, Maya, web).",
-            UpAxis.Z: "Z-up (Omniverse, Isaac Sim, CAD).",
+            UpAxis.Z: "Z-up (common in CAD, robotics and simulation).",
         },
         UpAxis.Y,
     )
@@ -169,8 +177,8 @@ def open(name: str) -> None:
     settings = load_settings()
     projects_dir = Path(settings.projects_dir)
 
-    project_path = projects_dir / name.lower().replace(" ", "_")
-    if not project_path.exists():
+    project_path = projects_dir / safe_project_name(name)
+    if not (project_path / "project.json").exists():
         console.print(f"[red]Project not found:[/] {name}")
         console.print("[info]Available projects:[/]")
         for p in Project.list_projects(projects_dir):
@@ -284,7 +292,7 @@ async def _chat_loop(agent: AgentRuntime, console: Console) -> None:
                 focused = now_focused
                 if now_focused is not None:
                     console.print(
-                        f"\n[info]→ Now working on: {now_focused}  "
+                        f"\n[info]-> Now working on: {now_focused}  "
                         f"({agent.state.count_objects()} object(s))[/]",
                     )
         except KeyboardInterrupt:
@@ -386,21 +394,37 @@ def skills() -> None:
         console.print(f"    - {name}")
 
     registry = _build_registry(settings)
+    not_configured = registry.not_configured_skills
+    disabled = registry.disabled_skills
 
-    if registry.skill_count == 0:
-        console.print("\n[info]No extension skills enabled.[/]")
+    if registry.skill_count == 0 and not not_configured and not disabled:
+        console.print("\n[info]No extension skills installed.[/]")
         return
 
-    console.print("\n[sf]Extension skills:[/]")
+    if registry.skill_count:
+        console.print("\n[sf]Extension skills:[/]")
     for name in registry.enabled_skills:
         tools = [
             t["function"]["name"]
             for t in registry.get_all_tools()
-            if t["function"]["name"].startswith(name)
+            if t["function"]["name"].startswith(f"{name}__")
         ]
         console.print(f"  - {name} ({len(tools)} tools)")
         for tool_name in tools:
             console.print(f"      - {tool_name}")
+
+    if not_configured:
+        console.print(
+            "\n[sf]Installed but not configured[/] "
+            "(add its settings under skills.<name>.config in config.json):",
+        )
+        for name, reason in not_configured.items():
+            console.print(f"  - {name}: {reason}")
+
+    if disabled:
+        console.print('\n[sf]Disabled in config[/] ("enabled": false):')
+        for name in disabled:
+            console.print(f"  - {name}")
 
 
 @main.command()
@@ -418,8 +442,12 @@ def info() -> None:
     )
     console.print(f"  Projects dir:    {settings.projects_dir}")
 
-    skills_enabled = [k for k, v in settings.skills.items() if v.enabled]
-    console.print(f"  Skills enabled:  {skills_enabled or 'none'}")
+    registry = _build_registry(settings)
+    console.print(f"  Skills enabled:  {registry.enabled_skills or 'none'}")
+    if registry.not_configured_skills:
+        console.print(
+            f"  Not configured:  {list(registry.not_configured_skills)}",
+        )
 
 
 @main.command()
@@ -456,7 +484,8 @@ def onboard() -> None:
     mcp = McpSettings()
     if mode is Mode.AGENT:
         console.print("\n[sf]LLM Configuration[/]")
-        model = console.input("  Model [gpt-4.1]: ").strip() or "gpt-4.1"
+        default_model = LLMSettings().model
+        model = console.input(f"  Model [{default_model}]: ").strip() or default_model
         api_key = console.input("  API key: ").strip()
         if not api_key:
             console.print(
@@ -502,9 +531,11 @@ def onboard() -> None:
 
     console.print(f"\n[sf]Config saved to {ConfigPaths.CONFIG_FILE}[/]")
     console.print(
-        "\n[info]Skills are extension packages you install separately. "
-        "After installing one (e.g. [sf]pip install bowerbot-skill-sketchfab[/]), "
-        "add its config to your config.json under the [sf]skills[/] block.[/]",
+        "\n[info]Skills are extension packages you install separately "
+        "(e.g. [sf]pip install bowerbot-skill-sketchfab[/]); an installed "
+        "skill is on. If it needs settings such as an API token, add them "
+        "to config.json under [sf]skills.<name>.config[/]; "
+        "[sf]bowerbot skills[/] lists what each one still needs.[/]",
     )
     if mode is Mode.AGENT:
         console.print("\n[info]You're ready to go! Try:[/]")

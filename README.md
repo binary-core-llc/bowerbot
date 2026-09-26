@@ -59,7 +59,7 @@ Think of it as:
 
 ### Pipeline Quality Built In
 
-BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (non-canonical folder names, external dependencies) are auto-normalized on intake so the project copy is always self-contained. Production-required invariants are validated at intake too: assets with non-identity root transforms (Maya pivot dance, unfrozen DCC exports) are refused with a clear message and the option to bake transforms into vertex data on the project copy without touching the source. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
+BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (a non-canonical root file name such as `root.usd`, a missing `defaultPrim` on a file with one root prim, dependencies outside the asset's folder) are normalized on intake so the project copy is self-contained. Production-required invariants are validated at intake too: assets with non-identity root transforms (Maya pivot dance, unfrozen DCC exports) or a root prim that is not an Xform are refused with a clear message and the option to fix the project copy (bake the transforms into vertex data, or wrap the root in an Xform) without touching the source. Problems BowerBot cannot fix (several root prims and no `defaultPrim`, geometry outside the `defaultPrim`, a dependency that does not resolve) are refused on intake with a message about what's wrong and how to fix it.
 
 > **"The cheapest bug to fix is the one you catch before it enters the pipeline."**
 
@@ -77,12 +77,12 @@ Projects are persistent. Close the session, come back later, and continue where 
 
 ## ✨ Features
 
-- 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box. BowerBot authors a single `scene.usda` as the live working layer; `save_scene_snapshot(name)` writes a flattened, DCC-stripped `<name>.usda` alongside whenever you want to publish a frozen version
+- 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box. BowerBot authors a single `scene.usda` as the live working layer; `save_scene_snapshot(name)` writes `<name>.usda` alongside it: the scene layer flattened and stripped of DCC scratch data, still referencing the project's `assets/` by relative path (asset edits show up in it; keep it in the project folder)
 - 🎭 **USD variant sets**: asset-level (material, geometry/LOD, configuration, attribute) live in the asset's `variants.usda`; scene-level (lighting moods, light-type swap, model selection at a placement) live inline in `scene.usda`. Architectural invariants protect every mutation: auto-promote existing references into a model-selection variant on first add, auto-demote back to a direct ref when the set is removed, cascading orphan-opinion cleanup on prim delete/rename, automatic texture-asset staging for Asset-typed attribute values, and suspect-set detection that flags variants that collapse to a single choice
-- 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md). Heavy `geo.usda` composes via a **payload arc** for lazy-load (city-scale digital twins, robot fleets, large layouts open instantly); `mtl.usda` / `lgt.usda` / `contents.usda` use references
+- 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md). Heavy `geo.usda` composes via a **payload arc** for lazy-load (city-scale digital twins, robot fleets, large layouts open instantly); `mtl.usda` / `lgt.usda` / `phy.usda` / `contents.usda` / `variants.usda` use references
 - 🧳 **Self-contained intake**: non-canonical source folders are detected via USD composition, canonicalized (`root.usd` → `<folder>.usda`), and every dependency (layers, textures, for folders and loose files alike) is copied and re-pathed into the asset folder, so the project copy composes exactly like the source and is always portable
-- 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts; procedural materials author hybrid MaterialX + UsdPreviewSurface outputs so they render across studio renderers (Renderman, Arnold), Hydra Storm, Apple RealityKit / AR Quick Look, and Isaac Sim
-- 💡 **Native USD lighting**: sun, dome, point, area, disk, and tube lights at scene or asset level, with optional UsdLux `light:link` collections so a rim light, kicker, or product-shot key only illuminates the prims you target
+- 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts; procedural materials author hybrid MaterialX + UsdPreviewSurface outputs so they render across studio renderers (Renderman, Arnold), Hydra Storm, and Apple RealityKit / AR Quick Look
+- 💡 **Native USD lighting**: sun and dome lights at scene level; point, area, disk, and tube lights at scene or asset level, with optional UsdLux `light:link` collections so a rim light, kicker, or product-shot key only illuminates the prims you target
 - 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
 - 📐 **Geometry-aware placement**: bounding-box resolved positions for surface, above, below, or nested placements
 - 🪨 **Scatter**: distribute assets over real surfaces, from a handful to millions, each piece resting on the triangles it lands on (uneven, sloped, or curved). Random with density variation and spacing, crop rows, heaps, paths, loops and curves (fences, posts, shelf products, chairs round a table), plus drop-to-surface for existing objects. Deterministic per seed; assets are referenced like any placement, as editable placements or as one PointInstancer for bulk
@@ -126,7 +126,7 @@ To modify BowerBot itself, clone the repo and let uv manage the dev environment:
 ```bash
 git clone https://github.com/binary-core-llc/bowerbot.git
 cd bowerbot
-uv sync
+uv sync --extra dev
 uv run bowerbot onboard
 ```
 
@@ -136,7 +136,7 @@ uv run bowerbot onboard
 bowerbot onboard
 ```
 
-The wizard first asks **how you'll run BowerBot** (agent or MCP mode, and in MCP mode which transport, see below), then your asset library directory and projects directory, and (in agent mode) your LLM API key. It writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
+The wizard first asks **how you'll run BowerBot** (agent or MCP mode). In agent mode it then asks for the LLM model (default `anthropic/claude-opus-5-5`) and your API key; in MCP mode, which transport your client uses (see below). Last come your asset library directory and projects directory. It writes `~/.bowerbot/config.json`. One file, one place, no `.env`.
 
 ### Create a project and start building
 
@@ -168,7 +168,7 @@ BowerBot drives itself with its own LLM. Set the model and API key in `~/.bowerb
 ```jsonc
 {
   "mode": "agent",
-  "llm": { "model": "anthropic/claude-sonnet-4-6", "api_key": "sk-..." }
+  "llm": { "model": "anthropic/claude-opus-5-5", "api_key": "sk-..." }
 }
 ```
 
@@ -183,6 +183,8 @@ bowerbot build "a reading nook with a chair, lamp, and bookshelf"
 ### MCP mode
 
 In MCP mode BowerBot has no LLM of its own. An MCP client is the brain and BowerBot is the tool provider, exposing its full tool surface (projects, scene building, lighting, materials, physics, variants, validation, packaging) plus every installed skill (Sketchfab, Kit, ...). The client opens or creates projects through the project tools (`create_project`, `open_project`, `list_projects`). No LLM API key is read; skills still use their own config (the Sketchfab token, the Kit `base_url`) from the same `config.json`.
+
+On connect, BowerBot sends the client short **instructions** (`prompts/mcp.md`): the rules that span several tools, such as when to ask the user before a destructive follow-up, which paths to pass, what is shared by every placement of an asset, and which values are in meters. Each tool's own description covers the rest. The longer agent-mode prompts are not sent.
 
 MCP mode speaks one of two transports, chosen by `mcp.transport`:
 
@@ -265,14 +267,16 @@ Stuck on something? See **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** f
 
 | Command | Description |
 |---------|-------------|
-| `bowerbot new "name"` | Create a new project |
-| `bowerbot open name` | Open a project and start chatting |
+| `bowerbot` | MCP mode: start the MCP server (stdio or http, per `mcp.transport`); agent mode: show help |
+| `bowerbot new "name"` | Create a new project (checks the name, then asks for its up axis and units) |
+| `bowerbot open name` | Open a project and start chatting with BowerBot's own LLM |
 | `bowerbot list` | Show all projects |
-| `bowerbot chat` | Auto-detect project in current directory |
-| `bowerbot build "prompt"` | Single-shot build (auto-creates project) |
-| `bowerbot skills` | List scene builder tools and enabled skills |
-| `bowerbot info` | Show current configuration |
+| `bowerbot chat` | Start chatting; loads the project in the current directory or a parent |
+| `bowerbot build "prompt"` | Single-shot build; the project is named after the prompt's first four words (reused if it exists, otherwise created Y-up, in meters) |
+| `bowerbot skills` | List the core tools and every installed skill: loaded, not configured, or disabled |
+| `bowerbot info` | Show the LLM settings (model, temperature, max tokens, API-key status), the projects directory and the loaded skills |
 | `bowerbot onboard` | First-time setup wizard |
+| `bowerbot --version` | Print the installed version |
 
 ---
 
@@ -282,11 +286,12 @@ Each project is a self-contained folder with metadata, scene, assets, and packag
 
 ```
 scenes/coffee_shop/
-  project.json    # Metadata: name, created_at, updated_at, scene_file
-  scene.usda      # The USD stage (references only, clean and readable)
-  scene.usdz      # Packaged output (Apple Vision Pro, Omniverse, etc.)
+  project.json    # Metadata: name, created_at, updated_at, scene_file, up_axis, meters_per_unit
+  scene.usda      # The USD stage: placements (references), lights, cameras, physics, variants
+  scene.usdz      # Packaged output, written by package_scene
+  <name>.usda     # Snapshots from save_scene_snapshot (optional)
   assets/         # ASWF folders + self-contained USDZs used by this scene
-  textures/       # Scene-level textures (HDRI maps for DomeLights, etc.)
+  textures/       # Scene-level textures (HDRI maps for DomeLights, etc.), created on first use
 ```
 
 Projects are resumable. Close the session, come back later, and continue where you left off:
@@ -323,11 +328,11 @@ BowerBot searches for assets across all connected sources, prioritizing what's a
 
 When you ask BowerBot to place an asset, it routes by what the source looks like and always produces a self-contained ASWF folder in the project:
 
-- **A file inside a folder of your asset library** (canonical `wall/wall.usda`, or non-canonical `wall/root.usd` + `wall/geo.usd` + `wall/mtl.usd`): the root is identified via USD composition (the file no sibling depends on) and written as `<folder>.usda` (a binary root is converted to text). The root and every file it depends on are copied, keeping the arcs the author wrote; files outside the folder are localized into it and every path is rewritten, so the copy composes exactly like the source and is portable.
-- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports, sitting directly in the library rather than in one of its folders): wrapped in a fresh ASWF folder named after the file stem, producing `<stem>/<stem>.usda` + `geo.usda` (the file copied whole, units included). Files it references are copied alongside and re-pathed the same way.
+- **A file in a top-level folder of your asset library that has one clear root** (canonical `wall/wall.usda`, or non-canonical `wall/root.usd` + `wall/geo.usd` + `wall/mtl.usd`): the root is identified via USD composition (the file no sibling depends on) and written as `<folder>.usda` (a binary root is converted to text). The root and every file it depends on are copied, keeping the arcs the author wrote; files outside the folder are localized into it and every path is rewritten, so the copy composes exactly like the source and is portable.
+- **Any other USD file** (`.usd`, `.usda`, `.usdc` from your DCC exports: one sitting directly in the library, deeper in sub-folders, or in a folder with several independent USD files and no clear root): wrapped in a fresh ASWF folder named after the file stem, producing `<stem>/<stem>.usda` + `geo.usda` (the file copied whole, units included). Files it references are copied alongside and re-pathed the same way.
 - **USDZ files** (from Sketchfab, DAMs, etc.): placed as-is since they're already self-contained.
 
-When an asset can't be safely intaken (a dependency that doesn't resolve, a folder with multiple independent USDs and no clear root, or a loose file with geometry outside its defaultPrim), BowerBot refuses with a message naming the conflict instead of guessing.
+When an asset can't be safely intaken (a dependency that doesn't resolve, several root prims and no `defaultPrim`, or geometry outside its `defaultPrim`), BowerBot refuses with a message naming the conflict instead of guessing.
 
 ### Material Workflow
 
@@ -351,7 +356,7 @@ assets/single_table/
 
 ### Scene Output
 
-The scene file (`scene.usda`) contains only references and lights: no material data, no geometry copies, no sublayers. Clean and readable:
+The scene file (`scene.usda`) holds the placements (references into the project's asset folders), lights, cameras, physics under `/Scene/Physics`, scene-level variant sets, scatters (a `PointInstancer` whose prototypes reference assets), and the per-instance overrides `set_prim_attribute` writes. Asset content stays in the asset folders: no geometry copies, no material definitions, no sublayers. Clean and readable (trimmed):
 
 ```usda
 def Xform "Scene" (kind = "assembly") {
@@ -359,15 +364,15 @@ def Xform "Scene" (kind = "assembly") {
         def Xform "Table_01" (kind = "group") {
             xformOp:translate = (5, 0, 4)
             def Xform "asset" (
-                references = @./assets/single_table/single_table.usda@
+                prepend references = @assets/single_table/single_table.usda@
             ) {
                 xformOp:scale = (0.01, 0.01, 0.01)   # conform: a centimeter asset in a meter scene
             }
         }
     }
-    def Xform "Lighting" {
-        def DistantLight "Sun_01" { ... }
-        def DomeLight "Environment_01" { ... }
+    def "Lighting" {
+        def DistantLight "Sun" { ... }
+        def DomeLight "Sky" { ... }
     }
 }
 ```
@@ -389,7 +394,7 @@ exporter can target:
       "pattern": { "type": "grid", "origin": [0, 0, 0],
                    "count": [6, 5], "spacing": [6, 6] } },
     { "asset": "forklift", "group": "Props",
-      "transforms": [ { "translate": [4.2, 0, 1.5], "rotate": [0, 90, 0] } ] }
+      "transforms": [ { "translate": [4.2, 1.5, 0], "rotate": [0, 0, 90] } ] }
   ]
 }
 ```
@@ -400,15 +405,17 @@ exporter can target:
   assets share a name; file paths are refused) and one `group`, plus either an enumerated `transforms` list or a parametric
   `pattern` (`grid`: `origin`, `count` `[nx, ny]`/`[nx, ny, nz]`,
   `spacing`; `linear`: `origin`, integer `count`, `spacing` direction
-  step). Optional per-entry `name`, `rotate`, and `scale` (a uniform
-  number or `[sx, sy, sz]`) act as defaults for placements that do not
-  set their own.
+  step). Optional per-entry `name` is the base name for the placed prims
+  (default: the asset's file name); optional `rotate` and `scale` (a
+  uniform number or `[sx, sy, sz]`) are defaults for placements that do
+  not set their own.
 - An asset name resolves to the project's copy first, then the library
   asset. The layout file itself lives in the project folder and is passed
   by its location there (e.g. `layouts/floor.json`).
-- Translates are in scene units, and pattern axes map to world
-  `[x, y, z]` (not up-axis aware — the example above is for a Z-up
-  scene). Each asset is conformed (units + up-axis) on reference, same
+- Translates are in scene units, rotations are about the scene's axes,
+  and pattern axes map to world `[x, y, z]` (not up-axis aware: the
+  example above is for a Z-up scene, where the floor is XY and a turn on
+  the floor is a rotation about Z). Each asset is conformed (units + up-axis) on reference, same
   as `place_asset`.
 - A layout expands to at most 100,000 placements per call.
 - The whole file is validated before anything is placed; every invalid
@@ -430,6 +437,12 @@ BowerBot's core tools, grouped by domain. Every tool maps 1:1 to a
 service function and is described in the LLM prompts under
 `src/bowerbot/prompts/`.
 
+Names you pass (asset instances, lights, cameras, groups, rename
+targets) are cleaned into valid USD prim names, e.g. `Key Light` becomes
+`Key_Light` and `3D Table` becomes `_3D_Table`, and placements get a
+number (`Table` becomes `Table_01`); each result reports the final prim
+path.
+
 #### Projects
 
 | Tool | Description |
@@ -443,16 +456,16 @@ service function and is described in the LLM prompts under
 
 | Tool | Description |
 |------|-------------|
-| `create_stage` | Initialize a new USD scene with standard hierarchy |
+| `create_stage` | Create or reopen the project's `scene.usda` (an empty `/Scene` root, in the project's up axis and units); rarely needed, since creating or opening a project opens its scene |
 | `list_scene` | Show current scene with positions and bounding boxes |
 | `list_prim_children` | Discover mesh parts inside a referenced asset |
 | `list_prim_attributes` | Enumerate every attribute on a prim with type, value, authored flag |
 | `set_prim_attribute` | Author or clear an attribute opinion (per-instance overrides; `value=null` clears) |
 | `move_asset` | Reposition an existing object without creating duplicates |
 | `rename_prim` | Move/rename objects in the hierarchy (cascades into variant bodies) |
-| `remove_prim` | Delete objects from the scene (cascades orphan-opinion cleanup) |
+| `remove_prim` | Delete objects from the scene (cascades orphan-opinion cleanup; a group left empty goes too; `/Scene` clears its children and keeps the root) |
 | `compute_grid_layout` | Calculate evenly spaced positions |
-| `save_scene_snapshot` / `list_scene_snapshots` / `delete_scene_snapshot` | Flatten the live `scene.usda` into a frozen `<name>.usda` snapshot you can publish |
+| `save_scene_snapshot` / `list_scene_snapshots` / `delete_scene_snapshot` | Save the live `scene.usda` as a named `<name>.usda` snapshot beside it (DCC scratch data stripped; assets stay referenced from `./assets/`) |
 
 #### Assets
 
@@ -464,7 +477,7 @@ service function and is described in the LLM prompts under
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (scans variant bodies in every layer first) |
 | `delete_project_texture` | Remove a texture file (checks references first) |
-| `cleanup_unused_contents` | Prune nested asset wrappers whose target folder no longer exists |
+| `cleanup_unused_contents` | Drop empty group scopes left in asset `contents.usda` layers, deleting a layer that ends up empty (removals already do this) |
 | `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data |
 
 #### Scatter
@@ -493,9 +506,9 @@ square meter. The same inputs and seed always give the same result.
 | Tool | Description |
 |------|-------------|
 | `list_light_type_properties` | Live UsdLux schema view for a light type (call before `create_light` to discover supported `inputs:*`) |
-| `create_light` | Add a native USD light (sun, dome, point, area, disk, tube) at scene or asset level |
+| `create_light` | Add a native USD light: sun or dome at scene level; point, area, disk or tube at scene or asset level |
 | `update_light` | Modify an existing light's xform / HDRI texture |
-| `remove_light` | Delete a light from the scene or asset |
+| `remove_light` | Delete a light from the scene or an asset (lights only; other prims go through `remove_prim`) |
 
 #### Cameras
 
@@ -510,9 +523,9 @@ square meter. The same inputs and seed always give the same result.
 
 | Tool | Description |
 |------|-------------|
-| `create_material` | Author a procedural MaterialX material and bind it to a prim |
-| `bind_material` | Apply a material to a specific mesh part (writes into asset `mtl.usda`) |
-| `remove_material` | Clear material binding from a prim |
+| `create_material` | Author a procedural hybrid material (MaterialX standard_surface + UsdPreviewSurface) in the asset's `mtl.usda` and bind it to a prim |
+| `bind_material` | Apply a library material to a specific mesh part (writes into the asset's `mtl.usda` and copies its textures into the asset's `maps/`) |
+| `remove_material` | Clear a binding BowerBot authored in the asset's `mtl.usda`; unused material definitions and an emptied `mtl.usda` go with it |
 | `list_materials` | Show all materials and their bindings |
 | `cleanup_unused_materials` | Prune material definitions no prim binds to |
 
@@ -521,9 +534,11 @@ square meter. The same inputs and seed always give the same result.
 | Tool | Description |
 |------|-------------|
 | `list_physics_api_properties` | Live UsdPhysics schema view for an applied API (call before `apply_physics_api`) |
-| `apply_physics_api` | Apply a UsdPhysics API (RigidBody, Mass, Collision, MeshCollision, ArticulationRoot) to a prim |
+| `apply_physics_api` | Apply a UsdPhysics API (RigidBody, Mass, Collision, MeshCollision, ArticulationRoot, Drive, Limit) to a prim |
 | `remove_physics_api` | Remove a UsdPhysics API and any dependent APIs |
 | `setup_physics_scene` | Create `/Scene/Physics` and a `UsdPhysics.Scene` with gravity |
+| `list_physics_scenes` | List every `UsdPhysics.Scene` under `/Scene/Physics` with its gravity |
+| `remove_physics_scene` | Remove a physics scene by name (drops relationship targets that named it) |
 | `get_physics_summary` | Return asset-side + scene-side physics opinions for a prim |
 | `list_joint_properties` | Schema view for a UsdPhysics typed joint |
 | `create_joint` / `remove_joint` / `list_joints` | Author / remove / list typed joints (Revolute, Prismatic, Spherical, Fixed, Distance) at scene or asset scope |
@@ -544,8 +559,8 @@ carry an `asset_` or `scene_` prefix so the LLM never has to guess.
 | `add_scene_lighting_attribute_variant` / `add_scene_lighting_selection_variant` | Lighting mood swaps + light-type swaps on `/Scene/Lighting` |
 | `add_scene_model_selection_variant` | Swap which asset reference loads at a placement (auto-promotes the existing ref into a variant body on first call) |
 | `select_asset_variant` / `select_asset_variant_for_instance` / `select_scene_variant` | Choose the active variant |
-| `remove_asset_variant` / `remove_asset_variant_set` / `remove_scene_variant` / `remove_scene_variant_set` | Delete a variant or whole set (cascades orphan cleanup, surfaces suspect sets) |
-| `list_variants` | Show every variant set with carrier path, selections, and authoring layer |
+| `remove_asset_variant` / `remove_asset_variant_set` / `remove_scene_variant` / `remove_scene_variant_set` | Delete a variant or whole set (cascades orphan cleanup; `remove_scene_variant` reports suspect sets) |
+| `list_variants` | Show every variant set on each carrier under a placement, with its variants and the composed (effective) selection |
 
 #### Validation & packaging
 
@@ -598,18 +613,17 @@ pip install bowerbot-skill-sketchfab
 
 **2. Get any credentials the skill needs.** Sketchfab requires an API token from https://sketchfab.com/settings/password. Each skill's README documents what credentials (if any) it needs.
 
-**3. Add the skill's config block to `~/.bowerbot/config.json`:**
+**3. Give the skill its settings, if it needs any.** An installed skill is on as soon as its package is installed. Skills that need credentials read them from their block in `~/.bowerbot/config.json`:
 
 ```json
 "skills": {
   "sketchfab": {
-    "enabled": true,
     "config": { "token": "your-sketchfab-token" }
   }
 }
 ```
 
-That's it. BowerBot auto-discovers the skill via Python entry points the next time you run it. The exact shape of `config` is per-skill; consult the skill's README.
+That's it. BowerBot auto-discovers the skill via Python entry points the next time you run it. Until a skill that needs settings has them, `bowerbot skills` lists it as installed but not configured. To turn an installed skill off, add `"enabled": false` to its block. The exact shape of `config` is per-skill; consult the skill's README.
 
 #### Verifying a skill is installed
 
@@ -621,7 +635,7 @@ Three commands, in increasing depth. All work on Windows, macOS, and Linux.
 bowerbot skills
 ```
 
-Lists the core scene-builder tools plus every extension skill the registry has loaded successfully. If your skill shows under "Extension skills" with its tools, you are done.
+Lists the core scene-builder tools and every installed extension skill: the ones loaded (under "Extension skills", with their tools), the ones still missing settings (under "Installed but not configured", with what each needs), and the ones turned off with `"enabled": false` (under "Disabled in config"). If your skill shows under "Extension skills" with its tools, you are done.
 
 **2. If it does not appear, check the package is installed:**
 
@@ -637,7 +651,7 @@ If the package is installed, this prints its name, version, and location. If not
 python -c "from importlib.metadata import entry_points; print('\n'.join(f'{ep.name} -> {ep.value}' for ep in entry_points(group='bowerbot.skills')))"
 ```
 
-If your skill does not appear in this output despite being pip-installed, the skill's `pyproject.toml` is missing or broken. File an issue on the skill's repo. If the skill does appear here but `bowerbot skills` still does not show it, the gap is in your `~/.bowerbot/config.json`: the skill's block is missing, `enabled: false`, or the credentials fail `validate_config()`.
+If your skill does not appear in this output despite being pip-installed, the skill's `pyproject.toml` is missing or broken. File an issue on the skill's repo. If the skill does appear here but `bowerbot skills` does not list it as loaded, check the other sections of that output: under "Disabled in config" its block has `"enabled": false`; under "Installed but not configured" it needs settings (add them under `skills.<name>.config`). If it is in neither, its settings failed validation or it failed to load, and BowerBot logged a warning with the reason.
 
 #### Private and in-house skills
 
@@ -658,7 +672,7 @@ Entry-point discovery works the same in all three cases.
 
 #### Trust
 
-A skill's `SKILL.md` is injected into the LLM's system prompt, and its tools run with the same access as core tools. Only install skills you trust. Open-source skills are auditable; closed-source skills should come from a vendor you have a relationship with. The first-party table above is the only set Binary Core has audited end-to-end.
+An installed skill is on by default. In agent mode its `SKILL.md` is added to the LLM's system prompt; in MCP mode the client sees the skill's tools and their descriptions. Either way its tools run with the same access as core tools. Only install skills you trust. Open-source skills are auditable; closed-source skills should come from a vendor you have a relationship with. The first-party table above is the only set Binary Core has audited end-to-end.
 
 ---
 
@@ -669,7 +683,7 @@ All settings live in one file: `~/.bowerbot/config.json`. BowerBot runs in one m
 - **agent mode** uses the `llm` block
 - **MCP mode** uses the `mcp` block
 
-The `skills`, `assets_dir`, and `projects_dir` keys apply to both modes. The `skills` block configures any skill packages you've installed (the example shows `bowerbot-skill-sketchfab`, see [Skills](#-skills)); a fresh install starts with `"skills": {}`. A scene's up-axis and units are not set here, you choose them per project at creation (see [MCP mode](#mcp-mode) and `bowerbot new`).
+The `skills`, `assets_dir`, and `projects_dir` keys apply to both modes. The `skills` block configures any skill packages you've installed (the example shows `bowerbot-skill-sketchfab`, see [Skills](#-skills)); an installed skill is on unless its block says `"enabled": false`, and a fresh install starts with `"skills": {}`. Use absolute paths for `assets_dir` and `projects_dir` (`~` means your home folder): a relative path resolves against the directory BowerBot starts in, which in MCP stdio mode the client picks. A scene's up-axis and units are not set here; you choose them per project at creation (`bowerbot new` asks, and `create_project` requires them).
 
 **Agent mode** (BowerBot uses its own LLM):
 
@@ -677,7 +691,7 @@ The `skills`, `assets_dir`, and `projects_dir` keys apply to both modes. The `sk
 {
   "mode": "agent",
   "llm": {
-    "model": "anthropic/claude-sonnet-4-6",
+    "model": "anthropic/claude-opus-5-5",
     "api_key": "sk-...",
     "temperature": 0.1,
     "max_tokens": 4096,
@@ -689,7 +703,6 @@ The `skills`, `assets_dir`, and `projects_dir` keys apply to both modes. The `sk
   },
   "skills": {
     "sketchfab": {
-      "enabled": true,
       "config": { "token": "your-sketchfab-token" }
     }
   },
@@ -708,7 +721,6 @@ The `skills`, `assets_dir`, and `projects_dir` keys apply to both modes. The `sk
   },
   "skills": {
     "sketchfab": {
-      "enabled": true,
       "config": { "token": "your-sketchfab-token" }
     }
   },
@@ -719,9 +731,14 @@ The `skills`, `assets_dir`, and `projects_dir` keys apply to both modes. The `sk
 
 For the http transport, use `"mcp": { "transport": "http", "host": "127.0.0.1", "port": 8181, "path": "/mcp" }` (see [MCP mode](#mcp-mode)).
 
+Onboarding also writes a `logging` block, `"logging": { "enabled": true, "level": "INFO", "console_level": "WARNING", "max_bytes": 10485760, "backup_count": 5 }` (see [Logs](docs/TROUBLESHOOTING.md#logs)).
+
+A key that `config.json` leaves out can also come from an environment variable named `BOWERBOT_` plus the key path joined by `__`, e.g. `BOWERBOT_LLM__TEMPERATURE=0.2`. A value in `config.json` wins over the environment.
+
 Switch models by changing one line:
 
 ```json
+{ "model": "anthropic/claude-opus-5-5" }
 { "model": "anthropic/claude-opus-4-7" }
 { "model": "anthropic/claude-sonnet-4-6" }
 { "model": "gpt-5" }
@@ -737,7 +754,7 @@ below ranks models by how well they hold up under that load.
 | Model | Tool Calling | Instruction Following | Recommended |
 |-------|-------------|----------------------|-------------|
 | `anthropic/claude-opus-4-7` | Excellent | Excellent | **Yes** (best overall) |
-| `anthropic/claude-sonnet-4-6` | Excellent | Excellent | **Yes** (default — best value) |
+| `anthropic/claude-sonnet-4-6` | Excellent | Excellent | **Yes** (best value) |
 | `anthropic/claude-haiku-4-5-20251001` | Good | Good | Yes (budget / fast) |
 | `gpt-5` | Excellent | Excellent | Yes |
 | `gpt-5-mini` | Good | Good | Yes (budget) |
@@ -745,11 +762,15 @@ below ranks models by how well they hold up under that load.
 | `gpt-4.1-mini` | Fair | Fair | Works (legacy budget) |
 | `gpt-4o` | Poor | Poor | No (skips tool calls, ignores SKILL.md) |
 
-Claude Opus 4.7 and Sonnet 4.6 give the most reliable experience today,
-especially on long sessions (physics + variants + materials in the same
-project) where consistent multi-round tool calling matters most.
-GPT-4.1 still works for simple flows but is no longer the recommended
-default — pick a current-generation model when you can.
+Claude Opus 4.7 and Sonnet 4.6 give the most reliable experience of the
+models above, especially on long sessions (physics + variants +
+materials in the same project) where consistent multi-round tool
+calling matters most. GPT-4.1 still works for simple flows; pick a
+current-generation model when you can.
+
+The default model, which `bowerbot onboard` suggests and BowerBot uses
+when `config.json` names none, is `anthropic/claude-opus-5-5`. The agent
+scenarios have not been run against it yet, so it is not in the table.
 
 ### Token Management
 
@@ -801,7 +822,7 @@ BowerBot is organized FastAPI-style:
 - **services/** are state-aware orchestrators, one function per tool, signature `(state, params)`, calls utils and other services freely, raises on errors
 - **tools/** are the LLM-facing surface, thin adapters that call ONE service and wrap its result or error in `ToolResult`
 
-Adding a feature is the same three-file change every time: schema, service, tool.
+Adding a feature is the same change every time: a schema, a service, a tool, and a mention of the tool in `prompts/*.md` (a test fails the build without it).
 
 ```
 src/bowerbot/
@@ -814,6 +835,7 @@ src/bowerbot/
   state.py            # SceneState: the context threaded through every tool handler
   dispatcher.py       # Aggregates core tool defs + routes core tool calls to handlers
   token_manager.py    # Conversation compression and summarization (agent mode)
+  logging_setup.py    # File + console logging: rotation, session ID, secret redaction
 
   prompts/            # LLM instructions as markdown (editable without code changes)
     core.md
@@ -829,6 +851,7 @@ src/bowerbot/
     textures.md
     variants.md
     summary.md        # Internal: how old conversation history is summarized
+    mcp.md            # MCP mode: the cross-tool rules sent to the client as instructions
 
   schemas/            # Pydantic models and enums, grouped by domain
     assets.py         #   Asset formats, categories, ASWF layer and scope names, metadata
@@ -853,30 +876,32 @@ src/bowerbot/
     textures.py       #   HDRI / image / texture-category enums
     transforms.py     #   TransformParams, PositionMode, SceneObject
     validation.py     #   Severity, ValidationIssue, ValidationResult
-    variants.py       #   VariantCategory, AddVariant params, VariantsSummary
+    variants.py       #   VariantCategory, VariantRules, variant set / carrier summaries
 
   services/           # State-aware orchestrators. One same-named function per tool.
     project_service.py     #   create_project, open_project, list_projects,
                            #   get_current_project (focus the bound project)
     stage_service.py       #   create_stage, list_scene, rename/remove_prim, move_asset,
                            #   set/list_prim_attribute(s), snapshot lifecycle, ...
-    asset_service.py       #   place_asset, place_asset_inside, list/delete_project_*,
-                           #   cleanup_unused_contents, freeze_asset
+    asset_service.py       #   place_asset, place_layout, place_asset_inside,
+                           #   list/delete_project_*, cleanup_unused_contents, freeze_asset
     library_service.py     #   list_assets, search_assets
     light_service.py       #   list_light_type_properties, create/update/remove_light
     camera_service.py      #   list_camera_properties, create/update/remove_camera
     material_service.py    #   create/bind/remove_material, list_materials,
                            #   cleanup_unused_materials
     physics_service.py     #   list_physics_api_properties, apply/remove_physics_api,
-                           #   setup_physics_scene, get_physics_summary, joints (3),
-                           #   collision groups (3)
+                           #   setup_physics_scene, list_physics_scenes, remove_physics_scene,
+                           #   get_physics_summary, joints (4), collision groups (3)
     scatter_service.py     #   scatter_on_surface, scatter_along_path, drop_to_surface
     texture_service.py     #   list_textures, search_textures
     validation_service.py  #   validate_scene, package_scene
     variant_service.py     #   add_asset_(material|geometry|attribute|configuration)_variant,
+                           #   setup_asset_geometry_variants, list_asset_geo_files,
                            #   add_scene_(lighting_attribute|lighting_selection|model_selection)_variant,
-                           #   list_variants, select/remove_asset_variant(_set|_for_instance),
-                           #   select/remove_scene_variant(_set)
+                           #   list_variants, select_asset_variant(_for_instance),
+                           #   remove_asset_variant(_set), select_scene_variant,
+                           #   remove_scene_variant(_set)
 
   tools/              # LLM-facing API layer (tool defs + thin handlers).
                       # Every public function mirrors a service function 1:1.
@@ -884,14 +909,14 @@ src/bowerbot/
                            #   get_current_project
     stage_tools.py         #   create_stage, list_scene, rename/remove_prim, move_asset,
                            #   set/list_prim_attribute(s), snapshot lifecycle, ...
-    asset_tools.py         #   place_asset(_inside), list/delete_project_*,
-                           #   cleanup_unused_contents, freeze_asset
+    asset_tools.py         #   place_asset, place_layout, place_asset_inside,
+                           #   list/delete_project_*, cleanup_unused_contents, freeze_asset
     library_tools.py       #   search_assets, list_assets
     light_tools.py         #   list_light_type_properties, create/update/remove_light
     camera_tools.py        #   list_camera_properties, create/update/remove_camera
     material_tools.py      #   create/bind/remove_material, list_materials,
                            #   cleanup_unused_materials
-    physics_tools.py       #   physics APIs (3), physics scene + summary (2),
+    physics_tools.py       #   physics APIs (3), physics scenes + summary (4),
                            #   joints (4), collision groups (3)
     scatter_tools.py       #   scatter_on_surface, scatter_along_path, drop_to_surface
     texture_tools.py       #   search_textures, list_textures
@@ -929,14 +954,14 @@ src/bowerbot/
       aswf.py                  #     wrap loose files into ASWF folders; root metadata
       freeze.py  nested.py     #     bake root transforms; nested assets in contents.usda
     library_utils.py           #   scan_library, find_asset (names -> root files), find_package_for
-    light_utils.py             #   All light authoring: create/update/remove,
-                               #   list_light_type_properties, lgt.usda lifecycle,
-                               #   HDRI staging
-    camera_utils.py            #   Camera authoring: create/update/remove, look_at
+    light_utils.py             #   Light authoring: create/update, light linking,
+                               #   list_light_type_properties, lgt.usda lifecycle
+                               #   (add/update/remove asset lights)
+    camera_utils.py            #   Camera authoring: create/update, look_at
                                #   aiming, list_camera_properties
     material_utils.py          #   material_in_folder primitives, find_first_material
-    texture_utils.py           #   find_textures, copy_texture_to_project,
-                               #   find_texture_references
+    texture_utils.py           #   find_textures, texture staging (stage_asset_texture into
+                               #   maps/, stage_scene_texture into textures/), find_texture_references
     physics/                   #   Physics, split into small modules:
       apis.py                  #     apply/remove UsdPhysics APIs (asset or scene scope)
       schema_info.py           #     what each API and joint declares and accepts
@@ -944,7 +969,7 @@ src/bowerbot/
       joints.py  groups.py     #     typed joints; collision groups
       summary.py               #     physics an asset or scene carries; empty phy.usda cleanup
       masking.py  scope.py     #     scene-override policy; asset vs scene scope
-      predicates.py            #     is_joint / is_physics_scene / is_collision_group / ...
+      predicates.py            #     is_joint / is_physics_scene / is_collision_group
     scatter/                   #   Scatter, split into small modules:
       on_surface.py            #     random / rows / pile pipelines over surfaces
       along_path.py            #     placing along polylines, circles and curves
@@ -980,13 +1005,14 @@ src/bowerbot/
 **Design principles**
 
 - **Tool ↔ service ↔ prompt 1:1:1**: every public tool function has a same-named public service function and is described in some `prompts/*.md` file. A test in `tests/test_tool_service_prompt_invariant.py` fails the build if this ever drifts.
-- **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums) and a small set of state objects (`SceneState`, `Project`).
+- **Functions only in tools / services / utils**: those layers define no classes. Data models (pydantic models, enums) live in `schemas/`; runtime objects live in the top-level modules (`SceneState`, `Project`, `Settings`, `AgentRuntime`, `TokenManager`) and the skill SDK (`skills/`).
 - **Tools are thin**: call ONE service, wrap its result or error in `ToolResult`. No guards, no business logic, no util calls, no cross-service routing.
 - **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
 - **Utils are pure primitives**: no `SceneState`, no other services. Composable building blocks.
 - **State lives in one place**: `SceneState` holds the open stage, the project binding, the asset library path, and the object counter; tool handlers thread it into service calls. Services get what they need through its `require_*()` methods, which raise one clear error when it is missing, and reopen the scene with `reopen_stage()`.
-- **All `pxr` is in `services/` and `utils/`**: the rest of the codebase never imports `pxr` directly.
+- **`pxr` stays in `utils/`, `services/` and `state.py`**: schemas, tools, and the runtimes (`agent.py`, `mcp_server.py`, `cli.py`) never import `pxr`.
 - **Prompts are content**: editable `.md` files, not Python constants.
+- **OpenUSD only**: the core builds on `pxr`, UsdPhysics and the ASWF asset guidelines, with no vendor runtime or vendor schema; anything specific to one application or simulator ships as a skill. A test in `tests/test_architecture_rules.py` enforces it.
 - **Skills are external integrations**: new asset providers ship as Python packages discovered via entry points.
 - **One config file**: `~/.bowerbot/config.json`, no `.env`.
 
@@ -998,15 +1024,15 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 
 **Scene level**
 - `upAxis` (`Y` or `Z`) and `metersPerUnit` chosen per project at `create_project`; `defaultPrim` always set
-- Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Cameras`, `/Scene/Props`, `/Scene/Physics`
+- Groups under `/Scene` are created on demand, never up front: `place_asset` uses `Architecture`, `Furniture`, `Products`, `Lighting` or `Props`; lights go in `/Scene/Lighting`, cameras in `/Scene/Cameras`, physics in `/Scene/Physics`; `place_layout` and the scatter tools take any group name (scatter defaults to `/Scene/Scatter`). A group a removal leaves empty is removed with it.
 - Unbroken model hierarchy: `/Scene` is an `assembly`, and the groups and placement wrappers above every placed asset are `group`s, so each placed component is a model that outliners and asset tools recognise; an asset nested inside another becomes a `subcomponent` of its container
 - References only: no inline geometry, no scattered material sublayers
 - Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched: the wrapper holds the placement (translate, rotate, scale), and its `asset` child conforms the asset to the scene's units and up axis and holds the reference (each model-selection variant carries its own conform)
-- Pre-packaging validator checks `defaultPrim`, units, up-axis, reference resolution, and material bindings
+- `validate_scene` (run it before `package_scene`, which does not run it for you) checks `defaultPrim`, units, up-axis, reference resolution, and material bindings
 
 **Asset level**
 - References (not sublayers) per ASWF guidelines, for predictable opinion strength
-- Materials inline in `mtl.usda`, lights inline in `lgt.usda`, nested references in `contents.usda`
+- Materials inline in `mtl.usda`, lights inline in `lgt.usda`, physics in `phy.usda`, nested references in `contents.usda`, asset variants in `variants.usda`
 - Automatic `metersPerUnit` and up-axis conversion across composition boundaries (scene to asset, container to nested asset)
 - Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or baked into vertex data with explicit user consent), so nested placements compose predictably
 - Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child conforms the nested asset to its container and holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
@@ -1028,7 +1054,7 @@ Two layers of authority. The naming convention makes routing explicit.
 1. **Orphan opinion cleanup cascade.** When a prim is removed, every variant body spec authored at the same path is dropped. Empty intermediate `over` specs are pruned. Empty variant bodies remove via `Sdf.VariantSetSpec.RemoveVariant`. Empty variant sets drop along with their `variantSetNames` and `variantSelections` metadata. When `variants.usda` becomes empty, the file is auto-deleted and the root reference scrubbed.
 2. **Rename invariant.** Renaming a prim follows the rename through every variant body opinion, preserving authored values.
 3. **Asset-staging for `Sdf.ValueTypeNames.Asset` attributes.** Variant bodies that author texture or HDRI paths automatically stage the source file where the variant lives: an asset variant into the asset's `maps/`, a scene variant into `<project>/textures/`, each written as a path relative to its layer. `bind_material` brings a library material's textures into the asset's `maps/` the same way. Two different files with the same name keep separate copies. Refuses if the source cannot be resolved (no silent broken paths).
-4. **Suspect-set detection.** After a removal, variant sets that have collapsed to a single model-selection variant (or 2+ variants converging on one prim with active-only opinions) are flagged via `suspect_variant_sets` on the result. BowerBot surfaces the suspect to the user and asks before deleting the set.
+4. **Suspect-set detection.** After `remove_scene_variant`, `remove_light` or `remove_camera`, variant sets that have collapsed to a single model-selection variant (or 2+ variants converging on one prim with active-only opinions) are flagged via `suspect_variant_sets` on the result. BowerBot's guidance tells the LLM to surface the suspect to the user and ask before deleting the set.
 5. **Model-selection symmetry.** `add_scene_model_selection_variant`'s first call auto-promotes the placement's existing direct reference into a variant body (named after the source asset folder). Removing the entire set auto-demotes the active variant's reference back to a direct reference on `/asset`. No data loss, no dead-slot placements.
 6. **Layer-level reference scanning.** `delete_project_asset`'s safety check scans variant bodies in any layer, not just the composed stage view. An asset referenced only by a non-active variant body still blocks deletion.
 

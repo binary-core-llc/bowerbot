@@ -15,7 +15,9 @@ decorative plants, any asset the user is likely to move individually.
 
 The asset becomes part of the container's asset folder. If the
 container is duplicated or reused in another scene, the nested
-asset comes with it. Use for permanent fixtures.
+asset comes with it. Use for permanent fixtures. Pass the container's
+placement path as `list_scene` reports it (`/Scene/<Group>/<Name>`),
+never its `/asset` child or a part inside it.
 
 Examples: a built-in counter that defines a café, recessed light
 housings inside a building (as geometry), kitchen cabinets, anything
@@ -203,7 +205,7 @@ BowerBot follows ASWF USD Working Group guidelines for asset structure.
 
 ### Composition arcs: payload for geo, references for everything else
 
-Per ASWF guidelines and Isaac/Omniverse conventions, an asset's
+Per the ASWF asset structure guidelines, an asset's
 canonical root composes its heavy data via PAYLOAD and its lighter
 sublayers via REFERENCES:
 - `geo.usda` → payload (lazy-load; lets large stages open quickly,
@@ -220,7 +222,8 @@ references, first in the list so they are the strongest.
 ### Class prim + inherits (shot-level broadcast hook)
 
 Every BowerBot-intaken asset's root layer ships with a sibling
-`class _class_<asset_name>` prim, and the asset's defaultPrim
+`class _class_<defaultPrim>` prim (USDZ assets are used as-is and get
+none), and the asset's defaultPrim
 inherits from it. The class prim is empty by default — it is a hook
 that lets a stronger layer (a shot file, a layout sublayer) author
 overrides like `over "_class_sofa" { material:binding = ... }` and
@@ -235,16 +238,16 @@ for a more advanced pipeline to use.
 
 Every asset BowerBot intakes gets the canonical ASWF identity authored
 on its root prim:
-- `kind = "component"` — terminal published asset (DCC outliners,
-  Houdini Solaris, Omniverse Browser, Isaac Asset Library all use Kind
-  to identify the asset boundary). In the scene, the groups and
+- `kind = "component"` — terminal published asset (USD's model
+  hierarchy: outliners and asset browsers read `kind` to find the asset
+  boundary). In the scene, the groups and
   placement wrappers above it are `group`s, so it stays a model; an asset
   placed inside another with `place_asset_inside` becomes a
   `subcomponent` of its container
 - `assetInfo` dictionary with `identifier` (relative path), `name`
-  (asset folder name), and `version` (default `"1.0"`) — read by every
-  asset-tracking pipeline (ftrack, ShotGrid, Omniverse Nucleus) for
-  dependency analysis
+  (asset folder name), and `version` (default `"1.0"`) — USD's standard
+  asset-identity metadata (`UsdModelAPI`), for pipeline tools that track
+  assets and their dependencies
 
 When an existing folder asset is intaken, BowerBot **only fills in
 missing fields** to preserve any upstream metadata the user's DCC or
@@ -295,14 +298,15 @@ in their project or when an asset reference has gone stale.
   `in_scene: false` with the snapshot in `referenced_by`. Use this to
   answer "what assets do I have?" or before suggesting a `place_asset`
   call.
-- `delete_project_asset(name=...)` — remove an asset folder. Refuses
-  by default if the asset is still referenced anywhere in the project;
-  the error names the referencing USD files (relative to the project)
-  so the user can remove those references first.
-- `cleanup_unused_contents()` — remove empty group scopes (e.g. an empty
-  `Props` or `Furniture` scope left in a container's `contents.usda`
-  after every nested asset in that group was removed), and drop the
-  `contents.usda` layer when no references remain. Run this after
-  removing the last nested asset from a group. It does NOT detect a
-  wrapper whose referenced sub-asset folder is missing on disk; it only
-  prunes scopes that already have zero child references.
+- `delete_project_asset(name=...)` — remove an asset folder or file
+  (`name` as `list_project_assets` reports it). Refuses while any
+  project file (scene.usda, a snapshot, another asset) still references
+  it; the error names those files so the user can remove the references
+  first.
+- `cleanup_unused_contents()` — remove empty group scopes left in a
+  container's `contents.usda` and drop the layer when no references
+  remain. `remove_prim` already does this when it removes a nested
+  asset, so this is only for leftovers (e.g. from edits made outside
+  BowerBot). It does NOT detect a wrapper whose referenced sub-asset
+  folder is missing on disk; it only prunes scopes that already have
+  zero child references.

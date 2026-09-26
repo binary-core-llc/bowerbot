@@ -3,23 +3,31 @@
 End-to-end scenarios that drive the live LLM against the real tool
 surface, organised by how a user actually thinks (discovery, vague
 intent, goal-oriented, iteration, conceptual, recovery, refusal,
-tool coverage) rather than by tool family.
+tool coverage, tool categories, exploratory) rather than by tool
+family.
 
 ## Running
 
-These tests cost real LLM API calls. They are excluded by default
-from `pytest` runs via the `agent_integration` marker. The runner
-reads your API key from `~/.bowerbot/config.json` (it skips the
-suite cleanly if no key is present, so they will simply not run
-without setup).
+These tests cost real LLM API calls. `pyproject.toml` leaves them
+out of default `pytest` runs (its `addopts` deselects the
+`agent_integration` and `integration` markers; a `-m` on the command
+line replaces that filter). The runner uses the model and API key in
+`~/.bowerbot/config.json` (it skips the suite cleanly if no key is
+present, so they will simply not run without setup).
 
 ```
-# Full suite (every scenario across every tier; ~$1.50-$2.50 with gpt-4.1)
+# Full suite (all 33 scenarios; cost depends on the model in your config.json)
 pytest -m agent_integration tests/agent/
 
-# One tier
+# One tier (-k matches scenario names, which start with the tier's prefix:
+# discovery_, vague_, goal_, iteration_, conceptual_, recovery_, refusal_,
+# coverage_, category_, explore_)
 pytest -m agent_integration tests/agent/ -k discovery
-pytest -m agent_integration tests/agent/ -k physics_goals
+pytest -m agent_integration tests/agent/ -k recovery
+
+# Smoke subset (12 highest-signal scenarios), or every scenario
+pytest -m "agent_integration and agent_smoke" tests/agent/
+pytest -m "agent_integration and agent_full" tests/agent/
 
 # One scenario by name
 pytest -m agent_integration tests/agent/ -k goal_pendulum_from_scratch
@@ -28,8 +36,8 @@ pytest -m agent_integration tests/agent/ -k goal_pendulum_from_scratch
 pytest -m agent_integration tests/agent/ -s
 ```
 
-`pytest` without the marker runs zero agent tests, so day-to-day
-development is unaffected.
+`pytest` without `-m` runs zero agent tests (the `addopts` filter), so
+day-to-day development is unaffected.
 
 ## What an artifact looks like
 
@@ -58,7 +66,9 @@ it explain its choice? did it call introspection first?).
 | `conceptual` | Q&A; agent should explain, not author | none (refusal of authoring is the assertion) |
 | `recovery` | Change of mind; agent must undo / change course | `remove_physics_api`, retargeting |
 | `refusals` | Spec-invalid asks; tool layer should refuse and the agent should explain | physics prim-type guards, destructive operations |
-| `tool_coverage` | Catches tool categories not naturally hit by the other tiers | `validate_scene`, `save_snapshot`, collision groups, articulation root |
+| `tool_coverage` | Catches tool categories not naturally hit by the other tiers | `validate_scene`, `save_scene_snapshot`, collision groups, articulation root |
+| `tool_categories` | One tool family end to end per scenario | snapshots (save, list, delete), `create_material` / `bind_material`, dimming and removing a light, a falling stack (rigid bodies + collision) |
+| `exploratory` | Everyday conversational edits | xform ops (random tilt, scale up), deleting a collision-group member, UsdLux attributes, one change applied to many prims |
 
 ## Adding a scenario
 
@@ -75,9 +85,11 @@ it explain its choice? did it call introspection first?).
 
 ## Cost guidelines
 
-- A single-prompt scenario typically costs $0.03-$0.08 on `gpt-4.1`.
-- A multi-prompt iteration scenario can run $0.15-$0.30.
-- The full ~20-scenario suite runs about $1.50-$2.50 per pass.
+- Cost depends on the model in your `config.json`. On `gpt-4.1`, a
+  single-prompt scenario cost about $0.03-$0.08 and a multi-prompt
+  iteration scenario $0.15-$0.30.
+- The suite has 33 scenarios; the `agent_smoke` subset (12) is the
+  cheap pre-PR run.
 
 Token usage per turn is recorded in the file log
 (`~/.bowerbot/logs/bowerbot.log`) and in the artifact transcripts.

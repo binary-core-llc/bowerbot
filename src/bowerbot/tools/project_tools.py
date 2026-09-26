@@ -71,8 +71,8 @@ TOOLS: list[Tool] = [
             "fixes its world up-axis and units up front and every placed "
             "asset is conformed to them, so up_axis and meters_per_unit "
             "are required: ask the user, or match the source you are "
-            "reconstructing (an Omniverse/Isaac scene is usually Z-up in "
-            "meters; most Maya/web content is Y-up)."
+            "reconstructing (its own upAxis and metersPerUnit; most Maya "
+            "and web content is Y-up)."
         ),
         parameters={
             "type": "object",
@@ -90,8 +90,8 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "enum": ["Y", "Z"],
                     "description": (
-                        "World up-axis for the scene. 'Z' for "
-                        "Omniverse/Isaac/CAD-style sources, 'Y' otherwise."
+                        "World up-axis for the scene: match the source's "
+                        "upAxis, or ask the user."
                     ),
                 },
                 "meters_per_unit": {

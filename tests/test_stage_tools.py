@@ -11,6 +11,7 @@ from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom
 
+from bowerbot.state import SceneState
 from tests._helpers import exec_tool, make_state
 
 
@@ -65,6 +66,29 @@ def test_create_stage_idempotent():
         _, state, _ = _setup(tmp)
         r = asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
         assert r.success, r.error
+
+
+def test_create_stage_recreates_a_deleted_scene_in_the_projects_axis_and_units():
+    """A scene.usda deleted mid-session comes back empty, Z-up in centimeters like its project."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state = SceneState(library_dir=tmp_path, projects_dir=tmp_path / "projects")
+        r = asyncio.run(exec_tool(state, "create_project", {
+            "name": "Zcm", "up_axis": "Z", "meters_per_unit": 0.01,
+        }))
+        assert r.success, r.error
+        _place(tmp_path, state)
+        scene_path = state.project.scene_path
+        scene_path.unlink()
+
+        r = asyncio.run(exec_tool(state, "create_stage", {}))
+
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(scene_path))
+        assert UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.z
+        assert UsdGeom.GetStageMetersPerUnit(stage) == 0.01
+        assert [p.GetPath() for p in stage.GetDefaultPrim().GetChildren()] == []
+        assert Usd.ModelAPI(stage.GetDefaultPrim()).GetKind() == "assembly"
 
 
 def test_create_stage_without_filename():

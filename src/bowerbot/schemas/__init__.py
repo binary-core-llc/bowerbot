@@ -66,7 +66,6 @@ from bowerbot.schemas.physics import (
     PhysicsNamespace,
     PhysicsPrimSummary,
     PhysicsRules,
-    PhysicsSummary,
     ScenePhysicsSummary,
 )
 from bowerbot.schemas.scatter import (
@@ -168,7 +167,6 @@ __all__ = [
     "PhysicsNamespace",
     "PhysicsPrimSummary",
     "PhysicsRules",
-    "PhysicsSummary",
     "PositionDefaults",
     "PositionMode",
     "PreviewSurfaceShader",

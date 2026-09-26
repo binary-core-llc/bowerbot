@@ -8,7 +8,9 @@ No .env files needed.
 
 Load order:
 1. ~/.bowerbot/config.json
-2. Built-in defaults
+2. ``BOWERBOT_*`` environment variables, for keys the file leaves out
+   (nested keys joined by ``__``, e.g. ``BOWERBOT_LLM__TEMPERATURE``)
+3. Built-in defaults
 """
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings
 
 from bowerbot.schemas import ConfigPaths
@@ -60,7 +62,7 @@ class LinearUnit(StrEnum):
 class LLMSettings(BaseModel):
     """LLM provider configuration."""
 
-    model: str = "gpt-4.1"
+    model: str = "anthropic/claude-opus-5-5"
     api_key: str = ""
     temperature: float = 0.1
     max_tokens: int = 4096
@@ -91,9 +93,9 @@ class McpSettings(BaseModel):
 
 
 class SkillConfig(BaseModel):
-    """Configuration for a single skill."""
+    """Configuration for a single skill. An installed skill is on unless ``enabled`` is false."""
 
-    enabled: bool = False
+    enabled: bool = True
     config: dict[str, Any] = Field(default_factory=dict)
 
     def to_json(self) -> dict[str, Any]:
@@ -131,6 +133,12 @@ class Settings(BaseSettings):
     projects_dir: Path = Path("./scenes")
 
     model_config = {"env_prefix": "BOWERBOT_", "env_nested_delimiter": "__"}
+
+    @field_validator("assets_dir", "projects_dir", mode="after")
+    @classmethod
+    def expand_home(cls, path: Path) -> Path:
+        """Read a leading ``~`` as the home folder, not a folder named ``~``."""
+        return path.expanduser()
 
     def get_api_key(self) -> str:
         """Resolve the API key from settings."""

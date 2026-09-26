@@ -32,7 +32,7 @@ Use this when no existing material file matches what the user wants.
 Creates a hybrid material with both a MaterialX
 `ND_standard_surface_surfaceshader` (for VFX-grade renderers) and a
 `UsdPreviewSurface` (for Hydra Storm, Apple RealityKit / AR Quick Look,
-Isaac Sim viewport) wired off the same Material prim with shared input
+USD viewers) wired off the same Material prim with shared input
 values, so BowerBot-generated materials render correctly across every
 USD consumer. No textures needed.
 
@@ -59,9 +59,10 @@ Common procedural materials:
 
 ### Adjusting material parameters
 
-Every value change goes to `scene.usda`. The asset's `mtl.usda` is
-only touched by `create_material` / `bind_material` (publish) and
-`remove_material` (delete).
+Every per-placement value change goes to `scene.usda`. The asset's
+`mtl.usda` is changed only by `create_material` / `bind_material` (add)
+and by `remove_material` / `cleanup_unused_materials` (remove); material
+variants live in `variants.usda`.
 
 1. `list_prim_attributes(shader_path)` — confirm the attribute name
    and type. The shader prim path is
@@ -111,23 +112,31 @@ Concretely:
   `create_material(pillow, sage)` on sofa 2 → only the LAST binding
   wins (it overwrote the first); both sofas show sage
 
-**Rule**: for "give each instance a different material" prompts,
-**always prefer `place_asset`** to make instances independent first,
-then bind materials per-instance.
+**Rule**: every placement of an asset shares one asset folder —
+placing the same asset again with `place_asset` does NOT make an
+independent copy — so `bind_material` / `create_material` on one
+placement changes them all. For "give each instance a different
+material":
+1. Different materials: add each material to the asset
+   (`confirm_shared_modification: true`), make them variants with
+   `add_asset_material_variant`, and pick one per placement with
+   `select_asset_variant_for_instance`.
+2. Same material, different values (color, roughness): use
+   `set_prim_attribute` on each placement's shaders (see "Adjusting
+   material parameters").
 
 Examples:
-- "Give each sofa a different pillow color" (4 sofa instances) → the
-  pillow must be placed scene-level (`place_asset`) on each sofa, then
-  `bind_material` per pillow
+- "Give each sofa a different pillow color" (pillows placed with
+  `place_asset`) → one material on the pillow asset, then
+  `set_prim_attribute` on each pillow's `standard_surface` and
+  `preview_surface` color inputs
 - "All my sofa legs should be gold" (explicit shared modification) →
   `bind_material` with `confirm_shared_modification: true`
 
-If `bind_material` or `create_material` returns a "shared modification"
-error, the recovery is:
-1. **Preferred**: switch to per-instance placement via `place_asset`
-   and bind on each.
-2. **Only if the user explicitly wants every instance to share the
-   material**: retry with `confirm_shared_modification: true`.
+If `bind_material` or `create_material` returns a "shared
+modification" error, ASK the user: apply it to every placement (retry
+with `confirm_shared_modification: true`), or keep placements
+different (variants or per-placement overrides as above).
 
 ### Cleaning up orphan materials
 

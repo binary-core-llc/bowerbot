@@ -7,9 +7,11 @@ Thanks for your interest in contributing to BowerBot!
 ```bash
 git clone https://github.com/binary-core-llc/bowerbot.git
 cd bowerbot
-uv sync
+uv sync --extra dev
 uv run pytest
 ```
+
+`uv run pytest` leaves out the tests that need live credentials and cost money (the `integration` and `agent_integration` markers); run those on purpose with `-m`, as [tests/agent/README.md](tests/agent/README.md) shows.
 
 ## How to Submit Changes
 
@@ -77,24 +79,25 @@ Add `!` after the type for breaking changes (e.g., `feat!: redesign skill interf
 
 ## Project Structure
 
-BowerBot is organized FastAPI-style. Adding a feature is a three-file change (schema, service, tool):
+BowerBot is organized FastAPI-style. Adding a feature touches the same places every time: a schema, a service, a tool, and a mention of the tool in a `prompts/*.md` file (`tests/test_tool_service_prompt_invariant.py` fails without it):
 
 - **`schemas/`**: pydantic models and enums.
-- **`utils/`**: pure-function primitives. The only place `pxr` is imported.
+- **`utils/`**: pure-function primitives, where the USD (`pxr`) work lives. Services and `state.py` also import `pxr` for paths, types and small edits; `schemas/` never do.
 - **`services/`**: orchestrators with signature `(state, params)`. One per tool. Get the scene, project and folders through `state.require_*()`, call utils, mutate state, raise on errors.
 - **`tools/`**: thin adapters. Call ONE service, wrap its result or error in `ToolResult`.
 - **`state.py`**: `SceneState`, threaded through every tool handler. The only place that checks for an open scene, project or configured folder.
 - **`dispatcher.py`**: tool registry and router.
 - **`skills/`**: the skill SDK (the `Skill` contract and the `SkillRegistry`). Skills themselves ship as separate pip packages and are discovered at runtime via entry points; they do not live in this directory.
-- **`prompts/`**: LLM instructions as `.md` files.
+- **`prompts/`**: LLM instructions as `.md` files. Agent mode sends them all as the system prompt; MCP mode sends only `mcp.md` (the rules that span several tools) as the server's instructions, so a new cross-tool rule belongs there too, and anything else an MCP client must know belongs in the tool's description.
 
 ## Code Rules
 
-`tests/test_architecture_rules.py` enforces these, so breaking one fails the build.
+`tests/test_architecture_rules.py` enforces most of these (not yet: schemas never importing `pxr`, and which third-party modules `utils/core` may import), so breaking one usually fails the build.
 
 - **One home per concept.** Helpers more than one domain needs live once, in `utils/core/`, and no public function name is defined twice in `utils/`. A domain too big for one readable file, or holding several jobs, becomes a package of small modules named for what they do (`utils/assets/`, `utils/physics/`, `utils/scatter/`, `utils/validation/`, `utils/variants/`); services call it as `<package>.<module>.<function>` (`physics.apis.apply_api`), the way they call `camera_utils.create_camera`. Domains import core; core never imports a domain (only the standard library, `pxr`, `numpy`, `bowerbot.schemas` and other core modules). Bounding boxes always come from `core/bounds.py`.
 - **No loose values.** `schemas/` holds classes and `type` declarations only, and `utils/` holds functions only (plus the standard `logger = logging.getLogger(__name__)`). A named value goes in a schema class named for what it holds: `<Domain>Rules` for what input is accepted (`NamingRules`, `LayoutRules`, `ScatterRules`), `<Domain>Defaults` for values used when the request gives none (`CameraDefaults`), `<Domain>Tuning` for internal algorithm settings (`ScatterTuning`), `<Domain>Namespace` for canonical prim paths. Schemas never import `pxr`: they name USD types by their registered schema name (`LightType.DISTANT` is `"DistantLight"`), and utils get the class with `core.schema_registry.schema_class()`. Type aliases use `type Vec3 = tuple[float, float, float]`. Outside `schemas/` and `utils/`, a module-level value is a registry (`TOOLS`, `HANDLERS`, and the JSON-schema pieces several tools in one file share) or runtime state (the CLI `console`, the session id, the validator cache); a value a user may change is a field in `config.py` settings (`LLMSettings.max_tool_rounds`), and LLM text is a `prompts/*.md` file. A module defines `logger` only when it logs.
 - **Optional params.** A service reads a parameter its tool does not require with `params.get()`. `params[...]` is only for required ones, which the dispatcher validates before the call.
+- **OpenUSD only.** The core builds on `pxr` and the ASWF asset guidelines, nothing else: no vendor runtime (`omni`, `isaacsim`, `carb`, `warp`, `physx`), no vendor schema (`PhysxSchema`, `Physx*API`), and no rule justified by one vendor's tool. Naming a DCC as a place a scene is opened is fine; building behavior around it is not. Vendor integrations ship as skills.
 - **One guard.** Only `SceneState` checks whether a scene, project or configured folder exists. Services ask for what they need with `state.require_stage()`, `require_stage_path()`, `require_project()`, `require_library_dir()` or `require_projects_dir()`, which raise one clear error when it is missing, and reopen the scene with `state.reopen_stage()`. Tools never check.
 
 ## Writing a Skill
@@ -126,7 +129,7 @@ See [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill
 A skill subclasses `bowerbot.skills.Skill` and implements three methods:
 
 - `get_tools() -> list[Tool]`: declares what the LLM sees.
-- `execute(tool_name, params, ctx) -> ToolResult`: routes to a service.
+- `async execute(tool_name, params, ctx) -> ToolResult`: routes to a service.
 - `validate_config() -> None`: verifies the skill is properly configured. Raises `SkillConfigError` with an actionable message when something is missing or invalid.
 
 The `skill.py` file should be **a dispatcher**, not a place for logic. It maps a tool name to a service function and wraps the result. All real work lives in `services/` and `utils/`.
@@ -160,9 +163,10 @@ Skills that need stage access call `Usd.Stage.Open(ctx.scene_path)` themselves. 
 
 - **Skills are hyper-isolated**: a skill depends only on `bowerbot.skills` (the public contract), the standard library, and external packages it ships with. It does **not** import from `bowerbot.utils`, `bowerbot.services`, `bowerbot.state`, or any other core module. If a skill needs a primitive, it carries its own copy in its `utils/`.
 - **Entry-point name must match `Skill.name`**: the registry compares them and skips with an error if they differ. Pick one identifier and use it both in `pyproject.toml` and on the class.
-- **One SKILL.md per skill**: injected into the system prompt when the skill is active.
+- **One SKILL.md per skill**: added to the system prompt in agent mode while the skill is loaded (MCP clients see only the skill's tool names and descriptions).
 - **Return ToolResult**: always return `ToolResult(success=True/False, ...)` from `execute()`.
-- **Raise `SkillConfigError`** from `validate_config()` when a required setting is missing or invalid. The registry logs the message and skips the skill so BowerBot keeps running. Do not return `True` / `False`; the contract is exception-based.
+- **Raise `SkillConfigError`** from `validate_config()` when a required setting is missing or invalid. The registry skips the skill so BowerBot keeps running: when the user has given no settings yet, `bowerbot skills` lists it as installed but not configured, with your message; when settings were given and fail, your message is logged as a warning. Do not return `True` / `False`; the contract is exception-based.
+- **Give every setting a default.** The registry builds your skill as `YourSkill(**config)`, passing the keys of the user's `skills.<name>.config` block as keyword arguments, and an installed skill loads even with no block. With defaults, `validate_config()` can name what is missing; a constructor that requires an argument is only reported as "its settings are missing".
 - **Use `ctx.cache_dir` for downloads**: declare `cache_subdir` on the class (e.g. `"cache/polyhaven"`); the registry creates the dir and exposes it via `ctx.cache_dir`.
 - **Use `ctx.project_dir` and `ctx.scene_path` for scene-aware skills**: these are `None` when no project is open. Always handle that case.
 - **No hardcoded paths**: every path comes through `SkillContext` or tool params.
@@ -182,7 +186,7 @@ from bowerbot.skills import (
 )
 ```
 
-These six names are the public contract. They follow semver: breaking changes are reserved for major version bumps. External skill packages should pin a compatible bowerbot range in their own `pyproject.toml`:
+These six names are the contract a skill implements (`bowerbot.skills` also exports `SkillRegistry`, which BowerBot uses to load skills). They follow semver: breaking changes are reserved for major version bumps. External skill packages should pin a compatible bowerbot range in their own `pyproject.toml`:
 
 ```toml
 dependencies = ["bowerbot>=1.5,<2"]
@@ -205,9 +209,9 @@ dependencies = ["bowerbot>=1.5,<2", "httpx"]
 polyhaven = "bowerbot_skill_polyhaven.skill:PolyhavenSkill"
 ```
 
-The entry-point key (`polyhaven` above) must equal the `name` attribute on your `Skill` class and the key the user puts in `~/.bowerbot/config.json`. The `SkillRegistry` enforces this and skips skills where they disagree.
+The entry-point key (`polyhaven` above) must equal the `name` attribute on your `Skill` class; it is also the key users put the skill's settings under in `~/.bowerbot/config.json`. The `SkillRegistry` skips a skill whose entry-point key and `name` disagree.
 
-Once `pip install bowerbot-skill-polyhaven` runs in the same Python environment as BowerBot, the registry discovers the skill automatically. No core code changes required.
+Once `pip install bowerbot-skill-polyhaven` runs in the same Python environment as BowerBot, the registry discovers the skill automatically, and it is on unless the user sets `"enabled": false`. No core code changes required.
 
 For the full production setup (PyPI Trusted Publisher OIDC, release-please, GitHub Actions), copy the [bowerbot-skill-sketchfab](https://github.com/binary-core-llc/bowerbot-skill-sketchfab) repo as a template.
 

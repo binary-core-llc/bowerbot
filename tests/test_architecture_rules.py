@@ -16,6 +16,9 @@
   folder exists. Services call ``state.require_*()``; tools never touch state.
 - Optional params: a service reads a parameter its tool does not require with
   ``params.get()``, never ``params[...]``.
+- OpenUSD only: the core builds on ``pxr`` and the ASWF guidelines; no vendor
+  runtime (omni, isaacsim, carb, warp, physx) and no vendor schema
+  (``PhysxSchema``, ``Physx*API``). Vendor integrations ship as skills.
 """
 
 from __future__ import annotations
@@ -277,3 +280,37 @@ def test_no_public_function_name_is_defined_twice_in_utils() -> None:
                 homes.setdefault(node.name, []).append(str(path.relative_to(UTILS_DIR)))
     dupes = {name: paths for name, paths in homes.items() if len(paths) > 1}
     assert not dupes, f"one home per function: {dupes}"
+
+
+VENDOR_MODULES = ("omni", "isaacsim", "carb", "warp", "physx", "PhysxSchema")
+
+
+def _vendor_module(module: str) -> bool:
+    return any(
+        module == root or module.startswith(f"{root}.") for root in VENDOR_MODULES
+    )
+
+
+def test_core_builds_on_openusd_only() -> None:
+    offenders = []
+    for path in sorted(BOWERBOT_DIR.rglob("*.py")):
+        rel = path.relative_to(BOWERBOT_DIR)
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Import):
+                offenders += [
+                    f"{rel}:{node.lineno} import {alias.name}"
+                    for alias in node.names if _vendor_module(alias.name)
+                ]
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                offenders += [
+                    f"{rel}:{node.lineno} from {node.module} import {alias.name}"
+                    for alias in node.names
+                    if _vendor_module(node.module) or alias.name in VENDOR_MODULES
+                ]
+            elif (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, str)
+                and node.value.startswith("Physx")
+            ):
+                offenders.append(f"{rel}:{node.lineno} {node.value!r}")
+    assert not offenders, f"vendor runtime or schema in the core: {offenders}"

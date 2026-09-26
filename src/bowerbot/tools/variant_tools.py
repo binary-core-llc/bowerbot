@@ -252,9 +252,10 @@ _VARIANT_NAME = {
 _SET_AS_DEFAULT = {
     "type": "boolean",
     "description": (
-        "If true, set this variant as the asset's ship default. "
-        "Every scene that references the asset sees this default "
-        "until it overrides per-instance."
+        "If true, make this variant the selected one: for an asset "
+        "variant, the asset's ship default (every placement sees it until "
+        "overridden per placement); for a scene variant, the carrier's "
+        "selection in scene.usda."
     ),
     "default": False,
 }
@@ -449,7 +450,8 @@ TOOLS: list[Tool] = [
         description=(
             "Author an attribute-override variant on an asset. Use for "
             "swapping ARBITRARY attribute values per variant: light color "
-            "or intensity, material sheen or roughness, anything not "
+            "or intensity, a material's base color or roughness (inputs its "
+            "shader already has; list_prim_attributes shows them), anything not "
             "covered by material-binding (add_asset_material_variant), payload "
             "swap (add_asset_geometry_variant), or activation toggle "
             "(add_asset_configuration_variant). Each entry in 'overrides' maps "
@@ -542,7 +544,7 @@ TOOLS: list[Tool] = [
             "Author a SCENE-LEVEL lighting selection variant on "
             "'/Scene/Lighting' by toggling which lights are active. The "
             "variant set lives INSIDE scene.usda. Use this for "
-            "light-TYPE swaps (DiskLight vs RectLight vs TubeLight) by "
+            "light-TYPE swaps (DiskLight vs RectLight vs CylinderLight) by "
             "pre-placing the alternative lights as siblings under "
             "/Scene/Lighting first, then having each variant flip the "
             "'active' flag so only one is on at a time. NEVER author "
@@ -623,16 +625,18 @@ TOOLS: list[Tool] = [
                 "fix_root_prim": {
                     "type": "boolean",
                     "description": (
-                        "If true, auto-fix the asset's root prim during "
-                        "intake (renames a single root to match the file)."
+                        "If true, wrap a non-Xform root prim under an Xform "
+                        "during intake (ASWF fix). Only with user "
+                        "confirmation."
                     ),
                     "default": False,
                 },
                 "fix_root_transforms": {
                     "type": "boolean",
                     "description": (
-                        "If true, bake non-identity root-prim transforms "
-                        "into descendants during intake."
+                        "If true, bake non-identity root transforms into "
+                        "vertex data during intake. Only with user "
+                        "confirmation."
                     ),
                     "default": False,
                 },

@@ -7,7 +7,9 @@ and solver-specific extensions.
 
 ## Supported applied-API schemas
 
-Four UsdPhysics applied APIs are in scope:
+Seven UsdPhysics applied APIs are in scope: the four below, plus
+`PhysicsArticulationRootAPI`, `PhysicsDriveAPI` and `PhysicsLimitAPI`
+(see Joints + articulations):
 
 - `PhysicsRigidBodyAPI` — declares a prim subtree as a rigid body.
 - `PhysicsMassAPI` — mass, density, center-of-mass overrides.
@@ -49,10 +51,13 @@ refuse violations at write time:
   `UsdGeom.Xformable`.
 
 `apply_physics_api` auto-resolves the right typed prim within a
-placement subtree and auto-ensures a `UsdPhysics.Scene`. Naming the
-placement Xform (e.g. `/Scene/Box_01`) is fine when the schema needs
-the Mesh underneath. The response reports both the resolved
-`prim_path` and the `requested_prim_path`.
+placement subtree. Naming the placement (e.g. `/Scene/Props/Box_01`) is
+fine when the schema needs the Mesh underneath. The response reports
+both the resolved `prim_path` and the `requested_prim_path`.
+Scene-scope writes, scene joints and collision groups create a
+PhysicsScene when the scene has none; asset-scope writes (the default
+for placements) do not, so call `setup_physics_scene` before authoring
+rigid bodies.
 
 Rigid bodies sit at the asset root; collisions go on each leaf
 Gprim individually. Do not apply CollisionAPI to a parent Xform and
@@ -61,8 +66,8 @@ expect it to propagate — it will not.
 ## Approximation rules (LOAD-BEARING — read before authoring collision)
 
 Raw triangle-mesh collision (`physics:approximation = "none"`) is
-**forbidden by PhysX and most solvers on dynamic or kinematic rigid
-bodies**. It is only valid for **static colliders** (a prim with
+**not supported on dynamic or kinematic rigid bodies by most physics
+engines**. It is only valid for **static colliders** (a prim with
 `PhysicsCollisionAPI` but no ancestor `PhysicsRigidBodyAPI`).
 
 Practical consequence: when authoring collision on a Mesh, you must
@@ -86,8 +91,11 @@ know whether that Mesh is under a `PhysicsRigidBodyAPI` subtree.
 **Workflow when the user says "add collision to this asset/object":**
 
 1. Call `get_physics_summary(prim_path)` (or check what you already
-   authored) to determine whether the target subtree carries
-   `PhysicsRigidBodyAPI`.
+   authored) to see whether the target subtree carries
+   `PhysicsRigidBodyAPI`. It reports only what BowerBot authored
+   (phy.usda and scene.usda); for physics shipped in the asset's own
+   files, call `list_prim_attributes` on `<placement>/asset` — a
+   `physics:rigidBodyEnabled` attribute means RigidBodyAPI is applied.
 2. For each leaf `UsdGeom.Mesh`, call `apply_physics_api` once:
    - `api_name="PhysicsMeshCollisionAPI"` when the body is dynamic /
      kinematic (this auto-applies `PhysicsCollisionAPI` and lets you
@@ -160,8 +168,8 @@ usdview); Quick Look will ignore it for now.
 ## Identifying the asset
 
 Every physics tool takes `prim_path`: a SCENE prim path of any
-placement (e.g. `/Scene/Models/Chair_01/asset/Body` for a leaf, or
-`/Scene/Models/Chair_01` for the asset root). For `scope="asset"`
+placement (e.g. `/Scene/Furniture/Chair_01/asset/Body` for a leaf, or
+`/Scene/Furniture/Chair_01` for the asset root). For `scope="asset"`
 BowerBot resolves the asset folder and translates the path into the
 asset's namespace before writing. For `scope="scene"` the path is
 used verbatim against the open scene. Use `list_scene` and
@@ -187,7 +195,9 @@ with it, e.g. `PhysicsCollisionAPI` for `PhysicsMeshCollisionAPI`, else
 null). **Always call this before `apply_physics_api`** so you know what
 to author.
 
-### `apply_physics_api(prim_path, api_name, attributes?, relationships?, scope?, clear_masking_overrides?, confirm_masked?)`
+### `apply_physics_api(prim_path, api_name, instance_name?, attributes?, relationships?, scope?, clear_masking_overrides?, confirm_masked?)`
+`instance_name` is required for PhysicsDriveAPI and PhysicsLimitAPI.
+
 Apply a UsdPhysics applied API and author its attributes /
 relationships. `attributes` keys must come from
 `list_physics_api_properties` for the same `api_name`; unknown names
@@ -210,7 +220,9 @@ approximation at the schema default `"none"`, which is invalid for
 dynamic bodies — the scene will not simulate correctly. See
 Approximation rules above.
 
-### `remove_physics_api(prim_path, api_name, scope?, clear_masking_overrides?, confirm_masked?)`
+### `remove_physics_api(prim_path, api_name, instance_name?, scope?, clear_masking_overrides?, confirm_masked?)`
+`instance_name` is required for PhysicsDriveAPI and PhysicsLimitAPI.
+
 Remove a UsdPhysics applied API and its opinions. Dropping
 PhysicsCollisionAPI cascades to PhysicsMeshCollisionAPI.
 
@@ -237,9 +249,10 @@ when the user wants to clean up stale or duplicate physics scenes.
 
 ### `get_physics_summary(prim_path)`
 Inspect every authored physics opinion on a prim and its
-descendants. Returns two sections: `asset` (phy.usda opinions, when
-the prim is inside an asset placement) and `scene` (scene.usda
-opinions on the same path). Use to check what's authored before
+descendants. Returns two sections: `asset` (every opinion in the
+asset's phy.usda — the whole asset, not only this prim's subtree; null
+when the prim is not in an asset placement) and `scene` (scene.usda
+physics opinions on this prim and its descendants). Use to check what's authored before
 making changes, or to debug why a placement behaves differently from
 the asset default.
 
@@ -261,10 +274,8 @@ includes/excludes of that collection. Filtering is declared via
 "only collide with these groups" via `invertFilteredGroups`.
 
 Group prims live at `/Scene/Physics/<name>` as **flat siblings of the
-PhysicsScene prim**, matching the Pixar and Omniverse canonical layout
-(`/World/PhysicsScene` next to `/World/DynamicGroup`). BowerBot uses
-`/Scene` as the scene root instead of `/World`, but the flat-sibling
-relationship to PhysicsScene is the same.
+PhysicsScene prim**, so every scene-level physics prim (scene, joints,
+groups) sits in one place.
 
 ### `create_or_update_collision_group(name, includes?, excludes?, filtered_groups?, invert_filter?, merge_group?)`
 Create a new `UsdPhysicsCollisionGroup` at `/Scene/Physics/<name>` or
@@ -276,9 +287,10 @@ tool to create them first otherwise).
 
 ### `remove_collision_group(name, force?)`
 Remove a collision group. Refuses if other groups reference it via
-`filteredGroups` unless `force=True`. On a forced removal BowerBot
-scrubs the now-dangling references and reports them in
-`scrubbed_dangling_refs`.
+`filteredGroups` unless `force=true`. Every removal drops the
+relationship targets that named the group and reports them in
+`scrubbed_dangling_refs`; `remove_physics_scene` and `remove_joint`
+report the same field.
 
 ### `list_collision_groups()`
 Return every group under `/Scene/Physics` (typed as
@@ -311,9 +323,10 @@ in the same subtree; the tool refuses.
 
 - **Asset-internal articulations** (robots, doors, characters): use
   `scope="asset"`. The joint lands inside the asset's `phy.usda` at
-  `/<AssetName>/joints/<name>` as a sibling of the body Xforms.
-  Matches the Isaac URDF importer convention. Every placement of
-  the asset inherits the articulation automatically.
+  `/<defaultPrim>/joints/<name>` (in the scene:
+  `<placement>/asset/joints/<name>`) as a sibling of the body Xforms.
+  The articulation ships with the asset, so every placement of the
+  asset inherits it automatically.
 - **Scene-spanning joints** (welding asset A to asset B, attaching
   a hook to a chain): use `scope="scene"` (default). The joint
   lands in `scene.usda` at `/Scene/Physics/<name>` as a flat
@@ -327,9 +340,9 @@ in the same subtree; the tool refuses.
   world" — legal per spec but only when there's a real body on the
   other side.
 - Convention is **body0 = parent, body1 = child** for articulated
-  chains. Spec is silent on this, but PhysX/Isaac follow it and
-  ignoring it inverts drive target-position signs (relevant once
-  drives ship in the follow-up).
+  chains. UsdPhysics does not require it, but a joint's position is
+  measured as body1 relative to body0, so swapping them inverts the
+  sign of drive targets.
 
 ### Joint drives (PhysicsDriveAPI)
 
@@ -341,7 +354,11 @@ To add a drive:
 1. Call `list_physics_api_properties(api_name="PhysicsDriveAPI",
    instance_name="angular")` to discover the attribute names.
 2. Call `apply_physics_api(prim_path=<joint>, api_name="PhysicsDriveAPI",
-   instance_name="angular", scope="scene", attributes={...})`.
+   instance_name="angular", attributes={...})`. Omit `scope`: a joint
+   under `/Scene/Physics` is written to scene.usda, an asset joint
+   (`<placement>/asset/joints/<name>`) to the asset's phy.usda;
+   `scope="scene"` on an asset joint makes a per-placement override
+   instead.
 
 Valid instance names per joint type:
 - **RevoluteJoint**: `angular`
@@ -387,11 +404,10 @@ list; those are set via the dedicated `body0` / `body1` params on
 #### `create_joint(joint_type, name, body0?, body1?, scope?, asset_anchor_prim_path?, attributes?)`
 Create a typed joint connecting two bodies. `scope="scene"`
 (default) writes to `/Scene/Physics/<name>`; `scope="asset"` writes
-to `/<AssetName>/joints/<name>` inside the asset's `phy.usda` (and
-translates body paths to asset-local namespace). For asset scope,
-either `body0` or `body1` (or `asset_anchor_prim_path`) must be a
-scene prim path inside an asset placement so BowerBot can locate
-the asset folder.
+to `/<defaultPrim>/joints/<name>` inside the asset's `phy.usda` (and
+translates body paths to asset-local namespace). For asset scope, give
+at least one body; every body you give must be inside one placement of
+the same asset, and BowerBot finds the asset folder from them.
 
 #### `remove_joint(scope?, prim_path?, name?, asset_anchor_prim_path?)`
 Remove a joint. scope="scene" + prim_path = drop a scene-level

@@ -22,7 +22,7 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.schemas.transforms import Vec3
-from bowerbot.utils.core.asset_folder import refuse_file_path, validate_asset_file
+from bowerbot.utils.core.asset_folder import validate_asset_file
 from bowerbot.utils.core.metrics import horizontal_axes
 from bowerbot.utils.core.naming import clean_group
 from bowerbot.utils.library_utils import find_asset
@@ -33,7 +33,13 @@ def resolve_layout_file(raw: str, project_dir: Path | None) -> Path:
     if project_dir is None:
         msg = "No project is open; a layout file lives in the project folder."
         raise ValueError(msg)
-    refuse_file_path(raw, None)
+    location = Path(raw).expanduser()
+    if location.is_absolute() or ".." in location.parts:
+        msg = (
+            f"layout_file '{raw}' is not a file path: put the layout JSON in the "
+            f"project folder and pass its location there (e.g. 'layouts/floor.json')."
+        )
+        raise ValueError(msg)
     path = project_dir / raw
     if not path.is_file():
         msg = (

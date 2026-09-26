@@ -31,8 +31,9 @@ Use these for general illumination and environment setup.
 ### Asset-level lights
 Lights that belong to a specific asset — a lamp's bulb, a candle's
 flame, recessed ceiling lights inside a building. These travel with
-the asset. Set `asset_prim_path` to the asset's prim path to create
-the light in the asset's `lgt.usda` file instead of the scene.
+the asset. Set `asset_prim_path` to the placement's path
+(`/Scene/<Group>/<Name>`, as `list_scene` reports it) to create the
+light in the asset's `lgt.usda` file instead of the scene.
 
 `DomeLight` (sky/HDRI environment) and `DistantLight` (the sun /
 infinite directional) are scene-level environment lights and **cannot**
@@ -47,8 +48,10 @@ parameter. Choose the one that matches what the user is asking for.
 
 #### `position_mode: "bounds_offset"` (default)
 Translate values are meters from the asset's bounding box, along the
-scene's axes. Use this for "above/below" placements relative to the
-whole asset — e.g. a bulb above a desk lamp.
+scene's axes as the asset stands unrotated; the light is shared by
+every placement, so on a turned placement it turns with the asset. Use
+this for "above/below" placements relative to the whole asset — e.g. a
+bulb above a desk lamp.
 
 - The up-axis value (`translate_y` in a Y-up scene, `translate_z` in a
   Z-up scene) is measured from the top surface: 1.0 → 1 m above the
@@ -56,7 +59,7 @@ whole asset — e.g. a bulb above a desk lamp.
   the bottom).
 - The other two values are measured from the bounding-box center:
   `translate_x: 0.3` → 0.3 m from the center toward +X.
-- If the up-axis value is omitted → 0.5 m above the top.
+- If `create_light` gets no up-axis value → 0.5 m above the top.
 
 Example: "add a point light to the desk lamp" in a Y-up scene →
 `asset_prim_path` pointing to the lamp, `position_mode:
@@ -65,14 +68,15 @@ Example: "add a point light to the desk lamp" in a Y-up scene →
 Z-up scene the same bulb is `translate_z: 0.5`.
 
 #### `position_mode: "absolute"`
-Translate values are **world-space** coordinates — the same
-coordinates returned by `list_scene` and `list_prim_children`.
-BowerBot handles the conversion from world-space to the asset's
-internal coordinate frame automatically.
+Translate values are **world-space** coordinates in scene units — the
+same coordinates returned by `list_scene` and `list_prim_children`.
+BowerBot converts them into the asset's own frame through the placement
+you pass as `asset_prim_path` (the placement itself, never a part inside
+it); other placements get the light at the same spot on their copy.
 
 Workflow for interior fixtures:
 1. Call `list_prim_children` on the container asset
-2. For each fixture prim, read its `bounds` (world-space meters)
+2. For each fixture prim, read its `bounds` (world coordinates in scene units)
 3. Compute the center: `((min.x + max.x)/2, ...)`
 4. Call `create_light` with `position_mode: "absolute"` and those
    center coordinates as `translate_x/y/z`
@@ -80,8 +84,9 @@ Workflow for interior fixtures:
 `bounds_offset` values are meters; `absolute` values are world
 coordinates in scene units, like everything `list_scene` reports.
 Spatial inputs (radius, width, height, length) inside `attributes` are
-in meters; BowerBot scales them to the asset's native units for asset
-lights.
+meters for an asset light (BowerBot scales them to the asset's native
+units) and scene units for a scene light (a 5 cm bulb in a centimeter
+scene is `inputs:radius: 5`).
 
 `create_light` returns the light's world `position` and, for asset
 lights, the composed scene `prim_path` (also restated in the
@@ -114,7 +119,8 @@ need exact names and defaults.
 
 ### Light rotation
 Directional lights (DiskLight, RectLight) emit along their local -Z.
-Rotations are about the scene's axes, for scene and asset lights alike.
+Rotations are about the scene's axes. An asset light's rotation applies
+as the asset stands unrotated, so it turns with each placement.
 Set rotation based on where the user wants the light to point:
 
 | Point the light | Y-up scene | Z-up scene |
@@ -178,9 +184,11 @@ override in `scene.usda` on one placement's composed light prim.
 
 - **Position / rotation / texture** → `update_light`. Pass only
   what changes: omitted translate / rotate axes keep their current
-  values. Handles xform-op management, `position_mode` math for
-  asset lights, and texture staging (asset `maps/` for an asset
-  RectLight, `<project>/textures/` for a scene DomeLight).
+  values. For an asset light `position_mode` is not remembered from
+  `create_light`: it defaults to `bounds_offset` on every call, so pass
+  `position_mode: "absolute"` again when you give world coordinates.
+  Handles xform-op management and texture staging (asset `maps/` for an
+  asset RectLight, `<project>/textures/` for a scene DomeLight).
 - **Any UsdLux input** (intensity, exposure, color, radius, angle,
   width, height, length, colorTemperature, diffuse, specular,
   normalize, etc.) → `set_prim_attribute` on the light prim with
@@ -188,17 +196,17 @@ override in `scene.usda` on one placement's composed light prim.
 - **Undo a previous tweak** → `set_prim_attribute(..., value=null)`.
 
 ### Removing lights
-Use `remove_light` to delete a light. Works for both scene-level
-and asset-level lights — provide the `prim_path`. It accepts lights
-only; to remove the whole `/Scene/Lighting` group or any other prim,
-use `remove_prim`.
+Use `remove_light` to delete a light: a scene light, or an asset light
+BowerBot added (a light that comes from the asset's own files is
+refused) — provide the `prim_path`. It accepts lights only; to remove
+the whole `/Scene/Lighting` group or any other prim, use `remove_prim`.
 
 If the result includes a `texture_file` field (DomeLight with HDRI),
 the texture file still exists in the project's `textures/` folder.
 Ask the user if they want to delete it. If they confirm, call
-`delete_project_texture` with the result's `texture_name` (just the
-file name, e.g. `studio.exr`); it deletes only the project's copy,
-never the user's library.
+`delete_project_texture(file_name=<the result's texture_name>)` (e.g.
+`studio.exr`); it deletes only the project's copy, never the user's
+library, and refuses while another file (e.g. a snapshot) still uses it.
 
 ### CRITICAL: Do NOT switch light levels
 If a light was created as an **asset light**, it MUST stay an asset
@@ -216,4 +224,5 @@ Use these as a sanity-check, not a substitute for the schema:
   stops). +1 doubles, -1 halves. Default 0.
 - Warm white `inputs:color` ≈ (1.0, 0.9, 0.8); cool ≈ (0.9, 0.95, 1.0).
 - Scene lights go in `/Scene/Lighting`.
-- Asset lights go in the asset's `lgt.usda` under `/{asset}/lgt/`.
+- Asset lights go in the asset's `lgt.usda` under `/<defaultPrim>/lgt/`
+  (in the scene: `<placement>/asset/lgt/<name>`).

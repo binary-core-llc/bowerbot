@@ -81,6 +81,19 @@ class Project:
         )
 
     @staticmethod
+    def new_path(projects_dir: Path, name: str) -> Path:
+        """Return the folder a new project *name* gets, refusing an unusable or taken name."""
+        safe_name = safe_project_name(name)
+        if not safe_name:
+            msg = f"Project name {name!r} has no letters or digits to name its folder."
+            raise ValueError(msg)
+        project_path = projects_dir / safe_name
+        if project_path.exists():
+            msg = f"Project already exists: {project_path}"
+            raise FileExistsError(msg)
+        return project_path
+
+    @staticmethod
     def create(
         projects_dir: Path,
         name: str,
@@ -89,21 +102,13 @@ class Project:
         meters_per_unit: float = 1.0,
     ) -> Project:
         """Create a new project directory and initialize it."""
-        safe_name = safe_project_name(name)
-        if not safe_name:
-            msg = f"Project name {name!r} has no letters or digits to name its folder."
-            raise ValueError(msg)
+        project_path = Project.new_path(projects_dir, name)
         if meters_per_unit <= 0:
             msg = (
                 f"meters_per_unit must be greater than 0 (1.0 = meters, "
                 f"0.01 = centimeters); got {meters_per_unit}."
             )
             raise ValueError(msg)
-
-        project_path = projects_dir / safe_name
-        if project_path.exists():
-            msg = f"Project already exists: {project_path}"
-            raise FileExistsError(msg)
 
         # Create directory structure
         project_path.mkdir(parents=True)

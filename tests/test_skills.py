@@ -7,6 +7,8 @@ import asyncio
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from bowerbot.config import Settings, SkillConfig
 from bowerbot.skills import (
     Skill,
@@ -95,6 +97,27 @@ class _MisconfiguredSkill(Skill):
 
     def validate_config(self) -> None:
         raise SkillConfigError("missing token")
+
+
+class _TokenRequiredSkill(Skill):
+    """Skill whose constructor requires its setting."""
+
+    name = "needs_token"
+    category = SkillCategory.ASSET_PROVIDER
+
+    def __init__(self, token: str) -> None:
+        self.token = token
+
+    def get_tools(self) -> list[Tool]:
+        return []
+
+    async def execute(
+        self, tool_name: str, params: dict, ctx: SkillContext,
+    ) -> ToolResult:
+        return ToolResult(success=True)
+
+    def validate_config(self) -> None:
+        return
 
 
 class _ContextEcho(Skill):
@@ -268,9 +291,7 @@ def test_registry_skips_skill_when_entry_point_name_mismatches(monkeypatch, capl
     )
 
 
-def test_registry_skips_skill_when_validate_config_raises(monkeypatch, caplog):
-    """A skill whose ``validate_config`` raises is skipped with a clear log."""
-    import logging
+def _install_broken_skill(monkeypatch) -> None:
     from importlib.metadata import EntryPoint
 
     from bowerbot.skills import registry as registry_mod
@@ -285,10 +306,121 @@ def test_registry_skips_skill_when_validate_config_raises(monkeypatch, caplog):
         lambda *, group: (fake_ep,) if group == "bowerbot.skills" else (),
     )
 
-    settings = Settings(skills={"broken": SkillConfig(enabled=True)})
+
+def test_registry_skips_skill_whose_settings_fail_validation(monkeypatch, caplog):
+    """Settings that fail ``validate_config`` skip the skill with a warning."""
+    import logging
+
+    _install_broken_skill(monkeypatch)
+    settings = Settings(
+        skills={"broken": SkillConfig(config={"token": "expired"})},
+    )
     registry = SkillRegistry()
     with caplog.at_level(logging.WARNING, logger="bowerbot.skills.registry"):
         registry.load_from_settings(settings)
 
     assert registry.skill_count == 0
-    assert any("missing token" in r.message for r in caplog.records)
+    assert registry.not_configured_skills == {}
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert any("missing token" in r.message for r in warnings)
+
+
+@pytest.mark.parametrize("skills", [{}, {"broken": SkillConfig()}])
+def test_registry_notes_an_unconfigured_skill_without_warning(
+    monkeypatch, caplog, skills,
+):
+    """A skill that needs settings nobody gave it is a quiet note, not a warning."""
+    import logging
+
+    _install_broken_skill(monkeypatch)
+    registry = SkillRegistry()
+    with caplog.at_level(logging.INFO, logger="bowerbot.skills.registry"):
+        registry.load_from_settings(Settings(skills=skills))
+
+    assert registry.skill_count == 0
+    assert registry.not_configured_skills == {"broken": "missing token"}
+    assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
+    assert any("not configured" in r.message for r in caplog.records)
+
+
+def test_registry_loads_a_skill_whose_block_omits_enabled(monkeypatch):
+    """A config block without ``enabled`` leaves the installed skill on."""
+    from importlib.metadata import EntryPoint
+
+    from bowerbot.skills import registry as registry_mod
+
+    fake_ep = EntryPoint(
+        name="external_provider",
+        value="tests.test_skills:_ExternalSkill",
+        group="bowerbot.skills",
+    )
+    monkeypatch.setattr(
+        registry_mod, "entry_points",
+        lambda *, group: (fake_ep,) if group == "bowerbot.skills" else (),
+    )
+
+    settings = Settings.model_validate({"skills": {"external_provider": {}}})
+    registry = SkillRegistry()
+    registry.load_from_settings(settings)
+
+    assert registry.enabled_skills == ["external_provider"]
+    assert registry.disabled_skills == []
+
+
+def test_registry_reports_a_skill_config_turns_off(monkeypatch):
+    """Only ``"enabled": false`` turns an installed skill off."""
+    from importlib.metadata import EntryPoint
+
+    from bowerbot.skills import registry as registry_mod
+
+    fake_ep = EntryPoint(
+        name="external_provider",
+        value="tests.test_skills:_ExternalSkill",
+        group="bowerbot.skills",
+    )
+    monkeypatch.setattr(
+        registry_mod, "entry_points",
+        lambda *, group: (fake_ep,) if group == "bowerbot.skills" else (),
+    )
+
+    settings = Settings.model_validate(
+        {"skills": {"external_provider": {"enabled": False}}},
+    )
+    registry = SkillRegistry()
+    registry.load_from_settings(settings)
+
+    assert registry.skill_count == 0
+    assert registry.disabled_skills == ["external_provider"]
+
+
+def test_registry_notes_a_skill_whose_constructor_needs_settings(monkeypatch, caplog):
+    """A constructor that requires a setting nobody gave is 'not configured', not a failure."""
+    import logging
+    from importlib.metadata import EntryPoint
+
+    from bowerbot.skills import registry as registry_mod
+
+    fake_ep = EntryPoint(
+        name="needs_token",
+        value="tests.test_skills:_TokenRequiredSkill",
+        group="bowerbot.skills",
+    )
+    monkeypatch.setattr(
+        registry_mod, "entry_points",
+        lambda *, group: (fake_ep,) if group == "bowerbot.skills" else (),
+    )
+
+    registry = SkillRegistry()
+    with caplog.at_level(logging.INFO, logger="bowerbot.skills.registry"):
+        registry.load_from_settings(Settings())
+
+    assert registry.skill_count == 0
+    assert "token" in registry.not_configured_skills["needs_token"]
+    assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
+
+    configured = Settings(
+        skills={"needs_token": SkillConfig(config={"token": "abc"})},
+    )
+    loaded = SkillRegistry()
+    loaded.load_from_settings(configured)
+    assert loaded.enabled_skills == ["needs_token"]

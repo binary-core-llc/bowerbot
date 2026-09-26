@@ -32,7 +32,13 @@ def create_empty_scene(
     if path.exists():
         return
 
-    stage = Usd.Stage.CreateNew(str(path))
+    held = Sdf.Layer.Find(str(path))
+    if held is not None:
+        # The file was deleted while USD still holds its layer: start that layer over.
+        held.Clear()
+        stage = Usd.Stage.Open(held)
+    else:
+        stage = Usd.Stage.CreateNew(str(path))
     UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
     UsdGeom.SetStageUpAxis(
         stage,
@@ -44,9 +50,11 @@ def create_empty_scene(
     stage.Save()
 
 
-def create_stage(path: str | Path) -> Usd.Stage:
-    """Create the scene at *path* (if missing) and return the open stage."""
-    create_empty_scene(path)
+def create_stage(
+    path: str | Path, *, up_axis: str, meters_per_unit: float,
+) -> Usd.Stage:
+    """Create the scene at *path* (if missing) in the given axis and units; return it open."""
+    create_empty_scene(path, up_axis=up_axis, meters_per_unit=meters_per_unit)
     return open_stage(path)
 
 

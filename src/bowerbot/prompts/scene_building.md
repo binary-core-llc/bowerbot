@@ -27,6 +27,9 @@ You have tools to create and manipulate OpenUSD scenes.
    - warnings should be surfaced; some are advisory (UsdSkel /
      UsdLux / UsdPhysics schema-specific best practices) and may be
      acceptable depending on the user's pipeline
+   - notes (severity `info`) need no fix. For example, "MaterialX
+     shaders not checked" only means this USD build cannot look up
+     MaterialX ids; BowerBot's hybrid materials are correct as authored
 9. Call `package_scene` to produce the final .usdz. Before the call,
    ASK the user where the .usdz will be consumed:
    - **Apple consumer paths** (iOS Files / Safari / iMessage AR Quick

@@ -12,6 +12,10 @@ class MaterialXShaders:
     STANDARD_SURFACE = "ND_standard_surface_surfaceshader"
     STANDARD_SURFACE_PRIM = "standard_surface"
     OUTPUT_QUALIFIER = "mtlx"
+    # Every MaterialX node definition id starts with this prefix.
+    NODE_DEF_PREFIX = "ND_"
+    # Sdr source type a USD build with MaterialX support registers.
+    SDR_SOURCE_TYPE = "mtlx"
 
 
 class PreviewSurfaceShader:

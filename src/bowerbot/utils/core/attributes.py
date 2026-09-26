@@ -61,13 +61,21 @@ def set_prim_attribute(
         return
 
     attr = prim.GetAttribute(attribute_name)
-    if not attr.IsValid():
-        attr = _create_attribute_on_demand(
-            prim, attribute_name, value, expected_type,
-        )
+    new_type = (
+        None if attr.IsValid()
+        else _new_attribute_type(prim, attribute_name, value, expected_type)
+    )
+    if expected_type is not None:
+        type_name = expected_type
+    elif new_type is not None:
+        type_name = new_type
+    else:
+        type_name = attr.GetTypeName()
 
-    type_name = expected_type if expected_type is not None else attr.GetTypeName()
+    # Convert before creating anything, so a bad value leaves the prim untouched.
     converted = json_to_usd(value, type_name)
+    if new_type is not None:
+        attr = _create_attribute(prim, attribute_name, new_type)
     try:
         attr.Set(converted)
     except (TypeError, RuntimeError):
@@ -78,30 +86,39 @@ def set_prim_attribute(
         raise ValueError(msg) from None
 
 
-def _create_attribute_on_demand(
+def _new_attribute_type(
     prim: Usd.Prim,
     attribute_name: str,
     value: object,
-    expected_type: Sdf.ValueTypeName | None = None,
+    expected_type: Sdf.ValueTypeName | None,
+) -> Sdf.ValueTypeName:
+    """The type a missing attribute is created with: xform op, expected, shader input, inferred."""
+    if attribute_name.startswith("xformOp:") and prim.IsA(UsdGeom.Xformable):
+        spec = _xform_op_spec(attribute_name[len("xformOp:"):].partition(":")[0])
+        if spec is not None:
+            return spec[2]
+
+    if expected_type is not None:
+        return expected_type
+
+    if attribute_name.startswith("inputs:") and prim.IsA(UsdShade.Shader):
+        base_name = attribute_name[len("inputs:"):]
+        sdr_type = _resolve_shader_input_type(UsdShade.Shader(prim), base_name)
+        if sdr_type is not None:
+            return sdr_type
+
+    return infer_sdf_type(value)
+
+
+def _create_attribute(
+    prim: Usd.Prim, attribute_name: str, type_name: Sdf.ValueTypeName,
 ) -> Usd.Attribute:
-    """Create an attribute; xformOp:* routes through Xformable so xformOpOrder updates."""
+    """Create a missing attribute; xformOp:* goes through Xformable so xformOpOrder updates."""
     if attribute_name.startswith("xformOp:") and prim.IsA(UsdGeom.Xformable):
         op = _add_xform_op(UsdGeom.Xformable(prim), attribute_name)
         if op is not None:
             return op.GetAttr()
-
-    if expected_type is not None:
-        return prim.CreateAttribute(attribute_name, expected_type, custom=False)
-
-    if attribute_name.startswith("inputs:") and prim.IsA(UsdShade.Shader):
-        shader = UsdShade.Shader(prim)
-        base_name = attribute_name[len("inputs:"):]
-        sdr_type = _resolve_shader_input_type(shader, base_name)
-        if sdr_type is not None:
-            return shader.CreateInput(base_name, sdr_type).GetAttr()
-
-    inferred = infer_sdf_type(value)
-    return prim.CreateAttribute(attribute_name, inferred, custom=False)
+    return prim.CreateAttribute(attribute_name, type_name, custom=False)
 
 
 def _add_xform_op(
@@ -113,14 +130,14 @@ def _add_xform_op(
     spec = _xform_op_spec(base)
     if spec is None:
         return None
-    op_type, value_type = spec
+    op_type, precision, value_type = spec
     current_order = xformable.GetXformOpOrderAttr().Get() or ()
     if attribute_name in current_order:
         attr = xformable.GetPrim().CreateAttribute(
             attribute_name, value_type, custom=False,
         )
         return UsdGeom.XformOp(attr)
-    return xformable.AddXformOp(op_type, opSuffix=namespace or "")
+    return xformable.AddXformOp(op_type, precision, opSuffix=namespace or "")
 
 
 def _resolve_shader_input_type(
@@ -140,33 +157,40 @@ def _resolve_shader_input_type(
     return sdr_input.GetTypeAsSdfType().GetSdfType()
 
 
-def _xform_op_spec(base: str) -> tuple[UsdGeom.XformOp.Type, Sdf.ValueTypeName] | None:
-    """Op type and value type for an ``xformOp:<base>`` attribute, or ``None``."""
+def _xform_op_spec(
+    base: str,
+) -> tuple[UsdGeom.XformOp.Type, UsdGeom.XformOp.Precision, Sdf.ValueTypeName] | None:
+    """Op type, precision and value type for an ``xformOp:<base>`` attribute, or ``None``.
+
+    Precisions are USD's per-op defaults, the ones BowerBot authors everywhere
+    else: double for translate and transform, float for rotate, scale and orient.
+    """
+    op, types = UsdGeom.XformOp, Sdf.ValueTypeNames
     match base:
         case "translate":
-            return UsdGeom.XformOp.TypeTranslate, Sdf.ValueTypeNames.Double3
+            return op.TypeTranslate, op.PrecisionDouble, types.Double3
         case "rotateX":
-            return UsdGeom.XformOp.TypeRotateX, Sdf.ValueTypeNames.Float
+            return op.TypeRotateX, op.PrecisionFloat, types.Float
         case "rotateY":
-            return UsdGeom.XformOp.TypeRotateY, Sdf.ValueTypeNames.Float
+            return op.TypeRotateY, op.PrecisionFloat, types.Float
         case "rotateZ":
-            return UsdGeom.XformOp.TypeRotateZ, Sdf.ValueTypeNames.Float
+            return op.TypeRotateZ, op.PrecisionFloat, types.Float
         case "rotateXYZ":
-            return UsdGeom.XformOp.TypeRotateXYZ, Sdf.ValueTypeNames.Float3
+            return op.TypeRotateXYZ, op.PrecisionFloat, types.Float3
         case "rotateXZY":
-            return UsdGeom.XformOp.TypeRotateXZY, Sdf.ValueTypeNames.Float3
+            return op.TypeRotateXZY, op.PrecisionFloat, types.Float3
         case "rotateYXZ":
-            return UsdGeom.XformOp.TypeRotateYXZ, Sdf.ValueTypeNames.Float3
+            return op.TypeRotateYXZ, op.PrecisionFloat, types.Float3
         case "rotateYZX":
-            return UsdGeom.XformOp.TypeRotateYZX, Sdf.ValueTypeNames.Float3
+            return op.TypeRotateYZX, op.PrecisionFloat, types.Float3
         case "rotateZXY":
-            return UsdGeom.XformOp.TypeRotateZXY, Sdf.ValueTypeNames.Float3
+            return op.TypeRotateZXY, op.PrecisionFloat, types.Float3
         case "rotateZYX":
-            return UsdGeom.XformOp.TypeRotateZYX, Sdf.ValueTypeNames.Float3
+            return op.TypeRotateZYX, op.PrecisionFloat, types.Float3
         case "scale":
-            return UsdGeom.XformOp.TypeScale, Sdf.ValueTypeNames.Float3
+            return op.TypeScale, op.PrecisionFloat, types.Float3
         case "orient":
-            return UsdGeom.XformOp.TypeOrient, Sdf.ValueTypeNames.Quatf
+            return op.TypeOrient, op.PrecisionFloat, types.Quatf
         case "transform":
-            return UsdGeom.XformOp.TypeTransform, Sdf.ValueTypeNames.Matrix4d
+            return op.TypeTransform, op.PrecisionDouble, types.Matrix4d
     return None

@@ -21,6 +21,9 @@ def usd_to_json(value: object) -> object:
         return value
     if isinstance(value, Sdf.AssetPath):
         return value.path or str(value)
+    if isinstance(value, Gf.Quatd | Gf.Quatf | Gf.Quath):
+        # Real part first, as USD writes quaternions: [w, x, y, z].
+        return [value.GetReal(), *value.GetImaginary()]
     # Gf vectors and matrices have no __iter__; iter() walks them by index.
     if (
         hasattr(value, "__len__")
@@ -28,9 +31,7 @@ def usd_to_json(value: object) -> object:
         and not isinstance(value, bytes)
     ):
         items = list(iter(value))
-        if items and hasattr(items[0], "__len__") and not isinstance(
-            items[0], str | bytes,
-        ):
+        if items and isinstance(usd_to_json(items[0]), list):
             return [usd_to_json(v) for v in items]
         try:
             return [float(c) for c in items]
@@ -41,6 +42,19 @@ def usd_to_json(value: object) -> object:
 
 def json_to_usd(value: object, type_name: Sdf.ValueTypeName) -> object:
     """Cast a JSON-shaped value to match a USD attribute's declared type."""
+    if type_name.isArray:
+        items = _decode_json_string(value, type_name)
+        if not isinstance(items, list | tuple):
+            msg = f"value {value!r} does not match {type_name}; pass a list, one entry per element."
+            raise ValueError(msg)
+        elements = []
+        for index, item in enumerate(items):
+            try:
+                elements.append(json_to_usd(item, type_name.scalarType))
+            except ValueError as exc:
+                raise ValueError(f"element {index} of {type_name}: {exc}") from None
+        return elements
+
     raw = str(type_name).lower()
 
     if raw in ("token", "string"):
@@ -55,15 +69,7 @@ def json_to_usd(value: object, type_name: Sdf.ValueTypeName) -> object:
         return int(_number(value, type_name))
     if raw == "bool":
         return _boolean(value, type_name)
-    if raw.startswith(("color3", "float3", "vector3f", "normal3f", "point3f")):
-        return Gf.Vec3f(*_number_seq(value, 3, type_name))
-    if raw.startswith(("double3", "vector3d", "normal3d", "point3d")):
-        return Gf.Vec3d(*_number_seq(value, 3, type_name))
-    if raw.startswith(("color4", "float4")):
-        return Gf.Vec4f(*_number_seq(value, 4, type_name))
-    if raw.startswith("float2"):
-        return Gf.Vec2f(*_number_seq(value, 2, type_name))
-    return value
+    return _gf_value(value, type_name)
 
 
 def infer_sdf_type(value: object) -> Sdf.ValueTypeName:
@@ -77,6 +83,8 @@ def infer_sdf_type(value: object) -> Sdf.ValueTypeName:
     if isinstance(value, str):
         return Sdf.ValueTypeNames.Token
     if isinstance(value, list | tuple):
+        if value and isinstance(value[0], list | tuple):
+            return infer_sdf_type(value[0]).arrayType
         n = len(value)
         if n == 2:
             return Sdf.ValueTypeNames.Float2
@@ -123,6 +131,26 @@ def unpack_vec3(
         float(params.get(ky, 0.0)),
         float(params.get(kz, 0.0)),
     )
+
+
+def _gf_value(value: object, type_name: Sdf.ValueTypeName) -> object:
+    """Build the Gf quaternion, matrix or vector *type_name* holds; other values pass through."""
+    default = type_name.defaultValue
+    if isinstance(default, Gf.Quatd | Gf.Quatf | Gf.Quath):
+        w, x, y, z = _number_seq(value, 4, type_name)
+        return type(default)(w, x, y, z)
+    if isinstance(default, Gf.Matrix2d | Gf.Matrix3d | Gf.Matrix4d):
+        size = len(default)
+        if not isinstance(value, list | tuple) or len(value) != size:
+            msg = f"value {value!r} does not match {type_name}; pass {size} rows of {size} numbers."
+            raise ValueError(msg)
+        return type(default)(*(n for row in value for n in _number_seq(row, size, type_name)))
+    if hasattr(default, "__len__") and hasattr(default, "__getitem__"):
+        numbers = _number_seq(value, len(default), type_name)
+        if isinstance(default[0], int):
+            return type(default)(*(int(n) for n in numbers))
+        return type(default)(*numbers)
+    return value
 
 
 def _decode_json_string(value: object, what: object) -> object:

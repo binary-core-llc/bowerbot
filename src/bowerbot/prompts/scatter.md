@@ -54,7 +54,12 @@ scattered assets like any other.
   PointInstancer prim at `/Scene/<group>/<name>` in scene.usda. Its
   prototypes are placement wrappers referencing the assets; the
   instancer repeats them. The whole scatter moves or is removed as one
-  prim (`move_asset`, `remove_prim`); individual pieces cannot be edited.
+  prim (`move_asset`, `remove_prim`). Individual pieces are entries in
+  its arrays, one per piece: to move or turn one, read `positions` or
+  `orientations` with `list_prim_attributes`, change that piece's entry,
+  and write the whole array back with `set_prim_attribute`
+  (orientations are `[w, x, y, z]`); to hide one, add its index to
+  `invisibleIds`.
 - `placements` (default for `scatter_along_path`, max 10,000): a group
   `/Scene/<group>/<name>` holding one normal placement per piece, each
   editable with `move_asset`, materials, variants, `remove_prim`.

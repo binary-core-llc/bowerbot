@@ -194,6 +194,34 @@ def _pivot_depths(project: Project, prim_path: str, ground: str) -> np.ndarray:
 # ── scatter_on_surface ──
 
 
+def test_one_piece_moves_through_the_positions_array():
+    """Reading positions and writing them back with one entry changed moves only that piece."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, project, lib = _setup(tmp)
+        _box_asset(lib / "ground.usda", (10.0, 0.1, 10.0))
+        _box_asset(lib / "stone.usda", (0.2, 0.2, 0.2))
+        ground = _place(state, "ground.usda", "Ground")
+        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+            "name": "Stones", "group": "Nature", "assets": [{"asset": "stone.usda"}],
+            "surfaces": [ground], "count": 5, "seed": 1,
+        }))
+        assert result.success, result.error
+        stones = "/Scene/Nature/Stones"
+        before = [m.ExtractTranslation() for m in _instance_matrices(project, stones)]
+
+        listed = asyncio.run(exec_tool(state, "list_prim_attributes", {"prim_path": stones}))
+        positions = next(a["value"] for a in listed.data["attributes"] if a["name"] == "positions")
+        positions[2][0] += 3.0
+        moved = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": stones, "attribute_name": "positions", "value": positions,
+        }))
+        assert moved.success, moved.error
+
+        after = [m.ExtractTranslation() for m in _instance_matrices(project, stones)]
+        assert abs(after[2][0] - before[2][0] - 3.0) < 1e-4
+        assert all((after[i] - before[i]).GetLength() < 1e-6 for i in (0, 1, 3, 4))
+
+
 def test_pieces_rest_on_uneven_ground_aligned_to_the_surface():
     """Each piece's base sits on the terrain with its up axis along the ground under it."""
     with tempfile.TemporaryDirectory() as tmp:

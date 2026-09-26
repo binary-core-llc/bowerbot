@@ -10,6 +10,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from pxr import Sdf, Tf
+
 from bowerbot.schemas import (
     AssetFormat,
     ASWFLayerNames,
@@ -32,8 +34,39 @@ def prepare_asset(
     fix_root_prim: bool = False,
     fix_root_transforms: bool = False,
 ) -> IntakeReport:
-    """Route an input file to USDZ / library-package / loose-file intake."""
+    """Bring *asset_path* into *assets_dir* as an ASWF asset, all or nothing.
+
+    If intake fails, every ``assets/`` entry this call added is removed;
+    entries that already existed are left alone.
+    """
     validate_asset_file(asset_path)
+    existing = _entries(assets_dir)
+    try:
+        return _route_intake(
+            asset_path, assets_dir,
+            library_dir=library_dir,
+            fix_root_prim=fix_root_prim,
+            fix_root_transforms=fix_root_transforms,
+        )
+    except Exception as exc:
+        for entry in _entries(assets_dir) - existing:
+            _remove_entry(entry)
+        if isinstance(exc, Tf.ErrorException):
+            reason = "; ".join(error.commentary.strip() for error in exc.args)
+            msg = f"Could not import {asset_path.name}: {reason}"
+            raise ValueError(msg) from exc
+        raise
+
+
+def _route_intake(
+    asset_path: Path,
+    assets_dir: Path,
+    *,
+    library_dir: Path | None,
+    fix_root_prim: bool,
+    fix_root_transforms: bool,
+) -> IntakeReport:
+    """Route an input file to USDZ / library-package / loose-file intake."""
     if asset_path.suffix.lower() == AssetFormat.USDZ:
         return intake_usdz(asset_path, assets_dir)
 
@@ -88,21 +121,16 @@ def _validate_intake(
     fix_root_prim: bool,
     fix_root_transforms: bool,
 ) -> None:
-    """Validate the intaken asset's geo.usda; rollback target on failure."""
+    """Validate the intaken asset's geo.usda (prepare_asset rolls back on failure)."""
     target_folder = assets_dir / report.asset_folder_name
     geo_path = target_folder / ASWFLayerNames.GEO
     if not geo_path.exists():
         return
-    try:
-        ensure_aswf_compliance(
-            geo_path,
-            fix_root_prim=fix_root_prim,
-            fix_root_transforms=fix_root_transforms,
-        )
-    except (ValueError, RuntimeError):
-        if target_folder.exists():
-            shutil.rmtree(target_folder, ignore_errors=True)
-        raise
+    ensure_aswf_compliance(
+        geo_path,
+        fix_root_prim=fix_root_prim,
+        fix_root_transforms=fix_root_transforms,
+    )
 
     canonical_root = target_folder / report.root_canonical_name
     if canonical_root.exists():
@@ -116,7 +144,10 @@ def _validate_intake(
 
 
 def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
-    """Copy a USDZ into *assets_dir* as-is."""
+    """Copy a USDZ into *assets_dir* as-is, once USD can read it."""
+    if Sdf.Layer.FindOrOpen(str(asset_path)) is None:
+        msg = f"Could not import {asset_path.name}: USD cannot read it as a USDZ package."
+        raise ValueError(msg)
     local_copy = assets_dir / asset_path.name
     copied = 0
     if not local_copy.exists():
@@ -130,6 +161,19 @@ def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
         was_renamed=False,
         files_copied=copied,
     )
+
+
+def _entries(assets_dir: Path) -> set[Path]:
+    """The files and folders directly under *assets_dir*."""
+    return set(assets_dir.iterdir()) if assets_dir.is_dir() else set()
+
+
+def _remove_entry(entry: Path) -> None:
+    """Remove one ``assets/`` entry: an asset folder, or a single ``.usdz`` file."""
+    if entry.is_dir() and not entry.is_symlink():
+        shutil.rmtree(entry)
+    else:
+        entry.unlink()
 
 
 def intake_summary(report: IntakeReport) -> dict[str, Any]:

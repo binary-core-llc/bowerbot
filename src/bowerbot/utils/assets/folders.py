@@ -35,9 +35,6 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
     to ``<folder>.usda`` and sibling references are rewritten.
     """
     detection = detect_folder_root(source_folder)
-    if detection.outcome is DetectionOutcome.EMPTY:
-        msg = f"No USD files found in {source_folder}"
-        raise ValueError(msg)
     if detection.outcome is DetectionOutcome.AMBIGUOUS:
         names = ", ".join(Path(c).name for c in detection.candidates)
         msg = (
@@ -47,10 +44,13 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
             f"individually."
         )
         raise ValueError(msg)
+    if detection.root is None:
+        msg = f"No USD files found in {source_folder}"
+        raise ValueError(msg)
 
     source_folder = source_folder.resolve()
     project_assets_dir = project_assets_dir.resolve()
-    source_root = Path(detection.root)  # type: ignore[arg-type]
+    source_root = Path(detection.root)
     target_folder = project_assets_dir / source_folder.name
 
     if target_folder.exists():
@@ -76,28 +76,24 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
 
     target_folder.mkdir(parents=True, exist_ok=False)
     files_copied = 0
-    try:
-        for src, dst in path_map.items():
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
-            files_copied += 1
+    for src, dst in path_map.items():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        files_copied += 1
 
-        _rewrite_asset_paths(layer_targets, path_map)
+    _rewrite_asset_paths(layer_targets, path_map)
 
-        canonical_root = target_folder / f"{target_folder.name}.usda"
-        copied_root = path_map[source_root.resolve()]
-        was_renamed = _canonicalize_root(
-            copied_root=copied_root,
-            canonical_root=canonical_root,
-            sibling_layer_targets=[p for p in layer_targets if p != copied_root],
-        )
+    canonical_root = target_folder / f"{target_folder.name}.usda"
+    copied_root = path_map[source_root.resolve()]
+    was_renamed = _canonicalize_root(
+        copied_root=copied_root,
+        canonical_root=canonical_root,
+        sibling_layer_targets=[p for p in layer_targets if p != copied_root],
+    )
 
-        normalize_root_metadata(canonical_root, target_folder.name)
-        rebuild_root_references(target_folder)
-        warnings = _validate_self_contained(canonical_root, target_folder)
-    except Exception:
-        shutil.rmtree(target_folder, ignore_errors=True)
-        raise
+    normalize_root_metadata(canonical_root, target_folder.name)
+    rebuild_root_references(target_folder)
+    warnings = _validate_self_contained(canonical_root, target_folder)
 
     logger.info(
         "Intaked %s -> %s (%d file(s), %d localized)",

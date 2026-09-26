@@ -96,6 +96,35 @@ def test_add_asset_material_variant_two_variants():
             assert r.success, r.error
 
 
+def test_variant_set_and_variant_names_are_cleaned():
+    """Set and variant names are cleaned on create, and the same spelling finds
+    them again on select."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        placed = _place(tmp_path, state)
+        mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
+        mat = _make_material(state, mesh_path, "oak")
+
+        r = asyncio.run(exec_tool(state, "add_asset_material_variant", {
+            "prim_path": placed.data["prim_path"],
+            "variant_set": "Wood Finish", "variant_name": "light oak",
+            "bindings": {mesh_path: mat.data["material"]},
+        }))
+        assert r.success, r.error
+
+        r = asyncio.run(exec_tool(state, "select_asset_variant", {
+            "prim_path": placed.data["prim_path"],
+            "variant_set": "Wood Finish", "variant_name": "light oak",
+        }))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        variant_set = stage.GetPrimAtPath(f"{placed.data['prim_path']}/asset").GetVariantSet(
+            "Wood_Finish",
+        )
+        assert variant_set.GetVariantNames() == ["light_oak"]
+        assert variant_set.GetVariantSelection() == "light_oak"
+
+
 # ── add_asset_configuration_variant ──
 
 

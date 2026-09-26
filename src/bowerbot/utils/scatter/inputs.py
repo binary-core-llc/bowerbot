@@ -18,20 +18,14 @@ from bowerbot.schemas import (
 from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils import layout_utils
 from bowerbot.utils.core.bounds import prim_world_box
-from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.naming import clean_prim_name
 from bowerbot.utils.core.values import to_vec3
 
 
 def scatter_prim_path(group: str, name: str) -> str:
     """``/Scene/<group>/<name>`` for a scatter, validating both parts."""
     group_path = layout_utils.scene_group_path(group)
-    prim_name = safe_prim_name(name)
-    if not is_valid_prim_name(prim_name):
-        msg = (
-            f"name '{name}' is not a valid USD prim name (letters, digits, "
-            "underscores; must start with a letter or underscore)."
-        )
-        raise ValueError(msg)
+    prim_name = clean_prim_name(name, "Scatter")
     return f"{group_path}/{prim_name}"
 
 

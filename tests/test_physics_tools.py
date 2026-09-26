@@ -339,6 +339,38 @@ def test_create_fixed_joint_scene_scope():
         assert "prim_path" in r.data
 
 
+def test_joint_and_collision_group_names_are_cleaned():
+    """Joint and collision-group names become valid prim names, not refusals."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        p1 = _place(tmp_path, state, "a")
+        p2 = _place(tmp_path, state, "b")
+        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        for p in (p1, p2):
+            asyncio.run(exec_tool(state, "apply_physics_api", {
+                "prim_path": p.data["prim_path"],
+                "api_name": "PhysicsRigidBodyAPI", "scope": "scene",
+            }))
+
+        joint = asyncio.run(exec_tool(state, "create_joint", {
+            "joint_type": "PhysicsFixedJoint", "name": "front-left weld",
+            "body0": p1.data["prim_path"], "body1": p2.data["prim_path"],
+            "scope": "scene",
+        }))
+        assert joint.success, joint.error
+        assert joint.data["prim_path"].endswith("/front_left_weld")
+
+        group = asyncio.run(exec_tool(state, "create_or_update_collision_group", {
+            "name": "1st Floor", "includes": [p1.data["prim_path"]],
+        }))
+        assert group.success, group.error
+        assert group.data["prim_path"].endswith("/_1st_Floor")
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(joint.data["prim_path"]).IsValid()
+        assert stage.GetPrimAtPath(group.data["prim_path"]).IsValid()
+
+
 def test_list_joints_after_create():
     """Lists joints after creation."""
     with tempfile.TemporaryDirectory() as tmp:

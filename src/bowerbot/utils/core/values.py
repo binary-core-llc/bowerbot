@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 from pxr import Gf, Sdf
 
-from bowerbot.schemas.transforms import Vec3
+from bowerbot.schemas.transforms import PartialVec3, Vec3
 
 
 def usd_to_json(value: object) -> object:
@@ -127,20 +127,32 @@ def parse_vec3(value: object, name: str = "vector") -> Vec3 | None:
     return to_vec3(value, name)
 
 
+def read_axes(params: dict[str, Any], kx: str, ky: str, kz: str) -> PartialVec3:
+    """Read three optional number keys; a missing (or null) key reads as ``None``."""
+    x, y, z = (
+        None if params.get(k) is None else coerce_number(params[k], k)
+        for k in (kx, ky, kz)
+    )
+    return x, y, z
+
+
 def unpack_vec3(
     params: dict[str, Any],
     kx: str,
     ky: str,
     kz: str,
+    current: Vec3 = (0.0, 0.0, 0.0),
 ) -> Vec3 | None:
-    """Read a triple of optional keys; return ``None`` if all are missing."""
-    if all(params.get(k) is None for k in (kx, ky, kz)):
+    """Read a triple of optional keys; ``None`` if all are missing.
+
+    A missing key takes its axis from *current*, so an update keeps the axes
+    it doesn't name.
+    """
+    axes = read_axes(params, kx, ky, kz)
+    if all(a is None for a in axes):
         return None
-    return (
-        float(params.get(kx, 0.0)),
-        float(params.get(ky, 0.0)),
-        float(params.get(kz, 0.0)),
-    )
+    x, y, z = (cur if a is None else a for a, cur in zip(axes, current, strict=True))
+    return x, y, z
 
 
 def _gf_value(value: object, type_name: Sdf.ValueTypeName) -> object:

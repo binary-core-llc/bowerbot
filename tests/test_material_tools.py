@@ -82,6 +82,19 @@ def test_create_material_metallic():
         assert r.success, r.error
 
 
+def test_create_material_cleans_the_name():
+    """A material name with spaces becomes a valid prim name."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        placed = _place(tmp_path, state)
+        r = asyncio.run(exec_tool(state, "create_material", {
+            "prim_path": f"{placed.data['prim_path']}/asset/Mesh",
+            "material_name": "Red Paint",
+        }))
+        assert r.success, r.error
+        assert r.data["material"].endswith("/Red_Paint")
+
+
 def test_create_material_missing_stage():
     """Fails when no stage is open."""
     with tempfile.TemporaryDirectory() as tmp:

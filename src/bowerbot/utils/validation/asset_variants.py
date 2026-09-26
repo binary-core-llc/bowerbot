@@ -11,7 +11,7 @@ from pxr import Sdf
 
 from bowerbot.schemas import ASWFLayerNames, Severity, ValidationIssue
 from bowerbot.utils.core.asset_folder import find_root_file, resolve_default_prim_name
-from bowerbot.utils.core.naming import is_valid_variant_name
+from bowerbot.utils.core.naming import is_valid_prim_name, is_valid_variant_name
 from bowerbot.utils.variants.inspection import get_variant_summary
 
 
@@ -76,12 +76,13 @@ def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
 
     summary = get_variant_summary(asset_dir)
     for vset in summary.variant_sets:
-        if not is_valid_variant_name(vset.name):
+        if not is_valid_prim_name(vset.name):
             issues.append(ValidationIssue(
                 severity=Severity.ERROR,
                 message=(
                     f"Invalid variant set name {vset.name!r} in "
-                    f"{asset_dir.name} (no whitespace or path separators)."
+                    f"{asset_dir.name} (letters, digits and underscores, not "
+                    f"starting with a digit)."
                 ),
             ))
         for v in vset.variants:

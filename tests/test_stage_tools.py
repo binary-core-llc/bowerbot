@@ -4,6 +4,8 @@
 """Tool-layer tests for stage: create, list, rename, remove, move, attrs, snapshots, grid."""
 
 import asyncio
+import re
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -133,6 +135,46 @@ def test_rename_prim_invalid_path():
         assert not r.success
 
 
+def test_rename_prim_cleans_an_invalid_name():
+    """An invalid new name is cleaned, never a path that deletes the prim."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        old_path = _place(tmp_path, state).data["prim_path"]
+
+        r = asyncio.run(exec_tool(state, "rename_prim", {
+            "old_path": old_path, "new_path": "/Scene/Living Room/2nd Table",
+        }))
+        assert r.success, r.error
+        assert r.data["new_path"] == "/Scene/Living_Room/_2nd_Table"
+
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath("/Scene/Living_Room/_2nd_Table/asset").IsValid()
+        assert not stage.GetPrimAtPath(old_path).IsValid()
+
+
+def test_rename_prim_refusals_leave_the_scene_untouched():
+    """The scene root, targets outside /Scene or taken, and moves into the
+    prim's own subtree are refused before anything is edited."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        table = _place(tmp_path, state).data["prim_path"]
+        chair = _place(tmp_path, state, "chair").data["prim_path"]
+        before = project.scene_path.read_text()
+
+        for old, new, why in (
+            ("/Scene", "/Scene2", "scene's root"),
+            (table, "/Elsewhere/Table", "outside /Scene"),
+            (table, chair, "already exists"),
+            ("/Scene/Furniture", "/Scene/Furniture/Inner/Deep", "inside itself"),
+        ):
+            r = asyncio.run(exec_tool(state, "rename_prim", {
+                "old_path": old, "new_path": new,
+            }))
+            assert not r.success, (old, new)
+            assert why in r.error
+        assert project.scene_path.read_text() == before
+
+
 # ── remove_prim ──
 
 
@@ -193,6 +235,46 @@ def test_remove_prim_invalid_path():
             "prim_path": "/Scene/Ghost",
         }))
         assert not r.success
+
+
+def test_remove_scene_root_clears_it_and_keeps_the_root():
+    """Removing /Scene empties the scene but keeps a valid root to build on."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _place(tmp_path, state)
+        asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "SphereLight", "light_name": "Key",
+        }))
+
+        r = asyncio.run(exec_tool(state, "remove_prim", {"prim_path": "/Scene"}))
+        assert r.success, r.error
+        stage = Usd.Stage.Open(str(project.scene_path))
+        root = stage.GetPrimAtPath("/Scene")
+        assert root.IsValid()
+        assert list(root.GetChildren()) == []
+        assert stage.GetDefaultPrim().GetPath() == root.GetPath()
+        assert Usd.ModelAPI(root).GetKind() == "assembly"
+
+        placed = _place(tmp_path, state, "chair")
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(placed.data["prim_path"]).IsValid()
+        assert Usd.ModelAPI(stage.GetPrimAtPath("/Scene")).GetKind() == "assembly"
+
+
+def test_placing_after_a_removal_takes_a_free_name():
+    """Removing a placement never makes the next placement reuse a live name."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        first = _place(tmp_path, state).data["prim_path"]
+        second = _place(tmp_path, state).data["prim_path"]
+        asyncio.run(exec_tool(state, "remove_prim", {"prim_path": first}))
+
+        third = _place(tmp_path, state)
+        assert third.success, third.error
+        assert third.data["prim_path"] not in (first, second)
+        stage = Usd.Stage.Open(str(project.scene_path))
+        assert stage.GetPrimAtPath(second).IsValid()
+        assert stage.GetPrimAtPath(third.data["prim_path"]).IsValid()
 
 
 # ── move_asset ──
@@ -445,6 +527,31 @@ def test_snapshot_lifecycle():
         assert not (project.path / "v1.usda").exists()
 
 
+def test_snapshot_keeps_asset_paths_relative():
+    """A snapshot's references and textures stay relative, so it still opens
+    after the project folder moves."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        _place(tmp_path, state)
+        (tmp_path / "hdri").mkdir()
+        (tmp_path / "hdri" / "sky.exr").write_bytes(b"v/1\x01" + b"0" * 64)
+        r = asyncio.run(exec_tool(state, "create_light", {
+            "light_type": "DomeLight", "light_name": "Sky", "texture": "hdri/sky.exr",
+        }))
+        assert r.success, r.error
+
+        r = asyncio.run(exec_tool(state, "save_scene_snapshot", {"name": "v1"}))
+        assert r.success, r.error
+        moved = tmp_path / "moved"
+        shutil.copytree(project.path, moved)
+        text = (moved / "v1.usda").read_text()
+        paths = re.findall(r"@([^@]+)@", text)
+        assert {Path(p).name for p in paths} >= {"table.usda", "sky.exr"}
+        for path in paths:
+            assert path.startswith("./"), path
+            assert (moved / path).exists(), path
+
+
 def test_delete_snapshot_nonexistent():
     """Fails when deleting a snapshot that does not exist."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -571,6 +678,22 @@ def test_list_scene_with_lights_and_assets():
 
 
 # ── remove_prim verifies cascade ──
+
+
+def test_object_count_follows_a_group_removal():
+    """object_count is what the scene holds now, also after removing a group."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, _ = _setup(tmp)
+        for name in ("a", "b", "c"):
+            _place(tmp_path, state, name, group="Props")
+        _place(tmp_path, state, "d")
+
+        r = asyncio.run(exec_tool(state, "remove_prim", {"prim_path": "/Scene/Props"}))
+        assert r.success, r.error
+        assert asyncio.run(exec_tool(state, "list_scene")).data["object_count"] == 1
+        info = asyncio.run(exec_tool(state, "get_current_project"))
+        assert info.success, info.error
+        assert info.data["object_count"] == 1
 
 
 def test_remove_prim_updates_object_count():

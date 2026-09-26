@@ -23,7 +23,7 @@ from bowerbot.utils import layout_utils, surface_utils
 from bowerbot.utils.assets.intake import intake_target_name, prepare_asset
 from bowerbot.utils.core.bounds import bbox_cache, world_range
 from bowerbot.utils.core.metrics import asset_conform, axis_index
-from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.naming import clean_prim_name
 from bowerbot.utils.core.transforms import gf_matrix_to_numpy
 from bowerbot.utils.library_utils import asset_location
 
@@ -103,9 +103,9 @@ def stage_prototypes(
         bmin, bmax, base_min, base_max, points = _conformed_extents(
             project_dir / report.scene_ref_path, unit_scale, correction, up,
         )
-        base = safe_prim_name(Path(report.asset_folder_name).stem) or "proto"
-        if not is_valid_prim_name(base):
-            base = f"proto_{base}"
+        base = clean_prim_name(
+            Path(report.asset_folder_name).stem, "Prototype", fallback="Prototype",
+        )
         name = base
         n = 2
         while name in used:

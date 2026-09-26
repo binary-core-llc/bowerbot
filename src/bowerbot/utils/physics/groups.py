@@ -16,7 +16,6 @@ from bowerbot.schemas import (
     SceneNamespace,
 )
 from bowerbot.utils.core.integrity import remove_scene_prim
-from bowerbot.utils.core.naming import validate_prim_name
 from bowerbot.utils.physics.scene import ensure_physics_scene
 
 logger = logging.getLogger(__name__)
@@ -33,7 +32,6 @@ def create_or_update_collision_group(
     merge_group: str | None = None,
 ) -> dict[str, Any]:
     """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``."""
-    validate_prim_name(name, "Collision group")
     ensure_physics_scene(stage)
 
     prim_path = _group_prim_path(name)

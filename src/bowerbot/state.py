@@ -29,6 +29,8 @@ class SceneState:
     project: Project | None = None
     stage: Usd.Stage | None = None
     stage_path: Path | None = None
+    # Counter behind placement names (Name_NN); counts placements ever made, not
+    # what the scene holds now (that is count_objects()).
     object_count: int = 0
     library_dir: Path | None = None
     projects_dir: Path | None = None
@@ -111,6 +113,10 @@ class SceneState:
         self.stage = stage_utils.open_stage(project.scene_path)
         self.object_count = len(inspection_utils.list_prims(self.stage))
         self.mark_saved()
+
+    def count_objects(self) -> int:
+        """Objects the open scene holds now (placements, lights, cameras, ...)."""
+        return len(inspection_utils.list_prims(self.stage)) if self.stage is not None else 0
 
     def touch_project(self) -> None:
         """Persist updated_at on the bound project, if any."""

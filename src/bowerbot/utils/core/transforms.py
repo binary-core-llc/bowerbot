@@ -10,6 +10,7 @@ from pxr import Gf, Usd, UsdGeom
 
 from bowerbot.schemas import PositionDefaults, PositionMode, SceneNamespace
 from bowerbot.schemas.surface import FloatArray
+from bowerbot.schemas.transforms import PartialVec3, Vec3
 
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
@@ -21,20 +22,33 @@ def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
     return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
 
 
+def read_translate_rotate(prim: Usd.Prim) -> tuple[Vec3, Vec3]:
+    """Return the ``(translate, rotateXYZ)`` op values on *prim*; missing ops read as 0."""
+    translate: Vec3 = (0.0, 0.0, 0.0)
+    rotate: Vec3 = (0.0, 0.0, 0.0)
+    for op in UsdGeom.Xformable(prim).GetOrderedXformOps():
+        value = op.Get()
+        if value is None:
+            continue
+        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
+            translate = (float(value[0]), float(value[1]), float(value[2]))
+        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
+            rotate = (float(value[0]), float(value[1]), float(value[2]))
+    return translate, rotate
+
+
 def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, float]:
     """Return ``(tx, ty, tz, ry)`` resolved on ``prim``; missing ops read as 0."""
-    xformable = UsdGeom.Xformable(prim)
-    tx = ty = tz = ry = 0.0
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
-            value = op.Get()
-            if value is not None:
-                tx, ty, tz = float(value[0]), float(value[1]), float(value[2])
-        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            value = op.Get()
-            if value is not None:
-                ry = float(value[1])
+    (tx, ty, tz), (_, ry, _) = read_translate_rotate(prim)
     return tx, ty, tz, ry
+
+
+def world_position(prim: Usd.Prim) -> Vec3:
+    """Return *prim*'s world-space origin."""
+    t = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(
+        Usd.TimeCode.Default(),
+    ).ExtractTranslation()
+    return float(t[0]), float(t[1]), float(t[2])
 
 
 def set_transform(
@@ -71,21 +85,32 @@ def set_transform(
 
 
 def update_translate_op(prim: Usd.Prim, value: Gf.Vec3d) -> None:
-    """Update the first translate xform op on *prim*."""
+    """Set *prim*'s ``xformOp:translate``, adding it first in the op order when missing."""
     xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
+    ops = xformable.GetOrderedXformOps()
+    for op in ops:
         if op.GetOpName() == "xformOp:translate":
             op.Set(value)
             return
+    translate = xformable.AddTranslateOp()
+    translate.Set(value)
+    xformable.SetXformOpOrder([translate, *ops])
 
 
 def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
-    """Update the first rotateXYZ xform op on *prim*."""
+    """Set *prim*'s rotateXYZ op, adding it right after the translate when missing."""
     xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
+    ops = xformable.GetOrderedXformOps()
+    for op in ops:
         if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
             op.Set(value)
             return
+    rotate = xformable.AddRotateXYZOp()
+    rotate.Set(value)
+    at = next(
+        (i + 1 for i, op in enumerate(ops) if op.GetOpName() == "xformOp:translate"), 0,
+    )
+    xformable.SetXformOpOrder([*ops[:at], rotate, *ops[at:]])
 
 
 def get_container_world_inverse(
@@ -150,6 +175,43 @@ def resolve_asset_position(
         return tx, ty, tz
 
     return _apply_bounds_offsets(bounds, tx, ty, tz, has_explicit_y=has_explicit_y)
+
+
+def resolve_asset_position_update(
+    mode: PositionMode,
+    bounds: dict[str, dict[str, float]] | None,
+    given: PartialVec3,
+    *,
+    current_local: Vec3,
+    current_world: Vec3,
+    world_to_local_mat: Gf.Matrix4d | None,
+    asset_mpu: float = 1.0,
+) -> Vec3:
+    """Resolve a new position for something already inside an asset; omitted axes stay put.
+
+    ``absolute`` fills the omitted axes from the current world position before
+    converting, since a rotated placement mixes axes. ``bounds_offset`` works
+    per axis, so an omitted axis keeps its asset-local value (*current_local*).
+    """
+    if mode is PositionMode.ABSOLUTE:
+        wx, wy, wz = (
+            cur if g is None else g for g, cur in zip(given, current_world, strict=True)
+        )
+        return resolve_asset_position(
+            mode, bounds, wx, wy, wz,
+            has_explicit_y=True, world_to_local_mat=world_to_local_mat, asset_mpu=asset_mpu,
+        )
+    ox, oy, oz = (0.0 if g is None else g for g in given)
+    resolved = resolve_asset_position(
+        mode, bounds, ox, oy, oz,
+        has_explicit_y=given[1] is not None,
+        world_to_local_mat=world_to_local_mat, asset_mpu=asset_mpu,
+    )
+    x, y, z = (
+        cur if g is None else r
+        for g, r, cur in zip(given, resolved, current_local, strict=True)
+    )
+    return x, y, z
 
 
 def _apply_bounds_offsets(

@@ -64,7 +64,7 @@ def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "path": str(project.path),
         "up_axis": up_axis.value,
         "meters_per_unit": meters_per_unit,
-        "object_count": state.object_count,
+        "object_count": state.count_objects(),
         "message": (
             f"Created and opened project '{project.name}' "
             f"({up_axis.value}-up, metersPerUnit={meters_per_unit})."
@@ -90,7 +90,7 @@ def open_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     return {
         "name": project.name,
         "path": str(project.path),
-        "object_count": state.object_count,
+        "object_count": state.count_objects(),
         "message": f"Opened project '{project.name}'.",
     }
 
@@ -107,6 +107,6 @@ def get_current_project(
     return {
         "current": state.project.name,
         "path": str(state.project.path),
-        "object_count": state.object_count,
+        "object_count": state.count_objects(),
         "message": f"Currently working on '{state.project.name}'.",
     }

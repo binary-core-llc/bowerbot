@@ -8,18 +8,21 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from pxr import Sdf
+
 from bowerbot.schemas import AssetScopeNames, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import assets, inspection_utils, stage_utils
 from bowerbot.utils.core import attributes
 from bowerbot.utils.core.asset_folder import parse_nested_contents_path, resolve_asset_dir_for_prim
 from bowerbot.utils.core.integrity import (
+    clear_scene_prim,
     composed_prim_paths,
     drop_refs_to_vanished,
     remove_scene_prim,
     rewrite_refs,
 )
-from bowerbot.utils.core.naming import safe_file_name
+from bowerbot.utils.core.naming import clean_prim_path, safe_file_name
 from bowerbot.utils.core.transforms import (
     read_translate_and_rotate_y,
     set_transform,
@@ -81,7 +84,20 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Move/rename a prim, rewriting every rel target across the scene."""
     stage = state.require_stage()
     old_path = params["old_path"]
-    new_path = params["new_path"]
+    new_path = clean_prim_path(params["new_path"], "New path")
+    root = SceneNamespace.ROOT
+    if old_path == root:
+        msg = f"{root} is the scene's root; rename the prims under it instead."
+        raise ValueError(msg)
+    if not new_path.startswith(f"{root}/"):
+        msg = f"{new_path} is outside {root}; renamed prims must stay in the scene."
+        raise ValueError(msg)
+    if stage.GetPrimAtPath(new_path).IsValid():
+        msg = f"Cannot rename {old_path} to {new_path}: a prim already exists there."
+        raise ValueError(msg)
+    if Sdf.Path(new_path).HasPrefix(Sdf.Path(old_path)):
+        msg = f"Cannot move {old_path} inside itself ({new_path})."
+        raise ValueError(msg)
 
     if parse_nested_contents_path(old_path) is not None:
         msg = (
@@ -130,16 +146,20 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             msg = f"Failed to remove nested {prim_path}"
             raise RuntimeError(msg)
         scrubbed = drop_refs_to_vanished(state.reopen_stage(), before)
+        message = f"Removed {prim_path}"
+    elif prim_path == SceneNamespace.ROOT:
+        scrubbed = clear_scene_prim(stage, prim_path)
+        message = f"Cleared {prim_path}: everything under it was removed; the scene root stays."
     else:
         scrubbed = remove_scene_prim(stage, prim_path)
+        message = f"Removed {prim_path}"
 
-    state.object_count = max(0, state.object_count - 1)
     state.touch_project()
     logger.info("Removed %s", prim_path)
     return {
         "prim_path": prim_path,
         "scrubbed_dangling_refs": scrubbed,
-        "message": f"Removed {prim_path}",
+        "message": message,
     }
 
 

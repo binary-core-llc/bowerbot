@@ -20,6 +20,7 @@ from bowerbot.schemas import (
     LightType,
     LightTypeSchemaInfo,
 )
+from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils.core.asset_folder import (
     ensure_layer_scope,
     ensure_root_reference,
@@ -33,7 +34,11 @@ from bowerbot.utils.core.asset_folder import (
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.overrides import clear_orphan_variant_overs
 from bowerbot.utils.core.schema_registry import schema_class, schema_properties
-from bowerbot.utils.core.transforms import update_rotate_op, update_translate_op
+from bowerbot.utils.core.transforms import (
+    read_translate_rotate,
+    update_rotate_op,
+    update_translate_op,
+)
 from bowerbot.utils.core.values import coerce_number
 from bowerbot.utils.variants.asset import remove_variants_layer_if_empty
 
@@ -144,6 +149,20 @@ def apply_light_link(light_prim: Usd.Prim, includes: list[str]) -> None:
     binding.CreateIncludeRootAttr(False)
 
 
+def require_light(stage: Usd.Stage, prim_path: str) -> Usd.Prim:
+    """Return the UsdLux light at *prim_path* or raise."""
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim or not prim.IsValid():
+        raise ValueError(f"Prim not found: {prim_path}")
+    if not prim.HasAPI(UsdLux.LightAPI):
+        msg = (
+            f"{prim_path} is not a light ({prim.GetTypeName() or 'a typeless prim'}). "
+            "To remove a group or any other prim, use remove_prim."
+        )
+        raise ValueError(msg)
+    return prim
+
+
 def get_light_texture(stage: Usd.Stage, prim_path: str) -> str | None:
     """Return the texture file path for a light prim, or ``None``."""
     prim = stage.GetPrimAtPath(prim_path)
@@ -248,26 +267,7 @@ def update_light_in_folder(
     texture: str | None = None,
 ) -> None:
     """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``."""
-    lgt_path = asset_dir / ASWFLayerNames.LGT
-    if not lgt_path.exists():
-        msg = f"No lights authored in {asset_dir.name}/{ASWFLayerNames.LGT}"
-        raise ValueError(msg)
-
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    light_prim_path = f"/{default_prim_name}/{AssetScopeNames.LIGHTS}/{light_name}"
-
-    stage = Usd.Stage.Open(str(lgt_path))
-    if stage is None:
-        msg = f"Cannot open lgt layer: {lgt_path}"
-        raise RuntimeError(msg)
-
-    prim = stage.GetPrimAtPath(light_prim_path)
-    if not prim.IsValid():
-        msg = (
-            f"Light '{light_name}' not found in "
-            f"{asset_dir.name}/{ASWFLayerNames.LGT}"
-        )
-        raise ValueError(msg)
+    stage, prim = _open_folder_light(asset_dir, light_name)
 
     if texture is not None:
         tex_attr = prim.GetAttribute("inputs:texture:file")
@@ -292,6 +292,15 @@ def update_light_in_folder(
         "Updated light %s in %s/%s",
         light_name, asset_dir.name, ASWFLayerNames.LGT,
     )
+
+
+def light_xform_in_folder(asset_dir: Path, light_name: str) -> tuple[Vec3, Vec3]:
+    """Return a folder light's ``(translate, rotate)``: asset-local meters and degrees."""
+    _, prim = _open_folder_light(asset_dir, light_name)
+    translate, rotate = read_translate_rotate(prim)
+    factor = unit_factor(asset_dir)
+    tx, ty, tz = (v / factor for v in translate)
+    return (tx, ty, tz), rotate
 
 
 def remove_light_from_folder(asset_dir: Path, light_name: str) -> bool:
@@ -376,6 +385,31 @@ def stage_asset_texture(
 
 
 # ── Internal helpers ──
+
+
+def _open_folder_light(asset_dir: Path, light_name: str) -> tuple[Usd.Stage, Usd.Prim]:
+    """Open *asset_dir*'s ``lgt.usda`` and return it with the light prim *light_name*."""
+    lgt_path = asset_dir / ASWFLayerNames.LGT
+    if not lgt_path.exists():
+        msg = f"No lights authored in {asset_dir.name}/{ASWFLayerNames.LGT}"
+        raise ValueError(msg)
+
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    light_prim_path = f"/{default_prim_name}/{AssetScopeNames.LIGHTS}/{light_name}"
+
+    stage = Usd.Stage.Open(str(lgt_path))
+    if stage is None:
+        msg = f"Cannot open lgt layer: {lgt_path}"
+        raise RuntimeError(msg)
+
+    prim = stage.GetPrimAtPath(light_prim_path)
+    if not prim.IsValid():
+        msg = (
+            f"Light '{light_name}' not found in "
+            f"{asset_dir.name}/{ASWFLayerNames.LGT}"
+        )
+        raise ValueError(msg)
+    return stage, prim
 
 
 def _apply_inverse_transform(

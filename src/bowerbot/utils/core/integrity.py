@@ -36,6 +36,26 @@ def remove_scene_prim(stage: Usd.Stage, prim_path: str) -> dict[str, Any]:
     return report
 
 
+def clear_scene_prim(stage: Usd.Stage, prim_path: str) -> dict[str, Any]:
+    """Remove every child of *prim_path* from the scene layer, keeping the prim itself.
+
+    Clearing ``/Scene`` empties the scene but keeps its root, so the layer's
+    defaultPrim and the root's kind stay valid. Returns the dropped-targets
+    report, like :func:`remove_scene_prim`.
+    """
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim.IsValid():
+        msg = f"Prim not found: {prim_path}"
+        raise ValueError(msg)
+    before = composed_prim_paths(stage)
+    for child in [str(c.GetPath()) for c in prim.GetChildren()]:
+        stage.RemovePrim(child)
+        clear_orphan_variant_overs(stage.GetRootLayer(), child)
+    report = drop_refs_to_vanished(stage, before)
+    stage.Save()
+    return report
+
+
 def composed_prim_paths(stage: Usd.Stage) -> set[Sdf.Path]:
     """Every prim the stage composes now, inactive ones included."""
     return {

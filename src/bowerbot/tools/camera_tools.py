@@ -151,8 +151,9 @@ TOOLS: list[Tool] = [
     Tool(
         name="update_camera",
         description=(
-            "Reposition or re-aim an existing scene camera. Pass new "
-            "translate values, and EXACTLY ONE of look_at (re-aim at a "
+            "Reposition or re-aim an existing scene camera. Pass only what "
+            "changes: translate and rotate axes you omit keep their current "
+            "values. To re-aim, pass AT MOST ONE of look_at (re-aim at a "
             "point; uses the new position if given, else the camera's "
             "current position) or rotate_x/y/z degrees. For any other "
             "camera attribute (focalLength, fStop, projection, ...) use "
@@ -171,28 +172,40 @@ TOOLS: list[Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "New X position in scene units.",
+                    "description": (
+                        "New X position in scene units. Omit to keep it."
+                    ),
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "New Y position in scene units.",
+                    "description": (
+                        "New Y position in scene units. Omit to keep it."
+                    ),
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "New Z position in scene units.",
+                    "description": (
+                        "New Z position in scene units. Omit to keep it."
+                    ),
                 },
                 "look_at": _LOOK_AT,
                 "rotate_x": {
                     "type": "number",
-                    "description": "New rotation around X in degrees.",
+                    "description": (
+                        "New rotation around X in degrees. Omit to keep it."
+                    ),
                 },
                 "rotate_y": {
                     "type": "number",
-                    "description": "New rotation around Y in degrees.",
+                    "description": (
+                        "New rotation around Y in degrees. Omit to keep it."
+                    ),
                 },
                 "rotate_z": {
                     "type": "number",
-                    "description": "New rotation around Z in degrees.",
+                    "description": (
+                        "New rotation around Z in degrees. Omit to keep it."
+                    ),
                 },
             },
             "required": ["prim_path"],

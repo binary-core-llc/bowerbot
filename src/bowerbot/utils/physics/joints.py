@@ -27,7 +27,6 @@ from bowerbot.utils.core.asset_folder import (
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.integrity import remove_scene_prim
-from bowerbot.utils.core.naming import validate_prim_name
 from bowerbot.utils.core.schema_registry import schema_class
 from bowerbot.utils.core.values import usd_to_json
 from bowerbot.utils.physics.predicates import is_joint
@@ -46,7 +45,6 @@ def create_joint_scene(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a typed joint at ``/Scene/Physics/<name>``; auto-ensures a ``UsdPhysics.Scene``."""
-    validate_prim_name(name, "Joint")
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
     refuse_unknown(list_joint_properties(joint_type), attributes, "attribute")
@@ -83,7 +81,6 @@ def create_joint_asset(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``."""
-    validate_prim_name(name, "Joint")
     attributes = attributes or {}
     refuse_unknown(list_joint_properties(joint_type), attributes, "attribute")
 

@@ -20,7 +20,6 @@ from bowerbot.utils.core.asset_folder import (
     find_root_file,
     resolve_default_prim_name,
 )
-from bowerbot.utils.core.naming import validate_variant_name
 from bowerbot.utils.variants.authoring import (
     author_in_variant,
     open_variants_stage,
@@ -69,9 +68,6 @@ def setup_geometry_variant_set(
             f"default_variant {default_variant!r} not present in variants "
             f"{list(variants)!r}",
         )
-    validate_variant_name(variant_set, "variant set")
-    for name in variants:
-        validate_variant_name(name)
     for payload_ref in variants.values():
         validate_payload_path(asset_dir, payload_ref)
     validate_lod_namespace_stability(asset_dir, variants)

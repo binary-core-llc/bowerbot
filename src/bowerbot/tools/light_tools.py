@@ -222,6 +222,8 @@ TOOLS: list[Tool] = [
         name="update_light",
         description=(
             "Update an existing light's position, rotation, or texture. "
+            "Pass only what changes: translate and rotate axes you omit "
+            "keep their current values. "
             "Works for both scene-level and asset-level lights, writing to "
             "the asset's lgt.usda for asset lights (all instances) or to "
             "scene.usda for scene lights. Only the things this tool covers "
@@ -256,12 +258,24 @@ TOOLS: list[Tool] = [
                     ),
                     "default": PositionMode.BOUNDS_OFFSET.value,
                 },
-                "translate_x": {"type": "number", "description": "New X position."},
-                "translate_y": {"type": "number", "description": "New Y position."},
-                "translate_z": {"type": "number", "description": "New Z position."},
-                "rotate_x": {"type": "number", "description": "New X rotation."},
-                "rotate_y": {"type": "number", "description": "New Y rotation."},
-                "rotate_z": {"type": "number", "description": "New Z rotation."},
+                "translate_x": {
+                    "type": "number", "description": "New X position. Omit to keep current X.",
+                },
+                "translate_y": {
+                    "type": "number", "description": "New Y position. Omit to keep current Y.",
+                },
+                "translate_z": {
+                    "type": "number", "description": "New Z position. Omit to keep current Z.",
+                },
+                "rotate_x": {
+                    "type": "number", "description": "New X rotation in degrees. Omit to keep it.",
+                },
+                "rotate_y": {
+                    "type": "number", "description": "New Y rotation in degrees. Omit to keep it.",
+                },
+                "rotate_z": {
+                    "type": "number", "description": "New Z rotation in degrees. Omit to keep it.",
+                },
                 "texture": {
                     "type": "string",
                     "description": (
@@ -284,8 +298,10 @@ TOOLS: list[Tool] = [
         description=(
             "Remove a light from the scene. Works for both scene-level and "
             "asset-level lights. For asset lights, removes from the asset's "
-            "lgt.usda. Relationship targets that named the light are dropped "
-            "and listed in scrubbed_dangling_refs."
+            "lgt.usda. Lights only: any other prim (a camera, the Lighting "
+            "group) is refused; remove those with remove_prim. Relationship "
+            "targets that named the light are dropped and listed in "
+            "scrubbed_dangling_refs."
         ),
         parameters={
             "type": "object",

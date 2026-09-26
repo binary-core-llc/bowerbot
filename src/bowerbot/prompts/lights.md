@@ -46,19 +46,23 @@ Asset lights support two coordinate modes via the `position_mode`
 parameter. Choose the one that matches what the user is asking for.
 
 #### `position_mode: "bounds_offset"` (default)
-Translate values are OFFSETS from the asset's bounding box surfaces.
-Use this for "above/below/next to" placements relative to the whole
-asset — e.g. a bulb above a desk lamp.
+Translate values are meters from the asset's bounding box, along the
+scene's axes. Use this for "above/below" placements relative to the
+whole asset — e.g. a bulb above a desk lamp.
 
-- translate_y = 1.0 → 1 meter above the top surface
-- translate_y = -0.5 → 0.5m below the bottom surface
-- translate_x = 0.5 → 0.5m to the right of the right face
-- If no translate is provided → defaults to 0.5m above top center
+- The up-axis value (`translate_y` in a Y-up scene, `translate_z` in a
+  Z-up scene) is measured from the top surface: 1.0 → 1 m above the
+  top; a negative value is measured from the bottom (-0.5 → 0.5 m below
+  the bottom).
+- The other two values are measured from the bounding-box center:
+  `translate_x: 0.3` → 0.3 m from the center toward +X.
+- If the up-axis value is omitted → 0.5 m above the top.
 
-Example: "add a point light to the desk lamp" → `asset_prim_path`
-pointing to the lamp, `position_mode: "bounds_offset"` (or omit,
-it's the default), translate_y = 0.5, and
-`attributes: {"inputs:intensity": 1000, "inputs:radius": 0.05}`.
+Example: "add a point light to the desk lamp" in a Y-up scene →
+`asset_prim_path` pointing to the lamp, `position_mode:
+"bounds_offset"` (or omit, it's the default), `translate_y: 0.5`, and
+`attributes: {"inputs:intensity": 1000, "inputs:radius": 0.05}`. In a
+Z-up scene the same bulb is `translate_z: 0.5`.
 
 #### `position_mode: "absolute"`
 Translate values are **world-space** coordinates — the same
@@ -73,14 +77,15 @@ Workflow for interior fixtures:
 4. Call `create_light` with `position_mode: "absolute"` and those
    center coordinates as `translate_x/y/z`
 
-Values are always in meters. Spatial inputs (radius, width, height,
-length) inside `attributes` are also in meters; BowerBot scales them
-to the asset's native units for asset lights.
+`bounds_offset` values are meters; `absolute` values are world
+coordinates in scene units, like everything `list_scene` reports.
+Spatial inputs (radius, width, height, length) inside `attributes` are
+in meters; BowerBot scales them to the asset's native units for asset
+lights.
 
-`create_light` returns the **resolved** `position` (in bounds_offset /
-absolute modes the final asset-local coordinates differ from what you
-passed) and, for asset lights, the composed scene `prim_path` (also
-restated in the `message`). Pass that `prim_path` to `update_light`
+`create_light` returns the light's world `position` and, for asset
+lights, the composed scene `prim_path` (also restated in the
+`message`). Pass that `prim_path` to `update_light`
 (moves, rotates or re-textures the shared light, on every placement) or
 to `set_prim_attribute` (a tweak on that one placement).
 
@@ -108,13 +113,18 @@ Common UsdLux inputs across every type: `inputs:intensity`,
 need exact names and defaults.
 
 ### Light rotation
-Directional lights (DiskLight, RectLight) default to facing -Z.
+Directional lights (DiskLight, RectLight) emit along their local -Z.
+Rotations are about the scene's axes, for scene and asset lights alike.
 Set rotation based on where the user wants the light to point:
-- Facing DOWN onto a surface below: `rotate_x: -90`
-- Facing UP from below: `rotate_x: 90`
-- Facing LEFT: `rotate_y: 90`
-- Facing RIGHT: `rotate_y: -90`
-- Facing FORWARD (+Z): `rotate_y: 180`
+
+| Point the light | Y-up scene | Z-up scene |
+|---|---|---|
+| DOWN onto a surface below | `rotate_x: -90` | no rotation |
+| UP from below | `rotate_x: 90` | `rotate_x: 180` |
+| toward -X | `rotate_y: 90` | `rotate_y: 90` |
+| toward +X | `rotate_y: -90` | `rotate_y: -90` |
+| toward +Z / +Y (forward) | `rotate_y: 180` (+Z) | `rotate_x: 90` (+Y) |
+
 Ask the user if the direction is ambiguous.
 
 ### Light linking

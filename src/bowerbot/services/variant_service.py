@@ -22,8 +22,9 @@ from bowerbot.utils.core.asset_folder import (
     resolve_default_prim_name,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
+from bowerbot.utils.core.metrics import asset_conform
 from bowerbot.utils.core.naming import clean_prim_name, clean_variant_name
-from bowerbot.utils.core.references import get_prim_ref_paths
+from bowerbot.utils.core.references import author_conform, get_prim_ref_paths
 
 # ── Category orchestrators ──
 
@@ -480,6 +481,7 @@ def add_scene_model_selection_variant(
             ov.GetReferences().ClearReferences()
             for r in refs:
                 ov.GetReferences().AddReference(r)
+            author_conform(ov, *asset_conform(stage, refs[0]))
         return fn
 
     promoted: str | None = None
@@ -496,11 +498,14 @@ def add_scene_model_selection_variant(
                     f"variant_name='{variant_name}' collides with auto-promoted "
                     f"name '{promoted}'. Pick a different variant_name.",
                 )
+            variants.scene.clear_direct_references(stage, asset_child)
+            variants.scene.move_direct_conform_out(
+                stage, asset_child, asset_conform(stage, existing[0])[0],
+            )
             variants.scene.apply_scene_variant(
                 stage, prim_path, set_name, promoted,
                 author_refs(list(existing)), set_as_default=True,
             )
-            variants.scene.clear_direct_references(stage, asset_child)
             stage = state.reopen_stage()
 
     variants.scene.apply_scene_variant(

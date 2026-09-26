@@ -10,7 +10,7 @@ from typing import Any
 
 from pxr import Sdf
 
-from bowerbot.schemas import AssetScopeNames, SceneNamespace
+from bowerbot.schemas import AssetScopeNames, LayoutDefaults, PositionMode, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import assets, inspection_utils, stage_utils
 from bowerbot.utils.core import attributes
@@ -22,12 +22,18 @@ from bowerbot.utils.core.integrity import (
     remove_scene_prim,
     rewrite_refs,
 )
+from bowerbot.utils.core.metrics import axis_index
 from bowerbot.utils.core.naming import clean_prim_path, safe_file_name
 from bowerbot.utils.core.transforms import (
-    read_translate_and_rotate_y,
+    asset_axes_rotation,
+    read_translate_rotate,
+    resolve_position_in_asset,
+    scene_axes_rotation,
+    scene_correction,
     set_transform,
-    world_to_local_point,
+    world_position,
 )
+from bowerbot.utils.core.values import read_axes, unpack_vec3
 from bowerbot.utils.layout_utils import suggest_grid_layout
 
 logger = logging.getLogger(__name__)
@@ -170,12 +176,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     prim = stage.GetPrimAtPath(prim_path)
     if not prim.IsValid():
         raise ValueError(f"Prim not found: {prim_path}")
-
-    cur_tx, cur_ty, cur_tz, cur_ry = read_translate_and_rotate_y(prim)
-    tx = float(params.get("translate_x", cur_tx))
-    ty = float(params.get("translate_y", cur_ty))
-    tz = float(params.get("translate_z", cur_tz))
-    ry = float(params.get("rotate_y", cur_ry))
+    current_translate, current_rotate = read_translate_rotate(prim)
 
     nested = parse_nested_contents_path(prim_path)
     if nested is not None:
@@ -184,40 +185,45 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
         group, prim_name = nested
-
         contents_marker = f"/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/"
-        container_prim_path = prim_path.split(contents_marker)[0]
-        local = world_to_local_point(
-            stage, container_prim_path, tx, ty, tz,
+        correction = scene_correction(stage, container_dir)
+        rotate = unpack_vec3(
+            params, "rotate_x", "rotate_y", "rotate_z",
+            scene_axes_rotation(current_rotate, correction),
+        ) or scene_axes_rotation(current_rotate, correction)
+        local = resolve_position_in_asset(
+            stage, prim_path.split(contents_marker)[0], container_dir,
+            PositionMode.ABSOLUTE,
+            read_axes(params, "translate_x", "translate_y", "translate_z"),
+            current_world=world_position(prim),
         )
-        if local is None:
-            msg = f"Failed to compute world-to-local for {container_prim_path}"
-            raise RuntimeError(msg)
-
         success = assets.nested.update_nested_asset_transform(
             container_dir, group, prim_name,
             translate=local,
-            rotate=(0.0, ry, 0.0),
+            rotate=asset_axes_rotation(rotate, correction),
         )
         if not success:
             msg = f"Failed to update nested transform for {prim_path}"
             raise RuntimeError(msg)
-        state.reopen_stage()
+        stage = state.reopen_stage()
     else:
-        set_transform(
-            stage, prim_path,
-            translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
-        )
+        rotate = unpack_vec3(
+            params, "rotate_x", "rotate_y", "rotate_z", current_rotate,
+        ) or current_rotate
+        translate = unpack_vec3(
+            params, "translate_x", "translate_y", "translate_z", current_translate,
+        ) or current_translate
+        set_transform(stage, prim_path, translate=translate, rotate=rotate)
         stage_utils.save_stage(stage)
 
     state.touch_project()
-
-    logger.info("Moved %s to (%s, %s, %s)", prim_path, tx, ty, tz)
+    x, y, z = (round(v, 4) for v in world_position(stage.GetPrimAtPath(prim_path)))
+    logger.info("Moved %s to (%s, %s, %s)", prim_path, x, y, z)
     return {
         "prim_path": prim_path,
-        "position": {"x": tx, "y": ty, "z": tz},
-        "rotation_y": ry,
-        "message": f"Moved {prim_path} to ({tx}, {ty}, {tz})",
+        "position": {"x": x, "y": y, "z": z},
+        "rotation": dict(zip("xyz", rotate, strict=True)),
+        "message": f"Moved {prim_path} to ({x}, {y}, {z})",
     }
 
 
@@ -342,20 +348,28 @@ def list_prim_children(state: SceneState, params: dict[str, Any]) -> dict[str, A
 
 
 def compute_grid_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Compute evenly spaced positions for N objects in a grid."""
+    """Compute evenly spaced positions for N objects on the scene's ground plane."""
     count = int(params["count"])
-    spacing = float(params.get("spacing", 2.0))
+    units_per_meter = 1.0 / state.meters_per_unit if state.meters_per_unit > 0 else 1.0
+    spacing = float(params.get("spacing", LayoutDefaults.GRID_SPACING_METERS * units_per_meter))
 
     placements = suggest_grid_layout(
         count,
         spacing=spacing,
+        width=LayoutDefaults.ROOM_WIDTH_METERS * units_per_meter,
+        depth=LayoutDefaults.ROOM_DEPTH_METERS * units_per_meter,
+        up=axis_index(state.up_axis.value),
     )
     positions = [
-        {"x": round(p[0], 2), "z": round(p[2], 2)} for p in placements
+        {"x": round(x, 4), "y": round(y, 4), "z": round(z, 4)} for x, y, z in placements
     ]
     return {
         "count": count,
         "spacing": spacing,
+        "up_axis": state.up_axis.value,
         "positions": positions,
-        "message": f"Computed {count} positions in grid with {spacing}m spacing.",
+        "message": (
+            f"Computed {count} positions on the ground plane ({state.up_axis.value}-up), "
+            f"{spacing} scene units apart."
+        ),
     }

@@ -108,9 +108,10 @@ TOOLS: list[Tool] = [
         description=(
             "Open an existing BowerBot project and focus it. Every "
             "subsequent tool call operates on this project until another "
-            "is opened. Returns the project name, path, and object_count "
-            "(prims already in the opened scene), so no follow-up call is "
-            "needed to learn the scene size. Use when the user wants to "
+            "is opened. Returns the project name, path, up_axis and "
+            "meters_per_unit (the scene's axes and units, which every "
+            "position and rotation uses), and object_count (prims already "
+            "in the opened scene), so no follow-up call is needed. Use when the user wants to "
             "resume or switch to a different project. Call list_projects "
             "first if unsure of the exact name."
         ),
@@ -132,7 +133,7 @@ TOOLS: list[Tool] = [
         name="get_current_project",
         description=(
             "Report which project is currently focused, including its "
-            "path and object count. Returns current=null (with an "
+            "path, up_axis, meters_per_unit and object count. Returns current=null (with an "
             "explanatory message) when none is focused. Use to confirm "
             "context before authoring."
         ),

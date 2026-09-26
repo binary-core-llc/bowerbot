@@ -5,21 +5,25 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 from pxr import Gf, Usd, UsdGeom
 
 from bowerbot.schemas import PositionDefaults, PositionMode, SceneNamespace
 from bowerbot.schemas.surface import FloatArray
 from bowerbot.schemas.transforms import PartialVec3, Vec3
+from bowerbot.utils.core.asset_folder import find_root_file, get_geometry_bounds, get_mpu
+from bowerbot.utils.core.metrics import asset_conform, axis_index
 
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
-    """Return the translate component of a prim's local transform."""
-    xformable = UsdGeom.Xformable(prim)
-    if not xformable:
+    """Return a prim's world-space position in scene units (what ``list_scene`` reports)."""
+    if not UsdGeom.Xformable(prim):
         return None
-    t = xformable.GetLocalTransformation().ExtractTranslation()
-    return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
+    x, y, z = (round(v, 4) for v in world_position(prim))
+    return {"x": x, "y": y, "z": z}
 
 
 def read_translate_rotate(prim: Usd.Prim) -> tuple[Vec3, Vec3]:
@@ -35,12 +39,6 @@ def read_translate_rotate(prim: Usd.Prim) -> tuple[Vec3, Vec3]:
         elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
             rotate = (float(value[0]), float(value[1]), float(value[2]))
     return translate, rotate
-
-
-def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, float]:
-    """Return ``(tx, ty, tz, ry)`` resolved on ``prim``; missing ops read as 0."""
-    (tx, ty, tz), (_, ry, _) = read_translate_rotate(prim)
-    return tx, ty, tz, ry
 
 
 def world_position(prim: Usd.Prim) -> Vec3:
@@ -113,128 +111,189 @@ def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
     xformable.SetXformOpOrder([*ops[:at], rotate, *ops[at:]])
 
 
-def get_container_world_inverse(
-    stage: Usd.Stage, container_prim_path: str,
-) -> Gf.Matrix4d | None:
-    """Return the inverse world transform of a container's wrapper Xform."""
-    prim = stage.GetPrimAtPath(container_prim_path)
+def asset_world_inverse(stage: Usd.Stage, prim_path: str) -> Gf.Matrix4d | None:
+    """World -> the frame of the asset a placement references (asset units and axes).
+
+    *prim_path* is a placement wrapper or its ``asset`` child. The ``asset``
+    child's world transform includes the placement, the unit scale and the
+    up-axis correction, so points land in the asset's own coordinates.
+    """
+    prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         return None
-
-    wrapper = prim
-    if prim.GetName() == SceneNamespace.ASSET_CHILD:
-        parent = prim.GetParent()
-        if parent and parent.IsValid():
-            wrapper = parent
-
-    xform_cache = UsdGeom.XformCache()
-    return xform_cache.GetLocalToWorldTransform(wrapper).GetInverse()
+    frame = prim
+    if prim.GetName() != SceneNamespace.ASSET_CHILD:
+        child = prim.GetChild(SceneNamespace.ASSET_CHILD)
+        frame = child if child and child.IsValid() else prim
+    return UsdGeom.XformCache().GetLocalToWorldTransform(frame).GetInverse()
 
 
-def world_to_local_point(
+def resolve_position_in_asset(
     stage: Usd.Stage,
-    container_prim_path: str,
-    x: float, y: float, z: float,
-) -> tuple[float, float, float] | None:
-    """Convert a world-space point into a container's local frame."""
-    inv = get_container_world_inverse(stage, container_prim_path)
-    if inv is None:
-        return None
-    local = inv.Transform(Gf.Vec3d(x, y, z))
-    return float(local[0]), float(local[1]), float(local[2])
-
-
-def resolve_asset_position(
+    asset_prim_path: str,
+    asset_dir: Path,
     mode: PositionMode,
-    bounds: dict[str, dict[str, float]] | None,
-    tx: float,
-    ty: float,
-    tz: float,
-    *,
-    has_explicit_y: bool,
-    world_to_local_mat: Gf.Matrix4d | None = None,
-    asset_mpu: float = 1.0,
-) -> tuple[float, float, float]:
-    """Resolve a translate value into asset-local meters.
-
-    For ``ABSOLUTE`` mode with a *world_to_local_mat*, world-space input
-    is converted to the asset's internal frame. For ``BOUNDS_OFFSET``
-    mode, *bounds* is used to position relative to the bbox surfaces.
-    """
-    if mode is PositionMode.ABSOLUTE:
-        if world_to_local_mat is None:
-            return tx, ty, tz
-        internal = world_to_local_mat.Transform(Gf.Vec3d(tx, ty, tz))
-        return (
-            internal[0] * asset_mpu,
-            internal[1] * asset_mpu,
-            internal[2] * asset_mpu,
-        )
-
-    if bounds is None:
-        return tx, ty, tz
-
-    return _apply_bounds_offsets(bounds, tx, ty, tz, has_explicit_y=has_explicit_y)
-
-
-def resolve_asset_position_update(
-    mode: PositionMode,
-    bounds: dict[str, dict[str, float]] | None,
     given: PartialVec3,
     *,
-    current_local: Vec3,
-    current_world: Vec3,
-    world_to_local_mat: Gf.Matrix4d | None,
-    asset_mpu: float = 1.0,
+    current_local: Vec3 | None = None,
+    current_world: Vec3 | None = None,
 ) -> Vec3:
-    """Resolve a new position for something already inside an asset; omitted axes stay put.
+    """Where a position asked for in the scene lands in the asset, in asset-local meters.
 
-    ``absolute`` fills the omitted axes from the current world position before
-    converting, since a rotated placement mixes axes. ``bounds_offset`` works
-    per axis, so an omitted axis keeps its asset-local value (*current_local*).
+    ``absolute``: world coordinates in scene units, converted through the
+    placement. ``bounds_offset``: meters from the asset's bounds along the
+    scene's axes (as the asset is conformed to the scene): from the top (up
+    value >= 0) or the bottom (< 0) along the up axis, from the center along the
+    other two; an omitted up value sits just above the top. Omitted axes keep
+    *current_world* / *current_local* when given (an update); otherwise they
+    read as 0 (and the up value as above the top).
     """
+    asset_mpu = get_mpu(asset_dir)
     if mode is PositionMode.ABSOLUTE:
-        wx, wy, wz = (
-            cur if g is None else g for g, cur in zip(given, current_world, strict=True)
-        )
-        return resolve_asset_position(
-            mode, bounds, wx, wy, wz,
-            has_explicit_y=True, world_to_local_mat=world_to_local_mat, asset_mpu=asset_mpu,
-        )
-    ox, oy, oz = (0.0 if g is None else g for g in given)
-    resolved = resolve_asset_position(
-        mode, bounds, ox, oy, oz,
-        has_explicit_y=given[1] is not None,
-        world_to_local_mat=world_to_local_mat, asset_mpu=asset_mpu,
+        base = current_world or (0.0, 0.0, 0.0)
+        world = Gf.Vec3d(*(b if g is None else g for g, b in zip(given, base, strict=True)))
+        world_to_asset = asset_world_inverse(stage, asset_prim_path)
+        local = world_to_asset.Transform(world) if world_to_asset is not None else world
+        return local[0] * asset_mpu, local[1] * asset_mpu, local[2] * asset_mpu
+
+    bounds = get_geometry_bounds(asset_dir)
+    correction = scene_correction(stage, asset_dir)
+    target = _bounds_offset_target(
+        bounds, given, up=axis_index(UsdGeom.GetStageUpAxis(stage)), correction=correction,
     )
+    if current_local is None:
+        return target
     x, y, z = (
-        cur if g is None else r
-        for g, r, cur in zip(given, resolved, current_local, strict=True)
+        t if named else cur
+        for named, t, cur in zip(
+            _asset_axes(given, correction), target, current_local, strict=True,
+        )
     )
     return x, y, z
 
 
-def _apply_bounds_offsets(
-    bounds: dict[str, dict[str, float]],
-    tx: float,
-    ty: float,
-    tz: float,
+def scene_correction(stage: Usd.Stage, asset_dir: Path) -> float | None:
+    """The up-axis turn (degrees about X) conforming *asset_dir*'s asset to *stage*, or None."""
+    root_file = find_root_file(asset_dir)
+    return asset_conform(stage, str(root_file))[1] if root_file is not None else None
+
+
+def _bounds_offset_target(
+    bounds: dict[str, dict[str, float]] | None,
+    given: PartialVec3,
     *,
-    has_explicit_y: bool,
-) -> tuple[float, float, float]:
-    """Convert offset-from-bounds values to absolute asset-local positions."""
-    tx = bounds["center"]["x"] + tx
-    tz = bounds["center"]["z"] + tz
-
-    if has_explicit_y:
-        if ty >= 0:
-            ty = bounds["max"]["y"] + ty
-        else:
-            ty = bounds["min"]["y"] + ty
+    up: int,
+    correction: float | None,
+) -> Vec3:
+    """Asset-local meters for offsets from the bounds, given along the scene's axes."""
+    offsets = [0.0 if g is None else g for g in given]
+    if bounds is None:
+        x, y, z = _to_asset_axes(Gf.Vec3d(*offsets), correction)
+        return x, y, z
+    to_scene = _correction_rotation(correction)
+    corners = [
+        to_scene.TransformDir(Gf.Vec3d(
+            bounds["max" if i & 1 else "min"]["x"],
+            bounds["max" if i & 2 else "min"]["y"],
+            bounds["max" if i & 4 else "min"]["z"],
+        ))
+        for i in range(8)
+    ]
+    low = [min(c[axis] for c in corners) for axis in range(3)]
+    high = [max(c[axis] for c in corners) for axis in range(3)]
+    target = [(low[axis] + high[axis]) / 2 + offsets[axis] for axis in range(3)]
+    if given[up] is None:
+        target[up] = high[up] + PositionDefaults.ABOVE_BOUNDS_METERS
+    elif offsets[up] >= 0:
+        target[up] = high[up] + offsets[up]
     else:
-        ty = bounds["max"]["y"] + PositionDefaults.ABOVE_BOUNDS_METERS
+        target[up] = low[up] + offsets[up]
+    x, y, z = _to_asset_axes(Gf.Vec3d(*target), correction)
+    return x, y, z
 
-    return tx, ty, tz
+
+def _correction_rotation(correction: float | None) -> Gf.Rotation:
+    """The up-axis correction (a rotation about X) as a Gf.Rotation."""
+    return Gf.Rotation(Gf.Vec3d.XAxis(), correction or 0.0)
+
+
+def _to_asset_axes(scene_vec: Gf.Vec3d, correction: float | None) -> Vec3:
+    """A vector along the conformed (scene) axes, in the asset's own axes."""
+    v = _correction_rotation(correction).GetInverse().TransformDir(scene_vec)
+    return float(v[0]), float(v[1]), float(v[2])
+
+
+def _asset_axes(given: PartialVec3, correction: float | None) -> tuple[bool, bool, bool]:
+    """Which asset-local axes the scene axes named in *given* map onto."""
+    named = _to_asset_axes(Gf.Vec3d(*(0.0 if g is None else 1.0 for g in given)), correction)
+    x, y, z = (abs(v) > 0.5 for v in named)
+    return x, y, z
+
+
+def asset_axes_rotation(rotate: Vec3, correction: float | None) -> Vec3:
+    """A nested placement's rotateXYZ given in scene axes, in its container's axes.
+
+    The nested asset carries its own conform, so unrotated it already stands
+    upright; the rotation is re-expressed in the container's axes (conformed
+    by *correction*). For a light, which has no conform, use
+    :func:`orientation_in_asset`.
+    """
+    if not correction:
+        return rotate
+    c = _correction_rotation(correction)
+    return rotation_to_rotate_xyz(c * rotate_xyz_rotation(rotate) * c.GetInverse())
+
+
+def scene_axes_rotation(rotate: Vec3, correction: float | None) -> Vec3:
+    """The inverse of :func:`asset_axes_rotation`: an asset-axes rotateXYZ in scene axes."""
+    if not correction:
+        return rotate
+    c = _correction_rotation(correction)
+    return rotation_to_rotate_xyz(c.GetInverse() * rotate_xyz_rotation(rotate) * c)
+
+
+def orientation_in_asset(rotate: Vec3, correction: float | None) -> Vec3:
+    """An asset light's rotateXYZ given in scene axes, authored in its asset's axes.
+
+    A light has no conform of its own, so the asset's up-axis turn
+    (*correction*) is undone: the light faces where a scene light with the
+    same rotation would.
+    """
+    if not correction:
+        return rotate
+    return rotation_to_rotate_xyz(
+        rotate_xyz_rotation(rotate) * _correction_rotation(correction).GetInverse(),
+    )
+
+
+def orientation_in_scene(rotate: Vec3, correction: float | None) -> Vec3:
+    """The inverse of :func:`orientation_in_asset`: an asset light's rotateXYZ in scene axes."""
+    if not correction:
+        return rotate
+    return rotation_to_rotate_xyz(rotate_xyz_rotation(rotate) * _correction_rotation(correction))
+
+
+def rotate_xyz_rotation(value: Any) -> Gf.Rotation:
+    """Gf.Rotation equal to an xformOp:rotateXYZ value (X applied first)."""
+    rx, ry, rz = (float(v) for v in (value or (0.0, 0.0, 0.0)))
+    return (
+        Gf.Rotation(Gf.Vec3d.XAxis(), rx)
+        * Gf.Rotation(Gf.Vec3d.YAxis(), ry)
+        * Gf.Rotation(Gf.Vec3d.ZAxis(), rz)
+    )
+
+
+def rotation_to_rotate_xyz(rotation: Gf.Rotation) -> Vec3:
+    """The smaller of the two rotateXYZ triples equal to *rotation*, so a yaw stays (0, yaw, 0)."""
+    rz, ry, rx = rotation.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
+
+    def wrap(angle: float) -> float:
+        wrapped = (angle + 180.0) % 360.0 - 180.0
+        return 0.0 if abs(wrapped) < 1e-6 else round(wrapped, 4)
+
+    first = (wrap(rx), wrap(ry), wrap(rz))
+    second = (wrap(rx + 180.0), wrap(180.0 - ry), wrap(rz + 180.0))
+    return min(first, second, key=lambda angles: sum(abs(a) for a in angles))
 
 
 def gf_matrix_to_numpy(matrix: Gf.Matrix4d) -> FloatArray:

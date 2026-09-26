@@ -22,8 +22,6 @@ from bowerbot.schemas import (
 from bowerbot.state import SceneState
 from bowerbot.utils import light_utils, stage_utils, texture_utils, variants
 from bowerbot.utils.core.asset_folder import (
-    get_geometry_bounds,
-    get_mpu,
     resolve_asset_dir_for_prim,
 )
 from bowerbot.utils.core.integrity import (
@@ -33,10 +31,11 @@ from bowerbot.utils.core.integrity import (
 )
 from bowerbot.utils.core.naming import clean_prim_name, unique_prim_path
 from bowerbot.utils.core.transforms import (
-    get_container_world_inverse,
+    orientation_in_asset,
+    orientation_in_scene,
     read_translate_rotate,
-    resolve_asset_position,
-    resolve_asset_position_update,
+    resolve_position_in_asset,
+    scene_correction,
     world_position,
 )
 from bowerbot.utils.core.values import read_axes, unpack_vec3
@@ -87,24 +86,16 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             )
             raise ValueError(msg)
 
-        mode = PositionMode(
-            params.get("position_mode", PositionMode.BOUNDS_OFFSET.value),
-        )
-        tx, ty, tz = resolve_asset_position(
-            mode,
-            get_geometry_bounds(asset_dir),
-            tx, ty, tz,
-            has_explicit_y=params.get("translate_y") is not None,
-            world_to_local_mat=get_container_world_inverse(
-                stage, asset_prim_path,
-            ),
-            asset_mpu=get_mpu(asset_dir),
+        tx, ty, tz = resolve_position_in_asset(
+            stage, asset_prim_path, asset_dir,
+            PositionMode(params.get("position_mode", PositionMode.BOUNDS_OFFSET.value)),
+            read_axes(params, "translate_x", "translate_y", "translate_z"),
         )
 
         light = LightParams(
             light_type=light_type,
             translate=(tx, ty, tz),
-            rotate=rotate,
+            rotate=orientation_in_asset(rotate, scene_correction(stage, asset_dir)),
             texture=light_utils.stage_asset_texture(
                 asset_dir, params.get("texture"),
                 library_dir=state.library_dir, project_dir=state.project_dir,
@@ -116,10 +107,11 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             asset_dir=asset_dir, light_name=safe_name, light=light,
         )
 
-        state.reopen_stage()
+        stage = state.reopen_stage()
 
         asset_local_tail = composed_path.lstrip("/").split("/", 1)[1]
         scene_light_path = f"{ref_prim_path}/{asset_local_tail}"
+        wx, wy, wz = world_position(stage.GetPrimAtPath(scene_light_path))
         logger.info(
             "Created asset light %s in %s/lgt.usda",
             light_type.value, asset_dir.name,
@@ -128,7 +120,7 @@ def create_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "prim_path": scene_light_path,
             "light_type": light_type.value,
             "asset_folder": asset_dir.name,
-            "position": {"x": tx, "y": ty, "z": tz},
+            "position": {"x": round(wx, 4), "y": round(wy, 4), "z": round(wz, 4)},
             "message": (
                 f"Created {light_type.value} in {asset_dir.name}/lgt.usda. "
                 f"To update this light, use prim_path: {scene_light_path}"
@@ -179,24 +171,26 @@ def update_light(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         current_translate, current_rotate = light_utils.light_xform_in_folder(
             asset_dir, light_name,
         )
-        rotate = unpack_vec3(params, "rotate_x", "rotate_y", "rotate_z", current_rotate)
+        correction = scene_correction(stage, asset_dir)
+        rotate = unpack_vec3(
+            params, "rotate_x", "rotate_y", "rotate_z",
+            orientation_in_scene(current_rotate, correction),
+        )
         given = read_axes(params, "translate_x", "translate_y", "translate_z")
         translate = None
         if any(axis is not None for axis in given):
-            translate = resolve_asset_position_update(
+            translate = resolve_position_in_asset(
+                stage, ref_prim_path, asset_dir,
                 PositionMode(params.get("position_mode", PositionMode.BOUNDS_OFFSET.value)),
-                get_geometry_bounds(asset_dir),
                 given,
                 current_local=current_translate,
                 current_world=world_position(prim),
-                world_to_local_mat=get_container_world_inverse(stage, ref_prim_path),
-                asset_mpu=get_mpu(asset_dir),
             )
         light_utils.update_light_in_folder(
             asset_dir,
             light_name,
             translate=translate,
-            rotate=rotate,
+            rotate=None if rotate is None else orientation_in_asset(rotate, correction),
             texture=light_utils.stage_asset_texture(
                 asset_dir, texture,
                 library_dir=state.library_dir, project_dir=state.project_dir,

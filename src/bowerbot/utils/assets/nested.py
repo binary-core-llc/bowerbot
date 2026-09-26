@@ -21,10 +21,12 @@ from bowerbot.utils.core.asset_folder import (
     ensure_root_reference,
     ensure_side_layer,
     get_mpu,
+    read_stage_metadata_from_dir,
     remove_empty_layer,
     resolve_default_prim_name,
 )
-from bowerbot.utils.core.metrics import read_mpu
+from bowerbot.utils.core.metrics import conform_between, read_stage_metadata
+from bowerbot.utils.core.references import author_conform
 
 logger = logging.getLogger(__name__)
 
@@ -53,20 +55,13 @@ def add_nested_asset_reference(
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
-    container_mpu = get_mpu(container_dir)
+    container_mpu, container_up = read_stage_metadata_from_dir(container_dir)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
-
     ref_full_path = (container_dir / ref_asset_path).resolve()
-    nested_mpu = (
-        read_mpu(ref_full_path)
-        if ref_full_path.exists() else container_mpu
+    nested_mpu, nested_up = (
+        read_stage_metadata(ref_full_path) if ref_full_path.exists()
+        else (container_mpu, container_up)
     )
-    unit_scale = (
-        nested_mpu / container_mpu if container_mpu > 0 else 1.0
-    )
-
-    sx, sy, sz = transform.scale
-    final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
 
     xformable = UsdGeom.Xformable(wrapper)
     xformable.ClearXformOpOrder()
@@ -78,9 +73,12 @@ def add_nested_asset_reference(
         ),
     )
     xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
-    xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+    xformable.AddScaleOp().Set(Gf.Vec3f(*transform.scale))
 
     asset_inner = stage.DefinePrim(f"{wrapper_path}/{SceneNamespace.ASSET_CHILD}", "Xform")
+    author_conform(
+        asset_inner, *conform_between(container_mpu, container_up, nested_mpu, nested_up),
+    )
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()

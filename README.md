@@ -996,18 +996,18 @@ src/bowerbot/
 Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF asset structure guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md):
 
 **Scene level**
-- `metersPerUnit = 1.0`, `upAxis = "Y"`, `defaultPrim` always set
+- `upAxis` (`Y` or `Z`) and `metersPerUnit` chosen per project at `create_project`; `defaultPrim` always set
 - Standard hierarchy: `/Scene/Architecture`, `/Scene/Furniture`, `/Scene/Products`, `/Scene/Lighting`, `/Scene/Cameras`, `/Scene/Props`, `/Scene/Physics`
 - References only: no inline geometry, no scattered material sublayers
-- Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched
+- Wrapper-prim pattern isolates scene-level transforms from asset-internal ones, so DCC export transforms (Maya pivots, rotations) stay untouched: the wrapper holds the placement (translate, rotate, scale), and its `asset` child conforms the asset to the scene's units and up axis and holds the reference (each model-selection variant carries its own conform)
 - Pre-packaging validator checks `defaultPrim`, units, up-axis, reference resolution, and material bindings
 
 **Asset level**
 - References (not sublayers) per ASWF guidelines, for predictable opinion strength
 - Materials inline in `mtl.usda`, lights inline in `lgt.usda`, nested references in `contents.usda`
-- Automatic `metersPerUnit` conversion across composition boundaries
+- Automatic `metersPerUnit` and up-axis conversion across composition boundaries (scene to asset, container to nested asset)
 - Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or baked into vertex data with explicit user consent), so nested placements compose predictably
-- Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
+- Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child conforms the nested asset to its container and holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
 - Asset roots carry the canonical ASWF identity: `kind = "component"` for terminal assets and an `assetInfo` dictionary (`identifier`, `name`, `version`) so DCC outliners, asset browsers, and pipeline asset-management systems recognise BowerBot output as production-grade
 
 **Variant sets**

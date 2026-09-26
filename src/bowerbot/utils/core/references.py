@@ -145,7 +145,12 @@ def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
 
 
 def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
-    """Author a batch of asset references, computing conform once per unique asset."""
+    """Author a batch of asset references, computing conform once per unique asset.
+
+    The wrapper places the asset (translate, rotate, scale as asked); its
+    ``asset`` child conforms it (unit scale and up-axis correction) and carries
+    the reference, so each reference keeps its own conform.
+    """
     conform: dict[str, tuple[float, float | None]] = {}
     for scene_object in scene_objects:
         asset_path = (
@@ -157,19 +162,26 @@ def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
 
         wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
         xformable = UsdGeom.Xformable(wrapper)
-
-        tx, ty, tz = scene_object.translate
-        rx, ry, rz = scene_object.rotate
-        sx, sy, sz = scene_object.scale
-        final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
-
-        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
-        xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+        xformable.AddTranslateOp().Set(Gf.Vec3d(*scene_object.translate))
+        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*scene_object.rotate))
+        xformable.AddScaleOp().Set(Gf.Vec3f(*scene_object.scale))
 
         asset_prim = stage.DefinePrim(
             f"{scene_object.prim_path}/{SceneNamespace.ASSET_CHILD}", "Xform",
         )
-        if up_axis_correction is not None:
-            UsdGeom.Xformable(asset_prim).AddRotateXOp().Set(up_axis_correction)
+        author_conform(asset_prim, unit_scale, up_axis_correction)
         asset_prim.GetReferences().AddReference(asset_path)
+
+
+def author_conform(prim: Usd.Prim, unit_scale: float, correction: float | None) -> None:
+    """Author the ops conforming a referenced asset to its parent: up-axis turn, then units.
+
+    Replaces any ops already authored at the edit target (a re-authored variant).
+    """
+    xformable = UsdGeom.Xformable(prim)
+    if xformable.GetOrderedXformOps():
+        xformable.ClearXformOpOrder()
+    if correction is not None:
+        xformable.AddRotateXOp().Set(correction)
+    if unit_scale != 1.0:
+        xformable.AddScaleOp().Set(Gf.Vec3f(unit_scale, unit_scale, unit_scale))

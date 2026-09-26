@@ -160,7 +160,10 @@ TOOLS: list[Tool] = [
             "position), and 'physics_scene'/'joint'/'collision_group' "
             "(prim_path, type, plus body0/body1 or name). New object kinds "
             "appear here automatically. Call this to see what is actually "
-            "in the scene rather than assuming a kind is absent. Use an "
+            "in the scene rather than assuming a kind is absent. Positions "
+            "and bounds are world coordinates in scene units; a placement is "
+            "listed by its wrapper path (what place_asset returned and what "
+            "move_asset, remove_prim and create_light take). Use an "
             "object's bounds to size or place items on a surface without "
             "reading USD files."
         ),
@@ -226,16 +229,17 @@ TOOLS: list[Tool] = [
     Tool(
         name="move_asset",
         description=(
-            "Move an existing object. Any axis (translate_x, translate_y, "
-            "translate_z, rotate_y) you omit keeps its current value, so "
-            "for single-axis moves pass only the axis the user asked to "
-            "change. Use this instead of place_asset when repositioning "
-            "an object already in the scene. translate_x/y/z are "
-            "world-space meters; for a prim nested inside a referenced "
-            "asset's contents (path containing '/asset/contents/'), the "
-            "move is converted into the asset's local space and written "
-            "into that asset folder's contents.usda, while the returned "
-            "'position' still echoes the world-space values you passed."
+            "Move or turn an existing object. Any axis (translate_x/y/z, "
+            "rotate_x/y/z) you omit keeps its current value, so for "
+            "single-axis moves pass only the axis the user asked to change. "
+            "Use this instead of place_asset when repositioning an object "
+            "already in the scene. translate_x/y/z are world coordinates in "
+            "scene units; rotations are about the scene's axes (turn an object "
+            "on the floor with rotate_y in a Y-up scene, rotate_z in a Z-up "
+            "scene). For a prim nested inside a referenced asset's contents "
+            "(path containing '/asset/contents/'), the move is converted into "
+            "the asset's own frame and written into that asset folder's "
+            "contents.usda. Returns the resulting world position and rotation."
         ),
         parameters={
             "type": "object",
@@ -250,22 +254,27 @@ TOOLS: list[Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "New X in meters. Omit to keep current X.",
+                    "description": "New X in scene units. Omit to keep current X.",
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "New Y in meters. Omit to keep current Y.",
+                    "description": "New Y in scene units. Omit to keep current Y.",
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "New Z in meters. Omit to keep current Z.",
+                    "description": "New Z in scene units. Omit to keep current Z.",
+                },
+                "rotate_x": {
+                    "type": "number",
+                    "description": "Rotation about X in degrees. Omit to keep it.",
                 },
                 "rotate_y": {
                     "type": "number",
-                    "description": (
-                        "Rotation around Y axis in degrees. Omit to keep "
-                        "current rotation."
-                    ),
+                    "description": "Rotation about Y in degrees. Omit to keep it.",
+                },
+                "rotate_z": {
+                    "type": "number",
+                    "description": "Rotation about Z in degrees. Omit to keep it.",
                 },
             },
             "required": ["prim_path"],
@@ -299,9 +308,11 @@ TOOLS: list[Tool] = [
     Tool(
         name="compute_grid_layout",
         description=(
-            "Compute evenly spaced positions for N objects in a grid, "
-            "centered in the room. Returns a list of (x, z) positions. "
-            "Use this to plan furniture layouts before calling place_asset."
+            "Compute evenly spaced positions for N objects in a grid on the "
+            "scene's ground plane (the plane across the up axis), centered in "
+            "a 10 m x 8 m room whose corner is the origin. Returns x/y/z "
+            "positions in scene units, with the up-axis value 0. Use this to "
+            "plan furniture layouts before calling place_asset."
         ),
         parameters={
             "type": "object",
@@ -312,8 +323,7 @@ TOOLS: list[Tool] = [
                 },
                 "spacing": {
                     "type": "number",
-                    "description": "Distance between objects in meters.",
-                    "default": 2.0,
+                    "description": "Distance between objects in scene units (default 2 m).",
                 },
             },
             "required": ["count"],

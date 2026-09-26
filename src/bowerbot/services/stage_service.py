@@ -10,6 +10,7 @@ from typing import Any
 
 from bowerbot.state import SceneState
 from bowerbot.utils import asset_intake_utils, inspection_utils, stage_utils
+from bowerbot.utils.core import attributes
 from bowerbot.utils.core.asset_folder import parse_nested_contents_path, resolve_asset_dir_for_prim
 from bowerbot.utils.core.integrity import rewrite_refs, scrub_dangling_refs
 from bowerbot.utils.core.naming import safe_file_name
@@ -203,12 +204,12 @@ def list_prim_attributes(
     """List every attribute on a prim with type + current value + authored flag."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
-    attributes = stage_utils.list_prim_attributes(stage, prim_path)
+    prim_attributes = attributes.list_prim_attributes(stage, prim_path)
     return {
         "prim_path": prim_path,
-        "attributes": attributes,
+        "attributes": prim_attributes,
         "message": (
-            f"{len(attributes)} attribute(s) on {prim_path}."
+            f"{len(prim_attributes)} attribute(s) on {prim_path}."
         ),
     }
 
@@ -223,7 +224,7 @@ def set_prim_attribute(
     attribute_name = params["attribute_name"]
     value = params.get("value")
 
-    stage_utils.set_prim_attribute(
+    attributes.set_prim_attribute(
         stage, prim_path, attribute_name, value,
     )
     stage_utils.save_stage(stage)

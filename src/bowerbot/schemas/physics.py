@@ -16,6 +16,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from bowerbot.schemas.schema_registry import SchemaPropertySpec
+
 
 class PhysicsApiName(StrEnum):
     """Whitelist of UsdPhysics applied-API schemas supported."""
@@ -39,24 +41,13 @@ class PhysicsJointType(StrEnum):
     DISTANCE = "PhysicsDistanceJoint"
 
 
-class PhysicsPropertySpec(BaseModel):
-    """One property exposed by a UsdPhysics API, discovered at runtime."""
-
-    name: str
-    kind: str  # "attribute" or "relationship"
-    type_name: str | None = None
-    default: Any = None
-    allowed_tokens: list[str] = []
-    documentation: str = ""
-
-
 class PhysicsApiSchemaInfo(BaseModel):
     """Live introspection of a UsdPhysics applied-API schema."""
 
     api_name: str
     target_requirement: str  # e.g. "UsdGeomGprim", "UsdGeomXformable", "UsdGeomMesh"
     requires_companion_api: str | None = None
-    properties: list[PhysicsPropertySpec] = []
+    properties: list[SchemaPropertySpec] = []
 
 
 class PhysicsPrimSummary(BaseModel):

@@ -18,7 +18,6 @@ from bowerbot.schemas.assets import (
 from bowerbot.schemas.cameras import (
     CameraDefaults,
     CameraParams,
-    CameraPropertySpec,
     CameraSchemaInfo,
 )
 from bowerbot.schemas.intake import (
@@ -36,7 +35,6 @@ from bowerbot.schemas.layout import (
 )
 from bowerbot.schemas.lights import (
     LightParams,
-    LightPropertySpec,
     LightType,
     LightTypeSchemaInfo,
 )
@@ -57,7 +55,6 @@ from bowerbot.schemas.physics import (
     PhysicsApiSchemaInfo,
     PhysicsJointType,
     PhysicsPrimSummary,
-    PhysicsPropertySpec,
     PhysicsSummary,
     ScenePhysicsSummary,
 )
@@ -82,6 +79,7 @@ from bowerbot.schemas.scatter import (
     ScatterSurfaceParams,
 )
 from bowerbot.schemas.scene import SceneNamespace
+from bowerbot.schemas.schema_registry import SchemaPropertySpec
 from bowerbot.schemas.surface import SurfaceIndex, SurfaceTriangles
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
 from bowerbot.schemas.transforms import (
@@ -109,7 +107,6 @@ __all__ = [
     "AssetPhysicsSummary",
     "CameraDefaults",
     "CameraParams",
-    "CameraPropertySpec",
     "CameraSchemaInfo",
     "CollisionGroupSummary",
     "CollisionGroupsSummary",
@@ -126,7 +123,6 @@ __all__ = [
     "LayoutRules",
     "LayoutTransform",
     "LightParams",
-    "LightPropertySpec",
     "LightType",
     "LightTypeSchemaInfo",
     "LinearPattern",
@@ -137,7 +133,6 @@ __all__ = [
     "PhysicsApiSchemaInfo",
     "PhysicsJointType",
     "PhysicsPrimSummary",
-    "PhysicsPropertySpec",
     "PhysicsSummary",
     "PositionDefaults",
     "PositionMode",
@@ -165,6 +160,7 @@ __all__ = [
     "SceneObject",
     "ScenePhysicsSummary",
     "SceneVariantsSummary",
+    "SchemaPropertySpec",
     "Severity",
     "SurfaceIndex",
     "SurfaceTriangles",

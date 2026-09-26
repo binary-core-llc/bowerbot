@@ -13,7 +13,7 @@ from pxr import Sdf, Usd, UsdShade
 
 from bowerbot.schemas import VariantCategory
 from bowerbot.state import SceneState
-from bowerbot.utils import asset_intake_utils, stage_utils, variant_utils
+from bowerbot.utils import asset_intake_utils, variant_utils
 from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
     list_alternate_geo_files,
@@ -22,6 +22,7 @@ from bowerbot.utils.core.asset_folder import (
     resolve_asset_file_path,
     resolve_default_prim_name,
 )
+from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.naming import safe_variant_name, validate_variant_name
 from bowerbot.utils.core.references import get_prim_ref_paths
 
@@ -231,7 +232,7 @@ def add_asset_attribute_variant(
             stage.OverridePrim(path)
             types = resolved_types[path]
             for attr_name, value in attrs.items():
-                stage_utils.set_prim_attribute(
+                set_prim_attribute(
                     stage, path, attr_name, value,
                     expected_type=types[attr_name],
                 )
@@ -357,7 +358,7 @@ def add_scene_lighting_attribute_variant(
             stage.OverridePrim(path)
             types = resolved_types[path]
             for attr_name, value in attrs.items():
-                stage_utils.set_prim_attribute(
+                set_prim_attribute(
                     stage, path, attr_name, value,
                     expected_type=types[attr_name],
                 )

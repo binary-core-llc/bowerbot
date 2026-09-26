@@ -9,6 +9,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from bowerbot.schemas.schema_registry import SchemaPropertySpec
+
 
 class CameraDefaults:
     """Values a camera gets when the request leaves them out."""
@@ -16,21 +18,10 @@ class CameraDefaults:
     CLIPPING_RANGE_METERS = (0.01, 100_000.0)
 
 
-class CameraPropertySpec(BaseModel):
-    """One Camera property discovered from the schema registry."""
-
-    name: str
-    kind: str
-    type_name: str | None = None
-    default: Any = None
-    allowed_tokens: list[str] = []
-    documentation: str = ""
-
-
 class CameraSchemaInfo(BaseModel):
     """Live introspection of the UsdGeom Camera prim schema."""
 
-    properties: list[CameraPropertySpec] = []
+    properties: list[SchemaPropertySpec] = []
 
 
 class CameraParams(BaseModel):

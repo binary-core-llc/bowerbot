@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
@@ -14,10 +15,55 @@ from bowerbot.schemas.transforms import Vec3
 
 
 class ScatterRules:
-    """Most instances one scatter call may create, per output."""
+    """Limits on what one scatter call may create."""
 
     MAX_INSTANCES = 1_000_000
     MAX_PLACEMENTS = 10_000
+    MAX_PILE_PIECES = 20_000
+
+
+class ScatterTuning:
+    """Internal settings of the scatter algorithms."""
+
+    # Points on a circle path.
+    PATH_SEGMENTS = 256
+    # Sampling rounds, and the largest batch, when topping up to an exact count.
+    MAX_SAMPLE_ROUNDS = 24
+    MAX_SAMPLE_BATCH = 2_000_000
+    # Candidates drawn per wanted instance before min-spacing thinning, and their cap.
+    SPACING_OVERSAMPLE = 6
+    MAX_SPACING_CANDIDATES = 400_000
+    # Instance count above which a scatter warns about scene.usda size.
+    LARGE_SCATTER = 100_000
+    # Monte Carlo samples used to measure a share (area left by a region, acceptance rate).
+    PROBE_SAMPLES = 20_000
+    # Share of a model's height treated as its base, and base samples per side.
+    BASE_SLICE = 0.05
+    BASE_GRID = 3
+    # Steepest face whose ground is plane-fitted from above.
+    FIT_MAX_SLOPE_DEGREES = 60.0
+    # Most unsupported instances named when a drop leaves some stranded.
+    STRANDED_REPORT = 20
+    # Most heightfield cells across a pile.
+    PILE_GRID = 400
+    # Pile drops tried per piece, and base growth when none fits the cone.
+    PILE_TRIES = 16
+    PILE_GROWTH = 1.05
+    PILE_GROWTH_STEPS = 4
+    # Default pile tilt off the flattest side, degrees.
+    PILE_TILT_DEGREES = 10.0
+    # Share of a piece's box it fills; sizes the pile heightfield.
+    PILE_SOLIDITY = 0.5
+    # Vertices sampled per prototype.
+    SHAPE_POINTS = 1500
+    # Footprint samples per side when dropping a placement.
+    DROP_FOOTPRINT = 3
+    # Bytes one instance adds to an ASCII .usda layer.
+    ASCII_BYTES_PER_INSTANCE = 116
+
+
+# Keep-probability per sampled point, given its position and triangle index.
+type ScatterAcceptance = Callable[[FloatArray, IntArray], FloatArray]
 
 
 class ScatterNamespace:

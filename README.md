@@ -830,6 +830,7 @@ src/bowerbot/
     cameras.py        #   CameraParams, CameraDefaults, CameraSchemaInfo
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
+    library.py        #   LibraryRules, LibraryDefaults (what a library scan returns)
     lights.py         #   LightType, LightParams, LightTypeSchemaInfo
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
     naming.py         #   NamingRules (valid prim and variant names)

@@ -19,6 +19,7 @@ from bowerbot.schemas.cameras import (
     CameraDefaults,
     CameraParams,
     CameraSchemaInfo,
+    CameraTuning,
 )
 from bowerbot.schemas.intake import (
     DetectionOutcome,
@@ -33,8 +34,10 @@ from bowerbot.schemas.layout import (
     LayoutTransform,
     LinearPattern,
 )
+from bowerbot.schemas.library import LibraryDefaults, LibraryRules
 from bowerbot.schemas.lights import (
     LightParams,
+    LightRules,
     LightType,
     LightTypeSchemaInfo,
 )
@@ -54,7 +57,9 @@ from bowerbot.schemas.physics import (
     PhysicsApiName,
     PhysicsApiSchemaInfo,
     PhysicsJointType,
+    PhysicsNamespace,
     PhysicsPrimSummary,
+    PhysicsRules,
     PhysicsSummary,
     ScenePhysicsSummary,
 )
@@ -77,10 +82,15 @@ from bowerbot.schemas.scatter import (
     ScatterRegionFalloff,
     ScatterRules,
     ScatterSurfaceParams,
+    ScatterTuning,
 )
 from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.schema_registry import SchemaPropertySpec
-from bowerbot.schemas.surface import SurfaceIndex, SurfaceTriangles
+from bowerbot.schemas.surface import (
+    SurfaceIndex,
+    SurfaceTriangles,
+    SurfaceTuning,
+)
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
 from bowerbot.schemas.transforms import (
     LayoutPattern,
@@ -94,6 +104,7 @@ from bowerbot.schemas.variants import (
     SceneVariantsSummary,
     VariantCarrier,
     VariantCategory,
+    VariantRules,
     VariantSetSummary,
     VariantsSummary,
 )
@@ -108,6 +119,7 @@ __all__ = [
     "CameraDefaults",
     "CameraParams",
     "CameraSchemaInfo",
+    "CameraTuning",
     "CollisionGroupSummary",
     "CollisionGroupsSummary",
     "DetectionOutcome",
@@ -122,7 +134,10 @@ __all__ = [
     "LayoutPattern",
     "LayoutRules",
     "LayoutTransform",
+    "LibraryDefaults",
+    "LibraryRules",
     "LightParams",
+    "LightRules",
     "LightType",
     "LightTypeSchemaInfo",
     "LinearPattern",
@@ -132,7 +147,9 @@ __all__ = [
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",
     "PhysicsJointType",
+    "PhysicsNamespace",
     "PhysicsPrimSummary",
+    "PhysicsRules",
     "PhysicsSummary",
     "PositionDefaults",
     "PositionMode",
@@ -156,6 +173,7 @@ __all__ = [
     "ScatterRegionFalloff",
     "ScatterRules",
     "ScatterSurfaceParams",
+    "ScatterTuning",
     "SceneNamespace",
     "SceneObject",
     "ScenePhysicsSummary",
@@ -164,12 +182,14 @@ __all__ = [
     "Severity",
     "SurfaceIndex",
     "SurfaceTriangles",
+    "SurfaceTuning",
     "TextureCategory",
     "TransformParams",
     "ValidationIssue",
     "ValidationResult",
     "VariantCarrier",
     "VariantCategory",
+    "VariantRules",
     "VariantSetSummary",
     "VariantsSummary",
 ]

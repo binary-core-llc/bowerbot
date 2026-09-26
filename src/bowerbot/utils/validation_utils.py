@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 import os
 from pathlib import Path
@@ -400,22 +401,20 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[ValidationIssue]:
     return issues
 
 
-_VALIDATION_CONTEXT: UsdValidation.ValidationContext | None = None
-
-
 def _get_validation_context() -> UsdValidation.ValidationContext | None:
-    """Lazily build a singleton ValidationContext with all registered validators."""
-    global _VALIDATION_CONTEXT
-    if _VALIDATION_CONTEXT is not None:
-        return _VALIDATION_CONTEXT
+    """The shared ValidationContext, or ``None`` if it cannot be built."""
     try:
-        registry = UsdValidation.ValidationRegistry()
-        validators = registry.GetOrLoadAllValidators()
-        _VALIDATION_CONTEXT = UsdValidation.ValidationContext(validators)
+        return _validation_context()
     except Exception as exc:
         logger.warning("Failed to build USD validation context: %s", exc)
         return None
-    return _VALIDATION_CONTEXT
+
+
+@functools.cache
+def _validation_context() -> UsdValidation.ValidationContext:
+    """Build a ValidationContext with every registered validator, once."""
+    registry = UsdValidation.ValidationRegistry()
+    return UsdValidation.ValidationContext(registry.GetOrLoadAllValidators())
 
 
 def _run_usd_compliance_checker(file_path: str) -> list[ValidationIssue]:

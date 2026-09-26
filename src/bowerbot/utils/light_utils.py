@@ -15,6 +15,7 @@ from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux
 from bowerbot.schemas import (
     ASWFLayerNames,
     LightParams,
+    LightRules,
     LightType,
     LightTypeSchemaInfo,
 )
@@ -29,34 +30,13 @@ from bowerbot.utils.core.asset_folder import (
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.overrides import clear_orphan_variant_overs
-from bowerbot.utils.core.schema_registry import schema_properties
+from bowerbot.utils.core.schema_registry import schema_class, schema_properties
 from bowerbot.utils.core.transforms import update_rotate_op, update_translate_op
 from bowerbot.utils.core.values import coerce_number
 from bowerbot.utils.variant_utils import remove_variants_layer_if_empty
 
-LIGHT_CLASSES: dict[str, type] = {
-    LightType.DISTANT: UsdLux.DistantLight,
-    LightType.DOME: UsdLux.DomeLight,
-    LightType.SPHERE: UsdLux.SphereLight,
-    LightType.RECT: UsdLux.RectLight,
-    LightType.DISK: UsdLux.DiskLight,
-    LightType.CYLINDER: UsdLux.CylinderLight,
-}
-
-SCENE_ONLY_LIGHT_TYPES: frozenset[LightType] = frozenset({
-    LightType.DOME,
-    LightType.DISTANT,
-})
-
 logger = logging.getLogger(__name__)
 
-# UsdLux inputs measured in stage units (scaled by asset MPU at write time).
-SPATIAL_LIGHT_INPUTS: frozenset[str] = frozenset({
-    "inputs:radius",
-    "inputs:width",
-    "inputs:height",
-    "inputs:length",
-})
 
 
 def list_light_type_properties(light_type: LightType) -> LightTypeSchemaInfo:
@@ -83,7 +63,7 @@ def scale_spatial_attributes(
     return {
         name: (
             coerce_number(value, f"spatial light input '{name}'") * factor
-            if name in SPATIAL_LIGHT_INPUTS else value
+            if name in LightRules.SPATIAL_INPUTS else value
         )
         for name, value in attributes.items()
     }
@@ -91,7 +71,7 @@ def scale_spatial_attributes(
 
 def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
     """Create a USD light prim in *stage* at *prim_path*."""
-    light_cls = LIGHT_CLASSES[light.light_type.value]
+    light_cls = schema_class(light.light_type)
     light_prim = light_cls.Define(stage, prim_path).GetPrim()
 
     write_light_attributes(stage, prim_path, light.attributes)
@@ -221,10 +201,7 @@ def add_light_to_folder(
         raise RuntimeError(msg)
 
     light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
-    light_cls = LIGHT_CLASSES.get(light.light_type.value)
-    if light_cls is None:
-        msg = f"Unknown light type: {light.light_type.value}"
-        raise ValueError(msg)
+    light_cls = schema_class(light.light_type)
 
     light_prim = light_cls.Define(stage, light_prim_path).GetPrim()
     factor = unit_factor(asset_dir)

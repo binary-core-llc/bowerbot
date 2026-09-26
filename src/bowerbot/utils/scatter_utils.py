@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import hashlib
 import math
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -34,10 +33,13 @@ from bowerbot.schemas import (
     ScatterRegionFalloff,
     ScatterRules,
     ScatterSurfaceParams,
+    ScatterTuning,
     SceneObject,
     SurfaceIndex,
     SurfaceTriangles,
+    SurfaceTuning,
 )
+from bowerbot.schemas.scatter import ScatterAcceptance
 from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
 from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils import asset_intake_utils, layout_utils, surface_utils
@@ -48,43 +50,6 @@ from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
 from bowerbot.utils.core.references import add_references, get_prim_ref_paths
 from bowerbot.utils.core.transforms import extract_position, gf_matrix_to_numpy
 from bowerbot.utils.core.values import to_vec3
-
-# Keep-probability per sampled point, given its position and triangle.
-_Acceptance = Callable[[FloatArray, IntArray], FloatArray]
-
-_PATH_SEGMENTS = 256
-_COUNT_OR_DENSITY = "a surface scatter needs a count or a density."
-_MAX_SAMPLE_ROUNDS = 24
-_MAX_SAMPLE_BATCH = 2_000_000
-_SPACING_OVERSAMPLE = 6
-_MAX_SPACING_CANDIDATES = 400_000
-_MAX_PILE_PIECES = 20_000
-# Instance count above which a scatter warns about scene.usda size.
-_LARGE_SCATTER = 100_000
-# Samples used to measure the area a region or avoid list leaves.
-_AREA_PROBE = 20_000
-# Share of a model's height treated as its base.
-_BASE_SLICE = 0.05
-_BASE_GRID = 3
-# Steepest face whose ground is plane-fitted from above.
-_FIT_MAX_SLOPE_DEGREES = 60.0
-_STRANDED_REPORT = 20
-_EPS = 1e-9
-_PILE_GRID = 400
-# Pile drops tried per piece, and base growth when none fits the cone.
-_PILE_TRIES = 16
-_PILE_GROWTH = 1.05
-_PILE_GROWTH_STEPS = 4
-# Default pile tilt off the flattest side, degrees.
-_PILE_TILT_DEGREES = 10.0
-# Share of a piece's box it fills; sizes the pile heightfield.
-_PILE_SOLIDITY = 0.5
-# Vertices sampled per prototype.
-_SHAPE_POINTS = 1500
-_DROP_FOOTPRINT = 3
-# Bytes one instance adds to an ASCII .usda layer.
-_ASCII_BYTES_PER_INSTANCE = 116
-
 
 # ── parameters and naming ──
 
@@ -299,7 +264,7 @@ def surface_on_accept(
     up: int,
     noise_scale: float,
     seed: int,
-) -> _Acceptance:
+) -> ScatterAcceptance:
     """Build the per-point acceptance probability for scatter_on_surface."""
     axes = list(horizontal_axes(up))
     region = surface.region
@@ -433,7 +398,7 @@ def scatter_surface_points(
     mpu: float,
     count: int | None,
     density: float | None,
-    accept: _Acceptance,
+    accept: ScatterAcceptance,
     min_spacing: float | None,
 ) -> tuple[FloatArray, IntArray, list[str]]:
     """Sample random surface points for a count or density."""
@@ -442,10 +407,8 @@ def scatter_surface_points(
     warnings: list[str] = []
     if count is not None:
         target = count
-    elif density is not None:
-        target = int(round(density * area * mpu * mpu))
     else:
-        raise ValueError(_COUNT_OR_DENSITY)
+        target = int(round(_require_density(density) * area * mpu * mpu))
     if target > ScatterRules.MAX_INSTANCES:
         msg = (
             f"this scatter would create about {target:,} instances; the maximum "
@@ -459,7 +422,10 @@ def scatter_surface_points(
         ]
 
     if min_spacing is not None:
-        pool = min(max(target * _SPACING_OVERSAMPLE, 1024), _MAX_SPACING_CANDIDATES)
+        pool = min(
+            max(target * ScatterTuning.SPACING_OVERSAMPLE, 1024),
+            ScatterTuning.MAX_SPACING_CANDIDATES,
+        )
         points, tris = _accepted_samples(rng, triangles, weights, pool, accept, exact=True)
         keep = _greedy_min_spacing(points, min_spacing, target)
         if keep.size < target:
@@ -487,17 +453,15 @@ def estimate_surface_count(
     mpu: float,
     count: int | None,
     density: float | None,
-    accept: _Acceptance,
+    accept: ScatterAcceptance,
 ) -> tuple[int, float]:
     """Estimate ``(instances, eligible_area_m2)`` without generating the scatter."""
     weights = triangles.areas * tri_mask
     area_m2 = float(weights.sum()) * mpu * mpu
     if count is not None:
         return count, area_m2
-    if density is None:
-        raise ValueError(_COUNT_OR_DENSITY)
-    raw = density * area_m2
-    probe = min(int(raw) + 1, 20_000)
+    raw = _require_density(density) * area_m2
+    probe = min(int(raw) + 1, ScatterTuning.PROBE_SAMPLES)
     points, tris = surface_utils.sample_on_triangles(rng, triangles, weights, probe)
     rate = float(np.mean(accept(points, tris))) if probe else 0.0
     return int(round(raw * rate)), area_m2
@@ -560,8 +524,8 @@ def pile_instances(
 ) -> tuple[FloatArray, FloatArray, BoolArray, float]:
     """Heap pieces under a repose cone, resting on the ground and on each other."""
     n = proto_idx.shape[0]
-    if n > _MAX_PILE_PIECES:
-        msg = f"a pile holds at most {_MAX_PILE_PIECES:,} pieces per call."
+    if n > ScatterRules.MAX_PILE_PIECES:
+        msg = f"a pile holds at most {ScatterRules.MAX_PILE_PIECES:,} pieces per call."
         raise ValueError(msg)
     axes = list(horizontal_axes(up))
     slope = math.tan(math.radians(repose_degrees))
@@ -570,10 +534,10 @@ def pile_instances(
     extents = np.array([np.subtract(p.bounds_max, p.bounds_min) for p in prototypes])
     sizes = extents[proto_idx] * scales
     reach = float(sizes.max())
-    volume = float(np.prod(sizes, axis=1).sum()) * _PILE_SOLIDITY
+    volume = float(np.prod(sizes, axis=1).sum()) * ScatterTuning.PILE_SOLIDITY
     natural = (3.0 * volume / (math.pi * max(slope, 1e-3))) ** (1.0 / 3.0)
     half = max(radius, 1.5 * natural) + reach
-    cell = max(float(sizes.min()) / 4.0, 2.0 * half / _PILE_GRID)
+    cell = max(float(sizes.min()) / 4.0, 2.0 * half / ScatterTuning.PILE_GRID)
     dims = int(2.0 * half / cell) + 1
     c_plan = center[axes]
     origin = c_plan - half
@@ -611,9 +575,9 @@ def pile_instances(
         lowest = float(under.min())
 
         best: tuple[float, int, int, float] | None = None
-        for _ in range(_PILE_GROWTH_STEPS):
-            dist = base_radius * np.sqrt(rng.random(_PILE_TRIES))
-            angle = rng.random(_PILE_TRIES) * 2.0 * math.pi
+        for _ in range(ScatterTuning.PILE_GROWTH_STEPS):
+            dist = base_radius * np.sqrt(rng.random(ScatterTuning.PILE_TRIES))
+            angle = rng.random(ScatterTuning.PILE_TRIES) * 2.0 * math.pi
             ia = np.floor((c_plan[0] + dist * np.cos(angle) - origin[0]) / cell).astype(np.int64)
             ib = np.floor((c_plan[1] + dist * np.sin(angle) - origin[1]) / cell).astype(np.int64)
             ca = ia[:, None] + cells[None, :, 0]
@@ -639,7 +603,7 @@ def pile_instances(
                 k = int(fits[np.argmin(rest[fits] + lowest)])
                 best = (float(excess[k]), int(ia[k]), int(ib[k]), float(rest[k]))
                 break
-            base_radius = min(base_radius * _PILE_GROWTH, max_radius)
+            base_radius = min(base_radius * ScatterTuning.PILE_GROWTH, max_radius)
         if best is None:
             continue
 
@@ -712,7 +676,7 @@ def generate_surface_scatter(
             rng, index, prototypes, proto_idx, scales,
             up=up, center=center,
             radius=radius, repose_degrees=surface.repose_degrees,
-            tilt_degrees=pose.tilt_jitter_degrees or _PILE_TILT_DEGREES,
+            tilt_degrees=pose.tilt_jitter_degrees or ScatterTuning.PILE_TILT_DEGREES,
         )
         if not placed.all():
             warnings.append(
@@ -817,9 +781,9 @@ def build_path(
         center = np.asarray(circle.center, dtype=np.float64)
         axes = list(horizontal_axes(up))
         angles = math.radians(circle.start_angle_degrees) + np.linspace(
-            0.0, 2.0 * math.pi, _PATH_SEGMENTS, endpoint=False,
+            0.0, 2.0 * math.pi, ScatterTuning.PATH_SEGMENTS, endpoint=False,
         )
-        points = np.repeat(center[None, :], _PATH_SEGMENTS, axis=0)
+        points = np.repeat(center[None, :], ScatterTuning.PATH_SEGMENTS, axis=0)
         points[:, axes[0]] += circle.radius * np.cos(angles)
         points[:, axes[1]] += circle.radius * np.sin(angles)
         return points, True, center
@@ -1251,8 +1215,8 @@ def ground_normals(
     det = caa * cbb - cab * cab
     fitted = (
         (w.sum(axis=1) >= 3)
-        & (det > 1e-6 * (caa + cbb) ** 2 + _EPS)
-        & (fallback[:, up] >= math.cos(math.radians(_FIT_MAX_SLOPE_DEGREES)))
+        & (det > 1e-6 * (caa + cbb) ** 2 + SurfaceTuning.EPS)
+        & (fallback[:, up] >= math.cos(math.radians(ScatterTuning.FIT_MAX_SLOPE_DEGREES)))
     )
     safe = np.where(fitted, det, 1.0)
     normals = np.zeros((n, 3))
@@ -1273,7 +1237,7 @@ def base_samples(
 ) -> FloatArray:
     """``(n, k, 3)`` points on each piece's base footprint, in the positions' frame."""
     axes = list(horizontal_axes(up))
-    t = np.linspace(0.0, 1.0, _BASE_GRID)
+    t = np.linspace(0.0, 1.0, ScatterTuning.BASE_GRID)
     ta, tb = (g.ravel() for g in np.meshgrid(t, t, indexing="ij"))
     n, k = positions.shape[0], ta.size
     local = np.repeat(base_min[:, None, :], k, axis=1)
@@ -1407,9 +1371,9 @@ def write_instancer(
 
 def instancer_size_warning(count: int) -> list[str]:
     """Warn when an instancer makes scene.usda heavy to re-save."""
-    if count <= _LARGE_SCATTER:
+    if count <= ScatterTuning.LARGE_SCATTER:
         return []
-    megabytes = count * _ASCII_BYTES_PER_INSTANCE / 1e6
+    megabytes = count * ScatterTuning.ASCII_BYTES_PER_INSTANCE / 1e6
     return [
         f"{count:,} instances add about {megabytes:,.0f} MB to scene.usda, which "
         "BowerBot re-saves after every edit. Lower the density, or split the area "
@@ -1585,7 +1549,7 @@ def drop_scatter(
     extent = instancer.ComputeExtentAtTime(time, time)
     if extent:
         instancer.CreateExtentAttr(extent)
-    stranded = np.flatnonzero(~supported)[:_STRANDED_REPORT]
+    stranded = np.flatnonzero(~supported)[:ScatterTuning.STRANDED_REPORT]
     stranded_at = world_samples.reshape(samples.shape)[stranded].mean(axis=1)
     return {
         "prim_path": prim_path,
@@ -1617,7 +1581,7 @@ def drop_prim(
     axes = list(index.axes)
     prim = stage.GetPrimAtPath(prim_path)
     bmin, bmax = prim_world_box(stage, prim_path)
-    grid = np.linspace(0.1, 0.9, _DROP_FOOTPRINT)
+    grid = np.linspace(0.1, 0.9, ScatterTuning.DROP_FOOTPRINT)
     ga, gb = np.meshgrid(grid, grid, indexing="ij")
     footprint = np.zeros((ga.size, 3))
     footprint[:, axes[0]] = bmin[axes[0]] + ga.ravel() * (bmax[axes[0]] - bmin[axes[0]])
@@ -1751,8 +1715,9 @@ def _conformed_extents(
     points *= unit_scale
     base_min, base_max = _base_footprint(points, up)
     shape = np.unique(points, axis=0)
-    if shape.shape[0] > _SHAPE_POINTS:
-        shape = shape[np.linspace(0, shape.shape[0] - 1, _SHAPE_POINTS).astype(np.int64)]
+    if shape.shape[0] > ScatterTuning.SHAPE_POINTS:
+        picks = np.linspace(0, shape.shape[0] - 1, ScatterTuning.SHAPE_POINTS).astype(np.int64)
+        shape = shape[picks]
     return corners.min(axis=0), corners.max(axis=0), base_min, base_max, shape
 
 
@@ -1760,7 +1725,8 @@ def _base_footprint(points: FloatArray, up: int) -> tuple[FloatArray, FloatArray
     """Box around the lowest slice of *points*: what meets the ground when upright."""
     bottom = float(points[:, up].min())
     top = float(points[:, up].max())
-    base = points[points[:, up] <= bottom + _BASE_SLICE * (top - bottom) + _EPS]
+    cut = bottom + ScatterTuning.BASE_SLICE * (top - bottom) + SurfaceTuning.EPS
+    base = points[points[:, up] <= cut]
     base_min = base.min(axis=0)
     base_max = base.max(axis=0)
     base_min[up] = base_max[up] = bottom
@@ -1859,7 +1825,7 @@ def _accepted_samples(
     triangles: SurfaceTriangles,
     weights: FloatArray,
     target: int,
-    accept: _Acceptance,
+    accept: ScatterAcceptance,
     *,
     exact: bool,
 ) -> tuple[FloatArray, IntArray]:
@@ -1868,7 +1834,7 @@ def _accepted_samples(
     kept_pts: list[FloatArray] = []
     kept_tris: list[IntArray] = []
     got = 0
-    for _ in range(_MAX_SAMPLE_ROUNDS if exact else 1):
+    for _ in range(ScatterTuning.MAX_SAMPLE_ROUNDS if exact else 1):
         points, tris = surface_utils.sample_on_triangles(rng, triangles, weights, batch)
         prob = accept(points, tris)
         keep = rng.random(points.shape[0]) < prob
@@ -1878,7 +1844,7 @@ def _accepted_samples(
         if not exact or got >= target:
             break
         rate = max(float(keep.mean()) if keep.size else 0.0, 1e-3)
-        batch = int(min(max((target - got) / rate * 1.25, 1024), _MAX_SAMPLE_BATCH))
+        batch = int(min(max((target - got) / rate * 1.25, 1024), ScatterTuning.MAX_SAMPLE_BATCH))
     points = np.concatenate(kept_pts) if kept_pts else np.zeros((0, 3))
     tris = np.concatenate(kept_tris) if kept_tris else np.zeros(0, dtype=np.int64)
     if exact:
@@ -1898,7 +1864,7 @@ def _eligible_share(
     if surface.region is None and avoid is None:
         return 1.0
     points, _ = surface_utils.sample_on_triangles(
-        rng, triangles, triangles.areas * tri_mask, _AREA_PROBE,
+        rng, triangles, triangles.areas * tri_mask, ScatterTuning.PROBE_SAMPLES,
     )
     if points.shape[0] == 0:
         return 0.0
@@ -2103,3 +2069,11 @@ def _pile_setup(surface: ScatterSurfaceParams) -> tuple[int, FloatArray, float]:
         raise ValueError(msg)
     center, radius = _region_circle(region)
     return surface.count, center, radius
+
+
+def _require_density(density: float | None) -> float:
+    """*density*, which a surface scatter needs when no count is given."""
+    if density is None:
+        msg = "a surface scatter needs a count or a density."
+        raise ValueError(msg)
+    return density

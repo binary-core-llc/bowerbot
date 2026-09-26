@@ -13,6 +13,16 @@ from bowerbot.schemas import SchemaPropertySpec
 from bowerbot.utils.core.values import usd_to_json
 
 
+def schema_class(type_name: str) -> type[Usd.SchemaBase]:
+    """The Python class USD registers for schema *type_name* (e.g. ``"DistantLight"``)."""
+    tf_type = Usd.SchemaRegistry.GetTypeFromSchemaTypeName(type_name)
+    cls: type[Usd.SchemaBase] | None = tf_type.pythonClass
+    if cls is None:
+        msg = f"Unknown USD schema type: {type_name}"
+        raise ValueError(msg)
+    return cls
+
+
 def schema_properties(
     prim_def: Usd.PrimDefinition,
     names: Iterable[str],

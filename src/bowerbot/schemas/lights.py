@@ -24,6 +24,15 @@ class LightType(StrEnum):
     CYLINDER = "CylinderLight"
 
 
+class LightRules:
+    """Where each light type may go, and which inputs are lengths."""
+
+    # Lights that only make sense at scene level, never inside an asset.
+    SCENE_ONLY_TYPES = frozenset({LightType.DOME, LightType.DISTANT})
+    # UsdLux inputs measured in stage units (scaled by asset MPU at write time).
+    SPATIAL_INPUTS = frozenset({"inputs:radius", "inputs:width", "inputs:height", "inputs:length"})
+
+
 class LightTypeSchemaInfo(BaseModel):
     """Live introspection of a UsdLux concrete-prim schema."""
 

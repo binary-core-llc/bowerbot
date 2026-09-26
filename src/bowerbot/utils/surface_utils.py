@@ -10,17 +10,11 @@ import math
 import numpy as np
 from pxr import Sdf, Usd, UsdGeom
 
-from bowerbot.schemas import SurfaceIndex, SurfaceTriangles
+from bowerbot.schemas import SurfaceIndex, SurfaceTriangles, SurfaceTuning
 from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
 from bowerbot.utils.core.bounds import bbox_cache
 from bowerbot.utils.core.metrics import horizontal_axes
 from bowerbot.utils.core.transforms import gf_matrix_to_numpy
-
-_EPS = 1e-9
-_BARY_EPS = 1e-7
-_SPHERE_SEGMENTS = (32, 16)
-_MAX_GRID_CELLS = 1 << 20
-_QUERY_CHUNK = 200_000
 
 
 def collect_triangles(
@@ -105,9 +99,9 @@ def build_vertical_index(
     bmax = tri_b.max(axis=1) + pad
 
     origin = np.array([amin.min(), bmin.min()])
-    extent = max(amax.max() - origin[0], bmax.max() - origin[1], _EPS)
+    extent = max(amax.max() - origin[0], bmax.max() - origin[1], SurfaceTuning.EPS)
     typical = float(np.median(np.maximum(amax - amin, bmax - bmin)))
-    cell = max(typical, extent / math.sqrt(_MAX_GRID_CELLS), _EPS)
+    cell = max(typical, extent / math.sqrt(SurfaceTuning.MAX_GRID_CELLS), SurfaceTuning.EPS)
     dims = (
         int((amax.max() - origin[0]) / cell) + 1,
         int((bmax.max() - origin[1]) / cell) + 1,
@@ -142,14 +136,15 @@ def vertical_hits(
 ) -> tuple[IntArray, IntArray, FloatArray]:
     """Every (query, triangle, height) where a vertical line meets a triangle."""
     out_q, out_t, out_h = [], [], []
-    for start in range(0, qa.shape[0], _QUERY_CHUNK):
-        sl = slice(start, start + _QUERY_CHUNK)
+    for start in range(0, qa.shape[0], SurfaceTuning.QUERY_CHUNK):
+        sl = slice(start, start + SurfaceTuning.QUERY_CHUNK)
         q, t = _candidate_pairs(index, qa[sl], qb[sl])
         if q.size == 0:
             continue
         pa, pb = qa[sl][q], qb[sl][q]
         l0, l1, l2, valid = _barycentric_2d(index, t, pa, pb)
-        inside = valid & (l0 >= -_BARY_EPS) & (l1 >= -_BARY_EPS) & (l2 >= -_BARY_EPS)
+        tol = -SurfaceTuning.BARY_EPS
+        inside = valid & (l0 >= tol) & (l1 >= tol) & (l2 >= tol)
         q, t = q[inside], t[inside]
         up = index.up
         triangles = index.triangles
@@ -214,14 +209,15 @@ def plan_coverage(
 ) -> BoolArray:
     """Whether each plan-view point lies on (or within *margin* of) any triangle."""
     covered = np.zeros(qa.shape[0], dtype=bool)
-    for start in range(0, qa.shape[0], _QUERY_CHUNK):
-        sl = slice(start, start + _QUERY_CHUNK)
+    for start in range(0, qa.shape[0], SurfaceTuning.QUERY_CHUNK):
+        sl = slice(start, start + SurfaceTuning.QUERY_CHUNK)
         q, t = _candidate_pairs(index, qa[sl], qb[sl])
         if q.size == 0:
             continue
         pa, pb = qa[sl][q], qb[sl][q]
         l0, l1, l2, valid = _barycentric_2d(index, t, pa, pb)
-        inside = valid & (l0 >= -_BARY_EPS) & (l1 >= -_BARY_EPS) & (l2 >= -_BARY_EPS)
+        tol = -SurfaceTuning.BARY_EPS
+        inside = valid & (l0 >= tol) & (l1 >= tol) & (l2 >= tol)
         if margin > 0:
             near = _distance_to_triangle_2d(index, t, pa, pb) <= margin
             inside = inside | near
@@ -346,7 +342,7 @@ def _sphere_triangles(
     sphere: UsdGeom.Sphere,
 ) -> tuple[FloatArray, FloatArray, FloatArray]:
     radius = sphere.GetRadiusAttr().Get() or 1.0
-    n_lon, n_lat = _SPHERE_SEGMENTS
+    n_lon, n_lat = SurfaceTuning.SPHERE_SEGMENTS
     theta = np.linspace(0.0, math.pi, n_lat + 1)
     phi = np.linspace(0.0, 2.0 * math.pi, n_lon + 1)
     tt, pp = np.meshgrid(theta, phi, indexing="ij")
@@ -422,7 +418,7 @@ def _instancer_footprints(
         "ni,nij->nj", (lo[proto_idx] + hi[proto_idx]) / 2.0, rotation,
     ) + matrices[:, 3, :3]
     lengths = np.linalg.norm(rotation, axis=2)
-    upness = np.abs(rotation[:, :, up]) / np.maximum(lengths, _EPS)
+    upness = np.abs(rotation[:, :, up]) / np.maximum(lengths, SurfaceTuning.EPS)
     normal_axis = np.argmax(upness, axis=1)
     rows = np.arange(proto_idx.size)
     edge_a = half[rows, (normal_axis + 1) % 3, None] * rotation[rows, (normal_axis + 1) % 3]
@@ -450,7 +446,7 @@ def _build_triangles(
     double = np.concatenate([np.full(p[0].shape[0], p[3]) for p in parts])
     cross = np.cross(v1 - v0, v2 - v0)
     length = np.linalg.norm(cross, axis=1)
-    keep = length > _EPS
+    keep = length > SurfaceTuning.EPS
     normals = cross[keep] / length[keep][:, None]
     return SurfaceTriangles(
         v0=v0[keep], v1=v1[keep], v2=v2[keep],
@@ -505,7 +501,7 @@ def _barycentric_2d(
     a1, b1 = triangles.v1[t, a_ax], triangles.v1[t, b_ax]
     a2, b2 = triangles.v2[t, a_ax], triangles.v2[t, b_ax]
     det = (b1 - b2) * (a0 - a2) + (a2 - a1) * (b0 - b2)
-    valid = np.abs(det) > _EPS
+    valid = np.abs(det) > SurfaceTuning.EPS
     safe = np.where(valid, det, 1.0)
     l0 = ((b1 - b2) * (pa - a2) + (a2 - a1) * (pb - b2)) / safe
     l1 = ((b2 - b0) * (pa - a2) + (a0 - a2) * (pb - b2)) / safe
@@ -527,8 +523,8 @@ def _distance_to_triangle_2d(
     for (sa, sb), (ea, eb) in zip(verts, verts[1:] + verts[:1], strict=True):
         da, db = ea - sa, eb - sb
         length2 = da * da + db * db
-        s = np.clip(((pa - sa) * da + (pb - sb) * db) / np.where(length2 > _EPS, length2, 1.0),
-                    0.0, 1.0)
+        safe_length2 = np.where(length2 > SurfaceTuning.EPS, length2, 1.0)
+        s = np.clip(((pa - sa) * da + (pb - sb) * db) / safe_length2, 0.0, 1.0)
         dist = np.hypot(pa - (sa + s * da), pb - (sb + s * db))
         best = np.minimum(best, dist)
     return best

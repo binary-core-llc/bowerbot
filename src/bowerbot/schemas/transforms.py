@@ -9,6 +9,8 @@ from pydantic import BaseModel
 
 from bowerbot.schemas.assets import AssetMetadata
 
+Vec3 = tuple[float, float, float]
+
 
 class TransformParams(BaseModel):
     """A prim transform (translate + rotate + scale).

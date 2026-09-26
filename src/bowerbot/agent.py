@@ -65,6 +65,7 @@ class AgentRuntime:
             f"# Scene Building\n\n{load_prompt('scene_building')}",
             f"# Asset Library\n\n{load_prompt('library')}",
             f"# Placing Assets\n\n{load_prompt('assets')}",
+            f"# Scatter\n\n{load_prompt('scatter')}",
             f"# Lighting\n\n{load_prompt('lights')}",
             f"# Cameras\n\n{load_prompt('cameras')}",
             f"# Materials\n\n{load_prompt('materials')}",

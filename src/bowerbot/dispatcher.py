@@ -30,6 +30,7 @@ from bowerbot.tools import (
     material_tools,
     physics_tools,
     project_tools,
+    scatter_tools,
     stage_tools,
     texture_tools,
     validation_tools,
@@ -52,6 +53,7 @@ def _collect_tools() -> list[Tool]:
     tools.extend(light_tools.TOOLS)
     tools.extend(material_tools.TOOLS)
     tools.extend(physics_tools.TOOLS)
+    tools.extend(scatter_tools.TOOLS)
     tools.extend(texture_tools.TOOLS)
     tools.extend(validation_tools.TOOLS)
     tools.extend(variant_tools.TOOLS)
@@ -63,7 +65,7 @@ def _collect_handlers() -> dict[str, ToolHandler]:
     handlers: dict[str, ToolHandler] = {}
     for module in (
         project_tools, stage_tools, asset_tools, camera_tools, library_tools,
-        light_tools, material_tools, physics_tools, texture_tools,
+        light_tools, material_tools, physics_tools, scatter_tools, texture_tools,
         validation_tools, variant_tools,
     ):
         handlers.update(module.HANDLERS)

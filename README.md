@@ -85,6 +85,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 💡 **Native USD lighting**: sun, dome, point, area, disk, and tube lights at scene or asset level, with optional UsdLux `light:link` collections so a rim light, kicker, or product-shot key only illuminates the prims you target
 - 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
 - 📐 **Geometry-aware placement**: bounding-box resolved positions for surface, above, below, or nested placements
+- 🪨 **Scatter**: distribute assets over real surfaces, from a handful to millions, each piece resting on the triangles it lands on (uneven, sloped, or curved). Random with density variation and spacing, crop rows, heaps, paths, loops and curves (fences, posts, shelf products, chairs round a table), plus drop-to-surface for existing objects. Deterministic per seed; assets are referenced like any placement, as editable placements or as one PointInstancer for bulk
 - 🔌 **Pluggable skills**: connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
 - 🧠 **Multi-LLM support**: OpenAI, Anthropic, and any provider via [litellm](https://docs.litellm.ai/)
 - 📁 **Project-based workflow**: one folder per scene, resumable across sessions
@@ -463,6 +464,18 @@ service function and is described in the LLM prompts under
 | `cleanup_unused_contents` | Prune nested asset wrappers whose target folder no longer exists |
 | `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data |
 
+#### Scatter
+
+Every piece rests on the actual geometry it lands on and is conformed to
+the scene's up-axis and units. Lengths are scene units; density is per
+square meter. The same inputs and seed always give the same result.
+
+| Tool | Description |
+|------|-------------|
+| `scatter_on_surface` | Fill surfaces randomly (count or density, min spacing, patchy variation, regions with falloff, avoid footprints), in rows draped over terrain, or as a heap; up to 1,000,000 instances as one PointInstancer in scene.usda (prototypes reference the assets), or up to 10,000 editable placements |
+| `scatter_along_path` | Place along a polyline, closed loop, circle around a prim, or BasisCurves; count, spacing, or butt-joined by asset length; sides/offset; facing tangent, path, center, outward, fixed, or random; optional follow-slope |
+| `drop_to_surface` | Settle existing placements onto the highest surface under their footprint, optionally tilted to the slope; reseat every instance of a scatter in place on the ground under its base |
+
 #### Library
 
 | Tool | Description |
@@ -808,6 +821,7 @@ src/bowerbot/
     cameras.md
     materials.md
     physics.md
+    scatter.md
     textures.md
     variants.md
 
@@ -820,7 +834,10 @@ src/bowerbot/
     materials.py      #   MaterialXShaders, ProceduralMaterialParams
     physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
                       #   PhysicsApiSchemaInfo, joint/collision-group summaries
+    scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
+                      #   ScatterAsset/Region, ScatterPrototype, ScatterInstanceSet
     scene.py          #   SceneNamespace (canonical /Scene/* layout)
+    surface.py        #   SurfaceTriangles, SurfaceIndex
     textures.py       #   HDRI / image / texture-category enums
     transforms.py     #   TransformParams, PositionMode, SceneObject
     validation.py     #   Severity, ValidationIssue, ValidationResult
@@ -841,6 +858,7 @@ src/bowerbot/
     physics_service.py     #   list_physics_api_properties, apply/remove_physics_api,
                            #   setup_physics_scene, get_physics_summary, joints (3),
                            #   collision groups (3)
+    scatter_service.py     #   scatter_on_surface, scatter_along_path, drop_to_surface
     texture_service.py     #   list_textures, search_textures
     validation_service.py  #   validate_scene, package_scene
     variant_service.py     #   add_asset_(material|geometry|attribute|configuration)_variant,
@@ -865,6 +883,7 @@ src/bowerbot/
                            #   cleanup_unused_materials
     physics_tools.py       #   physics APIs (3), physics scene + summary (2),
                            #   joints (4), collision groups (3)
+    scatter_tools.py       #   scatter_on_surface, scatter_along_path, drop_to_surface
     texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
     variant_tools.py       #   variant authoring + selection (asset + scene-instance)
@@ -895,6 +914,10 @@ src/bowerbot/
     physics_utils.py           #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
     physics_typing_utils.py    #   is_joint / is_physics_scene / is_collision_group / ...
+    scatter_utils.py           #   Distributions (random/rows/pile/path), resting,
+                               #   orientation, PointInstancer + placement authoring
+    surface_utils.py           #   World-space triangles from gprims, vertical ray
+                               #   queries, plan coverage, area sampling (numpy)
     scene_integrity_utils.py   #   Generic dangling-rel/target scrubbers
     validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants
     variant_utils.py           #   variants.usda lifecycle, author_in_variant keystone,

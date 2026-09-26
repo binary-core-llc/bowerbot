@@ -14,7 +14,7 @@ from bowerbot.config import UpAxis
 from bowerbot.project import Project
 from bowerbot.services import project_service
 from bowerbot.state import SceneState
-from bowerbot.utils import stage_utils
+from bowerbot.utils.core.metrics import asset_conform
 from tests._helpers import exec_tool
 
 
@@ -122,9 +122,9 @@ def test_up_axis_correction_signs():
         y_scene = Usd.Stage.CreateNew(str(d / "y_scene.usda"))
         UsdGeom.SetStageUpAxis(y_scene, UsdGeom.Tokens.y)
         y_scene.Save()
-        assert stage_utils.asset_conform(z_scene, str(y_asset))[1] == 90.0
-        assert stage_utils.asset_conform(y_scene, str(z_asset))[1] == -90.0
-        assert stage_utils.asset_conform(y_scene, str(y_asset))[1] is None
+        assert asset_conform(z_scene, str(y_asset))[1] == 90.0
+        assert asset_conform(y_scene, str(z_asset))[1] == -90.0
+        assert asset_conform(y_scene, str(y_asset))[1] is None
 
 
 def test_y_asset_stands_up_in_z_scene():

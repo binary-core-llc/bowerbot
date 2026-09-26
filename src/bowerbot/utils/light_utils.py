@@ -25,14 +25,13 @@ from bowerbot.utils.asset_folder_utils import (
     find_root_file,
     remove_empty_layer,
     resolve_default_prim_name,
+    unit_factor,
 )
+from bowerbot.utils.core.transforms import update_rotate_op, update_translate_op
 from bowerbot.utils.core.values import coerce_number, usd_to_json
-from bowerbot.utils.geometry_utils import unit_factor
 from bowerbot.utils.stage_utils import (
     clear_orphan_variant_overs,
     set_prim_attribute,
-    update_rotate_op,
-    update_translate_op,
 )
 from bowerbot.utils.usd_schema_utils import property_doc
 from bowerbot.utils.variant_utils import cleanup_if_empty

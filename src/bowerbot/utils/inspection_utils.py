@@ -11,6 +11,8 @@ from pxr import Sdf, Usd, UsdGeom, UsdLux
 
 from bowerbot.utils import physics_typing_utils
 from bowerbot.utils.camera_utils import format_camera_prim
+from bowerbot.utils.core.bounds import bbox_cache, world_bounds
+from bowerbot.utils.core.transforms import extract_position
 from bowerbot.utils.light_utils import format_light_prim
 from bowerbot.utils.physics_utils import (
     format_collision_group_prim,
@@ -19,17 +21,13 @@ from bowerbot.utils.physics_utils import (
 )
 from bowerbot.utils.scatter_utils import format_scatter_prim
 from bowerbot.utils.stage_utils import (
-    extract_position,
     get_prim_ref_paths,
-    world_bounds,
 )
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
     """List every meaningful prim in the scene, classified by kind."""
-    bbox_cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
+    cache = bbox_cache()
 
     results: list[dict] = []
     seen: set[str] = set()
@@ -39,9 +37,9 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
         if prim.IsA(UsdGeom.PointInstancer):
             # Prototypes live under the instancer; they are not scene objects.
             iterator.PruneChildren()
-            entry = format_scatter_prim(prim, bbox_cache)
+            entry = format_scatter_prim(prim, cache)
         else:
-            entry = _classify(prim, bbox_cache)
+            entry = _classify(prim, cache)
         if entry is None:
             continue
         if entry["prim_path"] in seen:

@@ -24,6 +24,13 @@ class TransformParams(BaseModel):
     scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
 
 
+class PositionDefaults:
+    """Values a position gets when the request leaves them out."""
+
+    # Height above an asset's top for a bounds_offset placement with no Y.
+    ABOVE_BOUNDS_METERS = 0.5
+
+
 class PositionMode(StrEnum):
     """Coordinate system used when placing a prim inside an asset.
 

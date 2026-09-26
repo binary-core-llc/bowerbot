@@ -41,7 +41,10 @@ from bowerbot.schemas import (
 from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
 from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils import asset_intake_utils, layout_utils, stage_utils, surface_utils
+from bowerbot.utils.core.bounds import bbox_cache, prim_world_box, world_bounds, world_range
+from bowerbot.utils.core.metrics import asset_conform, axis_index, horizontal_axes, up_vector
 from bowerbot.utils.core.naming import is_valid_prim_name, safe_prim_name
+from bowerbot.utils.core.transforms import extract_position, gf_matrix_to_numpy
 from bowerbot.utils.core.values import to_vec3
 
 # Keep-probability per sampled point, given its position and triangle.
@@ -230,12 +233,12 @@ def stage_prototypes(
         summary = f"asset intake failed ({len(problems)} asset(s)):"
         raise ValueError("\n".join([summary, *problems]))
 
-    up = surface_utils.axis_index(UsdGeom.GetStageUpAxis(stage))
+    up = axis_index(UsdGeom.GetStageUpAxis(stage))
     prototypes: list[ScatterPrototype] = []
     used: set[str] = set()
     for entry, path in sources:
         report = reports[path]
-        unit_scale, correction = stage_utils.asset_conform(stage, report.scene_ref_path)
+        unit_scale, correction = asset_conform(stage, report.scene_ref_path)
         bmin, bmax, base_min, base_max, points = _conformed_extents(
             project_dir / report.scene_ref_path, unit_scale, correction, up,
         )
@@ -296,7 +299,7 @@ def surface_on_accept(
     seed: int,
 ) -> _Acceptance:
     """Build the per-point acceptance probability for scatter_on_surface."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     region = surface.region
 
     def accept(points: FloatArray, _tris: IntArray) -> FloatArray:
@@ -322,7 +325,7 @@ def region_mask(points: FloatArray, region: ScatterRegion | None, up: int) -> Bo
     """Which *points* fall inside *region* in plan view."""
     if region is None:
         return np.ones(points.shape[0], dtype=bool)
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     if region.polygon is not None:
         polygon = np.asarray(region.polygon, dtype=np.float64)[:, axes]
         return _point_in_polygon(points[:, axes], polygon)
@@ -347,7 +350,7 @@ def region_plan_bounds(
     """Plan-view bounding box of *region*, or ``None`` for no region."""
     if region is None:
         return None
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     if region.polygon is not None:
         plan = np.asarray(region.polygon)[:, axes]
         return plan.min(axis=0), plan.max(axis=0)
@@ -387,7 +390,7 @@ def eligible_triangles(
     mask = surface_utils.slope_mask(triangles, up, max_slope_degrees)
     bounds = region_plan_bounds(region, up)
     if bounds is not None and triangles.count:
-        axes = list(surface_utils.horizontal_axes(up))
+        axes = list(horizontal_axes(up))
         tri = np.stack(
             [triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]], axis=1,
         )
@@ -534,7 +537,7 @@ def rows_plan_points(
 
 def plan_to_world(plan: FloatArray, up: int, height: float = 0.0) -> FloatArray:
     """Lift plan-view points to 3D at *height* on the up axis."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     pts = np.full((plan.shape[0], 3), height, dtype=np.float64)
     pts[:, axes] = plan
     return pts
@@ -558,7 +561,7 @@ def pile_instances(
     if n > _MAX_PILE_PIECES:
         msg = f"a pile holds at most {_MAX_PILE_PIECES:,} pieces per call."
         raise ValueError(msg)
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     slope = math.tan(math.radians(repose_degrees))
     orientations = pile_orientations(rng, prototypes, proto_idx, up, tilt_degrees)
 
@@ -658,8 +661,8 @@ def pile_orientations(
 ) -> FloatArray:
     """Lay each piece on its flattest side with a random spin and a small tilt."""
     n = int(proto_idx.shape[0])
-    up_vec = surface_utils.up_vector(up)
-    axes = surface_utils.horizontal_axes(up)
+    up_vec = up_vector(up)
+    axes = horizontal_axes(up)
     extents = np.array([np.subtract(p.bounds_max, p.bounds_min) for p in prototypes])[proto_idx]
     thin = np.argmin(extents, axis=1)
     q = np.tile([1.0, 0.0, 0.0, 0.0], (n, 1))
@@ -810,7 +813,7 @@ def build_path(
     if path.circle is not None:
         circle = path.circle
         center = np.asarray(circle.center, dtype=np.float64)
-        axes = list(surface_utils.horizontal_axes(up))
+        axes = list(horizontal_axes(up))
         angles = math.radians(circle.start_angle_degrees) + np.linspace(
             0.0, 2.0 * math.pi, _PATH_SEGMENTS, endpoint=False,
         )
@@ -865,7 +868,7 @@ def sample_path(
 ) -> FloatArray:
     """Interpolate 3D positions at plan arc-length *stations*."""
     pts = np.vstack([points, points[:1]]) if closed else points
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     seg = np.diff(pts[:, axes], axis=0)
     seg_len = np.hypot(seg[:, 0], seg[:, 1])
     cum = np.concatenate([[0.0], np.cumsum(seg_len)])
@@ -916,7 +919,7 @@ def facing_yaw(
 ) -> FloatArray:
     """Yaw turning each prototype's front (+Z in Y-up, -Y in Z-up) toward *facing*."""
     n = int(positions.shape[0])
-    up_vec = surface_utils.up_vector(up)
+    up_vec = up_vector(up)
     front = _front_vector(up)
     if facing is ScatterPathFacing.RANDOM:
         return rng.random(n) * 2.0 * math.pi
@@ -945,7 +948,7 @@ def facing_yaw(
         if facing is ScatterPathFacing.OUTWARD:
             target = -target
         return _signed_angle(np.broadcast_to(front, target.shape), target, up_vec)
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     theta = math.radians(direction_degrees or 0.0)
     fixed = np.zeros(3)
     fixed[axes[0]] = math.cos(theta)
@@ -964,7 +967,7 @@ def generate_path_scatter(
 ) -> tuple[ScatterInstanceSet, list[str]]:
     """Compute every instance of a scatter_along_path call in world space."""
     rng = np.random.default_rng(seed)
-    up_vec = surface_utils.up_vector(up)
+    up_vec = up_vector(up)
     points, closed, center = build_path(stage, path, up)
     spacing = path.spacing
     if path.count is None and spacing is None:
@@ -1102,8 +1105,8 @@ def quat_conj(q: FloatArray) -> FloatArray:
 
 def quat_heading(q: FloatArray, up: int) -> FloatArray:
     """The turn about up alone that keeps each rotation's heading (tilt removed)."""
-    axes = surface_utils.horizontal_axes(up)
-    up_vec = surface_utils.up_vector(up)
+    axes = horizontal_axes(up)
+    up_vec = up_vector(up)
     angle = np.zeros(q.shape[0])
     todo = np.ones(q.shape[0], dtype=bool)
     for axis in axes:
@@ -1124,7 +1127,7 @@ def random_headings(
 ) -> FloatArray:
     """Yaw-only rotations about up: uniformly random, or none."""
     yaw = rng.random(n) * 2.0 * math.pi if random_yaw else np.zeros(n)
-    return quat_axis_angle(surface_utils.up_vector(up), yaw)
+    return quat_axis_angle(up_vector(up), yaw)
 
 
 def surface_orientations(
@@ -1138,10 +1141,10 @@ def surface_orientations(
 ) -> FloatArray:
     """*headings*, optional random tilt, then (optionally) align to normals."""
     n = int(normals.shape[0])
-    up_vec = surface_utils.up_vector(up)
+    up_vec = up_vector(up)
     q = headings
     if tilt_jitter_degrees > 0:
-        axes = surface_utils.horizontal_axes(up)
+        axes = horizontal_axes(up)
         phi = rng.random(n) * 2.0 * math.pi
         axis = np.zeros((n, 3))
         axis[:, axes[0]] = np.cos(phi)
@@ -1183,7 +1186,7 @@ def rest_positions(
     bmax = np.stack([p.bounds_max for p in prototypes])[proto_idx]
     base_min, base_max = prototype_bases(prototypes, proto_idx)
     base = (base_min + base_max) / 2.0
-    up_vec = surface_utils.up_vector(up)
+    up_vec = up_vector(up)
     positions = contacts - quat_rotate(orientations, base * scales)
     if index is not None and settle.any():
         samples = base_samples(
@@ -1219,7 +1222,7 @@ def ground_normals(
     up: int,
 ) -> tuple[FloatArray, BoolArray]:
     """Normal of the ground fitted under each base footprint, else *fallback*."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     center = (base_min + base_max) / 2.0
     positions = contacts - quat_rotate(headings, center * scales)
     samples = base_samples(positions, headings, scales, base_min, base_max, up)
@@ -1267,7 +1270,7 @@ def base_samples(
     up: int,
 ) -> FloatArray:
     """``(n, k, 3)`` points on each piece's base footprint, in the positions' frame."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     t = np.linspace(0.0, 1.0, _BASE_GRID)
     ta, tb = (g.ravel() for g in np.meshgrid(t, t, indexing="ij"))
     n, k = positions.shape[0], ta.size
@@ -1309,7 +1312,7 @@ def to_local(
     if world == Gf.Matrix4d(1.0):
         return instances
     inverse = world.GetInverse()
-    matrix = surface_utils.gf_matrix_to_numpy(inverse)
+    matrix = gf_matrix_to_numpy(inverse)
     positions = instances.positions @ matrix[:3, :3] + matrix[3, :3]
     rot = inverse.RemoveScaleShear().ExtractRotationQuat()
     parent_q = np.array([[rot.GetReal(), *rot.GetImaginary()]])
@@ -1461,8 +1464,8 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
         "type": "PointInstancer",
         "instances": len(indices),
         "prototypes": prototypes,
-        "position": stage_utils.extract_position(prim),
-        "bounds": stage_utils.world_bounds(prim, bbox_cache),
+        "position": extract_position(prim),
+        "bounds": world_bounds(prim, bbox_cache),
     }
 
 
@@ -1526,7 +1529,7 @@ def drop_scatter(
     scales = np.asarray(raw_s, dtype=np.float64) if raw_s else np.ones((n, 3))
 
     world_gf = UsdGeom.XformCache(time).GetLocalToWorldTransform(instancer.GetPrim())
-    world = surface_utils.gf_matrix_to_numpy(world_gf)
+    world = gf_matrix_to_numpy(world_gf)
     to_local = np.linalg.inv(world)
     targets = instancer.GetPrototypesRel().GetTargets()
     proto_min = np.zeros((len(targets), 3))
@@ -1542,7 +1545,7 @@ def drop_scatter(
         rotation = world_gf.RemoveScaleShear().ExtractRotationQuat()
         to_world_q = np.tile([rotation.GetReal(), *rotation.GetImaginary()], (n, 1))
         world_scale = float(np.cbrt(abs(np.linalg.det(world[:3, :3]))))
-        up_vec = surface_utils.up_vector(up)
+        up_vec = up_vector(up)
         base = (base_min + base_max) / 2.0
         centers_local = positions + quat_rotate(orientations, base * scales)
         centers = centers_local @ world[:3, :3] + world[3, :3]
@@ -1569,7 +1572,7 @@ def drop_scatter(
     shift, supported = settle_shift(index, world_samples.reshape(samples.shape), up)
     if not supported.any():
         return {"prim_path": prim_path, "supported": False}
-    delta = np.outer(shift, surface_utils.up_vector(up)) @ to_local[:3, :3]
+    delta = np.outer(shift, up_vector(up)) @ to_local[:3, :3]
     if retilted:
         instancer.GetOrientationsAttr().Set(Vt.QuathArray.FromNumpy(
             np.ascontiguousarray(orientations[:, [1, 2, 3, 0]], dtype=np.float16),
@@ -1611,7 +1614,7 @@ def drop_prim(
     up = index.up
     axes = list(index.axes)
     prim = stage.GetPrimAtPath(prim_path)
-    bmin, bmax = surface_utils.prim_world_box(stage, prim_path)
+    bmin, bmax = prim_world_box(stage, prim_path)
     grid = np.linspace(0.1, 0.9, _DROP_FOOTPRINT)
     ga, gb = np.meshgrid(grid, grid, indexing="ij")
     footprint = np.zeros((ga.size, 3))
@@ -1640,7 +1643,7 @@ def drop_prim(
     ) if prim.GetParent().IsA(UsdGeom.Xformable) else Gf.Matrix4d(1.0)
     to_parent = parent_world.GetInverse()
     old_local = np.array(translate_op.Get() or Gf.Vec3d(0.0, 0.0, 0.0), dtype=np.float64)
-    up_vec = surface_utils.up_vector(up)
+    up_vec = up_vector(up)
 
     rotate_value = None
     world_shift = np.zeros(3)
@@ -1705,7 +1708,7 @@ def _circle_center(
         raise ValueError(msg)
     if raw.get("center") is not None:
         return to_vec3(raw["center"], "center")
-    bmin, bmax = surface_utils.prim_world_box(stage, raw["center_prim"])
+    bmin, bmax = prim_world_box(stage, raw["center_prim"])
     center = (bmin + bmax) / 2.0
     center[up] = bmin[up]
     return to_vec3(center.tolist(), "center_prim")
@@ -1720,17 +1723,14 @@ def _conformed_extents(
     if root is None or not root.IsValid():
         msg = f"{root_file.name} has no default prim to measure."
         raise ValueError(msg)
-    cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render],
-    )
-    rng = cache.ComputeWorldBound(root).ComputeAlignedRange()
-    if rng.IsEmpty():
+    rng = world_range(root, bbox_cache(include_render=True))
+    if rng is None:
         msg = f"{root_file.name} has no geometry bounds, so it cannot rest on a surface."
         raise ValueError(msg)
     corners = np.array([list(rng.GetCorner(i)) for i in range(8)])
     triangles = surface_utils.collect_triangles(
         stage, [str(root.GetPath())],
-        up=surface_utils.axis_index(UsdGeom.GetStageUpAxis(stage)),
+        up=axis_index(UsdGeom.GetStageUpAxis(stage)),
     )
     points = (
         np.concatenate([
@@ -1740,7 +1740,7 @@ def _conformed_extents(
         if triangles.count else corners
     )
     if correction is not None:
-        rotate = surface_utils.gf_matrix_to_numpy(
+        rotate = gf_matrix_to_numpy(
             Gf.Matrix4d().SetRotate(Gf.Rotation(Gf.Vec3d.XAxis(), correction)),
         )[:3, :3]
         corners = corners @ rotate
@@ -1770,11 +1770,8 @@ def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> FloatArray:
     triangles = surface_utils.collect_triangles(stage, [prim_path], up=up)
     if triangles.count:
         return np.concatenate([triangles.v0, triangles.v1, triangles.v2])
-    cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render],
-    )
-    rng = cache.ComputeWorldBound(stage.GetPrimAtPath(prim_path)).ComputeAlignedRange()
-    if rng.IsEmpty():
+    rng = world_range(stage.GetPrimAtPath(prim_path), bbox_cache(include_render=True))
+    if rng is None:
         msg = f"Prototype {prim_path} has no geometry, so it cannot rest on a surface."
         raise ValueError(msg)
     return np.array([list(rng.GetCorner(i)) for i in range(8)])
@@ -1849,7 +1846,7 @@ def _path_pitch(
     hit_b, h_b, _ = surface_utils.surface_under(
         index, behind, mode="nearest", reference=behind[:, up].copy(),
     )
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     run = np.linalg.norm((ahead - behind)[:, axes], axis=1)
     rise = np.where(hit_a & hit_b, h_a - h_b, 0.0)
     return np.arctan2(rise, np.maximum(run, 1e-9))
@@ -1905,7 +1902,7 @@ def _eligible_share(
         return 0.0
     keep = region_mask(points, surface.region, up)
     if avoid is not None:
-        axes = list(surface_utils.horizontal_axes(up))
+        axes = list(horizontal_axes(up))
         keep &= ~surface_utils.plan_coverage(
             avoid, points[:, axes[0]], points[:, axes[1]], surface.avoid_margin,
         )
@@ -2003,7 +2000,7 @@ def _curve_points(stage: Usd.Stage, prim_path: str) -> tuple[FloatArray, bool, F
     if points.shape[0] < 2:
         msg = f"curve_prim {prim_path} has fewer than 2 points."
         raise ValueError(msg)
-    world = surface_utils.gf_matrix_to_numpy(
+    world = gf_matrix_to_numpy(
         UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default()),
     )
     points = points @ world[:3, :3] + world[3, :3]
@@ -2013,7 +2010,7 @@ def _curve_points(stage: Usd.Stage, prim_path: str) -> tuple[FloatArray, bool, F
 
 def _plan_length(points: FloatArray, closed: bool, up: int) -> float:
     pts = np.vstack([points, points[:1]]) if closed else points
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     seg = np.diff(pts[:, axes], axis=0)
     return float(np.hypot(seg[:, 0], seg[:, 1]).sum())
 
@@ -2023,7 +2020,7 @@ def _segment_direction(
 ) -> FloatArray:
     """Direction of the path segment containing each station (tangent fallback)."""
     pts = np.vstack([points, points[:1]]) if closed else points
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     seg = np.diff(pts, axis=0)
     seg[:, up] = 0.0
     seg_len = np.hypot(*seg[:, axes].T)
@@ -2091,7 +2088,7 @@ def _region_circle(region: ScatterRegion) -> tuple[FloatArray, float]:
 
 def _plan_distance(points: FloatArray, center: FloatArray, up: int) -> FloatArray:
     """Plan-view distance from each point to *center*."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(horizontal_axes(up))
     offset = points[:, axes] - center[axes]
     return np.hypot(offset[:, 0], offset[:, 1])
 

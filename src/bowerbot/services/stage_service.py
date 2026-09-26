@@ -11,13 +11,18 @@ from typing import Any
 from bowerbot.state import SceneState
 from bowerbot.utils import (
     asset_intake_utils,
-    geometry_utils,
     inspection_utils,
     scene_integrity_utils,
     stage_utils,
 )
 from bowerbot.utils.asset_folder_utils import resolve_asset_dir_for_prim
 from bowerbot.utils.core.naming import safe_file_name
+from bowerbot.utils.core.transforms import (
+    read_translate_and_rotate_y,
+    set_transform,
+    world_to_local_point,
+)
+from bowerbot.utils.layout_utils import suggest_grid_layout
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +152,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     if not prim.IsValid():
         raise ValueError(f"Prim not found: {prim_path}")
 
-    cur_tx, cur_ty, cur_tz, cur_ry = stage_utils.read_translate_and_rotate_y(prim)
+    cur_tx, cur_ty, cur_tz, cur_ry = read_translate_and_rotate_y(prim)
     tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
     ty = float(params["translate_y"]) if params.get("translate_y") is not None else cur_ty
     tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
@@ -162,7 +167,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         group, prim_name = nested
 
         container_prim_path = prim_path.split("/asset/contents/")[0]
-        local = stage_utils.world_to_local_point(
+        local = world_to_local_point(
             stage, container_prim_path, tx, ty, tz,
         )
         if local is None:
@@ -179,7 +184,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             raise RuntimeError(msg)
         state.reopen_stage()
     else:
-        stage_utils.set_transform(
+        set_transform(
             stage, prim_path,
             translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
         )
@@ -321,7 +326,7 @@ def compute_grid_layout(state: SceneState, params: dict[str, Any]) -> dict[str, 
     count = int(params["count"])
     spacing = float(params.get("spacing", 2.0))
 
-    placements = geometry_utils.suggest_grid_layout(
+    placements = suggest_grid_layout(
         count,
         spacing=spacing,
     )

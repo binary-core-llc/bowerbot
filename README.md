@@ -59,7 +59,7 @@ Think of it as:
 
 ### Pipeline Quality Built In
 
-BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (a non-canonical root file name such as `root.usd`, a missing `defaultPrim` on a file with one root prim, dependencies outside the asset's folder) are normalized on intake so the project copy is self-contained. Production-required invariants are validated at intake too: assets with non-identity root transforms (Maya pivot dance, unfrozen DCC exports) or a root prim that is not an Xform are refused with a clear message and the option to fix the project copy (bake the transforms into vertex data, or wrap the root in an Xform) without touching the source. Problems BowerBot cannot fix (several root prims and no `defaultPrim`, geometry outside the `defaultPrim`, a dependency that does not resolve) are refused on intake with a message about what's wrong and how to fix it.
+BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (a non-canonical root file name such as `root.usd`, a missing `defaultPrim` on a file with one root prim, dependencies outside the asset's folder) are normalized on intake so the project copy is self-contained. Production-required invariants are validated at intake too, for loose files, library folders and USDZ packages alike: assets with non-identity root transforms (Maya pivot dance, unfrozen DCC exports) or a root prim that is not an Xform are refused with a clear message and the option to fix the project copy (move the root's transform onto the parts, so every part keeps its place, or wrap the root in an Xform) without touching the source. A USDZ can't be fixed in place, so it is refused with the advice to re-export or unpack it. Problems BowerBot cannot fix (several root prims and no `defaultPrim`, geometry outside the `defaultPrim`, a dependency that does not resolve) are refused on intake with a message about what's wrong and how to fix it.
 
 > **"The cheapest bug to fix is the one you catch before it enters the pipeline."**
 
@@ -478,7 +478,7 @@ path.
 | `delete_project_asset` | Remove an asset folder (scans variant bodies in every layer first) |
 | `delete_project_texture` | Remove a texture from the project (`textures/` or an asset folder, as a removal's `unused_files` lists it) once nothing uses it |
 | `cleanup_unused_contents` | Drop empty group scopes left in asset `contents.usda` layers, deleting a layer that ends up empty (removals already do this) |
-| `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data |
+| `freeze_asset` | Move non-identity root transforms (Maya/Houdini unfrozen exports) onto the asset's parts; every part keeps its place |
 
 #### Scatter
 
@@ -952,7 +952,7 @@ src/bowerbot/
       folders.py               #     library-folder intake: root detection, canonical root
       localize.py              #     copy a file and its dependencies, re-path, verify
       aswf.py                  #     wrap loose files into ASWF folders; root metadata
-      freeze.py  nested.py     #     bake root transforms; nested assets in contents.usda
+      freeze.py  nested.py     #     freeze root transforms; nested assets in contents.usda
     library_utils.py           #   scan_library, find_asset (names -> root files), find_package_for
     light_utils.py             #   Light authoring: create/update, light linking,
                                #   list_light_type_properties, lgt.usda lifecycle
@@ -1034,7 +1034,7 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 - References (not sublayers) per ASWF guidelines, for predictable opinion strength
 - Materials inline in `mtl.usda`, lights inline in `lgt.usda`, physics in `phy.usda`, nested references in `contents.usda`, asset variants in `variants.usda`
 - Automatic `metersPerUnit` and up-axis conversion across composition boundaries (scene to asset, container to nested asset)
-- Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or baked into vertex data with explicit user consent), so nested placements compose predictably
+- Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or moved onto the asset's parts with explicit user consent, every part staying in place), so nested placements compose predictably
 - Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child conforms the nested asset to its container and holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
 - Asset roots carry the canonical ASWF identity: `kind = "component"` for terminal assets and an `assetInfo` dictionary (`identifier`, `name`, `version`) so DCC outliners, asset browsers, and pipeline asset-management systems recognise BowerBot output as production-grade
 

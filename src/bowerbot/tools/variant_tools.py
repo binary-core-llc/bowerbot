@@ -636,8 +636,8 @@ TOOLS: list[Tool] = [
                 "fix_root_transforms": {
                     "type": "boolean",
                     "description": (
-                        "If true, bake non-identity root transforms into "
-                        "vertex data during intake. Only with user "
+                        "If true, move non-identity root transforms onto "
+                        "the asset's parts during intake. Only with user "
                         "confirmation."
                     ),
                     "default": False,

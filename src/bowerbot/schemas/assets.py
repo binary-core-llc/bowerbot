@@ -81,3 +81,12 @@ class AssetMetadata(BaseModel):
     source_skill: str  # e.g. "sketchfab", "local", "cgtrader"
     source_id: str  # Skill-specific identifier (URL, SKU, file path)
     file_path: str | None = None  # Local path after download
+
+
+class FreezeRules:
+    """How a root prim's transform moves onto the asset's parts."""
+
+    # Suffix of the matrix op each top part gets in front of its own transform.
+    OP_SUFFIX = "frozenRoot"
+    # Beyond this many variant combinations a freeze can't be checked in reasonable time.
+    MAX_VARIANT_COMBINATIONS = 256

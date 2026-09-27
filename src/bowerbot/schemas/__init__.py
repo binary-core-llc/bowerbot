@@ -15,6 +15,7 @@ from bowerbot.schemas.assets import (
     AssetMetadata,
     AssetScopeNames,
     ASWFLayerNames,
+    FreezeRules,
 )
 from bowerbot.schemas.cameras import (
     CameraDefaults,
@@ -137,6 +138,7 @@ __all__ = [
     "ConfigPaths",
     "DetectionOutcome",
     "FolderDetection",
+    "FreezeRules",
     "GridPattern",
     "HDRIFormat",
     "IntakeReport",

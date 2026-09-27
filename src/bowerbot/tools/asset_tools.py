@@ -68,7 +68,7 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> ToolRe
 
 
 def freeze_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
-    """Bake an existing project asset's root transforms into vertex data."""
+    """Move an existing project asset's root transform onto its parts."""
     try:
         data = asset_service.freeze_asset(state, params)
     except (ValueError, RuntimeError) as e:
@@ -187,11 +187,12 @@ TOOLS: list[Tool] = [
                 "fix_root_transforms": {
                     "type": "boolean",
                     "description": (
-                        "If true, bake non-identity root transforms "
+                        "If true, move non-identity root transforms "
                         "(translate/rotate/scale/pivot from an unfrozen "
-                        "DCC export) into vertex data on intake. Only use "
-                        "when the user confirms they want the fix; "
-                        "otherwise re-export with transforms frozen."
+                        "DCC export) onto the asset's parts on intake; "
+                        "every part stays where it is. Only use when the "
+                        "user confirms they want the fix; otherwise "
+                        "re-export with transforms frozen."
                     ),
                     "default": False,
                 },
@@ -283,9 +284,9 @@ TOOLS: list[Tool] = [
                             "fix_root_transforms": {
                                 "type": "boolean",
                                 "description": (
-                                    "Bake non-identity root transforms into "
-                                    "vertex data on intake. Only with user "
-                                    "confirmation."
+                                    "Move non-identity root transforms onto "
+                                    "the asset's parts on intake. Only with "
+                                    "user confirmation."
                                 ),
                                 "default": False,
                             },
@@ -500,8 +501,8 @@ TOOLS: list[Tool] = [
                 "fix_root_transforms": {
                     "type": "boolean",
                     "description": (
-                        "If true, bake non-identity root transforms into "
-                        "vertex data on intake (Maya/Houdini freeze)."
+                        "If true, move non-identity root transforms onto "
+                        "the asset's parts on intake (Maya/Houdini freeze)."
                     ),
                     "default": False,
                 },
@@ -598,13 +599,15 @@ TOOLS: list[Tool] = [
     Tool(
         name="freeze_asset",
         description=(
-            "Bake project assets' root transforms (translate/rotate/scale/"
-            "pivot) into vertex data, leaving the root prim with identity "
-            "transforms. Use this to clean up assets imported from DCC "
-            "exports without 'Bake Transforms' enabled — required for "
-            "nested placement to work correctly. If 'name' is provided, "
-            "freezes that one asset; if omitted, freezes every asset in "
-            "the project's assets/ directory."
+            "Move project assets' root transforms (translate/rotate/scale/"
+            "pivot) onto their parts, leaving the root prim with identity "
+            "transforms; every part keeps its place, in every variant. "
+            "Use this to clean up assets imported from DCC exports without "
+            "'Bake Transforms' enabled — required for nested placement to "
+            "work correctly. Refused, with nothing changed, when it can't "
+            "keep every part in place (e.g. an animated root). If 'name' "
+            "is provided, freezes that one asset; if omitted, freezes every "
+            "asset in the project's assets/ directory."
         ),
         parameters={
             "type": "object",

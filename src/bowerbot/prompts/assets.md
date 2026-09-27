@@ -257,31 +257,41 @@ get the canonical defaults stamped on them.
 ### Identity-root-transforms requirement
 
 Production USD assets must have identity transforms on the root prim
-(no translate/rotate/scale/pivot ops). BowerBot enforces this at intake.
-DCC exports without "Bake Transforms" enabled (Maya USD export's default
-without the flag, or Houdini's pre-freeze toggle) carry a pivot dance
-on the root prim that breaks nested placement.
+(no translate/rotate/scale/pivot ops). BowerBot enforces this at intake,
+on what the asset's root file composes: a transform authored in the root
+file counts as much as one in `geo.usda`, in every variant. DCC exports
+without "Bake Transforms" enabled (Maya USD export's default without the
+flag, or Houdini's pre-freeze toggle) carry a pivot dance on the root
+prim that breaks nested placement.
 
 When `place_asset` or `place_asset_inside` returns an error containing
 "non-identity transforms":
 
 1. Tell the user the asset is unfrozen and ask if they want BowerBot
-   to bake the transforms automatically. Make clear that **only the
+   to fix it: the root's transform moves onto the asset's parts, so
+   every part stays exactly where it is. Make clear that **only the
    project copy is modified — the user's source file stays untouched.**
 2. If they confirm, retry the same call with
    `fix_root_transforms: true`.
 3. If they decline, explain the alternative: re-export from their DCC
    with "Bake Transforms" / "Pre-freeze" enabled.
 
+Some cases can't be fixed, and the error says so: an animated root
+transform, or a USDZ package (it can't be edited in place; the user can
+re-export it, or unpack it into a library folder, which BowerBot can
+fix). Relay the error's advice; don't retry with the flag.
+
 For cleaning up assets already in the project (e.g. ones imported
 before this validation existed), use `freeze_asset`:
 
-- `freeze_asset(name="single_sofa")` — bake one specific asset
+- `freeze_asset(name="single_sofa")` — freeze one specific asset
 - `freeze_asset()` (no name) — sweep every asset folder in the
-  project and bake any that have non-identity root transforms
+  project and freeze any that have non-identity root transforms
 
 `freeze_asset` is a no-op on already-clean assets (returns
-`baked: false` for them).
+`baked: false` for them). It checks that every part of every variant
+keeps its world position; if one wouldn't, it changes nothing and says
+why.
 
 ### Inspecting and cleaning up the project
 

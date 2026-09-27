@@ -225,7 +225,10 @@ Approximation rules above.
 `instance_name` is required for PhysicsDriveAPI and PhysicsLimitAPI.
 
 Remove a UsdPhysics applied API and its opinions. Dropping
-PhysicsCollisionAPI cascades to PhysicsMeshCollisionAPI.
+PhysicsCollisionAPI cascades to PhysicsMeshCollisionAPI. The result
+lists joints left without a rigid body (`joints_without_rigid_body`)
+and pair filters left doing nothing (`inert_pair_filters`); tell the
+user.
 
 ### `setup_physics_scene(name?, gravity_magnitude?, gravity_direction?)`
 Create the scene's PhysicsScene singleton at `/Scene/Physics/<name>`
@@ -280,7 +283,10 @@ relationships={"physics:filteredPairs": [<wheel_L>, <wheel_R>]})`
   a collision group when a whole set should ignore another set (or
   itself).
 - `remove_physics_api(..., api_name="PhysicsFilteredPairsAPI")` removes
-  the filter; removing a target prim drops it from the list.
+  the filter; removing a target prim drops it from the list. Removing
+  the API that makes either side a body, collider or articulation root
+  leaves the filter authored and doing nothing: the result lists it in
+  `inert_pair_filters`. Re-apply that API or remove the filter.
 
 ## Collision groups
 

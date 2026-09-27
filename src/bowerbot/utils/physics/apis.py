@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd
+from pxr import Sdf, Usd, UsdPhysics
 
 from bowerbot.schemas import (
     ASWFLayerNames,
@@ -282,6 +282,44 @@ def require_collision_objects(
                 f"of those to it first."
             )
             raise ValueError(msg)
+
+
+def pair_filters(stage: Usd.Stage) -> dict[tuple[str, str], bool]:
+    """Each authored ``(filter prim, target)`` pair, and whether it acts.
+
+    A pair acts when both prims are a rigid body, collider or articulation root.
+    """
+    kinds = {api.value for api in PhysicsRules.COLLISION_OBJECT_APIS}
+    pairs: dict[tuple[str, str], bool] = {}
+    for prim in stage.Traverse():
+        applied = set(prim.GetAppliedSchemas())
+        if PhysicsApiName.FILTERED_PAIRS.value not in applied:
+            continue
+        for target in UsdPhysics.FilteredPairsAPI(prim).GetFilteredPairsRel().GetTargets():
+            acts = bool(kinds & applied) and bool(
+                kinds & set(stage.GetPrimAtPath(target).GetAppliedSchemas()),
+            )
+            pairs[(str(prim.GetPath()), str(target))] = acts
+    return pairs
+
+
+def newly_inert_filters(
+    before: dict[tuple[str, str], bool], after: dict[tuple[str, str], bool],
+) -> list[tuple[str, str]]:
+    """Pairs that acted *before* and, still authored *after*, no longer act."""
+    return sorted(pair for pair, acts in after.items() if not acts and before.get(pair))
+
+
+def inert_filters_note(pairs: list[tuple[str, str]]) -> str:
+    """A message suffix naming pair filters that stopped acting, or ``""``."""
+    if not pairs:
+        return ""
+    listed = ", ".join(f"{owner} -> {target}" for owner, target in pairs)
+    return (
+        f". {len(pairs)} pair filter(s) no longer act, since a filter pairs bodies, "
+        f"colliders or articulation roots: {listed}. Re-apply one of those APIs, or "
+        f"remove the filter (remove_physics_api PhysicsFilteredPairsAPI)"
+    )
 
 
 def check_articulation_root_nesting(stage: Usd.Stage, prim_path: str) -> None:

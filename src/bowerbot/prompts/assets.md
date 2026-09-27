@@ -318,7 +318,8 @@ in their project or when an asset reference has gone stale.
   (`name` as `list_project_assets` reports it). Refuses while any
   project file (scene.usda, a snapshot, another asset) still references
   it; the error names those files so the user can remove the references
-  first.
+  first. An asset only the deleted one placed (nested inside it) is
+  listed in `unused_assets`.
 - `cleanup_unused_contents()` — remove empty group scopes left in a
   container's `contents.usda` and drop the layer when no references
   remain. `remove_prim` already does this when it removes a nested

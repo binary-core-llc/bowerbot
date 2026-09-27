@@ -698,8 +698,9 @@ TOOLS: list[Tool] = [
             "this leaves the variant set empty, the variant set is "
             "auto-removed from the carrier. Operates on scene.usda only "
             "— asset-level variants are untouched. "
-            "A texture it leaves unused is listed in unused_files (it stays "
-            "in the project)."
+            "A texture it leaves unused is listed in unused_files, and an "
+            "asset only the removed variant placed in unused_assets; both "
+            "stay in the project."
         ),
         parameters={
             "type": "object",
@@ -723,8 +724,9 @@ TOOLS: list[Tool] = [
             "as demoted_to_direct_ref (None otherwise) so you can confirm "
             "which asset survived. Also returns removed (bool) and scope "
             "('scene'). "
-            "A texture it leaves unused is listed in unused_files (it stays "
-            "in the project)."
+            "A texture it leaves unused is listed in unused_files, and an "
+            "asset only the removed variants placed in unused_assets; both "
+            "stay in the project."
         ),
         parameters={
             "type": "object",

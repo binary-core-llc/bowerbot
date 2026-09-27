@@ -43,6 +43,8 @@ from bowerbot.utils.core.references import (
     layer_files,
     placement_of,
     project_asset_references,
+    unreferenced_assets,
+    unused_assets_note,
 )
 from bowerbot.utils.core.transforms import (
     asset_axes_rotation,
@@ -569,15 +571,20 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
         )
         raise ValueError(msg)
 
+    assets_before = unreferenced_assets(project.path, assets_dir)
     if asset_path.is_dir() and not asset_path.is_symlink():
         shutil.rmtree(asset_path)
     else:
         asset_path.unlink()  # a file, or a link: never what a link points to
     logger.info("Deleted project asset: %s", asset_path)
+    unused_assets = sorted(unreferenced_assets(project.path, assets_dir) - assets_before)
 
     return {
         "name": name,
-        "message": f"Deleted asset '{name}' from project assets.",
+        "unused_assets": unused_assets,
+        "message": f"Deleted asset '{name}' from project assets." + unused_assets_note(
+            unused_assets,
+        ),
     }
 
 

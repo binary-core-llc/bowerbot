@@ -185,22 +185,16 @@ TOOLS: list[Tool] = [
         name="place_layout",
         description=(
             "Place MANY assets into the scene in a single call, the batch form "
-            "of place_asset. Provide EXACTLY ONE of 'placements' (inline "
-            "entries) or 'layout_file' (path to a JSON file with the same "
-            "entries: {\"version\": 1, \"placements\": [...]}; absolute or "
-            "project-relative). Use inline for small or parametric layouts; "
-            "use layout_file beyond a few dozen entries (e.g. a layout "
-            "extracted from an existing scene by a script or exported from a "
-            "DCC). Each entry references one asset and positions it many "
-            "times, via an enumerated 'transforms' list or a parametric "
-            "'pattern' (grid or linear). Entry asset paths resolve in order: "
-            "absolute, layout-file dir, project dir, library dir; they must "
-            "name the asset's root FILE. Authoring matches place_asset "
-            "(grouped /asset reference wrappers, conformed to the scene "
-            "up-axis and units) in one stage write; the whole plan is "
-            "validated first and ALL problems are reported at once, nothing "
-            "is placed unless every entry is valid. Pass validate_only=true "
-            "to lint a layout (especially a layout_file) without placing "
+            "of place_asset, from inline 'placements' entries. Each entry "
+            "references one asset and positions it many times, via an "
+            "enumerated 'transforms' list or a parametric 'pattern' (grid or "
+            "linear). Entry asset paths resolve in order: absolute, project "
+            "dir, library dir; they must name the asset's root FILE. "
+            "Authoring matches place_asset (grouped /asset reference "
+            "wrappers, conformed to the scene up-axis and units) in one stage "
+            "write; the whole plan is validated first and ALL problems are "
+            "reported at once, nothing is placed unless every entry is valid. "
+            "Pass validate_only=true to lint a layout without placing "
             "anything. Put a logical 'group' on each entry (e.g. 'Boxes', "
             "'Building/Racks') so the set can be inspected or removed as a "
             "unit. Returns the total placed, the groups written, a per-asset "
@@ -223,8 +217,8 @@ TOOLS: list[Tool] = [
                                 "type": "string",
                                 "description": (
                                     "Path to the asset's root FILE, absolute "
-                                    "or relative to the layout-file/project/"
-                                    "library dirs (e.g. "
+                                    "or relative to the project/library dirs "
+                                    "(e.g. "
                                     "'SM_floor02/SM_floor02.usda')."
                                 ),
                             },
@@ -345,15 +339,6 @@ TOOLS: list[Tool] = [
                         "required": ["asset", "group"],
                     },
                 },
-                "layout_file": {
-                    "type": "string",
-                    "description": (
-                        "Path to a layout JSON file: {\"version\": 1, "
-                        "\"placements\": [...]} with the same entries as the "
-                        "inline form. Absolute or project-relative. Use "
-                        "INSTEAD of 'placements' for bulk layouts."
-                    ),
-                },
                 "validate_only": {
                     "type": "boolean",
                     "description": (
@@ -365,6 +350,7 @@ TOOLS: list[Tool] = [
                     "default": False,
                 },
             },
+            "required": ["placements"],
         },
     ),
     Tool(

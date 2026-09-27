@@ -11,7 +11,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from bowerbot.schemas.transforms import LayoutPattern
 
-LAYOUT_FILE_VERSION = 1
 MAX_LAYOUT_PLACEMENTS = 100_000
 
 Vec3 = tuple[float, float, float]

@@ -4,7 +4,6 @@
 """Tool-layer tests for asset tools."""
 
 import asyncio
-import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -307,50 +306,6 @@ def test_place_layout_missing_stage():
         assert not r.success
 
 
-def test_place_layout_from_layout_file():
-    """A BOM'd layout file places its entries, resolving assets against its own dir."""
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, _ = _setup(tmp)
-        _asset(tmp_path, "tile")
-        layout = tmp_path / "layout.json"
-        layout.write_text(json.dumps({
-            "version": 1,
-            "placements": [
-                {"asset": "tile.usda", "group": "Building/Floor",
-                 "pattern": {"type": "grid", "origin": [0, 0, 0],
-                             "count": [2, 2], "spacing": [6, 6]}},
-                {"asset": "tile.usda", "group": "Props", "name": "Spare",
-                 "transforms": [{"translate": [1, 0, 1]}]},
-            ],
-        }), encoding="utf-8-sig")
-
-        r = asyncio.run(exec_tool(state, "place_layout", {
-            "layout_file": str(layout),
-        }))
-        assert r.success, r.error
-        assert r.data["placed"] == 5
-        assert r.data["sources"]["tile"] == str(tmp_path / "tile.usda")
-
-
-def test_place_layout_file_version_rejected():
-    """A layout file with an unsupported version is refused."""
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, _ = _setup(tmp)
-        _asset(tmp_path, "tile")
-        layout = tmp_path / "layout.json"
-        layout.write_text(json.dumps({
-            "version": 2,
-            "placements": [{"asset": "tile.usda", "group": "Props",
-                            "transforms": [{"translate": [0, 0, 0]}]}],
-        }), encoding="utf-8")
-
-        r = asyncio.run(exec_tool(state, "place_layout", {
-            "layout_file": str(layout),
-        }))
-        assert not r.success
-        assert "version" in r.error
-
-
 def test_place_layout_aggregates_all_problems():
     """Every invalid entry and unresolvable asset is reported in one error."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -484,22 +439,18 @@ def test_place_layout_rejects_oversized_layout():
 
 
 def test_place_layout_same_file_two_spellings_no_collision():
-    """The same asset via absolute and layout-relative paths is one source."""
+    """The same asset via absolute and library-relative paths is one source."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
+        state.library_dir = tmp_path
         asset = _asset(tmp_path, "tile")
-        layout = tmp_path / "layout.json"
-        layout.write_text(json.dumps({
-            "version": 1,
+        r = asyncio.run(exec_tool(state, "place_layout", {
             "placements": [
                 {"asset": str(asset), "group": "Props",
                  "transforms": [{"translate": [0, 0, 0]}]},
                 {"asset": "tile.usda", "group": "Props",
                  "transforms": [{"translate": [2, 0, 0]}]},
             ],
-        }), encoding="utf-8")
-        r = asyncio.run(exec_tool(state, "place_layout", {
-            "layout_file": str(layout),
         }))
         assert r.success, r.error
         assert r.data["placed"] == 2

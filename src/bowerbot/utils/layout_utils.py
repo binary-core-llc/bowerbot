@@ -1,18 +1,16 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Layout utils — parse, validate, resolve, and expand batch-placement entries."""
+"""Layout utils — validate, resolve, and expand batch-placement entries."""
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 from pydantic import ValidationError
 
 from bowerbot.schemas import (
-    LAYOUT_FILE_VERSION,
     GridPattern,
     LayoutEntry,
     LayoutPattern,
@@ -22,53 +20,6 @@ from bowerbot.schemas import (
 from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
 
 Vec3 = tuple[float, float, float]
-
-
-def resolve_layout_file(raw: str, project_dir: Path | None) -> Path:
-    """Resolve a layout_file argument to an existing file, absolute or project-relative."""
-    path = Path(raw)
-    candidates = [path] if path.is_absolute() else (
-        [project_dir / raw] if project_dir is not None else []
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    searched = ", ".join(str(c) for c in candidates) or "no project open"
-    msg = (
-        f"layout_file '{raw}' not found (searched: {searched}). "
-        f"Pass an absolute path or a project-relative path."
-    )
-    raise ValueError(msg)
-
-
-def parse_layout_file(file: Path) -> list[Any]:
-    """Read a versioned layout JSON file and return its raw placements list."""
-    try:
-        data = json.loads(file.read_text(encoding="utf-8-sig"))
-    except json.JSONDecodeError as e:
-        msg = f"layout_file is not valid JSON (line {e.lineno}, column {e.colno}): {e.msg}"
-        raise ValueError(msg) from e
-    except UnicodeDecodeError as e:
-        msg = "layout_file is not UTF-8 encoded; re-save the file as UTF-8."
-        raise ValueError(msg) from e
-    except OSError as e:
-        msg = f"layout_file could not be read: {e}"
-        raise ValueError(msg) from e
-    if not isinstance(data, dict):
-        msg = 'layout_file must be an object: {"version": 1, "placements": [...]}.'
-        raise ValueError(msg)
-    version = data.get("version")
-    if version != LAYOUT_FILE_VERSION:
-        msg = (
-            f"unsupported layout_file version {version!r}; "
-            f"this BowerBot reads version {LAYOUT_FILE_VERSION}."
-        )
-        raise ValueError(msg)
-    placements = data.get("placements")
-    if not isinstance(placements, list) or not placements:
-        msg = "layout_file needs a non-empty 'placements' list."
-        raise ValueError(msg)
-    return placements
 
 
 def validate_layout_entries(
@@ -88,7 +39,6 @@ def validate_layout_entries(
 def resolve_layout_asset(
     raw: str,
     *,
-    layout_dir: Path | None,
     project_dir: Path | None,
     library_dir: Path | None,
 ) -> Path:
@@ -97,7 +47,7 @@ def resolve_layout_asset(
     if path.is_absolute():
         candidates = [path]
     else:
-        roots = (layout_dir, project_dir, library_dir)
+        roots = (project_dir, library_dir)
         candidates = [root / raw for root in roots if root is not None]
     for candidate in candidates:
         if candidate.is_file():

@@ -92,7 +92,7 @@ from bowerbot.schemas.scatter import (
     ScatterTuning,
 )
 from bowerbot.schemas.scene import SceneNamespace
-from bowerbot.schemas.schema_registry import SchemaPropertySpec
+from bowerbot.schemas.schema_registry import AttributeRules, SchemaPropertySpec
 from bowerbot.schemas.skills import SkillRules
 from bowerbot.schemas.surface import (
     SurfaceIndex,
@@ -131,6 +131,7 @@ __all__ = [
     "AssetMetadata",
     "AssetPhysicsSummary",
     "AssetScopeNames",
+    "AttributeRules",
     "CameraDefaults",
     "CameraParams",
     "CameraSchemaInfo",

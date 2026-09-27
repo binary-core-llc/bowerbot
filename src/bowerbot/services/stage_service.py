@@ -319,6 +319,7 @@ def set_prim_attribute(
     targets = [(prim_path, attribute_name), *([twin] if twin else [])]
     for path, name in targets:
         attributes.check_attribute_value(stage, path, name, value)
+        instancers.check_instancer_value(stage, path, name, value)
     asset_typed = attributes.attribute_type(stage, prim_path, attribute_name)
     if isinstance(value, str) and asset_typed == Sdf.ValueTypeNames.Asset:
         value = texture_utils.stage_asset_value(value, project_dir, state.library_dir)

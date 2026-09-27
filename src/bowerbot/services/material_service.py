@@ -43,16 +43,22 @@ def create_material(state: SceneState, params: dict[str, Any]) -> dict[str, Any]
     check_shared_modification(stage, asset_dir, params, op_label="create_material")
 
     asset_local_path = to_asset_local(prim_path, ref_prim_path)
+    inputs = {
+        name: float(params.get(name, default)) for name, default in (
+            ("base_color_r", 0.8), ("base_color_g", 0.8), ("base_color_b", 0.8),
+            ("metalness", 0.0), ("roughness", 0.5), ("opacity", 1.0),
+        )
+    }
+    out_of_range = [f"{name}={value}" for name, value in inputs.items() if not 0.0 <= value <= 1.0]
+    if out_of_range:
+        msg = f"Material inputs run from 0 to 1; got {', '.join(out_of_range)}."
+        raise ValueError(msg)
     material_params = ProceduralMaterialParams(
         material_name=material_name,
-        base_color=(
-            float(params.get("base_color_r", 0.8)),
-            float(params.get("base_color_g", 0.8)),
-            float(params.get("base_color_b", 0.8)),
-        ),
-        metalness=float(params.get("metalness", 0.0)),
-        roughness=float(params.get("roughness", 0.5)),
-        opacity=float(params.get("opacity", 1.0)),
+        base_color=(inputs["base_color_r"], inputs["base_color_g"], inputs["base_color_b"]),
+        metalness=inputs["metalness"],
+        roughness=inputs["roughness"],
+        opacity=inputs["opacity"],
     )
 
     material_prim_path = material_utils.create_procedural_material_in_folder(

@@ -12,7 +12,7 @@ from typing import Any
 from pxr import Sdf, Usd, UsdLux, UsdShade
 
 from bowerbot.schemas import VariantRules
-from bowerbot.utils.core.asset_folder import find_root_file
+from bowerbot.utils.core.asset_folder import find_root_file, resolve_default_prim_name
 
 
 def require_dict_param(
@@ -168,6 +168,24 @@ def validate_material_bindings(asset_dir: Path, bindings: dict[str, str]) -> Non
             )
     if problems:
         msg = "Material variant bindings name prims that do not exist:\n" + "\n".join(problems)
+        raise ValueError(msg)
+
+
+def validate_configuration_targets(asset_dir: Path, activations: dict[str, bool]) -> None:
+    """Refuse activations naming a prim the asset lacks, or the asset's root itself."""
+    root_file = find_root_file(asset_dir)
+    stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
+    root = f"/{resolve_default_prim_name(asset_dir)}"
+    problems = [
+        f"{path}: no such prim in {asset_dir.name}" for path in activations
+        if stage is None or not stage.GetPrimAtPath(path).IsValid()
+    ]
+    if root in activations:
+        problems.append(f"{root}: the asset's root; deactivating it would remove the whole asset")
+    if problems:
+        msg = "Configuration variant activations name prims it can't toggle:\n" + "\n".join(
+            problems,
+        )
         raise ValueError(msg)
 
 

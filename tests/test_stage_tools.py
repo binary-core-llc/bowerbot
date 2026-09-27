@@ -811,7 +811,7 @@ def test_renaming_into_a_new_group_keeps_the_placement_a_model():
 
 
 def test_a_group_left_empty_goes_with_its_last_prim():
-    """Removing a group's last prim removes the group; a group with its own transform stays."""
+    """Removing a group's last prim removes the group; a group with its own opinions stays."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         light = asyncio.run(exec_tool(state, "create_light", {
@@ -822,10 +822,11 @@ def test_a_group_left_empty_goes_with_its_last_prim():
         assert not stage.GetPrimAtPath("/Scene/Lighting").IsValid()
 
         table = _place(tmp_path, state, group="Props").data["prim_path"]
-        asyncio.run(exec_tool(state, "set_prim_attribute", {
-            "prim_path": "/Scene/Props", "attribute_name": "xformOp:translate",
-            "value": [0, 1, 0],
+        noted = asyncio.run(exec_tool(state, "set_prim_attribute", {
+            "prim_path": "/Scene/Props", "attribute_name": "userProperties:note",
+            "value": "keep this group",
         }))
+        assert noted.success, noted.error
         asyncio.run(exec_tool(state, "remove_prim", {"prim_path": table}))
         stage = Usd.Stage.Open(str(project.scene_path))
         assert stage.GetPrimAtPath("/Scene/Props").IsValid()

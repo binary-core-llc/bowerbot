@@ -3,7 +3,9 @@
 
 """Material schemas (MaterialX shader identifiers, procedural params)."""
 
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 
 class MaterialXShaders:
@@ -33,11 +35,15 @@ class PreviewSurfaceShader:
     SURFACE_PRIM = "preview_surface"
 
 
+# A material input that runs from 0 to 1 (a color channel, metalness, roughness, opacity).
+type UnitFloat = Annotated[float, Field(ge=0.0, le=1.0)]
+
+
 class ProceduralMaterialParams(BaseModel):
-    """Parameters for creating a procedural MaterialX material."""
+    """Parameters for creating a procedural MaterialX material; every input is 0 to 1."""
 
     material_name: str
-    base_color: tuple[float, float, float] = (0.8, 0.8, 0.8)
-    metalness: float = 0.0
-    roughness: float = 0.5
-    opacity: float = 1.0
+    base_color: tuple[UnitFloat, UnitFloat, UnitFloat] = (0.8, 0.8, 0.8)
+    metalness: UnitFloat = 0.0
+    roughness: UnitFloat = 0.5
+    opacity: UnitFloat = 1.0

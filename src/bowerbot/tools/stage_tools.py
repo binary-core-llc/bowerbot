@@ -380,9 +380,12 @@ TOOLS: list[Tool] = [
         name="set_prim_attribute",
         description=(
             "Author or clear an attribute opinion on a prim in scene.usda. "
-            "Type is inferred from the prim's schema or the shader "
-            "registry (call list_prim_attributes first to see what is "
-            "settable). Pass value=null to clear an authored opinion. "
+            "The attribute must be one the prim has (call "
+            "list_prim_attributes first), an xform op, or a shader input "
+            "the shader declares; a name it doesn't have is refused with "
+            "the closest ones. Custom data goes under primvars: or "
+            "userProperties:. Type is inferred from the prim's schema or the "
+            "shader registry. Pass value=null to clear an authored opinion. "
             "On a prim that comes from an asset (a placement's shader, "
             "asset light or part) this is a per-placement override in "
             "scene.usda: other placements keep the asset's value, so to "

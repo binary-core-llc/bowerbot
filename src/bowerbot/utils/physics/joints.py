@@ -28,6 +28,7 @@ from bowerbot.utils.core.asset_folder import (
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
 from bowerbot.utils.core.integrity import remove_scene_prim
+from bowerbot.utils.core.naming import unique_prim_path
 from bowerbot.utils.core.schema_registry import schema_class
 from bowerbot.utils.core.values import usd_to_json
 from bowerbot.utils.physics.predicates import is_joint
@@ -51,7 +52,7 @@ def create_joint_scene(
     refuse_unknown(list_joint_properties(joint_type), attributes, "attribute")
 
     ensure_physics_scene(stage)
-    prim_path = f"{SceneNamespace.PHYSICS}/{name}"
+    prim_path = unique_prim_path(stage, SceneNamespace.PHYSICS, name)
     joint = schema_class(joint_type).Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
@@ -98,7 +99,7 @@ def create_joint_asset(
     if not stage.GetPrimAtPath(joints_scope_path).IsValid():
         stage.DefinePrim(joints_scope_path, "Scope")
 
-    prim_path = f"{joints_scope_path}/{name}"
+    prim_path = unique_prim_path(stage, joints_scope_path, name)
     joint = schema_class(joint_type).Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
@@ -131,6 +132,13 @@ def remove_joint_scene(stage: Usd.Stage, prim_path: str) -> dict[str, Any] | Non
     holds no supported joint at ``prim_path``.
     """
     spec = stage.GetRootLayer().GetPrimAtPath(prim_path)
+    prim = stage.GetPrimAtPath(prim_path)
+    if prim.IsValid() and not prim.IsA(UsdPhysics.Joint):
+        msg = (
+            f"{prim_path} is a {prim.GetTypeName() or 'prim'}, not a joint. Use the tool "
+            f"for that kind of prim."
+        )
+        raise ValueError(msg)
     if spec is None or not _is_supported_joint_spec(spec):
         return None
     return remove_scene_prim(stage, prim_path)

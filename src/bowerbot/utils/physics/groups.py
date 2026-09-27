@@ -16,7 +16,7 @@ from bowerbot.schemas import (
     SceneNamespace,
 )
 from bowerbot.utils.core.integrity import remove_scene_prim, require_prims
-from bowerbot.utils.physics.scene import ensure_physics_scene
+from bowerbot.utils.physics.scene import ensure_physics_scene, refuse_other_kind
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +37,23 @@ def create_or_update_collision_group(
     """
     include_paths = None if includes is None else require_prims(stage, includes, "includes")
     exclude_paths = None if excludes is None else require_prims(stage, excludes, "excludes")
+    prim_path = _group_prim_path(name)
+    refuse_other_kind(stage, prim_path, UsdPhysics.CollisionGroup, "collision group")
     filtered_paths = None
     if filtered_groups is not None:
         resolved = [_resolve_group_path(g) for g in filtered_groups]
         for path in resolved:
+            if path == prim_path:
+                continue  # filtering itself: the group exists once this call is done
             if not stage.GetPrimAtPath(path).IsValid():
                 raise ValueError(
                     f"filtered_groups references missing group at {path}. "
                     "Create that group first.",
                 )
+            refuse_other_kind(stage, path, UsdPhysics.CollisionGroup, "collision group")
         filtered_paths = [Sdf.Path(p) for p in resolved]
     ensure_physics_scene(stage)
 
-    prim_path = _group_prim_path(name)
     group = UsdPhysics.CollisionGroup.Define(stage, prim_path)
 
     if include_paths is not None or exclude_paths is not None:
@@ -90,6 +94,7 @@ def remove_collision_group(
     dropped-targets report, or ``None`` if no group has that name.
     """
     prim_path = _group_prim_path(name)
+    refuse_other_kind(stage, prim_path, UsdPhysics.CollisionGroup, "collision group")
     if not stage.GetPrimAtPath(prim_path).IsValid():
         return None
 

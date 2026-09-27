@@ -69,10 +69,14 @@ def _plan(
     layer_sources: list[Path],
     asset_sources: list[Path],
 ) -> dict[Path, Path]:
-    """Map every source file to its copy; the root gets *target_root*, names never collide."""
+    """Map every source file to its copy; the root gets *target_root*, names never collide.
+
+    A file already on disk in the target folder is never a target, so copying
+    into an existing asset folder cannot overwrite what the asset has.
+    """
     target_folder = target_root.parent
     plan = {source_root: target_root}
-    used = {target_root}
+    used = {target_root, *(path for path in target_folder.rglob("*") if path.is_file())}
     for source in (*layer_sources, *asset_sources):
         if source in plan:
             continue

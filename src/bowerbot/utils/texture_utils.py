@@ -86,46 +86,6 @@ def stage_asset_value(
     return copy_texture_to_project(source, project_dir)
 
 
-def project_texture_file(project_dir: Path, assets_dir: Path, location: str) -> Path:
-    """The texture *location* names in the project, resolved; refuse anything else.
-
-    *location* is a file name in ``textures/`` or a path relative to the
-    project inside ``textures/`` or an asset folder (``assets/<asset>/maps/wood.png``),
-    as removal results report it in ``unused_files``.
-    """
-    rel = Path(location)
-    if len(rel.parts) == 1:
-        rel = Path(ASWFLayerNames.TEXTURES) / rel
-    target = (project_dir / rel).resolve()
-    textures = (project_dir / ASWFLayerNames.TEXTURES).resolve()
-    assets = assets_dir.resolve()
-    inside = target.is_relative_to(textures) or (
-        target.is_relative_to(assets) and len(target.relative_to(assets).parts) > 1
-    )
-    if rel.is_absolute() or not inside:
-        msg = (
-            f"'{location}' is not a texture location in the project: pass a file "
-            f"name in {ASWFLayerNames.TEXTURES}/ or a path as unused_files reports "
-            f"it (e.g. assets/table/maps/wood.png)."
-        )
-        raise ValueError(msg)
-    if target.suffix.lower() not in TextureCategory.ALL.extensions():
-        msg = f"'{location}' is not a texture (an image or HDRI file)."
-        raise ValueError(msg)
-    if not target.is_file():
-        msg = f"Texture file not found: {rel.as_posix()}"
-        raise ValueError(msg)
-    return target
-
-
-def remove_empty_folders(folder: Path, stop: Path) -> None:
-    """Remove *folder* and each parent it leaves empty, stopping before *stop*."""
-    folder, stop = folder.resolve(), stop.resolve()
-    while folder != stop and folder.is_relative_to(stop) and not any(folder.iterdir()):
-        folder.rmdir()
-        folder = folder.parent
-
-
 def find_textures(
     library_dir: Path,
     category: TextureCategory,

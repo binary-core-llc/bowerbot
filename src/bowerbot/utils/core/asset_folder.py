@@ -259,6 +259,61 @@ def project_unused_files(project_dir: Path, asset_dir: Path | None) -> set[Path]
     return unused
 
 
+def project_file(project_dir: Path, assets_dir: Path, location: str) -> Path:
+    """The file *location* names inside the project, resolved; refuse anything else.
+
+    *location* is a file name in ``textures/`` or a path relative to the
+    project inside ``textures/`` or an asset folder
+    (``assets/table/maps/wood.png``), as removal results report it in
+    ``unused_files``. A whole asset (its folder, its root file or a ``.usdz``)
+    is refused: ``delete_project_asset`` removes those.
+    """
+    rel = Path(location)
+    if len(rel.parts) == 1:
+        rel = Path(ASWFLayerNames.TEXTURES) / rel
+    target = (project_dir / rel).resolve()
+    textures = (project_dir / ASWFLayerNames.TEXTURES).resolve()
+    assets = assets_dir.resolve()
+    in_asset = target.is_relative_to(assets) and len(target.relative_to(assets).parts) > 1
+    if rel.is_absolute() or not (target.is_relative_to(textures) or in_asset):
+        msg = (
+            f"'{location}' is not a file in the project: pass a file name in "
+            f"{ASWFLayerNames.TEXTURES}/ or a path as unused_files reports it "
+            f"(e.g. assets/table/maps/wood.png)."
+        )
+        raise ValueError(msg)
+    if in_asset and find_root_file(assets / target.relative_to(assets).parts[0]) == target:
+        msg = f"'{location}' is an asset's root file; delete_project_asset removes the asset."
+        raise ValueError(msg)
+    if not target.is_file():
+        msg = f"File not found in the project: {rel.as_posix()}"
+        raise ValueError(msg)
+    return target
+
+
+def remove_empty_folders(folder: Path, stop: Path) -> None:
+    """Remove *folder* and each parent it leaves empty, stopping before *stop*."""
+    folder, stop = folder.resolve(), stop.resolve()
+    while folder != stop and folder.is_relative_to(stop) and not any(folder.iterdir()):
+        folder.rmdir()
+        folder = folder.parent
+
+
+def folder_entries(folder: Path) -> set[Path]:
+    """Every file and folder under *folder*: a snapshot :func:`remove_added_entries` undoes to."""
+    return set(folder.rglob("*")) if folder.is_dir() else set()
+
+
+def remove_added_entries(folder: Path, before: set[Path]) -> None:
+    """Delete what appeared under *folder* since *before*: files, then the folders left empty."""
+    added = folder_entries(folder) - before
+    for path in sorted(added, key=lambda p: len(p.parts), reverse=True):
+        if path.is_file():
+            path.unlink()
+        elif path.is_dir() and not any(path.iterdir()):
+            path.rmdir()
+
+
 def asset_has_root_payload(asset_dir: Path) -> bool:
     """Return whether the asset's root prim has a directly authored payload."""
     root_file = find_root_file(asset_dir)

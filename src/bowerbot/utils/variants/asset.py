@@ -225,13 +225,18 @@ def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
     return True
 
 
-def restore_canonical_geo_if_needed(asset_dir: Path) -> bool:
-    """Restore ``./geo.usda`` on the asset root when no other geometry source remains."""
+def restore_canonical_geo_if_needed(asset_dir: Path, payload: str | None = None) -> bool:
+    """Put a geometry payload back on the asset root when no other geometry source remains.
+
+    *payload* is the geometry the removed variant set had selected, so the
+    asset keeps showing what it showed; ``./geo.usda`` when not given.
+    """
+    payload = payload or f"./{ASWFLayerNames.GEO}"
     if asset_has_root_payload(asset_dir):
         return False
     if _variants_have_any_payload(asset_dir):
         return False
-    if not (asset_dir / ASWFLayerNames.GEO).exists():
+    if not (asset_dir / payload).exists():
         return False
 
     root_file = find_root_file(asset_dir)
@@ -243,7 +248,7 @@ def restore_canonical_geo_if_needed(asset_dir: Path) -> bool:
     root_prim = stage.GetDefaultPrim()
     if root_prim is None:
         return False
-    root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
+    root_prim.GetPayloads().AddPayload(payload)
     stage.Save()
     return True
 

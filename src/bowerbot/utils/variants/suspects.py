@@ -71,12 +71,12 @@ def suspect_variant_sets_in_asset(
 
 
 def _is_collapsed_selection_set(vset_spec: Sdf.VariantSetSpec) -> bool:
-    """Whether a variant set has lost its purpose (single model left, or selection on one prim)."""
+    """Whether a variant set lost its purpose (one model or LOD left, or selection on one prim)."""
     if len(vset_spec.variants) == 0:
         return False
     if len(vset_spec.variants) == 1:
         only = next(iter(vset_spec.variants.values()))
-        return _variant_body_authors_references(only)
+        return _variant_body_authors_arcs(only)
     leaf_paths: set[str] = set()
     active_only = True
     for variant_name in list(vset_spec.variants.keys()):
@@ -90,15 +90,15 @@ def _is_collapsed_selection_set(vset_spec: Sdf.VariantSetSpec) -> bool:
     return active_only and len(leaf_paths) == 1
 
 
-def _variant_body_authors_references(variant_spec: Sdf.VariantSpec) -> bool:
-    """Whether a variant body authors any reference arcs (model_selection style)."""
+def _variant_body_authors_arcs(variant_spec: Sdf.VariantSpec) -> bool:
+    """Whether a variant body brings in content: a reference (model selection) or payload (LOD)."""
     inner = variant_spec.primSpec
     if inner is None:
         return False
     stack = [inner]
     while stack:
         spec = stack.pop()
-        if spec.HasInfo("references"):
+        if spec.HasInfo("references") or spec.HasInfo("payload"):
             return True
         stack.extend(spec.nameChildren)
     return False

@@ -332,12 +332,14 @@ def _audit_asset_folder(folder: Path, project_dir: Path, out: list[Issue]) -> No
         if side in referenced and not exists:
             _add(out, "error", "side-layer-missing", rel,
                  f"root references {side} but the file is gone")
-    if (folder / "geo.usda").exists() and "geo.usda" not in payloads | referenced:
-        _add(out, "warn", "geo-not-composed", rel,
-             "geo.usda is not a payload or reference of the root")
-
     layers, _assets, unresolved = UsdUtils.ComputeAllDependencies(str(root))
     reachable = {os.path.realpath(lyr.realPath) for lyr in layers if lyr.realPath}
+    geo = folder / "geo.usda"
+    if geo.exists() and "geo.usda" not in payloads | referenced and (
+        os.path.realpath(str(geo)) not in reachable
+    ):  # an LOD set loads it from a variant body instead of the root
+        _add(out, "warn", "geo-not-composed", rel,
+             "geo.usda is not a payload or reference of the root, nor of a variant")
     for asset_path in unresolved:
         _add(out, "error", "asset-unresolved", rel, asset_path)
     for path in folder.rglob("*"):

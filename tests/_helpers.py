@@ -97,6 +97,7 @@ def build_library(lib: Path) -> None:
     lamp.mkdir()
     _png(lamp / "maps" / "shade.png", b"shade")
     _box(lamp / "geo.usda", (0.4, 0.6, 0.4), parts=("Base", "Shade"), name="lamp")
+    _box(lamp / "geo_low.usda", (0.4, 0.6, 0.4), parts=("Base", "Shade"), name="lamp")  # unused LOD
     mtl = _stage(lamp / "mtl.usda")
     mtl.SetDefaultPrim(mtl.OverridePrim("/lamp"))
     cloth = _textured_material(mtl, "/lamp/mtl/cloth", "./maps/shade.png")

@@ -426,7 +426,7 @@ def test_removing_a_textured_material_lists_its_texture():
         assert removed.success, removed.error
         assert removed.data["unused_files"] == ["assets/table/maps/wood.png"]
 
-        deleted = asyncio.run(exec_tool(state, "delete_project_texture", {
+        deleted = asyncio.run(exec_tool(state, "delete_project_file", {
             "file_name": "assets/table/maps/wood.png",
         }))
         assert deleted.success, deleted.error

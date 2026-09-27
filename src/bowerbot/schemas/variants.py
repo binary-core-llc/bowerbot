@@ -55,3 +55,12 @@ class SceneVariantsSummary(BaseModel):
 
     prim_path: str
     carriers: list[VariantCarrier] = Field(default_factory=list)
+
+
+class LodRules:
+    """How an LOD brought in from the library is stored in an asset folder."""
+
+    # A copied LOD becomes geo_<variant>.<ext>, next to the asset's geo layer.
+    FILE_PREFIX = "geo_"
+    # Suffix of the op that converts a copied LOD's parts to the asset's units and axis.
+    CONFORM_OP_SUFFIX = "conform"

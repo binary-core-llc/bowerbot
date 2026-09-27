@@ -476,7 +476,7 @@ path.
 | `place_asset_inside` | Nest an asset inside an ASWF container's `contents.usda` |
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (scans variant bodies in every layer first) |
-| `delete_project_texture` | Remove a texture from the project (`textures/` or an asset folder, as a removal's `unused_files` lists it) once nothing uses it |
+| `delete_project_file` | Remove a file nothing uses from the project (a texture, an LOD geometry layer no variant loads), as a removal's `unused_files` lists it |
 | `cleanup_unused_contents` | Drop empty group scopes left in asset `contents.usda` layers, deleting a layer that ends up empty (removals already do this) |
 | `freeze_asset` | Move non-identity root transforms (Maya/Houdini unfrozen exports) onto the asset's parts; every part keeps its place |
 
@@ -553,13 +553,13 @@ carry an `asset_` or `scene_` prefix so the LLM never has to guess.
 | Tool | Description |
 |------|-------------|
 | `add_asset_material_variant` | Bind a different material set per variant |
-| `add_asset_geometry_variant` / `setup_asset_geometry_variants` / `list_asset_geo_files` | Swap geometry / LOD payloads per variant |
+| `add_asset_geometry_variant` / `setup_asset_geometry_variants` / `list_asset_geo_files` | Swap geometry / LOD payloads per variant; an LOD can come from the library (copied into the asset folder, units converted on request) |
 | `add_asset_attribute_variant` | Override any prim attribute per variant (stages texture assets automatically) |
 | `add_asset_configuration_variant` | Activate / deactivate prims per variant |
 | `add_scene_lighting_attribute_variant` / `add_scene_lighting_selection_variant` | Lighting mood swaps + light-type swaps on `/Scene/Lighting` |
 | `add_scene_model_selection_variant` | Swap which asset reference loads at a placement (auto-promotes the existing ref into a variant body on first call) |
 | `select_asset_variant` / `select_asset_variant_for_instance` / `select_scene_variant` | Choose the active variant |
-| `remove_asset_variant` / `remove_asset_variant_set` / `remove_scene_variant` / `remove_scene_variant_set` | Delete a variant or whole set (cascades orphan cleanup; `remove_scene_variant` reports suspect sets) |
+| `remove_asset_variant` / `remove_asset_variant_set` / `remove_scene_variant` / `remove_scene_variant_set` | Delete a variant or whole set (cascades orphan cleanup; `remove_asset_variant` and `remove_scene_variant` report suspect sets; removing an LOD set keeps its selected geometry) |
 | `list_variants` | Show every variant set on each carrier under a placement, with its variants and the composed (effective) selection |
 
 #### Validation & packaging
@@ -1054,13 +1054,13 @@ Two layers of authority. The naming convention makes routing explicit.
 1. **Orphan opinion cleanup cascade.** When a prim is removed, every variant body spec authored at the same path is dropped. Empty intermediate `over` specs are pruned. Empty variant bodies remove via `Sdf.VariantSetSpec.RemoveVariant`. Empty variant sets drop along with their `variantSetNames` and `variantSelections` metadata. When `variants.usda` becomes empty, the file is auto-deleted and the root reference scrubbed.
 2. **Rename invariant.** Renaming a prim follows the rename through every variant body opinion, preserving authored values.
 3. **Asset-staging for `Sdf.ValueTypeNames.Asset` attributes.** Variant bodies that author texture or HDRI paths automatically stage the source file where the variant lives: an asset variant into the asset's `maps/`, a scene variant into `<project>/textures/`, each written as a path relative to its layer. `set_prim_attribute` stages into `<project>/textures/` the same way, and `bind_material` brings a library material's textures into the asset's `maps/`. Two different files with the same name keep separate copies. Refuses if the source cannot be resolved (no silent broken paths).
-4. **Suspect-set detection.** After `remove_scene_variant`, `remove_light` or `remove_camera`, variant sets that have collapsed to a single model-selection variant (or 2+ variants converging on one prim with active-only opinions) are flagged via `suspect_variant_sets` on the result. BowerBot's guidance tells the LLM to surface the suspect to the user and ask before deleting the set.
+4. **Suspect-set detection.** After `remove_scene_variant`, `remove_asset_variant`, `remove_light` or `remove_camera`, variant sets that have collapsed to a single model-selection or LOD variant (or 2+ variants converging on one prim with active-only opinions) are flagged via `suspect_variant_sets` on the result. BowerBot's guidance tells the LLM to surface the suspect to the user and ask before deleting the set.
 5. **Model-selection symmetry.** `add_scene_model_selection_variant`'s first call auto-promotes the placement's existing direct reference into a variant body (named after the source asset folder). Removing the entire set auto-demotes the active variant's reference back to a direct reference on `/asset`. No data loss, no dead-slot placements.
 6. **Layer-level reference scanning.** `delete_project_asset`'s safety check scans variant bodies in any layer, not just the composed stage view. An asset referenced only by a non-active variant body still blocks deletion.
 
 **Removal scope**
 - Removal operations are scoped to one carrier. Removing a variant set from one asset never affects other assets, even when they reference each other.
-- A removal never deletes files silently. Files it leaves unused (a texture only the removed material, light or variant used, a payload no variant loads) are listed in `unused_files`; `delete_project_texture` deletes a texture on request, once no USD file in the project uses it.
+- A removal never deletes files silently. Files it leaves unused (a texture only the removed material, light or variant used, a payload no variant loads) are listed in `unused_files`; `delete_project_file` deletes one on request, once no USD file in the project uses it.
 - When multiple assets are in scope, BowerBot asks which asset before calling the removal tool. It never guesses.
 - Variants composed in via referenced assets stay visible after removal because they are authored elsewhere. Navigate to that asset and remove them there.
 

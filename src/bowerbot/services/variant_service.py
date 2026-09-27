@@ -16,8 +16,10 @@ from bowerbot.state import SceneState
 from bowerbot.utils import assets, library_utils, variants
 from bowerbot.utils.core.asset_folder import (
     asset_has_root_payload,
+    folder_entries,
     list_alternate_geo_files,
     normalize_asset_prim_path,
+    remove_added_entries,
     require_placement_asset,
     resolve_default_prim_name,
     unused_asset_files,
@@ -118,8 +120,6 @@ def add_asset_geometry_variant(
     set_as_default = bool(params.get("set_as_default", False))
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
-    for payload_ref in payloads.values():
-        variants.checks.validate_payload_path(asset_dir, payload_ref)
 
     summary = variants.inspection.get_variant_summary(asset_dir)
     existing = any(s.name == set_name for s in summary.variant_sets)
@@ -132,21 +132,35 @@ def add_asset_geometry_variant(
             "inside variants).",
         )
 
-    existing_refs = variants.inspection.get_variant_payload_refs(asset_dir, set_name)
-    new_payload_ref = next(iter(payloads.values()))
-    variants.checks.validate_lod_namespace_stability(
-        asset_dir, {**existing_refs, variant_name: new_payload_ref},
-    )
+    before = folder_entries(asset_dir)
+    try:
+        payloads = {
+            target: assets.lod.add_lod_file(
+                asset_dir, source, variant_name,
+                conform_units=bool(params.get("conform_units", False)),
+            ) if (source := assets.lod.lod_source(ref, asset_dir, state.library_dir)) else ref
+            for target, ref in payloads.items()
+        }
+        for payload_ref in payloads.values():
+            variants.checks.validate_payload_path(asset_dir, payload_ref)
+        existing_refs = variants.inspection.get_variant_payload_refs(asset_dir, set_name)
+        new_payload_ref = next(iter(payloads.values()))
+        variants.checks.validate_lod_namespace_stability(
+            asset_dir, {**existing_refs, variant_name: new_payload_ref},
+        )
 
-    def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
-        for target_path, payload_asset in payloads.items():
-            target = stage.OverridePrim(target_path)
-            target.GetPayloads().ClearPayloads()
-            target.GetPayloads().AddPayload(payload_asset)
+        def author_fn(stage: Usd.Stage, _prim_path: str) -> None:
+            for target_path, payload_asset in payloads.items():
+                target = stage.OverridePrim(target_path)
+                target.GetPayloads().ClearPayloads()
+                target.GetPayloads().AddPayload(payload_asset)
 
-    variants.asset.apply_variant(
-        asset_dir, set_name, variant_name, author_fn, set_as_default,
-    )
+        variants.asset.apply_variant(
+            asset_dir, set_name, variant_name, author_fn, set_as_default,
+        )
+    except Exception:
+        remove_added_entries(asset_dir, before)
+        raise
     state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
@@ -180,9 +194,21 @@ def setup_asset_geometry_variants(
         msg = f"Two variant names in {sorted(requested)} clean to the same name; rename one."
         raise ValueError(msg)
 
-    variants.asset.setup_geometry_variant_set(
-        asset_dir, set_name, payloads_by_variant, default_variant,
-    )
+    before = folder_entries(asset_dir)
+    try:
+        payloads_by_variant = {
+            name: assets.lod.add_lod_file(
+                asset_dir, source, name,
+                conform_units=bool(params.get("conform_units", False)),
+            ) if (source := assets.lod.lod_source(ref, asset_dir, state.library_dir)) else ref
+            for name, ref in payloads_by_variant.items()
+        }
+        variants.asset.setup_geometry_variant_set(
+            asset_dir, set_name, payloads_by_variant, default_variant,
+        )
+    except Exception:
+        remove_added_entries(asset_dir, before)
+        raise
     state.reopen_stage()
     return {
         "asset_path": str(asset_dir),
@@ -543,15 +569,22 @@ def add_scene_model_selection_variant(
 def list_asset_geo_files(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """List alternate geometry files available for geometry variants."""
+    """List alternate geometry files available for geometry variants.
+
+    Files already in the project's copy of the asset, and those the asset's
+    library folder has but doesn't use (copied in when a variant takes one).
+    """
     stage = state.require_stage()
     asset_dir = require_placement_asset(stage, params["prim_path"])[0]
     files = list_alternate_geo_files(asset_dir)
+    library_files = assets.lod.library_alternates(asset_dir, state.library_dir)
     return {
         "asset_path": str(asset_dir),
         "geo_files": files,
+        "library_files": library_files,
         "message": (
-            f"{len(files)} alternate geometry file(s) in {asset_dir.name}"
+            f"{len(files)} alternate geometry file(s) in {asset_dir.name}, "
+            f"{len(library_files)} more in its library folder."
         ),
     }
 
@@ -688,6 +721,7 @@ def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> dict[str,
         "removed": removed,
         "default_variant": new_default,
         "unused_files": unused,
+        "suspect_variant_sets": variants.suspects.suspect_variant_sets_in_asset(asset_dir),
         "message": message,
     }
 
@@ -807,13 +841,19 @@ def remove_asset_variant_set(
     set_name = clean_prim_name(set_name, "Variant set")
 
     unused_before = unused_asset_files(asset_dir)
+    selection = next(
+        (s.selection for s in variants.inspection.get_variant_summary(asset_dir).variant_sets
+         if s.name == set_name), None,
+    )
+    kept = variants.inspection.get_variant_payload_refs(asset_dir, set_name).get(selection or "")
     removed = variants.asset.remove_variant_set(asset_dir, set_name)
+    demoted = False
     if removed:
         variants.asset.clear_default_variant(asset_dir, set_name)
         variants.scene.clear_scene_variant_selections(
             stage, asset_dir, set_name,
         )
-        variants.asset.restore_canonical_geo_if_needed(asset_dir)
+        demoted = variants.asset.restore_canonical_geo_if_needed(asset_dir, kept)
         variants.asset.remove_variants_layer_if_empty(asset_dir)
     unused = newly_unused(
         state.require_project().path, unused_before, unused_asset_files(asset_dir),
@@ -824,9 +864,12 @@ def remove_asset_variant_set(
         "asset_path": str(asset_dir),
         "variant_set": set_name,
         "removed": removed,
+        "demoted_to_direct_payload": kept if demoted else None,
         "unused_files": unused,
         "message": (
             f"Removed variant set '{set_name}' from {asset_dir.name}"
+            + (f"; its selected geometry {kept} is the asset's payload again"
+               if demoted else "")
             if removed else
             f"Variant set '{set_name}' not found in {asset_dir.name}"
         ) + "." + unused_files_note(unused),

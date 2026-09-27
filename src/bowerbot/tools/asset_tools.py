@@ -76,10 +76,10 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
     return ToolResult(success=True, data=data)
 
 
-def delete_project_texture(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def delete_project_file(state: SceneState, params: dict[str, Any]) -> ToolResult:
     """Delete a texture from the project's ``textures/`` dir, if unreferenced."""
     try:
-        data = asset_service.delete_project_texture(state, params)
+        data = asset_service.delete_project_file(state, params)
     except (ValueError, RuntimeError) as e:
         return ToolResult(success=False, error=str(e))
     return ToolResult(success=True, data=data)
@@ -572,13 +572,15 @@ TOOLS: list[Tool] = [
         },
     ),
     Tool(
-        name="delete_project_texture",
+        name="delete_project_file",
         description=(
-            "Delete a texture file from the project: one in textures/ or "
-            "one in an asset folder (e.g. a maps/ file), as a removal's "
-            "unused_files lists it. Refuses while any USD file in the "
-            "project still uses it (variant bodies included). Never touches "
-            "the asset library. Only when the user agrees."
+            "Delete a file of the project that nothing uses: a texture in "
+            "textures/, or a file in an asset folder (a maps/ texture, an LOD "
+            "geometry layer no variant loads), as a removal's unused_files "
+            "lists it. Refuses while any USD file in the project still uses "
+            "it (variant bodies included), and refuses an asset's root file "
+            "(delete_project_asset removes whole assets). Never touches the "
+            "asset library. Only when the user agrees."
         ),
         parameters={
             "type": "object",
@@ -586,10 +588,11 @@ TOOLS: list[Tool] = [
                 "file_name": {
                     "type": "string",
                     "description": (
-                        "The texture to delete: a file name in textures/ "
+                        "The file to delete: a file name in textures/ "
                         "(e.g. 'studio.exr') or a path relative to the "
                         "project as unused_files reports it (e.g. "
-                        "'assets/table/maps/wood.png')."
+                        "'assets/table/maps/wood.png', "
+                        "'assets/chair/geo_low.usda')."
                     ),
                 },
             },
@@ -659,7 +662,7 @@ HANDLERS = {
     "place_layout": place_layout,
     "list_project_assets": list_project_assets,
     "delete_project_asset": delete_project_asset,
-    "delete_project_texture": delete_project_texture,
+    "delete_project_file": delete_project_file,
     "cleanup_unused_contents": cleanup_unused_contents,
     "freeze_asset": freeze_asset,
 }

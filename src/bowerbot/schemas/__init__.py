@@ -113,6 +113,7 @@ from bowerbot.schemas.validation import (
     ValidationResult,
 )
 from bowerbot.schemas.variants import (
+    LodRules,
     SceneVariantsSummary,
     VariantCarrier,
     VariantCategory,
@@ -122,13 +123,13 @@ from bowerbot.schemas.variants import (
 )
 
 __all__ = [
-    "AppleUSDZConstraints",
-    "AssetScopeNames",
     "ASWFLayerNames",
+    "AppleUSDZConstraints",
     "AssetCategory",
     "AssetFormat",
     "AssetMetadata",
     "AssetPhysicsSummary",
+    "AssetScopeNames",
     "CameraDefaults",
     "CameraParams",
     "CameraSchemaInfo",
@@ -158,6 +159,7 @@ __all__ = [
     "LightTypeSchemaInfo",
     "LinearPattern",
     "LocalizedCopy",
+    "LodRules",
     "LoggingRules",
     "MaterialXShaders",
     "NamingRules",

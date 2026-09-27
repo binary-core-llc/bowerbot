@@ -102,7 +102,7 @@ all value tweaks go through `set_prim_attribute`.
 `remove_material` and `cleanup_unused_materials` list the textures a
 removed material leaves unused in `unused_files` (e.g.
 `assets/table/maps/wood.png`); they stay in the asset folder until the
-user agrees to `delete_project_texture`.
+user agrees to `delete_project_file`.
 
 ### Multi-instance containers: the shared-material trap
 

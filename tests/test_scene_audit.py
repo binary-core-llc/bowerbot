@@ -138,6 +138,10 @@ def test_a_scene_built_with_every_tool_stays_clean():
         call("add_scene_model_selection_variant", prim_path=chair, variant_set="model",
              variant_name="post", asset="post", set_as_default=True)
 
+        call("setup_asset_geometry_variants", prim_path=lamp, variant_set="lod",
+             variants={"high": "./geo.usda", "low": "lamp/geo_low.usda"},
+             default_variant="high")
+
         call("setup_physics_scene")
         call("apply_physics_api", prim_path=chair, api_name="PhysicsRigidBodyAPI", scope="scene")
         call("apply_physics_api", prim_path=f"{table}/asset/Top", api_name="PhysicsCollisionAPI")
@@ -220,6 +224,18 @@ def test_removing_what_was_added_restores_the_project():
            lambda made: call("remove_physics_api", prim_path=leg, api_name="PhysicsCollisionAPI"))
         rt(lambda: call("create_or_update_collision_group", name="Group", includes=[chair]),
            lambda made: call("remove_collision_group", name="Group"))
+        def remove_lod(made: dict[str, Any]) -> None:
+            """Remove the set, then delete the file it reports unused (the user's yes)."""
+            removed = asyncio.run(exec_tool(project.state, "remove_asset_variant_set", {
+                "prim_path": lamp, "variant_set": "lod",
+            }))
+            assert removed.data["unused_files"] == ["assets/lamp/geo_low.usda"]
+            call("delete_project_file", file_name="assets/lamp/geo_low.usda")
+
+        rt(lambda: call("setup_asset_geometry_variants", prim_path=lamp, variant_set="lod",
+                        variants={"high": "./geo.usda", "low": "lamp/geo_low.usda"},
+                        default_variant="high"),
+           remove_lod)
         call("apply_physics_api", prim_path=top, api_name="PhysicsCollisionAPI")
         call("apply_physics_api", prim_path=leg, api_name="PhysicsCollisionAPI")
         rt(lambda: call("apply_physics_api", prim_path=top, api_name="PhysicsFilteredPairsAPI",

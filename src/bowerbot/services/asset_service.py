@@ -30,6 +30,7 @@ from bowerbot.utils.core.asset_folder import (
     require_folder_entry,
     resolve_asset_dir_for_prim,
 )
+from bowerbot.utils.core.instancers import require_not_prototype
 from bowerbot.utils.core.naming import clean_group, clean_prim_name, next_placement_path
 from bowerbot.utils.core.references import (
     add_reference,
@@ -302,6 +303,7 @@ def place_asset_inside(state: SceneState, params: dict[str, Any]) -> dict[str, A
     )
     asset_name = params["asset_name"]
     container_prim_path = placement_of(stage, params["container_prim_path"])
+    require_not_prototype(stage, container_prim_path)
     outer = enclosing_placement(stage, container_prim_path)
     if outer is not None:
         msg = (

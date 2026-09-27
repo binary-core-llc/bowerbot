@@ -18,7 +18,7 @@ from bowerbot.utils import (
     stage_utils,
     texture_utils,
 )
-from bowerbot.utils.core import attributes
+from bowerbot.utils.core import attributes, instancers
 from bowerbot.utils.core.asset_folder import (
     nested_container_path,
     parse_nested_contents_path,
@@ -126,6 +126,16 @@ def rename_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         msg = f"Cannot move {old_path} inside itself ({new_path})."
         raise ValueError(msg)
 
+    owner = instancers.prototype_owner(stage, old_path) or instancers.prototypes_below(
+        stage, old_path,
+    )
+    if owner is not None and not Sdf.Path(new_path).HasPrefix(Sdf.Path(owner)):
+        msg = (
+            f"Cannot move {old_path} out of the scatter {owner}: its prototypes stay "
+            f"inside it (outside, a prototype also draws on its own). Rename it in place."
+        )
+        raise ValueError(msg)
+
     if parse_nested_contents_path(old_path) is not None:
         msg = (
             f"Cannot rename {old_path}: it lives inside a referenced "
@@ -181,6 +191,21 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     elif prim_path == SceneNamespace.ROOT:
         scrubbed = clear_scene_prim(stage, prim_path)
         message = f"Cleared {prim_path}: everything under it was removed; the scene root stays"
+    elif instancers.prototype_owner(stage, prim_path) is not None:
+        result = instancers.remove_prototype(stage, prim_path)
+        scrubbed = {"rels_touched": result["rels_touched"]}
+        message = (
+            f"Removed {result['scatter']}: {prim_path} was its only prototype"
+            if result["removed_scatter"] else
+            f"Removed the prototype {prim_path} and its {result['removed_instances']} "
+            f"piece(s) from {result['scatter']}; the other pieces stay"
+        )
+    elif (owner := instancers.prototypes_below(stage, prim_path)) is not None:
+        msg = (
+            f"{prim_path} holds the prototypes of the scatter {owner}. Remove the "
+            f"scatter ({owner}), or one prototype and its pieces."
+        )
+        raise ValueError(msg)
     else:
         scrubbed = remove_scene_prim(stage, prim_path)
         message = f"Removed {prim_path}"
@@ -206,6 +231,7 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     if enclosing_placement(stage, prim_path) is not None:
         prim_path = placement_of(stage, prim_path)
         prim = stage.GetPrimAtPath(prim_path)
+    instancers.require_not_prototype(stage, prim_path)
     current_translate, current_rotate = read_translate_rotate(prim)
 
     nested = parse_nested_contents_path(prim_path)

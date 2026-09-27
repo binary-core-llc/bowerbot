@@ -19,6 +19,7 @@ from bowerbot.schemas import (
 from bowerbot.utils import surface_utils
 from bowerbot.utils.core.asset_folder import parse_nested_contents_path
 from bowerbot.utils.core.bounds import prim_world_box
+from bowerbot.utils.core.instancers import require_not_prototype
 from bowerbot.utils.core.metrics import up_vector
 from bowerbot.utils.core.references import get_prim_ref_paths
 from bowerbot.utils.core.transforms import gf_matrix_to_numpy, rotate_xyz_rotation
@@ -48,6 +49,7 @@ def drop_targets(stage: Usd.Stage, prim_paths: list[str]) -> tuple[list[str], li
         if not prim.IsValid():
             msg = f"Prim not found: {prim_path}"
             raise ValueError(msg)
+        require_not_prototype(stage, prim_path)
         iterator = iter(Usd.PrimRange(prim))
         for candidate in iterator:
             path = str(candidate.GetPath())

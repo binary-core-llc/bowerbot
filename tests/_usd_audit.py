@@ -224,6 +224,7 @@ def _audit_scene(stage: Usd.Stage, meta: dict, out: list[Issue]) -> None:
              f"{UsdGeom.GetStageMetersPerUnit(stage)} vs project {meta.get('meters_per_unit')}")
     _composition(stage, out, "scene.usda")
     _relationships(stage, out, "scene.usda")
+    _instancers(stage, out, "scene.usda")
     for prim in stage.Traverse():
         kind = Usd.ModelAPI(prim).GetKind()
         if kind and Kind.Registry.IsA(kind, Kind.Tokens.model) and not prim.IsModel():
@@ -259,6 +260,31 @@ def _composition(stage: Usd.Stage, out: list[Issue], label: str) -> None:
     _layers, _assets, unresolved = UsdUtils.ComputeAllDependencies(stage.GetRootLayer().identifier)
     for asset_path in unresolved:
         _add(out, "error", "unresolved-dependency", label, asset_path)
+
+
+def _instancers(stage: Usd.Stage, out: list[Issue], label: str) -> None:
+    """Each PointInstancer's indices name a prototype, and its per-instance arrays agree."""
+    for prim in stage.Traverse():
+        if not prim.IsA(UsdGeom.PointInstancer):
+            continue
+        where = f"{label}:{prim.GetPath()}"
+        prototypes = UsdGeom.PointInstancer(prim).GetPrototypesRel().GetTargets()
+        indices = list(prim.GetAttribute("protoIndices").Get() or [])
+        if any(not 0 <= i < len(prototypes) for i in indices):
+            _add(out, "error", "instancer-bad-index", where,
+                 f"protoIndices go up to {max(indices)} with {len(prototypes)} prototypes")
+        for target in prototypes:
+            if not stage.GetPrimAtPath(target).IsValid():
+                _add(out, "error", "instancer-missing-prototype", where, str(target))
+            elif not target.HasPrefix(prim.GetPath()):
+                _add(out, "warn", "instancer-prototype-outside", where, str(target))
+        for name in ("ids", "positions", "orientations", "orientationsf", "scales",
+                     "velocities", "accelerations", "angularVelocities"):
+            attr = prim.GetAttribute(name)
+            value = attr.Get() if attr and attr.HasAuthoredValue() else None
+            if value is not None and len(value) != len(indices):
+                _add(out, "error", "instancer-array-length", where,
+                     f"{name}: {len(value)} for {len(indices)} instances")
 
 
 def _relationships(stage: Usd.Stage, out: list[Issue], label: str) -> None:

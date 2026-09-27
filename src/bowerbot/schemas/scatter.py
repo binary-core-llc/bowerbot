@@ -78,6 +78,17 @@ class ScatterNamespace:
     PROTOTYPES = "Prototypes"
 
 
+class ScatterInstancerArrays:
+    """A PointInstancer's attributes holding one value per instance, parallel to protoIndices."""
+
+    ATTRIBUTES = (
+        "ids", "positions", "orientations", "orientationsf", "scales",
+        "velocities", "accelerations", "angularVelocities",
+    )
+    # Primvar interpolations that mean one value per instance on an instancer.
+    PRIMVAR_INTERPOLATIONS = ("vertex", "varying")
+
+
 class ScatterOutput(StrEnum):
     """How a scatter is written: one PointInstancer, or one placement per instance."""
 

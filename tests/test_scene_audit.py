@@ -141,6 +141,10 @@ def test_a_scene_built_with_every_tool_stays_clean():
         call("setup_physics_scene")
         call("apply_physics_api", prim_path=chair, api_name="PhysicsRigidBodyAPI", scope="scene")
         call("apply_physics_api", prim_path=f"{table}/asset/Top", api_name="PhysicsCollisionAPI")
+        call("apply_physics_api", prim_path=f"{table}/asset/Leg", api_name="PhysicsCollisionAPI")
+        call("apply_physics_api", prim_path=f"{table}/asset/Top",
+             api_name="PhysicsFilteredPairsAPI",
+             relationships={"physics:filteredPairs": [f"{table}/asset/Leg"]})
         call("create_joint", joint_type="PhysicsFixedJoint", name="bolt", body0=chair, body1=table,
              scope="scene")
         call("create_or_update_collision_group", name="Furniture", includes=[chair, table])
@@ -216,6 +220,12 @@ def test_removing_what_was_added_restores_the_project():
            lambda made: call("remove_physics_api", prim_path=leg, api_name="PhysicsCollisionAPI"))
         rt(lambda: call("create_or_update_collision_group", name="Group", includes=[chair]),
            lambda made: call("remove_collision_group", name="Group"))
+        call("apply_physics_api", prim_path=top, api_name="PhysicsCollisionAPI")
+        call("apply_physics_api", prim_path=leg, api_name="PhysicsCollisionAPI")
+        rt(lambda: call("apply_physics_api", prim_path=top, api_name="PhysicsFilteredPairsAPI",
+                        relationships={"physics:filteredPairs": [leg]}),
+           lambda made: call("remove_physics_api", prim_path=top,
+                             api_name="PhysicsFilteredPairsAPI"))
         rt(lambda: call("add_asset_attribute_variant", prim_path=table, variant_set="size",
                         variant_name="big", overrides={top: {"size": 2.0}}),
            lambda made: call("remove_asset_variant_set", prim_path=table, variant_set="size"))

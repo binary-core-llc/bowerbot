@@ -78,6 +78,8 @@ def apply_api(
         target_path = str(target.GetPath())
         if api_name == PhysicsApiName.ARTICULATION_ROOT:
             check_articulation_root_nesting(composed, target_path)
+        if api_name in PhysicsRules.FILTERS_COLLISION_OBJECTS:
+            require_collision_objects(composed, target_path, relationships)
     del composed
 
     stage = Usd.Stage.Open(str(ensure_side_layer(asset_dir, ASWFLayerNames.PHY)))
@@ -168,7 +170,6 @@ def apply_api_scene(
         name: require_prims(stage, targets, f"relationships['{name}']")
         for name, targets in relationships.items()
     }
-    ensure_physics_scene(stage)
 
     instance: str | None = None
     if is_multi:
@@ -182,6 +183,9 @@ def apply_api_scene(
         target_path = str(target.GetPath())
         if api_name == PhysicsApiName.ARTICULATION_ROOT:
             check_articulation_root_nesting(stage, target_path)
+        if api_name in PhysicsRules.FILTERS_COLLISION_OBJECTS:
+            require_collision_objects(stage, target_path, targets_by_name)
+    ensure_physics_scene(stage)
 
     companion = PhysicsRules.COMPANIONS.get(api_name)
     if companion is not None:
@@ -258,6 +262,26 @@ def resolve_typed_target(
         f"{len(candidates)} {cls.__name__} descendants. Pick one and "
         f"retry: {[str(c.GetPath()) for c in candidates]}",
     )
+
+
+def require_collision_objects(
+    stage: Usd.Stage, prim_path: str, relationships: dict[str, list[str]],
+) -> None:
+    """Refuse unless *prim_path* and every relationship target is a body, collider or articulation.
+
+    Pair filtering acts only on those; on anything else it would do nothing.
+    """
+    kinds = {api.value for api in PhysicsRules.COLLISION_OBJECT_APIS}
+    names = " / ".join(sorted(kinds))
+    paths = [prim_path, *(t for targets in relationships.values() for t in targets)]
+    for path in paths:
+        if not kinds & set(stage.GetPrimAtPath(path).GetAppliedSchemas()):
+            msg = (
+                f"{path} is not a rigid body, collider or articulation root (it has "
+                f"no {names}), so filtering its collisions does nothing. Apply one "
+                f"of those to it first."
+            )
+            raise ValueError(msg)
 
 
 def check_articulation_root_nesting(stage: Usd.Stage, prim_path: str) -> None:

@@ -53,10 +53,16 @@ def list_api_properties(
         ),
     )
 
-    target_req = (
-        "UsdPhysics joint prim" if api_name in PhysicsRules.MULTI_APPLY_APIS
-        else f"UsdGeom.{PhysicsRules.TARGET_TYPES[api_name]}"
-    )
+    if api_name in PhysicsRules.MULTI_APPLY_APIS:
+        target_req = "UsdPhysics joint prim"
+    elif api_name in PhysicsRules.FILTERS_COLLISION_OBJECTS:
+        target_req = (
+            "a rigid body, collider or articulation root (a prim with "
+            + " / ".join(api.value for api in PhysicsRules.COLLISION_OBJECT_APIS)
+            + "); every filteredPairs target too"
+        )
+    else:
+        target_req = f"UsdGeom.{PhysicsRules.TARGET_TYPES[api_name]}"
     companion = PhysicsRules.COMPANIONS.get(api_name)
     return PhysicsApiSchemaInfo(
         api_name=api_name.value,

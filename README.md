@@ -534,7 +534,7 @@ square meter. The same inputs and seed always give the same result.
 | Tool | Description |
 |------|-------------|
 | `list_physics_api_properties` | Live UsdPhysics schema view for an applied API (call before `apply_physics_api`) |
-| `apply_physics_api` | Apply a UsdPhysics API (RigidBody, Mass, Collision, MeshCollision, ArticulationRoot, Drive, Limit) to a prim |
+| `apply_physics_api` | Apply a UsdPhysics API (RigidBody, Mass, Collision, MeshCollision, ArticulationRoot, Drive, Limit, FilteredPairs) to a prim |
 | `remove_physics_api` | Remove a UsdPhysics API and any dependent APIs |
 | `setup_physics_scene` | Create `/Scene/Physics` and a `UsdPhysics.Scene` with gravity |
 | `list_physics_scenes` | List every `UsdPhysics.Scene` under `/Scene/Physics` with its gravity |

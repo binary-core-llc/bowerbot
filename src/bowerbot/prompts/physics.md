@@ -7,9 +7,10 @@ and solver-specific extensions.
 
 ## Supported applied-API schemas
 
-Seven UsdPhysics applied APIs are in scope: the four below, plus
+Eight UsdPhysics applied APIs are in scope: the four below, plus
 `PhysicsArticulationRootAPI`, `PhysicsDriveAPI` and `PhysicsLimitAPI`
-(see Joints + articulations):
+(see Joints + articulations) and `PhysicsFilteredPairsAPI` (see Pair
+filtering):
 
 - `PhysicsRigidBodyAPI` — declares a prim subtree as a rigid body.
 - `PhysicsMassAPI` — mass, density, center-of-mass overrides.
@@ -255,6 +256,31 @@ when the prim is not in an asset placement) and `scene` (scene.usda
 physics opinions on this prim and its descendants). Use to check what's authored before
 making changes, or to debug why a placement behaves differently from
 the asset default.
+
+## Pair filtering (PhysicsFilteredPairsAPI)
+
+Turns off collisions between specific pairs: "the body and its front
+wheels must not collide", "this door and its frame pass through each
+other". Apply `PhysicsFilteredPairsAPI` to one side and list the other
+side(s) in `physics:filteredPairs`:
+
+`apply_physics_api(prim_path=<body>, api_name="PhysicsFilteredPairsAPI",
+relationships={"physics:filteredPairs": [<wheel_L>, <wheel_R>]})`
+
+- Both the prim and every target must be a rigid body, a collider or an
+  articulation root (`PhysicsRigidBodyAPI`, `PhysicsCollisionAPI` or
+  `PhysicsArticulationRootAPI` on the prim itself); anything else is
+  refused, since filtering it would do nothing. Author those first.
+- Scope works as for the other APIs: parts of one asset go in its
+  `phy.usda` (shared by every placement; the targets must be in the same
+  asset); prims in different placements go in `scene.usda`
+  (`scope="scene"`).
+- Pair filtering takes precedence over collision-group filtering.
+  Prefer it when only a few pairs should pass through each other; use
+  a collision group when a whole set should ignore another set (or
+  itself).
+- `remove_physics_api(..., api_name="PhysicsFilteredPairsAPI")` removes
+  the filter; removing a target prim drops it from the list.
 
 ## Collision groups
 

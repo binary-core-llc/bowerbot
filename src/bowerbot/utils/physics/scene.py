@@ -50,6 +50,21 @@ def author_physics_scene(
     A new scene gets the default for any value not given; an existing scene
     keeps what it has for those.
     """
+    if gravity_magnitude is not None and gravity_magnitude < 0:
+        msg = (
+            f"gravity_magnitude {gravity_magnitude} is negative; UsdPhysics reads a "
+            f"negative magnitude as 'use the default'. Pass 0 or more (0 = no gravity), "
+            f"and point gravity_direction the way it should pull."
+        )
+        raise ValueError(msg)
+    if gravity_direction is not None and not any(gravity_direction):
+        msg = (
+            "gravity_direction [0, 0, 0] has no direction; UsdPhysics reads it as 'down "
+            "the up axis'. For no gravity pass gravity_magnitude=0."
+        )
+        raise ValueError(msg)
+    scene_path = f"{SceneNamespace.PHYSICS}/{name}"
+    refuse_other_kind(stage, scene_path, UsdPhysics.Scene, "physics scene")
     scene_path = f"{ensure_physics_scope(stage)}/{name}"
     is_new = not is_physics_scene(stage.GetPrimAtPath(scene_path))
     scene = UsdPhysics.Scene.Define(stage, scene_path)
@@ -121,9 +136,22 @@ def remove_physics_scene(stage: Usd.Stage, name: str) -> dict[str, Any] | None:
     pointed at the scene), or ``None`` if no physics scene has that name.
     """
     path = f"{SceneNamespace.PHYSICS}/{name}"
+    refuse_other_kind(stage, path, UsdPhysics.Scene, "physics scene")
     if not is_physics_scene(stage.GetPrimAtPath(path)):
         return None
     return remove_scene_prim(stage, path)
+
+
+def refuse_other_kind(stage: Usd.Stage, path: str, schema: type, label: str) -> None:
+    """Refuse when *path* holds a prim that isn't a *schema*: no tool retypes or removes it."""
+    prim = stage.GetPrimAtPath(path)
+    if prim.IsValid() and not prim.IsA(schema):
+        kind = prim.GetTypeName() or "prim"
+        msg = (
+            f"{path} is a {kind}, not a {label}. Pick another name, or use the tool "
+            f"for a {kind}."
+        )
+        raise ValueError(msg)
 
 
 def format_physics_scene_prim(prim: Usd.Prim) -> dict[str, Any]:

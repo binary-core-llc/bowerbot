@@ -105,6 +105,58 @@ def remove_prototype(stage: Usd.Stage, prim_path: str) -> dict[str, Any]:
     return {"scatter": owner, "removed_instances": removed, "removed_scatter": False, **report}
 
 
+def check_instancer_value(
+    stage: Usd.Stage, prim_path: str, attribute_name: str, value: Any,
+) -> None:
+    """Refuse a value that would put an instancer's arrays out of step with its pieces.
+
+    A per-instance array keeps one entry per piece; ``protoIndices`` keeps the
+    piece count and names existing prototypes; ``invisibleIds`` names pieces
+    that exist. Re-scattering is the way to change the count.
+    """
+    prim = stage.GetPrimAtPath(prim_path)
+    if value is None or not prim.IsValid() or not prim.IsA(UsdGeom.PointInstancer):
+        return
+    instancer = UsdGeom.PointInstancer(prim)
+    count = len(instancer.GetProtoIndicesAttr().Get() or [])
+    values = list(value) if isinstance(value, list | tuple) else None
+    if attribute_name == "protoIndices":
+        prototypes = len(instancer.GetPrototypesRel().GetTargets())
+        if values is None or any(
+            isinstance(i, bool) or not isinstance(i, int) or not 0 <= i < prototypes
+            for i in values
+        ):
+            msg = (
+                f"protoIndices entries name prototypes 0 to {prototypes - 1} of "
+                f"{prim_path}; got {value!r}."
+            )
+            raise ValueError(msg)
+    attr = prim.GetAttribute(attribute_name)
+    per_instance = attribute_name == "protoIndices" or attribute_name in (
+        ScatterInstancerArrays.ATTRIBUTES
+    ) or (
+        attribute_name.startswith("primvars:") and attr.IsValid()
+        and UsdGeom.Primvar(attr).GetInterpolation() in (
+            ScatterInstancerArrays.PRIMVAR_INTERPOLATIONS
+        )
+        and not UsdGeom.Primvar(attr).IsIndexed()
+    )
+    if per_instance and values is not None and len(values) != count:
+        msg = (
+            f"{attribute_name} of {prim_path} holds one entry per piece ({count}); got "
+            f"{len(values)}. Change one piece's entry and write the whole array back; to "
+            f"change how many pieces there are, re-scatter."
+        )
+        raise ValueError(msg)
+    if attribute_name == "invisibleIds" and values is not None:
+        ids = instancer.GetIdsAttr().Get()
+        known = {int(i) for i in ids} if ids else set(range(count))
+        unknown = sorted({i for i in values if not isinstance(i, int) or i not in known})
+        if unknown:
+            msg = f"invisibleIds names pieces {prim_path} doesn't have: {unknown[:5]}."
+            raise ValueError(msg)
+
+
 def instancer_problems(instancer: UsdGeom.PointInstancer) -> list[ValidationIssue]:
     """What makes an instancer draw wrong: missing prototypes, bad indices, short arrays."""
     where = str(instancer.GetPath())

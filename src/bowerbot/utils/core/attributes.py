@@ -5,11 +5,12 @@
 
 from __future__ import annotations
 
+import difflib
 from typing import Any
 
 from pxr import Sdf, Sdr, Usd, UsdGeom, UsdShade
 
-from bowerbot.schemas import MaterialXShaders, PreviewSurfaceShader
+from bowerbot.schemas import AttributeRules, MaterialXShaders, PreviewSurfaceShader
 from bowerbot.utils.core.overrides import prune_empty_overrides
 from bowerbot.utils.core.values import infer_sdf_type, json_to_usd, usd_to_json
 
@@ -98,8 +99,15 @@ def attribute_type(
 def check_attribute_value(
     stage: Usd.Stage, prim_path: str, attribute_name: str, value: object,
 ) -> None:
-    """Raise ``ValueError`` if :func:`set_prim_attribute` would refuse *value*; author nothing."""
+    """Raise ``ValueError`` if the attribute or *value* would be refused; author nothing.
+
+    The attribute must be one the prim has (its schemas, applied APIs, or an
+    authored one), an xform op, a shader input its shader's registry entry
+    declares, or user data (``primvars:``, ``userProperties:``): anything else
+    is a typo that would become an attribute nothing reads.
+    """
     prim = _require_prim(stage, prim_path)
+    _require_known_attribute(prim, attribute_name)
     if value is not None:
         _typed_value(prim, attribute_name, value, None)
 
@@ -135,6 +143,40 @@ def twin_shader_input(
     if not twin.IsA(UsdShade.Shader) or UsdShade.Shader(twin).GetIdAttr().Get() != twin_id:
         return None
     return str(twin.GetPath()), f"inputs:{twin_name}"
+
+
+def _require_known_attribute(prim: Usd.Prim, attribute_name: str) -> None:
+    """Refuse a name the prim doesn't have and that isn't an xform op, shader input or user data."""
+    if prim.GetAttribute(attribute_name).IsValid():
+        return
+    if attribute_name.startswith(AttributeRules.USER_DATA_PREFIXES):
+        return
+    if attribute_name.startswith("xformOp:") and prim.IsA(UsdGeom.Xformable) and _xform_op_spec(
+        attribute_name[len("xformOp:"):].partition(":")[0],
+    ) is not None:
+        return
+    candidates = [str(name) for name in prim.GetPropertyNames()]
+    if attribute_name.startswith("inputs:") and (
+        prim.IsA(UsdShade.Material) or prim.IsA(UsdShade.NodeGraph)
+    ):
+        return  # a material's interface inputs are its own to declare
+    if attribute_name.startswith("inputs:") and prim.IsA(UsdShade.Shader):
+        info_id = UsdShade.Shader(prim).GetIdAttr().Get()
+        node = Sdr.Registry().GetShaderNodeByIdentifier(info_id) if info_id else None
+        if node is None:
+            return  # a shader the registry doesn't know: nothing to check against
+        if node.GetShaderInput(attribute_name[len("inputs:"):]) is not None:
+            return
+        candidates += [f"inputs:{name}" for name in node.GetShaderInputNames()]
+    close = difflib.get_close_matches(attribute_name, candidates, n=3, cutoff=0.7)
+    hint = f" Did you mean {close}?" if close else ""
+    msg = (
+        f"{prim.GetPath()} ({prim.GetTypeName() or 'prim'}) has no attribute "
+        f"{attribute_name!r}.{hint} list_prim_attributes shows what it has. An API's "
+        f"attributes (physics:mass ...) come with the API (apply_physics_api first); "
+        f"custom data goes under primvars: or userProperties:."
+    )
+    raise ValueError(msg)
 
 
 def _require_prim(stage: Usd.Stage, prim_path: str) -> Usd.Prim:

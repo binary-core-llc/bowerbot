@@ -30,6 +30,7 @@ from bowerbot.utils.core.asset_folder import (
     unit_factor,
 )
 from bowerbot.utils.core.attributes import set_prim_attribute
+from bowerbot.utils.core.naming import unique_prim_path
 from bowerbot.utils.core.overrides import clear_orphan_variant_overs
 from bowerbot.utils.core.schema_registry import schema_class, schema_properties
 from bowerbot.utils.core.transforms import (
@@ -248,7 +249,9 @@ def add_light_to_folder(
         msg = f"Cannot open lgt layer: {lgt_path}"
         raise RuntimeError(msg)
 
-    light_prim_path = f"/{default_prim_name}/{AssetScopeNames.LIGHTS}/{light_name}"
+    light_prim_path = unique_prim_path(
+        stage, f"/{default_prim_name}/{AssetScopeNames.LIGHTS}", light_name,
+    )
     light_cls = schema_class(light.light_type)
 
     light_prim = light_cls.Define(stage, light_prim_path).GetPrim()

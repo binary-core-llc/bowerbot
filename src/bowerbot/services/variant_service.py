@@ -15,7 +15,6 @@ from bowerbot.schemas import SceneNamespace, VariantCategory
 from bowerbot.state import SceneState
 from bowerbot.utils import assets, library_utils, variants
 from bowerbot.utils.core.asset_folder import (
-    asset_has_root_payload,
     folder_entries,
     list_alternate_geo_files,
     normalize_asset_prim_path,
@@ -121,16 +120,19 @@ def add_asset_geometry_variant(
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
 
-    summary = variants.inspection.get_variant_summary(asset_dir)
-    existing = any(s.name == set_name for s in summary.variant_sets)
-    if not existing and asset_has_root_payload(asset_dir):
-        raise ValueError(
-            f"{asset_dir.name} has a direct payload on its root prim, which "
-            "blocks variant payload swapping per LIVRPS. Run "
-            "setup_asset_geometry_variants first to restructure the asset into "
-            "the Pixar-canonical pattern (no root payload, all payloads "
-            "inside variants).",
+    if not variants.inspection.get_variant_payload_refs(asset_dir, set_name):
+        geometry_sets = sorted(
+            s.name for s in variants.inspection.get_variant_summary(asset_dir).variant_sets
+            if variants.inspection.get_variant_payload_refs(asset_dir, s.name)
         )
+        msg = (
+            f"{asset_dir.name} has no geometry variant set '{set_name}' to extend "
+            f"(its geometry sets: {geometry_sets or 'none'}). An asset loads its "
+            f"geometry from one set, so a second one would load two geometries at "
+            f"once: use setup_asset_geometry_variants to create the set, or name an "
+            f"existing geometry set."
+        )
+        raise ValueError(msg)
 
     before = folder_entries(asset_dir)
     try:
@@ -318,6 +320,7 @@ def add_asset_configuration_variant(
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
 
+    variants.checks.validate_configuration_targets(asset_dir, activations)
     if variants.masking.enforce_no_masking_overrides(
         stage, asset_dir,
         {path: ["active"] for path in activations},

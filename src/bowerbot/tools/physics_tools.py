@@ -441,8 +441,8 @@ TOOLS: list[Tool] = [
                     "type": "number",
                     "description": (
                         "Gravity strength in stage units per second "
-                        "squared. Leave unset to derive 9.81 / "
-                        "metersPerUnit from the stage."
+                        "squared, 0 or more (0 = no gravity). Leave unset "
+                        "to derive 9.81 / metersPerUnit from the stage."
                     ),
                 },
                 "gravity_direction": {
@@ -451,8 +451,8 @@ TOOLS: list[Tool] = [
                     "minItems": 3,
                     "maxItems": 3,
                     "description": (
-                        "Unit-vector gravity direction. A new scene defaults "
-                        "to straight down the stage's up axis."
+                        "Unit-vector gravity direction (not [0, 0, 0]). A new "
+                        "scene defaults to straight down the stage's up axis."
                     ),
                 },
             },
@@ -578,8 +578,9 @@ TOOLS.append(Tool(
                 "items": {"type": "string"},
                 "description": (
                     "Other group names this group does NOT collide "
-                    "with. Resolved to /Scene/Physics/<name>. Refuses "
-                    "if any named group does not exist."
+                    "with (its own name: its members never collide with "
+                    "each other). Resolved to /Scene/Physics/<name>. "
+                    "Refuses if any named group does not exist."
                 ),
             },
             "invert_filter": {
@@ -670,6 +671,8 @@ TOOLS.append(Tool(
         "other can be world-static (set to empty / omit to mean "
         "'attach to world'). Convention is body0=parent, body1=child "
         "for articulated chains. Both must be UsdGeom.Xformable.\n\n"
+        "A name already taken gets the next number (bolt_02); the "
+        "result's prim_path has the final name.\n\n"
         "scope='asset' (default 'scene'): writes the joint into the "
         "asset's phy.usda at /<defaultPrim>/joints/<name>. Used for "
         "asset-internal articulations (robot arm, character, door). "

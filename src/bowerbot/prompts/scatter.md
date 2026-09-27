@@ -63,7 +63,8 @@ scattered assets like any other.
   its arrays, one per piece: to move or turn one, read `positions` or
   `orientations` with `list_prim_attributes`, change that piece's entry,
   and write the whole array back with `set_prim_attribute`
-  (orientations are `[w, x, y, z]`); to hide one, add its index to
+  (orientations are `[w, x, y, z]`; the array keeps one entry per piece,
+  a different length is refused); to hide one, add its index to
   `invisibleIds`.
 - `placements` (default for `scatter_along_path`, max 10,000): a group
   `/Scene/<group>/<name>` holding one normal placement per piece, each

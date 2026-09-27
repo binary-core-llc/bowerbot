@@ -17,3 +17,10 @@ class SchemaPropertySpec(BaseModel):
     default: Any = None
     allowed_tokens: list[str] = []
     documentation: str = ""
+
+
+class AttributeRules:
+    """Which attribute names a prim may take beyond the ones its schemas give it."""
+
+    # Namespaces for custom data: set_prim_attribute authors any name under them.
+    USER_DATA_PREFIXES = ("primvars:", "userProperties:")

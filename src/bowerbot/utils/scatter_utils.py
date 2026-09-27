@@ -180,8 +180,7 @@ def resolve_asset_sources(
     for idx, entry in enumerate(assets):
         try:
             path = layout_utils.resolve_layout_asset(
-                entry.asset, layout_dir=None,
-                project_dir=project_dir, library_dir=library_dir,
+                entry.asset, project_dir=project_dir, library_dir=library_dir,
             )
         except ValueError as e:
             problems.append(f"assets[{idx}]: {e}")

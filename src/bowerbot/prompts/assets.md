@@ -66,25 +66,13 @@ back with `list_scene` / `list_prim_children` or removed together with
 groups written, and a per-asset breakdown; read individual prim paths
 with `list_scene` when you need them.
 
-For BULK layouts (more than a few dozen entries — e.g. rebuilding a
-layout extracted from an existing USD scene, or a DCC export), do not
-stream entries inline. Write them to a layout JSON file and pass its
-path as `layout_file` instead of `placements`:
-
-```
-{ "version": 1, "placements": [ ...same entries as inline... ] }
-```
-
-When the source is an existing scene, write a small script that
-extracts `(asset, transform, group)` per placement and dumps that file —
-never transcribe transforms by hand. Entry asset paths resolve in
-order: absolute → layout-file dir → project dir → library dir, and must
-name the asset's root file (e.g. `SM_floor02/SM_floor02.usda`).
+Entry asset paths resolve in order: absolute → project dir → library
+dir, and must name the asset's root file (e.g. `SM_floor02/SM_floor02.usda`).
 
 The whole plan is validated before anything is placed: every invalid
 entry and every unresolvable asset is reported at once, with entry
-indices. Pass `validate_only=true` to lint a layout file without
-placing anything, fix the reported entries, and rerun.
+indices. Pass `validate_only=true` to lint a layout without placing
+anything, fix the reported entries, and rerun.
 
 Pattern `count` and `spacing` map to the world axes `[x, y, z]` — they
 are NOT up-axis aware. In a Z-up scene the ground plane is XY, so a

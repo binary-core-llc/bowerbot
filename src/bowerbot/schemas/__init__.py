@@ -23,7 +23,6 @@ from bowerbot.schemas.cameras import (
 )
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
 from bowerbot.schemas.layout import (
-    LAYOUT_FILE_VERSION,
     MAX_LAYOUT_PLACEMENTS,
     GridPattern,
     LayoutEntry,
@@ -96,7 +95,6 @@ from bowerbot.schemas.variants import (
 
 __all__ = [
     "DEFAULT_CLIPPING_RANGE_METERS",
-    "LAYOUT_FILE_VERSION",
     "MAX_LAYOUT_PLACEMENTS",
     "MAX_SCATTER_INSTANCES",
     "MAX_SCATTER_PLACEMENTS",

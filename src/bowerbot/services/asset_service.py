@@ -101,21 +101,12 @@ def place_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Place many assets in one transactional batch from inline entries or a layout file."""
+    """Place many assets in one transactional batch from inline entries."""
     raw_entries = params.get("placements")
-    layout_file = params.get("layout_file")
-    if (raw_entries is None) == (layout_file is None):
-        msg = "place_layout needs exactly one of 'placements' or 'layout_file'."
-        raise ValueError(msg)
-
-    project_dir = state.project.path if state.project else None
-    layout_dir = None
-    if layout_file is not None:
-        file_path = layout_utils.resolve_layout_file(layout_file, project_dir)
-        raw_entries = layout_utils.parse_layout_file(file_path)
-        layout_dir = file_path.parent
     if not raw_entries:
         raise ValueError("place_layout needs a non-empty 'placements' list.")
+
+    project_dir = state.project.path if state.project else None
 
     valid, problems = layout_utils.validate_layout_entries(raw_entries)
 
@@ -125,7 +116,6 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         try:
             asset_path = layout_utils.resolve_layout_asset(
                 entry.asset,
-                layout_dir=layout_dir,
                 project_dir=project_dir,
                 library_dir=state.library_dir,
             )

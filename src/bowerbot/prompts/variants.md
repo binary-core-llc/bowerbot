@@ -55,11 +55,30 @@ tool only swaps bindings. Create materials first with
 `create_material` or `bind_material`.
 
 ### `list_asset_geo_files(prim_path)`
-Returns the other USD files in the project's copy of the asset folder
-(not the canonical layers or the root). A package whose geometry file
+Returns `geo_files`, the other USD files in the project's copy of the
+asset folder (not the canonical layers or the root), and
+`library_files`, the geometry files the asset's library folder has but
+doesn't use (e.g. `chair/geo_low.usda`). A package whose geometry file
 has another name (e.g. `geo.usd`) lists that file too — it is the
-current geometry, not an alternate. Call before authoring geometry
-variants so you know which payload files are available.
+current geometry, not an alternate. Loose LOD files elsewhere in the
+library don't show here: find them with `search_assets` (e.g. "chair
+low"). Call before authoring geometry variants so you know what is
+available; never invent a file name.
+
+### Where an LOD comes from
+An LOD value in `setup_asset_geometry_variants` / `add_asset_geometry_variant`
+is one of:
+- a file already in the asset folder: `./geo_low.usda`;
+- a library geometry file: an entry of `library_files`, or a loose
+  file's name as `search_assets` reports it. BowerBot copies it into the
+  asset folder as `geo_<variant>` (with the textures it uses) and points
+  the variant at the copy; the library file is untouched.
+
+A whole library asset (a folder with its own root, or a `.usdz`) is
+refused: that is a separate asset, which `add_scene_model_selection_variant`
+swaps in instead. A library file whose units or up axis differ from the
+asset's is refused; with the user's OK, `conform_units=true` converts the
+project's copy. If anything is refused, nothing is left in the folder.
 
 ### `setup_asset_geometry_variants(prim_path, variant_set, variants, default_variant)` — REQUIRED FIRST CALL
 Initial setup of an LOD/geometry-swap variant set. BowerBot's intaken
@@ -72,8 +91,9 @@ including a variant that captures the original geometry (typically
 `high` or `hero` -> `./geo.usda`). Pick `default_variant` accordingly.
 
 ### `add_asset_geometry_variant(prim_path, variant_set, variant_name, payloads, set_as_default?)`
-EXTEND an existing geometry variant set with another LOD. Refuses
-on first call when the asset still has a direct root payload — run
+EXTEND an existing geometry variant set with another LOD (from the
+asset folder or the library, as above). Refuses on first call when the
+asset still has a direct root payload — run
 `setup_asset_geometry_variants` first. Also refuses if a payload file
 is missing or resolves outside the asset folder, or if the new LOD's
 prim hierarchy diverges from the existing LODs (production LODs must
@@ -205,10 +225,14 @@ retry with the exact carrier path.
 Idempotent removal. Removing the default variant selects a remaining
 one (reported as `default_variant`); payload files no variant uses any
 more (and textures only the removed variant used) are listed in
-`unused_files` and stay in the asset folder. If the
-last variant in a set is removed, the set is auto-removed; if the last
-variant set is removed, `variants.usda` is auto-deleted and the
-reference scrubbed.
+`unused_files` and stay in the asset folder until the user agrees to
+`delete_project_file`. An LOD set left with a single variant is reported
+in `suspect_variant_sets` (ask before removing it). Removing a geometry
+set makes the LOD it had selected the asset's payload again
+(`demoted_to_direct_payload`), so the asset keeps showing what it
+showed. If the last variant in a set is removed, the set is
+auto-removed; if the last variant set is removed, `variants.usda` is
+auto-deleted and the reference scrubbed.
 Operates on this asset only; variants composed in via referenced
 assets stay visible.
 
@@ -378,7 +402,7 @@ to every scene, or stay scoped to this scene only.
 
 ## After removing a prim — proactive variant-set health check
 
-`remove_light`, `remove_camera` and `remove_scene_variant` return a
+`remove_light`, `remove_camera`, `remove_scene_variant` and `remove_asset_variant` return a
 `suspect_variant_sets` field listing selection-style variant sets
 that, after the removal, now author opinions on only ONE remaining
 prim. These were likely designed to switch BETWEEN multiple prims
@@ -464,14 +488,14 @@ mechanics drive the validation.
 5. `add_asset_material_variant`(chair, "finish", "metal", bindings={mesh: metal}, set_as_default=true)
 
 **"Add an LOD low variant to the building"**
-1. `list_asset_geo_files`(building) -> e.g. `["geo_low.usda"]`. It
-   lists only files already in the project's copy of the asset; intake
-   copies what the asset's root references, so an LOD file the library
-   package never references is not there. If it is missing, tell the
+1. `list_asset_geo_files`(building) -> e.g. `library_files:
+   ["building/geo_low.usda"]`. If nothing is listed, `search_assets`
+   ("building low") for a loose LOD file. If there is none, tell the
    user; never invent a file name.
 2. `setup_asset_geometry_variants`(building, "lod",
-   variants={"high": "./geo.usda", "low": "./geo_low.usda"},
-   default_variant="high")
+   variants={"high": "./geo.usda", "low": "building/geo_low.usda"},
+   default_variant="high") -> the low file is copied in as
+   `geo_low.usda`.
    (Restructures the asset; ALL future LODs use add_asset_geometry_variant.)
 
 **"Make Table_01 use the wood finish but leave others alone"**

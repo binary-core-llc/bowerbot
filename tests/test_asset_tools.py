@@ -792,7 +792,7 @@ def test_delete_project_asset_never_leaves_the_assets_folder():
         assert (outside / "keep.txt").exists()
 
 
-def test_delete_project_texture_never_leaves_the_textures_folder():
+def test_delete_project_file_never_leaves_the_textures_folder():
     """A texture name that points outside textures/ is refused and nothing is deleted."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
@@ -801,7 +801,7 @@ def test_delete_project_texture_never_leaves_the_textures_folder():
         outside.write_text("keep")
 
         for name in ("../scene.usda", str(outside)):
-            r = asyncio.run(exec_tool(state, "delete_project_texture", {"file_name": name}))
+            r = asyncio.run(exec_tool(state, "delete_project_file", {"file_name": name}))
             assert not r.success, name
         assert project.scene_path.exists()
         assert outside.exists()
@@ -870,10 +870,10 @@ def test_freeze_asset_noop_clean():
         assert r.data["baked_count"] == 0
 
 
-# ── delete_project_texture ──
+# ── delete_project_file ──
 
 
-def test_delete_project_texture_unreferenced():
+def test_delete_project_file_unreferenced():
     """Deletes a texture that no USD file references."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
@@ -882,14 +882,14 @@ def test_delete_project_texture_unreferenced():
         tex = tex_dir / "wood.png"
         tex.write_bytes(b"fake")
 
-        r = asyncio.run(exec_tool(state, "delete_project_texture", {
+        r = asyncio.run(exec_tool(state, "delete_project_file", {
             "file_name": "wood.png",
         }))
         assert r.success, r.error
         assert not tex.exists()
 
 
-def test_delete_project_texture_refuses_when_referenced():
+def test_delete_project_file_refuses_when_referenced():
     """Refuses deletion when a USD file references the texture."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
@@ -908,7 +908,7 @@ def test_delete_project_texture_refuses_when_referenced():
         ).Set(Sdf.AssetPath("./textures/marble.exr"))
         ref_stage.Save()
 
-        r = asyncio.run(exec_tool(state, "delete_project_texture", {
+        r = asyncio.run(exec_tool(state, "delete_project_file", {
             "file_name": "marble.exr",
         }))
         assert not r.success
@@ -1470,7 +1470,7 @@ def test_nesting_takes_the_container_or_its_asset_child_and_writes_nothing_when_
         assert not (assets_dir / "stone").exists()
 
 
-def test_delete_project_texture_counts_every_use_and_stays_in_the_project():
+def test_delete_project_file_counts_every_use_and_stays_in_the_project():
     """A texture only an unselected variant uses is in use; paths outside textures are refused."""
     with tempfile.TemporaryDirectory() as tmp:
         state = library_state(Path(tmp))
@@ -1489,11 +1489,11 @@ def test_delete_project_texture_counts_every_use_and_stays_in_the_project():
         stage.Save()
 
         for location in ("glow.png", "textures/sky.png"):
-            used = _run(state, "delete_project_texture", file_name=location)
+            used = _run(state, "delete_project_file", file_name=location)
             assert not used.success, location
             assert "scene.usda" in used.error
         for location in ("../scene.usda", "scene.usda", str(project.path / "textures/glow.png")):
-            assert not _run(state, "delete_project_texture", file_name=location).success
+            assert not _run(state, "delete_project_file", file_name=location).success
         assert (project.path / "textures" / "glow.png").exists()
 
 
@@ -1840,7 +1840,7 @@ def test_a_freeze_that_would_move_a_part_changes_nothing(monkeypatch):
         _, state, project = _setup(tmp)
         asset_dir = _lod_asset(project.assets_dir)
         files = {f.name: f.read_bytes() for f in asset_dir.iterdir()}
-        monkeypatch.setattr(freeze, "_prepend_matrix", lambda spec, matrix: None)
+        monkeypatch.setattr(freeze, "_prepend_matrix", lambda spec, matrix, op_suffix: None)
 
         r = asyncio.run(exec_tool(state, "freeze_asset", {"name": "lamp"}))
         assert not r.success

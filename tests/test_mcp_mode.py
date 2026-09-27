@@ -250,7 +250,7 @@ def test_mcp_client_receives_the_cross_tool_rules():
         "suspect_variant_sets", "unused_files",
     }
     assert mentioned - tool_names - params - fields_and_inputs == set()
-    assert {"remove_scene_variant_set", "delete_project_texture", "set_prim_attribute"} <= mentioned
+    assert {"remove_scene_variant_set", "delete_project_file", "set_prim_attribute"} <= mentioned
     assert "isaac" not in instructions.lower()
 
 

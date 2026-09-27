@@ -205,7 +205,7 @@ A texture the light used stays in the project; the result lists it
 in `unused_files` (e.g. `textures/studio.exr` for a DomeLight's HDRI,
 `assets/lamp/maps/screen.png` for an asset RectLight's). Ask the user
 if they want to delete it. If they confirm, call
-`delete_project_texture(file_name=<that entry>)`; it deletes only the
+`delete_project_file(file_name=<that entry>)`; it deletes only the
 project's copy, never the user's library, and refuses while another
 file (e.g. a snapshot) still uses it. `update_light` lists a texture it
 replaced the same way.

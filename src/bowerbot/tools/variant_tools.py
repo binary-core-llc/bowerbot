@@ -229,6 +229,17 @@ _PRIM_PATH = {
     ),
 }
 
+_CONFORM_UNITS = {
+    "type": "boolean",
+    "description": (
+        "If a library geometry file's units or up axis differ from the "
+        "asset's, convert the project's copy to match (the library file is "
+        "untouched). Without it such a file is refused. Only with the "
+        "user's OK."
+    ),
+    "default": False,
+}
+
 _SCENE_CARRIER_PRIM_PATH = {
     "type": "string",
     "description": (
@@ -335,12 +346,18 @@ TOOLS: list[Tool] = [
             "set; use add_asset_geometry_variant afterwards to extend it. "
             "Provide every variant in one call, including a 'default'-like "
             "variant (commonly 'high' or 'hero') that captures the asset's "
-            "current geometry payload. REFUSES if any payload file is "
-            "missing or resolves outside the asset folder (ASWF assets must "
-            "be self-contained), and REFUSES if the LOD payloads have "
-            "divergent geometry prim hierarchies (production LODs must share "
-            "prim names so bindings, light-linking, and overrides compose); "
-            "the error names the missing/extra prims."
+            "current geometry payload. An LOD can be a file already in the "
+            "asset folder ('./geo_low.usda') or a geometry file in the library "
+            "(a loose file's name as search_assets reports it, or a location "
+            "list_asset_geo_files returns as library_files): BowerBot copies "
+            "it into the asset folder as geo_<variant> with what it uses, "
+            "then points the variant at the copy. A whole library asset (a "
+            "folder's root, a .usdz) is refused: use a model-selection "
+            "variant for that. REFUSES if the LOD payloads have divergent "
+            "geometry prim hierarchies (production LODs must share prim names "
+            "so bindings, light-linking, and overrides compose), or if a "
+            "library file's units or up axis differ from the asset's unless "
+            "conform_units=true. Nothing is left behind when it refuses."
         ),
         parameters={
             "type": "object",
@@ -356,13 +373,14 @@ TOOLS: list[Tool] = [
                 "variants": {
                     "type": "object",
                     "description": (
-                        "Map of variant name -> payload asset path "
-                        "(relative to the asset folder). One entry per "
-                        "LOD level. Common names: 'high', 'hero', 'mid', "
-                        "'low', 'proxy'."
+                        "Map of variant name -> its geometry: a file in the "
+                        "asset folder ('./geo.usda') or a library geometry "
+                        "file (name or location). One entry per LOD level. "
+                        "Common names: 'high', 'hero', 'mid', 'low', 'proxy'."
                     ),
                     "additionalProperties": {"type": "string"},
                 },
+                "conform_units": _CONFORM_UNITS,
                 "default_variant": {
                     "type": "string",
                     "description": (
@@ -386,10 +404,12 @@ TOOLS: list[Tool] = [
             "swaps, or alternative meshes. Use ONLY to EXTEND an existing "
             "geometry variant set: if the set is new and the asset still has "
             "a direct root payload, this REFUSES and tells you to run "
-            "setup_asset_geometry_variants first. Also REFUSES if a payload "
-            "file is missing or resolves outside the asset folder, or if the "
-            "new LOD's geometry prim hierarchy diverges from the existing "
-            "LODs in the set."
+            "setup_asset_geometry_variants first. The payload can be a file "
+            "in the asset folder or a library geometry file, which BowerBot "
+            "copies in as geo_<variant> (see setup_asset_geometry_variants). "
+            "Also REFUSES if the new LOD's geometry prim hierarchy diverges "
+            "from the existing LODs in the set, or if a library file's units "
+            "or up axis differ unless conform_units=true."
         ),
         parameters={
             "type": "object",
@@ -400,12 +420,14 @@ TOOLS: list[Tool] = [
                 "payloads": {
                     "type": "object",
                     "description": (
-                        "Map of prim path -> payload asset path. The "
-                        "payload asset path is relative to variants.usda."
+                        "Map of prim path -> geometry: a file in the asset "
+                        "folder ('./geo_low.usda') or a library geometry file "
+                        "(name or location)."
                     ),
                     "additionalProperties": {"type": "string"},
                 },
                 "set_as_default": _SET_AS_DEFAULT,
+                "conform_units": _CONFORM_UNITS,
             },
             "required": [
                 "prim_path", "variant_set", "variant_name", "payloads",
@@ -716,11 +738,13 @@ TOOLS: list[Tool] = [
         effect=ToolEffect.READ,
         description=(
             "List alternate geometry files (LODs, swap geometry, "
-            "alt states) inside an asset folder. Canonical layers "
-            "(geo.usda, mtl.usda, lgt.usda, phy.usda, contents.usda, "
-            "variants.usda, and the root file) are excluded. Call "
-            "this before add_asset_geometry_variant so you know which "
-            "payload files exist; pick from the returned list."
+            "alt states) for an asset: geo_files already in its project "
+            "folder (canonical layers and the root excluded), and "
+            "library_files its library folder has but doesn't use. Pass "
+            "either to setup_asset_geometry_variants / "
+            "add_asset_geometry_variant; a library file is copied in then. "
+            "Loose LOD files elsewhere in the library are found with "
+            "search_assets."
         ),
         parameters={
             "type": "object",
@@ -808,7 +832,9 @@ TOOLS: list[Tool] = [
             "listed in unused_files; they stay in the asset folder. "
             "If this leaves the variant set empty, the variant set is "
             "auto-removed; if this leaves no variant sets at all, "
-            "variants.usda is auto-deleted and the reference scrubbed."
+            "variants.usda is auto-deleted and the reference scrubbed. "
+            "An LOD set left with a single variant is reported in "
+            "suspect_variant_sets; ask before removing it."
         ),
         parameters={
             "type": "object",
@@ -828,7 +854,9 @@ TOOLS: list[Tool] = [
             "composed from referenced assets remain. When multiple assets "
             "are in scope, ASK the user which asset before calling. "
             "A texture it leaves unused is listed in unused_files (it stays "
-            "in the project)."
+            "in the project). "
+            "Removing an LOD set makes the LOD it had selected the asset's "
+            "payload again (demoted_to_direct_payload)."
         ),
         parameters={
             "type": "object",

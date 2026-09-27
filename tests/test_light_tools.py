@@ -174,7 +174,7 @@ def test_create_dome_light_with_texture():
 
 
 def test_remove_dome_light_names_the_texture_to_delete():
-    """remove_light lists the texture it left unused; delete_project_texture takes that path."""
+    """remove_light lists the texture it left unused; delete_project_file takes that path."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         hdri = tmp_path / "studio.hdr"
@@ -190,7 +190,7 @@ def test_remove_dome_light_names_the_texture_to_delete():
         assert removed.success, removed.error
         assert removed.data["unused_files"] == ["textures/studio.hdr"]
 
-        deleted = asyncio.run(exec_tool(state, "delete_project_texture", {
+        deleted = asyncio.run(exec_tool(state, "delete_project_file", {
             "file_name": removed.data["unused_files"][0],
         }))
         assert deleted.success, deleted.error
@@ -940,7 +940,7 @@ def test_removing_an_asset_rect_light_lists_its_texture_for_deletion():
         assert removed.success, removed.error
         assert removed.data["unused_files"] == ["assets/lamp/maps/glow.png"]
 
-        deleted = _run(state, "delete_project_texture", file_name="assets/lamp/maps/glow.png")
+        deleted = _run(state, "delete_project_file", file_name="assets/lamp/maps/glow.png")
         assert deleted.success, deleted.error
         assert not (maps / "glow.png").exists()
         assert (maps / "shade.png").exists()

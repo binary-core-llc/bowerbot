@@ -9,6 +9,7 @@ from bowerbot.utils.assets import (
     freeze,
     intake,
     localize,
+    lod,
     nested,
 )
 
@@ -18,5 +19,6 @@ __all__ = [
     "freeze",
     "intake",
     "localize",
+    "lod",
     "nested",
 ]

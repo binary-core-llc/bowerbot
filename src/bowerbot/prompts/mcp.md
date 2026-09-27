@@ -4,12 +4,13 @@ the user, and the rules that span several tools.
 
 ## Ask the user first
 - A result with `suspect_variant_sets` (from `remove_light`,
-  `remove_camera` or `remove_scene_variant`) lists variant sets that may
+  `remove_camera`, `remove_scene_variant` or `remove_asset_variant`)
+  lists variant sets that may
   have lost their purpose. Show each entry and remove a set only on a
   yes: `"scope": "scene"` → `remove_scene_variant_set(prim_path=<carrier_prim_path>, variant_set=...)`;
   `"scope": "asset"` → `remove_asset_variant_set(prim_path=<a placement of that asset>, variant_set=...)`.
 - A result with `unused_files` names project files an edit left unused.
-  Offer to delete them; call `delete_project_texture` (for textures) or
+  Offer to delete them; call `delete_project_file` (for a file) or
   `delete_project_asset` (for an asset nothing places any more) only on a
   yes.
 - Flags that override a refusal are the user's decision: explain the

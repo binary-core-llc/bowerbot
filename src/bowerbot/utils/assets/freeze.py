@@ -31,7 +31,7 @@ def freeze_one_asset(assets_dir: Path, name: str) -> dict[str, Any]:
     return {"name": name, "baked": freeze_root_transform(root_file)}
 
 
-def freeze_root_transform(root_file: Path) -> bool:
+def freeze_root_transform(root_file: Path, *, op_suffix: str = FreezeRules.OP_SUFFIX) -> bool:
     """Move the root prim's transform onto the parts below it; the root ends at identity.
 
     Works on what *root_file* composes: the transform may be authored in the
@@ -47,6 +47,7 @@ def freeze_root_transform(root_file: Path) -> bool:
     by variants that move the root differently, and any result where a prim
     would move (checked for every variant combination). Only files inside the
     asset folder are edited. Returns ``False`` when there is nothing to move.
+    The parts' new op is ``xformOp:transform:<op_suffix>``.
     """
     stage = Usd.Stage.Open(str(root_file))
     root = _xformable_root(stage)
@@ -96,7 +97,7 @@ def freeze_root_transform(root_file: Path) -> bool:
         _clear_root_transform(layers[identifier].GetPrimAtPath(path))
     for (identifier, path), matrix in part_matrices.items():
         if not _matrix_is_identity(matrix):
-            _prepend_matrix(layers[identifier].GetPrimAtPath(path), matrix)
+            _prepend_matrix(layers[identifier].GetPrimAtPath(path), matrix, op_suffix)
 
     moved = _moved_prims(root_file, combinations, before)
     if moved:
@@ -244,9 +245,9 @@ def _clear_root_transform(spec: Sdf.PrimSpec) -> None:
             spec.RemoveProperty(spec.properties[name])
 
 
-def _prepend_matrix(spec: Sdf.PrimSpec, matrix: Gf.Matrix4d) -> None:
-    """Put *matrix* in front of the part's op order (outermost), merging an earlier freeze."""
-    name = f"xformOp:transform:{FreezeRules.OP_SUFFIX}"
+def _prepend_matrix(spec: Sdf.PrimSpec, matrix: Gf.Matrix4d, op_suffix: str) -> None:
+    """Put *matrix* in front of the part's op order (outermost), merging an earlier one."""
+    name = f"xformOp:transform:{op_suffix}"
     order_spec = spec.attributes.get("xformOpOrder")
     order = list(order_spec.default) if order_spec is not None and order_spec.default else []
     if UsdGeom.XformOpTypes.resetXformStack in order:

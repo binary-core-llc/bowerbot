@@ -21,10 +21,12 @@ from bowerbot.schemas import (
     TransformParams,
 )
 from bowerbot.state import SceneState
-from bowerbot.utils import assets, layout_utils, library_utils, stage_utils, texture_utils
+from bowerbot.utils import assets, layout_utils, library_utils, stage_utils
 from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
     find_root_file,
+    project_file,
+    remove_empty_folders,
     require_folder_entry,
     resolve_asset_dir_for_prim,
 )
@@ -577,34 +579,33 @@ def delete_project_asset(state: SceneState, params: dict[str, Any]) -> dict[str,
     }
 
 
-# ── delete_project_texture ──
+# ── delete_project_file ──
 
 
-def delete_project_texture(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Delete a texture from the project (``textures/`` or an asset folder) nothing uses."""
+def delete_project_file(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Delete a file of the project (in ``textures/`` or an asset folder) that nothing uses."""
     project = state.require_project()
     file_name = params["file_name"]
-    target = texture_utils.project_texture_file(project.path, project.assets_dir, file_name)
+    target = project_file(project.path, project.assets_dir, file_name)
 
     users = files_named_by(layer_files(project.path)).get(target, [])
     if users:
         names = ", ".join(sorted({str(user.relative_to(project.path)) for user in users}))
-        msg = f"Texture '{file_name}' is still used by: {names}. Remove those uses first."
+        msg = f"'{file_name}' is still used by: {names}. Remove those uses first."
         raise ValueError(msg)
 
     target.unlink()
-    textures = project.path / ASWFLayerNames.TEXTURES
-    in_asset = target.is_relative_to(project.assets_dir.resolve())
+    assets = project.assets_dir.resolve()
     stop = (
-        project.assets_dir / target.relative_to(project.assets_dir.resolve()).parts[0]
-        if in_asset else textures.parent
+        project.assets_dir / target.relative_to(assets).parts[0]
+        if target.is_relative_to(assets) else project.path
     )
-    texture_utils.remove_empty_folders(target.parent, stop)
+    remove_empty_folders(target.parent, stop)
     location = target.relative_to(project.path.resolve()).as_posix()
-    logger.info("Deleted project texture: %s", location)
+    logger.info("Deleted project file: %s", location)
     return {
         "file": location,
-        "message": f"Deleted texture {location} from the project.",
+        "message": f"Deleted {location} from the project.",
     }
 
 

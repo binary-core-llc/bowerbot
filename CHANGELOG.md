@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/binary-core-llc/bowerbot/compare/v1.13.0...v1.14.0) (2026-09-27)
+
+
+### Features
+
+* **scatter:** scatter assets over surfaces and along paths, resting on real geometry ([#206](https://github.com/binary-core-llc/bowerbot/issues/206)) ([5b12990](https://github.com/binary-core-llc/bowerbot/commit/5b129906f6f305c463f28dcf48266b98eb97e4bd))
+
 ## [1.13.0](https://github.com/binary-core-llc/bowerbot/compare/v1.12.0...v1.13.0) (2026-06-19)
 
 

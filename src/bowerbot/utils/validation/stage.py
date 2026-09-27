@@ -11,6 +11,7 @@ from typing import Any
 from pxr import Usd, UsdGeom, UsdShade
 
 from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
+from bowerbot.utils.core.instancers import instancer_problems
 from bowerbot.utils.core.references import referenced_asset_dir
 from bowerbot.utils.validation.asset_variants import validate_asset_variants
 from bowerbot.utils.validation.compliance import run_usd_compliance_checker
@@ -43,6 +44,7 @@ def validate_stage(
     issues.extend(_check_sublayers(stage))
     issues.extend(_check_material_bindings(stage))
     issues.extend(_check_scene_asset_variants(stage))
+    issues.extend(_check_point_instancers(stage))
     issues.extend(run_usd_compliance_checker(stage_path))
 
     is_valid = not any(i.severity == Severity.ERROR for i in issues)
@@ -182,4 +184,13 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[ValidationIssue]:
             continue
         seen.add(asset_dir)
         issues.extend(validate_asset_variants(asset_dir))
+    return issues
+
+
+def _check_point_instancers(stage: Usd.Stage) -> list[ValidationIssue]:
+    """Every instancer's prototypes exist and its per-instance arrays agree."""
+    issues: list[ValidationIssue] = []
+    for prim in stage.Traverse():
+        if prim.IsA(UsdGeom.PointInstancer):
+            issues.extend(instancer_problems(UsdGeom.PointInstancer(prim)))
     return issues

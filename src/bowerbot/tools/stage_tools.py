@@ -216,7 +216,10 @@ TOOLS: list[Tool] = [
             "asset's contents.usda. A group the removal leaves empty (e.g. "
             "/Scene/Props after its last placement) is removed too, unless it "
             "carries its own transform or other opinions. Removing /Scene "
-            "clears everything under it and keeps the scene root. "
+            "clears everything under it and keeps the scene root. Removing one "
+            "prototype of a scatter (<scatter>/Prototypes/<asset>) removes its "
+            "pieces too and keeps the others where they are; the last prototype "
+            "takes the scatter with it. "
             "A texture it leaves unused is listed in unused_files (it stays "
             "in the project)."
         ),
@@ -248,7 +251,8 @@ TOOLS: list[Tool] = [
             "the asset's own frame and written into that asset folder's "
             "contents.usda. Returns the resulting world position and rotation. "
             "A placement's /asset child means the placement itself; a part "
-            "inside a placement is refused."
+            "inside a placement is refused, and so is a scatter's prototype "
+            "(the scatter moves as one prim)."
         ),
         parameters={
             "type": "object",

@@ -10,7 +10,7 @@ from typing import Any
 
 from pxr import Sdf
 
-from bowerbot.schemas import AssetScopeNames, LayoutDefaults, PositionMode, SceneNamespace
+from bowerbot.schemas import LayoutDefaults, PositionMode, SceneNamespace
 from bowerbot.state import SceneState
 from bowerbot.utils import (
     assets,
@@ -19,7 +19,11 @@ from bowerbot.utils import (
     texture_utils,
 )
 from bowerbot.utils.core import attributes
-from bowerbot.utils.core.asset_folder import parse_nested_contents_path, resolve_asset_dir_for_prim
+from bowerbot.utils.core.asset_folder import (
+    nested_container_path,
+    parse_nested_contents_path,
+    resolve_asset_dir_for_prim,
+)
 from bowerbot.utils.core.integrity import (
     clear_scene_prim,
     composed_prim_paths,
@@ -160,7 +164,7 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     nested = parse_nested_contents_path(prim_path)
     if nested is not None:
-        container_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
+        container_dir, _ = resolve_asset_dir_for_prim(stage, nested_container_path(prim_path))
         if container_dir is None:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
@@ -206,19 +210,19 @@ def move_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     nested = parse_nested_contents_path(prim_path)
     if nested is not None:
-        container_dir, _ = resolve_asset_dir_for_prim(stage, prim_path)
+        container_path = nested_container_path(prim_path)
+        container_dir, _ = resolve_asset_dir_for_prim(stage, container_path)
         if container_dir is None:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
         group, prim_name = nested
-        contents_marker = f"/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/"
         correction = scene_correction(stage, container_dir)
         rotate = unpack_vec3(
             params, "rotate_x", "rotate_y", "rotate_z",
             scene_axes_rotation(current_rotate, correction),
         ) or scene_axes_rotation(current_rotate, correction)
         local = resolve_position_in_asset(
-            stage, prim_path.split(contents_marker)[0], container_dir,
+            stage, container_path, container_dir,
             PositionMode.ABSOLUTE,
             read_axes(params, "translate_x", "translate_y", "translate_z"),
             current_world=world_position(prim),

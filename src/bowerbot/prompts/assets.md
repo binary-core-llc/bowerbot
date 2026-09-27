@@ -23,6 +23,12 @@ Examples: a built-in counter that defines a café, recessed light
 housings inside a building (as geometry), kitchen cabinets, anything
 the user would consider "part of" the container.
 
+A nested placement's path (`.../asset/contents/<Group>/<Name>`, as
+`list_scene` reports it) works like any placement. Asset variants,
+materials, asset lights and asset-scope physics edit the nested asset's
+own folder, shared by every placement of it, nested or not.
+`move_asset` and `remove_prim` edit the container's `contents.usda`.
+
 ### Choosing between them
 
 When the user's intent is **explicit**, follow it exactly:

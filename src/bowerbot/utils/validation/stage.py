@@ -11,7 +11,7 @@ from typing import Any
 from pxr import Usd, UsdGeom, UsdShade
 
 from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
-from bowerbot.utils.core.references import get_prim_ref_paths
+from bowerbot.utils.core.references import referenced_asset_dir
 from bowerbot.utils.validation.asset_variants import validate_asset_variants
 from bowerbot.utils.validation.compliance import run_usd_compliance_checker
 
@@ -176,16 +176,10 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[ValidationIssue]:
     """Walk referenced asset folders and validate each one's variants."""
     seen: set[Path] = set()
     issues: list[ValidationIssue] = []
-    stage_dir = Path(stage.GetRootLayer().realPath).parent
-
     for prim in stage.Traverse():
-        for ref_path in get_prim_ref_paths(prim):
-            resolved = (stage_dir / ref_path).resolve()
-            if not resolved.exists():
-                continue
-            asset_dir = resolved.parent
-            if asset_dir in seen:
-                continue
-            seen.add(asset_dir)
-            issues.extend(validate_asset_variants(asset_dir))
+        asset_dir = referenced_asset_dir(prim)
+        if asset_dir is None or asset_dir in seen:
+            continue
+        seen.add(asset_dir)
+        issues.extend(validate_asset_variants(asset_dir))
     return issues

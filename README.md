@@ -1035,7 +1035,7 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 - Materials inline in `mtl.usda`, lights inline in `lgt.usda`, physics in `phy.usda`, nested references in `contents.usda`, asset variants in `variants.usda`
 - Automatic `metersPerUnit` and up-axis conversion across composition boundaries (scene to asset, container to nested asset)
 - Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or moved onto the asset's parts with explicit user consent, every part staying in place), so nested placements compose predictably
-- Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child conforms the nested asset to its container and holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
+- Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child conforms the nested asset to its container and holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level. Asset-level tools (variants, materials, asset lights, asset-scope physics) given a nested placement edit the nested asset's own folder
 - Asset roots carry the canonical ASWF identity: `kind = "component"` for terminal assets and an `assetInfo` dictionary (`identifier`, `name`, `version`) so DCC outliners, asset browsers, and pipeline asset-management systems recognise BowerBot output as production-grade
 
 **Variant sets**

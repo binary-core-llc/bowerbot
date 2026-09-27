@@ -222,8 +222,9 @@ _PRIM_PATH = {
     "description": (
         "Scene path of any placement of the asset, e.g. "
         "'/Scene/Furniture/Table_01' (its /asset child means the same "
-        "placement; a part inside it is refused). The asset folder is "
-        "resolved from this. Use list_scene to find the path. When "
+        "placement; a part inside it is refused). A nested placement "
+        "('.../asset/contents/<Group>/<Name>') means the nested asset. The "
+        "asset folder is resolved from this. Use list_scene to find the path. When "
         "multiple assets could match, ASK the user which one before "
         "calling."
     ),

@@ -34,9 +34,9 @@ from bowerbot.utils.core.dependencies import resolve as resolve_dependencies
 from bowerbot.utils.core.metrics import read_mpu, read_stage_metadata
 from bowerbot.utils.core.references import (
     count_scene_refs_to_asset_dir,
-    get_prim_ref_paths,
     layer_files,
     placement_of,
+    referenced_asset_dir,
     unused_files,
     unused_scene_textures,
 )
@@ -169,25 +169,17 @@ def resolve_asset_dir_for_prim(
     stage: Usd.Stage,
     prim_path: str,
 ) -> tuple[Path | None, str | None]:
-    """Find the outer ASWF asset folder backing *prim_path* in *stage*."""
-    # Resolution is rooted at stage_dir (project root) on purpose: nested
-    # refs in contents.usda are authored relative to that layer
-    # (../sibling_asset/...) and resolve to a nonexistent path here, so
-    # they are skipped and the walk continues to the outer container's
-    # scene-level reference. That is the routing target move/remove/freeze
-    # need.
-    stage_dir = Path(stage.GetRootLayer().realPath).parent
+    """Find the ASWF asset folder of the nearest placement holding *prim_path*.
+
+    Returns the folder and the prim that references it (the placement's
+    ``asset`` child). For a prim inside a nested placement that is the nested
+    asset, not its container; to edit the container's ``contents.usda``,
+    resolve the container's own path (:func:`nested_container_path`).
+    """
 
     def _check(prim: Usd.Prim) -> tuple[Path | None, str | None]:
-        for ref_path in get_prim_ref_paths(prim):
-            resolved = (stage_dir / ref_path).resolve()
-            if not resolved.exists() or not resolved.parent.is_dir():
-                continue
-            folder = resolved.parent
-            for ext in AssetFormat.layer_formats():
-                if resolved.name == f"{folder.name}{ext}":
-                    return folder, str(prim.GetPath())
-        return None, None
+        folder = referenced_asset_dir(prim)
+        return (folder, str(prim.GetPath())) if folder is not None else (None, None)
 
     target = stage.GetPrimAtPath(prim_path)
     if target and target.IsValid():
@@ -804,6 +796,12 @@ def unit_factor(asset_dir: Path) -> float:
     """Return the factor that converts meters into asset units."""
     mpu = get_mpu(asset_dir)
     return 1.0 / mpu if mpu > 0 else 1.0
+
+
+def nested_container_path(prim_path: str) -> str:
+    """The container placement a nested wrapper (``.../asset/contents/<group>/<name>``) sits in."""
+    marker = f"/{SceneNamespace.ASSET_CHILD}/{AssetScopeNames.CONTENTS}/"
+    return prim_path.split(marker)[0]
 
 
 def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:

@@ -39,21 +39,35 @@ def get_prim_ref_paths(prim: Usd.Prim) -> list[str]:
     return paths
 
 
+def referenced_asset_dir(prim: Usd.Prim) -> Path | None:
+    """The ASWF asset folder whose root file *prim* references, strongest opinion first.
+
+    Each reference is resolved against the layer that authored it, as USD
+    does: a nested placement's reference lives in its container's
+    ``contents.usda`` and is relative to that file, not to the scene. Only a
+    folder's canonical root (``<folder>/<folder>.usd*``) counts, so the side
+    layers an asset root references itself are skipped.
+    """
+    for spec in prim.GetPrimStack():
+        for ref in spec.referenceList.GetAddedOrExplicitItems():
+            if not ref.assetPath:
+                continue
+            resolved = Path(spec.layer.ComputeAbsolutePath(ref.assetPath)).resolve()
+            folder = resolved.parent
+            if resolved.is_file() and any(
+                resolved.name == f"{folder.name}{ext}" for ext in AssetFormat.layer_formats()
+            ):
+                return folder
+    return None
+
+
 def find_asset_placements(stage: Usd.Stage, asset_dir: Path) -> list[str]:
-    """Return scene prim paths of every wrapper-asset child referencing *asset_dir*."""
-    root_path = stage.GetRootLayer().realPath
-    if not root_path:
-        return []
-    stage_dir = Path(root_path).parent
+    """Scene paths of every prim that references *asset_dir*'s root, nested placements included."""
     target_dir = asset_dir.resolve()
-    placements: list[str] = []
-    for prim in stage.Traverse():
-        for ref_path in get_prim_ref_paths(prim):
-            resolved = (stage_dir / ref_path).resolve()
-            if resolved.exists() and resolved.parent == target_dir:
-                placements.append(str(prim.GetPath()))
-                break
-    return placements
+    return [
+        str(prim.GetPath()) for prim in stage.Traverse()
+        if referenced_asset_dir(prim) == target_dir
+    ]
 
 
 def is_placement(stage: Usd.Stage, prim_path: str | Sdf.Path) -> bool:

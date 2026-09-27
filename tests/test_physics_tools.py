@@ -12,7 +12,7 @@ from pxr import Gf, Usd, UsdGeom, UsdPhysics, UsdShade
 from bowerbot.config import UpAxis
 from bowerbot.project import Project
 from bowerbot.state import SceneState
-from tests._helpers import exec_tool, make_state
+from tests._helpers import exec_tool, library_state, make_state
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -1436,3 +1436,107 @@ def test_removing_a_rigid_body_reports_the_joints_it_strands():
         assert r.success, r.error
         assert r.data["joints_without_rigid_body"] == [joint]
         assert joint in r.data["message"]
+
+
+# ── pair filtering (PhysicsFilteredPairsAPI) ──
+
+
+def _run(state, tool, **params):
+    return asyncio.run(exec_tool(state, tool, params))
+
+
+def _colliding_table(state):
+    """A table whose two parts are colliders, and the parts' scene paths."""
+    table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                 translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+    top, leg = f"{table}/asset/Top", f"{table}/asset/Leg"
+    for part in (top, leg):
+        assert _run(state, "apply_physics_api", prim_path=part,
+                    api_name="PhysicsCollisionAPI").success
+    return top, leg
+
+
+def test_filtered_pairs_stop_two_parts_of_an_asset_colliding():
+    """The filter lives in the asset's phy.usda, targets inside the asset; removal leaves none."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        top, leg = _colliding_table(state)
+
+        r = _run(state, "apply_physics_api", prim_path=top, api_name="PhysicsFilteredPairsAPI",
+                 relationships={"physics:filteredPairs": [leg]})
+        assert r.success, r.error
+        assert r.data["scope"] == "asset"
+        phy = Usd.Stage.Open(str(state.require_project().assets_dir / "table" / "phy.usda"))
+        spec = phy.GetRootLayer().GetPrimAtPath("/table/Top")
+        assert "PhysicsFilteredPairsAPI" in spec.GetInfo("apiSchemas").GetAddedOrExplicitItems()
+        assert list(spec.relationships["physics:filteredPairs"].targetPathList
+                    .GetAddedOrExplicitItems()) == ["/table/Leg"]
+        composed = state.require_stage().GetPrimAtPath(top)
+        assert UsdPhysics.FilteredPairsAPI(composed).GetFilteredPairsRel().GetTargets() == [leg]
+
+        removed = _run(state, "remove_physics_api", prim_path=top,
+                       api_name="PhysicsFilteredPairsAPI")
+        assert removed.success, removed.error
+        layer = (state.require_project().assets_dir / "table" / "phy.usda").read_text()
+        assert "FilteredPairs" not in layer and "filteredPairs" not in layer
+
+
+def test_filtered_pairs_need_a_body_or_collider_on_both_sides():
+    """Filtering a prim physics doesn't see would do nothing, so it is refused unwritten."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                     translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+        top, leg = f"{table}/asset/Top", f"{table}/asset/Leg"
+        _run(state, "apply_physics_api", prim_path=top, api_name="PhysicsCollisionAPI")
+        phy = state.require_project().assets_dir / "table" / "phy.usda"
+        before = phy.read_text()
+
+        r = _run(state, "apply_physics_api", prim_path=top, api_name="PhysicsFilteredPairsAPI",
+                 relationships={"physics:filteredPairs": [leg]})
+        assert not r.success
+        assert "/table/Leg is not a rigid body, collider or articulation root" in r.error
+        assert phy.read_text() == before
+
+        props = _run(state, "list_physics_api_properties", api_name="PhysicsFilteredPairsAPI")
+        assert props.success, props.error
+        assert "rigid body, collider or articulation root" in props.data["target_requirement"]
+        assert "physics:filteredPairs" in {p["name"] for p in props.data["properties"]}
+
+
+def test_scene_filtered_pairs_drop_a_removed_target():
+    """Across placements the filter is a scene opinion; removing a target placement drops it."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        crates = []
+        for name, x in (("CrateA", 2.0), ("CrateB", 3.0)):
+            placed = _run(state, "place_asset", asset="crate", asset_name=name, group="Props",
+                          translate_x=x, translate_y=0.0, translate_z=0.0).data["prim_path"]
+            mesh = f"{placed}/asset/Mesh"
+            _run(state, "apply_physics_api", prim_path=mesh, api_name="PhysicsCollisionAPI",
+                 scope="scene")
+            crates.append((placed, mesh))
+        (_, mesh_a), (placed_b, mesh_b) = crates
+
+        r = _run(state, "apply_physics_api", prim_path=mesh_a, scope="scene",
+                 api_name="PhysicsFilteredPairsAPI",
+                 relationships={"physics:filteredPairs": [mesh_b]})
+        assert r.success, r.error
+
+        removed = _run(state, "remove_prim", prim_path=placed_b)
+        assert removed.success, removed.error
+        rel = state.require_stage().GetPrimAtPath(mesh_a).GetRelationship("physics:filteredPairs")
+        assert rel.GetTargets() == []
+
+
+def test_a_refused_scene_physics_call_leaves_no_physics_scene():
+    """The target is checked before the PhysicsScene is ensured, so a refusal writes nothing."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        table = _run(state, "place_asset", asset="table", asset_name="Table", group="Furniture",
+                     translate_x=0.0, translate_y=0.0, translate_z=0.0).data["prim_path"]
+
+        r = _run(state, "apply_physics_api", prim_path=table, scope="scene",
+                 api_name="PhysicsMeshCollisionAPI")
+        assert not r.success
+        assert not state.require_stage().GetPrimAtPath("/Scene/Physics").IsValid()

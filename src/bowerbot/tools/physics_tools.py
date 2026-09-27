@@ -186,7 +186,9 @@ TOOLS: list[Tool] = [
                         "PhysicsArticulationRootAPI, PhysicsDriveAPI "
                         "(multi-apply: motor/spring on joints), "
                         "PhysicsLimitAPI (multi-apply: angle/distance "
-                        "limits on joints)."
+                        "limits on joints), PhysicsFilteredPairsAPI (turns off "
+                        "collisions between this body/collider and the prims "
+                        "in physics:filteredPairs)."
                     ),
                 },
                 "instance_name": {
@@ -219,7 +221,10 @@ TOOLS: list[Tool] = [
             "- PhysicsMeshCollisionAPI requires a UsdGeom.Mesh and "
             "auto-applies PhysicsCollisionAPI alongside it.\n"
             "- PhysicsRigidBodyAPI / PhysicsMassAPI require a "
-            "UsdGeom.Xformable.\n\n"
+            "UsdGeom.Xformable.\n"
+            "- PhysicsFilteredPairsAPI goes on a rigid body, collider or "
+            "articulation root, and every physics:filteredPairs target "
+            "must be one too (author those APIs first).\n\n"
             "If you pass an Xform whose subtree contains a unique prim "
             "of the required type, BowerBot resolves to that descendant "
             "automatically and returns both `prim_path` (resolved) and "

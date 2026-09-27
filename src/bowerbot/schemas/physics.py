@@ -29,6 +29,7 @@ class PhysicsApiName(StrEnum):
     ARTICULATION_ROOT = "PhysicsArticulationRootAPI"
     DRIVE = "PhysicsDriveAPI"
     LIMIT = "PhysicsLimitAPI"
+    FILTERED_PAIRS = "PhysicsFilteredPairsAPI"
 
 
 class PhysicsJointType(StrEnum):
@@ -72,7 +73,16 @@ class PhysicsRules:
         PhysicsApiName.COLLISION: "Gprim",
         PhysicsApiName.MESH_COLLISION: "Mesh",
         PhysicsApiName.ARTICULATION_ROOT: "Xformable",
+        PhysicsApiName.FILTERED_PAIRS: "Xformable",
     }
+    # What UsdPhysics calls a body, a collision or an articulation: the only
+    # prims pair filtering acts on, both the filtering prim and its targets.
+    COLLISION_OBJECT_APIS = (
+        PhysicsApiName.RIGID_BODY,
+        PhysicsApiName.COLLISION,
+        PhysicsApiName.ARTICULATION_ROOT,
+    )
+    FILTERS_COLLISION_OBJECTS = frozenset({PhysicsApiName.FILTERED_PAIRS})
     # MeshCollisionAPI is meaningless without CollisionAPI per the spec.
     COMPANIONS = {PhysicsApiName.MESH_COLLISION: PhysicsApiName.COLLISION}
     # Dropping CollisionAPI also drops MeshCollisionAPI.

@@ -270,16 +270,20 @@ TOOLS: list[Tool] = [
         name="scatter_along_path",
         description=(
             "Place assets along a path: a polyline ('points'), a circle around a "
-            "point or prim ('circle'), or a BasisCurves prim ('curve_prim'). "
+            "point or prim ('circle'), or a BasisCurves prim ('curve_prim', "
+            "followed as USD draws it: a linear curve through its points, a cubic "
+            "bezier, bspline or catmullRom along the curve, not its control "
+            "points). "
             "For streetlights or fence posts along a road, fence sections "
             "following a boundary, products along a shelf, chairs round a "
             "table. Spacing comes from 'count', 'spacing', or (neither) the "
             "asset's own length plus 'gap', so sections butt end to end. Each "
             "piece is snapped straight down onto the nearest surface (all scene "
             "geometry unless 'surfaces' is given) and rests on it. 'facing' "
-            "turns each piece's front (+Z in Y-up scenes, -Y in Z-up) toward "
-            "the path direction, the path line, the centre, outward, a fixed "
-            "direction, or random; correct odd assets with yaw_offset_degrees. "
+            "turns each piece's long axis along the path ('tangent'), or its "
+            "front (+Z in Y-up scenes, -Y in Z-up) toward the path line, the "
+            "centre, outward or a fixed direction, or turns it at random; "
+            "correct odd assets with yaw_offset_degrees. "
             "Default output is individually editable placements."
         ),
         parameters={
@@ -309,7 +313,10 @@ TOOLS: list[Tool] = [
                     "required": ["radius"],
                 },
                 "curve_prim": {
-                    "type": "string", "description": "A BasisCurves prim to follow.",
+                    "type": "string",
+                    "description": (
+                        "A BasisCurves prim to follow (its first curve), as USD draws it."
+                    ),
                 },
                 "count": {
                     "type": "integer", "minimum": 1, "description": "Number of stations.",

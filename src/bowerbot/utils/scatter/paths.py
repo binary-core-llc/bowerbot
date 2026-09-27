@@ -214,7 +214,12 @@ def path_pitch(
 
 
 def _curve_points(stage: Usd.Stage, prim_path: str) -> tuple[FloatArray, bool, FloatArray]:
-    """World-space control points of the first curve on a BasisCurves prim."""
+    """World-space points of the first curve on a BasisCurves prim, as USD draws it.
+
+    A linear curve is its points. A cubic curve (bezier, bspline or catmullRom,
+    nonperiodic, pinned or periodic) is evaluated into a dense polyline whose
+    points lie on the curve: a bspline passes near, not through, its points.
+    """
     prim = stage.GetPrimAtPath(prim_path)
     if not prim.IsValid() or not prim.IsA(UsdGeom.BasisCurves):
         msg = f"curve_prim {prim_path} is not a BasisCurves prim."
@@ -230,8 +235,76 @@ def _curve_points(stage: Usd.Stage, prim_path: str) -> tuple[FloatArray, bool, F
         UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default()),
     )
     points = points @ world[:3, :3] + world[3, :3]
-    closed = curves.GetWrapAttr().Get() == UsdGeom.Tokens.periodic
+    wrap = curves.GetWrapAttr().Get() or UsdGeom.Tokens.nonperiodic
+    closed = wrap == UsdGeom.Tokens.periodic
+    if (curves.GetTypeAttr().Get() or UsdGeom.Tokens.cubic) == UsdGeom.Tokens.cubic:
+        basis = curves.GetBasisAttr().Get() or UsdGeom.Tokens.bezier
+        points = _cubic_polyline(points, str(basis), str(wrap), prim_path)
     return points, closed, points.mean(axis=0)
+
+
+def _cubic_polyline(points: FloatArray, basis: str, wrap: str, prim_path: str) -> FloatArray:
+    """Dense points on a cubic curve, refined until every chord hugs the curve."""
+    if wrap == UsdGeom.Tokens.pinned and basis != UsdGeom.Tokens.bezier:
+        # Pinned: phantom end points make the curve start and end on its end points.
+        points = np.vstack([2 * points[0] - points[1], points, 2 * points[-1] - points[-2]])
+    periodic = wrap == UsdGeom.Tokens.periodic
+    segments = points[_segment_indices(points.shape[0], basis, periodic, prim_path)]
+    size = float(np.ptp(points, axis=0).max()) or 1.0
+    samples = ScatterTuning.CURVE_START_SAMPLES
+    while True:
+        t = np.linspace(0.0, 1.0, samples + 1)
+        dense = np.einsum("tk,skd->std", _basis_weights(basis, t), segments)
+        mid = np.einsum("tk,skd->std", _basis_weights(basis, (t[:-1] + t[1:]) / 2), segments)
+        stray = np.linalg.norm(mid - (dense[:, :-1] + dense[:, 1:]) / 2, axis=2).max()
+        close_enough = stray <= ScatterTuning.CURVE_TOLERANCE * size
+        if close_enough or samples >= ScatterTuning.CURVE_MAX_SAMPLES:
+            break
+        samples *= 2
+    joined = np.vstack([dense[0], *(segment[1:] for segment in dense[1:])])
+    return joined[:-1] if periodic else joined
+
+
+def _segment_indices(n: int, basis: str, periodic: bool, prim_path: str) -> IntArray:
+    """Indices of the 4 points driving each cubic segment, per USD's vstep and wrap."""
+    step = 3 if basis == UsdGeom.Tokens.bezier else 1
+    if periodic:
+        valid = n >= 3 and n % step == 0
+        starts = np.arange(0, n, step)
+    else:
+        valid = n >= 4 and (n - 4) % step == 0
+        starts = np.arange(0, n - 3, step)
+    if not valid:
+        wrap = "periodic" if periodic else "nonperiodic"
+        msg = (
+            f"curve_prim {prim_path} is a {wrap} cubic {basis} curve with {n} points, "
+            f"which USD can't draw (a bezier needs 3k+1 points, 3k when periodic; a "
+            f"{basis} needs at least 4)."
+        )
+        raise ValueError(msg)
+    return (starts[:, None] + np.arange(4)[None, :]) % n
+
+
+def _basis_weights(basis: str, t: FloatArray) -> FloatArray:
+    """Weights of a segment's 4 points at parameters *t*, for USD's cubic bases."""
+    s = 1.0 - t
+    if basis == UsdGeom.Tokens.bezier:
+        weights = [s**3, 3 * s * s * t, 3 * s * t * t, t**3]
+    elif basis == UsdGeom.Tokens.bspline:
+        weights = [s**3 / 6, (3 * t**3 - 6 * t**2 + 4) / 6,
+                   (-3 * t**3 + 3 * t**2 + 3 * t + 1) / 6, t**3 / 6]
+    else:
+        weights = [(-t**3 + 2 * t**2 - t) / 2, (3 * t**3 - 5 * t**2 + 2) / 2,
+                   (-3 * t**3 + 4 * t**2 + t) / 2, (t**3 - t**2) / 2]
+    return np.stack(weights, axis=1)
+
+
+def on_circle(points: FloatArray, center: FloatArray, radius: float, up: int) -> FloatArray:
+    """*points* moved radially onto the circle of *radius* around *center* (plan view)."""
+    offset = points - center
+    offset[:, up] = 0.0
+    distance = np.linalg.norm(offset, axis=1, keepdims=True)
+    return points + offset * (radius / np.maximum(distance, 1e-12) - 1.0)
 
 
 def plan_length(points: FloatArray, closed: bool, up: int) -> float:

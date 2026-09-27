@@ -108,7 +108,8 @@ scattered assets like any other.
   (pieces butt together) or a `gap`, `facing='fixed'` toward the aisle,
   `surfaces` [the shelf].
 - "streetlights / fence posts along the winding road" →
-  `scatter_along_path`, `points` tracing the road (or `curve_prim`),
+  `scatter_along_path`, `points` tracing the road (or `curve_prim`, a
+  BasisCurves prim in the scene, followed as USD draws it),
   `spacing`, `sides` 'left'/'right'/'both' with `offset` (distance from
   the road centre line), `facing='path'` so lights face the road.
 - "a fence built from sections following the boundary" →

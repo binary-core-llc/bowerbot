@@ -25,8 +25,13 @@ class ScatterRules:
 class ScatterTuning:
     """Internal settings of the scatter algorithms."""
 
-    # Points on a circle path.
+    # Points on a circle path (pieces are then put exactly on the circle).
     PATH_SEGMENTS = 256
+    # A cubic curve path is sampled until no chord strays from the curve by more than this
+    # fraction of the curve's size, doubling the samples per segment up to the cap.
+    CURVE_TOLERANCE = 1e-7
+    CURVE_START_SAMPLES = 16
+    CURVE_MAX_SAMPLES = 4096
     # Sampling rounds, and the largest batch, when topping up to an exact count.
     MAX_SAMPLE_ROUNDS = 24
     MAX_SAMPLE_BATCH = 2_000_000

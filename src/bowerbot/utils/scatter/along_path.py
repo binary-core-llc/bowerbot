@@ -24,6 +24,7 @@ from bowerbot.utils.scatter.orientation import quat_axis_angle, quat_between, qu
 from bowerbot.utils.scatter.paths import (
     build_path,
     facing_yaw,
+    on_circle,
     path_pitch,
     path_stations,
     path_tangents,
@@ -68,7 +69,10 @@ def generate_path_scatter(
     sign = np.tile(signs, stations.size)
     tangent = tangents[station_idx]
     lateral = np.cross(up_vec, tangent) * (sign * path.offset)[:, None]
-    contacts = sample_path(points, closed, up, stations)[station_idx] + lateral
+    on_path = sample_path(points, closed, up, stations)
+    if path.circle is not None:
+        on_path = on_circle(on_path, center, path.circle.radius, up)
+    contacts = on_path[station_idx] + lateral
 
     n = contacts.shape[0]
     weights = [proto.weight for proto in prototypes]

@@ -12,7 +12,7 @@ from pxr import Sdf, Usd, UsdGeom
 
 from bowerbot.schemas import SurfaceIndex, SurfaceTriangles, SurfaceTuning
 from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
-from bowerbot.utils.core.bounds import bbox_cache
+from bowerbot.utils.core.bounds import bbox_cache, untransformed_range
 from bowerbot.utils.core.metrics import horizontal_axes
 from bowerbot.utils.core.transforms import gf_matrix_to_numpy
 
@@ -402,8 +402,8 @@ def _instancer_footprints(
         prim = stage.GetPrimAtPath(target)
         if not prim.IsValid():
             continue
-        box = cache.ComputeUntransformedBound(prim).ComputeAlignedRange()
-        if not box.IsEmpty():
+        box = untransformed_range(prim, cache)
+        if box is not None:
             lo[i], hi[i] = box.GetMin(), box.GetMax()
     keep &= (proto_idx >= 0) & (proto_idx < len(targets))
     keep[keep] &= ~np.isnan(lo[proto_idx[keep], 0])

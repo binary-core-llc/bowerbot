@@ -87,12 +87,40 @@ def scale_spatial_attributes(
     }
 
 
+def spatial_defaults(
+    light_type: LightType, given: dict[str, Any], factor: float,
+) -> dict[str, Any]:
+    """The light type's length inputs *given* leaves out, as USD's fallbacks read in meters.
+
+    USD's fallbacks (radius 0.5, width 1 ...) carry no unit, so in a layer whose
+    unit isn't the meter an unset size shrinks or grows with it: a 5 mm bulb in
+    a centimeter scene, and (lights not being normalized) 10,000x less light.
+    *factor* converts meters into the layer's units; at 1 nothing is added.
+    """
+    if factor == 1.0:
+        return {}
+    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)
+    defaults: dict[str, Any] = {}
+    for name in sorted(LightRules.SPATIAL_INPUTS - set(given)):
+        attr_def = prim_def.GetAttributeDefinition(name) if prim_def is not None else None
+        fallback = attr_def.GetFallbackValue() if attr_def else None
+        if fallback is not None:
+            defaults[name] = float(fallback) * factor
+    return defaults
+
+
 def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
-    """Create a USD light prim in *stage* at *prim_path*."""
+    """Create a USD light prim in *stage* at *prim_path*.
+
+    Sizes the caller leaves out are USD's defaults in meters, in scene units.
+    """
     light_cls = schema_class(light.light_type)
     light_prim = light_cls.Define(stage, prim_path).GetPrim()
 
-    write_light_attributes(stage, prim_path, light.attributes)
+    factor = 1.0 / UsdGeom.GetStageMetersPerUnit(stage)
+    write_light_attributes(stage, prim_path, {
+        **spatial_defaults(light.light_type, light.attributes, factor), **light.attributes,
+    })
     if light.texture is not None:
         tex_attr = light_prim.GetAttribute("inputs:texture:file")
         if tex_attr:
@@ -226,10 +254,10 @@ def add_light_to_folder(
     light_prim = light_cls.Define(stage, light_prim_path).GetPrim()
     factor = unit_factor(asset_dir)
 
-    write_light_attributes(
-        stage, light_prim_path,
-        scale_spatial_attributes(light.attributes, factor),
-    )
+    write_light_attributes(stage, light_prim_path, {
+        **spatial_defaults(light.light_type, light.attributes, factor),
+        **scale_spatial_attributes(light.attributes, factor),
+    })
     if light.texture is not None:
         tex_attr = light_prim.GetAttribute("inputs:texture:file")
         if tex_attr:

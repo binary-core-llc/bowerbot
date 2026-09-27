@@ -86,7 +86,8 @@ coordinates in scene units, like everything `list_scene` reports.
 Spatial inputs (radius, width, height, length) inside `attributes` are
 meters for an asset light (BowerBot scales them to the asset's native
 units) and scene units for a scene light (a 5 cm bulb in a centimeter
-scene is `inputs:radius: 5`).
+scene is `inputs:radius: 5`). A size left out is USD's default in meters
+in any scene: a 0.5 m sphere or disk radius, a 1 x 1 m rect, a 1 m tube.
 
 `create_light` returns the light's world `position` and, for asset
 lights, the composed scene `prim_path` (also restated in the

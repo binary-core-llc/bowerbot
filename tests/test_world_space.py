@@ -356,3 +356,133 @@ def test_a_cubic_curve_usd_cannot_draw_is_refused():
         assert not result.success
         assert "3k+1 points" in result.error
         assert scene.state.require_project().scene_path.read_text() == before
+
+
+# ── lights are not geometry ──
+
+
+def _lamp_with_lights(scene: _Scene, **where: float) -> str:
+    """A lamp (0.4 x 0.6 x 0.4 m) with a bulb above it and a light hanging below it."""
+    lamp = scene.call("place_asset", asset="lamp", asset_name="Lamp", group="Props",
+                      **where)["prim_path"]
+    scene.call("create_light", light_type="SphereLight", light_name="Bulb", asset_prim_path=lamp)
+    scene.call("create_light", light_type="SphereLight", light_name="Under", asset_prim_path=lamp,
+               position_mode="bounds_offset", translate_x=0.0,
+               **{f"translate_{scene.up.lower()}": -0.2,
+                  f"translate_{'z' if scene.up == 'Y' else 'y'}": 0.0})
+    return lamp
+
+
+def _reported(scene: _Scene, bounds: dict[str, dict[str, float]]) -> Gf.Range3d:
+    return Gf.Range3d(Gf.Vec3d(*(bounds["min"][a] for a in "xyz")),
+                      Gf.Vec3d(*(bounds["max"][a] for a in "xyz")))
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_lights_do_not_count_as_an_objects_bounds(up, mpu):
+    """list_scene reports the lamp's geometry, and a drop rests the geometry on the ground."""
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, -1.0))["prim_path"]
+        lamp = _lamp_with_lights(scene, **scene.at(1.0, 0, 0))
+        size = scene.vec(0.4, 0.4, 0.6)
+        listed = next(o for o in scene.call("list_scene")["objects"] if o["prim_path"] == lamp)
+        assert _close(_reported(scene, listed["bounds"]).GetSize(), size, scene), listed
+
+        scene.call("drop_to_surface", prim_paths=[lamp], surfaces=[ground])
+        _rests_on(scene, f"{lamp}/asset/Base", -1.0 + 0.05)
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_lit_assets_scatter_by_their_geometry(up, mpu):
+    """Streetlights along a road butt end to end and rest on it, whatever their lights."""
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, 0))["prim_path"]
+        _lamp_with_lights(scene, **scene.at(0, 4.0, 1.0))
+        line = [list(scene.vec(-2.0, 2.0, 0)), list(scene.vec(2.0, 2.0, 0))]
+        scene.call("scatter_along_path", name="Lights", group="Street",
+                   assets=[{"asset": "lamp"}], points=line, surfaces=[ground])
+        boxes = [scene.bounds(f"{piece.GetPath()}/asset/Base")
+                 for piece in scene.stage().GetPrimAtPath("/Scene/Street/Lights").GetChildren()]
+        xs = sorted(box.GetMidpoint()[0] for box in boxes)
+        assert len(xs) >= 2
+        steps = [b - a for a, b in zip(xs, xs[1:], strict=False)]
+        assert all(abs(step - scene.u(0.4)) <= scene.u(TOL) for step in steps), steps
+        for box in boxes:
+            assert abs(box.GetMin()[scene.up_i] - scene.u(0.05)) <= scene.u(1e-3), box
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_default_light_sizes_are_meters_in_any_units(up, mpu):
+    """Unset sizes are USD's defaults in meters: a 0.5 m sphere, a 1 x 1 m rect; a size the
+    caller gives is kept in scene units (scene light) or meters (asset light)."""
+    with _scene(up, mpu) as scene:
+        for name, kind in (("Bulb", "SphereLight"), ("Panel", "RectLight"),
+                           ("Disk", "DiskLight"), ("Tube", "CylinderLight")):
+            scene.call("create_light", light_type=kind, light_name=name)
+        scene.call("create_light", light_type="SphereLight", light_name="Given",
+                   attributes={"inputs:radius": scene.u(0.05)})
+        seat = scene.call("place_asset", asset="chair_cm", asset_name="Seat", group="Props",
+                          **scene.at(1.0, 0, 0))["prim_path"]
+        inner = scene.call("create_light", light_type="SphereLight", light_name="Inner",
+                           asset_prim_path=seat)["prim_path"]
+        fixed = scene.call("create_light", light_type="SphereLight", light_name="Fixed",
+                           asset_prim_path=seat, attributes={"inputs:radius": 0.1})["prim_path"]
+
+        def meters(path: str, name: str) -> float:
+            prim = scene.stage().GetPrimAtPath(path)
+            stretch = scene.world(path).TransformDir(Gf.Vec3d(1, 0, 0)).GetLength()
+            return prim.GetAttribute(name).Get() * stretch * mpu
+
+        expected = {("Bulb", "inputs:radius"): 0.5, ("Panel", "inputs:width"): 1.0,
+                    ("Panel", "inputs:height"): 1.0, ("Disk", "inputs:radius"): 0.5,
+                    ("Tube", "inputs:radius"): 0.5, ("Tube", "inputs:length"): 1.0,
+                    ("Given", "inputs:radius"): 0.05}
+        for (name, attr), size in expected.items():
+            assert abs(meters(f"/Scene/Lighting/{name}", attr) - size) <= 1e-6, (name, attr)
+        assert abs(meters(inner, "inputs:radius") - 0.5) <= 1e-6
+        assert abs(meters(fixed, "inputs:radius") - 0.1) <= 1e-6
+        if mpu == 1.0:  # a meter scene gets nothing more than before
+            bulb = scene.stage().GetPrimAtPath("/Scene/Lighting/Bulb")
+            assert not bulb.GetAttribute("inputs:radius").HasAuthoredValue()
+
+
+def _instance_geometry_bottoms(scene: _Scene, path: str) -> list[float]:
+    """The lowest geometry point (up axis) of each instance of a scatter: gprims only."""
+    stage = scene.stage()
+    instancer = UsdGeom.PointInstancer(stage.GetPrimAtPath(path))
+    cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default", "render"])
+    time = Usd.TimeCode.Default()
+    xforms = instancer.ComputeInstanceTransformsAtTime(time, time)
+    world = UsdGeom.Xformable(instancer).ComputeLocalToWorldTransform(time)
+    targets = instancer.GetPrototypesRel().GetTargets()
+    bottoms = []
+    for xform, index in zip(xforms, instancer.GetProtoIndicesAttr().Get(), strict=True):
+        prototype = stage.GetPrimAtPath(targets[index])
+        to_local = UsdGeom.Xformable(prototype).ComputeLocalToWorldTransform(time).GetInverse()
+        low = math.inf
+        for part in Usd.PrimRange(prototype):
+            if part.IsA(UsdGeom.Gprim):
+                box = cache.ComputeWorldBound(part)
+                box.Transform(to_local * xform * world)
+                low = min(low, box.ComputeAlignedRange().GetMin()[scene.up_i])
+        bottoms.append(low)
+    return bottoms
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_a_lit_instancer_scatter_rests_by_its_geometry(up, mpu):
+    """Lamps with lights, scattered as one PointInstancer, rest on the ground after a drop."""
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, 0))["prim_path"]
+        _lamp_with_lights(scene, **scene.at(0, 4.5, 1.0))
+        scene.call("scatter_on_surface", name="Lamps", group="Street",
+                   assets=[{"asset": "lamp"}], surfaces=[ground], count=5, seed=3, align="up")
+        for bottom in _instance_geometry_bottoms(scene, "/Scene/Street/Lamps"):
+            assert abs(bottom - scene.u(0.05)) <= scene.u(1e-3), bottom
+        scene.call("move_asset", prim_path=ground, **{f"translate_{up.lower()}": scene.u(0.5)})
+        scene.call("drop_to_surface", prim_paths=["/Scene/Street/Lamps"], surfaces=[ground])
+        for bottom in _instance_geometry_bottoms(scene, "/Scene/Street/Lamps"):
+            assert abs(bottom - scene.u(0.55)) <= scene.u(1e-3), bottom

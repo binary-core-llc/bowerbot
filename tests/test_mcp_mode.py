@@ -247,7 +247,7 @@ def test_mcp_client_receives_the_cross_tool_rules():
     params = {p for t in tools for p in t.inputSchema.get("properties", {})}
     mentioned = set(re.findall(r"`([a-z]+(?:_[a-z]+)+)", instructions))
     fields_and_inputs = {
-        "suspect_variant_sets", "unused_files",
+        "suspect_variant_sets", "unused_assets", "unused_files",
     }
     assert mentioned - tool_names - params - fields_and_inputs == set()
     assert {"remove_scene_variant_set", "delete_project_file", "set_prim_attribute"} <= mentioned

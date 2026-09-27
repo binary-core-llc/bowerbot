@@ -139,6 +139,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
     )
 
     joints_before = physics.joints.joints_reaching_rigid_body(stage)
+    filters_before = physics.apis.pair_filters(stage)
     if scope == "scene":
         changed = physics.apis.remove_api_scene(
             stage, prim_path, api_name,
@@ -151,6 +152,7 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
             else api_name.value
         )
         broken = sorted(joints_before - physics.joints.joints_reaching_rigid_body(stage))
+        inert = physics.apis.newly_inert_filters(filters_before, physics.apis.pair_filters(stage))
         return {
             "scope": "scene",
             "prim_path": prim_path,
@@ -158,11 +160,13 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
             "instance_name": instance_name,
             "removed": changed,
             "joints_without_rigid_body": broken,
+            "inert_pair_filters": [{"prim_path": o, "target": t} for o, t in inert],
             "message": (
                 f"Removed {api_label} from {prim_path}"
                 if changed
                 else f"{api_label} was not present on {prim_path}"
-            ) + physics.joints.broken_joints_note(broken),
+            ) + physics.joints.broken_joints_note(broken)
+            + physics.apis.inert_filters_note(inert),
         }
 
     try:
@@ -198,7 +202,9 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
     )
     if changed:
         physics.summary.remove_physics_layer_if_empty(asset_dir)
-    broken = sorted(joints_before - physics.joints.joints_reaching_rigid_body(state.reopen_stage()))
+    stage = state.reopen_stage()
+    broken = sorted(joints_before - physics.joints.joints_reaching_rigid_body(stage))
+    inert = physics.apis.newly_inert_filters(filters_before, physics.apis.pair_filters(stage))
     state.touch_project()
 
     api_label = (
@@ -213,11 +219,13 @@ def remove_physics_api(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "api_name": api_name.value,
         "removed": changed,
         "joints_without_rigid_body": broken,
+        "inert_pair_filters": [{"prim_path": o, "target": t} for o, t in inert],
         "message": (
             f"Removed {api_label} from {asset_local_path}"
             if changed
             else f"{api_label} was not present on {asset_local_path}"
-        ) + physics.joints.broken_joints_note(broken),
+        ) + physics.joints.broken_joints_note(broken)
+        + physics.apis.inert_filters_note(inert),
         "cleared_masking_opinions": [
             {"prim_path": p, "kind": k, "key": key}
             for p, k, key in cleared

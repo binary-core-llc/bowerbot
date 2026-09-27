@@ -554,7 +554,9 @@ TOOLS: list[Tool] = [
             "this after removing an asset from the scene when the user "
             "confirms they want to delete the files too. BowerBot scans all "
             "USD files in the project to ensure the asset is not referenced "
-            "elsewhere before deleting."
+            "elsewhere before deleting. An asset only the deleted one placed "
+            "(nested inside it) is listed in unused_assets; offer to delete "
+            "it too."
         ),
         parameters={
             "type": "object",

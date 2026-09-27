@@ -26,6 +26,7 @@ from bowerbot.schemas import (
 from bowerbot.state import SceneState
 from bowerbot.utils import scatter, stage_utils, surface_utils
 from bowerbot.utils.core.metrics import axis_index
+from bowerbot.utils.core.references import unreferenced_assets, unused_assets_note
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, A
     """Distribute assets over surface prims, each piece resting on the surface it lands on."""
     stage = state.require_stage()
     project = state.require_project()
+    assets_before = unreferenced_assets(project.path, project.assets_dir)
     up = axis_index(state.up_axis.value)
     arrangement = ScatterArrangement(params.get("arrangement", ScatterArrangement.RANDOM))
     count = params.get("count")
@@ -173,9 +175,12 @@ def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "by_asset": scatter.authoring.count_by_prototype(prototypes, instances),
         "seed": seed,
         "warnings": warnings,
+        "unused_assets": (unused := sorted(
+            unreferenced_assets(project.path, project.assets_dir) - assets_before,
+        )),
         "message": (
             f"Scattered {instances.count:,} instance(s) at {prim_path} "
-            f"({output.value}, seed {seed})."
+            f"({output.value}, seed {seed})." + unused_assets_note(unused)
         ),
     }
 
@@ -184,6 +189,7 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, A
     """Place assets along a polyline, circle or curve, resting each on the surface below."""
     stage = state.require_stage()
     project = state.require_project()
+    assets_before = unreferenced_assets(project.path, project.assets_dir)
     up = axis_index(state.up_axis.value)
     given = [key for key in ("points", "circle", "curve_prim") if params.get(key) is not None]
     if len(given) != 1:
@@ -302,9 +308,12 @@ def scatter_along_path(state: SceneState, params: dict[str, Any]) -> dict[str, A
         "by_asset": scatter.authoring.count_by_prototype(prototypes, instances),
         "seed": seed,
         "warnings": warnings,
+        "unused_assets": (unused := sorted(
+            unreferenced_assets(project.path, project.assets_dir) - assets_before,
+        )),
         "message": (
             f"Placed {instances.count:,} instance(s) along the path at {prim_path} "
-            f"({output.value})."
+            f"({output.value})." + unused_assets_note(unused)
         ),
     }
 

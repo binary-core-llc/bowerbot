@@ -38,6 +38,8 @@ from bowerbot.utils.core.references import (
     enclosing_placement,
     newly_unused,
     placement_of,
+    unreferenced_assets,
+    unused_assets_note,
     unused_files_note,
     unused_scene_textures,
 )
@@ -169,8 +171,10 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove an object from the scene, scrubbing every rel that targeted it."""
     stage = state.require_stage()
     prim_path = params["prim_path"]
-    project_dir = state.require_project().path
+    project = state.require_project()
+    project_dir = project.path
     unused_before = unused_scene_textures(project_dir)
+    assets_before = unreferenced_assets(project_dir, project.assets_dir)
 
     nested = parse_nested_contents_path(prim_path)
     if nested is not None:
@@ -212,12 +216,14 @@ def remove_prim(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
     state.touch_project()
     unused = newly_unused(project_dir, unused_before, unused_scene_textures(project_dir))
+    unused_assets = sorted(unreferenced_assets(project_dir, project.assets_dir) - assets_before)
     logger.info("Removed %s", prim_path)
     return {
         "prim_path": prim_path,
         "scrubbed_dangling_refs": scrubbed,
         "unused_files": unused,
-        "message": message + "." + unused_files_note(unused),
+        "unused_assets": unused_assets,
+        "message": message + "." + unused_files_note(unused) + unused_assets_note(unused_assets),
     }
 
 
@@ -385,15 +391,25 @@ def list_scene_snapshots(state: SceneState, params: dict[str, Any]) -> dict[str,
 def delete_scene_snapshot(
     state: SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
-    """Delete a named snapshot file."""
+    """Delete a named snapshot file, reporting textures and assets only it used."""
     stage_path = state.require_stage_path()
+    project = state.require_project()
     name = params["name"]
+    unused_before = unused_scene_textures(project.path)
+    assets_before = unreferenced_assets(project.path, project.assets_dir)
     removed = stage_utils.delete_scene_snapshot(stage_path, name)
     state.touch_project()
+    unused = newly_unused(project.path, unused_before, unused_scene_textures(project.path))
+    unused_assets = sorted(unreferenced_assets(project.path, project.assets_dir) - assets_before)
     return {
         "snapshot_path": str(removed),
         "snapshot_name": removed.stem,
-        "message": f"Deleted snapshot {removed.name}",
+        "unused_files": unused,
+        "unused_assets": unused_assets,
+        "message": (
+            f"Deleted snapshot {removed.name}." + unused_files_note(unused)
+            + unused_assets_note(unused_assets)
+        ),
     }
 
 

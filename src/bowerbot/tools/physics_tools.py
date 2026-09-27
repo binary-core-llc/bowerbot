@@ -361,7 +361,11 @@ TOOLS: list[Tool] = [
             "masking flags mirror apply_physics_api. Returns "
             "joints_without_rigid_body: joints that no longer connect to any "
             "rigid body (they fail validate_scene); tell the user and remove "
-            "them or re-apply PhysicsRigidBodyAPI."
+            "them or re-apply PhysicsRigidBodyAPI. Also returns "
+            "inert_pair_filters: pair filters still authored that no longer "
+            "act, because one side is no longer a rigid body, collider or "
+            "articulation root; tell the user and re-apply that API or remove "
+            "the filter."
         ),
         parameters={
             "type": "object",

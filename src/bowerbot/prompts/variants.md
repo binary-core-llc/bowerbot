@@ -368,7 +368,8 @@ reference is RESTORED as a direct reference on `/asset` before
 the set is dropped. End state: clean placement with a direct ref,
 no dead slot. The return data includes
 `demoted_to_direct_ref: <variant_name>` so you can confirm to the
-user which asset was preserved.
+user which asset was preserved. Assets only the removed variants
+placed are listed in `unused_assets` (they stay in the project).
 
 ### `select_scene_variant(prim_path, variant_set, variant_name)`
 

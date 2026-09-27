@@ -1,12 +1,13 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""World space: scatter paths put every piece where the path is.
+"""World space: every tool that places, moves or converts geometry puts it where it says.
 
-A clean USD file can still hold a piece in the wrong place, so these tests
-measure the composed result (world bounds and headings) in Y-up and Z-up
-scenes, in meters and in centimeters. The library boxes are centered on
-their origin, so a piece's bounds center is its position.
+A clean USD file can still hold a part in the wrong place, so these tests
+measure the composed result (world bounds, world positions, headings and
+aiming directions) in Y-up and Z-up scenes, in meters and in centimeters.
+The library boxes are centered on their origin, so a placement's bounds
+center is its position.
 """
 
 from __future__ import annotations
@@ -100,6 +101,451 @@ def _assert_box(scene: _Scene, path: str, center: Gf.Vec3d, size: Gf.Vec3d) -> N
     box = scene.bounds(path)
     assert _close(box.GetMidpoint(), center, scene), (path, box.GetMidpoint(), center)
     assert _close(box.GetSize(), size, scene), (path, box.GetSize(), size)
+
+
+# ── placing and moving ──
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_placed_assets_land_at_their_position_in_scene_units_and_axes(up, mpu):
+    """A meter Y-up box, a Z-up post and a centimeter chair, straight and turned on the floor."""
+    with _scene(up, mpu) as scene:
+        for i, asset in enumerate(("table", "post", "chair_cm")):
+            for turned in (False, True):
+                where = (2.0 * i, 3.0 if turned else 0.0, 0.5)
+                path = scene.call("place_asset", asset=asset, asset_name=asset.title(),
+                                  group="Props", **scene.at(*where),
+                                  **scene.turn(90.0 if turned else 0.0))["prim_path"]
+                _assert_box(scene, path, scene.vec(*where), scene.size(asset, turned=turned))
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_moving_and_renaming_keep_the_geometry_where_they_say(up, mpu):
+    with _scene(up, mpu) as scene:
+        path = scene.call("place_asset", asset="table", asset_name="Table", group="Furniture",
+                          **scene.at(0, 0, 0))["prim_path"]
+        scene.call("move_asset", prim_path=path, **scene.at(1.5, -2.0, 0.25), **scene.turn(90))
+        _assert_box(scene, path, scene.vec(1.5, -2.0, 0.25), scene.size("table", turned=True))
+
+        # One axis only: the others keep their values.
+        scene.call("move_asset", prim_path=path, translate_x=scene.u(3.0))
+        _assert_box(scene, path, scene.vec(3.0, -2.0, 0.25), scene.size("table", turned=True))
+
+        before = scene.bounds(path)
+        moved = scene.call("rename_prim", old_path=path, new_path="/Scene/Dining/Room/Table")
+        after = scene.bounds(moved["new_path"])
+        assert _close(after.GetMin(), before.GetMin(), scene)
+        assert _close(after.GetMax(), before.GetMax(), scene)
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_a_layout_places_every_entry_where_its_pattern_or_transform_says(up, mpu):
+    with _scene(up, mpu) as scene:
+        origin = scene.vec(4.0, 1.0, 0.5)
+        spacing = [scene.u(0.5), scene.u(0.75)]
+        scene.call("place_layout", placements=[
+            {"asset": "crate", "group": "Grid",
+             "pattern": {"type": "grid", "origin": list(origin), "count": [3, 2],
+                         "spacing": spacing}},
+            {"asset": "table", "group": "Listed",
+             "transforms": [{"translate": list(scene.vec(-3, 0, 0.2)),
+                             "rotate": [90 if up == "X" else 0, 90 if up == "Y" else 0,
+                                        90 if up == "Z" else 0]}]},
+        ])
+        stage = scene.stage()
+        crates = sorted(p.GetName() for p in stage.GetPrimAtPath("/Scene/Grid").GetChildren())
+        assert len(crates) == 6
+        centers = sorted(
+            tuple(round(v, 4) for v in scene.bounds(f"/Scene/Grid/{name}").GetMidpoint())
+            for name in crates
+        )
+        expected = sorted(
+            tuple(round(v, 4) for v in origin + Gf.Vec3d(i * spacing[0], j * spacing[1], 0))
+            for i in range(3) for j in range(2)
+        )
+        assert centers == expected
+        table = stage.GetPrimAtPath("/Scene/Listed").GetChildren()[0].GetPath()
+        _assert_box(scene, str(table), scene.vec(-3, 0, 0.2), scene.size("table", turned=True))
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_a_tilt_about_a_literal_scene_axis(up, mpu):
+    """rotate_x turns about the scene's X axis in both conventions: height and Y/Z size swap."""
+    with _scene(up, mpu) as scene:
+        path = scene.call("place_asset", asset="table", asset_name="Table", group="Props",
+                          **scene.at(0, 0, 1.0), rotate_x=90.0)["prim_path"]
+        size = scene.size("table")
+        _assert_box(scene, path, scene.vec(0, 0, 1.0), Gf.Vec3d(size[0], size[2], size[1]))
+
+
+# ── nesting ──
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_a_nested_placement_lands_where_asked_in_a_turned_container(up, mpu):
+    """absolute takes world coordinates; bounds_offset offsets from the container's top."""
+    with _scene(up, mpu) as scene:
+        table = scene.call("place_asset", asset="table", asset_name="Table", group="Furniture",
+                           **scene.at(2.0, 1.0, 0.5), **scene.turn(90))["prim_path"]
+        crate = scene.call("place_asset_inside", asset="crate", asset_name="Crate",
+                           container_prim_path=table, group="Props",
+                           **scene.at(2.1, 1.2, 0.7))["prim_path"]
+        _assert_box(scene, crate, scene.vec(2.1, 1.2, 0.7), scene.size("crate"))
+
+        # 0.15 m above the top, 0.2 m along X of the unrotated table: the offset turns with it.
+        stone = scene.call("place_asset_inside", asset="stone", asset_name="Stone",
+                           container_prim_path=table, group="Props",
+                           position_mode="bounds_offset",
+                           translate_x=0.2, **{f"translate_{up.lower()}": 0.15,
+                                               f"translate_{'z' if up == 'Y' else 'y'}": 0.0})
+        top = 0.5 + 0.05
+        # Unrotated +X turned 90° about up: Y-up turns +X to -Z; Z-up turns +X to +Y.
+        depth_shift = -0.2 if up == "Y" else 0.2
+        _assert_box(scene, stone["prim_path"], scene.vec(2.0, 1.0 + depth_shift, top + 0.15),
+                    scene.size("stone"))
+
+
+# ── resting on surfaces ──
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_dropped_objects_rest_on_the_surface_below_them(up, mpu):
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, 0))["prim_path"]
+        floating = scene.call("place_asset", asset="crate", asset_name="Floating", group="Props",
+                              **scene.at(1.0, 1.0, 2.0))["prim_path"]
+        sunk = scene.call("place_asset", asset="chair", asset_name="Sunk", group="Props",
+                          **scene.at(-1.0, 2.0, 0.0))["prim_path"]
+        scene.call("drop_to_surface", prim_paths=[floating, sunk], surfaces=[ground])
+        for path, asset, x, depth in ((floating, "crate", 1.0, 1.0), (sunk, "chair", -1.0, 2.0)):
+            _rests_on(scene, path, 0.05)
+            box = scene.bounds(path)
+            assert _close(box.GetSize(), scene.size(asset), scene)
+            plan = box.GetMidpoint()
+            assert abs(plan[0] - scene.u(x)) <= scene.u(TOL)
+            assert abs(plan[scene.depth_i] - scene.u(depth)) <= scene.u(TOL)
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+@pytest.mark.parametrize("output", ["instancer", "placements"])
+def test_scattered_pieces_rest_on_the_surface_inside_it(up, mpu, output):
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(1.0, -1.0, 0.0))["prim_path"]
+        scene.call("scatter_on_surface", name="Stones", group="Nature",
+                   assets=[{"asset": "stone"}], surfaces=[ground], count=12, seed=3,
+                   align="up", output=output)
+        boxes = _instance_boxes(scene, "/Scene/Nature/Stones")
+        assert len(boxes) == 12
+        for box in boxes:
+            assert abs(box.GetMin()[scene.up_i] - scene.u(0.05)) <= scene.u(1e-3), box
+            # Each piece turns at random about the up axis: its height stays 0.2 m and its
+            # plan footprint is that of a 0.2 m square at some heading.
+            size = box.GetSize()
+            assert abs(size[scene.up_i] - scene.u(0.2)) <= scene.u(TOL), box
+            widest = scene.u(0.2 * math.sqrt(2)) + scene.u(TOL)
+            for axis in (0, scene.depth_i):
+                assert scene.u(0.2) - scene.u(TOL) <= size[axis] <= widest, box
+            # The sample point (the piece's center) lies on the ground; a piece near
+            # the edge may hang over it.
+            for axis, center in ((0, 1.0), (scene.depth_i, -1.0)):
+                middle = box.GetMidpoint()[axis]
+                assert scene.u(center - 5.0) <= middle <= scene.u(center + 5.0), box
+
+
+def _ground_plane(scene: _Scene, path: str) -> tuple[Gf.Vec3d, Gf.Vec3d]:
+    """A point on the ground box's mid-plane and the plane's unit normal (its up axis)."""
+    world = scene.world(path)
+    up_axis = Gf.Vec3d(0, 0, 0)
+    up_axis[scene.up_i] = 1.0
+    return world.ExtractTranslation(), world.TransformDir(up_axis).GetNormalized()
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_pieces_scattered_on_a_slope_lie_flat_on_it(up, mpu):
+    """align='surface' on a tilted ground: each piece's up is the slope's normal, its base on it."""
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, 0), rotate_x=15.0)["prim_path"]
+        scene.call("scatter_on_surface", name="Stones", group="Nature",
+                   assets=[{"asset": "stone"}], surfaces=[ground], count=8, seed=5,
+                   align="surface", output="placements")
+        origin, normal = _ground_plane(scene, ground)
+        pieces = scene.stage().GetPrimAtPath("/Scene/Nature/Stones").GetChildren()
+        assert len(pieces) == 8
+        up_axis = Gf.Vec3d(0, 0, 0)
+        up_axis[scene.up_i] = 1.0
+        for piece in pieces:
+            world = scene.world(str(piece.GetPath()))
+            piece_up = world.TransformDir(up_axis).GetNormalized()
+            assert Gf.Dot(piece_up, normal) > 1 - 1e-6, (piece.GetPath(), piece_up, normal)
+            center = scene.bounds(str(piece.GetPath())).GetMidpoint()
+            height = Gf.Dot(center - origin, normal)
+            assert abs(height - scene.u(0.05 + 0.1)) <= scene.u(1e-3), (piece.GetPath(), height)
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_a_scatter_is_reseated_when_its_ground_moves(up, mpu):
+    """drop_to_surface on a whole scatter: every instance rests on the ground's new height."""
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, 0))["prim_path"]
+        scene.call("scatter_on_surface", name="Stones", group="Nature",
+                   assets=[{"asset": "stone"}], surfaces=[ground], count=10, seed=2, align="up")
+        scene.call("move_asset", prim_path=ground, **{f"translate_{up.lower()}": scene.u(0.5)})
+        scene.call("drop_to_surface", prim_paths=["/Scene/Nature/Stones"], surfaces=[ground])
+        boxes = _instance_boxes(scene, "/Scene/Nature/Stones")
+        assert len(boxes) == 10
+        for box in boxes:
+            assert abs(box.GetMin()[scene.up_i] - scene.u(0.55)) <= scene.u(1e-3), box
+
+
+def _plan(box: Gf.Range3d, scene: _Scene) -> tuple[float, float, float, float]:
+    return (box.GetMin()[0], box.GetMax()[0], box.GetMin()[scene.depth_i],
+            box.GetMax()[scene.depth_i])
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_scatter_options_embed_scale_spacing_and_avoid(up, mpu):
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, 0))["prim_path"]
+        crate = scene.call("place_asset", asset="crate", asset_name="Crate", group="Props",
+                           **scene.at(1.0, 0.5, 0.2))["prim_path"]
+
+        scene.call("scatter_on_surface", name="Buried", group="Nature",
+                   assets=[{"asset": "stone"}], surfaces=[ground], count=6, seed=1,
+                   align="up", embed=0.5)
+        for box in _instance_boxes(scene, "/Scene/Nature/Buried"):
+            assert abs(box.GetMin()[scene.up_i] - scene.u(0.05 - 0.1)) <= scene.u(1e-3), box
+
+        scene.call("scatter_on_surface", name="Sized", group="Nature",
+                   assets=[{"asset": "stone"}], surfaces=[ground], count=10, seed=1,
+                   align="up", scale_range=[0.5, 1.5])
+        for box in _instance_boxes(scene, "/Scene/Nature/Sized"):
+            height = box.GetSize()[scene.up_i]
+            assert scene.u(0.1) - scene.u(TOL) <= height <= scene.u(0.3) + scene.u(TOL), box
+            assert abs(box.GetMin()[scene.up_i] - scene.u(0.05)) <= scene.u(1e-3), box
+
+        scene.call("scatter_on_surface", name="Spaced", group="Nature",
+                   assets=[{"asset": "stone"}], surfaces=[ground], count=10, seed=1,
+                   align="up", min_spacing=scene.u(1.0))
+        centers = [box.GetMidpoint() for box in _instance_boxes(scene, "/Scene/Nature/Spaced")]
+        for i, a in enumerate(centers):
+            for b in centers[i + 1:]:
+                gap = math.hypot(a[0] - b[0], a[scene.depth_i] - b[scene.depth_i])
+                assert gap >= scene.u(1.0) - scene.u(TOL), (a, b, gap)
+
+        scene.call("scatter_on_surface", name="Around", group="Nature",
+                   assets=[{"asset": "stone"}], surfaces=[ground], count=60, seed=1,
+                   align="up", avoid=[crate])
+        x0, x1, d0, d1 = _plan(scene.bounds(crate), scene)
+        for box in _instance_boxes(scene, "/Scene/Nature/Around"):
+            px0, px1, pd0, pd1 = _plan(box, scene)
+            overlaps = px0 < x1 and px1 > x0 and pd0 < d1 and pd1 > d0
+            assert not overlaps, ("a stone lies under the avoided crate", box)
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_rows_and_a_pile_rest_on_the_ground(up, mpu):
+    with _scene(up, mpu) as scene:
+        ground = scene.call("place_asset", asset="ground", asset_name="Ground",
+                            group="Architecture", **scene.at(0, 0, 0))["prim_path"]
+        scene.call("scatter_on_surface", name="Rows", group="Crops",
+                   assets=[{"asset": "stone"}], surfaces=[ground], arrangement="rows",
+                   spacing=scene.u(1.0), row_spacing=scene.u(2.0), row_direction_degrees=0,
+                   align="up", random_yaw=False, seed=1)
+        boxes = _instance_boxes(scene, "/Scene/Crops/Rows")
+        assert boxes
+        depths = sorted({round(box.GetMidpoint()[scene.depth_i] / scene.u(1.0), 3)
+                         for box in boxes})
+        gaps = [b - a for a, b in zip(depths, depths[1:], strict=False)]
+        assert all(abs(gap - 2.0) <= 1e-3 for gap in gaps), depths
+        for box in boxes:
+            assert abs(box.GetMin()[scene.up_i] - scene.u(0.05)) <= scene.u(1e-3), box
+
+        scene.call("scatter_on_surface", name="Heap", group="Crops",
+                   assets=[{"asset": "stone"}], surfaces=[ground], arrangement="pile",
+                   count=40, region={"center": list(scene.vec(2.0, 2.0, 0)),
+                                     "radius": scene.u(1.0)}, seed=1)
+        for box in _instance_boxes(scene, "/Scene/Crops/Heap"):
+            assert box.GetMin()[scene.up_i] >= scene.u(0.05) - scene.u(1e-3), (
+                "a pile piece sinks into the ground", box)
+            reach = math.hypot(box.GetMidpoint()[0] - scene.u(2.0),
+                               box.GetMidpoint()[scene.depth_i] - scene.u(2.0))
+            assert reach <= scene.u(1.0) + scene.u(0.2), box
+
+
+# ── swapping and converting the asset in a slot ──
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_a_model_selection_variant_conforms_each_choice_like_a_placement(up, mpu):
+    """A meter chair, its centimeter twin and a Z-up post all stand in the slot, true size."""
+    with _scene(up, mpu) as scene:
+        where = (1.0, -1.0, 0.3)
+        slot = scene.call("place_asset", asset="chair", asset_name="Seat", group="Furniture",
+                          **scene.at(*where), **scene.turn(90))["prim_path"]
+        scene.call("add_scene_model_selection_variant", prim_path=slot, variant_set="model",
+                   variant_name="cm", asset="chair_cm")
+        scene.call("add_scene_model_selection_variant", prim_path=slot, variant_set="model",
+                   variant_name="post", asset="post")
+        for variant, asset in (("chair", "chair"), ("cm", "chair_cm"), ("post", "post")):
+            scene.call("select_scene_variant", prim_path=slot, variant_set="model",
+                       variant_name=variant)
+            _assert_box(scene, slot, scene.vec(*where), scene.size(asset, turned=True))
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_every_lod_and_a_frozen_asset_measure_like_the_source(up, mpu):
+    """An LOD in other units and a frozen export keep the size and place of the original."""
+    with _scene(up, mpu) as scene:
+        library = scene.state.library_dir
+        stage = Usd.Stage.CreateNew(str(library / "lamp_cm.usda"))
+        UsdGeom.SetStageMetersPerUnit(stage, 0.01)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
+        stage.SetDefaultPrim(stage.DefinePrim("/lamp_cm", "Xform"))
+        for part in ("Base", "Shade"):
+            cube = UsdGeom.Cube.Define(stage, f"/lamp_cm/{part}")
+            cube.AddScaleOp().Set(Gf.Vec3f(20.0, 20.0, 30.0))  # 0.4 x 0.4 x 0.6 m, Z-up
+        stage.Save()
+        where = (1.0, 1.0, 0.3)
+        lamp = scene.call("place_asset", asset="lamp", asset_name="Lamp", group="Props",
+                          **scene.at(*where), **scene.turn(90))["prim_path"]
+        high = scene.bounds(lamp)
+        scene.call("setup_asset_geometry_variants", prim_path=lamp, variant_set="lod",
+                   variants={"high": "./geo.usda", "cm": "lamp_cm"}, default_variant="high",
+                   conform_units=True)
+        scene.call("select_asset_variant_for_instance", prim_path=lamp, variant_set="lod",
+                   variant_name="cm")
+        low = scene.bounds(lamp)
+        assert _close(low.GetMin(), high.GetMin(), scene) and _close(low.GetMax(), high.GetMax(),
+                                                                     scene)
+
+        unfrozen = Usd.Stage.CreateNew(str(library / "unfrozen.usda"))
+        UsdGeom.SetStageMetersPerUnit(unfrozen, 1.0)
+        UsdGeom.SetStageUpAxis(unfrozen, UsdGeom.Tokens.y)
+        root = UsdGeom.Xform.Define(unfrozen, "/unfrozen")
+        unfrozen.SetDefaultPrim(root.GetPrim())
+        root.AddTranslateOp().Set(Gf.Vec3d(0.0, 0.5, 0.0))
+        root.AddRotateYOp().Set(90.0)
+        arm = UsdGeom.Xform.Define(unfrozen, "/unfrozen/arm")
+        arm.AddTranslateOp().Set(Gf.Vec3d(1.0, 0.0, 0.0))
+        UsdGeom.Cube.Define(unfrozen, "/unfrozen/arm/Box").GetSizeAttr().Set(0.4)
+        unfrozen.Save()
+        # The source, placed at the origin unturned: in a Y-up scene the box sits at
+        # (0, 0.5, -1); turned into a Z-up scene, Y-up depth -1 becomes +1 along Y.
+        path = scene.call("place_asset", asset="unfrozen", asset_name="Unfrozen", group="Props",
+                          **scene.at(0, 0, 0), fix_root_transforms=True)["prim_path"]
+        _assert_box(scene, path, scene.vec(0.0, 1.0 if up == "Z" else -1.0, 0.5),
+                    scene.vec(0.4, 0.4, 0.4))
+
+
+# ── lights and cameras ──
+
+
+def _position(scene: _Scene, path: str) -> Gf.Vec3d:
+    return scene.world(path).ExtractTranslation()
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_lights_land_where_asked(up, mpu):
+    """Scene lights, and asset lights in absolute and bounds_offset modes on a turned lamp."""
+    with _scene(up, mpu) as scene:
+        key = scene.call("create_light", light_type="SphereLight", light_name="Key",
+                         **scene.at(1.0, 2.0, 3.0))["prim_path"]
+        assert _close(_position(scene, key), scene.vec(1.0, 2.0, 3.0), scene)
+        scene.call("update_light", prim_path=key, translate_x=scene.u(-1.0))
+        assert _close(_position(scene, key), scene.vec(-1.0, 2.0, 3.0), scene)
+
+        lamp = scene.call("place_asset", asset="lamp", asset_name="Lamp", group="Props",
+                          **scene.at(2.0, 1.0, 0.3), **scene.turn(90))["prim_path"]
+        bulb = scene.call("create_light", light_type="SphereLight", light_name="Bulb",
+                          asset_prim_path=lamp, position_mode="absolute",
+                          **scene.at(2.1, 1.1, 1.0))["prim_path"]
+        assert _close(_position(scene, bulb), scene.vec(2.1, 1.1, 1.0), scene)
+        scene.call("update_light", prim_path=bulb, position_mode="absolute",
+                   **scene.at(1.9, 0.9, 1.2))
+        assert _close(_position(scene, bulb), scene.vec(1.9, 0.9, 1.2), scene)
+
+        # 0.2 m above the lamp's top, 0.1 m along the unrotated lamp's +X.
+        glow = scene.call("create_light", light_type="SphereLight", light_name="Glow",
+                          asset_prim_path=lamp, position_mode="bounds_offset",
+                          translate_x=0.1, **{f"translate_{up.lower()}": 0.2,
+                                              f"translate_{'z' if up == 'Y' else 'y'}": 0.0},
+                          )["prim_path"]
+        depth_shift = -0.1 if up == "Y" else 0.1
+        top = 0.3 + 0.3
+        assert _close(_position(scene, glow), scene.vec(2.0, 1.0 + depth_shift, top + 0.2),
+                      scene)
+
+
+def _aims_at(scene: _Scene, path: str, target: Gf.Vec3d) -> None:
+    world = scene.world(path)
+    position = world.ExtractTranslation()
+    forward = world.TransformDir(Gf.Vec3d(0, 0, -1)).GetNormalized()
+    wanted = (target - position).GetNormalized()
+    assert Gf.Dot(forward, wanted) > 1 - 1e-6, (forward, wanted)
+    up_dir = world.TransformDir(Gf.Vec3d(0, 1, 0))
+    assert up_dir[scene.up_i] > 0, "the camera is upside down or rolled onto its side"
+    side = world.TransformDir(Gf.Vec3d(1, 0, 0))
+    assert abs(side[scene.up_i]) <= 1e-6 * side.GetLength(), "the camera is rolled"
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_cameras_aim_at_their_look_at_point_level_and_upright(up, mpu):
+    with _scene(up, mpu) as scene:
+        target = scene.vec(0.5, -0.5, 0.4)
+        cam = scene.call("create_camera", camera_name="Hero", **scene.at(4.0, 3.0, 2.0),
+                         look_at=list(target))["prim_path"]
+        assert _close(_position(scene, cam), scene.vec(4.0, 3.0, 2.0), scene)
+        _aims_at(scene, cam, target)
+
+        other = scene.vec(-2.0, 1.0, 0.0)
+        scene.call("update_camera", prim_path=cam, look_at=list(other))
+        assert _close(_position(scene, cam), scene.vec(4.0, 3.0, 2.0), scene)
+        _aims_at(scene, cam, other)
+
+        scene.call("update_camera", prim_path=cam, **scene.at(-3.0, -3.0, 5.0),
+                   look_at=list(target))
+        assert _close(_position(scene, cam), scene.vec(-3.0, -3.0, 5.0), scene)
+        _aims_at(scene, cam, target)
+
+
+def _emits(scene: _Scene, path: str) -> Gf.Vec3d:
+    """The world direction a light shines along (its local -Z)."""
+    return scene.world(path).TransformDir(Gf.Vec3d(0, 0, -1)).GetNormalized()
+
+
+@pytest.mark.parametrize(("up", "mpu"), CONVENTIONS)
+def test_lights_and_cameras_face_where_their_rotation_says(up, mpu):
+    """Rotations are about the scene's axes; an asset light's rotation turns with the placement."""
+    with _scene(up, mpu) as scene:
+        down = scene.vec(0, 0, -1.0).GetNormalized()
+        # A rect light pointing down: rotate_x=-90 in Y-up, none in Z-up (lights face local -Z).
+        panel = scene.call("create_light", light_type="RectLight", light_name="Panel",
+                           **scene.at(0, 0, 3.0),
+                           **({"rotate_x": -90.0} if up == "Y" else {}))["prim_path"]
+        assert Gf.Dot(_emits(scene, panel), down) > 1 - 1e-6
+
+        lamp = scene.call("place_asset", asset="lamp", asset_name="Lamp", group="Props",
+                          **scene.at(0, 0, 0.3), **scene.turn(90))["prim_path"]
+        # rotate_y=-90 aims the light at +X as the lamp stands unrotated; the lamp's 90° turn
+        # then carries +X to -Z (Y-up) or +Y (Z-up).
+        side = scene.call("create_light", light_type="RectLight", light_name="Side",
+                          asset_prim_path=lamp, position_mode="absolute",
+                          **scene.at(0.3, 0, 0.4), rotate_y=-90.0)["prim_path"]
+        expected = Gf.Vec3d(0, 0, -1) if up == "Y" else Gf.Vec3d(0, 1, 0)
+        assert Gf.Dot(_emits(scene, side), expected) > 1 - 1e-6, _emits(scene, side)
+
+        # A camera turned 90° about a horizontal scene axis looks level and stays upright.
+        cam = scene.call("create_camera", camera_name="Side", **scene.at(0, 0, 1.0),
+                         **({"rotate_y": 90.0} if up == "Y" else {"rotate_x": 90.0}))["prim_path"]
+        forward = scene.world(cam).TransformDir(Gf.Vec3d(0, 0, -1)).GetNormalized()
+        expected = Gf.Vec3d(-1, 0, 0) if up == "Y" else Gf.Vec3d(0, 1, 0)
+        assert Gf.Dot(forward, expected) > 1 - 1e-6, forward
+        assert scene.world(cam).TransformDir(Gf.Vec3d(0, 1, 0))[scene.up_i] > 1 - 1e-6
 
 
 # ── scatter paths ──

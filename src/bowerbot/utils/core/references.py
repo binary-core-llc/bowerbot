@@ -228,6 +228,24 @@ def unused_files_note(unused: list[str]) -> str:
     return f" No longer used, kept in the project: {', '.join(unused)}."
 
 
+def unreferenced_assets(project_dir: Path, assets_dir: Path) -> set[str]:
+    """The ``assets/`` entries no project file references (each one delete_project_asset takes)."""
+    if not assets_dir.is_dir():
+        return set()
+    referenced: set[str] = set().union(*project_asset_references(project_dir, assets_dir).values())
+    return {entry.name for entry in assets_dir.iterdir()} - referenced
+
+
+def unused_assets_note(unused: list[str]) -> str:
+    """The sentence a result message adds for asset entries an edit left unused (or ``""``)."""
+    if not unused:
+        return ""
+    return (
+        f" Assets no longer used, kept in the project: {', '.join(unused)} "
+        "(delete_project_asset removes one)."
+    )
+
+
 def files_referencing(references: dict[str, set[str]], entry: str) -> list[str]:
     """The project files (relative paths, sorted) that reference the ``assets/`` *entry*."""
     return sorted(file for file, entries in references.items() if entry in entries)

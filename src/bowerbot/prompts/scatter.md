@@ -156,5 +156,6 @@ scattered assets like any other.
   point's own height, so give shelf paths at shelf height and ground paths
   near ground height. With no `surfaces`, all scene geometry is used.
 - Removing a scatter with `remove_prim` leaves its assets in `assets/`,
-  like any removed placement; `delete_project_asset` removes them once
-  nothing references them.
+  like any removed placement, and lists those nothing else uses in
+  `unused_assets` (as does a `replace` that drops an asset);
+  `delete_project_asset` removes them.

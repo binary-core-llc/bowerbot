@@ -1060,7 +1060,7 @@ Two layers of authority. The naming convention makes routing explicit.
 
 **Removal scope**
 - Removal operations are scoped to one carrier. Removing a variant set from one asset never affects other assets, even when they reference each other.
-- A removal never deletes files silently. Files it leaves unused (a texture only the removed material, light or variant used, a payload no variant loads) are listed in `unused_files`; `delete_project_file` deletes one on request, once no USD file in the project uses it.
+- A removal never deletes files silently. Files it leaves unused (a texture only the removed material, light or variant used, a payload no variant loads) are listed in `unused_files`; `delete_project_file` deletes one on request, once no USD file in the project uses it. Assets it leaves unused (the last placement's, a model-selection variant's, one only a deleted snapshot or asset used) are listed in `unused_assets`; `delete_project_asset` deletes one on request.
 - When multiple assets are in scope, BowerBot asks which asset before calling the removal tool. It never guesses.
 - Variants composed in via referenced assets stay visible after removal because they are authored elsewhere. Navigate to that asset and remove them there.
 

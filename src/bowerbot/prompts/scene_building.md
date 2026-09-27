@@ -20,12 +20,12 @@ You have tools to create and manipulate OpenUSD scenes.
    clears the scene and keeps its root. A group left empty by a removal
    or a `rename_prim` (e.g. `/Scene/Lighting` after its last light) is
    removed with it.
-7. After removing assets from the scene, tell the user that the asset
-   files still exist in the project's assets directory. Ask if they
-   want to delete them. If they confirm, use `delete_project_asset` —
-   it works for both ASWF asset folders and standalone files (USDZ).
-   BowerBot will scan all USD files in the project to ensure the
-   asset is not referenced elsewhere before deleting.
+7. A removal that leaves an asset nothing uses (its last placement)
+   lists it in `unused_assets`; the asset stays in the project's
+   assets directory. Ask if they want to delete it. If they confirm,
+   use `delete_project_asset` — it works for both ASWF asset folders
+   and standalone files (USDZ), and refuses while any project file
+   still references the asset.
 8. Call `validate_scene` before packaging, and summarise what it
    finds; `package_scene` runs it again itself and does not package
    while it finds errors (`force=true` packages anyway: only when the

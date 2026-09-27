@@ -221,8 +221,9 @@ TOOLS: list[Tool] = [
             "prototype of a scatter (<scatter>/Prototypes/<asset>) removes its "
             "pieces too and keeps the others where they are; the last prototype "
             "takes the scatter with it. "
-            "A texture it leaves unused is listed in unused_files (it stays "
-            "in the project)."
+            "A texture it leaves unused is listed in unused_files, and an "
+            "asset nothing uses any more (its last placement, a nested one, a "
+            "scatter's) in unused_assets; both stay in the project."
         ),
         parameters={
             "type": "object",
@@ -503,7 +504,9 @@ TOOLS: list[Tool] = [
         description=(
             "Delete a named snapshot file. Refuses to delete scene.usda. "
             "The snapshot is gone permanently — confirm with the user "
-            "before calling."
+            "before calling. Textures and assets only the snapshot used are "
+            "listed in unused_files and unused_assets (they stay in the "
+            "project)."
         ),
         parameters={
             "type": "object",

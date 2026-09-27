@@ -9,10 +9,11 @@ the user, and the rules that span several tools.
   have lost their purpose. Show each entry and remove a set only on a
   yes: `"scope": "scene"` → `remove_scene_variant_set(prim_path=<carrier_prim_path>, variant_set=...)`;
   `"scope": "asset"` → `remove_asset_variant_set(prim_path=<a placement of that asset>, variant_set=...)`.
-- A result with `unused_files` names project files an edit left unused.
-  Offer to delete them; call `delete_project_file` (for a file) or
-  `delete_project_asset` (for an asset nothing places any more) only on a
-  yes.
+- A result with `unused_files` or `unused_assets` names project files
+  and assets an edit left unused. Offer to delete them; call
+  `delete_project_file` (for a file) or `delete_project_asset` (for an
+  asset) only on a yes. Deleting an asset can leave another unused (one
+  nested inside it); its result lists that in `unused_assets` too.
 - Flags that override a refusal are the user's decision: explain the
   refusal and ask before passing `clear_masking_overrides`,
   `confirm_masked`, `confirm_shared_modification`, `fix_root_prim`,

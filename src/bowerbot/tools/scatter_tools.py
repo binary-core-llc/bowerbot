@@ -113,8 +113,10 @@ _COMMON = {
         "description": (
             "Regenerate an existing scatter with the same name in place. It is "
             "rebuilt from scratch: prototypes are named after the assets again "
-            "and edits on them (renames, variant sets) are lost. To fix sunken "
-            "or floating pieces instead, use drop_to_surface."
+            "and edits on them (renames, variant sets) are lost. An asset the "
+            "new scatter no longer uses is listed in unused_assets (it stays in "
+            "the project). To fix sunken or floating pieces instead, use "
+            "drop_to_surface."
         ),
     },
     "validate_only": {

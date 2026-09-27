@@ -31,6 +31,8 @@ from bowerbot.utils.core.references import (
     get_prim_ref_paths,
     newly_unused,
     placement_of,
+    unreferenced_assets,
+    unused_assets_note,
     unused_files_note,
     unused_scene_textures,
 )
@@ -771,12 +773,15 @@ def remove_scene_variant(
     set_name = clean_prim_name(set_name, "Variant set")
     variant_name = clean_variant_name(variant_name)
 
-    project_dir = state.require_project().path
+    project = state.require_project()
+    project_dir = project.path
     unused_before = unused_scene_textures(project_dir)
+    assets_before = unreferenced_assets(project_dir, project.assets_dir)
     removed = variants.scene.remove_scene_variant(
         stage, prim_path, set_name, variant_name,
     )
     unused = newly_unused(project_dir, unused_before, unused_scene_textures(project_dir))
+    unused_assets = sorted(unreferenced_assets(project_dir, project.assets_dir) - assets_before)
     suspects: list[dict[str, Any]] = []
     if removed:
         suspects = variants.suspects.suspect_variant_sets_on_scene_carrier(
@@ -791,11 +796,12 @@ def remove_scene_variant(
         "scope": "scene",
         "suspect_variant_sets": suspects,
         "unused_files": unused,
+        "unused_assets": unused_assets,
         "message": (
             f"Removed '{variant_name}' from '{set_name}' on {prim_path}"
             if removed else
             f"Variant '{variant_name}' not found in '{set_name}' on {prim_path}"
-        ) + "." + unused_files_note(unused),
+        ) + "." + unused_files_note(unused) + unused_assets_note(unused_assets),
     }
 
 
@@ -808,8 +814,10 @@ def remove_scene_variant_set(
     set_name = params["variant_set"]
     set_name = clean_prim_name(set_name, "Variant set")
 
-    project_dir = state.require_project().path
+    project = state.require_project()
+    project_dir = project.path
     unused_before = unused_scene_textures(project_dir)
+    assets_before = unreferenced_assets(project_dir, project.assets_dir)
     demoted = variants.scene.restore_active_scene_variant_references_to_direct_ref(
         stage, prim_path, set_name,
     )
@@ -817,6 +825,7 @@ def remove_scene_variant_set(
         stage, prim_path, set_name,
     )
     unused = newly_unused(project_dir, unused_before, unused_scene_textures(project_dir))
+    unused_assets = sorted(unreferenced_assets(project_dir, project.assets_dir) - assets_before)
     state.reopen_stage()
     suffix = f" (restored '{demoted}' as direct reference)" if demoted else ""
     return {
@@ -826,11 +835,12 @@ def remove_scene_variant_set(
         "demoted_to_direct_ref": demoted,
         "scope": "scene",
         "unused_files": unused,
+        "unused_assets": unused_assets,
         "message": (
             f"Removed variant set '{set_name}' from {prim_path}{suffix}"
             if removed else
             f"Variant set '{set_name}' not found on {prim_path}"
-        ) + "." + unused_files_note(unused),
+        ) + "." + unused_files_note(unused) + unused_assets_note(unused_assets),
     }
 
 

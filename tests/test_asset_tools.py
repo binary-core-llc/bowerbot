@@ -9,7 +9,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdShade
+from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdShade, UsdUtils
 
 from tests._helpers import exec_tool, library_state, make_state
 
@@ -975,7 +975,7 @@ def test_place_asset_inside_nested_visible_in_scene():
 
 
 def test_freeze_asset_bakes_root_xform():
-    """Bakes non-identity root transform into vertex data."""
+    """Moves a non-identity root transform onto the parts; the mesh stays where it was."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
 
@@ -1013,6 +1013,13 @@ def test_freeze_asset_bakes_root_xform():
         assert r.success, r.error
         assert r.data["baked_count"] == 1
         assert r.data["results"][0]["baked"] is True
+        frozen = Usd.Stage.Open(str(root_path))
+        assert not UsdGeom.Xformable(frozen.GetPrimAtPath("/shifted")).GetOrderedXformOps()
+        box = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default"]).ComputeWorldBound(
+            frozen.GetPrimAtPath("/shifted/Mesh"),
+        ).ComputeAlignedRange()
+        assert box.GetMin() == Gf.Vec3d(5, 0, 0)
+        assert box.GetMax() == Gf.Vec3d(6, 1, 0)
 
 
 # ── list_project_assets: detail check ──
@@ -1488,3 +1495,386 @@ def test_delete_project_texture_counts_every_use_and_stays_in_the_project():
         for location in ("../scene.usda", "scene.usda", str(project.path / "textures/glow.png")):
             assert not _run(state, "delete_project_texture", file_name=location).success
         assert (project.path / "textures" / "glow.png").exists()
+
+
+# ── freezing keeps every part where it was ──
+
+
+def _unfrozen_rig(path: Path, *, animated: bool = False) -> None:
+    """A rig whose root is moved, turned and unevenly scaled, with parts of every kind below it."""
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    root = UsdGeom.Xform.Define(stage, "/rig")
+    stage.SetDefaultPrim(root.GetPrim())
+    root.AddTranslateOp().Set(Gf.Vec3d(0.0, 0.5, 0.0))
+    turn = root.AddRotateYOp()
+    turn.Set(90.0)
+    if animated:
+        turn.Set(0.0, 1.0)
+        turn.Set(90.0, 24.0)
+    root.AddScaleOp().Set(Gf.Vec3f(2.0, 1.0, 3.0))
+    wheel = UsdGeom.Xform.Define(stage, "/rig/wheel")  # a part at its pivot
+    wheel.AddTranslateOp().Set(Gf.Vec3d(1.0, 0.0, 0.0))
+    wheel.AddRotateZOp().Set(30.0)
+    tire = UsdGeom.Mesh.Define(stage, "/rig/wheel/Tire")
+    tire.GetPointsAttr().Set([Gf.Vec3f(-0.3, -0.3, -0.1), Gf.Vec3f(0.3, 0.3, 0.1),
+                              Gf.Vec3f(0.3, -0.3, 0.1)])
+    tire.GetFaceVertexCountsAttr().Set([3])
+    tire.GetFaceVertexIndicesAttr().Set([0, 1, 2])
+    UsdGeom.Cube.Define(stage, "/rig/Body").GetSizeAttr().Set(0.5)  # no points
+    stage.DefinePrim("/rig/geo", "Scope")
+    UsdGeom.Sphere.Define(stage, "/rig/geo/Lamp").GetRadiusAttr().Set(0.1)  # behind a scope
+    sticker = UsdGeom.Xform.Define(stage, "/rig/Sticker")  # ignores its parent's transform
+    sticker.SetResetXformStack(True)
+    sticker.AddTranslateOp().Set(Gf.Vec3d(0.0, 3.0, 0.0))
+    UsdGeom.Cube.Define(stage, "/rig/Sticker/Mesh").GetSizeAttr().Set(0.2)
+    spare = UsdGeom.Xform.Define(stage, "/rig/Spare")  # switched off, but still a part
+    spare.AddTranslateOp().Set(Gf.Vec3d(0.0, 0.0, 1.0))
+    spare.GetPrim().SetActive(False)
+    UsdGeom.ModelAPI(root.GetPrim()).SetExtentsHint([Gf.Vec3f(-1.0), Gf.Vec3f(1.0)])
+    bolt = stage.CreateClassPrim("/_bolt")  # an instanced grouping's source
+    UsdGeom.Cube.Define(stage, "/_bolt/Head").AddTranslateOp().Set(Gf.Vec3d(0.0, 0.0, 0.5))
+    bolts = stage.DefinePrim("/rig/Bolts", "Scope")
+    bolts.GetReferences().AddInternalReference(bolt.GetPath())
+    bolts.SetInstanceable(True)
+    stage.Save()
+
+
+def _gprim_bounds(stage: Usd.Stage, root: str) -> dict[str, tuple[float, ...]]:
+    """World bounds of every gprim below *root*, keyed by its path relative to *root*."""
+    cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default", "render"])
+    bounds = {}
+    predicate = Usd.TraverseInstanceProxies(Usd.PrimDefaultPredicate)
+    for prim in Usd.PrimRange(stage.GetPrimAtPath(root), predicate):
+        if prim.IsA(UsdGeom.Gprim):
+            box = cache.ComputeWorldBound(prim).ComputeAlignedRange()
+            key = str(prim.GetPath().MakeRelativePath(Sdf.Path(root)))
+            bounds[key] = tuple(round(v, 4) for v in (*box.GetMin(), *box.GetMax()))
+    return bounds
+
+
+def test_fixing_root_transforms_keeps_every_part_where_it_was():
+    """Pivoted parts, implicit shapes, a scope and a reset stack stay where the source has them."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        _unfrozen_rig(state.library_dir / "rig.usda")
+        source = _gprim_bounds(Usd.Stage.Open(str(state.library_dir / "rig.usda")), "/rig")
+
+        r = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "rig", "asset_name": "Rig", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+            "fix_root_transforms": True,
+        }))
+        assert r.success, r.error
+        placed = _gprim_bounds(state.require_stage(), f"{r.data['prim_path']}/asset")
+        assert placed == source
+        assert "Bolts/Head" in placed
+
+        geo = Usd.Stage.Open(str(state.require_project().assets_dir / "rig" / "geo.usda"))
+        root = UsdGeom.Xformable(geo.GetPrimAtPath("/rig"))
+        assert not root.GetOrderedXformOps()
+        wheel_ops = [op.GetOpName() for op in
+                     UsdGeom.Xformable(geo.GetPrimAtPath("/rig/wheel")).GetOrderedXformOps()]
+        assert wheel_ops == [
+            "xformOp:transform:frozenRoot", "xformOp:translate", "xformOp:rotateZ",
+        ]
+
+
+def test_freeze_asset_keeps_every_part_where_it_was():
+    """freeze_asset on a project copy: identical world bounds before and after."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        asset_dir = project.assets_dir / "rig"
+        asset_dir.mkdir(parents=True)
+        _unfrozen_rig(asset_dir / "geo.usda")
+        root_stage = Usd.Stage.CreateNew(str(asset_dir / "rig.usda"))
+        root_stage.SetDefaultPrim(root_stage.DefinePrim("/rig", "Xform"))
+        root_stage.GetDefaultPrim().GetPayloads().AddPayload("./geo.usda")
+        root_stage.Save()
+        before = _gprim_bounds(Usd.Stage.Open(str(asset_dir / "rig.usda")), "/rig")
+
+        r = asyncio.run(exec_tool(state, "freeze_asset", {"name": "rig"}))
+        assert r.success, r.error
+        assert r.data["results"][0]["baked"] is True
+        after = _gprim_bounds(Usd.Stage.Open(str(asset_dir / "rig.usda")), "/rig")
+        assert after == before
+
+        geo = Sdf.Layer.FindOrOpen(str(asset_dir / "geo.usda"))
+        assert not [n for n in geo.GetPrimAtPath("/rig").properties.keys()
+                    if n.startswith("xformOp") or n == "extentsHint"]
+        assert list(geo.GetPrimAtPath("/rig/Spare").attributes["xformOpOrder"].default) == [
+            "xformOp:transform:frozenRoot", "xformOp:translate",
+        ]
+
+        # A second transform on the root later merges into the same op.
+        stage = Usd.Stage.Open(str(asset_dir / "geo.usda"))
+        UsdGeom.Xformable(stage.GetPrimAtPath("/rig")).AddTranslateOp().Set(Gf.Vec3d(0, 0, 4))
+        stage.Save()
+        before = _gprim_bounds(Usd.Stage.Open(str(asset_dir / "rig.usda")), "/rig")
+        r = asyncio.run(exec_tool(state, "freeze_asset", {}))
+        assert r.success, r.error
+        assert r.data["baked_count"] == 1
+        assert _gprim_bounds(Usd.Stage.Open(str(asset_dir / "rig.usda")), "/rig") == before
+        wheel_order = geo.GetPrimAtPath("/rig/wheel").attributes["xformOpOrder"].default
+        assert list(wheel_order).count("xformOp:transform:frozenRoot") == 1
+
+
+def test_an_animated_root_transform_is_not_frozen():
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        _unfrozen_rig(state.library_dir / "rig.usda", animated=True)
+
+        r = asyncio.run(exec_tool(state, "place_asset", {
+            "asset": "rig", "asset_name": "Rig", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+            "fix_root_transforms": True,
+        }))
+        assert not r.success
+        assert "animated" in r.error
+
+
+def _moved_library_folder(library: Path, name: str, *, inline: bool) -> Path:
+    """A library folder whose root file moves the root prim: parts inline, or in geo.usda."""
+    folder = library / name
+    folder.mkdir()
+    stage = Usd.Stage.CreateNew(str(folder / f"{name}.usda"))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    root = UsdGeom.Xform.Define(stage, f"/{name}")
+    stage.SetDefaultPrim(root.GetPrim())
+    root.AddTranslateOp().Set(Gf.Vec3d(0.0, 5.0, 0.0))
+    root.AddRotateXOp().Set(-90.0)
+    if inline:
+        UsdGeom.Cube.Define(stage, f"/{name}/Box").GetSizeAttr().Set(1.0)
+    else:
+        geo = Usd.Stage.CreateNew(str(folder / "geo.usda"))
+        geo.SetDefaultPrim(UsdGeom.Xform.Define(geo, f"/{name}").GetPrim())
+        box = UsdGeom.Cube.Define(geo, f"/{name}/Box")
+        box.AddTranslateOp().Set(Gf.Vec3d(0.0, 2.0, 0.0))
+        geo.Save()
+        root.GetPrim().GetPayloads().AddPayload("./geo.usda")
+    stage.Save()
+    return folder
+
+
+def _place_at_origin(state, asset: str, **flags):
+    return asyncio.run(exec_tool(state, "place_asset", {
+        "asset": asset, "asset_name": asset.title(), "group": "Props",
+        "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0, **flags,
+    }))
+
+
+def test_a_transform_in_a_library_folders_root_file_is_refused_then_frozen():
+    """Intake checks what the root file composes, not only geo.usda."""
+    for inline in (False, True):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = library_state(Path(tmp))
+            folder = _moved_library_folder(state.library_dir, "keg", inline=inline)
+            source_bytes = {f.name: f.read_bytes() for f in folder.iterdir()}
+            truth = _gprim_bounds(Usd.Stage.Open(str(folder / "keg.usda")), "/keg")
+
+            refused = _place_at_origin(state, "keg")
+            assert not refused.success
+            assert "fix_root_transforms" in refused.error
+            assert not (state.require_project().assets_dir / "keg").exists()
+
+            r = _place_at_origin(state, "keg", fix_root_transforms=True)
+            assert r.success, r.error
+            placed = _gprim_bounds(state.require_stage(), f"{r.data['prim_path']}/asset")
+            assert placed == truth
+            copy = Usd.Stage.Open(str(state.require_project().assets_dir / "keg" / "keg.usda"))
+            assert not UsdGeom.Xformable(copy.GetDefaultPrim()).GetOrderedXformOps()
+            assert {f.name: f.read_bytes() for f in folder.iterdir()} == source_bytes
+
+
+def test_a_library_folder_with_a_shape_root_is_wrapped_and_keeps_its_geometry():
+    """A folder whose one file has a Cube root: refused, then wrapped; the cube still shows."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        folder = state.library_dir / "keg"
+        folder.mkdir()
+        stage = Usd.Stage.CreateNew(str(folder / "keg.usda"))
+        UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+        UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+        cube = UsdGeom.Cube.Define(stage, "/keg")
+        stage.SetDefaultPrim(cube.GetPrim())
+        Usd.ModelAPI(cube.GetPrim()).SetKind(Kind.Tokens.component)
+        stage.Save()
+
+        refused = _place_at_origin(state, "keg")
+        assert not refused.success
+        assert "fix_root_prim" in refused.error
+
+        r = _place_at_origin(state, "keg", fix_root_prim=True)
+        assert r.success, r.error
+        scene = state.require_stage()
+        shape = scene.GetPrimAtPath(f"{r.data['prim_path']}/asset/mesh")
+        assert shape.GetTypeName() == "Cube"
+        box = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default"]).ComputeWorldBound(
+            shape,
+        ).ComputeAlignedRange()
+        assert (box.GetMin(), box.GetMax()) == (Gf.Vec3d(-1), Gf.Vec3d(1))
+        assert Usd.ModelAPI(shape).GetKind() == ""
+        assert Usd.ModelAPI(scene.GetPrimAtPath(f"{r.data['prim_path']}/asset")).GetKind() == (
+            Kind.Tokens.component
+        )
+        issues = asyncio.run(exec_tool(state, "validate_scene", {}))
+        assert issues.success, issues.error
+        assert issues.data["error_count"] == 0
+
+
+def _lod_asset(assets_dir: Path, *, root_offsets: tuple[float, float] = (0.0, 0.0)) -> Path:
+    """A project asset whose root file moves the root and switches two LOD payloads.
+
+    *root_offsets* also move each LOD file's own root (an unfrozen export per LOD).
+    """
+    asset_dir = assets_dir / "lamp"
+    asset_dir.mkdir(parents=True)
+    lods = (("geo.usda", 1.0, root_offsets[0]), ("geo_low.usda", 0.5, root_offsets[1]))
+    for file_name, height, offset in lods:
+        geo = Usd.Stage.CreateNew(str(asset_dir / file_name))
+        root = UsdGeom.Xform.Define(geo, "/lamp")
+        geo.SetDefaultPrim(root.GetPrim())
+        if offset:
+            root.AddTranslateOp().Set(Gf.Vec3d(offset, 0.0, 0.0))
+        shade = UsdGeom.Cube.Define(geo, "/lamp/Shade")
+        shade.AddTranslateOp().Set(Gf.Vec3d(0.0, height, 0.0))
+        geo.Save()
+    stage = Usd.Stage.CreateNew(str(asset_dir / "lamp.usda"))
+    root = UsdGeom.Xform.Define(stage, "/lamp")
+    stage.SetDefaultPrim(root.GetPrim())
+    if not any(root_offsets):
+        root.AddTranslateOp().Set(Gf.Vec3d(0.0, 0.0, 3.0))
+        root.AddScaleOp().Set(Gf.Vec3f(2.0))
+    lod = root.GetPrim().GetVariantSets().AddVariantSet("lod")
+    for variant, file_name in (("high", "geo.usda"), ("low", "geo_low.usda")):
+        lod.AddVariant(variant)
+        lod.SetVariantSelection(variant)
+        with lod.GetVariantEditContext():
+            root.GetPrim().GetPayloads().AddPayload(f"./{file_name}")
+    lod.SetVariantSelection("high")
+    stage.Save()
+    return asset_dir
+
+
+def _lod_bounds(asset_dir: Path) -> dict[str, tuple[float, ...]]:
+    stage = Usd.Stage.Open(str(asset_dir / "lamp.usda"))
+    lod = stage.GetDefaultPrim().GetVariantSet("lod")
+    bounds = {}
+    for variant in ("high", "low"):
+        lod.SetVariantSelection(variant)
+        bounds[variant] = _gprim_bounds(stage, "/lamp")["Shade"]
+    return bounds
+
+
+def _root_ops(usd_file: Path) -> list[str]:
+    stage = Usd.Stage.Open(str(usd_file))
+    root = stage.GetDefaultPrim()
+    ops = []
+    for variant in root.GetVariantSet("lod").GetVariantNames() or [""]:
+        if variant:
+            root.GetVariantSet("lod").SetVariantSelection(variant)
+        ops += [op.GetOpName() for op in UsdGeom.Xformable(root).GetOrderedXformOps()]
+    return ops
+
+
+def test_freezing_moves_every_lod():
+    """The root's transform lands on the parts of every geometry variant, not only the selected."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        asset_dir = _lod_asset(project.assets_dir)
+        before = _lod_bounds(asset_dir)
+        assert before["high"] != before["low"]
+
+        r = asyncio.run(exec_tool(state, "freeze_asset", {"name": "lamp"}))
+        assert r.success, r.error
+        assert r.data["results"][0]["baked"] is True
+        assert _lod_bounds(asset_dir) == before
+        assert _root_ops(asset_dir / "lamp.usda") == []
+
+
+def test_each_lod_keeps_its_own_root_transform():
+    """LOD files exported unfrozen with different root transforms: each LOD stays in place."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        asset_dir = _lod_asset(project.assets_dir, root_offsets=(3.0, 7.0))
+        before = _lod_bounds(asset_dir)
+
+        r = asyncio.run(exec_tool(state, "freeze_asset", {"name": "lamp"}))
+        assert r.success, r.error
+        assert _lod_bounds(asset_dir) == before
+        assert _root_ops(asset_dir / "lamp.usda") == []
+
+
+def test_parts_shared_by_variants_that_move_the_root_differently_are_refused():
+    """One frozen transform can't fit two root poses: refused before anything is written."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        asset_dir = project.assets_dir / "sign"
+        asset_dir.mkdir(parents=True)
+        stage = Usd.Stage.CreateNew(str(asset_dir / "sign.usda"))
+        root = UsdGeom.Xform.Define(stage, "/sign")
+        stage.SetDefaultPrim(root.GetPrim())
+        UsdGeom.Cube.Define(stage, "/sign/Board")
+        pose = root.GetPrim().GetVariantSets().AddVariantSet("pose")
+        for variant, height in (("low", 1.0), ("high", 4.0)):
+            pose.AddVariant(variant)
+            pose.SetVariantSelection(variant)
+            with pose.GetVariantEditContext():
+                root.AddTranslateOp().Set(Gf.Vec3d(0.0, height, 0.0))
+        stage.Save()
+        files = {f.name: f.read_bytes() for f in asset_dir.iterdir()}
+
+        r = asyncio.run(exec_tool(state, "freeze_asset", {"name": "sign"}))
+        assert not r.success
+        assert "moves differently per variant" in r.error
+        assert {f.name: f.read_bytes() for f in asset_dir.iterdir()} == files
+
+
+def test_a_freeze_that_would_move_a_part_changes_nothing(monkeypatch):
+    """The world-transform check is the safety net: any mismatch restores every file."""
+    from bowerbot.utils.assets import freeze
+
+    with tempfile.TemporaryDirectory() as tmp:
+        _, state, project = _setup(tmp)
+        asset_dir = _lod_asset(project.assets_dir)
+        files = {f.name: f.read_bytes() for f in asset_dir.iterdir()}
+        monkeypatch.setattr(freeze, "_prepend_matrix", lambda spec, matrix: None)
+
+        r = asyncio.run(exec_tool(state, "freeze_asset", {"name": "lamp"}))
+        assert not r.success
+        assert "nothing was changed" in r.error
+        assert {f.name: f.read_bytes() for f in asset_dir.iterdir()} == files
+        assert _root_ops(asset_dir / "lamp.usda") != []
+
+
+def _usdz(library: Path, name: str, *, root_type: str = "Xform", moved: bool = False) -> None:
+    source = library / f"{name}_src.usda"
+    stage = Usd.Stage.CreateNew(str(source))
+    root = stage.DefinePrim(f"/{name}", root_type)
+    stage.SetDefaultPrim(root)
+    if moved:
+        UsdGeom.Xformable(root).AddTranslateOp().Set(Gf.Vec3d(0.0, 5.0, 0.0))
+    if root_type == "Xform":
+        UsdGeom.Cube.Define(stage, f"/{name}/Box")
+    stage.Save()
+    assert UsdUtils.CreateNewUsdzPackage(str(source), str(library / f"{name}.usdz"))
+    source.unlink()
+
+
+def test_a_usdz_a_placement_would_break_is_refused():
+    """A package can't be repaired in place: a shape root or a moved root is refused."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state = library_state(Path(tmp))
+        _usdz(state.library_dir, "boxed", root_type="Cube")
+        _usdz(state.library_dir, "shifted", moved=True)
+        _usdz(state.library_dir, "clean")
+
+        for name, reason in (("boxed", "Cube"), ("shifted", "non-identity")):
+            r = _place_at_origin(state, name)
+            assert not r.success
+            assert reason in r.error
+            assert "unpack it" in r.error
+            assert not (state.require_project().assets_dir / f"{name}.usdz").exists()
+        assert _place_at_origin(state, "clean").success

@@ -15,7 +15,11 @@ from bowerbot.schemas import (
     ASWFLayerNames,
     LocalizedCopy,
 )
-from bowerbot.utils.assets.freeze import bake_root_transforms, root_transform_is_identity
+from bowerbot.utils.assets.freeze import (
+    freeze_root_transform,
+    root_transform_is_animated,
+    root_transform_is_identity,
+)
 from bowerbot.utils.assets.localize import localize
 from bowerbot.utils.core.asset_folder import state_units
 from bowerbot.utils.core.metrics import read_stage_metadata
@@ -79,9 +83,8 @@ def ensure_aswf_compliance(
     geometry_file: Path,
     *,
     fix_root_prim: bool = False,
-    fix_root_transforms: bool = False,
 ) -> None:
-    """Validate and (optionally) repair a geometry file for ASWF compliance."""
+    """Validate and (optionally) repair the file that defines an asset's root prim."""
     layer = Sdf.Layer.FindOrOpen(str(geometry_file))
     if layer is None:
         msg = f"Cannot open geometry file: {geometry_file.name}"
@@ -138,24 +141,38 @@ def ensure_aswf_compliance(
             geometry_file.name,
         )
 
-    if not root_transform_is_identity(geometry_file):
-        if not fix_root_transforms:
-            msg = (
-                f"Asset '{geometry_file.name}' has non-identity transforms "
-                f"baked on its root prim (translate/rotate/scale/pivot from "
-                f"an unfrozen DCC export). Production USD assets must have "
-                f"identity root transforms or nested placement breaks. Ask "
-                f"the user if they want BowerBot to bake the transforms into "
-                f"vertex data automatically — this only modifies the project "
-                f"copy, the user's original source file is untouched. If they "
-                f"confirm, call place_asset again with fix_root_transforms=true. "
-                f"Alternatively, advise them to re-export from their DCC with "
-                f"transforms frozen ('Bake Transforms' in Maya USD export, "
-                f"'Pre-freeze' in Houdini)."
-            )
-            raise ValueError(msg)
-        bake_root_transforms(geometry_file)
-        logger.info("Baked root transforms in %s", geometry_file.name)
+
+def ensure_identity_root(root_file: Path, *, fix_root_transforms: bool = False) -> None:
+    """Refuse an asset whose root prim composes a transform, or move it onto the parts.
+
+    Checks what *root_file* composes, so a transform authored in the root
+    file itself counts as much as one in the geometry file it loads.
+    """
+    if root_transform_is_identity(root_file):
+        return
+    if root_transform_is_animated(root_file):
+        msg = (
+            f"Asset '{root_file.parent.name}' has an animated transform on its root "
+            f"prim. Production USD assets need a static identity root, or nested "
+            f"placement breaks. Re-export it from the DCC with a static root."
+        )
+        raise ValueError(msg)
+    if not fix_root_transforms:
+        msg = (
+            f"Asset '{root_file.parent.name}' has non-identity transforms on its "
+            f"root prim (translate/rotate/scale/pivot from an unfrozen DCC export). "
+            f"Production USD assets must have identity root transforms or nested "
+            f"placement breaks. Ask the user if they want BowerBot to move the "
+            f"transform onto the asset's parts (every part stays exactly where it "
+            f"is) — this only modifies the project copy, the user's original source "
+            f"file is untouched. If they confirm, call place_asset again with "
+            f"fix_root_transforms=true. Alternatively, advise them to re-export "
+            f"from their DCC with transforms frozen ('Bake Transforms' in Maya USD "
+            f"export, 'Pre-freeze' in Houdini)."
+        )
+        raise ValueError(msg)
+    freeze_root_transform(root_file)
+    logger.info("Moved the root transform onto the parts in %s", root_file.parent.name)
 
 
 def normalize_root_metadata(root_file: Path, asset_name: str) -> None:
@@ -284,7 +301,15 @@ def _wrap_root_prim(geometry_file: Path) -> None:
     remove = Sdf.BatchNamespaceEdit()
     remove.Add(root_path, Sdf.Path.emptyPath)
     wrapped.Apply(remove)
-    Sdf.PrimSpec(wrapped, default_prim_name, Sdf.SpecifierDef, "Xform")
-    Sdf.CopySpec(source_layer, root_path, wrapped, root_path.AppendChild("mesh"))
+    wrapper = Sdf.PrimSpec(wrapped, default_prim_name, Sdf.SpecifierDef, "Xform")
+    moved = root_path.AppendChild("mesh")
+    Sdf.CopySpec(source_layer, root_path, wrapped, moved)
+    # The asset's identity stays on the root: the moved prim is a part, not a model.
+    child = wrapped.GetPrimAtPath(moved)
+    for key in ("kind", "assetInfo"):
+        if child.HasInfo(key):
+            wrapper.SetInfo(key, child.GetInfo(key))
+            child.ClearInfo(key)
+    child.inheritPathList.RemoveItemEdits(Sdf.Path(f"/_class_{default_prim_name}"))
     source_layer.TransferContent(wrapped)
     source_layer.Save()

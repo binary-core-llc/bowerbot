@@ -24,6 +24,7 @@ from bowerbot.state import SceneState
 from bowerbot.utils import assets, layout_utils, library_utils, stage_utils, texture_utils
 from bowerbot.utils.core.asset_folder import (
     compute_ref_asset_path,
+    find_root_file,
     require_folder_entry,
     resolve_asset_dir_for_prim,
 )
@@ -508,7 +509,7 @@ def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> dict[s
 
 
 def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Bake project asset root transforms into vertex data (one or all)."""
+    """Move project assets' root transforms onto their parts (one or all)."""
     assets_dir = state.resolve_assets_dir()
     name = params.get("name")
 
@@ -518,7 +519,7 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         results = [
             assets.freeze.freeze_one_asset(assets_dir, entry.name)
             for entry in sorted(assets_dir.iterdir())
-            if entry.is_dir() and (entry / ASWFLayerNames.GEO).exists()
+            if entry.is_dir() and find_root_file(entry) is not None
         ]
 
     state.touch_project()
@@ -534,7 +535,7 @@ def freeze_asset(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         "baked_count": baked_count,
         "total": len(results),
         "message": (
-            f"Baked transforms in {baked_count} of {len(results)} asset(s)."
+            f"Froze the root transform of {baked_count} of {len(results)} asset(s)."
         ),
     }
 

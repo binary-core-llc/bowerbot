@@ -10,15 +10,21 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Tf
+from pxr import Sdf, Tf, Usd
 
 from bowerbot.schemas import (
     AssetFormat,
     ASWFLayerNames,
     IntakeReport,
 )
-from bowerbot.utils.assets.aswf import create_asset_folder, ensure_aswf_compliance
+from bowerbot.utils.assets.aswf import (
+    create_asset_folder,
+    ensure_aswf_compliance,
+    ensure_identity_root,
+    normalize_root_metadata,
+)
 from bowerbot.utils.assets.folders import intake_folder
+from bowerbot.utils.assets.freeze import root_transform_is_identity
 from bowerbot.utils.core.asset_folder import validate_asset_file
 from bowerbot.utils.library_utils import find_package_for
 from bowerbot.utils.validation.compliance import run_usd_compliance_checker
@@ -170,18 +176,26 @@ def _validate_intake(
     fix_root_prim: bool,
     fix_root_transforms: bool,
 ) -> None:
-    """Validate the intaken asset's geo.usda (prepare_asset rolls back on failure)."""
+    """Validate the intaken asset's root prim (prepare_asset rolls back on failure).
+
+    The prim is checked where it is defined: ``geo.usda``, or the root file
+    itself for a folder that keeps its geometry inline. Its transform is
+    checked on what the root file composes.
+    """
     target_folder = assets_dir / report.asset_folder_name
+    canonical_root = target_folder / report.root_canonical_name
     geo_path = target_folder / ASWFLayerNames.GEO
-    if not geo_path.exists():
+    defining_file = geo_path if geo_path.exists() else canonical_root
+    if not defining_file.exists():
         return
-    ensure_aswf_compliance(
-        geo_path,
-        fix_root_prim=fix_root_prim,
+    ensure_aswf_compliance(defining_file, fix_root_prim=fix_root_prim)
+    if defining_file == canonical_root:
+        normalize_root_metadata(canonical_root, report.asset_folder_name)
+    ensure_identity_root(
+        canonical_root if canonical_root.exists() else defining_file,
         fix_root_transforms=fix_root_transforms,
     )
 
-    canonical_root = target_folder / report.root_canonical_name
     if canonical_root.exists():
         compliance_issues = run_usd_compliance_checker(canonical_root)
         for issue in compliance_issues:
@@ -197,6 +211,7 @@ def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
     if Sdf.Layer.FindOrOpen(str(asset_path)) is None:
         msg = f"Could not import {asset_path.name}: USD cannot read it as a USDZ package."
         raise ValueError(msg)
+    _require_placeable_package(asset_path)
     local_copy = assets_dir / asset_path.name
     copied = 0
     if not local_copy.exists():
@@ -210,6 +225,32 @@ def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
         was_renamed=False,
         files_copied=copied,
     )
+
+
+def _require_placeable_package(asset_path: Path) -> None:
+    """Refuse a USDZ a placement would break: a package can't be repaired in place."""
+    stage = Usd.Stage.Open(str(asset_path))
+    root = stage.GetDefaultPrim()
+    problem = None
+    if not root or not root.IsValid():
+        problem = "has no defaultPrim, so a reference to it loads nothing"
+    elif root.GetTypeName() not in ("Xform", ""):
+        problem = (
+            f"has a {root.GetTypeName()} as its root prim instead of an Xform, so a "
+            f"placement would drop its geometry"
+        )
+    elif not root_transform_is_identity(asset_path):
+        problem = (
+            "has non-identity transforms on its root prim (an unfrozen DCC export), "
+            "so nested placement breaks"
+        )
+    if problem is not None:
+        msg = (
+            f"{asset_path.name} {problem}. A USDZ can't be repaired in place: "
+            f"re-export it, or unpack it into a folder in the library and place "
+            f"that, which BowerBot can fix."
+        )
+        raise ValueError(msg)
 
 
 def _entries(assets_dir: Path) -> set[Path]:

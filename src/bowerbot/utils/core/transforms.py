@@ -111,6 +111,21 @@ def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
     xformable.SetXformOpOrder([*ops[:at], rotate, *ops[at:]])
 
 
+def top_parts(prim: Usd.Prim) -> list[Usd.Prim]:
+    """The first transformable prims below *prim*, looking through scopes and other groupings.
+
+    Inactive and unloaded children count too (they keep their place when turned
+    back on), and so do the parts inside an instanced grouping.
+    """
+    parts: list[Usd.Prim] = []
+    for child in prim.GetFilteredChildren(Usd.TraverseInstanceProxies(Usd.PrimAllPrimsPredicate)):
+        if child.IsA(UsdGeom.Xformable):
+            parts.append(child)
+        else:
+            parts.extend(top_parts(child))
+    return parts
+
+
 def asset_world_inverse(stage: Usd.Stage, prim_path: str) -> Gf.Matrix4d | None:
     """World -> the frame of the asset a placement references (asset units and axes).
 

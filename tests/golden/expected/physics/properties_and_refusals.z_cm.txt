@@ -1,0 +1,2162 @@
+##### scenario: physics/properties_and_refusals
+##### convention: Z-up, 0.01 meters per unit
+##### Physics property listings, and physics calls that cannot work.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: list_physics_api_properties
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsRigidBodyAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRigidBodyAPI",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Angular velocity in the same space as the node's xform.",
+        "kind": "attribute",
+        "name": "physics:angularVelocity",
+        "type_name": "vector3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines whether the body is kinematic or not.",
+        "kind": "attribute",
+        "name": "physics:kinematicEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if this PhysicsRigidBodyAPI is enabled.",
+        "kind": "attribute",
+        "name": "physics:rigidBodyEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Single PhysicsScene that will simulate this body.",
+        "kind": "relationship",
+        "name": "physics:simulationOwner",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the body is asleep when the simulation starts.",
+        "kind": "attribute",
+        "name": "physics:startsAsleep",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Linear velocity in the same space as the node's xform.",
+        "kind": "attribute",
+        "name": "physics:velocity",
+        "type_name": "vector3f"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "UsdGeom.Xformable"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: list_physics_api_properties
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsMassAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsMassAPI",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(-inf, -inf, -inf)",
+        "documentation": "Center of mass in the prim's local space.",
+        "kind": "attribute",
+        "name": "physics:centerOfMass",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "If non-zero, specifies the density of the object.",
+        "kind": "attribute",
+        "name": "physics:density",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "If non-zero, specifies diagonalized inertia tensor along the \n        principal axes.",
+        "kind": "attribute",
+        "name": "physics:diagonalInertia",
+        "type_name": "float3"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "If non-zero, directly specifies the mass of the object.",
+        "kind": "attribute",
+        "name": "physics:mass",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0, 0)",
+        "documentation": "Orientation of the inertia tensor's principal axes in the \n        prim's local space.",
+        "kind": "attribute",
+        "name": "physics:principalAxes",
+        "type_name": "quatf"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "UsdGeom.Xformable"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: list_physics_api_properties
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsCollisionAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsCollisionAPI",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if the PhysicsCollisionAPI is enabled.",
+        "kind": "attribute",
+        "name": "physics:collisionEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Single PhysicsScene that will simulate this collider.",
+        "kind": "relationship",
+        "name": "physics:simulationOwner",
+        "type_name": null
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "UsdGeom.Gprim"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: list_physics_api_properties
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsMeshCollisionAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsMeshCollisionAPI",
+    "properties": [
+      {
+        "allowed_tokens": [
+          "none",
+          "convexDecomposition",
+          "convexHull",
+          "boundingSphere",
+          "boundingCube",
+          "meshSimplification"
+        ],
+        "default": "none",
+        "documentation": "Determines the mesh's collision approximation:\n\t\"none\" - The mesh geometry is used directly as a collider without any \n    approximation.",
+        "kind": "attribute",
+        "name": "physics:approximation",
+        "type_name": "token"
+      }
+    ],
+    "requires_companion_api": "PhysicsCollisionAPI",
+    "target_requirement": "UsdGeom.Mesh"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: list_physics_api_properties
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsArticulationRootAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsArticulationRootAPI",
+    "properties": [],
+    "requires_companion_api": null,
+    "target_requirement": "UsdGeom.Xformable"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: list_physics_api_properties
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsDriveAPI")
+  current project: golden
+  said: REFUSED: PhysicsDriveAPI is a multi-apply API. Provide instance_name (e.g. 'angular', 'linear').
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "PhysicsDriveAPI is a multi-apply API. Provide instance_name (e.g. 'angular', 'linear')."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: list_physics_api_properties
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsLimitAPI")
+  current project: golden
+  said: REFUSED: PhysicsLimitAPI is a multi-apply API. Provide instance_name (e.g. 'angular', 'linear').
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "PhysicsLimitAPI is a multi-apply API. Provide instance_name (e.g. 'angular', 'linear')."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: list_joint_properties
+
+SUMMARY
+  call: list_joint_properties(joint_type="PhysicsRevoluteJoint")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRevoluteJoint",
+    "properties": [
+      {
+        "allowed_tokens": [
+          "X",
+          "Y",
+          "Z"
+        ],
+        "default": "X",
+        "documentation": "Joint axis.",
+        "kind": "attribute",
+        "name": "physics:axis",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body0",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body1",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break force.",
+        "kind": "attribute",
+        "name": "physics:breakForce",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break torque.",
+        "kind": "attribute",
+        "name": "physics:breakTorque",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the jointed subtrees should collide or not.",
+        "kind": "attribute",
+        "name": "physics:collisionEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the joint can be included in an Articulation.",
+        "kind": "attribute",
+        "name": "physics:excludeFromArticulation",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if the joint is enabled.",
+        "kind": "attribute",
+        "name": "physics:jointEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos0",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos1",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot0",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot1",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": -Infinity,
+        "documentation": "Lower limit.",
+        "kind": "attribute",
+        "name": "physics:lowerLimit",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Upper limit.",
+        "kind": "attribute",
+        "name": "physics:upperLimit",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "The proxyPrim relationship allows us to link a\n        prim whose purpose is \"render\" to its (single target)\n        purpose=\"proxy\" prim.",
+        "kind": "relationship",
+        "name": "proxyPrim",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [
+          "default",
+          "render",
+          "proxy",
+          "guide"
+        ],
+        "default": "default",
+        "documentation": "Purpose is a classification of geometry into categories that \n        can each be independently included or excluded from traversals of prims \n        on a stage, such as rendering or bounding-box computation traversals.",
+        "kind": "attribute",
+        "name": "purpose",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [
+          "inherited",
+          "invisible"
+        ],
+        "default": "inherited",
+        "documentation": "Visibility is meant to be the simplest form of \"pruning\" \n        visibility that is supported by most DCC apps.",
+        "kind": "attribute",
+        "name": "visibility",
+        "type_name": "token"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "(typed prim)"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 09: list_joint_properties
+
+SUMMARY
+  call: list_joint_properties(joint_type="PhysicsPrismaticJoint")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsPrismaticJoint",
+    "properties": [
+      {
+        "allowed_tokens": [
+          "X",
+          "Y",
+          "Z"
+        ],
+        "default": "X",
+        "documentation": "Joint axis.",
+        "kind": "attribute",
+        "name": "physics:axis",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body0",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body1",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break force.",
+        "kind": "attribute",
+        "name": "physics:breakForce",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break torque.",
+        "kind": "attribute",
+        "name": "physics:breakTorque",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the jointed subtrees should collide or not.",
+        "kind": "attribute",
+        "name": "physics:collisionEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the joint can be included in an Articulation.",
+        "kind": "attribute",
+        "name": "physics:excludeFromArticulation",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if the joint is enabled.",
+        "kind": "attribute",
+        "name": "physics:jointEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos0",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos1",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot0",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot1",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": -Infinity,
+        "documentation": "Lower limit.",
+        "kind": "attribute",
+        "name": "physics:lowerLimit",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Upper limit.",
+        "kind": "attribute",
+        "name": "physics:upperLimit",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "The proxyPrim relationship allows us to link a\n        prim whose purpose is \"render\" to its (single target)\n        purpose=\"proxy\" prim.",
+        "kind": "relationship",
+        "name": "proxyPrim",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [
+          "default",
+          "render",
+          "proxy",
+          "guide"
+        ],
+        "default": "default",
+        "documentation": "Purpose is a classification of geometry into categories that \n        can each be independently included or excluded from traversals of prims \n        on a stage, such as rendering or bounding-box computation traversals.",
+        "kind": "attribute",
+        "name": "purpose",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [
+          "inherited",
+          "invisible"
+        ],
+        "default": "inherited",
+        "documentation": "Visibility is meant to be the simplest form of \"pruning\" \n        visibility that is supported by most DCC apps.",
+        "kind": "attribute",
+        "name": "visibility",
+        "type_name": "token"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "(typed prim)"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 10: list_joint_properties
+
+SUMMARY
+  call: list_joint_properties(joint_type="PhysicsSphericalJoint")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsSphericalJoint",
+    "properties": [
+      {
+        "allowed_tokens": [
+          "X",
+          "Y",
+          "Z"
+        ],
+        "default": "X",
+        "documentation": "Cone limit axis.",
+        "kind": "attribute",
+        "name": "physics:axis",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body0",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body1",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break force.",
+        "kind": "attribute",
+        "name": "physics:breakForce",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break torque.",
+        "kind": "attribute",
+        "name": "physics:breakTorque",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the jointed subtrees should collide or not.",
+        "kind": "attribute",
+        "name": "physics:collisionEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": -1.0,
+        "documentation": "Cone limit from the primary joint axis in the local0 frame \n        toward the next axis.",
+        "kind": "attribute",
+        "name": "physics:coneAngle0Limit",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": -1.0,
+        "documentation": "Cone limit from the primary joint axis in the local0 frame \n        toward the second to next axis.",
+        "kind": "attribute",
+        "name": "physics:coneAngle1Limit",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the joint can be included in an Articulation.",
+        "kind": "attribute",
+        "name": "physics:excludeFromArticulation",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if the joint is enabled.",
+        "kind": "attribute",
+        "name": "physics:jointEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos0",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos1",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot0",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot1",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "The proxyPrim relationship allows us to link a\n        prim whose purpose is \"render\" to its (single target)\n        purpose=\"proxy\" prim.",
+        "kind": "relationship",
+        "name": "proxyPrim",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [
+          "default",
+          "render",
+          "proxy",
+          "guide"
+        ],
+        "default": "default",
+        "documentation": "Purpose is a classification of geometry into categories that \n        can each be independently included or excluded from traversals of prims \n        on a stage, such as rendering or bounding-box computation traversals.",
+        "kind": "attribute",
+        "name": "purpose",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [
+          "inherited",
+          "invisible"
+        ],
+        "default": "inherited",
+        "documentation": "Visibility is meant to be the simplest form of \"pruning\" \n        visibility that is supported by most DCC apps.",
+        "kind": "attribute",
+        "name": "visibility",
+        "type_name": "token"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "(typed prim)"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 11: list_joint_properties
+
+SUMMARY
+  call: list_joint_properties(joint_type="PhysicsFixedJoint")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsFixedJoint",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body0",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body1",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break force.",
+        "kind": "attribute",
+        "name": "physics:breakForce",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break torque.",
+        "kind": "attribute",
+        "name": "physics:breakTorque",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the jointed subtrees should collide or not.",
+        "kind": "attribute",
+        "name": "physics:collisionEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the joint can be included in an Articulation.",
+        "kind": "attribute",
+        "name": "physics:excludeFromArticulation",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if the joint is enabled.",
+        "kind": "attribute",
+        "name": "physics:jointEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos0",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos1",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot0",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot1",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "The proxyPrim relationship allows us to link a\n        prim whose purpose is \"render\" to its (single target)\n        purpose=\"proxy\" prim.",
+        "kind": "relationship",
+        "name": "proxyPrim",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [
+          "default",
+          "render",
+          "proxy",
+          "guide"
+        ],
+        "default": "default",
+        "documentation": "Purpose is a classification of geometry into categories that \n        can each be independently included or excluded from traversals of prims \n        on a stage, such as rendering or bounding-box computation traversals.",
+        "kind": "attribute",
+        "name": "purpose",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [
+          "inherited",
+          "invisible"
+        ],
+        "default": "inherited",
+        "documentation": "Visibility is meant to be the simplest form of \"pruning\" \n        visibility that is supported by most DCC apps.",
+        "kind": "attribute",
+        "name": "visibility",
+        "type_name": "token"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "(typed prim)"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 12: list_joint_properties
+
+SUMMARY
+  call: list_joint_properties(joint_type="PhysicsDistanceJoint")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsDistanceJoint",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body0",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to any UsdGeomXformable.",
+        "kind": "relationship",
+        "name": "physics:body1",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break force.",
+        "kind": "attribute",
+        "name": "physics:breakForce",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": Infinity,
+        "documentation": "Joint break torque.",
+        "kind": "attribute",
+        "name": "physics:breakTorque",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the jointed subtrees should collide or not.",
+        "kind": "attribute",
+        "name": "physics:collisionEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the joint can be included in an Articulation.",
+        "kind": "attribute",
+        "name": "physics:excludeFromArticulation",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if the joint is enabled.",
+        "kind": "attribute",
+        "name": "physics:jointEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos0",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Relative position of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localPos1",
+        "type_name": "point3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body0's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot0",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 0, 0, 0)",
+        "documentation": "Relative orientation of the joint frame to body1's frame.",
+        "kind": "attribute",
+        "name": "physics:localRot1",
+        "type_name": "quatf"
+      },
+      {
+        "allowed_tokens": [],
+        "default": -1.0,
+        "documentation": "Maximum distance.",
+        "kind": "attribute",
+        "name": "physics:maxDistance",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": -1.0,
+        "documentation": "Minimum distance.",
+        "kind": "attribute",
+        "name": "physics:minDistance",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "The proxyPrim relationship allows us to link a\n        prim whose purpose is \"render\" to its (single target)\n        purpose=\"proxy\" prim.",
+        "kind": "relationship",
+        "name": "proxyPrim",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [
+          "default",
+          "render",
+          "proxy",
+          "guide"
+        ],
+        "default": "default",
+        "documentation": "Purpose is a classification of geometry into categories that \n        can each be independently included or excluded from traversals of prims \n        on a stage, such as rendering or bounding-box computation traversals.",
+        "kind": "attribute",
+        "name": "purpose",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [
+          "inherited",
+          "invisible"
+        ],
+        "default": "inherited",
+        "documentation": "Visibility is meant to be the simplest form of \"pruning\" \n        visibility that is supported by most DCC apps.",
+        "kind": "attribute",
+        "name": "visibility",
+        "type_name": "token"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "(typed prim)"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 13: place_asset
+intent: place crate.usda as Crate
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Crate at /Scene/Props/Crate_01.
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Crate_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_01/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 25.0000)
+    ~ /Scene  bounds: (none) → (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Crate",
+    "intake": {
+      "asset_folder": "crate",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "crate.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Crate at /Scene/Props/Crate_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Crate_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Crate_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,35 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Crate_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 14: apply_physics_api
+intent: a negative mass
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsMassAPI", attributes={"physics:mass": -3.0})
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file assets/crate/crate.usda
+    + file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_01/asset  applied APIs: (none) → PhysicsMassAPI
+    ~ /Scene/Props/Crate_01/asset  attr physics:mass: (none) → -3
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ the returned prim_path /crate does not exist in the scene
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsMassAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate",
+    "attributes_set": [
+      "physics:mass"
+    ],
+    "cleared_masking_opinions": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/crate",
+    "relationships_set": [],
+    "requested_prim_path": "/crate",
+    "scene_prim_path": "/Scene/Props/Crate_01/asset",
+    "scope": "asset"
+  }
+
+files:
+  ~ assets/crate/crate.usda
+    assets/crate/geo.usda
+  + assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/crate/crate.usda:
+      --- assets/crate/crate.usda (before)
+      +++ assets/crate/crate.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./phy.usda@
+       )
+       {
+  + assets/crate/phy.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      over "crate" (
+          prepend apiSchemas = ["PhysicsMassAPI"]
+      )
+      {
+          float physics:mass = -3
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -22,4 +22,5 @@
+   
+               def Xform "asset" (
+  +                apiSchemas = ["PhysicsMassAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -30,4 +31,5 @@
+               )
+               {
+  +                float physics:mass = -3
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 15: apply_physics_api
+intent: an attribute the API does not have
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsRigidBodyAPI", attributes={"physics:nope": 1})
+  current project: golden
+  said: REFUSED: PhysicsRigidBodyAPI does not declare attribute(s) ['physics:nope']. Allowed: ['physics:angularVelocity', 'physics:kinematicEnabled', 'physics:rigidBodyEnabled', 'physics:startsAsleep', 'physics:velocity']
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "PhysicsRigidBodyAPI does not declare attribute(s) ['physics:nope']. Allowed: ['physics:angularVelocity', 'physics:kinematicEnabled', 'physics:rigidBodyEnabled', 'physics:startsAsleep', 'physics:velocity']"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 16: apply_physics_api
+intent: a prim that does not exist
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Nope", api_name="PhysicsRigidBodyAPI")
+  current project: golden
+  said: REFUSED: Prim not found in scene: /Scene/Nope
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityMagnitude: 981
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ refused, but the project changed anyway
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found in scene: /Scene/Nope"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -28,4 +28,13 @@
+               }
+           }
+      +
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            float physics:gravityMagnitude = 981
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -45,4 +45,13 @@
+           }
+       }
+  +
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            float physics:gravityMagnitude = 981
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 17: create_joint
+intent: a body that does not exist
+
+SUMMARY
+  call: create_joint(joint_type="PhysicsFixedJoint", name="J", body0="/Scene/Props/Crate_01", body1="/Scene/Nope", scope="scene")
+  current project: golden
+  said: REFUSED: Joint body1 prim not found: /Scene/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Joint body1 prim not found: /Scene/Nope"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 18: remove_joint
+
+SUMMARY
+  call: remove_joint(scope="scene", prim_path="/Scene/Physics/Nope")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ reported success, but no file changed
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "prim_path": "/Scene/Physics/Nope",
+    "removed": false,
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 19: get_physics_summary
+
+SUMMARY
+  call: get_physics_summary(prim_path="/Scene/Nope")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": null,
+    "scene": {
+      "prim_path": "/Scene/Nope",
+      "prims": []
+    }
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 20: list_joints
+
+SUMMARY
+  call: list_joints()
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "joints": []
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 21: list_collision_groups
+
+SUMMARY
+  call: list_collision_groups()
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "groups": []
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues

@@ -1,0 +1,1177 @@
+##### scenario: physics/asset_apis
+##### convention: Z-up, 0.01 meters per unit
+##### Physics APIs authored in the asset (shared by every placement) and removed again.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place crate.usda as Crate
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Crate at /Scene/Props/Crate_01.
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Crate_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_01/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 25.0000)
+    ~ /Scene  bounds: (none) → (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Crate",
+    "intake": {
+      "asset_folder": "crate",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "crate.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Crate at /Scene/Props/Crate_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Crate_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Crate_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,35 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Crate_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: place_asset
+intent: place crate.usda as Crate
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=200.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Crate at /Scene/Props/Crate_02.
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Props/Crate_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (200, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (200.0000, 0.0000, 25.0000)
+    ~ /Scene  bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000) → (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Crate",
+    "intake": {
+      "asset_folder": "crate",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "crate.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Crate at /Scene/Props/Crate_02.",
+    "position": {
+      "x": 200.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Crate_02",
+    "rotation_y": 0.0
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -27,4 +27,20 @@
+                   }
+               }
+      +
+      +        def Xform "Crate_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (200, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -42,4 +42,33 @@
+               }
+           }
+  +
+  +        def Xform "Crate_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (200, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: apply_physics_api
+intent: a rigid body on the crate
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsRigidBodyAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file assets/crate/crate.usda
+    + file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_01/asset  applied APIs: (none) → PhysicsRigidBodyAPI
+    ~ /Scene/Props/Crate_02/asset  applied APIs: (none) → PhysicsRigidBodyAPI
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ the returned prim_path /crate does not exist in the scene
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRigidBodyAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate",
+    "attributes_set": [],
+    "cleared_masking_opinions": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/crate",
+    "relationships_set": [],
+    "requested_prim_path": "/crate",
+    "scene_prim_path": "/Scene/Props/Crate_01/asset",
+    "scope": "asset"
+  }
+
+files:
+  ~ assets/crate/crate.usda
+    assets/crate/geo.usda
+  + assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/crate/crate.usda:
+      --- assets/crate/crate.usda (before)
+      +++ assets/crate/crate.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./phy.usda@
+       )
+       {
+  + assets/crate/phy.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      over "crate" (
+          prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -22,4 +22,5 @@
+   
+               def Xform "asset" (
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -51,4 +52,5 @@
+   
+               def Xform "asset" (
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: apply_physics_api
+intent: a collider on the box
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_01/asset/Box", api_name="PhysicsCollisionAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_01/asset/Box  applied APIs: (none) → PhysicsCollisionAPI
+    ~ /Scene/Props/Crate_02/asset/Box  applied APIs: (none) → PhysicsCollisionAPI
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ the returned prim_path /crate/Box does not exist in the scene
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsCollisionAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate/Box",
+    "attributes_set": [],
+    "cleared_masking_opinions": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/crate/Box",
+    "relationships_set": [],
+    "requested_prim_path": "/crate/Box",
+    "scene_prim_path": "/Scene/Props/Crate_01/asset/Box",
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+  ~ assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/crate/phy.usda:
+      --- assets/crate/phy.usda (before)
+      +++ assets/crate/phy.usda (after)
+      @@ -8,4 +8,9 @@
+       )
+       {
+      +    over "Box" (
+      +        prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +    )
+      +    {
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -34,5 +34,7 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Box"
+  +                def Cube "Box" (
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
+  +                )
+                   {
+                       double size = 1
+  @@ -64,5 +66,7 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Box"
+  +                def Cube "Box" (
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
+  +                )
+                   {
+                       double size = 1
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: apply_physics_api
+intent: a mass of 12.5
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsMassAPI", attributes={"physics:mass": 12.5})
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_01/asset  applied APIs: PhysicsRigidBodyAPI → PhysicsRigidBodyAPI, PhysicsMassAPI
+    ~ /Scene/Props/Crate_01/asset  attr physics:mass: (none) → 12.5
+    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsRigidBodyAPI → PhysicsRigidBodyAPI, PhysicsMassAPI
+    ~ /Scene/Props/Crate_02/asset  attr physics:mass: (none) → 12.5
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ the returned prim_path /crate does not exist in the scene
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsMassAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate",
+    "attributes_set": [
+      "physics:mass"
+    ],
+    "cleared_masking_opinions": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/crate",
+    "relationships_set": [],
+    "requested_prim_path": "/crate",
+    "scene_prim_path": "/Scene/Props/Crate_01/asset",
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+  ~ assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/crate/phy.usda:
+      --- assets/crate/phy.usda (before)
+      +++ assets/crate/phy.usda (after)
+      @@ -5,7 +5,9 @@
+       
+       over "crate" (
+      -    prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+      +    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+       )
+       {
+      +    float physics:mass = 12.5
+      +
+           over "Box" (
+               prepend apiSchemas = ["PhysicsCollisionAPI"]
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -22,5 +22,5 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = ["PhysicsRigidBodyAPI"]
+  +                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -31,4 +31,5 @@
+               )
+               {
+  +                float physics:mass = 12.5
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  @@ -54,5 +55,5 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = ["PhysicsRigidBodyAPI"]
+  +                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -63,4 +64,5 @@
+               )
+               {
+  +                float physics:mass = 12.5
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: get_physics_summary
+
+SUMMARY
+  call: get_physics_summary(prim_path="/Scene/Props/Crate_01")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": {
+      "asset_path": "<PROJECT>/assets/crate",
+      "has_physics_layer": true,
+      "prims": [
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {},
+          "prim_path": "/crate/Box",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsRigidBodyAPI",
+            "PhysicsMassAPI"
+          ],
+          "attributes": {
+            "physics:mass": 12.5
+          },
+          "prim_path": "/crate",
+          "relationships": {}
+        }
+      ]
+    },
+    "scene": {
+      "prim_path": "/Scene/Props/Crate_01",
+      "prims": []
+    }
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 07: get_physics_summary
+intent: the second crate shares it
+
+SUMMARY
+  call: get_physics_summary(prim_path="/Scene/Props/Crate_02")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": {
+      "asset_path": "<PROJECT>/assets/crate",
+      "has_physics_layer": true,
+      "prims": [
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {},
+          "prim_path": "/crate/Box",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsRigidBodyAPI",
+            "PhysicsMassAPI"
+          ],
+          "attributes": {
+            "physics:mass": 12.5
+          },
+          "prim_path": "/crate",
+          "relationships": {}
+        }
+      ]
+    },
+    "scene": {
+      "prim_path": "/Scene/Props/Crate_02",
+      "prims": []
+    }
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 08: remove_physics_api
+
+SUMMARY
+  call: remove_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsMassAPI")
+  current project: golden
+  said: ok: Removed PhysicsMassAPI from /crate
+
+  what changed:
+    ~ file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_01/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsMassAPI → (none)
+    ~ /Scene/Props/Crate_01/asset  attr physics:mass: 12.5 → (none)
+    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsMassAPI → (none)
+    ~ /Scene/Props/Crate_02/asset  attr physics:mass: 12.5 → (none)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsMassAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate",
+    "cleared_masking_opinions": [],
+    "message": "Removed PhysicsMassAPI from /crate",
+    "removed": true,
+    "scene_prim_path": "/Scene/Props/Crate_01/asset",
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+  ~ assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/crate/phy.usda:
+      --- assets/crate/phy.usda (before)
+      +++ assets/crate/phy.usda (after)
+      @@ -5,9 +5,7 @@
+       
+       over "crate" (
+      -    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+      +    apiSchemas = None
+       )
+       {
+      -    float physics:mass = 12.5
+      -
+           over "Box" (
+               prepend apiSchemas = ["PhysicsCollisionAPI"]
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -22,5 +22,5 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+  +                apiSchemas = None
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -31,5 +31,4 @@
+               )
+               {
+  -                float physics:mass = 12.5
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  @@ -55,5 +54,5 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+  +                apiSchemas = None
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -64,5 +63,4 @@
+               )
+               {
+  -                float physics:mass = 12.5
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 09: remove_physics_api
+
+SUMMARY
+  call: remove_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsRigidBodyAPI")
+  current project: golden
+  said: ok: PhysicsRigidBodyAPI was not present on /crate
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ reported success, but no file changed
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRigidBodyAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate",
+    "cleared_masking_opinions": [],
+    "message": "PhysicsRigidBodyAPI was not present on /crate",
+    "removed": false,
+    "scene_prim_path": "/Scene/Props/Crate_01/asset",
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 10: remove_physics_api
+intent: the last one: does phy.usda go?
+
+SUMMARY
+  call: remove_physics_api(prim_path="/Scene/Props/Crate_01/asset/Box", api_name="PhysicsCollisionAPI")
+  current project: golden
+  said: ok: Removed PhysicsCollisionAPI from /crate/Box
+
+  what changed:
+    ~ file assets/crate/crate.usda
+    - file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_01/asset/Box  applied APIs: PhysicsCollisionAPI → (none)
+    ~ /Scene/Props/Crate_02/asset/Box  applied APIs: PhysicsCollisionAPI → (none)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsCollisionAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate/Box",
+    "cleared_masking_opinions": [],
+    "message": "Removed PhysicsCollisionAPI from /crate/Box",
+    "removed": true,
+    "scene_prim_path": "/Scene/Props/Crate_01/asset/Box",
+    "scope": "asset"
+  }
+
+files:
+  ~ assets/crate/crate.usda
+    assets/crate/geo.usda
+  - assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/crate/crate.usda:
+      --- assets/crate/crate.usda (before)
+      +++ assets/crate/crate.usda (after)
+      @@ -15,5 +15,4 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      -    prepend references = @./phy.usda@
+       )
+       {
+  - assets/crate/phy.usda (removed)
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -22,5 +22,4 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = None
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -34,7 +33,5 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Box" (
+  -                    apiSchemas = ["PhysicsCollisionAPI"]
+  -                )
+  +                def Cube "Box"
+                   {
+                       double size = 1
+  @@ -54,5 +51,4 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = None
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -66,7 +62,5 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Box" (
+  -                    apiSchemas = ["PhysicsCollisionAPI"]
+  -                )
+  +                def Cube "Box"
+                   {
+                       double size = 1
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues

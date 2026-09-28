@@ -1,0 +1,776 @@
+##### scenario: library/every_option
+##### convention: Y-up, 1.0 meters per unit
+##### Library and texture listings with every category and limit, and refusals of the tools that take no input.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: list_assets
+
+SUMMARY
+  call: list_assets(category="all", limit=3)
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair",
+        "path": "<LIBRARY>/chair.usda"
+      }
+    ],
+    "total_matches": 14,
+    "truncated": true
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: list_textures
+
+SUMMARY
+  call: list_textures(category="all")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: list_textures
+
+SUMMARY
+  call: list_textures(category="material")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: search_textures
+
+SUMMARY
+  call: search_textures(query="o", category="all")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: search_textures
+
+SUMMARY
+  call: search_textures(query="studio", category="hdri")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: compute_grid_layout
+intent: a negative count
+
+SUMMARY
+  call: compute_grid_layout(count=-2)
+  current project: golden
+  said: ok: Computed -2 positions in grid with 2.0m spacing.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "count": -2,
+    "message": "Computed -2 positions in grid with 2.0m spacing.",
+    "positions": [],
+    "spacing": 2.0
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: compute_grid_layout
+intent: a negative spacing
+
+SUMMARY
+  call: compute_grid_layout(count=4, spacing=-1.0)
+  current project: golden
+  said: ok: Computed 4 positions in grid with -1.0m spacing.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "count": 4,
+    "message": "Computed 4 positions in grid with -1.0m spacing.",
+    "positions": [
+      {
+        "x": 5.5,
+        "z": 4.5
+      },
+      {
+        "x": 4.5,
+        "z": 4.5
+      },
+      {
+        "x": 5.5,
+        "z": 3.5
+      },
+      {
+        "x": 4.5,
+        "z": 3.5
+      }
+    ],
+    "spacing": -1.0
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: get_current_project
+intent: a parameter the tool does not take
+
+SUMMARY
+  call: get_current_project(nope=1)
+  current project: golden
+  said: ok: Currently working on 'golden'.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "current": "golden",
+    "message": "Currently working on 'golden'.",
+    "object_count": 0,
+    "path": "<PROJECT>"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 09: list_projects
+
+SUMMARY
+  call: list_projects(nope=1)
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "count": 1,
+    "current": "golden",
+    "projects": [
+      {
+        "name": "golden",
+        "path": "<PROJECT>",
+        "updated_at": "<TIME>"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 10: list_camera_properties
+
+SUMMARY
+  call: list_camera_properties(nope=1)
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "properties": [
+      {
+        "allowed_tokens": [
+          "perspective",
+          "orthographic"
+        ],
+        "default": "perspective",
+        "documentation": "",
+        "kind": "attribute",
+        "name": "projection",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 20.954999924,
+        "documentation": "Horizontal aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
+        "kind": "attribute",
+        "name": "horizontalAperture",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 15.290800095,
+        "documentation": "Vertical aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
+        "kind": "attribute",
+        "name": "verticalAperture",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Horizontal aperture offset in the same units as\n                 horizontalAperture.",
+        "kind": "attribute",
+        "name": "horizontalApertureOffset",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Vertical aperture offset in the same units as\n                 verticalAperture.",
+        "kind": "attribute",
+        "name": "verticalApertureOffset",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 50.0,
+        "documentation": "Perspective focal length in tenths of a scene unit; see \n                 .",
+        "kind": "attribute",
+        "name": "focalLength",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1000000)",
+        "documentation": "Near and far clipping distances in scene units; see \n                 .",
+        "kind": "attribute",
+        "name": "clippingRange",
+        "type_name": "float2"
+      },
+      {
+        "allowed_tokens": [],
+        "default": [],
+        "documentation": "Additional, arbitrarily oriented clipping planes.",
+        "kind": "attribute",
+        "name": "clippingPlanes",
+        "type_name": "float4[]"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Lens aperture.",
+        "kind": "attribute",
+        "name": "fStop",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Distance from the camera to the focus plane in scene units; see \n                 .",
+        "kind": "attribute",
+        "name": "focusDistance",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [
+          "mono",
+          "left",
+          "right"
+        ],
+        "default": "mono",
+        "documentation": "If different from mono, the camera is intended to be the left\n                 or right camera of a stereo setup.",
+        "kind": "attribute",
+        "name": "stereoRole",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Frame relative shutter open time in UsdTimeCode units (negative\n                 value indicates that the shutter opens before the current\n                 frame time).",
+        "kind": "attribute",
+        "name": "shutter:open",
+        "type_name": "double"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Frame relative shutter close time, analogous comments from\n                 shutter:open apply.",
+        "kind": "attribute",
+        "name": "shutter:close",
+        "type_name": "double"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure compensation, as a log base-2 value.",
+        "kind": "attribute",
+        "name": "exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 100.0,
+        "documentation": "The speed rating of the sensor or film when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:iso",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Time in seconds that the sensor is exposed to light when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:time",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "f-stop of the aperture when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:fStop",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Scalar multiplier representing overall responsivity of the \n                 sensor system to light when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:responsivity",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 11: list_light_type_properties
+intent: a light type that does not exist
+
+SUMMARY
+  call: list_light_type_properties(light_type="LaserLight")
+  current project: golden
+  said: REFUSED: invalid parameters for list_light_type_properties at 'light_type': 'LaserLight' is not one of ['DistantLight', 'DomeLight', 'SphereLight', 'RectLight', 'DiskLight', 'CylinderLight']
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "invalid parameters for list_light_type_properties at 'light_type': 'LaserLight' is not one of ['DistantLight', 'DomeLight', 'SphereLight', 'RectLight', 'DiskLight', 'CylinderLight']"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues

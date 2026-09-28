@@ -1,0 +1,1296 @@
+##### scenario: cameras/create_update_remove
+##### convention: Y-up, 1.0 meters per unit
+##### Cameras: placed, aimed, turned, given lens values, moved and removed.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place a table
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/table.usda", asset_name="Table", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Table at /Scene/Furniture/Table_01.
+
+  what changed:
+    + file assets/table/geo.usda
+    + file assets/table/table.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Table_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset [Xform]
+          bounds: (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_L [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (-0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (-0.5500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_R [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (0.5500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Top [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.05, 0.8)
+          attr xformOp:translate: (0, 0.75, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)
+          material shown: (none)
+          world position: (0.0000, 0.7500, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Table",
+    "intake": {
+      "asset_folder": "table",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "table.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Table at /Scene/Furniture/Table_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Table_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/table/geo.usda
+  + assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/table/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      def Xform "table"
+      {
+          def Cube "Top"
+          {
+              double size = 1
+              float3 xformOp:scale = (1.2, 0.05, 0.8)
+              double3 xformOp:translate = (0, 0.75, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_L"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (-0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_R"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/table/table.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "table" (
+          assetInfo = {
+              asset identifier = @./table.usda@
+              string name = "table"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_table>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_table"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Table_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/table/table.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,48 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Table_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/table/table.usda@
+  +                    string name = "table"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Top"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (1.2, 0.05, 0.8)
+  +                    double3 xformOp:translate = (0, 0.75, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_L"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (-0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_R"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: list_camera_properties
+
+SUMMARY
+  call: list_camera_properties()
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "properties": [
+      {
+        "allowed_tokens": [
+          "perspective",
+          "orthographic"
+        ],
+        "default": "perspective",
+        "documentation": "",
+        "kind": "attribute",
+        "name": "projection",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 20.954999924,
+        "documentation": "Horizontal aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
+        "kind": "attribute",
+        "name": "horizontalAperture",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 15.290800095,
+        "documentation": "Vertical aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
+        "kind": "attribute",
+        "name": "verticalAperture",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Horizontal aperture offset in the same units as\n                 horizontalAperture.",
+        "kind": "attribute",
+        "name": "horizontalApertureOffset",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Vertical aperture offset in the same units as\n                 verticalAperture.",
+        "kind": "attribute",
+        "name": "verticalApertureOffset",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 50.0,
+        "documentation": "Perspective focal length in tenths of a scene unit; see \n                 .",
+        "kind": "attribute",
+        "name": "focalLength",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1000000)",
+        "documentation": "Near and far clipping distances in scene units; see \n                 .",
+        "kind": "attribute",
+        "name": "clippingRange",
+        "type_name": "float2"
+      },
+      {
+        "allowed_tokens": [],
+        "default": [],
+        "documentation": "Additional, arbitrarily oriented clipping planes.",
+        "kind": "attribute",
+        "name": "clippingPlanes",
+        "type_name": "float4[]"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Lens aperture.",
+        "kind": "attribute",
+        "name": "fStop",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Distance from the camera to the focus plane in scene units; see \n                 .",
+        "kind": "attribute",
+        "name": "focusDistance",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [
+          "mono",
+          "left",
+          "right"
+        ],
+        "default": "mono",
+        "documentation": "If different from mono, the camera is intended to be the left\n                 or right camera of a stereo setup.",
+        "kind": "attribute",
+        "name": "stereoRole",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Frame relative shutter open time in UsdTimeCode units (negative\n                 value indicates that the shutter opens before the current\n                 frame time).",
+        "kind": "attribute",
+        "name": "shutter:open",
+        "type_name": "double"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Frame relative shutter close time, analogous comments from\n                 shutter:open apply.",
+        "kind": "attribute",
+        "name": "shutter:close",
+        "type_name": "double"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure compensation, as a log base-2 value.",
+        "kind": "attribute",
+        "name": "exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 100.0,
+        "documentation": "The speed rating of the sensor or film when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:iso",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Time in seconds that the sensor is exposed to light when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:time",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "f-stop of the aperture when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:fStop",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Scalar multiplier representing overall responsivity of the \n                 sensor system to light when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:responsivity",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: create_camera
+intent: a camera looking at the table
+
+SUMMARY
+  call: create_camera(camera_name="Front", translate_x=0.0, translate_y=1.5, translate_z=5.0, look_at=[0.0, 0.75, 0.0])
+  current project: golden
+  said: ok: Created camera at /Scene/Cameras/Front
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Cameras [typeless]
+    + prim /Scene/Cameras/Front [Camera]
+          attr clippingRange: (0.01, 100000)
+          attr xformOp:rotateXYZ: (-8.53077, 0, 0)
+          attr xformOp:translate: (0, 1.5, 5)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')
+          world position: (0.0000, 1.5000, 5.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created camera at /Scene/Cameras/Front",
+    "position": {
+      "x": 0.0,
+      "y": 1.5,
+      "z": 5.0
+    },
+    "prim_path": "/Scene/Cameras/Front",
+    "rotation": {
+      "x": -8.5308,
+      "y": -0.0,
+      "z": 0.0
+    }
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -26,4 +26,15 @@
+               }
+           }
+      +
+      +    def "Cameras"
+      +    {
+      +        def Camera "Front"
+      +        {
+      +            float2 clippingRange = (0.01, 100000)
+      +            float3 xformOp:rotateXYZ = (-8.530766, -0, 0)
+      +            double3 xformOp:translate = (0, 1.5, 5)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -56,4 +56,15 @@
+           }
+       }
+  +
+  +    def "Cameras"
+  +    {
+  +        def Camera "Front"
+  +        {
+  +            float2 clippingRange = (0.01, 100000)
+  +            float3 xformOp:rotateXYZ = (-8.530766, -0, 0)
+  +            double3 xformOp:translate = (0, 1.5, 5)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (0.0000, 1.5000, 5.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: create_camera
+intent: an overhead orthographic camera
+
+SUMMARY
+  call: create_camera(camera_name="Top", translate_x=0.0, translate_y=8.0, translate_z=0.0, rotate_x=-90.0, attributes={"focalLength": 35.0, "projection": "orthographic"})
+  current project: golden
+  said: ok: Created camera at /Scene/Cameras/Top
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Cameras/Top [Camera]
+          attr clippingRange: (0.01, 100000)
+          attr focalLength: 35
+          attr projection: 'orthographic'
+          attr xformOp:rotateXYZ: (-90, 0, 0)
+          attr xformOp:translate: (0, 8, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')
+          world position: (0.0000, 8.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created camera at /Scene/Cameras/Top",
+    "position": {
+      "x": 0.0,
+      "y": 8.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Cameras/Top",
+    "rotation": {
+      "x": -90.0,
+      "y": 0.0,
+      "z": 0.0
+    }
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -36,4 +36,14 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+               }
+      +
+      +        def Camera "Top"
+      +        {
+      +            float2 clippingRange = (0.01, 100000)
+      +            float focalLength = 35
+      +            token projection = "orthographic"
+      +            float3 xformOp:rotateXYZ = (-90, 0, 0)
+      +            double3 xformOp:translate = (0, 8, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -66,4 +66,14 @@
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+           }
+  +
+  +        def Camera "Top"
+  +        {
+  +            float2 clippingRange = (0.01, 100000)
+  +            float focalLength = 35
+  +            token projection = "orthographic"
+  +            float3 xformOp:rotateXYZ = (-90, 0, 0)
+  +            double3 xformOp:translate = (0, 8, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (0.0000, 1.5000, 5.0000)
+  /Scene/Cameras/Top  [Camera]  at (0.0000, 8.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: update_camera
+intent: move the front camera and re-aim it
+
+SUMMARY
+  call: update_camera(prim_path="/Scene/Cameras/Front", translate_x=3.0, translate_y=2.0, translate_z=3.0, look_at=[0.0, 0.75, 0.0])
+  current project: golden
+  said: ok: Updated camera at /Scene/Cameras/Front
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Cameras/Front  attr xformOp:rotateXYZ: (-8.53077, 0, 0) → (-16.4164, 45, 0)
+    ~ /Scene/Cameras/Front  attr xformOp:translate: (0, 1.5, 5) → (3, 2, 3)
+    ~ /Scene/Cameras/Front  world position: (0.0000, 1.5000, 5.0000) → (3.0000, 2.0000, 3.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated camera at /Scene/Cameras/Front",
+    "prim_path": "/Scene/Cameras/Front"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -32,6 +32,6 @@
+               {
+                   float2 clippingRange = (0.01, 100000)
+      -            float3 xformOp:rotateXYZ = (-8.530766, -0, 0)
+      -            double3 xformOp:translate = (0, 1.5, 5)
+      +            float3 xformOp:rotateXYZ = (-16.416441, 45, 0)
+      +            double3 xformOp:translate = (3, 2, 3)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -62,6 +62,6 @@
+           {
+               float2 clippingRange = (0.01, 100000)
+  -            float3 xformOp:rotateXYZ = (-8.530766, -0, 0)
+  -            double3 xformOp:translate = (0, 1.5, 5)
+  +            float3 xformOp:rotateXYZ = (-16.416441, 45, 0)
+  +            double3 xformOp:translate = (3, 2, 3)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (3.0000, 2.0000, 3.0000)
+  /Scene/Cameras/Top  [Camera]  at (0.0000, 8.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: update_camera
+intent: turn the overhead camera
+
+SUMMARY
+  call: update_camera(prim_path="/Scene/Cameras/Top", rotate_z=90.0)
+  current project: golden
+  said: ok: Updated camera at /Scene/Cameras/Top
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Cameras/Top  attr xformOp:rotateXYZ: (-90, 0, 0) → (0, 0, 90)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated camera at /Scene/Cameras/Top",
+    "prim_path": "/Scene/Cameras/Top"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -42,5 +42,5 @@
+                   float focalLength = 35
+                   token projection = "orthographic"
+      -            float3 xformOp:rotateXYZ = (-90, 0, 0)
+      +            float3 xformOp:rotateXYZ = (0, 0, 90)
+                   double3 xformOp:translate = (0, 8, 0)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -72,5 +72,5 @@
+               float focalLength = 35
+               token projection = "orthographic"
+  -            float3 xformOp:rotateXYZ = (-90, 0, 0)
+  +            float3 xformOp:rotateXYZ = (0, 0, 90)
+               double3 xformOp:translate = (0, 8, 0)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (3.0000, 2.0000, 3.0000)
+  /Scene/Cameras/Top  [Camera]  at (0.0000, 8.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: create_camera
+intent: a taken name
+
+SUMMARY
+  call: create_camera(camera_name="Front")
+  current project: golden
+  said: ok: Created camera at /Scene/Cameras/Front_02
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Cameras/Front_02 [Camera]
+          attr clippingRange: (0.01, 100000)
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created camera at /Scene/Cameras/Front_02",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Cameras/Front_02",
+    "rotation": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    }
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -46,4 +46,12 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+               }
+      +
+      +        def Camera "Front_02"
+      +        {
+      +            float2 clippingRange = (0.01, 100000)
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -76,4 +76,12 @@
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+           }
+  +
+  +        def Camera "Front_02"
+  +        {
+  +            float2 clippingRange = (0.01, 100000)
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (3.0000, 2.0000, 3.0000)
+  /Scene/Cameras/Top  [Camera]  at (0.0000, 8.0000, 0.0000)
+  /Scene/Cameras/Front_02  [Camera]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: create_camera
+intent: an attribute cameras do not have
+
+SUMMARY
+  call: create_camera(camera_name="Bad", attributes={"nope": 1})
+  current project: golden
+  said: REFUSED: Unknown Camera attribute(s) ['nope']. Call list_camera_properties for the valid names.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Unknown Camera attribute(s) ['nope']. Call list_camera_properties for the valid names."
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (3.0000, 2.0000, 3.0000)
+  /Scene/Cameras/Top  [Camera]  at (0.0000, 8.0000, 0.0000)
+  /Scene/Cameras/Front_02  [Camera]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 09: remove_camera
+
+SUMMARY
+  call: remove_camera(prim_path="/Scene/Cameras/Top")
+  current project: golden
+  said: ok: Removed camera at /Scene/Cameras/Top
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Cameras/Top [Camera]
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed camera at /Scene/Cameras/Top",
+    "prim_path": "/Scene/Cameras/Top",
+    "suspect_variant_sets": []
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -37,14 +37,4 @@
+               }
+       
+      -        def Camera "Top"
+      -        {
+      -            float2 clippingRange = (0.01, 100000)
+      -            float focalLength = 35
+      -            token projection = "orthographic"
+      -            float3 xformOp:rotateXYZ = (0, 0, 90)
+      -            double3 xformOp:translate = (0, 8, 0)
+      -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+      -        }
+      -
+               def Camera "Front_02"
+               {
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -67,14 +67,4 @@
+           }
+   
+  -        def Camera "Top"
+  -        {
+  -            float2 clippingRange = (0.01, 100000)
+  -            float focalLength = 35
+  -            token projection = "orthographic"
+  -            float3 xformOp:rotateXYZ = (0, 0, 90)
+  -            double3 xformOp:translate = (0, 8, 0)
+  -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+  -        }
+  -
+           def Camera "Front_02"
+           {
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (3.0000, 2.0000, 3.0000)
+  /Scene/Cameras/Front_02  [Camera]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 10: remove_camera
+
+SUMMARY
+  call: remove_camera(prim_path="/Scene/Cameras/Nope")
+  current project: golden
+  said: REFUSED: Prim not found: /Scene/Cameras/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found: /Scene/Cameras/Nope"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (3.0000, 2.0000, 3.0000)
+  /Scene/Cameras/Front_02  [Camera]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 11: list_scene
+
+SUMMARY
+  call: list_scene()
+  current project: golden
+  said: ok: Scene has 3 object(s).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Scene has 3 object(s).",
+    "object_count": 3,
+    "objects": [
+      {
+        "asset": "assets/table/table.usda",
+        "bounds": {
+          "max": {
+            "x": 0.6,
+            "y": 0.775,
+            "z": 0.4
+          },
+          "min": {
+            "x": -0.6,
+            "y": 0.0,
+            "z": -0.4
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Furniture/Table_01/asset",
+        "type": "Xform"
+      },
+      {
+        "focal_length": 50.0,
+        "kind": "camera",
+        "position": {
+          "x": 3.0,
+          "y": 2.0,
+          "z": 3.0
+        },
+        "prim_path": "/Scene/Cameras/Front",
+        "projection": "perspective",
+        "type": "Camera"
+      },
+      {
+        "focal_length": 50.0,
+        "kind": "camera",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Cameras/Front_02",
+        "projection": "perspective",
+        "type": "Camera"
+      }
+    ]
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Cameras/Front  [Camera]  at (3.0000, 2.0000, 3.0000)
+  /Scene/Cameras/Front_02  [Camera]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues

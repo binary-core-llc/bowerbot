@@ -1,0 +1,839 @@
+##### scenario: variants/asset_geometry_lod
+##### convention: Z-up, 0.01 meters per unit
+##### A geometry (LOD) variant set built from the files in the asset folder.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place lamp/lamp.usda as Lamp
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/lamp/lamp.usda", asset_name="Lamp", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Lamp at /Scene/Props/Lamp_01.
+
+  what changed:
+    + file assets/lamp/geo.usda
+    + file assets/lamp/lamp.usda
+    + file assets/lamp/maps/lamp_diffuse.png
+    + file assets/lamp/mtl.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Lamp_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/Base [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.3, 0.1, 0.3)
+          attr xformOp:translate: (0, 0.05, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 5.0000)
+    + prim /Scene/Props/Lamp_01/asset/Shade [Cube]
+          applied APIs: MaterialBindingAPI
+          attr size: 1
+          attr xformOp:scale: (0.4, 0.3, 0.4)
+          attr xformOp:translate: (0, 0.5, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)
+          material shown: /Scene/Props/Lamp_01/asset/mtl/brass
+          rel material:binding: /Scene/Props/Lamp_01/asset/mtl/brass
+          world position: (0.0000, 0.0000, 50.0000)
+    + prim /Scene/Props/Lamp_01/asset/mtl [Scope]
+    + prim /Scene/Props/Lamp_01/asset/mtl/brass [Material] (+2 prims inside)
+          attr outputs:surface: (no value)
+          connect outputs:surface: /Scene/Props/Lamp_01/asset/mtl/brass/PreviewSurface.outputs:surface
+    ~ /Scene  bounds: (none) → (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Lamp",
+    "intake": {
+      "asset_folder": "lamp",
+      "files_copied": 4,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "lamp.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Lamp at /Scene/Props/Lamp_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Lamp_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/lamp/geo.usda
+  + assets/lamp/lamp.usda
+  + assets/lamp/maps/lamp_diffuse.png
+  + assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/lamp/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp"
+      {
+          def Cube "Base"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.3, 0.1, 0.3)
+              double3 xformOp:translate = (0, 0.05, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Shade"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.4, 0.3, 0.4)
+              double3 xformOp:translate = (0, 0.5, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/lamp/lamp.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp" (
+          assetInfo = {
+              asset identifier = @./lamp.usda@
+              string name = "lamp"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_lamp>
+          kind = "component"
+          prepend payload = @./geo.usda@
+          prepend references = @./mtl.usda@
+      )
+      {
+      }
+
+      class Xform "_class_lamp"
+      {
+      }
+
+  + assets/lamp/maps/lamp_diffuse.png (new):
+      <binary: 70 bytes, sha256:9b25e3bbeaa1ec03>
+  + assets/lamp/mtl.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def "lamp"
+      {
+          def Scope "mtl"
+          {
+              def Material "brass"
+              {
+                  token outputs:surface.connect = </lamp/mtl/brass/PreviewSurface.outputs:surface>
+
+                  def Shader "PreviewSurface"
+                  {
+                      uniform token info:id = "UsdPreviewSurface"
+                      color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+                      token outputs:surface
+                  }
+
+                  def Shader "Diffuse"
+                  {
+                      uniform token info:id = "UsdUVTexture"
+                      asset inputs:file = @./maps/lamp_diffuse.png@
+                  }
+              }
+          }
+
+          over "Shade" (
+              prepend apiSchemas = ["MaterialBindingAPI"]
+          )
+          {
+              rel material:binding = </lamp/mtl/brass>
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Lamp_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/lamp/lamp.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,67 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Lamp_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/lamp/lamp.usda@
+  +                    string name = "lamp"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Base"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.3, 0.1, 0.3)
+  +                    double3 xformOp:translate = (0, 0.05, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Shade" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+  +                {
+  +                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/brass>
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.4, 0.3, 0.4)
+  +                    double3 xformOp:translate = (0, 0.5, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Scope "mtl"
+  +                {
+  +                    def Material "brass"
+  +                    {
+  +                        token outputs:surface.connect = </Scene/Props/Lamp_01/asset/mtl/brass/PreviewSurface.outputs:surface>
+  +
+  +                        def Shader "PreviewSurface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+  +                            token outputs:surface
+  +                        }
+  +
+  +                        def Shader "Diffuse"
+  +                        {
+  +                            uniform token info:id = "UsdUVTexture"
+  +                            asset inputs:file = @<PROJECT>/assets/lamp/maps/lamp_diffuse.png@
+  +                        }
+  +                    }
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 02: list_asset_geo_files
+
+SUMMARY
+  call: list_asset_geo_files(prim_path="/Scene/Props/Lamp_01")
+  current project: golden
+  said: ok: 0 alternate geometry file(s) in lamp
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/lamp",
+    "geo_files": [],
+    "message": "0 alternate geometry file(s) in lamp"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 03: add_asset_geometry_variant
+intent: extending a set that was never set up
+
+SUMMARY
+  call: add_asset_geometry_variant(prim_path="/Scene/Props/Lamp_01", variant_set="lod", variant_name="low", payloads={"/lamp": "./geo_low.usda"})
+  current project: golden
+  said: REFUSED: Payload file does not exist: './geo_low.usda' (resolved to <PROJECT>/assets/lamp/geo_low.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Payload file does not exist: './geo_low.usda' (resolved to <PROJECT>/assets/lamp/geo_low.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant."
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 04: setup_asset_geometry_variants
+intent: set up high and low
+
+SUMMARY
+  call: setup_asset_geometry_variants(prim_path="/Scene/Props/Lamp_01", variant_set="lod", variants={"high": "./geo.usda", "low": "./geo_low.usda"}, default_variant="high")
+  current project: golden
+  said: REFUSED: Payload file does not exist: './geo_low.usda' (resolved to <PROJECT>/assets/lamp/geo_low.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Payload file does not exist: './geo_low.usda' (resolved to <PROJECT>/assets/lamp/geo_low.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant."
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 05: select_asset_variant
+
+SUMMARY
+  call: select_asset_variant(prim_path="/Scene/Props/Lamp_01", variant_set="lod", variant_name="low")
+  current project: golden
+  said: ok: Selected 'low' for 'lod' in lamp
+
+  what changed:
+    ~ file assets/lamp/lamp.usda
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ no prim at or under /Scene/Props/Lamp_01 has a variant set named 'lod'
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/lamp",
+    "message": "Selected 'low' for 'lod' in lamp",
+    "variant_name": "low",
+    "variant_set": "lod"
+  }
+
+files:
+    assets/lamp/geo.usda
+  ~ assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lamp.usda:
+      --- assets/lamp/lamp.usda (before)
+      +++ assets/lamp/lamp.usda (after)
+      @@ -16,4 +16,7 @@
+           prepend payload = @./geo.usda@
+           prepend references = @./mtl.usda@
+      +    variants = {
+      +        string lod = "low"
+      +    }
+       )
+       {
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 06: add_asset_geometry_variant
+intent: a third variant
+
+SUMMARY
+  call: add_asset_geometry_variant(prim_path="/Scene/Props/Lamp_01", variant_set="lod", variant_name="proxy", payloads={"/lamp": "./geo_low.usda"})
+  current project: golden
+  said: REFUSED: Payload file does not exist: './geo_low.usda' (resolved to <PROJECT>/assets/lamp/geo_low.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Payload file does not exist: './geo_low.usda' (resolved to <PROJECT>/assets/lamp/geo_low.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant."
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 07: setup_asset_geometry_variants
+intent: a payload file that does not exist
+
+SUMMARY
+  call: setup_asset_geometry_variants(prim_path="/Scene/Props/Lamp_01", variant_set="lod2", variants={"high": "./geo.usda", "missing": "./nope.usda"}, default_variant="high")
+  current project: golden
+  said: REFUSED: Payload file does not exist: './nope.usda' (resolved to <PROJECT>/assets/lamp/nope.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Payload file does not exist: './nope.usda' (resolved to <PROJECT>/assets/lamp/nope.usda). Drop the file in the asset folder or re-export from your DCC before authoring the variant."
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 08: list_variants
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Props/Lamp_01")
+  current project: golden
+  said: ok: 0 variant set(s) across 0 carrier(s) under /Scene/Props/Lamp_01
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carriers": [],
+    "message": "0 variant set(s) across 0 carrier(s) under /Scene/Props/Lamp_01",
+    "prim_path": "/Scene/Props/Lamp_01"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 09: remove_asset_variant_set
+
+SUMMARY
+  call: remove_asset_variant_set(prim_path="/Scene/Props/Lamp_01", variant_set="lod")
+  current project: golden
+  said: ok: Variant set 'lod' not found in lamp
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/lamp",
+    "message": "Variant set 'lod' not found in lamp",
+    "removed": false,
+    "variant_set": "lod"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues

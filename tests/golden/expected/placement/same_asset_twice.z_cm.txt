@@ -1,0 +1,724 @@
+##### scenario: placement/same_asset_twice
+##### convention: Z-up, 0.01 meters per unit
+##### Two placements of one asset share one project copy and get the next number.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place chair.usda as Chair in Furniture
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Chair at /Scene/Furniture/Chair_01.
+
+  what changed:
+    + file assets/chair/chair.usda
+    + file assets/chair/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Chair_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_01/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)
+          material shown: (none)
+          world position: (0.0000, 20.0000, 70.0000)
+    + prim /Scene/Furniture/Chair_01/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 45.0000)
+    ~ /Scene  bounds: (none) → (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Chair",
+    "intake": {
+      "asset_folder": "chair",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "chair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Chair at /Scene/Furniture/Chair_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Chair_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/chair/chair.usda
+  + assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/chair/chair.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "chair" (
+          assetInfo = {
+              asset identifier = @./chair.usda@
+              string name = "chair"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_chair>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_chair"
+      {
+      }
+
+  + assets/chair/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+      )
+
+      def Xform "chair"
+      {
+          def Cube "Seat"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.05, 0.45)
+              double3 xformOp:translate = (0, 0.45, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Back"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.5, 0.05)
+              double3 xformOp:translate = (0, 0.7, -0.2)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Chair_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/chair/chair.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,43 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Chair_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                    string name = "chair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                    double3 xformOp:translate = (0, 0.45, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Back"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.0000, 45.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 20.0000, 70.0000)  bounds (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: place_asset
+intent: place chair.usda as Chair in Furniture
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", group="Furniture", translate_x=100.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Chair at /Scene/Furniture/Chair_02.
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Furniture/Chair_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (100, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (100.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_02/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+          kind: component
+          world position: (100.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_02/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (77.5000, 17.5000, 45.0000)..(122.5000, 22.5000, 95.0000)
+          material shown: (none)
+          world position: (100.0000, 20.0000, 70.0000)
+    + prim /Scene/Furniture/Chair_02/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 47.5000)
+          material shown: (none)
+          world position: (100.0000, 0.0000, 45.0000)
+    ~ /Scene  bounds: (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000) → (-22.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Chair",
+    "intake": {
+      "asset_folder": "chair",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "chair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Chair at /Scene/Furniture/Chair_02.",
+    "position": {
+      "x": 100.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Chair_02",
+    "rotation_y": 0.0
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -27,4 +27,20 @@
+                   }
+               }
+      +
+      +        def Xform "Chair_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (100, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/chair/chair.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -50,4 +50,41 @@
+               }
+           }
+  +
+  +        def Xform "Chair_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (100, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                    string name = "chair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                    double3 xformOp:translate = (0, 0.45, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Back"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.0000, 45.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 20.0000, 70.0000)  bounds (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (100.0000, 0.0000, 45.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (100.0000, 20.0000, 70.0000)  bounds (77.5000, 17.5000, 45.0000)..(122.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: the same name in lowercase
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="chair", group="Furniture", translate_x=200.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed chair at /Scene/Furniture/chair_03.
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Furniture/chair_03 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (200, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/chair_03/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+          kind: component
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/chair_03/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (177.5000, 17.5000, 45.0000)..(222.5000, 22.5000, 95.0000)
+          material shown: (none)
+          world position: (200.0000, 20.0000, 70.0000)
+    + prim /Scene/Furniture/chair_03/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 47.5000)
+          material shown: (none)
+          world position: (200.0000, 0.0000, 45.0000)
+    ~ /Scene  bounds: (-22.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000) → (-22.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "chair",
+    "intake": {
+      "asset_folder": "chair",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "chair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed chair at /Scene/Furniture/chair_03.",
+    "position": {
+      "x": 200.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/chair_03",
+    "rotation_y": 0.0
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -43,4 +43,20 @@
+                   }
+               }
+      +
+      +        def Xform "chair_03"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (200, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/chair/chair.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -87,4 +87,41 @@
+               }
+           }
+  +
+  +        def Xform "chair_03"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (200, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                    string name = "chair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                    double3 xformOp:translate = (0, 0.45, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Back"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.0000, 45.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 20.0000, 70.0000)  bounds (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (100.0000, 0.0000, 45.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (100.0000, 20.0000, 70.0000)  bounds (77.5000, 17.5000, 45.0000)..(122.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/chair_03  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+  /Scene/Furniture/chair_03/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+  /Scene/Furniture/chair_03/asset/Seat  [Cube]  at (200.0000, 0.0000, 45.0000)  bounds (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/chair_03/asset/Back  [Cube]  at (200.0000, 20.0000, 70.0000)  bounds (177.5000, 17.5000, 45.0000)..(222.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: list_project_assets
+
+SUMMARY
+  call: list_project_assets()
+  current project: golden
+  said: ok: Project has 1 asset(s), 0 unused.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "assets": [
+      {
+        "in_scene": true,
+        "name": "chair",
+        "type": "folder"
+      }
+    ],
+    "message": "Project has 1 asset(s), 0 unused.",
+    "total": 1,
+    "unused_count": 0
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.0000, 45.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 20.0000, 70.0000)  bounds (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (100.0000, 0.0000, 45.0000)  bounds (77.5000, -22.5000, 42.5000)..(122.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (100.0000, 20.0000, 70.0000)  bounds (77.5000, 17.5000, 45.0000)..(122.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/chair_03  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+  /Scene/Furniture/chair_03/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 95.0000)
+  /Scene/Furniture/chair_03/asset/Seat  [Cube]  at (200.0000, 0.0000, 45.0000)  bounds (177.5000, -22.5000, 42.5000)..(222.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/chair_03/asset/Back  [Cube]  at (200.0000, 20.0000, 70.0000)  bounds (177.5000, 17.5000, 45.0000)..(222.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues

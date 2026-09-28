@@ -1,0 +1,561 @@
+##### scenario: physics/scene
+##### convention: Z-up, 0.01 meters per unit
+##### The physics scene: create, adjust, list, remove.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: list_physics_scenes
+intent: none yet
+
+SUMMARY
+  call: list_physics_scenes()
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "count": 0,
+    "scenes": []
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: setup_physics_scene
+intent: the default physics scene
+
+SUMMARY
+  call: setup_physics_scene()
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityMagnitude: 981
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "gravity_direction": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "gravity_magnitude": 981.0,
+    "prim_path": "/Scene/Physics/PhysicsScene"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,12 @@
+       )
+       {
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            float physics:gravityMagnitude = 981
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,12 @@
+   )
+   {
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            float physics:gravityMagnitude = 981
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 03: setup_physics_scene
+intent: adjust gravity
+
+SUMMARY
+  call: setup_physics_scene(gravity_magnitude=5.0, gravity_direction=[0, -1, 0])
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Physics/PhysicsScene  attr physics:gravityMagnitude: 981 → 5
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "gravity_direction": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "gravity_magnitude": 5.0,
+    "prim_path": "/Scene/Physics/PhysicsScene"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -15,5 +15,5 @@
+               {
+                   vector3f physics:gravityDirection = (0, -1, 0)
+      -            float physics:gravityMagnitude = 981
+      +            float physics:gravityMagnitude = 5
+               }
+           }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -17,5 +17,5 @@
+           {
+               vector3f physics:gravityDirection = (0, -1, 0)
+  -            float physics:gravityMagnitude = 981
+  +            float physics:gravityMagnitude = 5
+           }
+       }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 04: setup_physics_scene
+intent: a second scene
+
+SUMMARY
+  call: setup_physics_scene(name="Space", gravity_magnitude=0.0)
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics/Space [PhysicsScene]
+          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityMagnitude: 0
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "gravity_direction": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "gravity_magnitude": 0.0,
+    "prim_path": "/Scene/Physics/Space"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -17,4 +17,10 @@
+                   float physics:gravityMagnitude = 5
+               }
+      +
+      +        def PhysicsScene "Space"
+      +        {
+      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            float physics:gravityMagnitude = 0
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -19,4 +19,10 @@
+               float physics:gravityMagnitude = 5
+           }
+  +
+  +        def PhysicsScene "Space"
+  +        {
+  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            float physics:gravityMagnitude = 0
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 05: list_physics_scenes
+
+SUMMARY
+  call: list_physics_scenes()
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "count": 2,
+    "scenes": [
+      {
+        "gravity_direction": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "gravity_magnitude": 5.0,
+        "name": "PhysicsScene",
+        "prim_path": "/Scene/Physics/PhysicsScene"
+      },
+      {
+        "gravity_direction": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "gravity_magnitude": 0.0,
+        "name": "Space",
+        "prim_path": "/Scene/Physics/Space"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 06: remove_physics_scene
+
+SUMMARY
+  call: remove_physics_scene(name="Space")
+  current project: golden
+  said: ok: Removed PhysicsScene 'Space'
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Physics/Space [PhysicsScene]
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed PhysicsScene 'Space'",
+    "name": "Space",
+    "removed": true
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -17,10 +17,4 @@
+                   float physics:gravityMagnitude = 5
+               }
+      -
+      -        def PhysicsScene "Space"
+      -        {
+      -            vector3f physics:gravityDirection = (0, -1, 0)
+      -            float physics:gravityMagnitude = 0
+      -        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -19,10 +19,4 @@
+               float physics:gravityMagnitude = 5
+           }
+  -
+  -        def PhysicsScene "Space"
+  -        {
+  -            vector3f physics:gravityDirection = (0, -1, 0)
+  -            float physics:gravityMagnitude = 0
+  -        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 07: remove_physics_scene
+
+SUMMARY
+  call: remove_physics_scene(name="Nope")
+  current project: golden
+  said: ok: PhysicsScene 'Nope' not found under /Scene/Physics
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "PhysicsScene 'Nope' not found under /Scene/Physics",
+    "name": "Nope",
+    "removed": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues

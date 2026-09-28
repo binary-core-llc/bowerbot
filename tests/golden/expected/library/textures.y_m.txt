@@ -1,0 +1,523 @@
+##### scenario: library/textures
+##### convention: Y-up, 1.0 meters per unit
+##### Texture searches and listings, and deleting a project texture.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: search_textures
+
+SUMMARY
+  call: search_textures(query="studio")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: search_textures
+
+SUMMARY
+  call: search_textures(query="wood", category="material")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: list_textures
+
+SUMMARY
+  call: list_textures()
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: list_textures
+
+SUMMARY
+  call: list_textures(category="hdri")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: create_light
+intent: a dome light copies the HDRI into the project
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Sky", texture="<LIBRARY>/hdri/studio.hdr")
+  current project: golden
+  said: ok: Created DomeLight at /Scene/Lighting/Sky
+
+  what changed:
+    ~ file scene.usda
+    + file textures/studio.hdr
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Sky [DomeLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr inputs:texture:file: @./textures/studio.hdr@
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "message": "Created DomeLight at /Scene/Lighting/Sky",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Sky"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+  + textures/studio.hdr
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,13 @@
+       )
+       {
+      +    def "Lighting"
+      +    {
+      +        def DomeLight "Sky"
+      +        {
+      +            asset inputs:texture:file = @./textures/studio.hdr@
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +    }
+       }
+       
+  + textures/studio.hdr (new):
+      <binary: 49 bytes, sha256:a6047f6d65ac4310>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,13 @@
+   )
+   {
+  +    def "Lighting"
+  +    {
+  +        def DomeLight "Sky"
+  +        {
+  +            asset inputs:texture:file = @<PROJECT>/textures/studio.hdr@
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: delete_project_texture
+intent: the texture is still used by the light
+
+SUMMARY
+  call: delete_project_texture(file_name="studio.hdr")
+  current project: golden
+  said: REFUSED: Texture 'studio.hdr' is still referenced by: scene.usda. Remove those references first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Texture 'studio.hdr' is still referenced by: scene.usda. Remove those references first."
+  }
+
+files:
+    project.json
+    scene.usda
+    textures/studio.hdr
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: remove_light
+
+SUMMARY
+  call: remove_light(prim_path="/Scene/Lighting/Sky")
+  current project: golden
+  said: ok: Removed light at /Scene/Lighting/Sky
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Lighting/Sky [DomeLight]
+
+  project state after the step:
+    not used by the scene: textures/studio.hdr
+
+  checks:
+    ⚠ left behind a file nothing in the scene uses: textures/studio.hdr
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed light at /Scene/Lighting/Sky",
+    "prim_path": "/Scene/Lighting/Sky",
+    "suspect_variant_sets": [],
+    "texture_file": "./textures/studio.hdr"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+    textures/studio.hdr
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -12,10 +12,4 @@
+           def "Lighting"
+           {
+      -        def DomeLight "Sky"
+      -        {
+      -            asset inputs:texture:file = @./textures/studio.hdr@
+      -            double3 xformOp:translate = (0, 0, 0)
+      -            uniform token[] xformOpOrder = ["xformOp:translate"]
+      -        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -14,10 +14,4 @@
+       def "Lighting"
+       {
+  -        def DomeLight "Sky"
+  -        {
+  -            asset inputs:texture:file = @<PROJECT>/textures/studio.hdr@
+  -            double3 xformOp:translate = (0, 0, 0)
+  -            uniform token[] xformOpOrder = ["xformOp:translate"]
+  -        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: delete_project_texture
+intent: now unused
+
+SUMMARY
+  call: delete_project_texture(file_name="studio.hdr")
+  current project: golden
+  said: ok: Deleted texture 'studio.hdr' from project textures.
+
+  what changed:
+    - file textures/studio.hdr
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "file": "studio.hdr",
+    "message": "Deleted texture 'studio.hdr' from project textures."
+  }
+
+files:
+    project.json
+    scene.usda
+  - textures/studio.hdr
+
+file changes:
+  - textures/studio.hdr (removed)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues

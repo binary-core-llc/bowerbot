@@ -1,0 +1,1162 @@
+##### scenario: scatter/random_instancer
+##### convention: Y-up, 1.0 meters per unit
+##### Crates scattered at random on the ground as one point instancer, then replaced.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: a 10 x 10 m ground to scatter on
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/ground.usda", asset_name="Ground", group="Architecture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Ground at /Scene/Architecture/Ground_01.
+
+  what changed:
+    + file assets/ground/geo.usda
+    + file assets/ground/ground.usda
+    ~ file scene.usda
+    + prim /Scene/Architecture [typeless]
+    + prim /Scene/Architecture/Ground_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Architecture/Ground_01/asset [Xform]
+          bounds: (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Architecture/Ground_01/asset/Plane [Mesh]
+          attr extent: ((-5, 0, -5), (5, 0, 5))
+          attr faceVertexCounts: (4)
+          attr faceVertexIndices: (0, 3, 2, 1)
+          attr points: ((-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5))
+          bounds: (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ /Scene  bounds: (none) → (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Ground",
+    "intake": {
+      "asset_folder": "ground",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "ground.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Ground at /Scene/Architecture/Ground_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Architecture/Ground_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/ground/geo.usda
+  + assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/ground/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+      )
+
+      def Xform "ground"
+      {
+          def Mesh "Plane"
+          {
+              float3[] extent = [(-5, 0, -5), (5, 0, 5)]
+              int[] faceVertexCounts = [4]
+              int[] faceVertexIndices = [0, 3, 2, 1]
+              point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+          }
+      }
+
+  + assets/ground/ground.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "ground" (
+          assetInfo = {
+              asset identifier = @./ground.usda@
+              string name = "ground"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_ground>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_ground"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Architecture"
+      +    {
+      +        def Xform "Ground_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/ground/ground.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,32 @@
+   )
+   {
+  +    def "Architecture"
+  +    {
+  +        def Xform "Ground_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/ground/ground.usda@
+  +                    string name = "ground"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Mesh "Plane"
+  +                {
+  +                    float3[] extent = [(-5, 0, -5), (5, 0, 5)]
+  +                    int[] faceVertexCounts = [4]
+  +                    int[] faceVertexIndices = [0, 3, 2, 1]
+  +                    point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: scatter_on_surface
+intent: 5 crates at random (seed 1)
+
+SUMMARY
+  call: scatter_on_surface(name="Crates", assets=[{"asset": "<LIBRARY>/crate.usda"}], surfaces=["/Scene/Architecture/Ground_01"], count=5, seed=1)
+  current project: golden
+  said: ok: Scattered 5 instance(s) at /Scene/Scatter/Crates (instancer, seed 1).
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Scatter [typeless]
+    + prim /Scene/Scatter/Crates [PointInstancer]
+          attr extent: ((-4.78919, 0, -3.77628), (4.40359, 0.5, 1.68529))
+          attr orientations: ((-0.648926, 0, 0.760742, 0), (-0.12915, 0, 0.991699, 0), (0.64502, 0, 0.76416, 0), (0.875488, 0, 0.483643, 0), (-0.995605, 0, 0.0943604, 0))
+          attr positions: ((1.50635, 0, -3.39627), (4.09782, 0, -0.798113), (-2.89075, 0, 1.39687), (2.41346, 0, -3.43152), (-4.49667, 0, -3.33991))
+          attr protoIndices: (0, 0, 0, 0, 0)
+          attr scales: ((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1))
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          bounds: (-4.7892, 0.0000, -3.7763)..(4.4036, 0.5000, 1.6853)
+          rel prototypes: /Scene/Scatter/Crates/Prototypes/crate
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Crates/Prototypes [Scope]
+    + prim /Scene/Scatter/Crates/Prototypes/crate [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Crates/Prototypes/crate/asset [Xform]
+          bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Crates/Prototypes/crate/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+          material shown: (none)
+          world position: (0.0000, 0.2500, 0.0000)
+    ~ /Scene  bounds: (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000) → (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5000, 5.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "by_asset": {
+      "crate": 5
+    },
+    "instances": 5,
+    "message": "Scattered 5 instance(s) at /Scene/Scatter/Crates (instancer, seed 1).",
+    "output": "instancer",
+    "prim_path": "/Scene/Scatter/Crates",
+    "seed": 1,
+    "warnings": []
+  }
+
+files:
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -26,4 +26,38 @@
+               }
+           }
+      +
+      +    def "Scatter"
+      +    {
+      +        def PointInstancer "Crates"
+      +        {
+      +            float3[] extent = [(-4.7891893, 0, -3.7762816), (4.403589, 0.5, 1.685287)]
+      +            quath[] orientations = [(-0.648926, 0, 0.760742, 0), (-0.12915, 0, 0.991699, 0), (0.64502, 0, 0.76416, 0), (0.875488, 0, 0.483643, 0), (-0.995605, 0, 0.0943604, 0)]
+      +            point3f[] positions = [(1.5063542, 0, -3.396269), (4.097816, 0, -0.79811275), (-2.89075, 0, 1.3968675), (2.4134586, 0, -3.431525), (-4.4966683, 0, -3.3399062)]
+      +            int[] protoIndices = [0, 0, 0, 0, 0]
+      +            rel prototypes = </Scene/Scatter/Crates/Prototypes/crate>
+      +            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Scope "Prototypes"
+      +            {
+      +                def Xform "crate"
+      +                {
+      +                    float3 xformOp:rotateXYZ = (0, 0, 0)
+      +                    float3 xformOp:scale = (1, 1, 1)
+      +                    double3 xformOp:translate = (0, 0, 0)
+      +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                    def Xform "asset" (
+      +                        prepend references = @assets/crate/crate.usda@
+      +                    )
+      +                    {
+      +                    }
+      +                }
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -40,4 +40,50 @@
+           }
+       }
+  +
+  +    def "Scatter"
+  +    {
+  +        def PointInstancer "Crates"
+  +        {
+  +            float3[] extent = [(-4.7891893, 0, -3.7762816), (4.403589, 0.5, 1.685287)]
+  +            quath[] orientations = [(-0.648926, 0, 0.760742, 0), (-0.12915, 0, 0.991699, 0), (0.64502, 0, 0.76416, 0), (0.875488, 0, 0.483643, 0), (-0.995605, 0, 0.0943604, 0)]
+  +            point3f[] positions = [(1.5063542, 0, -3.396269), (4.097816, 0, -0.79811275), (-2.89075, 0, 1.3968675), (2.4134586, 0, -3.431525), (-4.4966683, 0, -3.3399062)]
+  +            int[] protoIndices = [0, 0, 0, 0, 0]
+  +            rel prototypes = </Scene/Scatter/Crates/Prototypes/crate>
+  +            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Scope "Prototypes"
+  +            {
+  +                def Xform "crate"
+  +                {
+  +                    float3 xformOp:rotateXYZ = (0, 0, 0)
+  +                    float3 xformOp:scale = (1, 1, 1)
+  +                    double3 xformOp:translate = (0, 0, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                    def Xform "asset" (
+  +                        assetInfo = {
+  +                            asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                            string name = "crate"
+  +                            string version = "1.0"
+  +                        }
+  +                        kind = "component"
+  +                    )
+  +                    {
+  +                        def Cube "Box"
+  +                        {
+  +                            double size = 1
+  +                            float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                            double3 xformOp:translate = (0, 0.25, 0)
+  +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                        }
+  +                    }
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5000, 5.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)  material (none)
+  /Scene/Scatter/Crates  [PointInstancer]  at (0.0000, 0.0000, 0.0000)  bounds (-4.7892, 0.0000, -3.7763)..(4.4036, 0.5000, 1.6853)
+  /Scene/Scatter/Crates/Prototypes  [Scope]  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: scatter_on_surface
+intent: the same name again without replace
+
+SUMMARY
+  call: scatter_on_surface(name="Crates", assets=[{"asset": "<LIBRARY>/crate.usda"}], surfaces=["/Scene/Architecture/Ground_01"], count=3, seed=2)
+  current project: golden
+  said: REFUSED: /Scene/Scatter/Crates already exists. Pass replace=true to regenerate it (same seed gives the same result), or choose another name.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "/Scene/Scatter/Crates already exists. Pass replace=true to regenerate it (same seed gives the same result), or choose another name."
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5000, 5.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)  material (none)
+  /Scene/Scatter/Crates  [PointInstancer]  at (0.0000, 0.0000, 0.0000)  bounds (-4.7892, 0.0000, -3.7763)..(4.4036, 0.5000, 1.6853)
+  /Scene/Scatter/Crates/Prototypes  [Scope]  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: scatter_on_surface
+intent: replace it with a mix of crates and chairs
+
+SUMMARY
+  call: scatter_on_surface(name="Crates", assets=[{"asset": "<LIBRARY>/crate.usda", "weight": 3}, {"asset": "<LIBRARY>/chair.usda", "weight": 1}], surfaces=["/Scene/Architecture/Ground_01"], count=4, seed=2, replace=true)
+  current project: golden
+  said: ok: Scattered 4 instance(s) at /Scene/Scatter/Crates (instancer, seed 2).
+
+  what changed:
+    + file assets/chair/chair.usda
+    + file assets/chair/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Scatter/Crates/Prototypes/chair [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Crates/Prototypes/chair/asset [Xform]
+          bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Crates/Prototypes/chair/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)
+          material shown: (none)
+          world position: (0.0000, 0.7000, -0.2000)
+    + prim /Scene/Scatter/Crates/Prototypes/chair/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)
+          material shown: (none)
+          world position: (0.0000, 0.4500, 0.0000)
+    ~ /Scene  bounds: (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5000, 5.0000) → (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5250, 5.0000)
+    ~ /Scene/Scatter/Crates  attr extent: ((-4.78919, 0, -3.77628), (4.40359, 0.5, 1.68529)) → ((-4.93446, -0.000000012, -3.45429), (0.878452, 0.525, 3.80246))
+    ~ /Scene/Scatter/Crates  attr orientations: ((-0.648926, 0, 0.760742, 0), (-0.12915, 0, 0.991699, 0), (0.64502, 0, 0.76416, 0), (0.875488, 0, 0.483643, 0), (-0.995605, 0, 0.0943604, 0)) → ((0.465332, 0, 0.885254, 0), (-0.0347595, 0, 0.999512, 0), (-0.942383, 0, 0.335205, 0), (-0.761719, 0, 0.647949, 0))
+    ~ /Scene/Scatter/Crates  attr positions: ((1.50635, 0, -3.39627), (4.09782, 0, -0.798113), (-2.89075, 0, 1.39687), (2.41346, 0, -3.43152), (-4.49667, 0, -3.33991)) → ((-2.86992, -0.425, 2.74662), (0.611569, 0, 3.53558), (-0.665244, 0, -3.10253), (-4.6476, 0, -2.65167))
+    ~ /Scene/Scatter/Crates  attr protoIndices: (0, 0, 0, 0, 0) → (1, 0, 0, 0)
+    ~ /Scene/Scatter/Crates  attr scales: ((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)) → ((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1))
+    ~ /Scene/Scatter/Crates  rel prototypes: /Scene/Scatter/Crates/Prototypes/crate → /Scene/Scatter/Crates/Prototypes/crate, /Scene/Scatter/Crates/Prototypes/chair
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "by_asset": {
+      "chair": 1,
+      "crate": 3
+    },
+    "instances": 4,
+    "message": "Scattered 4 instance(s) at /Scene/Scatter/Crates (instancer, seed 2).",
+    "output": "instancer",
+    "prim_path": "/Scene/Scatter/Crates",
+    "seed": 2,
+    "warnings": []
+  }
+
+files:
+  + assets/chair/chair.usda
+  + assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/chair/chair.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "chair" (
+          assetInfo = {
+              asset identifier = @./chair.usda@
+              string name = "chair"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_chair>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_chair"
+      {
+      }
+
+  + assets/chair/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+      )
+
+      def Xform "chair"
+      {
+          def Cube "Seat"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.05, 0.45)
+              double3 xformOp:translate = (0, 0.45, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Back"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.5, 0.05)
+              double3 xformOp:translate = (0, 0.7, -0.2)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -31,10 +31,13 @@
+               def PointInstancer "Crates"
+               {
+      -            float3[] extent = [(-4.7891893, 0, -3.7762816), (4.403589, 0.5, 1.685287)]
+      -            quath[] orientations = [(-0.648926, 0, 0.760742, 0), (-0.12915, 0, 0.991699, 0), (0.64502, 0, 0.76416, 0), (0.875488, 0, 0.483643, 0), (-0.995605, 0, 0.0943604, 0)]
+      -            point3f[] positions = [(1.5063542, 0, -3.396269), (4.097816, 0, -0.79811275), (-2.89075, 0, 1.3968675), (2.4134586, 0, -3.431525), (-4.4966683, 0, -3.3399062)]
+      -            int[] protoIndices = [0, 0, 0, 0, 0]
+      -            rel prototypes = </Scene/Scatter/Crates/Prototypes/crate>
+      -            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+      +            float3[] extent = [(-4.9344625, -0.000000012, -3.454293), (0.8784524, 0.525, 3.8024588)]
+      +            quath[] orientations = [(0.465332, 0, 0.885254, 0), (-0.0347595, 0, 0.999512, 0), (-0.942383, 0, 0.335205, 0), (-0.761719, 0, 0.647949, 0)]
+      +            point3f[] positions = [(-2.869918, -0.425, 2.7466156), (0.6115693, 0, 3.5355756), (-0.6652443, 0, -3.1025286), (-4.647604, 0, -2.651668)]
+      +            int[] protoIndices = [1, 0, 0, 0]
+      +            rel prototypes = [
+      +                </Scene/Scatter/Crates/Prototypes/crate>,
+      +                </Scene/Scatter/Crates/Prototypes/chair>,
+      +            ]
+      +            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+                   float3 xformOp:rotateXYZ = (0, 0, 0)
+                   float3 xformOp:scale = (1, 1, 1)
+      @@ -57,4 +60,18 @@
+                           }
+                       }
+      +
+      +                def Xform "chair"
+      +                {
+      +                    float3 xformOp:rotateXYZ = (0, 0, 0)
+      +                    float3 xformOp:scale = (1, 1, 1)
+      +                    double3 xformOp:translate = (0, 0, 0)
+      +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                    def Xform "asset" (
+      +                        prepend references = @assets/chair/chair.usda@
+      +                    )
+      +                    {
+      +                    }
+      +                }
+                   }
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -45,10 +45,13 @@
+           def PointInstancer "Crates"
+           {
+  -            float3[] extent = [(-4.7891893, 0, -3.7762816), (4.403589, 0.5, 1.685287)]
+  -            quath[] orientations = [(-0.648926, 0, 0.760742, 0), (-0.12915, 0, 0.991699, 0), (0.64502, 0, 0.76416, 0), (0.875488, 0, 0.483643, 0), (-0.995605, 0, 0.0943604, 0)]
+  -            point3f[] positions = [(1.5063542, 0, -3.396269), (4.097816, 0, -0.79811275), (-2.89075, 0, 1.3968675), (2.4134586, 0, -3.431525), (-4.4966683, 0, -3.3399062)]
+  -            int[] protoIndices = [0, 0, 0, 0, 0]
+  -            rel prototypes = </Scene/Scatter/Crates/Prototypes/crate>
+  -            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+  +            float3[] extent = [(-4.9344625, -0.000000012, -3.454293), (0.8784524, 0.525, 3.8024588)]
+  +            quath[] orientations = [(0.465332, 0, 0.885254, 0), (-0.0347595, 0, 0.999512, 0), (-0.942383, 0, 0.335205, 0), (-0.761719, 0, 0.647949, 0)]
+  +            point3f[] positions = [(-2.869918, -0.425, 2.7466156), (0.6115693, 0, 3.5355756), (-0.6652443, 0, -3.1025286), (-4.647604, 0, -2.651668)]
+  +            int[] protoIndices = [1, 0, 0, 0]
+  +            rel prototypes = [
+  +                </Scene/Scatter/Crates/Prototypes/crate>,
+  +                </Scene/Scatter/Crates/Prototypes/chair>,
+  +            ]
+  +            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+               float3 xformOp:rotateXYZ = (0, 0, 0)
+               float3 xformOp:scale = (1, 1, 1)
+  @@ -83,4 +86,38 @@
+                       }
+                   }
+  +
+  +                def Xform "chair"
+  +                {
+  +                    float3 xformOp:rotateXYZ = (0, 0, 0)
+  +                    float3 xformOp:scale = (1, 1, 1)
+  +                    double3 xformOp:translate = (0, 0, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                    def Xform "asset" (
+  +                        assetInfo = {
+  +                            asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                            string name = "chair"
+  +                            string version = "1.0"
+  +                        }
+  +                        kind = "component"
+  +                    )
+  +                    {
+  +                        def Cube "Seat"
+  +                        {
+  +                            double size = 1
+  +                            float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                            double3 xformOp:translate = (0, 0.45, 0)
+  +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                        }
+  +
+  +                        def Cube "Back"
+  +                        {
+  +                            double size = 1
+  +                            float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                            double3 xformOp:translate = (0, 0.7, -0.2)
+  +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                        }
+  +                    }
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5250, 5.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)  material (none)
+  /Scene/Scatter/Crates  [PointInstancer]  at (0.0000, 0.0000, 0.0000)  bounds (-4.9345, 0.0000, -3.4543)..(0.8785, 0.5250, 3.8025)
+  /Scene/Scatter/Crates/Prototypes  [Scope]  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.9500, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Scatter/Crates/Prototypes/chair  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Scatter/Crates/Prototypes/chair/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Scatter/Crates/Prototypes/chair/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Scatter/Crates/Prototypes/chair/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: list_scene
+
+SUMMARY
+  call: list_scene()
+  current project: golden
+  said: ok: Scene has 2 object(s).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Scene has 2 object(s).",
+    "object_count": 2,
+    "objects": [
+      {
+        "asset": "assets/ground/ground.usda",
+        "bounds": {
+          "max": {
+            "x": 5.0,
+            "y": 0.0,
+            "z": 5.0
+          },
+          "min": {
+            "x": -5.0,
+            "y": 0.0,
+            "z": -5.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Architecture/Ground_01/asset",
+        "type": "Xform"
+      },
+      {
+        "bounds": {
+          "max": {
+            "x": 0.8785,
+            "y": 0.525,
+            "z": 3.8025
+          },
+          "min": {
+            "x": -4.9345,
+            "y": -0.0,
+            "z": -3.4543
+          }
+        },
+        "instances": 4,
+        "kind": "scatter",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Crates",
+        "prototypes": [
+          "assets/crate/crate.usda",
+          "assets/chair/chair.usda"
+        ],
+        "type": "PointInstancer"
+      }
+    ]
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5250, 5.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)  material (none)
+  /Scene/Scatter/Crates  [PointInstancer]  at (0.0000, 0.0000, 0.0000)  bounds (-4.9345, 0.0000, -3.4543)..(0.8785, 0.5250, 3.8025)
+  /Scene/Scatter/Crates/Prototypes  [Scope]  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.9500, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Scatter/Crates/Prototypes/crate/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Scatter/Crates/Prototypes/chair  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Scatter/Crates/Prototypes/chair/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Scatter/Crates/Prototypes/chair/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Scatter/Crates/Prototypes/chair/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: remove_prim
+intent: remove the whole scatter
+
+SUMMARY
+  call: remove_prim(prim_path="/Scene/Scatter/Crates")
+  current project: golden
+  said: ok: Removed /Scene/Scatter/Crates
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Scatter/Crates [PointInstancer]
+    - prim /Scene/Scatter/Crates/Prototypes [Scope]
+    - prim /Scene/Scatter/Crates/Prototypes/chair [Xform]
+    - prim /Scene/Scatter/Crates/Prototypes/chair/asset [Xform]
+    - prim /Scene/Scatter/Crates/Prototypes/chair/asset/Back [Cube]
+    - prim /Scene/Scatter/Crates/Prototypes/chair/asset/Seat [Cube]
+    - prim /Scene/Scatter/Crates/Prototypes/crate [Xform]
+    - prim /Scene/Scatter/Crates/Prototypes/crate/asset [Xform]
+    - prim /Scene/Scatter/Crates/Prototypes/crate/asset/Box [Cube]
+    ~ /Scene  bounds: (-5.0000, 0.0000, -5.0000)..(5.0000, 0.5250, 5.0000) → (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+
+  project state after the step:
+    not used by the scene: assets/chair/chair.usda
+    not used by the scene: assets/chair/geo.usda
+    not used by the scene: assets/crate/crate.usda
+    not used by the scene: assets/crate/geo.usda
+
+  checks:
+    ⚠ left behind a file nothing in the scene uses: assets/chair/chair.usda
+    ⚠ left behind a file nothing in the scene uses: assets/chair/geo.usda
+    ⚠ left behind a file nothing in the scene uses: assets/crate/crate.usda
+    ⚠ left behind a file nothing in the scene uses: assets/crate/geo.usda
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed /Scene/Scatter/Crates",
+    "prim_path": "/Scene/Scatter/Crates",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    }
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -29,51 +29,4 @@
+           def "Scatter"
+           {
+      -        def PointInstancer "Crates"
+      -        {
+      -            float3[] extent = [(-4.9344625, -0.000000012, -3.454293), (0.8784524, 0.525, 3.8024588)]
+      -            quath[] orientations = [(0.465332, 0, 0.885254, 0), (-0.0347595, 0, 0.999512, 0), (-0.942383, 0, 0.335205, 0), (-0.761719, 0, 0.647949, 0)]
+      -            point3f[] positions = [(-2.869918, -0.425, 2.7466156), (0.6115693, 0, 3.5355756), (-0.6652443, 0, -3.1025286), (-4.647604, 0, -2.651668)]
+      -            int[] protoIndices = [1, 0, 0, 0]
+      -            rel prototypes = [
+      -                </Scene/Scatter/Crates/Prototypes/crate>,
+      -                </Scene/Scatter/Crates/Prototypes/chair>,
+      -            ]
+      -            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+      -            float3 xformOp:rotateXYZ = (0, 0, 0)
+      -            float3 xformOp:scale = (1, 1, 1)
+      -            double3 xformOp:translate = (0, 0, 0)
+      -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      -
+      -            def Scope "Prototypes"
+      -            {
+      -                def Xform "crate"
+      -                {
+      -                    float3 xformOp:rotateXYZ = (0, 0, 0)
+      -                    float3 xformOp:scale = (1, 1, 1)
+      -                    double3 xformOp:translate = (0, 0, 0)
+      -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      -
+      -                    def Xform "asset" (
+      -                        prepend references = @assets/crate/crate.usda@
+      -                    )
+      -                    {
+      -                    }
+      -                }
+      -
+      -                def Xform "chair"
+      -                {
+      -                    float3 xformOp:rotateXYZ = (0, 0, 0)
+      -                    float3 xformOp:scale = (1, 1, 1)
+      -                    double3 xformOp:translate = (0, 0, 0)
+      -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      -
+      -                    def Xform "asset" (
+      -                        prepend references = @assets/chair/chair.usda@
+      -                    )
+      -                    {
+      -                    }
+      -                }
+      -            }
+      -        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -43,83 +43,4 @@
+       def "Scatter"
+       {
+  -        def PointInstancer "Crates"
+  -        {
+  -            float3[] extent = [(-4.9344625, -0.000000012, -3.454293), (0.8784524, 0.525, 3.8024588)]
+  -            quath[] orientations = [(0.465332, 0, 0.885254, 0), (-0.0347595, 0, 0.999512, 0), (-0.942383, 0, 0.335205, 0), (-0.761719, 0, 0.647949, 0)]
+  -            point3f[] positions = [(-2.869918, -0.425, 2.7466156), (0.6115693, 0, 3.5355756), (-0.6652443, 0, -3.1025286), (-4.647604, 0, -2.651668)]
+  -            int[] protoIndices = [1, 0, 0, 0]
+  -            rel prototypes = [
+  -                </Scene/Scatter/Crates/Prototypes/crate>,
+  -                </Scene/Scatter/Crates/Prototypes/chair>,
+  -            ]
+  -            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
+  -            float3 xformOp:rotateXYZ = (0, 0, 0)
+  -            float3 xformOp:scale = (1, 1, 1)
+  -            double3 xformOp:translate = (0, 0, 0)
+  -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  -
+  -            def Scope "Prototypes"
+  -            {
+  -                def Xform "crate"
+  -                {
+  -                    float3 xformOp:rotateXYZ = (0, 0, 0)
+  -                    float3 xformOp:scale = (1, 1, 1)
+  -                    double3 xformOp:translate = (0, 0, 0)
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  -
+  -                    def Xform "asset" (
+  -                        assetInfo = {
+  -                            asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  -                            string name = "crate"
+  -                            string version = "1.0"
+  -                        }
+  -                        kind = "component"
+  -                    )
+  -                    {
+  -                        def Cube "Box"
+  -                        {
+  -                            double size = 1
+  -                            float3 xformOp:scale = (0.5, 0.5, 0.5)
+  -                            double3 xformOp:translate = (0, 0.25, 0)
+  -                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                        }
+  -                    }
+  -                }
+  -
+  -                def Xform "chair"
+  -                {
+  -                    float3 xformOp:rotateXYZ = (0, 0, 0)
+  -                    float3 xformOp:scale = (1, 1, 1)
+  -                    double3 xformOp:translate = (0, 0, 0)
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  -
+  -                    def Xform "asset" (
+  -                        assetInfo = {
+  -                            asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  -                            string name = "chair"
+  -                            string version = "1.0"
+  -                        }
+  -                        kind = "component"
+  -                    )
+  -                    {
+  -                        def Cube "Seat"
+  -                        {
+  -                            double size = 1
+  -                            float3 xformOp:scale = (0.45, 0.05, 0.45)
+  -                            double3 xformOp:translate = (0, 0.45, 0)
+  -                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                        }
+  -
+  -                        def Cube "Back"
+  -                        {
+  -                            double size = 1
+  -                            float3 xformOp:scale = (0.45, 0.5, 0.05)
+  -                            double3 xformOp:translate = (0, 0.7, -0.2)
+  -                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                        }
+  -                    }
+  -                }
+  -            }
+  -        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, 0.0000, -5.0000)..(5.0000, 0.0000, 5.0000)  material (none)
+
+validation:
+  valid, no issues

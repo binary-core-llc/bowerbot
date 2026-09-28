@@ -55,7 +55,7 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         [near / state.meters_per_unit, far / state.meters_per_unit],
     )
 
-    prim_path = utils.stage.unique_prim_path(
+    prim_path = usd.namespace.unique_prim_path(
         state.stage, constants.SceneNamespace.CAMERAS, safe_name,
     )
     camera = schemas.CameraParams(
@@ -126,7 +126,7 @@ def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     utils.cameras.require_camera(state.stage, prim_path)
 
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
-    success = utils.stage.remove_prim(state.stage, prim_path)
+    success = usd.namespace.remove_prim(state.stage, prim_path)
     if not success:
         msg = f"Failed to remove camera {prim_path}"
         raise RuntimeError(msg)

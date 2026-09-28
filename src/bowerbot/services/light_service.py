@@ -108,7 +108,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             ),
         }
 
-    prim_path = utils.stage.unique_prim_path(
+    prim_path = usd.namespace.unique_prim_path(
         state.stage, constants.SceneNamespace.LIGHTING, safe_name,
     )
     light = schemas.LightParams(
@@ -213,7 +213,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     texture_file = utils.lights.get_light_texture(state.stage, prim_path)
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
-    success = utils.stage.remove_prim(state.stage, prim_path)
+    success = usd.namespace.remove_prim(state.stage, prim_path)
     if not success:
         msg = f"Failed to remove light {prim_path}"
         raise RuntimeError(msg)

@@ -917,6 +917,8 @@ src/bowerbot/
       metrics.py               #   metersPerUnit and upAxis: read them, conform an
                                #   asset to the scene, world axes
       bounds.py                #   World-space bounding boxes of prims
+      namespace.py             #   Renaming, moving and removing prims, and what must
+                               #   follow (variant overs, relationship targets, empty overs)
       transforms.py            #   xformOps: read and write translate and rotate, bake
                                #   transforms into geometry, rotation math
       naming.py                #   Valid and safe USD names: prims, variants, joints,
@@ -950,7 +952,6 @@ src/bowerbot/
                                #   orientation, PointInstancer + placement authoring
     surface.py                 #   World-space triangles from gprims, vertical ray
                                #   queries, plan coverage, area sampling (numpy)
-    integrity.py               #   Generic dangling-rel/target scrubbers
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
     variants.py                #   variants.usda lifecycle, author_in_variant keystone,
                                #   apply_variant, set/clear_default, removal + cleanup

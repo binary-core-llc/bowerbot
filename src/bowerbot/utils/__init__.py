@@ -25,7 +25,6 @@ from bowerbot.utils import dependencies
 from bowerbot.utils import geometry
 from bowerbot.utils import inspection
 from bowerbot.utils import intake
-from bowerbot.utils import integrity
 from bowerbot.utils import layout
 from bowerbot.utils import library
 from bowerbot.utils import lights
@@ -49,7 +48,6 @@ __all__ = [
     "geometry",
     "inspection",
     "intake",
-    "integrity",
     "layout",
     "library",
     "lights",

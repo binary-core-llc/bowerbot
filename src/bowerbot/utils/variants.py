@@ -707,7 +707,7 @@ def clear_masking_scene_opinions(
             spec.ClearInfo("active")
         touched_paths.add(prim_path)
     for prim_path in touched_paths:
-        utils.stage.prune_empty_overrides(layer, prim_path)
+        usd.namespace.prune_empty_overrides(layer, prim_path)
     layer.Save()
 
 
@@ -866,7 +866,7 @@ def remove_scene_variant(
         if set_name in prim_spec.variantSelections:
             del prim_spec.variantSelections[set_name]
         layer.Save()
-        utils.stage.prune_empty_overrides(layer, carrier_prim_path)
+        usd.namespace.prune_empty_overrides(layer, carrier_prim_path)
         return True
 
     surviving = [v for v in existing if v != variant_name]
@@ -908,7 +908,7 @@ def remove_scene_variant_set(
     if set_name in prim_spec.variantSelections:
         del prim_spec.variantSelections[set_name]
     layer.Save()
-    utils.stage.prune_empty_overrides(layer, carrier_prim_path)
+    usd.namespace.prune_empty_overrides(layer, carrier_prim_path)
     return True
 
 
@@ -1236,7 +1236,7 @@ def clear_scene_variant_selections(
             continue
         del sels[set_name]
         scrubbed += 1
-        utils.stage.prune_empty_overrides(layer, placement)
+        usd.namespace.prune_empty_overrides(layer, placement)
     if scrubbed:
         layer.Save()
     return scrubbed

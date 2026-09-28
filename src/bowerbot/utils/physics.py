@@ -518,7 +518,7 @@ def clear_masking_scene_opinions(
             spec.RemoveProperty(prop_spec)
             touched_paths.add(prim_path)
     for prim_path in touched_paths:
-        utils.stage.prune_empty_overrides(layer, prim_path)
+        usd.namespace.prune_empty_overrides(layer, prim_path)
     if touched_paths:
         layer.Save()
 
@@ -1311,7 +1311,7 @@ def _remove_api_from_layer(
 
     if touched:
         layer.Save()
-        utils.stage.prune_empty_overrides(layer, prim_path)
+        usd.namespace.prune_empty_overrides(layer, prim_path)
     return touched
 
 

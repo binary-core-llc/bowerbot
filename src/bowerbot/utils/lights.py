@@ -329,7 +329,7 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     if variants_path.exists():
         variants_layer = Sdf.Layer.FindOrOpen(str(variants_path))
         if variants_layer is not None:
-            utils.stage.clear_orphan_variant_overs(variants_layer, str(light_prim_path))
+            usd.namespace.clear_orphan_variant_overs(variants_layer, str(light_prim_path))
         utils.variants.cleanup_if_empty(asset_dir)
 
     utils.asset_folder.remove_empty_layer(

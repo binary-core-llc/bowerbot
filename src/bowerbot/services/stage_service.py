@@ -78,13 +78,13 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         )
         raise ValueError(msg)
 
-    success = utils.stage.rename_prim(state.stage, old_path, new_path)
+    success = usd.namespace.rename_prim(state.stage, old_path, new_path)
     if not success:
         msg = f"Failed to rename {old_path} to {new_path}"
         raise RuntimeError(msg)
 
     state.stage = utils.stage.open_stage(state.stage_path)
-    rewrites = utils.integrity.rewrite_refs(
+    rewrites = usd.namespace.rewrite_refs(
         state.stage, {old_path: new_path},
     )
     logger.info("Renamed %s -> %s", old_path, new_path)
@@ -115,12 +115,12 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
             raise RuntimeError(msg)
         state.stage = utils.stage.open_stage(state.stage_path)
     else:
-        success = utils.stage.remove_prim(state.stage, prim_path)
+        success = usd.namespace.remove_prim(state.stage, prim_path)
         if not success:
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
 
-    scrubbed = utils.integrity.scrub_dangling_refs(state.stage)
+    scrubbed = usd.namespace.scrub_dangling_refs(state.stage)
 
     state.object_count = max(0, state.object_count - 1)
     state.touch_project()

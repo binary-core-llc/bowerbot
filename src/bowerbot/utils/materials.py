@@ -16,6 +16,7 @@ from pxr import UsdShade
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +290,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
             edit.Add(path, Sdf.Path.emptyPath)
             mtl_layer.Apply(edit)
             if variants_layer is not None:
-                utils.stage.clear_orphan_variant_overs(variants_layer, str(path))
+                usd.namespace.clear_orphan_variant_overs(variants_layer, str(path))
 
     mtl_layer.Save()
     if removed and variants_layer is not None:

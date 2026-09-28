@@ -440,7 +440,7 @@ def remove_collision_group(
         state.stage, name, force=force,
     )
     scrubbed = (
-        utils.integrity.scrub_dangling_refs(state.stage) if removed else {}
+        usd.namespace.scrub_dangling_refs(state.stage) if removed else {}
     )
     if removed:
         state.touch_project()

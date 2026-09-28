@@ -15,7 +15,6 @@ from pxr import UsdShade
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
@@ -295,7 +294,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
 
     mtl_layer.Save()
     if removed and variants_layer is not None:
-        utils.variants.cleanup_if_empty(asset_dir)
+        authoring.asset_variants.cleanup_if_empty(asset_dir)
 
     authoring.asset_folder.remove_empty_layer(
         mtl_path, asset_dir, lambda p: p.IsA(UsdShade.Material),

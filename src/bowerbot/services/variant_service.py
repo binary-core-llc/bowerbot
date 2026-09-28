@@ -109,7 +109,7 @@ def add_asset_geometry_variant(
     for payload_ref in payloads.values():
         utils.variants.validate_payload_path(asset_dir, payload_ref)
 
-    summary = utils.variants.get_variant_summary(asset_dir)
+    summary = authoring.asset_variants.get_variant_summary(asset_dir)
     existing = any(s.name == set_name for s in summary.variant_sets)
     if not existing and authoring.asset_folder.asset_has_root_payload(asset_dir):
         raise ValueError(
@@ -120,7 +120,7 @@ def add_asset_geometry_variant(
             "inside variants).",
         )
 
-    existing_refs = utils.variants.get_variant_payload_refs(asset_dir, set_name)
+    existing_refs = authoring.asset_variants.get_variant_payload_refs(asset_dir, set_name)
     new_payload_ref = next(iter(payloads.values()))
     utils.variants.validate_lod_namespace_stability(
         asset_dir, {**existing_refs, variant_name: new_payload_ref},
@@ -574,7 +574,7 @@ def select_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    utils.variants.set_default_variant(asset_dir, set_name, variant_name)
+    authoring.asset_variants.set_default_variant(asset_dir, set_name, variant_name)
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
     return {
@@ -647,25 +647,25 @@ def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    removed = utils.variants.remove_variant(asset_dir, set_name, variant_name)
+    removed = authoring.asset_variants.remove_variant(asset_dir, set_name, variant_name)
     if removed:
-        summary = utils.variants.get_variant_summary(asset_dir)
+        summary = authoring.asset_variants.get_variant_summary(asset_dir)
         still_has_set = any(s.name == set_name for s in summary.variant_sets)
         scrub_target = None if not still_has_set else variant_name
         if not still_has_set:
-            utils.variants.clear_default_variant(asset_dir, set_name)
+            authoring.asset_variants.clear_default_variant(asset_dir, set_name)
         else:
             current = next(
                 (s.selection for s in summary.variant_sets if s.name == set_name),
                 None,
             )
             if current == variant_name:
-                utils.variants.clear_default_variant(asset_dir, set_name)
+                authoring.asset_variants.clear_default_variant(asset_dir, set_name)
         utils.variants.clear_scene_variant_selections(
             state.stage, asset_dir, set_name, scrub_target,
         )
         utils.variants.restore_canonical_geo_if_needed(asset_dir)
-        utils.variants.cleanup_if_empty(asset_dir)
+        authoring.asset_variants.cleanup_if_empty(asset_dir)
 
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -802,14 +802,14 @@ def remove_asset_variant_set(
     set_name = params["variant_set"]
     usd.naming.validate_variant_name(set_name, "variant set")
 
-    removed = utils.variants.remove_variant_set(asset_dir, set_name)
+    removed = authoring.asset_variants.remove_variant_set(asset_dir, set_name)
     if removed:
-        utils.variants.clear_default_variant(asset_dir, set_name)
+        authoring.asset_variants.clear_default_variant(asset_dir, set_name)
         utils.variants.clear_scene_variant_selections(
             state.stage, asset_dir, set_name,
         )
         utils.variants.restore_canonical_geo_if_needed(asset_dir)
-        utils.variants.cleanup_if_empty(asset_dir)
+        authoring.asset_variants.cleanup_if_empty(asset_dir)
 
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)

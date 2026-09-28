@@ -946,6 +946,8 @@ src/bowerbot/
       asset_folder.py          #   The ASWF asset folder: root file and defaultPrim, its
                                #   layers (geo, mtl, lgt, phy, variants, contents),
                                #   units and bounds, building one
+      asset_variants.py        #   An asset's variants.usda: variant sets and payloads,
+                               #   default selections, removal
     stage.py                   #   Placing asset references, finding placements,
                                #   list_prim_children (moving to authoring/ and features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
@@ -966,9 +968,10 @@ src/bowerbot/
     scatter.py                 #   Distributions (random/rows/pile/path), resting,
                                #   orientation, PointInstancer + placement authoring
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
-    variants.py                #   variants.usda lifecycle, apply_variant, set/clear
-                               #   default, removal + cleanup (variant-set operations
-                               #   are in usd/variant_sets)
+    variants.py                #   apply_variant, scene variants, masking checks,
+                               #   suspect sets (variant-set operations are in
+                               #   usd/variant_sets, an asset's variants.usda in
+                               #   authoring/asset_variants)
     geometry.py                #   Placement math: position from bounds offsets, grid
                                #   layout suggestions
     layout.py                  #   place_layout expansion: grid/linear patterns,

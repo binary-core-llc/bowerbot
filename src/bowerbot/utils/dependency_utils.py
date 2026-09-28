@@ -31,35 +31,6 @@ def resolve(root_path: str | Path) -> tuple[list[Path], list[Path]]:
     return found, missing
 
 
-def validate_asset_folder(root_path: str | Path) -> tuple[bool, list[str]]:
-    """Validate that an ASWF asset folder is complete.
-
-    Checks the root file exists, its stem matches the folder name,
-    and every dependency resolves on disk.
-    """
-    root = Path(root_path).resolve()
-    errors: list[str] = []
-
-    if not root.exists():
-        return False, [f"Root file not found: {root}"]
-
-    if root.stem != root.parent.name:
-        errors.append(
-            f"Root file '{root.name}' does not match "
-            f"folder name '{root.parent.name}'",
-        )
-
-    _, missing = resolve(root)
-    for m in missing:
-        try:
-            rel = m.relative_to(root.parent)
-        except ValueError:
-            rel = Path(m.name)
-        errors.append(f"Missing dependency: {rel}")
-
-    return len(errors) == 0, errors
-
-
 def _walk(
     file_path: Path,
     visited: set[Path],

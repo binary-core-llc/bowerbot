@@ -67,10 +67,6 @@ class Project:
     def meta_path(self) -> Path:
         return self.path / "project.json"
 
-    @property
-    def usdz_path(self) -> Path:
-        return self.scene_path.with_suffix(".usdz")
-
     def save(self) -> None:
         """Save project metadata to project.json."""
         self.meta.updated_at = datetime.now(UTC).isoformat()

@@ -80,7 +80,12 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 
 - **`schemas/`**: data shapes: pydantic models, enums and type aliases. No values, no `pxr`.
 - **`constants/`**: fixed values, grouped in classes named for what they hold: `<Domain>Rules` (what BowerBot accepts), `<Domain>Defaults` (fallbacks when a call leaves a value out), `<Domain>Tuning` (internal algorithm knobs), `<Domain>Namespace` (prim and file names BowerBot authors) and `<Domain>Usd` (the `pxr` classes behind a name).
-- **`utils/`**: pure-function primitives: functions only, no values. The only place `pxr` is imported, besides the `pxr` classes kept in `constants/`.
+- **`utils/`**: pure-function primitives: functions only, no values, one job per module, each opening with a docstring that says what it owns. The only place `pxr` is imported, besides the `pxr` classes kept in `constants/`. Modules are grouped into folders by layer:
+  - `usd/`: USD building blocks, generic OpenUSD operations. A module here uses only other `usd/` modules.
+  - `authoring/`: BowerBot's authoring model (asset folders, `/Scene` placements, the library). Uses `usd/` and other `authoring/` modules.
+  - `features/`: the logic behind each tool family. Uses `usd/` and `authoring/`, never another feature; when a job needs two features, the service calls both.
+
+  Code imports the group it needs and calls a module through it: `from bowerbot.utils import usd`, then `usd.naming.safe_prim_name(...)`. Import the group, never a module inside it. Modules are moving into these groups one PR at a time; the ones not moved yet are called as `utils.<module>.<function>`.
 - **`services/`**: orchestrators with signature `(state, params)`. One per tool. Call utils and other services, mutate state, raise on errors.
 - **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
 - **`scene_state.py`**: `SceneState`, threaded through every tool handler.

@@ -4,7 +4,12 @@
 """Each layer holds only its kind of thing.
 
 - ``utils/`` and ``services/`` hold functions: no values, classes or type
-  aliases at module level (``logger`` excepted).
+  aliases at module level (``logger`` excepted). Every utils module and group
+  opens with a docstring saying what it owns.
+- ``utils/usd/`` holds USD building blocks: a module there reaches other utils
+  only through ``usd``, never a module outside the group.
+- ``utils/authoring/`` holds BowerBot's authoring model: a module there uses
+  ``usd`` and ``authoring``, never ``features``.
 - ``constants/`` holds fixed values, grouped in classes.
 - ``schemas/`` holds data shapes (pydantic models, enums, dataclasses) and
   type aliases, never values, and never imports ``pxr``.
@@ -43,6 +48,18 @@ def _modules(layer: str) -> list[Path]:
     return sorted(path for path in (PACKAGE / layer).glob("*.py") if path.name != "__init__.py")
 
 
+def _utils_modules() -> list[Path]:
+    """Every utils module, the group folders included."""
+    return sorted(
+        path for path in (PACKAGE / "utils").rglob("*.py")
+        if path.name != "__init__.py" and "__pycache__" not in path.parts
+    )
+
+
+def _utils_id(path: Path) -> str:
+    return path.relative_to(PACKAGE / "utils").as_posix()
+
+
 def _module_name(path: Path) -> str:
     return "bowerbot." + ".".join(path.relative_to(PACKAGE).with_suffix("").parts)
 
@@ -68,7 +85,11 @@ def _assigned_name(node: ast.stmt) -> str | None:
     return target.id if isinstance(target, ast.Name) else None
 
 
-@pytest.mark.parametrize("path", _modules("utils") + _modules("services"), ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "path",
+    _utils_modules() + _modules("services"),
+    ids=lambda p: p.relative_to(PACKAGE).as_posix(),
+)
 def test_utils_and_services_hold_only_functions(path: Path) -> None:
     extra = [
         f"line {node.lineno}: {ast.unparse(node).splitlines()[0][:80]}"
@@ -204,3 +225,78 @@ def test_every_module_reference_exists(path: Path) -> None:
                 break
             value = getattr(value, name)
     assert not problems, f"{path.relative_to(ROOT)}:\n" + "\n".join(sorted(problems))
+
+
+@pytest.mark.parametrize(
+    "path",
+    _utils_modules() + sorted((PACKAGE / "utils").rglob("__init__.py")),
+    ids=_utils_id,
+)
+def test_utils_modules_and_groups_say_what_they_own(path: Path) -> None:
+    docstring = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8")))
+    assert docstring, f"utils/{_utils_id(path)} needs a docstring saying what it owns"
+
+
+_UTILS_GROUPS = {"usd", "authoring", "features"}
+
+
+@pytest.mark.parametrize(
+    "path", _own_code_files(), ids=lambda p: p.relative_to(ROOT).as_posix(),
+)
+def test_utils_groups_are_imported_as_groups(path: Path) -> None:
+    """Code imports a group (``from bowerbot.utils import usd``), then calls ``usd.naming.x(...)``.
+
+    Never a module inside a group, and never a group through the package
+    (``utils.usd``). Only the utils package's own ``__init__`` files import its
+    modules directly.
+    """
+    if path.name == "__init__.py" and (PACKAGE / "utils") in path.parents:
+        return
+    problems = set()
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.ImportFrom) and node.module == "bowerbot.utils":
+            for alias in node.names:
+                if alias.name not in _UTILS_GROUPS:
+                    problems.add(f"line {node.lineno}: imports {alias.name}; import its group")
+        if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("bowerbot.utils."):
+            problems.add(f"line {node.lineno}: imports from {node.module}; import the group")
+        if (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "utils"
+            and node.attr in _UTILS_GROUPS
+        ):
+            problems.add(f"line {node.lineno}: utils.{node.attr}; import the group instead")
+    assert not problems, f"{path.relative_to(ROOT)}:\n" + "\n".join(sorted(problems))
+
+
+@pytest.mark.parametrize(
+    "path", sorted((PACKAGE / "utils" / "usd").glob("*.py")), ids=_utils_id,
+)
+def test_usd_building_blocks_use_only_their_group(path: Path) -> None:
+    """A ``usd/`` module reaches other utils only through ``usd``."""
+    problems = []
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        names = [alias.name for alias in node.names]
+        if node.module == "bowerbot" and "utils" in names:
+            problems.append(f"line {node.lineno}: imports all of utils; import usd instead")
+        if node.module == "bowerbot.utils" and set(names) - {"usd"}:
+            problems.append(f"line {node.lineno}: imports {names} from utils; only usd is allowed")
+    assert not problems, f"utils/{_utils_id(path)}:\n" + "\n".join(problems)
+
+
+@pytest.mark.parametrize(
+    "path", sorted((PACKAGE / "utils" / "authoring").glob("*.py")), ids=_utils_id,
+)
+def test_authoring_never_uses_features(path: Path) -> None:
+    """An ``authoring/`` module uses ``usd`` and ``authoring``, never a feature."""
+    problems = [
+        f"line {node.lineno}: imports {alias.name} from utils; only usd and authoring are allowed"
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+        if isinstance(node, ast.ImportFrom) and node.module == "bowerbot.utils"
+        for alias in node.names
+        if alias.name not in {"usd", "authoring"}
+    ]
+    assert not problems, f"utils/{_utils_id(path)}:\n" + "\n".join(problems)

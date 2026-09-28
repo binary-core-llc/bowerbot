@@ -14,6 +14,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ def list_light_type_properties(
 def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level or asset-level light."""
     light_type = schemas.LightType(params["light_type"])
-    safe_name = utils.naming.safe_prim_name(params["light_name"])
+    safe_name = usd.naming.safe_prim_name(params["light_name"])
     attributes = dict(params.get("attributes") or {})
     light_link_includes = params.get("light_link_includes") or []
     rotate = (

@@ -26,6 +26,7 @@ from pydantic import Field
 
 from bowerbot import config
 from bowerbot import utils
+from bowerbot.utils import authoring
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ class Project:
         meters_per_unit: float = 1.0,
     ) -> Project:
         """Create a new project directory and initialize it."""
-        safe_name = utils.naming.safe_project_name(name)
+        safe_name = authoring.naming.safe_project_name(name)
         if not safe_name:
             safe_name = "untitled"
 

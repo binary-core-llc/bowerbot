@@ -10,6 +10,7 @@ from typing import Any
 
 from bowerbot import scene_state
 from bowerbot import utils
+from bowerbot.utils import authoring
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         msg = "No project open."
         raise RuntimeError(msg)
 
-    safe_name = utils.naming.safe_file_name(params["filename"]) or "scene"
+    safe_name = authoring.naming.safe_file_name(params["filename"]) or "scene"
     logger.debug("create_stage filename=%s", safe_name)
 
     state.stage_path = state.project.scene_path

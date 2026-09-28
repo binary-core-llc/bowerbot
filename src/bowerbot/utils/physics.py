@@ -30,6 +30,7 @@ from pxr import UsdPhysics
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -674,7 +675,7 @@ def create_or_update_collision_group(
     merge_group: str | None = None,
 ) -> dict[str, Any]:
     """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``."""
-    _validate_group_name(name)
+    usd.naming.validate_group_name(name)
     ensure_physics_scene(stage)
 
     prim_path = _group_prim_path(name)
@@ -917,7 +918,7 @@ def create_joint_scene(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a typed joint at ``/Scene/Physics/<name>``; auto-ensures a ``UsdPhysics.Scene``."""
-    _validate_joint_name(name)
+    usd.naming.validate_joint_name(name)
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
@@ -954,7 +955,7 @@ def create_joint_asset(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``."""
-    _validate_joint_name(name)
+    usd.naming.validate_joint_name(name)
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
 
@@ -1059,18 +1060,6 @@ def list_joints_asset(asset_dir: Path) -> schemas.JointsSummary:
     if stage is None:
         return schemas.JointsSummary()
     return list_joints_scene(stage)
-
-
-def _validate_joint_name(name: str) -> None:
-    """Refuse empty names or names with whitespace / path separators."""
-    if not name:
-        raise ValueError("Joint name cannot be empty.")
-    bad = [c for c in name if c in constants.NamingRules.FORBIDDEN_CHARS]
-    if bad:
-        raise ValueError(
-            f"Joint name {name!r} has invalid characters "
-            f"{sorted(set(bad))}; use letters, digits, and underscores.",
-        )
 
 
 def _validate_joint_bodies(
@@ -1244,18 +1233,6 @@ def check_articulation_root_nesting(stage: Usd.Stage, prim_path: str) -> None:
                 "UsdPhysics spec forbids nesting two ArticulationRootAPIs "
                 "in the same subtree.",
             )
-
-
-def _validate_group_name(name: str) -> None:
-    """Refuse empty names or names with whitespace / path separators."""
-    if not name:
-        raise ValueError("Collision group name cannot be empty.")
-    bad = [c for c in name if c in constants.NamingRules.FORBIDDEN_CHARS]
-    if bad:
-        raise ValueError(
-            f"Collision group name {name!r} has invalid characters "
-            f"{sorted(set(bad))}; use letters, digits, and underscores.",
-        )
 
 
 def _summarize_group(prim: Usd.Prim) -> schemas.CollisionGroupSummary:

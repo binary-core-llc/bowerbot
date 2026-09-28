@@ -20,6 +20,7 @@ from pxr import UsdLux
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 # ── Layer lifecycle ──
 
@@ -146,9 +147,9 @@ def setup_geometry_variant_set(
             f"default_variant {default_variant!r} not present in variants "
             f"{list(variants)!r}",
         )
-    validate_variant_name(variant_set, "variant set")
+    usd.naming.validate_variant_name(variant_set, "variant set")
     for name in variants:
-        validate_variant_name(name)
+        usd.naming.validate_variant_name(name)
     for payload_ref in variants.values():
         validate_payload_path(asset_dir, payload_ref)
     validate_lod_namespace_stability(asset_dir, variants)
@@ -511,17 +512,6 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
 
 
 # ── Naming ──
-
-
-def is_valid_variant_set_name(name: str) -> bool:
-    """Reject empty names or names with whitespace / path separators."""
-    return bool(name) and not any(c in constants.NamingRules.FORBIDDEN_CHARS for c in name)
-
-
-def validate_variant_name(name: str, label: str = "variant") -> None:
-    """Raise ``ValueError`` if ``name`` is not a valid variant identifier."""
-    if not is_valid_variant_set_name(name):
-        raise ValueError(f"Invalid {label} name: {name!r}")
 
 
 def require_dict_param(

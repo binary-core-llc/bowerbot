@@ -14,6 +14,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     ry = float(params.get("rotate_y", 0.0))
 
     state.object_count += 1
-    safe_asset_name = utils.naming.safe_prim_name(asset_name)
+    safe_asset_name = usd.naming.safe_prim_name(asset_name)
     prim_path = f"/Scene/{group}/{safe_asset_name}_{state.object_count:02d}"
 
     assets_dir = state.resolve_assets_dir()
@@ -104,8 +105,8 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         except ValueError as e:
             problems.append(f"placements[{idx}]: {e}")
             continue
-        base_name = utils.naming.safe_prim_name(entry.name or asset_path.stem)
-        if not utils.naming.is_valid_prim_name(base_name):
+        base_name = usd.naming.safe_prim_name(entry.name or asset_path.stem)
+        if not usd.naming.is_valid_prim_name(base_name):
             problems.append(
                 f"placements[{idx}]: name '{base_name}' is not a valid USD "
                 f"prim name (it must start with a letter or underscore); "
@@ -309,7 +310,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
 
     state.object_count += 1
-    safe_asset_name = utils.naming.safe_prim_name(asset_name)
+    safe_asset_name = usd.naming.safe_prim_name(asset_name)
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
     try:

@@ -20,6 +20,7 @@ from pxr import UsdValidation
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -339,7 +340,7 @@ def validate_asset_variants(asset_dir: Path) -> list[schemas.ValidationIssue]:
 
     summary = utils.variants.get_variant_summary(asset_dir)
     for vset in summary.variant_sets:
-        if not utils.variants.is_valid_variant_set_name(vset.name):
+        if not usd.naming.is_valid_variant_set_name(vset.name):
             issues.append(schemas.ValidationIssue(
                 severity=schemas.Severity.ERROR,
                 message=(
@@ -348,7 +349,7 @@ def validate_asset_variants(asset_dir: Path) -> list[schemas.ValidationIssue]:
                 ),
             ))
         for v in vset.variants:
-            if not utils.variants.is_valid_variant_set_name(v):
+            if not usd.naming.is_valid_variant_set_name(v):
                 issues.append(schemas.ValidationIssue(
                     severity=schemas.Severity.ERROR,
                     message=(

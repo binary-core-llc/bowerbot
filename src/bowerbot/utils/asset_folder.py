@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Resolving an asset file path, and refusing material writes to a shared asset folder.
+"""Refusing material writes to an asset folder shared by several placements.
 
 The asset folder itself is in ``authoring.asset_folder``; scene placements are
 in ``authoring.placement``.
@@ -21,26 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 # ── Folder structure ──
-
-
-def resolve_asset_file_path(
-    raw: str,
-    project_dir: Path | None,
-    library_dir: Path | None,
-) -> Path:
-    """Resolve a relative asset path against project dir, then library dir."""
-    p = Path(raw)
-    if p.is_absolute():
-        return p
-    if project_dir is not None:
-        candidate = project_dir / p
-        if candidate.exists():
-            return candidate
-    if library_dir is not None:
-        candidate = library_dir / p
-        if candidate.exists():
-            return candidate
-    return p.resolve()
 
 
 def check_shared_modification(

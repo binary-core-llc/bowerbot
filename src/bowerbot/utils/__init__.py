@@ -25,14 +25,12 @@ from bowerbot.utils import geometry
 from bowerbot.utils import inspection
 from bowerbot.utils import intake
 from bowerbot.utils import layout
-from bowerbot.utils import library
 from bowerbot.utils import lights
 from bowerbot.utils import materials
 from bowerbot.utils import physics
 from bowerbot.utils import physics_typing
 from bowerbot.utils import scatter
 from bowerbot.utils import stage
-from bowerbot.utils import textures
 from bowerbot.utils import usd
 from bowerbot.utils import validation
 from bowerbot.utils import variants
@@ -45,14 +43,12 @@ __all__ = [
     "inspection",
     "intake",
     "layout",
-    "library",
     "lights",
     "materials",
     "physics",
     "physics_typing",
     "scatter",
     "stage",
-    "textures",
     "usd",
     "validation",
     "variants",

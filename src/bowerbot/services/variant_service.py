@@ -464,7 +464,7 @@ def add_scene_model_selection_variant(
             f"{prim_path} has no '/asset' child — not a valid placement wrapper.",
         )
 
-    resolved_path = utils.asset_folder.resolve_asset_file_path(
+    resolved_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
         state.project.path if state.project else None,
         state.library_dir,

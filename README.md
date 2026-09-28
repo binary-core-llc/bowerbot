@@ -950,19 +950,19 @@ src/bowerbot/
                                #   default selections, removal
       placement.py             #   How the scene refers to asset folders: /Scene
                                #   placements, nested assets, container frames
+      library.py               #   The asset library: searching it for assets and
+                               #   textures, its asset folders, resolving a path
     stage.py                   #   list_prim_children (moving to features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
     intake.py                  #   intake_folder, intake_usdz, ASWF compliance repair
-    asset_folder.py            #   resolve_asset_file_path, check_shared_modification
-                               #   (moving to authoring/library, features/materials)
-    library.py                 #   scan_library, find_package_for
+    asset_folder.py            #   check_shared_modification (moving to
+                               #   features/materials)
     lights.py                  #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle
     cameras.py                 #   Camera authoring: create/update/remove, look_at
                                #   aiming, list_camera_properties
     materials.py               #   material_in_folder primitives, find_first_material
-    textures.py                #   find_textures: textures in the library by category
     physics.py                 #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
     physics_typing.py          #   is_joint / is_physics_scene / is_collision_group / ...
@@ -974,8 +974,8 @@ src/bowerbot/
                                #   usd/variant_sets, an asset's variants.usda in
                                #   authoring/asset_variants)
     geometry.py                #   suggest_grid_layout
-    layout.py                  #   place_layout expansion: grid/linear patterns,
-                               #   asset resolution
+    layout.py                  #   place_layout expansion: entry validation, grid/linear
+                               #   patterns
 ```
 
 **Design principles**

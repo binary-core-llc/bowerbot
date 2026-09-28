@@ -1,11 +1,13 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Layout utils — validate, resolve, and expand batch-placement entries."""
+"""Layout utils — validate and expand batch-placement entries.
+
+Resolving an entry's asset path is in ``authoring.library``.
+"""
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from pydantic import ValidationError
@@ -25,34 +27,6 @@ def validate_layout_entries(
         except ValidationError as e:
             problems.extend(_render_entry_error(idx, e))
     return valid, problems
-
-
-def resolve_layout_asset(
-    raw: str,
-    *,
-    project_dir: Path | None,
-    library_dir: Path | None,
-) -> Path:
-    """Resolve an entry's asset to an existing root file, never falling back to the CWD."""
-    path = Path(raw)
-    if path.is_absolute():
-        candidates = [path]
-    else:
-        roots = (project_dir, library_dir)
-        candidates = [root / raw for root in roots if root is not None]
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate.resolve()
-    for candidate in candidates:
-        if candidate.is_dir():
-            msg = (
-                f"'{raw}' is a folder ({candidate}); reference the asset's root "
-                f"file instead (e.g. '{candidate.name}/{candidate.name}.usda')."
-            )
-            raise ValueError(msg)
-    searched = ", ".join(str(c) for c in candidates) or "no roots available"
-    msg = f"asset '{raw}' not found (searched: {searched})."
-    raise ValueError(msg)
 
 
 def count_entry(entry: schemas.LayoutEntry) -> int:

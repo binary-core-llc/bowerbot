@@ -121,7 +121,7 @@ def resolve_asset_sources(
     targets: dict[str, Path] = {}
     for idx, entry in enumerate(assets):
         try:
-            path = utils.layout.resolve_layout_asset(
+            path = authoring.library.resolve_layout_asset(
                 entry.asset, project_dir=project_dir, library_dir=library_dir,
             )
         except ValueError as e:

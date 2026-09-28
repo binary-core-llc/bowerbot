@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bring an asset into the project and add it to the scene."""
-    asset_path = utils.asset_folder.resolve_asset_file_path(
+    asset_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
         state.project.path if state.project else None,
         state.library_dir,
@@ -97,7 +97,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     folder_sources: dict[str, Path] = {}
     for idx, entry in valid:
         try:
-            asset_path = utils.layout.resolve_layout_asset(
+            asset_path = authoring.library.resolve_layout_asset(
                 entry.asset,
                 project_dir=project_dir,
                 library_dir=state.library_dir,
@@ -241,7 +241,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
 def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Nest an asset inside an ASWF container's ``contents.usda``."""
-    asset_path = utils.asset_folder.resolve_asset_file_path(
+    asset_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
         state.project.path if state.project else None,
         state.library_dir,

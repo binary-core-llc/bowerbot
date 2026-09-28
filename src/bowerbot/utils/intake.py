@@ -23,7 +23,6 @@ from pxr import UsdUtils
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
@@ -43,7 +42,7 @@ def prepare_asset(
         return intake_usdz(asset_path, assets_dir)
 
     if library_dir is not None:
-        package_dir = utils.library.find_package_for(asset_path, library_dir)
+        package_dir = authoring.library.find_package_for(asset_path, library_dir)
         if package_dir is not None:
             report = intake_folder(package_dir, assets_dir)
             _validate_intake(
@@ -80,7 +79,7 @@ def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
     if asset_path.suffix.lower() == ".usdz":
         return asset_path.name
     if library_dir is not None:
-        package_dir = utils.library.find_package_for(asset_path, library_dir)
+        package_dir = authoring.library.find_package_for(asset_path, library_dir)
         if package_dir is not None:
             return package_dir.name
     return asset_path.stem

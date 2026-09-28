@@ -17,7 +17,6 @@ from bowerbot.schemas import LightParams, LightPropertySpec, LightType, LightTyp
 from bowerbot.utils.asset_folder_utils import (
     ensure_layer_scope,
     ensure_root_reference,
-    find_root_file,
     remove_empty_layer,
     resolve_default_prim_name,
 )
@@ -346,31 +345,6 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     remove_empty_layer(
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),
     )
-
-
-def list_lights_in_folder(asset_dir: Path) -> list[dict]:
-    """List all lights declared in *asset_dir*'s ``lgt.usda``."""
-    lgt_path = asset_dir / ASWFLayerNames.LGT
-    if not lgt_path.exists():
-        return []
-
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return []
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return []
-
-    return [
-        {
-            "prim_path": str(prim.GetPath()),
-            "name": prim.GetName(),
-            "type": prim.GetTypeName(),
-        }
-        for prim in stage.Traverse()
-        if prim.HasAPI(UsdLux.LightAPI)
-    ]
 
 
 def stage_asset_texture(asset_dir: Path, texture: str | None) -> str | None:

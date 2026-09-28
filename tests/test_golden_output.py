@@ -8,6 +8,10 @@ Each scenario and convention has one recording,
 step in order. A failure names the first step whose snapshot differs and shows
 the difference. When the difference is intended, review it and re-record with
 ``BOWERBOT_UPDATE_GOLDEN=1 pytest tests/test_golden_output.py``.
+
+Each scenario is also recorded with every folder listed in reverse order and
+must give the same recording: the disk's listing order differs between
+machines, so BowerBot's output must not depend on it.
 """
 
 from __future__ import annotations
@@ -61,18 +65,14 @@ def _split_steps(text: str) -> list[str]:
     return [part.strip("\n") for part in parts if part.startswith(STEP_MARK)]
 
 
-@pytest.mark.parametrize(("scenario", "convention"), CASES)
-def test_golden_output(scenario: Scenario, convention: Convention, tmp_path: Path) -> None:
+def _compare(scenario: Scenario, convention: Convention, now: str, when: str = "") -> None:
+    """Fail with the first step where *now* differs from the recording."""
     path = _recording_path(scenario, convention)
-    now = _join(scenario, convention, record(scenario, convention, tmp_path))
-    if UPDATE:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(now, encoding="utf-8")
-        return
     assert path.is_file(), f"no recording for {scenario.name} [{convention.key}]; record it first"
     recorded = path.read_text(encoding="utf-8")
     if recorded == now:
         return
+    case = f"{scenario.name} [{convention.key}]{when}"
     before, after = _split_steps(recorded), _split_steps(now)
     for index in range(max(len(before), len(after))):
         old = before[index] if index < len(before) else "(no such step recorded)"
@@ -83,5 +83,31 @@ def test_golden_output(scenario: Scenario, convention: Convention, tmp_path: Pat
                 old.splitlines(), new.splitlines(),
                 fromfile="recorded", tofile="now", lineterm="",
             ))
-            pytest.fail(f"{scenario.name} [{convention.key}] differs at {title}:\n{diff}")
-    pytest.fail(f"{scenario.name} [{convention.key}]: the header or layout changed; re-record it")
+            pytest.fail(f"{case} differs at {title}:\n{diff}")
+    pytest.fail(f"{case}: the header or layout changed; re-record it")
+
+
+@pytest.mark.parametrize(("scenario", "convention"), CASES)
+def test_golden_output(scenario: Scenario, convention: Convention, tmp_path: Path) -> None:
+    now = _join(scenario, convention, record(scenario, convention, tmp_path))
+    if UPDATE:
+        path = _recording_path(scenario, convention)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(now, encoding="utf-8")
+        return
+    _compare(scenario, convention, now)
+
+
+@pytest.mark.parametrize(("scenario", "convention"), CASES)
+def test_golden_output_ignores_listing_order(
+    scenario: Scenario, convention: Convention, tmp_path: Path,
+) -> None:
+    """The same recording with every folder listed in reverse order.
+
+    Failing here while test_golden_output passes means BowerBot's output
+    depends on the order the disk lists files in, which differs between machines.
+    """
+    if UPDATE:
+        pytest.skip("re-recording")
+    now = _join(scenario, convention, record(scenario, convention, tmp_path, reverse_listings=True))
+    _compare(scenario, convention, now, " with folders listed in reverse order")

@@ -313,7 +313,7 @@ SUMMARY
     + prim /Scene/Scatter/Loose/crate_02 [Xform]
           attr xformOp:rotateXYZ: (0, 0, -15.7438)
           attr xformOp:scale: (100, 100, 100)
-          attr xformOp:translate: (-134.486, -262.995, 6.39478e-14)
+          attr xformOp:translate: (-134.486, -262.995, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (-134.4860, -262.9954, 0.0000)
     + prim /Scene/Scatter/Loose/crate_02/asset [Xform]
@@ -333,7 +333,7 @@ SUMMARY
     + prim /Scene/Scatter/Loose/crate_03 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 102.312)
           attr xformOp:scale: (100, 100, 100)
-          attr xformOp:translate: (-450.991, 193.196, -3.7347e-14)
+          attr xformOp:translate: (-450.991, 193.196, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (-450.9915, 193.1961, 0.0000)
     + prim /Scene/Scatter/Loose/crate_03/asset [Xform]
@@ -353,7 +353,7 @@ SUMMARY
     + prim /Scene/Scatter/Loose/crate_04 [Xform]
           attr xformOp:rotateXYZ: (0, 0, -126.523)
           attr xformOp:scale: (100, 100, 100)
-          attr xformOp:translate: (158.124, 325.319, -6.66842e-14)
+          attr xformOp:translate: (158.124, 325.319, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (158.1238, 325.3189, 0.0000)
     + prim /Scene/Scatter/Loose/crate_04/asset [Xform]
@@ -462,7 +462,7 @@ file changes:
       +            {
       +                float3 xformOp:rotateXYZ = (0, 0, -15.7438)
       +                float3 xformOp:scale = (100, 100, 100)
-      +                double3 xformOp:translate = (-134.4860456865525, -262.9954364636579, 6.394783290978486e-14)
+      +                double3 xformOp:translate = (-134.486045687, -262.995436464, 0)
       +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
       +
       +                def Xform "asset" (
@@ -478,7 +478,7 @@ file changes:
       +            {
       +                float3 xformOp:rotateXYZ = (0, 0, 102.3124)
       +                float3 xformOp:scale = (100, 100, 100)
-      +                double3 xformOp:translate = (-450.991475616421, 193.19608503084712, -3.734703325061143e-14)
+      +                double3 xformOp:translate = (-450.991475616, 193.196085031, 0)
       +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
       +
       +                def Xform "asset" (
@@ -494,7 +494,7 @@ file changes:
       +            {
       +                float3 xformOp:rotateXYZ = (0, 0, -126.523)
       +                float3 xformOp:scale = (100, 100, 100)
-      +                double3 xformOp:translate = (158.1238031225385, 325.31890544981457, -6.668419271212191e-14)
+      +                double3 xformOp:translate = (158.123803123, 325.31890545, 0)
       +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
       +
       +                def Xform "asset" (
@@ -525,7 +525,7 @@ composed scene changes:
   +            {
   +                float3 xformOp:rotateXYZ = (0, 0, -15.7438)
   +                float3 xformOp:scale = (100, 100, 100)
-  +                double3 xformOp:translate = (-134.4860456865525, -262.9954364636579, 6.394783290978486e-14)
+  +                double3 xformOp:translate = (-134.486045687, -262.995436464, 0)
   +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
   +                def Xform "asset" (
@@ -554,7 +554,7 @@ composed scene changes:
   +            {
   +                float3 xformOp:rotateXYZ = (0, 0, 102.3124)
   +                float3 xformOp:scale = (100, 100, 100)
-  +                double3 xformOp:translate = (-450.991475616421, 193.19608503084712, -3.734703325061143e-14)
+  +                double3 xformOp:translate = (-450.991475616, 193.196085031, 0)
   +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
   +                def Xform "asset" (
@@ -583,7 +583,7 @@ composed scene changes:
   +            {
   +                float3 xformOp:rotateXYZ = (0, 0, -126.523)
   +                float3 xformOp:scale = (100, 100, 100)
-  +                double3 xformOp:translate = (158.1238031225385, 325.31890544981457, -6.668419271212191e-14)
+  +                double3 xformOp:translate = (158.123803123, 325.31890545, 0)
   +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
   +                def Xform "asset" (
@@ -645,7 +645,7 @@ SUMMARY
     + prim /Scene/Scatter/Rows [PointInstancer]
           attr extent: ((-235.344, -235.344, 0), (135.156, 33.4331, 50))
           attr orientations: ((0.397949, -0, 0, 0.91748), (-0.995117, 0, 0, 0.0974731), (-0.975098, 0, 0, 0.221069), (0.848145, -0, 0, 0.529785), (-0.335449, 0, 0, 0.941895), (-0.600098, 0, 0, 0.799805))
-          attr positions: ((-200, -200, 4.996e-14), (-200, 1.2326e-30, 5.55112e-15), (-50, -200, 4.996e-14), (-50, 1.2326e-30, 5.55112e-15), (100, -200, 4.996e-14), (100, 1.2326e-30, 5.55112e-15))
+          attr positions: ((-200, -200, 0), (-200, 0, 0), (-50, -200, 0), (-50, 0, 0), (100, -200, 0), (100, 0, 0))
           attr protoIndices: (0, 0, 0, 0, 0, 0)
           attr scales: ((1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1))
           attr xformOp:rotateXYZ: (0, 0, 0)
@@ -721,7 +721,7 @@ file changes:
       +        {
       +            float3[] extent = [(-235.34406, -235.34406, 0), (135.15616, 33.433105, 50)]
       +            quath[] orientations = [(0.397949, -0, 0, 0.91748), (-0.995117, 0, 0, 0.0974731), (-0.975098, 0, 0, 0.221069), (0.848145, -0, 0, 0.529785), (-0.335449, 0, 0, 0.941895), (-0.600098, 0, 0, 0.799805)]
-      +            point3f[] positions = [(-200, -200, 4.9960036e-14), (-200, 1.2325952e-30, 5.551115e-15), (-50, -200, 4.9960036e-14), (-50, 1.2325952e-30, 5.551115e-15), (100, -200, 4.9960036e-14), (100, 1.2325952e-30, 5.551115e-15)]
+      +            point3f[] positions = [(-200, -200, 0), (-200, 0, 0), (-50, -200, 0), (-50, 0, 0), (100, -200, 0), (100, 0, 0)]
       +            int[] protoIndices = [0, 0, 0, 0, 0, 0]
       +            rel prototypes = </Scene/Scatter/Rows/Prototypes/crate>
       +            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]
@@ -763,7 +763,7 @@ composed scene changes:
   +        {
   +            float3[] extent = [(-235.34406, -235.34406, 0), (135.15616, 33.433105, 50)]
   +            quath[] orientations = [(0.397949, -0, 0, 0.91748), (-0.995117, 0, 0, 0.0974731), (-0.975098, 0, 0, 0.221069), (0.848145, -0, 0, 0.529785), (-0.335449, 0, 0, 0.941895), (-0.600098, 0, 0, 0.799805)]
-  +            point3f[] positions = [(-200, -200, 4.9960036e-14), (-200, 1.2325952e-30, 5.551115e-15), (-50, -200, 4.9960036e-14), (-50, 1.2325952e-30, 5.551115e-15), (100, -200, 4.9960036e-14), (100, 1.2325952e-30, 5.551115e-15)]
+  +            point3f[] positions = [(-200, -200, 0), (-200, 0, 0), (-50, -200, 0), (-50, 0, 0), (100, -200, 0), (100, 0, 0)]
   +            int[] protoIndices = [0, 0, 0, 0, 0, 0]
   +            rel prototypes = </Scene/Scatter/Rows/Prototypes/crate>
   +            float3[] scales = [(1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1), (1, 1, 1)]

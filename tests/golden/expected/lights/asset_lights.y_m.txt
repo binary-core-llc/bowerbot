@@ -432,7 +432,7 @@ full answer:
     "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Props/Lamp_01/asset/lgt/Bulb",
     "position": {
       "x": 0.0,
-      "y": 0.7500000059604645,
+      "y": 0.750000006,
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Bulb"
@@ -474,7 +474,7 @@ file changes:
               def SphereLight "Bulb"
               {
                   float inputs:radius = 0.05
-                  double3 xformOp:translate = (0, 0.7500000059604645, 0)
+                  double3 xformOp:translate = (0, 0.750000006, 0)
                   uniform token[] xformOpOrder = ["xformOp:translate"]
               }
           }
@@ -493,7 +493,7 @@ composed scene changes:
   +                    def SphereLight "Bulb"
   +                    {
   +                        float inputs:radius = 0.05
-  +                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
+  +                        double3 xformOp:translate = (0, 0.750000006, 0)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +                }
@@ -807,7 +807,7 @@ composed scene changes:
   +                    def SphereLight "Bulb"
   +                    {
   +                        float inputs:radius = 0.05
-  +                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
+  +                        double3 xformOp:translate = (0, 0.750000006, 0)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +
@@ -895,8 +895,8 @@ file changes:
       @@ -11,5 +11,5 @@
                {
                    float inputs:radius = 0.05
-      -            double3 xformOp:translate = (0, 0.7500000059604645, 0)
-      +            double3 xformOp:translate = (0, 0.8500000059604644, 0)
+      -            double3 xformOp:translate = (0, 0.750000006, 0)
+      +            double3 xformOp:translate = (0, 0.850000006, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate"]
                }
 
@@ -906,15 +906,15 @@ composed scene changes:
   @@ -75,5 +75,5 @@
                        {
                            float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
-  +                        double3 xformOp:translate = (0, 0.8500000059604644, 0)
+  -                        double3 xformOp:translate = (0, 0.750000006, 0)
+  +                        double3 xformOp:translate = (0, 0.850000006, 0)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
   @@ -149,5 +149,5 @@
                        {
                            float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
-  +                        double3 xformOp:translate = (0, 0.8500000059604644, 0)
+  -                        double3 xformOp:translate = (0, 0.750000006, 0)
+  +                        double3 xformOp:translate = (0, 0.850000006, 0)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
 
@@ -1056,7 +1056,7 @@ file changes:
       -        def SphereLight "Bulb"
       -        {
       -            float inputs:radius = 0.05
-      -            double3 xformOp:translate = (0, 0.8500000059604644, 0)
+      -            double3 xformOp:translate = (0, 0.850000006, 0)
       -            uniform token[] xformOpOrder = ["xformOp:translate"]
       -        }
       -
@@ -1072,7 +1072,7 @@ composed scene changes:
   -                    def SphereLight "Bulb"
   -                    {
   -                        float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.8500000059604644, 0)
+  -                        double3 xformOp:translate = (0, 0.850000006, 0)
   -                        uniform token[] xformOpOrder = ["xformOp:translate"]
   -                    }
   -
@@ -1084,7 +1084,7 @@ composed scene changes:
   -                    def SphereLight "Bulb"
   -                    {
   -                        float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.8500000059604644, 0)
+  -                        double3 xformOp:translate = (0, 0.850000006, 0)
   -                        uniform token[] xformOpOrder = ["xformOp:translate"]
   -                    }
   -

@@ -23,8 +23,18 @@ EVIDENCE
   the validator's findings.
 
 The project is read from a fresh copy on disk after every step, so an edit
-that was never saved cannot hide. Temp paths and timestamps are replaced by
-placeholders, so a snapshot is the same on every machine and every run.
+that was never saved cannot hide. A snapshot is the same on every machine and
+every run:
+
+- temp paths and timestamps are replaced by placeholders;
+- numbers are shown to 9 decimals, and float noise below that as 0, because
+  the last digits of a computed value can differ between CPUs;
+- the size of a listed file that stores absolute paths is replaced by a note,
+  because it depends on the length of the test's temp path;
+- folders are listed in sorted order while recording, because the disk's own
+  order differs between machines. ``test_golden_output`` also records every
+  scenario with folders listed in reverse, which shows whether BowerBot's
+  output depends on that order.
 """
 
 from __future__ import annotations
@@ -39,6 +49,8 @@ import shutil
 import sys
 import tempfile
 import zipfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from string import Template
@@ -58,6 +70,12 @@ PROJECT_NAME = "golden"
 CRASH_MARK = "CRASHED (the exception escaped the dispatcher):"
 STAGE_KEY = "(stage)"
 _TIME = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}:?\d{2}|Z)?")
+# A decimal or exponent number standing alone (not part of a name, hash or version).
+_NUMBER = re.compile(
+    r"(?<![\w.])-?(?:\d+\.\d+(?:[eE][-+]?\d+)?|\d+[eE][-+]?\d+)(?![\w.])",
+)
+_DECIMALS = 9
+_PATH_DEPENDENT_SIZE = "<depends on the test's temp path: the file stores absolute paths>"
 _TEXT_SUFFIXES = {".usda", ".json", ".txt", ".md", ".mtlx"}
 _USD_SUFFIXES = {".usd", ".usda", ".usdc"}
 _USD_BINARY_SUFFIXES = {".usd", ".usdc"}
@@ -114,13 +132,65 @@ class _Normalizer:
             text = text.replace(spelling, label)
         return _TIME.sub("<TIME>", text)
 
+    def has_temp_path(self, text: str) -> bool:
+        return any(spelling in text for spelling, _ in self._pairs)
 
-def record(scenario: Scenario, convention: Convention, workdir: Path) -> list[StepRecord]:
+
+class _OrderedScan:
+    """An ``os.scandir`` result in a fixed order, usable as a context manager."""
+
+    def __init__(self, entries: list[os.DirEntry[str]]) -> None:
+        self._entries = iter(entries)
+
+    def __iter__(self) -> Iterator[os.DirEntry[str]]:
+        return self._entries
+
+    def __next__(self) -> os.DirEntry[str]:
+        return next(self._entries)
+
+    def __enter__(self) -> _OrderedScan:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def close(self) -> None:
+        return None
+
+
+@contextmanager
+def listing_order(*, reverse: bool) -> Iterator[None]:
+    """List every folder in sorted order (or reversed) instead of the disk's order."""
+    listdir, scandir = os.listdir, os.scandir
+
+    def ordered_listdir(path: Any = ".") -> list[Any]:
+        return sorted(listdir(path), reverse=reverse)
+
+    def ordered_scandir(path: Any = ".") -> _OrderedScan:
+        with scandir(path) as entries:
+            return _OrderedScan(sorted(entries, key=lambda entry: entry.name, reverse=reverse))
+
+    os.listdir, os.scandir = ordered_listdir, ordered_scandir  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        os.listdir, os.scandir = listdir, scandir
+
+
+def record(
+    scenario: Scenario, convention: Convention, workdir: Path, *, reverse_listings: bool = False,
+) -> list[StepRecord]:
     """Run *scenario* in *convention* under *workdir*; return one snapshot per step.
 
     Unless the scenario starts with no project, step 0 is ``create_project``,
-    so the project's creation is recorded too.
+    so the project's creation is recorded too. Folders are listed in sorted
+    order, or in reverse with *reverse_listings*.
     """
+    with listing_order(reverse=reverse_listings):
+        return _record(scenario, convention, workdir)
+
+
+def _record(scenario: Scenario, convention: Convention, workdir: Path) -> list[StepRecord]:
     library = build_library(workdir / "library")
     projects = workdir / "projects"
     normalize = _Normalizer(workdir, library, projects)
@@ -581,7 +651,8 @@ def _render(
     lines += ["", "EVIDENCE", "", "what USD printed while the tool ran:"]
     lines += [f"  {line}" for line in printed] or ["  (nothing)"]
     lines += ["", "full answer:"]
-    lines.append(_indent(normalize(_json(data if result.success else {"error": result.error}))))
+    answer = _path_dependent_sizes(data, normalize) if result.success else {"error": result.error}
+    lines.append(_indent(normalize(_json(answer))))
     lines += ["", "files:"]
     lines += _file_tree(previous.files, capture.files)
     lines += ["", "file changes:"]
@@ -600,7 +671,41 @@ def _render(
             f"  {'valid' if capture.valid else 'INVALID'}, {len(capture.issues)} issue(s):",
         )
         lines += [f"  - {issue}" for issue in capture.issues]
-    return "\n".join(lines).rstrip() + "\n"
+    return _steady_numbers("\n".join(lines).rstrip() + "\n")
+
+
+def _steady_numbers(text: str) -> str:
+    """Show long numbers to 9 decimals, and float noise below that as 0."""
+
+    def steady(match: re.Match[str]) -> str:
+        literal = match.group(0)
+        mantissa = literal.lower().split("e")[0]
+        exponent = "e" in literal.lower()
+        if not exponent and len(mantissa.partition(".")[2]) <= _DECIMALS:
+            return literal
+        value = float(literal)
+        if exponent and abs(value) >= 1e15:
+            return literal
+        rounded = f"{round(value, _DECIMALS):.{_DECIMALS}f}".rstrip("0")
+        if float(rounded) == 0:
+            return "0" if exponent else "0.0"
+        return rounded + "0" if rounded.endswith(".") else rounded
+
+    return _NUMBER.sub(steady, text)
+
+
+def _path_dependent_sizes(value: Any, normalize: _Normalizer) -> Any:
+    """*value* with the size of any listed file that stores absolute paths replaced by a note."""
+    if isinstance(value, list):
+        return [_path_dependent_sizes(item, normalize) for item in value]
+    if not isinstance(value, dict):
+        return value
+    out = {key: _path_dependent_sizes(item, normalize) for key, item in value.items()}
+    path, size = value.get("path"), value.get("size_bytes")
+    if isinstance(path, str) and isinstance(size, int) and Path(path).is_file():
+        if normalize.has_temp_path(Path(path).read_bytes().decode("utf-8", errors="replace")):
+            out["size_bytes"] = _PATH_DEPENDENT_SIZE
+    return out
 
 
 def _answer_flags(data: dict[str, Any], facts: dict[str, dict[str, str]]) -> list[str]:

@@ -534,7 +534,7 @@ full answer:
     "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Props/Lamp_01/asset/lgt/Glow",
     "position": {
       "x": 0.0,
-      "y": 0.7500000059604645,
+      "y": 0.750000006,
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Glow"
@@ -575,7 +575,7 @@ file changes:
           {
               def SphereLight "Glow"
               {
-                  double3 xformOp:translate = (0, 0.7500000059604645, 0)
+                  double3 xformOp:translate = (0, 0.750000006, 0)
                   uniform token[] xformOpOrder = ["xformOp:translate"]
               }
           }
@@ -593,7 +593,7 @@ composed scene changes:
   +                {
   +                    def SphereLight "Glow"
   +                    {
-  +                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
+  +                        double3 xformOp:translate = (0, 0.750000006, 0)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +                }
@@ -736,8 +736,8 @@ file changes:
       @@ -10,5 +10,5 @@
                def SphereLight "Glow"
                {
-      -            double3 xformOp:translate = (0, 0.7500000059604645, 0)
-      +            double3 xformOp:translate = (0, 0.04999999403953559, 0)
+      -            double3 xformOp:translate = (0, 0.750000006, 0)
+      +            double3 xformOp:translate = (0, 0.049999994, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate"]
                }
 
@@ -747,8 +747,8 @@ composed scene changes:
   @@ -74,5 +74,5 @@
                        def SphereLight "Glow"
                        {
-  -                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
-  +                        double3 xformOp:translate = (0, 0.04999999403953559, 0)
+  -                        double3 xformOp:translate = (0, 0.750000006, 0)
+  +                        double3 xformOp:translate = (0, 0.049999994, 0)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
 
@@ -812,8 +812,8 @@ file changes:
       @@ -10,5 +10,5 @@
                def SphereLight "Glow"
                {
-      -            double3 xformOp:translate = (0, 0.04999999403953559, 0)
-      +            double3 xformOp:translate = (0, 0.7000000059604645, 0)
+      -            double3 xformOp:translate = (0, 0.049999994, 0)
+      +            double3 xformOp:translate = (0, 0.700000006, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate"]
                }
 
@@ -823,8 +823,8 @@ composed scene changes:
   @@ -74,5 +74,5 @@
                        def SphereLight "Glow"
                        {
-  -                        double3 xformOp:translate = (0, 0.04999999403953559, 0)
-  +                        double3 xformOp:translate = (0, 0.7000000059604645, 0)
+  -                        double3 xformOp:translate = (0, 0.049999994, 0)
+  +                        double3 xformOp:translate = (0, 0.700000006, 0)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
 

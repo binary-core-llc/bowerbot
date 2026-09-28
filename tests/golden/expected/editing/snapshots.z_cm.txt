@@ -958,12 +958,12 @@ full answer:
       {
         "name": "first",
         "path": "<PROJECT>/first.usda",
-        "size_bytes": 1487
+        "size_bytes": "<depends on the test's temp path: the file stores absolute paths>"
       },
       {
         "name": "withspace",
         "path": "<PROJECT>/withspace.usda",
-        "size_bytes": 1487
+        "size_bytes": "<depends on the test's temp path: the file stores absolute paths>"
       }
     ]
   }
@@ -1145,7 +1145,7 @@ full answer:
       {
         "name": "withspace",
         "path": "<PROJECT>/withspace.usda",
-        "size_bytes": 1487
+        "size_bytes": "<depends on the test's temp path: the file stores absolute paths>"
       }
     ]
   }

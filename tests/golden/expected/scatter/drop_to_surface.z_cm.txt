@@ -818,7 +818,7 @@ file changes:
                    float3 xformOp:rotateXYZ = (0, 0, 0)
                    float3 xformOp:scale = (100, 100, 100)
       -            double3 xformOp:translate = (-100, 0, 300)
-      +            double3 xformOp:translate = (-100, 0, -42.4999999627471)
+      +            double3 xformOp:translate = (-100, 0, -42.499999963)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
        
 
@@ -836,7 +836,7 @@ composed scene changes:
                float3 xformOp:rotateXYZ = (0, 0, 0)
                float3 xformOp:scale = (100, 100, 100)
   -            double3 xformOp:translate = (-100, 0, 300)
-  +            double3 xformOp:translate = (-100, 0, -42.4999999627471)
+  +            double3 xformOp:translate = (-100, 0, -42.499999963)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
    
 
@@ -867,7 +867,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Props/Crate_02  attr xformOp:translate: (100, 0, 0) → (100, 0, 9.99201e-15)
+    ~ /Scene/Props/Crate_02  attr xformOp:translate: (100, 0, 0) → (100, 0, 0)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -922,7 +922,7 @@ file changes:
                    float3 xformOp:rotateXYZ = (0, 0, 0)
                    float3 xformOp:scale = (100, 100, 100)
       -            double3 xformOp:translate = (100, 0, 0)
-      +            double3 xformOp:translate = (100, 0, 9.992007221626414e-15)
+      +            double3 xformOp:translate = (100, 0, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
        
 
@@ -933,7 +933,7 @@ composed scene changes:
                float3 xformOp:rotateXYZ = (0, 0, 0)
                float3 xformOp:scale = (100, 100, 100)
   -            double3 xformOp:translate = (100, 0, 0)
-  +            double3 xformOp:translate = (100, 0, 9.992007221626414e-15)
+  +            double3 xformOp:translate = (100, 0, 0)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
    
 

@@ -797,7 +797,7 @@ file changes:
                    float3 xformOp:rotateXYZ = (0, 0, 0)
                    float3 xformOp:scale = (1, 1, 1)
       -            double3 xformOp:translate = (-1, 3, 0)
-      +            double3 xformOp:translate = (-1, -0.42499999962747115, 0)
+      +            double3 xformOp:translate = (-1, -0.425, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
        
 
@@ -815,7 +815,7 @@ composed scene changes:
                float3 xformOp:rotateXYZ = (0, 0, 0)
                float3 xformOp:scale = (1, 1, 1)
   -            double3 xformOp:translate = (-1, 3, 0)
-  +            double3 xformOp:translate = (-1, -0.42499999962747115, 0)
+  +            double3 xformOp:translate = (-1, -0.425, 0)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
    
 

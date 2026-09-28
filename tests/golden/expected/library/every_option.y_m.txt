@@ -127,20 +127,20 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
-      },
-      {
-        "category": "package",
-        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
       {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
         "category": "geo",
         "format": ".usda",
-        "name": "unfrozen",
-        "path": "<LIBRARY>/unfrozen.usda"
+        "name": "chair",
+        "path": "<LIBRARY>/chair.usda"
       }
     ],
     "total_matches": 14,
@@ -574,7 +574,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 20.954999923706055,
+        "default": 20.954999924,
         "documentation": "Horizontal aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "horizontalAperture",
@@ -582,7 +582,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 15.290800094604492,
+        "default": 15.290800095,
         "documentation": "Vertical aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "verticalAperture",

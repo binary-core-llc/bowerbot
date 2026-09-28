@@ -382,7 +382,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 20.954999923706055,
+        "default": 20.954999924,
         "documentation": "Horizontal aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "horizontalAperture",
@@ -390,7 +390,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 15.290800094604492,
+        "default": 15.290800095,
         "documentation": "Vertical aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "verticalAperture",
@@ -559,7 +559,7 @@ SUMMARY
     ~ file scene.usda
     + prim /Scene/Cameras [typeless]
     + prim /Scene/Cameras/Front [Camera]
-          attr clippingRange: (1, 1e+07)
+          attr clippingRange: (1, 10000000.0)
           attr xformOp:rotateXYZ: (81.4692, 0, 0)
           attr xformOp:translate: (0, -500, 150)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')
@@ -663,7 +663,7 @@ SUMMARY
   what changed:
     ~ file scene.usda
     + prim /Scene/Cameras/Top [Camera]
-          attr clippingRange: (1, 1e+07)
+          attr clippingRange: (1, 10000000.0)
           attr focalLength: 35
           attr projection: 'orthographic'
           attr xformOp:rotateXYZ: (-90, 0, 0)
@@ -767,7 +767,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Cameras/Front  attr xformOp:rotateXYZ: (81.4692, 0, 0) → (73.5836, -3.18055e-15, 45)
+    ~ /Scene/Cameras/Front  attr xformOp:rotateXYZ: (81.4692, 0, 0) → (73.5836, 0, 45)
     ~ /Scene/Cameras/Front  attr xformOp:translate: (0, -500, 150) → (300, -300, 200)
     ~ /Scene/Cameras/Front  world position: (0.0000, -500.0000, 150.0000) → (300.0000, -300.0000, 200.0000)
 
@@ -803,7 +803,7 @@ file changes:
                    float2 clippingRange = (1, 10000000)
       -            float3 xformOp:rotateXYZ = (81.46923, -0, 0)
       -            double3 xformOp:translate = (0, -500, 150)
-      +            float3 xformOp:rotateXYZ = (73.58356, -3.1805547e-15, 45)
+      +            float3 xformOp:rotateXYZ = (73.58356, 0, 45)
       +            double3 xformOp:translate = (300, -300, 200)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
                }
@@ -816,7 +816,7 @@ composed scene changes:
                float2 clippingRange = (1, 10000000)
   -            float3 xformOp:rotateXYZ = (81.46923, -0, 0)
   -            double3 xformOp:translate = (0, -500, 150)
-  +            float3 xformOp:rotateXYZ = (73.58356, -3.1805547e-15, 45)
+  +            float3 xformOp:rotateXYZ = (73.58356, 0, 45)
   +            double3 xformOp:translate = (300, -300, 200)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
            }
@@ -918,7 +918,7 @@ SUMMARY
   what changed:
     ~ file scene.usda
     + prim /Scene/Cameras/Front_02 [Camera]
-          attr clippingRange: (1, 1e+07)
+          attr clippingRange: (1, 10000000.0)
           attr xformOp:rotateXYZ: (0, 0, 0)
           attr xformOp:translate: (0, 0, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')

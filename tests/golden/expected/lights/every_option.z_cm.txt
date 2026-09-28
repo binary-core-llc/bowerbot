@@ -541,7 +541,7 @@ full answer:
     "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Props/Lamp_01/asset/lgt/Glow",
     "position": {
       "x": 0.0,
-      "y": 0.6500000059604645,
+      "y": 0.650000006,
       "z": 10.0
     },
     "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Glow"
@@ -582,7 +582,7 @@ file changes:
           {
               def SphereLight "Glow"
               {
-                  double3 xformOp:translate = (0, 0.6500000059604645, 10)
+                  double3 xformOp:translate = (0, 0.650000006, 10)
                   uniform token[] xformOpOrder = ["xformOp:translate"]
               }
           }
@@ -600,7 +600,7 @@ composed scene changes:
   +                {
   +                    def SphereLight "Glow"
   +                    {
-  +                        double3 xformOp:translate = (0, 0.6500000059604645, 10)
+  +                        double3 xformOp:translate = (0, 0.650000006, 10)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +                }
@@ -743,8 +743,8 @@ file changes:
       @@ -10,5 +10,5 @@
                def SphereLight "Glow"
                {
-      -            double3 xformOp:translate = (0, 0.6500000059604645, 10)
-      +            double3 xformOp:translate = (0, 0.14999999403953546, -10)
+      -            double3 xformOp:translate = (0, 0.650000006, 10)
+      +            double3 xformOp:translate = (0, 0.149999994, -10)
                    uniform token[] xformOpOrder = ["xformOp:translate"]
                }
 
@@ -754,8 +754,8 @@ composed scene changes:
   @@ -77,5 +77,5 @@
                        def SphereLight "Glow"
                        {
-  -                        double3 xformOp:translate = (0, 0.6500000059604645, 10)
-  +                        double3 xformOp:translate = (0, 0.14999999403953546, -10)
+  -                        double3 xformOp:translate = (0, 0.650000006, 10)
+  +                        double3 xformOp:translate = (0, 0.149999994, -10)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
 
@@ -819,8 +819,8 @@ file changes:
       @@ -10,5 +10,5 @@
                def SphereLight "Glow"
                {
-      -            double3 xformOp:translate = (0, 0.14999999403953546, -10)
-      +            double3 xformOp:translate = (0, 0.6500000059604645, 5)
+      -            double3 xformOp:translate = (0, 0.149999994, -10)
+      +            double3 xformOp:translate = (0, 0.650000006, 5)
                    uniform token[] xformOpOrder = ["xformOp:translate"]
                }
 
@@ -830,8 +830,8 @@ composed scene changes:
   @@ -77,5 +77,5 @@
                        def SphereLight "Glow"
                        {
-  -                        double3 xformOp:translate = (0, 0.14999999403953546, -10)
-  +                        double3 xformOp:translate = (0, 0.6500000059604645, 5)
+  -                        double3 xformOp:translate = (0, 0.149999994, -10)
+  +                        double3 xformOp:translate = (0, 0.650000006, 5)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
 
@@ -861,7 +861,7 @@ SUMMARY
     ~ file scene.usda
     + prim /Scene/Cameras [typeless]
     + prim /Scene/Cameras/Tilted [Camera]
-          attr clippingRange: (1, 1e+07)
+          attr clippingRange: (1, 10000000.0)
           attr xformOp:rotateXYZ: (-10, 15, 5)
           attr xformOp:translate: (0, -400, 200)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')

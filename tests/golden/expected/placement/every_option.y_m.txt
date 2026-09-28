@@ -627,7 +627,7 @@ full answer:
     "message": "Placed A inside table at /Scene/Furniture/Table_02/asset/contents/Architecture/A_03",
     "position": {
       "x": 0.0,
-      "y": 0.007750000003725291,
+      "y": 0.00775,
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_02/asset/contents/Architecture/A_03",
@@ -704,7 +704,7 @@ file changes:
                   {
                       float3 xformOp:rotateXYZ = (0, 30, 0)
                       float3 xformOp:scale = (100, 100, 100)
-                      double3 xformOp:translate = (0, 0.775000000372529, 0)
+                      double3 xformOp:translate = (0, 0.775, 0)
                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
                       def Xform "asset" (
@@ -742,7 +742,7 @@ composed scene changes:
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 30, 0)
   +                            float3 xformOp:scale = (100, 100, 100)
-  +                            double3 xformOp:translate = (0, 0.775000000372529, 0)
+  +                            double3 xformOp:translate = (0, 0.775, 0)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
   +                            def Xform "asset" (
@@ -851,7 +851,7 @@ full answer:
     },
     "message": "Placed B inside table at /Scene/Furniture/Table_02/asset/contents/Furniture/B_04",
     "position": {
-      "x": -0.027999999999999997,
+      "x": -0.028,
       "y": 0.0,
       "z": 0.0
     },

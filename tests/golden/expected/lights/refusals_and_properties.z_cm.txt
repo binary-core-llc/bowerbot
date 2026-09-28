@@ -127,7 +127,7 @@ full answer:
     "properties": [
       {
         "allowed_tokens": [],
-        "default": 0.5299999713897705,
+        "default": 0.529999971,
         "documentation": "The angular diameter of the light in \ndegrees. The fallback value is 0.53. Higher values make the light rays less \nparallel, thereby increasing shadow softness, but also increasing the overall \namount of light.",
         "kind": "attribute",
         "name": "inputs:angle",

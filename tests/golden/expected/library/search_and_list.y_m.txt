@@ -186,14 +186,14 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
       },
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp",
-        "path": "<LIBRARY>/lamp/lamp.usda"
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
       }
     ],
     "total_matches": 2,
@@ -291,14 +291,14 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
       },
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp",
-        "path": "<LIBRARY>/lamp/lamp.usda"
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
       }
     ],
     "total_matches": 8,
@@ -349,20 +349,14 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
-      },
-      {
-        "category": "package",
-        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
       {
-        "category": "geo",
+        "category": "package",
         "format": ".usda",
-        "name": "unfrozen",
-        "path": "<LIBRARY>/unfrozen.usda"
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
       },
       {
         "category": "geo",
@@ -373,26 +367,14 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "rooted_mesh",
-        "path": "<LIBRARY>/rooted_mesh.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "path_curve",
-        "path": "<LIBRARY>/path_curve.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
         "name": "chair_cm",
         "path": "<LIBRARY>/chair_cm.usda"
       },
       {
         "category": "geo",
         "format": ".usda",
-        "name": "post_z",
-        "path": "<LIBRARY>/post_z.usda"
+        "name": "crate",
+        "path": "<LIBRARY>/crate.usda"
       },
       {
         "category": "geo",
@@ -403,20 +385,8 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "table",
-        "path": "<LIBRARY>/table.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
         "name": "ground",
         "path": "<LIBRARY>/ground.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "crate",
-        "path": "<LIBRARY>/crate.usda"
       },
       {
         "category": "mtl",
@@ -429,6 +399,36 @@ full answer:
         "format": ".usda",
         "name": "steel",
         "path": "<LIBRARY>/materials/steel.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "path_curve",
+        "path": "<LIBRARY>/path_curve.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "post_z",
+        "path": "<LIBRARY>/post_z.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "rooted_mesh",
+        "path": "<LIBRARY>/rooted_mesh.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "table",
+        "path": "<LIBRARY>/table.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "unfrozen",
+        "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
     "total_matches": 14,
@@ -479,14 +479,14 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
       },
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp",
-        "path": "<LIBRARY>/lamp/lamp.usda"
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
       }
     ],
     "total_matches": 2,
@@ -595,26 +595,8 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "unfrozen",
-        "path": "<LIBRARY>/unfrozen.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
         "name": "chair",
         "path": "<LIBRARY>/chair.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "rooted_mesh",
-        "path": "<LIBRARY>/rooted_mesh.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "path_curve",
-        "path": "<LIBRARY>/path_curve.usda"
       },
       {
         "category": "geo",
@@ -625,8 +607,8 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "post_z",
-        "path": "<LIBRARY>/post_z.usda"
+        "name": "crate",
+        "path": "<LIBRARY>/crate.usda"
       },
       {
         "category": "geo",
@@ -637,20 +619,38 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "table",
-        "path": "<LIBRARY>/table.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
         "name": "ground",
         "path": "<LIBRARY>/ground.usda"
       },
       {
         "category": "geo",
         "format": ".usda",
-        "name": "crate",
-        "path": "<LIBRARY>/crate.usda"
+        "name": "path_curve",
+        "path": "<LIBRARY>/path_curve.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "post_z",
+        "path": "<LIBRARY>/post_z.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "rooted_mesh",
+        "path": "<LIBRARY>/rooted_mesh.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "table",
+        "path": "<LIBRARY>/table.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "unfrozen",
+        "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
     "total_matches": 10,

@@ -375,7 +375,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 20.954999923706055,
+        "default": 20.954999924,
         "documentation": "Horizontal aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "horizontalAperture",
@@ -383,7 +383,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 15.290800094604492,
+        "default": 15.290800095,
         "documentation": "Vertical aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "verticalAperture",
@@ -760,7 +760,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Cameras/Front  attr xformOp:rotateXYZ: (-8.53077, 0, 0) → (-16.4164, 45, -6.74698e-15)
+    ~ /Scene/Cameras/Front  attr xformOp:rotateXYZ: (-8.53077, 0, 0) → (-16.4164, 45, 0)
     ~ /Scene/Cameras/Front  attr xformOp:translate: (0, 1.5, 5) → (3, 2, 3)
     ~ /Scene/Cameras/Front  world position: (0.0000, 1.5000, 5.0000) → (3.0000, 2.0000, 3.0000)
 
@@ -796,7 +796,7 @@ file changes:
                    float2 clippingRange = (0.01, 100000)
       -            float3 xformOp:rotateXYZ = (-8.530766, -0, 0)
       -            double3 xformOp:translate = (0, 1.5, 5)
-      +            float3 xformOp:rotateXYZ = (-16.416441, 45, -6.7469753e-15)
+      +            float3 xformOp:rotateXYZ = (-16.416441, 45, 0)
       +            double3 xformOp:translate = (3, 2, 3)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
                }
@@ -809,7 +809,7 @@ composed scene changes:
                float2 clippingRange = (0.01, 100000)
   -            float3 xformOp:rotateXYZ = (-8.530766, -0, 0)
   -            double3 xformOp:translate = (0, 1.5, 5)
-  +            float3 xformOp:rotateXYZ = (-16.416441, 45, -6.7469753e-15)
+  +            float3 xformOp:rotateXYZ = (-16.416441, 45, 0)
   +            double3 xformOp:translate = (3, 2, 3)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
            }

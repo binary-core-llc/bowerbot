@@ -1170,20 +1170,14 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
-      },
-      {
-        "category": "package",
-        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
       {
-        "category": "geo",
+        "category": "package",
         "format": ".usda",
-        "name": "unfrozen",
-        "path": "<LIBRARY>/unfrozen.usda"
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
       },
       {
         "category": "geo",
@@ -1194,26 +1188,14 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "rooted_mesh",
-        "path": "<LIBRARY>/rooted_mesh.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "path_curve",
-        "path": "<LIBRARY>/path_curve.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
         "name": "chair_cm",
         "path": "<LIBRARY>/chair_cm.usda"
       },
       {
         "category": "geo",
         "format": ".usda",
-        "name": "post_z",
-        "path": "<LIBRARY>/post_z.usda"
+        "name": "crate",
+        "path": "<LIBRARY>/crate.usda"
       },
       {
         "category": "geo",
@@ -1224,20 +1206,8 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "table",
-        "path": "<LIBRARY>/table.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
         "name": "ground",
         "path": "<LIBRARY>/ground.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "crate",
-        "path": "<LIBRARY>/crate.usda"
       },
       {
         "category": "mtl",
@@ -1250,6 +1220,36 @@ full answer:
         "format": ".usda",
         "name": "steel",
         "path": "<LIBRARY>/materials/steel.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "path_curve",
+        "path": "<LIBRARY>/path_curve.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "post_z",
+        "path": "<LIBRARY>/post_z.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "rooted_mesh",
+        "path": "<LIBRARY>/rooted_mesh.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "table",
+        "path": "<LIBRARY>/table.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "unfrozen",
+        "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
     "total_matches": 14,
@@ -1310,7 +1310,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 20.954999923706055,
+        "default": 20.954999924,
         "documentation": "Horizontal aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "horizontalAperture",
@@ -1318,7 +1318,7 @@ full answer:
       },
       {
         "allowed_tokens": [],
-        "default": 15.290800094604492,
+        "default": 15.290800095,
         "documentation": "Vertical aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
         "kind": "attribute",
         "name": "verticalAperture",

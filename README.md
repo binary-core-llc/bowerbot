@@ -939,9 +939,10 @@ src/bowerbot/
                                # the library, project textures
       naming.py                #   Names of BowerBot's files and folders: projects,
                                #   the scene and its snapshots
-    stage.py                   #   The project's scene.usda: create, open, save, snapshots;
-                               #   placing references and finding placements (moving to
-                               #   authoring/)
+      stage.py                 #   The project's scene.usda: create, open, save, named
+                               #   snapshots
+    stage.py                   #   Placing asset references, finding placements,
+                               #   list_prim_children (moving to authoring/ and features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
     intake.py                  #   intake_folder, intake_usdz, create_asset_folder, ASWF

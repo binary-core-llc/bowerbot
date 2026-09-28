@@ -14,6 +14,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             asset_dir=asset_dir, light_name=safe_name, light=light,
         )
 
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
 
         asset_local_tail = composed_path.lstrip("/").split("/", 1)[1]
         scene_light_path = f"{ref_prim_path}/{asset_local_tail}"
@@ -123,7 +124,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         attributes=attributes,
     )
     utils.lights.create_light(state.stage, prim_path, light)
-    utils.stage.save_stage(state.stage)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info("Created %s at %s", light_type.value, prim_path)
@@ -171,7 +172,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             rotate=rotate,
             texture=utils.lights.stage_asset_texture(asset_dir, texture),
         )
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     else:
         utils.lights.update_light(
             state.stage,
@@ -182,7 +183,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 state.project.path if state.project else None, texture,
             ),
         )
-        utils.stage.save_stage(state.stage)
+        authoring.stage.save_stage(state.stage)
 
     state.touch_project()
     logger.info("Updated light at %s", prim_path)
@@ -200,7 +201,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
         utils.lights.remove_light_from_folder(asset_dir, light_name)
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
         logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
         return {
             "prim_path": prim_path,
@@ -218,7 +219,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         msg = f"Failed to remove light {prim_path}"
         raise RuntimeError(msg)
 
-    utils.stage.save_stage(state.stage)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info("Removed scene light at %s", prim_path)

@@ -14,6 +14,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     )
     try:
         utils.cameras.create_camera(state.stage, prim_path, camera)
-        utils.stage.save_stage(state.stage)
+        authoring.stage.save_stage(state.stage)
     except Exception:
         state.stage.Reload()
         raise
@@ -110,7 +111,7 @@ def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     utils.cameras.update_camera(
         state.stage, prim_path, translate=translate, rotate=rotate,
     )
-    utils.stage.save_stage(state.stage)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info("Updated camera at %s", prim_path)
@@ -131,7 +132,7 @@ def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         msg = f"Failed to remove camera {prim_path}"
         raise RuntimeError(msg)
 
-    utils.stage.save_stage(state.stage)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info("Removed camera at %s", prim_path)

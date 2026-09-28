@@ -12,6 +12,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -147,7 +148,7 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
             first_index=state.object_count + 1,
         )
         state.object_count += written["placements"] or 1
-        utils.stage.save_stage(stage)
+        authoring.stage.save_stage(stage)
     except Exception:
         state.object_count = object_count_snapshot
         stage.Reload()
@@ -280,7 +281,7 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
             first_index=state.object_count + 1,
         )
         state.object_count += written["placements"] or 1
-        utils.stage.save_stage(stage)
+        authoring.stage.save_stage(stage)
     except Exception:
         state.object_count = object_count_snapshot
         stage.Reload()
@@ -331,7 +332,7 @@ def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> di
         scatter_results = [
             utils.scatter.drop_scatter(stage, path, index, align=align) for path in scatters
         ]
-        utils.stage.save_stage(stage)
+        authoring.stage.save_stage(stage)
     except Exception:
         stage.Reload()
         raise

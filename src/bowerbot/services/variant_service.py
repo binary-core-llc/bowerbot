@@ -16,6 +16,7 @@ from pxr import UsdShade
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def add_asset_material_variant(
         "relationship", "material",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
 
     def author_fn(stage, _prim_path: str) -> None:
         for mesh_path, material_path in bindings.items():
@@ -68,7 +69,7 @@ def add_asset_material_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -135,7 +136,7 @@ def add_asset_geometry_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -167,7 +168,7 @@ def setup_asset_geometry_variants(
         asset_dir, set_name, variants, default_variant,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -212,7 +213,7 @@ def add_asset_attribute_variant(
         "attribute", "attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
 
     resolved_types = utils.variants.resolve_attribute_types_for_overrides(
         asset_dir, overrides,
@@ -238,7 +239,7 @@ def add_asset_attribute_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -284,7 +285,7 @@ def add_asset_configuration_variant(
         "active", "configuration",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
 
     def author_fn(stage, _prim_path: str) -> None:
         for prim_path, active in activations.items():
@@ -295,7 +296,7 @@ def add_asset_configuration_variant(
         asset_dir, set_name, variant_name, author_fn, set_as_default,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -340,7 +341,7 @@ def add_scene_lighting_attribute_variant(
         "attribute", "lighting attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
 
     resolved_types = usd.attributes.resolve_scene_attribute_types(
         state.stage, overrides,
@@ -367,7 +368,7 @@ def add_scene_lighting_attribute_variant(
         author_fn, set_as_default,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "carrier_prim_path": carrier,
         "variant_set": set_name,
@@ -413,7 +414,7 @@ def add_scene_lighting_selection_variant(
         "active", "lighting selection",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
 
     def author_fn(stage, _carrier: str) -> None:
         for path, active in activations.items():
@@ -424,7 +425,7 @@ def add_scene_lighting_selection_variant(
         author_fn, set_as_default,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "carrier_prim_path": carrier,
         "variant_set": set_name,
@@ -506,14 +507,14 @@ def add_scene_model_selection_variant(
                 author_refs(list(existing)), set_as_default=True,
             )
             usd.references.clear_direct_references(state.stage, asset_child)
-            state.stage = utils.stage.open_stage(state.stage_path)
+            state.stage = authoring.stage.open_stage(state.stage_path)
 
     utils.variants.apply_scene_variant(
         state.stage, prim_path, set_name, variant_name,
         author_refs([new_ref]), set_as_default,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     suffix = f" (auto-promoted existing as '{promoted}')" if promoted else ""
     return {
         "carrier_prim_path": prim_path,
@@ -575,7 +576,7 @@ def select_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
 
     utils.variants.set_default_variant(asset_dir, set_name, variant_name)
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -667,7 +668,7 @@ def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
         utils.variants.cleanup_if_empty(asset_dir)
 
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -711,7 +712,7 @@ def select_scene_variant(
         state.stage, prim_path, set_name, variant_name,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "carrier_prim_path": prim_path,
         "variant_set": set_name,
@@ -744,7 +745,7 @@ def remove_scene_variant(
             state.stage, prim_path,
         )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "carrier_prim_path": prim_path,
         "variant_set": set_name,
@@ -777,7 +778,7 @@ def remove_scene_variant_set(
         state.stage, prim_path, set_name,
     )
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     suffix = f" (restored '{demoted}' as direct reference)" if demoted else ""
     return {
         "carrier_prim_path": prim_path,
@@ -811,7 +812,7 @@ def remove_asset_variant_set(
         utils.variants.cleanup_if_empty(asset_dir)
 
     if state.stage_path is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,

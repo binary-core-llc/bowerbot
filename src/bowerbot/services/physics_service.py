@@ -24,6 +24,7 @@ from typing import Any
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         asset_dir, asset_local_path, api_name, attributes, relationships,
         instance_name=instance_name,
     )
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
     logger.info(
@@ -176,7 +177,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
     if changed:
         utils.physics.cleanup_if_empty(asset_dir)
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
     api_label = (
@@ -347,7 +348,7 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         asset_dir, joint_type, name,
         asset_body0, asset_body1, attributes,
     )
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
     logger.info(
         "Service created %s asset-level (%s in %s)",
@@ -385,7 +386,7 @@ def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     removed = utils.physics.remove_joint_asset(asset_dir, name)
     if removed:
         utils.physics.cleanup_if_empty(asset_dir)
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
         state.touch_project()
     return {
         "scope": "asset",

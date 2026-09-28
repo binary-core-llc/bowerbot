@@ -11,7 +11,9 @@ group (plus ``constants`` and ``schemas``), never a feature. Callers write
 """
 
 from bowerbot.utils.authoring import naming
+from bowerbot.utils.authoring import stage
 
 __all__ = [
     "naming",
+    "stage",
 ]

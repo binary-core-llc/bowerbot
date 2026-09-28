@@ -14,6 +14,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     )
 
     utils.stage.add_reference(state.stage, scene_object)
-    utils.stage.save_stage(state.stage)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info("Placed %s at %s (%s, %s, %s)", asset_name, prim_path, tx, ty, tz)
@@ -214,7 +215,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                     scale=transform.scale,
                 ))
         utils.stage.add_references(state.stage, objects)
-        utils.stage.save_stage(state.stage)
+        authoring.stage.save_stage(state.stage)
     except Exception:
         state.object_count = object_count_snapshot
         state.stage.Reload()
@@ -328,7 +329,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         state.object_count -= 1
         raise
 
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
     composed_path = (
@@ -403,7 +404,7 @@ def cleanup_unused_contents(
             raise ValueError(msg)
 
         removed = utils.intake.cleanup_unused_contents_in_folder(asset_dir)
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
         logger.info(
             "Cleaned %d empty group(s) from %s/contents",
             len(removed), asset_dir.name,
@@ -431,7 +432,7 @@ def cleanup_unused_contents(
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)
 
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     logger.info(
         "Cleaned %d empty group(s) across %d asset folder(s)",
         total, len(per_folder),
@@ -465,7 +466,7 @@ def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     state.touch_project()
     if state.stage is not None:
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
 
     baked_count = sum(1 for r in results if r["baked"])
     logger.info(

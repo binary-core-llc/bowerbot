@@ -27,7 +27,7 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     state.stage_path = state.project.scene_path
     if state.stage_path.exists():
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
         state.object_count = len(utils.inspection.list_prims(state.stage))
         logger.info("Reopened existing stage: %s", state.stage_path)
         return {
@@ -40,8 +40,8 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         }
 
     state.object_count = 0
-    state.stage = utils.stage.create_stage(state.stage_path)
-    utils.stage.save_stage(state.stage)
+    state.stage = authoring.stage.create_stage(state.stage_path)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info("Created stage: %s", state.stage_path)
@@ -83,7 +83,7 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         msg = f"Failed to rename {old_path} to {new_path}"
         raise RuntimeError(msg)
 
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     rewrites = usd.namespace.rewrite_refs(
         state.stage, {old_path: new_path},
     )
@@ -113,7 +113,7 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         if not success:
             msg = f"Failed to remove nested {prim_path}"
             raise RuntimeError(msg)
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     else:
         success = usd.namespace.remove_prim(state.stage, prim_path)
         if not success:
@@ -169,13 +169,13 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
         if not success:
             msg = f"Failed to update nested transform for {prim_path}"
             raise RuntimeError(msg)
-        state.stage = utils.stage.open_stage(state.stage_path)
+        state.stage = authoring.stage.open_stage(state.stage_path)
     else:
         usd.transforms.set_transform(
             state.stage, prim_path,
             translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
         )
-        utils.stage.save_stage(state.stage)
+        authoring.stage.save_stage(state.stage)
 
     state.touch_project()
 
@@ -214,7 +214,7 @@ def set_prim_attribute(
     usd.attributes.set_prim_attribute(
         state.stage, prim_path, attribute_name, value,
     )
-    utils.stage.save_stage(state.stage)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
     action = "Cleared" if value is None else "Authored"
     logger.info(
@@ -238,7 +238,7 @@ def save_scene_snapshot(state: scene_state.SceneState, params: dict[str, Any]) -
     name = params["name"]
     force = bool(params.get("force", False))
     state.stage.Save()
-    snapshot_path = utils.stage.save_scene_snapshot(
+    snapshot_path = authoring.stage.save_scene_snapshot(
         state.stage_path, name, force=force,
     )
     state.touch_project()
@@ -259,7 +259,7 @@ def list_scene_snapshots(state: scene_state.SceneState, params: dict[str, Any]) 
     del params
     if state.stage_path is None:
         raise ValueError("No scene is open.")
-    snapshots = utils.stage.list_scene_snapshots(state.stage_path)
+    snapshots = authoring.stage.list_scene_snapshots(state.stage_path)
     return {
         "scene_path": str(state.stage_path),
         "snapshot_count": len(snapshots),
@@ -275,7 +275,7 @@ def delete_scene_snapshot(
     if state.stage_path is None:
         raise ValueError("No scene is open.")
     name = params["name"]
-    removed = utils.stage.delete_scene_snapshot(state.stage_path, name)
+    removed = authoring.stage.delete_scene_snapshot(state.stage_path, name)
     state.touch_project()
     return {
         "snapshot_path": str(removed),

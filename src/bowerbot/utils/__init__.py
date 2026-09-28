@@ -32,7 +32,6 @@ from bowerbot.utils import physics
 from bowerbot.utils import physics_typing
 from bowerbot.utils import scatter
 from bowerbot.utils import stage
-from bowerbot.utils import surface
 from bowerbot.utils import textures
 from bowerbot.utils import usd
 from bowerbot.utils import validation
@@ -53,7 +52,6 @@ __all__ = [
     "physics_typing",
     "scatter",
     "stage",
-    "surface",
     "textures",
     "usd",
     "validation",

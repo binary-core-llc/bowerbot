@@ -15,6 +15,7 @@ from bowerbot.utils.usd import metrics
 from bowerbot.utils.usd import namespace
 from bowerbot.utils.usd import naming
 from bowerbot.utils.usd import references
+from bowerbot.utils.usd import surface
 from bowerbot.utils.usd import transforms
 from bowerbot.utils.usd import values
 from bowerbot.utils.usd import variant_sets
@@ -26,6 +27,7 @@ __all__ = [
     "namespace",
     "naming",
     "references",
+    "surface",
     "transforms",
     "values",
     "variant_sets",

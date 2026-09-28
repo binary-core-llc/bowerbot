@@ -925,6 +925,8 @@ src/bowerbot/
                                #   transforms into geometry, rotation math
       references.py            #   References and payloads: read and clear them, find
                                #   what a layer references, walk dependencies
+      surface.py               #   World-space triangles of geometry, vertical ray
+                               #   queries, plan-view sampling (numpy)
       variant_sets.py          #   USD variant sets: author inside a variant, read,
                                #   select and remove variant sets
       naming.py                #   Valid and safe USD names: prims, variants, joints,
@@ -935,8 +937,9 @@ src/bowerbot/
                                # the library, project textures
       naming.py                #   Names of BowerBot's files and folders: projects,
                                #   the scene and its snapshots
-    stage.py                   #   USD-stage primitives: open/save, references,
-                               #   xform-op edits, namespace edits, set/list_prim_attribute
+    stage.py                   #   The project's scene.usda: create, open, save, snapshots;
+                               #   placing references and finding placements (moving to
+                               #   authoring/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
     intake.py                  #   intake_folder, intake_usdz, create_asset_folder, ASWF
@@ -956,11 +959,10 @@ src/bowerbot/
     physics_typing.py          #   is_joint / is_physics_scene / is_collision_group / ...
     scatter.py                 #   Distributions (random/rows/pile/path), resting,
                                #   orientation, PointInstancer + placement authoring
-    surface.py                 #   World-space triangles from gprims, vertical ray
-                               #   queries, plan coverage, area sampling (numpy)
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
-    variants.py                #   variants.usda lifecycle, author_in_variant keystone,
-                               #   apply_variant, set/clear_default, removal + cleanup
+    variants.py                #   variants.usda lifecycle, apply_variant, set/clear
+                               #   default, removal + cleanup (variant-set operations
+                               #   are in usd/variant_sets)
     geometry.py                #   Bounds, unit conversion, layout math
     layout.py                  #   place_layout expansion: grid/linear patterns,
                                #   asset resolution

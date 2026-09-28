@@ -96,13 +96,13 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
         [schemas.ScatterAsset(**asset) for asset in params["assets"]],
         project_dir=project_dir, library_dir=state.library_dir,
     )
-    triangles = utils.surface.collect_triangles(
+    triangles = usd.surface.collect_triangles(
         stage, params["surfaces"], up=up, exclude=[prim_path],
     )
     avoid = None
     if params.get("avoid"):
-        avoid = utils.surface.build_vertical_index(
-            utils.surface.collect_triangles(
+        avoid = usd.surface.build_vertical_index(
+            usd.surface.collect_triangles(
                 stage, params["avoid"], up=up, exclude=[prim_path],
                 instancer_footprints=True,
             ),
@@ -257,8 +257,8 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
 
     index = None
     if params.get("snap", True):
-        index = utils.surface.build_vertical_index(
-            utils.surface.collect_triangles(
+        index = usd.surface.build_vertical_index(
+            usd.surface.collect_triangles(
                 stage, params.get("surfaces") or [constants.SceneNamespace.ROOT],
                 up=up, exclude=[prim_path],
             ),
@@ -315,8 +315,8 @@ def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> di
     up = usd.metrics.axis_index(state.up_axis.value)
     align = schemas.ScatterDropAlign(params.get("align", schemas.ScatterDropAlign.KEEP))
     wrappers, scatters = utils.scatter.drop_targets(stage, params["prim_paths"])
-    index = utils.surface.build_vertical_index(
-        utils.surface.collect_triangles(
+    index = usd.surface.build_vertical_index(
+        usd.surface.collect_triangles(
             stage, params.get("surfaces") or [constants.SceneNamespace.ROOT],
             up=up, exclude=wrappers,
         ),

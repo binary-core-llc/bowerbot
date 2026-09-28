@@ -243,7 +243,7 @@ def surface_on_accept(
         prob = region_mask(points, region, up).astype(np.float64)
         prob *= region_falloff(points, region, up)
         if avoid is not None and points.shape[0]:
-            covered = utils.surface.plan_coverage(
+            covered = usd.surface.plan_coverage(
                 avoid, points[:, axes[0]], points[:, axes[1]], surface.avoid_margin,
             )
             prob[covered] = 0.0
@@ -332,7 +332,7 @@ def eligible_triangles(
     region: schemas.ScatterRegion | None,
 ) -> schemas.BoolArray:
     """Triangles that are flat enough and overlap the region in plan view."""
-    mask = utils.surface.slope_mask(triangles, up, max_slope_degrees)
+    mask = usd.surface.slope_mask(triangles, up, max_slope_degrees)
     bounds = region_plan_bounds(region, up)
     if bounds is not None and triangles.count:
         axes = list(usd.metrics.horizontal_axes(up))
@@ -446,7 +446,7 @@ def estimate_surface_count(
         raise ValueError(constants.ScatterRules.COUNT_OR_DENSITY)
     raw = density * area_m2
     probe = min(int(raw) + 1, 20_000)
-    points, tris = utils.surface.sample_on_triangles(rng, triangles, weights, probe)
+    points, tris = usd.surface.sample_on_triangles(rng, triangles, weights, probe)
     rate = float(np.mean(accept(points, tris))) if probe else 0.0
     return int(round(raw * rate)), area_m2
 
@@ -530,7 +530,7 @@ def pile_instances(
     gb = origin[1] + (np.arange(dims) + 0.5) * cell
     aa, bb = np.meshgrid(ga, gb, indexing="ij")
     probe = plan_to_world(np.stack([aa.ravel(), bb.ravel()], axis=1), up)
-    hit, heights, _ = utils.surface.surface_under(index, probe, mode="top")
+    hit, heights, _ = usd.surface.surface_under(index, probe, mode="top")
     field = np.where(hit, heights, np.nan).reshape(dims, dims)
     if np.isnan(field).all():
         msg = "no surface lies under the pile region; check the region centre and surfaces."
@@ -660,7 +660,7 @@ def generate_surface_scatter(
     warnings: list[str] = []
 
     if surface.arrangement is schemas.ScatterArrangement.PILE:
-        index = utils.surface.build_vertical_index(triangles, up, up_facing_only=True)
+        index = usd.surface.build_vertical_index(triangles, up, up_facing_only=True)
         count, center, radius = _pile_setup(surface)
         proto_idx = pick_prototypes(rng, weights, count, schemas.ScatterAssetOrder.RANDOM)
         scales = random_scales(rng, pose.scale_range, count)
@@ -705,7 +705,7 @@ def generate_surface_scatter(
     proto_idx = pick_prototypes(rng, weights, n, schemas.ScatterAssetOrder.RANDOM)
     scales = random_scales(rng, pose.scale_range, n)
     headings = random_headings(rng, n, up, random_yaw=pose.random_yaw)
-    index = utils.surface.build_vertical_index(triangles, up, up_facing_only=True)
+    index = usd.surface.build_vertical_index(triangles, up, up_facing_only=True)
     settle = np.ones(n, dtype=bool)
     if pose.align is schemas.ScatterAlign.SURFACE:
         base_min, base_max = prototype_bases(prototypes, proto_idx)
@@ -960,7 +960,7 @@ def generate_path_scatter(
     normals = np.repeat(up_vec[None, :], n, axis=0)
     warnings: list[str] = []
     if index is not None:
-        hit, heights, tris = utils.surface.surface_under(
+        hit, heights, tris = usd.surface.surface_under(
             index, contacts, mode="nearest", reference=contacts[:, up].copy(),
         )
         contacts[hit, up] = heights[hit]
@@ -1120,7 +1120,7 @@ def ground_normals(
     samples = base_samples(positions, headings, scales, base_min, base_max, up)
     n, k, _ = samples.shape
     flat = samples.reshape(-1, 3)
-    hit, heights, _ = utils.surface.surface_under(
+    hit, heights, _ = usd.surface.surface_under(
         index, flat, mode="nearest", reference=flat[:, up].copy(),
     )
     w = hit.reshape(n, k).astype(np.float64)
@@ -1181,7 +1181,7 @@ def settle_shift(
     """Up shift that lands each piece's highest base sample on the surface."""
     n, k, _ = samples.shape
     flat = samples.reshape(-1, 3)
-    hit, heights, _ = utils.surface.surface_under(
+    hit, heights, _ = usd.surface.surface_under(
         index, flat, mode="nearest", reference=flat[:, up].copy(),
     )
     gap = np.where(hit, flat[:, up] - np.where(hit, heights, 0.0), -np.inf).reshape(n, k)
@@ -1448,7 +1448,7 @@ def drop_scatter(
         headings = usd.transforms.quat_heading(
             usd.transforms.quat_mul(to_world_q, orientations), up,
         )
-        hit, _, tris = utils.surface.surface_under(
+        hit, _, tris = usd.surface.surface_under(
             index, centers, mode="nearest", reference=centers[:, up].copy(),
         )
         fallback = np.where(
@@ -1520,12 +1520,12 @@ def drop_prim(
     footprint[:, axes[0]] = bmin[axes[0]] + ga.ravel() * (bmax[axes[0]] - bmin[axes[0]])
     footprint[:, axes[1]] = bmin[axes[1]] + gb.ravel() * (bmax[axes[1]] - bmin[axes[1]])
     ceiling = np.full(footprint.shape[0], bmax[up])
-    hit, heights, _ = utils.surface.surface_under(
+    hit, heights, _ = usd.surface.surface_under(
         index, footprint, mode="below", reference=ceiling,
     )
     if not hit.any():
         # Fully buried: use the nearest ground above instead.
-        hit, heights, _ = utils.surface.surface_under(
+        hit, heights, _ = usd.surface.surface_under(
             index, footprint, mode="nearest", reference=ceiling,
         )
     if not hit.any():
@@ -1633,7 +1633,7 @@ def _conformed_extents(
         msg = f"{root_file.name} has no geometry bounds, so it cannot rest on a surface."
         raise ValueError(msg)
     corners = np.array([list(rng.GetCorner(i)) for i in range(8)])
-    triangles = utils.surface.collect_triangles(
+    triangles = usd.surface.collect_triangles(
         stage, [str(root.GetPath())],
         up=usd.metrics.axis_index(UsdGeom.GetStageUpAxis(stage)),
     )
@@ -1681,7 +1681,7 @@ def _base_footprint(
 
 def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.FloatArray:
     """World-space vertices of a prototype, or its box corners if it has no mesh."""
-    triangles = utils.surface.collect_triangles(stage, [prim_path], up=up)
+    triangles = usd.surface.collect_triangles(stage, [prim_path], up=up)
     if triangles.count:
         return np.concatenate([triangles.v0, triangles.v1, triangles.v2])
     cache = UsdGeom.BBoxCache(
@@ -1714,7 +1714,7 @@ def _noise_scale(
     """Variation feature size: explicit, else a fifth of the covered extent."""
     if surface.variation_scale is not None:
         return surface.variation_scale
-    bounds = region_plan_bounds(surface.region, up) or utils.surface.plan_bounds(triangles, up)
+    bounds = region_plan_bounds(surface.region, up) or usd.surface.plan_bounds(triangles, up)
     return max(float(np.max(bounds[1] - bounds[0])) / 5.0, 1e-6)
 
 
@@ -1729,14 +1729,14 @@ def _rows_contacts(
     if surface.spacing is None or surface.row_spacing is None:
         msg = "arrangement 'rows' needs spacing and row_spacing."
         raise ValueError(msg)
-    lo, hi = region_plan_bounds(surface.region, up) or utils.surface.plan_bounds(triangles, up)
+    lo, hi = region_plan_bounds(surface.region, up) or usd.surface.plan_bounds(triangles, up)
     plan = rows_plan_points(
         rng, lo, hi, spacing=surface.spacing, row_spacing=surface.row_spacing,
         direction_degrees=surface.row_direction_degrees, jitter=surface.jitter,
     )
     points = plan_to_world(plan, up)
-    index = utils.surface.build_vertical_index(triangles, up, up_facing_only=True)
-    hit, heights, tris = utils.surface.surface_under(index, points, mode="top")
+    index = usd.surface.build_vertical_index(triangles, up, up_facing_only=True)
+    hit, heights, tris = usd.surface.surface_under(index, points, mode="top")
     ok = hit.copy()
     ok[hit] = tri_mask[tris[hit]]
     points = points[ok]
@@ -1757,10 +1757,10 @@ def _path_pitch(
     """Pitch (radians) of the surface along the path across each instance."""
     ahead = sample_path(points, closed, up, stations + half)[station_idx] + lateral
     behind = sample_path(points, closed, up, stations - half)[station_idx] + lateral
-    hit_a, h_a, _ = utils.surface.surface_under(
+    hit_a, h_a, _ = usd.surface.surface_under(
         index, ahead, mode="nearest", reference=ahead[:, up].copy(),
     )
-    hit_b, h_b, _ = utils.surface.surface_under(
+    hit_b, h_b, _ = usd.surface.surface_under(
         index, behind, mode="nearest", reference=behind[:, up].copy(),
     )
     axes = list(usd.metrics.horizontal_axes(up))
@@ -1784,7 +1784,7 @@ def _accepted_samples(
     kept_tris: list[schemas.IntArray] = []
     got = 0
     for _ in range(constants.ScatterTuning.MAX_SAMPLE_ROUNDS if exact else 1):
-        points, tris = utils.surface.sample_on_triangles(rng, triangles, weights, batch)
+        points, tris = usd.surface.sample_on_triangles(rng, triangles, weights, batch)
         prob = accept(points, tris)
         keep = rng.random(points.shape[0]) < prob
         kept_pts.append(points[keep])
@@ -1814,7 +1814,7 @@ def _eligible_share(
     """Share of the eligible area inside the region and clear of avoid."""
     if surface.region is None and avoid is None:
         return 1.0
-    points, _ = utils.surface.sample_on_triangles(
+    points, _ = usd.surface.sample_on_triangles(
         rng, triangles, triangles.areas * tri_mask, constants.ScatterTuning.AREA_PROBE,
     )
     if points.shape[0] == 0:
@@ -1822,7 +1822,7 @@ def _eligible_share(
     keep = region_mask(points, surface.region, up)
     if avoid is not None:
         axes = list(usd.metrics.horizontal_axes(up))
-        keep &= ~utils.surface.plan_coverage(
+        keep &= ~usd.surface.plan_coverage(
             avoid, points[:, axes[0]], points[:, axes[1]], surface.avoid_margin,
         )
     return float(keep.mean())

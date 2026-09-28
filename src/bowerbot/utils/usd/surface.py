@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Surface utils — world-space triangles and vectorized vertical queries."""
+"""World-space triangles of geometry, vertical ray queries on them, and plan-view sampling."""
 
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ from pxr import UsdGeom
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot.utils import usd
+
+# ── Triangles of geometry ──
 
 
 def collect_triangles(
@@ -76,6 +78,8 @@ def collect_triangles(
             ))
 
     return _build_triangles(parts, up)
+
+# ── Vertical queries ──
 
 
 def build_vertical_index(
@@ -211,6 +215,8 @@ def surface_under(
     tris[q[best]] = t[best]
     return hit, heights, tris
 
+# ── Plan-view coverage and sampling ──
+
 
 def plan_coverage(
     index: schemas.SurfaceIndex, qa: schemas.FloatArray, qb: schemas.FloatArray, margin: float,
@@ -275,8 +281,7 @@ def plan_bounds(
     pts = np.concatenate([triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]])
     return pts.min(axis=0), pts.max(axis=0)
 
-
-# ── internals ──
+# ── Helpers ──
 
 
 def _is_drawn(prim: Usd.Prim) -> bool:

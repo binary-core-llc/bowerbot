@@ -23,7 +23,6 @@ from bowerbot.utils import authoring
 from bowerbot.utils import cameras
 from bowerbot.utils import geometry
 from bowerbot.utils import inspection
-from bowerbot.utils import intake
 from bowerbot.utils import layout
 from bowerbot.utils import lights
 from bowerbot.utils import materials
@@ -41,7 +40,6 @@ __all__ = [
     "cameras",
     "geometry",
     "inspection",
-    "intake",
     "layout",
     "lights",
     "materials",

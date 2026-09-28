@@ -1,12 +1,11 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Asset intake primitives — bring source folders into the project.
+"""Bringing a file or folder into the project: copy it, localize its dependencies, check it.
 
-USD-write side of the asset domain: folder copy + canonicalize +
-localize external dependencies, plus ASWF compliance repair. Building an
-asset folder is in ``authoring.asset_folder``, and nested asset references
-in ``authoring.placement``.
+A library package is copied as a self-contained asset folder, a loose file is
+wrapped in a new one (``authoring.asset_folder``), and a USDZ is copied as-is.
+The geometry is then checked for ASWF compliance and, when asked, repaired.
 """
 
 from __future__ import annotations
@@ -27,6 +26,8 @@ from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
+
+# ── Bringing an asset into the project ──
 
 
 def prepare_asset(
@@ -83,43 +84,6 @@ def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
         if package_dir is not None:
             return package_dir.name
     return asset_path.stem
-
-
-def _validate_intake(
-    report: schemas.IntakeReport,
-    assets_dir: Path,
-    *,
-    fix_root_prim: bool,
-    fix_root_transforms: bool,
-) -> None:
-    """Validate the intaken asset's geo.usda; rollback target on failure."""
-    target_folder = assets_dir / report.asset_folder_name
-    geo_path = target_folder / constants.ASWFLayerNames.GEO
-    if not geo_path.exists():
-        return
-    try:
-        ensure_aswf_compliance(
-            geo_path,
-            fix_root_prim=fix_root_prim,
-            fix_root_transforms=fix_root_transforms,
-        )
-    except (ValueError, RuntimeError):
-        if target_folder.exists():
-            shutil.rmtree(target_folder, ignore_errors=True)
-        raise
-
-    canonical_root = target_folder / report.root_canonical_name
-    if canonical_root.exists():
-        compliance_issues = usd.compliance.run_usd_compliance_checker(canonical_root)
-        for issue in compliance_issues:
-            report.warnings.append(issue.message)
-            logger.info(
-                "ComplianceChecker on %s: %s",
-                report.asset_folder_name, issue.message,
-            )
-
-
-# ── Folder intake ──
 
 
 def intake_folder(source_folder: Path, project_assets_dir: Path) -> schemas.IntakeReport:
@@ -229,7 +193,7 @@ def intake_usdz(asset_path: Path, assets_dir: Path) -> schemas.IntakeReport:
     )
 
 
-# ── Loose-file wrapping ──
+# ── Checking and repairing geometry ──
 
 
 def ensure_aswf_compliance(
@@ -331,6 +295,9 @@ def freeze_one_asset(assets_dir: Path, name: str) -> dict:
     return {"name": name, "baked": baked}
 
 
+# ── Reporting an intake ──
+
+
 def intake_summary(report: schemas.IntakeReport) -> dict:
     """Condense an intake report into the fields surfaced to the LLM."""
     return {
@@ -365,7 +332,41 @@ def placement_message(
     return " ".join(parts)
 
 
-# ── Internal: intake helpers ──
+# ── Helpers ──
+
+
+def _validate_intake(
+    report: schemas.IntakeReport,
+    assets_dir: Path,
+    *,
+    fix_root_prim: bool,
+    fix_root_transforms: bool,
+) -> None:
+    """Validate the intaken asset's geo.usda; rollback target on failure."""
+    target_folder = assets_dir / report.asset_folder_name
+    geo_path = target_folder / constants.ASWFLayerNames.GEO
+    if not geo_path.exists():
+        return
+    try:
+        ensure_aswf_compliance(
+            geo_path,
+            fix_root_prim=fix_root_prim,
+            fix_root_transforms=fix_root_transforms,
+        )
+    except (ValueError, RuntimeError):
+        if target_folder.exists():
+            shutil.rmtree(target_folder, ignore_errors=True)
+        raise
+
+    canonical_root = target_folder / report.root_canonical_name
+    if canonical_root.exists():
+        compliance_issues = usd.compliance.run_usd_compliance_checker(canonical_root)
+        for issue in compliance_issues:
+            report.warnings.append(issue.message)
+            logger.info(
+                "ComplianceChecker on %s: %s",
+                report.asset_folder_name, issue.message,
+            )
 
 
 def _reuse_existing_target(target_folder: Path, source_root: Path) -> schemas.IntakeReport:
@@ -542,9 +543,6 @@ def _validate_self_contained(
         raise RuntimeError(msg)
 
     return []
-
-
-# ── Internal: nested + folder-creation helpers ──
 
 
 def _wrap_root_prim(geometry_file: Path) -> None:

@@ -469,7 +469,7 @@ def add_scene_model_selection_variant(
         state.project.path if state.project else None,
         state.library_dir,
     )
-    report = utils.intake.prepare_asset(
+    report = authoring.intake.prepare_asset(
         resolved_path, state.resolve_assets_dir(),
         library_dir=state.library_dir,
         fix_root_prim=bool(params.get("fix_root_prim", False)),

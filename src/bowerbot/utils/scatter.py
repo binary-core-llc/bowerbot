@@ -19,7 +19,6 @@ from pxr import Vt
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
@@ -127,7 +126,7 @@ def resolve_asset_sources(
         except ValueError as e:
             problems.append(f"assets[{idx}]: {e}")
             continue
-        target = utils.intake.intake_target_name(path, library_dir)
+        target = authoring.intake.intake_target_name(path, library_dir)
         prior = targets.setdefault(target, path)
         if prior != path:
             problems.append(
@@ -161,7 +160,7 @@ def stage_prototypes(
     problems: list[str] = []
     for path in fix_prim:
         try:
-            reports[path] = utils.intake.prepare_asset(
+            reports[path] = authoring.intake.prepare_asset(
                 path, assets_dir, library_dir=library_dir,
                 fix_root_prim=fix_prim[path], fix_root_transforms=fix_xform[path],
             )

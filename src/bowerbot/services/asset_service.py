@@ -43,7 +43,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
 
     assets_dir = state.resolve_assets_dir()
     try:
-        report = utils.intake.prepare_asset(
+        report = authoring.intake.prepare_asset(
             asset_path, assets_dir,
             library_dir=state.library_dir,
             fix_root_prim=params.get("fix_root_prim", False),
@@ -75,8 +75,8 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         "asset": asset_name,
         "position": {"x": tx, "y": ty, "z": tz},
         "rotation_y": ry,
-        "intake": utils.intake.intake_summary(report),
-        "message": utils.intake.placement_message(asset_name, prim_path, report),
+        "intake": authoring.intake.intake_summary(report),
+        "message": authoring.intake.placement_message(asset_name, prim_path, report),
     }
 
 
@@ -114,7 +114,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 f"set the entry's 'name'.",
             )
             continue
-        target = utils.intake.intake_target_name(
+        target = authoring.intake.intake_target_name(
             asset_path, state.library_dir,
         )
         prior = folder_sources.setdefault(target, asset_path)
@@ -179,7 +179,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     intake_problems: list[str] = []
     for path in folder_sources.values():
         try:
-            reports[path] = utils.intake.prepare_asset(
+            reports[path] = authoring.intake.prepare_asset(
                 path, assets_dir,
                 library_dir=state.library_dir,
                 fix_root_prim=fix_prim[path],
@@ -285,7 +285,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         raise ValueError(msg)
 
     assets_dir = state.resolve_assets_dir()
-    report = utils.intake.prepare_asset(
+    report = authoring.intake.prepare_asset(
         asset_path, assets_dir,
         library_dir=state.library_dir,
         fix_root_prim=params.get("fix_root_prim", False),
@@ -345,7 +345,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         "container": container_dir.name,
         "position": {"x": tx, "y": ty, "z": tz},
         "rotation_y": ry,
-        "intake": utils.intake.intake_summary(report),
+        "intake": authoring.intake.intake_summary(report),
         "message": (
             f"Placed {asset_name} inside {container_dir.name} at {composed_path}"
         ),
@@ -456,10 +456,10 @@ def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     name = params.get("name")
 
     if name:
-        results = [utils.intake.freeze_one_asset(assets_dir, name)]
+        results = [authoring.intake.freeze_one_asset(assets_dir, name)]
     else:
         results = [
-            utils.intake.freeze_one_asset(assets_dir, entry.name)
+            authoring.intake.freeze_one_asset(assets_dir, entry.name)
             for entry in sorted(assets_dir.iterdir())
             if entry.is_dir() and (entry / constants.ASWFLayerNames.GEO).exists()
         ]

@@ -952,10 +952,11 @@ src/bowerbot/
                                #   placements, nested assets, container frames
       library.py               #   The asset library: searching it for assets and
                                #   textures, its asset folders, resolving a path
+      intake.py                #   Bringing a file or folder into the project: copy,
+                               #   localize, check and repair (ASWF compliance)
     stage.py                   #   list_prim_children (moving to features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
-    intake.py                  #   intake_folder, intake_usdz, ASWF compliance repair
     asset_folder.py            #   check_shared_modification (moving to
                                #   features/materials)
     lights.py                  #   All light authoring: create/update/remove,

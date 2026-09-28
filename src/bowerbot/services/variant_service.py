@@ -33,7 +33,7 @@ def add_asset_material_variant(
     )
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    raw = utils.variants.require_dict_param(
+    raw = usd.values.require_dict_param(
         params, "bindings",
         "Each entry maps a mesh prim path to a material prim path "
         "(e.g. {'/Geo/Top': '/Materials/wood'}).",
@@ -92,7 +92,7 @@ def add_asset_geometry_variant(
     )
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    raw = utils.variants.require_dict_param(
+    raw = usd.values.require_dict_param(
         params, "payloads",
         "Each entry maps a prim path to a payload asset path "
         "(e.g. {'/Geo': './geo_low.usda'}).",
@@ -157,7 +157,7 @@ def setup_asset_geometry_variants(
     asset_dir, _ = utils.asset_folder.require_asset_context(state.stage, params["prim_path"])
     set_name = params["variant_set"]
     default_variant = params["default_variant"]
-    variants = utils.variants.require_dict_param(
+    variants = usd.values.require_dict_param(
         params, "variants",
         "Each entry maps a variant name to its payload path "
         "(e.g. {'high': './geo.usda', 'low': './geo_low.usda'}).",
@@ -190,7 +190,7 @@ def add_asset_attribute_variant(
     )
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    raw = utils.variants.require_dict_param(
+    raw = usd.values.require_dict_param(
         params, "overrides",
         "Each entry maps a prim path to attribute_name -> value "
         "(e.g. {'lgt/Bulb': {'inputs:color': [0.2, 0.4, 1.0]}}).",
@@ -262,7 +262,7 @@ def add_asset_configuration_variant(
     )
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    raw = utils.variants.require_dict_param(
+    raw = usd.values.require_dict_param(
         params, "activations",
         "Each entry maps a prim path to a boolean active flag "
         "(e.g. {'/Geo/Door': false}).",
@@ -316,7 +316,7 @@ def add_scene_lighting_attribute_variant(
     """Author a scene-lighting attribute variant on UsdLux children of /Scene/Lighting."""
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    raw = utils.variants.require_dict_param(
+    raw = usd.values.require_dict_param(
         params, "overrides",
         "Each entry maps a UsdLux prim path under /Scene/Lighting to "
         "attribute_name -> value (e.g. {'/Scene/Lighting/Key_01': "
@@ -388,7 +388,7 @@ def add_scene_lighting_selection_variant(
     """Author a scene-lighting variant: active toggles on UsdLux children of /Scene/Lighting."""
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    raw = utils.variants.require_dict_param(
+    raw = usd.values.require_dict_param(
         params, "activations",
         "Each entry maps a UsdLux prim path under /Scene/Lighting to a "
         "boolean active flag (e.g. {'/Scene/Lighting/Key_Disk': true, "

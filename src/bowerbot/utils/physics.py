@@ -104,7 +104,7 @@ def list_api_properties(
                 name=real_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=utils.usd_schema.to_jsonable(attr_spec.default),
+                default=usd.values.to_jsonable(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
@@ -595,7 +595,7 @@ def get_physics_summary(asset_dir: Path) -> schemas.AssetPhysicsSummary:
         if not isinstance(spec, Sdf.PrimSpec):
             return
         apis = _read_api_schemas(spec)
-        attrs = {a.name: utils.usd_schema.to_jsonable(a.default) for a in spec.attributes}
+        attrs = {a.name: usd.values.to_jsonable(a.default) for a in spec.attributes}
         rels = {
             r.name: [str(t) for t in r.targetPathList.explicitItems]
             for r in spec.relationships
@@ -630,7 +630,7 @@ def get_scene_physics_summary(
             return
         apis = _read_api_schemas(spec)
         attrs = {
-            a.name: utils.usd_schema.to_jsonable(a.default)
+            a.name: usd.values.to_jsonable(a.default)
             for a in spec.attributes
             if a.name.startswith("physics:")
         }
@@ -799,20 +799,6 @@ def autodetect_scope(stage: Usd.Stage, prim_path: str) -> str:
     return "asset"
 
 
-def parse_vec3(
-    value: Any, name: str = "vector",
-) -> tuple[float, float, float] | None:
-    """Coerce a JSON-shaped triple to ``(float, float, float)`` or None."""
-    if value is None:
-        return None
-    if not isinstance(value, (list, tuple)) or len(value) != 3:
-        raise ValueError(
-            f"{name!r} must be a list of 3 numbers; got {value!r}",
-        )
-    x, y, z = (utils.stage.coerce_number(v, name) for v in value)
-    return x, y, z
-
-
 def resolve_typed_target(
     prim: Usd.Prim, api_name: schemas.PhysicsApiName,
 ) -> Usd.Prim:
@@ -887,7 +873,7 @@ def list_joint_properties(joint_type: schemas.PhysicsJointType) -> schemas.Physi
                 name=prop_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=utils.usd_schema.to_jsonable(attr_spec.default),
+                default=usd.values.to_jsonable(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
@@ -1183,7 +1169,7 @@ def _summarize_joint(prim: Usd.Prim) -> schemas.JointSummary:
             continue
         if not a.HasAuthoredValue():
             continue
-        attrs[name] = utils.usd_schema.to_jsonable(a.Get())
+        attrs[name] = usd.values.to_jsonable(a.Get())
 
     return schemas.JointSummary(
         prim_path=str(prim.GetPath()),

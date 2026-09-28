@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any
 
 from pxr import Sdf
 from pxr import Usd
@@ -512,18 +511,6 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
 
 
 # ── Naming ──
-
-
-def require_dict_param(
-    params: dict[str, Any], name: str, hint: str,
-) -> dict[str, Any]:
-    """Read a required non-empty dict tool param; raise with a hint on miss."""
-    value = params.get(name)
-    if not isinstance(value, dict) or not value:
-        raise ValueError(
-            f"'{name}' is required and must be a non-empty object. {hint}",
-        )
-    return value
 
 
 def _resolve_payload_path(asset_dir: Path, payload_ref: str) -> Path:

@@ -31,7 +31,7 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     safe_name = usd.naming.safe_prim_name(params["camera_name"])
     attributes = dict(params.get("attributes") or {})
     look_at = params.get("look_at")
-    rotate = utils.geometry.unpack_vec3(
+    rotate = usd.values.unpack_vec3(
         params, "rotate_x", "rotate_y", "rotate_z",
     )
     if look_at is not None and rotate is not None:
@@ -85,10 +85,10 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
 def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Reposition or re-aim an existing scene camera."""
     prim_path = params["prim_path"]
-    translate = utils.geometry.unpack_vec3(
+    translate = usd.values.unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
     )
-    rotate = utils.geometry.unpack_vec3(
+    rotate = usd.values.unpack_vec3(
         params, "rotate_x", "rotate_y", "rotate_z",
     )
     look_at = params.get("look_at")

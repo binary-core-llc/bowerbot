@@ -12,6 +12,7 @@ from pxr import UsdGeom
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 
 def list_camera_properties() -> schemas.CameraSchemaInfo:
@@ -33,7 +34,7 @@ def list_camera_properties() -> schemas.CameraSchemaInfo:
             name=name,
             kind="attribute",
             type_name=str(attr_spec.typeName),
-            default=utils.usd_schema.to_jsonable(attr_spec.default),
+            default=usd.values.to_jsonable(attr_spec.default),
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],

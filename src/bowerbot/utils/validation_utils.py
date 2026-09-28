@@ -5,18 +5,15 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 import os
 from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom, UsdShade, UsdUtils, UsdValidation
 
-from bowerbot.schemas import (
-    AppleUSDZConstraints,
-    Severity,
-    ValidationIssue,
-    ValidationResult,
-)
+from bowerbot.constants import AppleUSDZConstraints, ASWFLayerNames
+from bowerbot.schemas import Severity, ValidationIssue, ValidationResult
 from bowerbot.utils.stage_utils import get_prim_ref_paths
 
 logger = logging.getLogger(__name__)
@@ -276,7 +273,6 @@ def _check_sublayers(stage: Usd.Stage) -> list[ValidationIssue]:
 
 def validate_asset_variants(asset_dir: Path) -> list[ValidationIssue]:
     """Structural checks for variant authoring on a single asset folder."""
-    from bowerbot.schemas import ASWFLayerNames
     from bowerbot.utils import variant_utils
     from bowerbot.utils.asset_folder_utils import (
         find_root_file,
@@ -398,22 +394,24 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[ValidationIssue]:
     return issues
 
 
-_VALIDATION_CONTEXT: UsdValidation.ValidationContext | None = None
+@functools.cache
+def _validation_context() -> UsdValidation.ValidationContext:
+    """Build a ValidationContext with all registered validators, once.
+
+    A failed build raises and is not cached, so the next call tries again.
+    """
+    registry = UsdValidation.ValidationRegistry()
+    validators = registry.GetOrLoadAllValidators()
+    return UsdValidation.ValidationContext(validators)
 
 
 def _get_validation_context() -> UsdValidation.ValidationContext | None:
-    """Lazily build a singleton ValidationContext with all registered validators."""
-    global _VALIDATION_CONTEXT
-    if _VALIDATION_CONTEXT is not None:
-        return _VALIDATION_CONTEXT
+    """The shared ValidationContext, or ``None`` when it cannot be built."""
     try:
-        registry = UsdValidation.ValidationRegistry()
-        validators = registry.GetOrLoadAllValidators()
-        _VALIDATION_CONTEXT = UsdValidation.ValidationContext(validators)
+        return _validation_context()
     except Exception as exc:
         logger.warning("Failed to build USD validation context: %s", exc)
         return None
-    return _VALIDATION_CONTEXT
 
 
 def _run_usd_compliance_checker(file_path: str) -> list[ValidationIssue]:

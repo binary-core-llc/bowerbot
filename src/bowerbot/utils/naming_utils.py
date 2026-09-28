@@ -3,14 +3,12 @@
 
 """Name sanitization for files, prims, and projects."""
 
-import re
-
-_PRIM_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
+from bowerbot.constants import NamingRules
 
 
 def is_valid_prim_name(name: str) -> bool:
     """Whether *name* is a legal USD prim identifier."""
-    return _PRIM_NAME.match(name) is not None
+    return NamingRules.PRIM_NAME.match(name) is not None
 
 
 def safe_file_name(name: str) -> str:

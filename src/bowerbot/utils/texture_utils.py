@@ -10,7 +10,8 @@ from pathlib import Path
 
 from pxr import Usd
 
-from bowerbot.schemas import ASWFLayerNames, HDRIFormat, TextureCategory
+from bowerbot.constants import ASWFLayerNames
+from bowerbot.schemas import HDRIFormat, TextureCategory
 
 
 def copy_texture_to_project(source: Path, project_dir: Path) -> str:

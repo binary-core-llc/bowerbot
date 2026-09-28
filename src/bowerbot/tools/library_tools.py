@@ -7,17 +7,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot.constants import LibraryDefaults, LibraryRules
 from bowerbot.services import library_service
 from bowerbot.skills.base import Tool, ToolResult
 from bowerbot.state import SceneState
 from bowerbot.tools._helpers import require_library_dir
-from bowerbot.utils.library_utils import (
-    ALL,
-    DEFAULT_SEARCH_LIMIT,
-    LIBRARY_CATEGORIES,
-)
 
-_CATEGORY_VALUES: list[str] = [c.value for c in LIBRARY_CATEGORIES] + [ALL]
+_CATEGORY_VALUES: list[str] = (
+    [c.value for c in LibraryRules.CATEGORIES] + [LibraryRules.ANY_CATEGORY]
+)
 
 
 def search_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
@@ -66,9 +64,9 @@ TOOLS: list[Tool] = [
                     "type": "integer",
                     "description": (
                         f"Maximum number of results to return "
-                        f"(default {DEFAULT_SEARCH_LIMIT}, minimum 1)."
+                        f"(default {LibraryDefaults.SEARCH_LIMIT}, minimum 1)."
                     ),
-                    "default": DEFAULT_SEARCH_LIMIT,
+                    "default": LibraryDefaults.SEARCH_LIMIT,
                 },
             },
             "required": ["query"],
@@ -99,9 +97,9 @@ TOOLS: list[Tool] = [
                     "type": "integer",
                     "description": (
                         f"Maximum number of results to return "
-                        f"(default {DEFAULT_SEARCH_LIMIT}, minimum 1)."
+                        f"(default {LibraryDefaults.SEARCH_LIMIT}, minimum 1)."
                     ),
-                    "default": DEFAULT_SEARCH_LIMIT,
+                    "default": LibraryDefaults.SEARCH_LIMIT,
                 },
             },
         },

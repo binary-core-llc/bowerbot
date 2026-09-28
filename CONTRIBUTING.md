@@ -78,14 +78,17 @@ Add `!` after the type for breaking changes (e.g., `feat!: redesign skill interf
 
 BowerBot is organized FastAPI-style. Adding a feature is a three-file change (schema, service, tool):
 
-- **`schemas/`**: pydantic models and enums.
-- **`utils/`**: pure-function primitives. The only place `pxr` is imported.
+- **`schemas/`**: data shapes: pydantic models, enums and type aliases. No values, no `pxr`.
+- **`constants/`**: fixed values, grouped in classes named for what they hold: `<Domain>Rules` (what BowerBot accepts), `<Domain>Defaults` (fallbacks when a call leaves a value out), `<Domain>Tuning` (internal algorithm knobs), `<Domain>Namespace` (prim and file names BowerBot authors) and `<Domain>Usd` (the `pxr` classes behind a name).
+- **`utils/`**: pure-function primitives: functions only, no values. The only place `pxr` is imported, besides the `pxr` classes kept in `constants/`.
 - **`services/`**: orchestrators with signature `(state, params)`. One per tool. Call utils and other services, mutate state, raise on errors.
 - **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
 - **`state.py`**: `SceneState`, threaded through every tool handler.
 - **`dispatcher.py`**: tool registry and router.
 - **`skills/`**: the skill SDK (the `Skill` contract and the `SkillRegistry`). Skills themselves ship as separate pip packages and are discovered at runtime via entry points; they do not live in this directory.
 - **`prompts/`**: LLM instructions as `.md` files.
+
+`tests/test_architecture_rules.py` checks that `utils/` and `services/` hold only functions, `constants/` only classes of values, and `schemas/` only data shapes and type aliases.
 
 ## Writing a Skill
 

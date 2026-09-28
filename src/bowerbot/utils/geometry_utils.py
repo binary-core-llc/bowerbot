@@ -10,12 +10,9 @@ from pathlib import Path
 
 from pxr import Gf, Usd, UsdGeom
 
-from bowerbot.schemas import ASWFLayerNames, PositionMode
+from bowerbot.constants import ASWFLayerNames, LightDefaults
+from bowerbot.schemas import PositionMode
 from bowerbot.utils.asset_folder_utils import read_stage_metadata_from_dir
-
-# Default vertical offset (meters) above an asset's top surface when
-# placing a prim with no explicit Y position in BOUNDS_OFFSET mode.
-DEFAULT_LIGHT_Y_OFFSET = 0.5
 
 
 def get_geometry_bounds(
@@ -124,7 +121,7 @@ def _apply_bounds_offsets(
         else:
             ty = bounds["min"]["y"] + ty
     else:
-        ty = bounds["max"]["y"] + DEFAULT_LIGHT_Y_OFFSET
+        ty = bounds["max"]["y"] + LightDefaults.Y_OFFSET
 
     return tx, ty, tz
 

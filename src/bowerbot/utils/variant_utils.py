@@ -11,18 +11,18 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pxr import Sdf, Usd, UsdLux
 
+from bowerbot.constants import ASWFLayerNames, MaterialRules, NamingRules, SceneNamespace
 from bowerbot.schemas import (
-    ASWFLayerNames,
-    SceneNamespace,
     SceneVariantsSummary,
     VariantCarrier,
     VariantSetSummary,
     VariantsSummary,
 )
+from bowerbot.schemas.opinions import OpinionKind
 from bowerbot.utils.asset_folder_utils import (
     asset_has_root_payload,
     clear_root_payload,
@@ -36,9 +36,6 @@ from bowerbot.utils.stage_utils import (
     prune_empty_overrides,
 )
 from bowerbot.utils.texture_utils import stage_asset_value
-
-VariantAuthorFn = Callable[[Usd.Stage, str], None]
-
 
 # ── Layer lifecycle ──
 
@@ -131,7 +128,7 @@ def author_in_variant(
     prim_path: str,
     set_name: str,
     variant_name: str,
-    author_fn: VariantAuthorFn,
+    author_fn: Callable[[Usd.Stage, str], None],
 ) -> None:
     """Run ``author_fn(stage, prim_path)`` inside the variant's edit context."""
     prim = stage.GetPrimAtPath(prim_path)
@@ -187,7 +184,7 @@ def setup_geometry_variant_set(
     set_default_variant(asset_dir, variant_set, default_variant)
 
 
-def _payload_setter(payload_ref: str) -> VariantAuthorFn:
+def _payload_setter(payload_ref: str) -> Callable[[Usd.Stage, str], None]:
     """Return an author function that sets the root prim's payload."""
     def author_fn(stage: Usd.Stage, prim_path: str) -> None:
         target = stage.GetPrimAtPath(prim_path)
@@ -200,7 +197,7 @@ def apply_variant(
     asset_dir: Path,
     variant_set: str,
     variant_name: str,
-    author_fn: VariantAuthorFn,
+    author_fn: Callable[[Usd.Stage, str], None],
     set_as_default: bool = False,
 ) -> None:
     """End-to-end variant authoring: layer, reference, opinions, default selection."""
@@ -532,12 +529,9 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
 # ── Naming ──
 
 
-_FORBIDDEN_NAME_CHARS = frozenset(" \t\n\r/\\")
-
-
 def is_valid_variant_set_name(name: str) -> bool:
     """Reject empty names or names with whitespace / path separators."""
-    return bool(name) and not any(c in _FORBIDDEN_NAME_CHARS for c in name)
+    return bool(name) and not any(c in NamingRules.FORBIDDEN_CHARS for c in name)
 
 
 def validate_variant_name(name: str, label: str = "variant") -> None:
@@ -586,9 +580,6 @@ def validate_payload_path(asset_dir: Path, payload_ref: str) -> None:
         ) from exc
 
 
-_NON_GEOMETRY_TYPES = frozenset({"Material", "Shader", "NodeGraph"})
-
-
 def _collect_geometry_prim_paths(payload_path: Path) -> set[str]:
     """Return prim paths under a payload's default prim, relative to it."""
     layer = Sdf.Layer.FindOrOpen(str(payload_path))
@@ -611,7 +602,7 @@ def _collect_geometry_prim_paths(payload_path: Path) -> set[str]:
         spec = layer.GetObjectAtPath(path)
         if not isinstance(spec, Sdf.PrimSpec):
             return
-        if str(spec.typeName) in _NON_GEOMETRY_TYPES:
+        if str(spec.typeName) in MaterialRules.SHADING_PRIM_TYPES:
             return
         rel = str(path)[len(root_prefix):]
         paths.add(rel)
@@ -666,9 +657,6 @@ def validate_lod_namespace_stability(
         "separate asset folders if these are genuinely different assets.",
     )
     raise ValueError("\n".join(lines))
-
-
-OpinionKind = Literal["attribute", "relationship", "active"]
 
 
 def find_masking_scene_opinions(
@@ -803,7 +791,7 @@ def apply_scene_variant(
     carrier_prim_path: str,
     variant_set: str,
     variant_name: str,
-    author_fn: VariantAuthorFn,
+    author_fn: Callable[[Usd.Stage, str], None],
     set_as_default: bool = False,
 ) -> None:
     """Author a scene-level variant on a carrier prim; preserve prior default unless overridden."""

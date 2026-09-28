@@ -17,9 +17,8 @@ from bowerbot.schemas import (
     LinearPattern,
     TransformParams,
 )
+from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
-
-Vec3 = tuple[float, float, float]
 
 
 def validate_layout_entries(

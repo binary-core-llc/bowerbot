@@ -11,6 +11,7 @@ from pathlib import Path
 
 from pxr import Gf, Kind, Sdf, Sdr, Usd, UsdGeom, UsdShade, UsdUtils
 
+from bowerbot.constants import NamespaceRules, TransformUsd
 from bowerbot.schemas import SceneObject
 from bowerbot.utils.naming_utils import safe_file_name
 
@@ -208,9 +209,6 @@ def prune_empty_overrides(layer: Sdf.Layer, prim_path: str) -> None:
         path = parent_path
 
 
-_INTRINSIC_PRIM_INFO_KEYS = frozenset({"specifier", "typeName"})
-
-
 def _is_empty_override(spec: Sdf.PrimSpec) -> bool:
     """An ``over`` with no authored content; safe to delete."""
     if spec.specifier != Sdf.SpecifierOver:
@@ -231,7 +229,7 @@ def _is_empty_override(spec: Sdf.PrimSpec) -> bool:
             or arc.deletedItems
         ):
             return False
-    authored = set(spec.ListInfoKeys()) - _INTRINSIC_PRIM_INFO_KEYS
+    authored = set(spec.ListInfoKeys()) - NamespaceRules.INTRINSIC_PRIM_INFO_KEYS
     return not authored
 
 
@@ -267,7 +265,7 @@ def _add_xform_op(
     """Return the xform op for *attribute_name*, adding to xformOpOrder if missing."""
     suffix = attribute_name[len("xformOp:"):]
     base, _, namespace = suffix.partition(":")
-    spec = _XFORM_OP_SPECS.get(base)
+    spec = TransformUsd.XFORM_OPS.get(base)
     if spec is None:
         return None
     op_type, value_type = spec
@@ -278,23 +276,6 @@ def _add_xform_op(
         )
         return UsdGeom.XformOp(attr)
     return xformable.AddXformOp(op_type, opSuffix=namespace or "")
-
-
-_XFORM_OP_SPECS: dict[str, tuple[object, Sdf.ValueTypeName]] = {
-    "translate": (UsdGeom.XformOp.TypeTranslate, Sdf.ValueTypeNames.Double3),
-    "rotateX": (UsdGeom.XformOp.TypeRotateX, Sdf.ValueTypeNames.Float),
-    "rotateY": (UsdGeom.XformOp.TypeRotateY, Sdf.ValueTypeNames.Float),
-    "rotateZ": (UsdGeom.XformOp.TypeRotateZ, Sdf.ValueTypeNames.Float),
-    "rotateXYZ": (UsdGeom.XformOp.TypeRotateXYZ, Sdf.ValueTypeNames.Float3),
-    "rotateXZY": (UsdGeom.XformOp.TypeRotateXZY, Sdf.ValueTypeNames.Float3),
-    "rotateYXZ": (UsdGeom.XformOp.TypeRotateYXZ, Sdf.ValueTypeNames.Float3),
-    "rotateYZX": (UsdGeom.XformOp.TypeRotateYZX, Sdf.ValueTypeNames.Float3),
-    "rotateZXY": (UsdGeom.XformOp.TypeRotateZXY, Sdf.ValueTypeNames.Float3),
-    "rotateZYX": (UsdGeom.XformOp.TypeRotateZYX, Sdf.ValueTypeNames.Float3),
-    "scale": (UsdGeom.XformOp.TypeScale, Sdf.ValueTypeNames.Float3),
-    "orient": (UsdGeom.XformOp.TypeOrient, Sdf.ValueTypeNames.Quatf),
-    "transform": (UsdGeom.XformOp.TypeTransform, Sdf.ValueTypeNames.Matrix4d),
-}
 
 
 def _resolve_shader_input_type(
@@ -606,8 +587,6 @@ def unique_prim_path(stage: Usd.Stage, parent: str, base_name: str) -> str:
         if not stage.GetPrimAtPath(candidate).IsValid():
             return candidate
         n += 1
-
-
 
 
 # ── Transforms / namespace edits ──

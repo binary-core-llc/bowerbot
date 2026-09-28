@@ -6,21 +6,6 @@
 from pydantic import BaseModel
 
 
-class MaterialXShaders:
-    """MaterialX shader identifiers and naming conventions."""
-
-    STANDARD_SURFACE = "ND_standard_surface_surfaceshader"
-    STANDARD_SURFACE_PRIM = "standard_surface"
-    OUTPUT_QUALIFIER = "mtlx"
-
-
-class PreviewSurfaceShader:
-    """UsdPreviewSurface shader identifiers."""
-
-    SURFACE_ID = "UsdPreviewSurface"
-    SURFACE_PRIM = "preview_surface"
-
-
 class ProceduralMaterialParams(BaseModel):
     """Parameters for creating a procedural MaterialX material."""
 

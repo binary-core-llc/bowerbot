@@ -533,7 +533,7 @@ def delete_project_texture(state: scene_state.SceneState, params: dict[str, Any]
         msg = f"Texture file not found: {constants.ASWFLayerNames.TEXTURES}/{file_name}"
         raise ValueError(msg)
 
-    referencing = utils.textures.find_texture_references(project_dir, file_name)
+    referencing = authoring.textures.find_texture_references(project_dir, file_name)
     if referencing:
         files_list = ", ".join(referencing)
         msg = (

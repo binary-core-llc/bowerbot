@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-import shutil
 from pathlib import Path
 from typing import Any
 
@@ -335,22 +334,6 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     utils.asset_folder.remove_empty_layer(
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),
     )
-
-
-def stage_asset_texture(asset_dir: Path, texture: str | None) -> str | None:
-    """Copy an HDRI into the asset's ``maps/`` dir; return the ref path."""
-    if not texture:
-        return texture
-
-    maps_dir = asset_dir / constants.ASWFLayerNames.MAPS
-    maps_dir.mkdir(exist_ok=True)
-    tex_path = Path(texture)
-    if tex_path.exists():
-        dest = maps_dir / tex_path.name
-        if not dest.exists():
-            shutil.copy2(tex_path, dest)
-        return f"./{constants.ASWFLayerNames.MAPS}/{tex_path.name}"
-    return texture
 
 
 # ── Internal helpers ──

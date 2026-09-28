@@ -236,9 +236,6 @@ def _clear_all_default_variants(asset_dir: Path) -> None:
         layer.Save()
 
 
-# ── Scene composition inspection ──
-
-
 # ── Asset folder inspection ──
 
 
@@ -751,31 +748,6 @@ def enforce_no_scene_masking_overrides(
     return False
 
 
-def stage_asset_typed_overrides(
-    overrides: dict[str, dict[str, object]],
-    resolved_types: dict[str, dict[str, Sdf.ValueTypeName | None]],
-    project_dir: Path | None,
-    library_dir: Path | None,
-) -> dict[str, dict[str, object]]:
-    """Return a new overrides dict with Asset-typed string values staged into the project."""
-    if project_dir is None:
-        return overrides
-    asset_type = Sdf.ValueTypeNames.Asset
-    out: dict[str, dict[str, object]] = {}
-    for prim_path, attrs in overrides.items():
-        types = resolved_types.get(prim_path, {})
-        staged: dict[str, object] = {}
-        for attr_name, value in attrs.items():
-            if types.get(attr_name) == asset_type and isinstance(value, str):
-                staged[attr_name] = utils.textures.stage_asset_value(
-                    value, project_dir, library_dir,
-                )
-            else:
-                staged[attr_name] = value
-        out[prim_path] = staged
-    return out
-
-
 def require_scene_lighting_carrier(stage: Usd.Stage) -> str:
     """Return the lighting carrier path or raise if it does not exist yet."""
     if stage is None:
@@ -1068,8 +1040,3 @@ def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:
                 refs[variant_name] = op[0].assetPath
                 break
     return refs
-
-
-# ── Internal helpers ──
-
-

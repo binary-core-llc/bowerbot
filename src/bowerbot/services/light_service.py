@@ -80,7 +80,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             light_type=light_type,
             translate=(tx, ty, tz),
             rotate=rotate,
-            texture=utils.lights.stage_asset_texture(
+            texture=authoring.textures.stage_asset_texture(
                 asset_dir, params.get("texture"),
             ),
             light_link_includes=light_link_includes,
@@ -116,7 +116,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         light_type=light_type,
         translate=(tx, ty, tz),
         rotate=rotate,
-        texture=utils.textures.stage_scene_texture(
+        texture=authoring.textures.stage_scene_texture(
             state.project.path if state.project else None,
             params.get("texture"),
         ),
@@ -170,7 +170,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             light_name,
             translate=translate,
             rotate=rotate,
-            texture=utils.lights.stage_asset_texture(asset_dir, texture),
+            texture=authoring.textures.stage_asset_texture(asset_dir, texture),
         )
         state.stage = authoring.stage.open_stage(state.stage_path)
     else:
@@ -179,7 +179,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             prim_path,
             translate=translate,
             rotate=rotate,
-            texture=utils.textures.stage_scene_texture(
+            texture=authoring.textures.stage_scene_texture(
                 state.project.path if state.project else None, texture,
             ),
         )

@@ -941,6 +941,8 @@ src/bowerbot/
                                #   the scene and its snapshots
       stage.py                 #   The project's scene.usda: create, open, save, named
                                #   snapshots
+      textures.py              #   Copying textures into the project and asset folders,
+                               #   staging file-path values, finding who uses a texture
     stage.py                   #   Placing asset references, finding placements,
                                #   list_prim_children (moving to authoring/ and features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
@@ -950,13 +952,11 @@ src/bowerbot/
                                #   resolve_asset_dir_for_prim)
     library.py                 #   scan_library, find_package_for
     lights.py                  #   All light authoring: create/update/remove,
-                               #   list_light_type_properties, lgt.usda lifecycle,
-                               #   HDRI staging
+                               #   list_light_type_properties, lgt.usda lifecycle
     cameras.py                 #   Camera authoring: create/update/remove, look_at
                                #   aiming, list_camera_properties
     materials.py               #   material_in_folder primitives, find_first_material
-    textures.py                #   find_textures, copy_texture_to_project,
-                               #   find_texture_references
+    textures.py                #   find_textures: textures in the library by category
     physics.py                 #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
     physics_typing.py          #   is_joint / is_physics_scene / is_collision_group / ...

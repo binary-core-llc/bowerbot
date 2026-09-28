@@ -65,6 +65,11 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[tool.ruff.lint.isort]
+# One import per line (Google Python Style Guide), except typing and collections.abc.
+force-single-line = true
+single-line-exclusions = ["typing", "collections.abc"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

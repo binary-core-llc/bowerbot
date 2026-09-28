@@ -5,16 +5,16 @@
 
 from __future__ import annotations
 
-from pxr import Gf, Usd, UsdGeom
+from pxr import Gf
+from pxr import Usd
+from pxr import UsdGeom
 
-from bowerbot.constants import CameraTuning, MetricsUsd
-from bowerbot.schemas import CameraParams, CameraPropertySpec, CameraSchemaInfo
-from bowerbot.schemas.transforms import Vec3
-from bowerbot.utils.stage_utils import extract_position, set_prim_attribute
-from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 
-def list_camera_properties() -> CameraSchemaInfo:
+def list_camera_properties() -> schemas.CameraSchemaInfo:
     """Live schema-registry view of every attribute the Camera prim declares."""
     prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition("Camera")
     if prim_def is None:
@@ -23,35 +23,38 @@ def list_camera_properties() -> CameraSchemaInfo:
             "USD build is missing UsdGeom.",
         )
 
-    properties: list[CameraPropertySpec] = []
+    properties: list[schemas.CameraPropertySpec] = []
     for prop_name in UsdGeom.Camera.GetSchemaAttributeNames(False):
         name = str(prop_name)
         attr_spec = prim_def.GetSchemaAttributeSpec(name)
         if attr_spec is None:
             continue
-        properties.append(CameraPropertySpec(
+        properties.append(schemas.CameraPropertySpec(
             name=name,
             kind="attribute",
             type_name=str(attr_spec.typeName),
-            default=to_jsonable(attr_spec.default),
+            default=utils.usd_schema.to_jsonable(attr_spec.default),
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],
-            documentation=property_doc(prim_def, name, attr_spec),
+            documentation=utils.usd_schema.property_doc(prim_def, name, attr_spec),
         ))
 
-    return CameraSchemaInfo(properties=properties)
+    return schemas.CameraSchemaInfo(properties=properties)
 
 
-def look_at_rotation(eye: Vec3, target: Vec3, up_axis: str) -> Vec3:
+def look_at_rotation(eye: schemas.Vec3, target: schemas.Vec3, up_axis: str) -> schemas.Vec3:
     """Return rotateXYZ degrees aiming a camera's -Z axis from *eye* at *target*."""
     eye_v, target_v = Gf.Vec3d(*eye), Gf.Vec3d(*target)
     if (target_v - eye_v).GetLength() == 0:
         raise ValueError("look_at target must differ from the camera position.")
     forward = (target_v - eye_v).GetNormalized()
-    up = MetricsUsd.UP_VECTORS[up_axis]
-    if abs(Gf.Dot(forward, up)) > CameraTuning.UP_ALIGNED_DOT:
-        up = MetricsUsd.UP_VECTORS["Y"] if up_axis == "Z" else MetricsUsd.UP_VECTORS["Z"]
+    up = constants.MetricsUsd.UP_VECTORS[up_axis]
+    if abs(Gf.Dot(forward, up)) > constants.CameraTuning.UP_ALIGNED_DOT:
+        up = (
+            constants.MetricsUsd.UP_VECTORS["Y"] if up_axis == "Z"
+            else constants.MetricsUsd.UP_VECTORS["Z"]
+        )
     view = Gf.Matrix4d().SetLookAt(eye_v, target_v, up)
     rz, ry, rx = view.GetInverse().ExtractRotation().Decompose(
         Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis(),
@@ -59,7 +62,7 @@ def look_at_rotation(eye: Vec3, target: Vec3, up_axis: str) -> Vec3:
     return (rx, ry, rz)
 
 
-def create_camera(stage: Usd.Stage, prim_path: str, camera: CameraParams) -> None:
+def create_camera(stage: Usd.Stage, prim_path: str, camera: schemas.CameraParams) -> None:
     """Create a UsdGeom Camera prim in *stage* at *prim_path*."""
     refuse_unknown_camera_attributes(camera.attributes)
     prim = UsdGeom.Camera.Define(stage, prim_path).GetPrim()
@@ -75,8 +78,8 @@ def update_camera(
     stage: Usd.Stage,
     prim_path: str,
     *,
-    translate: Vec3 | None = None,
-    rotate: Vec3 | None = None,
+    translate: schemas.Vec3 | None = None,
+    rotate: schemas.Vec3 | None = None,
 ) -> None:
     """Update a camera's translate / rotateXYZ ops."""
     prim = require_camera(stage, prim_path)
@@ -113,7 +116,7 @@ def require_camera(stage: Usd.Stage, prim_path: str) -> Usd.Prim:
     return prim
 
 
-def camera_translate(prim: Usd.Prim) -> Vec3:
+def camera_translate(prim: Usd.Prim) -> schemas.Vec3:
     """Return the camera's local translation."""
     t = UsdGeom.Xformable(prim).GetLocalTransformation().ExtractTranslation()
     return (t[0], t[1], t[2])
@@ -126,7 +129,7 @@ def write_camera_attributes(
     for name, value in attributes.items():
         prim = stage.GetPrimAtPath(prim_path)
         attr = prim.GetAttribute(name)
-        set_prim_attribute(
+        utils.stage.set_prim_attribute(
             stage, prim_path, name, value, expected_type=attr.GetTypeName(),
         )
 
@@ -151,5 +154,5 @@ def format_camera_prim(prim: Usd.Prim) -> dict:
         "type": str(prim.GetTypeName()),
         "projection": str(camera.GetProjectionAttr().Get()),
         "focal_length": float(camera.GetFocalLengthAttr().Get()),
-        "position": extract_position(prim),
+        "position": utils.stage.extract_position(prim),
     }

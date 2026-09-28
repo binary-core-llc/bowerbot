@@ -7,9 +7,10 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Usd, UsdGeom
+from pxr import Usd
+from pxr import UsdGeom
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -26,14 +27,14 @@ def _asset(directory: Path, name: str) -> Path:
 
 def _setup(tmp):
     tmp_path = Path(tmp)
-    state, project = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, project = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return tmp_path, state, project
 
 
 def _place(tmp_path, state, name="chair"):
     asset = _asset(tmp_path, name)
-    r = asyncio.run(exec_tool(state, "place_asset", {
+    r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
         "asset_file_path": str(asset), "asset_name": name.title(),
         "group": "Furniture",
         "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -43,7 +44,7 @@ def _place(tmp_path, state, name="chair"):
 
 
 def _make_material(state, mesh_path, name="wood"):
-    r = asyncio.run(exec_tool(state, "create_material", {
+    r = asyncio.run(_helpers.exec_tool(state, "create_material", {
         "prim_path": mesh_path,
         "material_name": name,
     }))
@@ -63,7 +64,7 @@ def test_add_asset_material_variant():
 
         mat = _make_material(state, mesh_path, "oak")
 
-        r = asyncio.run(exec_tool(state, "add_asset_material_variant", {
+        r = asyncio.run(_helpers.exec_tool(state, "add_asset_material_variant", {
             "prim_path": placed.data["prim_path"],
             "variant_set": "material",
             "variant_name": "oak",
@@ -85,7 +86,7 @@ def test_add_asset_material_variant_two_variants():
         m2 = _make_material(state, mesh_path, "maple")
 
         for name, mat in [("walnut", m1), ("maple", m2)]:
-            r = asyncio.run(exec_tool(
+            r = asyncio.run(_helpers.exec_tool(
                 state, "add_asset_material_variant", {
                     "prim_path": placed.data["prim_path"],
                     "variant_set": "material",
@@ -106,7 +107,7 @@ def test_add_asset_configuration_variant():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_asset_configuration_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "config",
@@ -125,7 +126,7 @@ def test_add_asset_configuration_variant_two():
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
         for name, active in [("open", True), ("closed", False)]:
-            r = asyncio.run(exec_tool(
+            r = asyncio.run(_helpers.exec_tool(
                 state, "add_asset_configuration_variant", {
                     "prim_path": placed.data["prim_path"],
                     "variant_set": "door_state",
@@ -145,14 +146,14 @@ def test_add_asset_attribute_variant():
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
 
-        asyncio.run(exec_tool(state, "create_light", {
+        asyncio.run(_helpers.exec_tool(state, "create_light", {
             "asset_prim_path": placed.data["prim_path"],
             "light_type": "SphereLight",
             "light_name": "Bulb",
             "attributes": {"inputs:intensity": 500.0},
         }))
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_asset_attribute_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "mood",
@@ -174,14 +175,14 @@ def test_add_asset_attribute_variant_unknown_attribute():
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
 
-        asyncio.run(exec_tool(state, "create_light", {
+        asyncio.run(_helpers.exec_tool(state, "create_light", {
             "asset_prim_path": placed.data["prim_path"],
             "light_type": "SphereLight",
             "light_name": "Bulb",
             "attributes": {"inputs:intensity": 500.0},
         }))
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_asset_attribute_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "mood",
@@ -214,7 +215,7 @@ def test_setup_and_add_geometry_variant():
         UsdGeom.Cube.Define(low_stage, "/chair/Mesh")
         low_stage.Save()
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "setup_asset_geometry_variants", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "lod",
@@ -245,7 +246,7 @@ def test_list_asset_geo_files():
         UsdGeom.Cube.Define(alt_stage, "/chair/Mesh")
         alt_stage.Save()
 
-        r = asyncio.run(exec_tool(state, "list_asset_geo_files", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_asset_geo_files", {
             "prim_path": placed.data["prim_path"],
         }))
         assert r.success, r.error
@@ -265,7 +266,7 @@ def test_select_asset_variant():
         m1 = _make_material(state, mesh_path, "a")
         m2 = _make_material(state, mesh_path, "b")
         for name, mat in [("a", m1), ("b", m2)]:
-            asyncio.run(exec_tool(
+            asyncio.run(_helpers.exec_tool(
                 state, "add_asset_material_variant", {
                     "prim_path": placed.data["prim_path"],
                     "variant_set": "mtl",
@@ -274,7 +275,7 @@ def test_select_asset_variant():
                 },
             ))
 
-        r = asyncio.run(exec_tool(state, "select_asset_variant", {
+        r = asyncio.run(_helpers.exec_tool(state, "select_asset_variant", {
             "prim_path": placed.data["prim_path"],
             "variant_set": "mtl",
             "variant_name": "b",
@@ -293,7 +294,7 @@ def test_select_asset_variant_for_instance():
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
         mat = _make_material(state, mesh_path, "red")
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_asset_material_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "color",
@@ -302,7 +303,7 @@ def test_select_asset_variant_for_instance():
             },
         ))
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "select_asset_variant_for_instance", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "color",
@@ -323,7 +324,7 @@ def test_remove_asset_variant():
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
         mat = _make_material(state, mesh_path, "temp")
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_asset_material_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "mtl",
@@ -332,7 +333,7 @@ def test_remove_asset_variant():
             },
         ))
 
-        r = asyncio.run(exec_tool(state, "remove_asset_variant", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_asset_variant", {
             "prim_path": placed.data["prim_path"],
             "variant_set": "mtl",
             "variant_name": "temp",
@@ -351,7 +352,7 @@ def test_remove_asset_variant_set():
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
         mat = _make_material(state, mesh_path, "x")
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_asset_material_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "doomed",
@@ -360,7 +361,7 @@ def test_remove_asset_variant_set():
             },
         ))
 
-        r = asyncio.run(exec_tool(state, "remove_asset_variant_set", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_asset_variant_set", {
             "prim_path": placed.data["prim_path"],
             "variant_set": "doomed",
         }))
@@ -376,7 +377,7 @@ def test_list_variants_empty():
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "list_variants", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_variants", {
             "prim_path": placed.data["prim_path"],
         }))
         assert r.success, r.error
@@ -390,7 +391,7 @@ def test_list_variants_after_add():
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
         mat = _make_material(state, mesh_path, "v")
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_asset_material_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "vis",
@@ -399,7 +400,7 @@ def test_list_variants_after_add():
             },
         ))
 
-        r = asyncio.run(exec_tool(state, "list_variants", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_variants", {
             "prim_path": placed.data["prim_path"],
         }))
         assert r.success, r.error
@@ -418,14 +419,14 @@ def test_add_scene_lighting_attribute_variant():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
             "attributes": {"inputs:intensity": 1000.0},
         }))
         assert created.success, created.error
         light_path = created.data["prim_path"]
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_scene_lighting_attribute_variant", {
                 "clear_masking_overrides": True,
                 "variant_set": "mood",
@@ -446,14 +447,14 @@ def test_add_scene_lighting_attribute_variant_two_moods():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
             "attributes": {"inputs:intensity": 1000.0},
         }))
         light_path = created.data["prim_path"]
 
         for name, intensity in [("warm", 1500.0), ("cool", 800.0)]:
-            r = asyncio.run(exec_tool(
+            r = asyncio.run(_helpers.exec_tool(
                 state, "add_scene_lighting_attribute_variant", {
                 "clear_masking_overrides": True,
                     "variant_set": "mood",
@@ -471,13 +472,13 @@ def test_add_scene_lighting_attribute_variant_unknown_attribute():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
             "attributes": {"inputs:intensity": 1000.0},
         }))
         light_path = created.data["prim_path"]
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_scene_lighting_attribute_variant", {
                 "clear_masking_overrides": True,
                 "variant_set": "mood",
@@ -500,14 +501,14 @@ def test_add_scene_lighting_selection_variant():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
 
-        disk = asyncio.run(exec_tool(state, "create_light", {
+        disk = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "DiskLight", "light_name": "Key_Disk",
         }))
-        rect = asyncio.run(exec_tool(state, "create_light", {
+        rect = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "RectLight", "light_name": "Key_Rect",
         }))
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_scene_lighting_selection_variant", {
                 "variant_set": "key_type",
                 "variant_name": "disk",
@@ -530,7 +531,7 @@ def test_add_scene_model_selection_variant():
         placed = _place(tmp_path, state, "chair")
 
         alt = _asset(tmp_path, "stool")
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_scene_model_selection_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "seating",
@@ -549,13 +550,13 @@ def test_select_scene_variant():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
             "attributes": {"inputs:intensity": 1000.0},
         }))
         light_path = created.data["prim_path"]
 
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_scene_lighting_attribute_variant", {
                 "clear_masking_overrides": True,
                 "variant_set": "mood",
@@ -566,7 +567,7 @@ def test_select_scene_variant():
             },
         ))
 
-        r = asyncio.run(exec_tool(state, "select_scene_variant", {
+        r = asyncio.run(_helpers.exec_tool(state, "select_scene_variant", {
             "prim_path": "/Scene/Lighting",
             "variant_set": "mood",
             "variant_name": "bright",
@@ -582,13 +583,13 @@ def test_remove_scene_variant():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
             "attributes": {"inputs:intensity": 1000.0},
         }))
         light_path = created.data["prim_path"]
 
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_scene_lighting_attribute_variant", {
                 "clear_masking_overrides": True,
                 "variant_set": "mood",
@@ -599,7 +600,7 @@ def test_remove_scene_variant():
             },
         ))
 
-        r = asyncio.run(exec_tool(state, "remove_scene_variant", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_scene_variant", {
             "prim_path": "/Scene/Lighting",
             "variant_set": "mood",
             "variant_name": "temp",
@@ -615,13 +616,13 @@ def test_remove_scene_variant_set():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
             "attributes": {"inputs:intensity": 1000.0},
         }))
         light_path = created.data["prim_path"]
 
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_scene_lighting_attribute_variant", {
                 "clear_masking_overrides": True,
                 "variant_set": "doomed",
@@ -632,7 +633,7 @@ def test_remove_scene_variant_set():
             },
         ))
 
-        r = asyncio.run(exec_tool(state, "remove_scene_variant_set", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_scene_variant_set", {
             "prim_path": "/Scene/Lighting",
             "variant_set": "doomed",
         }))
@@ -649,7 +650,7 @@ def test_remove_model_selection_set_demotes():
         placed = _place(tmp_path, state, "chair")
 
         alt = _asset(tmp_path, "stool")
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "add_scene_model_selection_variant", {
                 "prim_path": placed.data["prim_path"],
                 "variant_set": "seating",
@@ -658,7 +659,7 @@ def test_remove_model_selection_set_demotes():
             },
         ))
 
-        r = asyncio.run(exec_tool(state, "remove_scene_variant_set", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_scene_variant_set", {
             "prim_path": placed.data["prim_path"],
             "variant_set": "seating",
         }))
@@ -677,8 +678,8 @@ def test_remove_model_selection_set_demotes():
 def test_add_material_variant_missing_stage():
     """Fails when no stage is open."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
-        r = asyncio.run(exec_tool(
+        state, _ = _helpers.make_state(Path(tmp))
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_asset_material_variant", {
                 "prim_path": "/Scene/Furniture/X",
                 "variant_set": "mtl",
@@ -693,7 +694,7 @@ def test_add_config_variant_invalid_prim():
     """Fails for a nonexistent prim."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "add_asset_configuration_variant", {
                 "prim_path": "/Scene/Furniture/Ghost",
                 "variant_set": "x",
@@ -708,7 +709,7 @@ def test_select_scene_variant_unknown_set():
     """Fails when selecting from a nonexistent variant set."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "select_scene_variant", {
+        r = asyncio.run(_helpers.exec_tool(state, "select_scene_variant", {
             "prim_path": "/Scene/Lighting",
             "variant_set": "nope",
             "variant_name": "x",

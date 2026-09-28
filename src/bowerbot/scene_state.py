@@ -6,17 +6,18 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pxr import Usd
 
-from bowerbot.config import Settings, UpAxis
-from bowerbot.utils import inspection_utils, stage_utils
+from bowerbot import config
+from bowerbot import utils
 
 if TYPE_CHECKING:
-    from bowerbot.project import Project
+    from bowerbot import project_folder
 
 
 _HASH_CHUNK_SIZE = 65536
@@ -26,9 +27,9 @@ _HASH_CHUNK_SIZE = 65536
 class SceneState:
     """Mutable scene-building context shared across tool handlers."""
 
-    up_axis: UpAxis = UpAxis.Y
+    up_axis: config.UpAxis = config.UpAxis.Y
     meters_per_unit: float = 1.0
-    project: Project | None = None
+    project: project_folder.Project | None = None
     stage: Usd.Stage | None = None
     stage_path: Path | None = None
     object_count: int = 0
@@ -37,7 +38,7 @@ class SceneState:
     layer_baselines: dict[Path, tuple[float, str]] = field(default_factory=dict)
 
     @classmethod
-    def from_settings(cls, settings: Settings) -> SceneState:
+    def from_settings(cls, settings: config.Settings) -> SceneState:
         """Build an unbound state with the configured library and projects dirs."""
         return cls(
             library_dir=Path(settings.assets_dir),
@@ -62,14 +63,14 @@ class SceneState:
         self.assets_dir.mkdir(parents=True, exist_ok=True)
         return self.assets_dir
 
-    def bind_project(self, project: Project) -> None:
+    def bind_project(self, project: project_folder.Project) -> None:
         """Focus this state on *project*: open its scene and count objects."""
         self.project = project
         self.up_axis = project.meta.up_axis
         self.meters_per_unit = project.meta.meters_per_unit
         self.stage_path = project.scene_path
-        self.stage = stage_utils.open_stage(project.scene_path)
-        self.object_count = len(inspection_utils.list_prims(self.stage))
+        self.stage = utils.stage.open_stage(project.scene_path)
+        self.object_count = len(utils.inspection.list_prims(self.stage))
         self.mark_saved()
 
     def touch_project(self) -> None:

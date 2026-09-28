@@ -8,18 +8,20 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-from pxr import Gf, Usd, UsdGeom
+from pxr import Gf
+from pxr import Usd
+from pxr import UsdGeom
 
-from bowerbot.constants import ASWFLayerNames, LightDefaults
-from bowerbot.schemas import PositionMode
-from bowerbot.utils.asset_folder_utils import read_stage_metadata_from_dir
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 
 def get_geometry_bounds(
     asset_dir: Path,
 ) -> dict[str, dict[str, float]] | None:
     """Return the asset's geometry bounds in meters, or ``None``."""
-    geo_path = asset_dir / ASWFLayerNames.GEO
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if not geo_path.exists():
         return None
 
@@ -38,7 +40,7 @@ def get_geometry_bounds(
     if rng.IsEmpty():
         return None
 
-    mpu, _ = read_stage_metadata_from_dir(asset_dir)
+    mpu, _ = utils.asset_folder.read_stage_metadata_from_dir(asset_dir)
     mn = rng.GetMin()
     mx = rng.GetMax()
 
@@ -60,7 +62,7 @@ def get_geometry_bounds(
 
 def get_mpu(asset_dir: Path) -> float:
     """Return the asset's ``metersPerUnit``, defaulting to 1.0."""
-    mpu, _ = read_stage_metadata_from_dir(asset_dir)
+    mpu, _ = utils.asset_folder.read_stage_metadata_from_dir(asset_dir)
     return mpu if mpu > 0 else 1.0
 
 
@@ -71,7 +73,7 @@ def unit_factor(asset_dir: Path) -> float:
 
 
 def resolve_asset_position(
-    mode: PositionMode,
+    mode: schemas.PositionMode,
     bounds: dict[str, dict[str, float]] | None,
     tx: float,
     ty: float,
@@ -87,7 +89,7 @@ def resolve_asset_position(
     is converted to the asset's internal frame. For ``BOUNDS_OFFSET``
     mode, *bounds* is used to position relative to the bbox surfaces.
     """
-    if mode is PositionMode.ABSOLUTE:
+    if mode is schemas.PositionMode.ABSOLUTE:
         if world_to_local_mat is None:
             return tx, ty, tz
         internal = world_to_local_mat.Transform(Gf.Vec3d(tx, ty, tz))
@@ -121,7 +123,7 @@ def _apply_bounds_offsets(
         else:
             ty = bounds["min"]["y"] + ty
     else:
-        ty = bounds["max"]["y"] + LightDefaults.Y_OFFSET
+        ty = bounds["max"]["y"] + constants.LightDefaults.Y_OFFSET
 
     return tx, ty, tz
 

@@ -21,37 +21,15 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdPhysics
 
-from bowerbot.constants import (
-    ASWFLayerNames,
-    NamingRules,
-    PhysicsNamespace,
-    PhysicsRules,
-    PhysicsUsd,
-    SceneNamespace,
-)
-from bowerbot.schemas import (
-    AssetPhysicsSummary,
-    CollisionGroupsSummary,
-    CollisionGroupSummary,
-    JointsSummary,
-    JointSummary,
-    PhysicsApiName,
-    PhysicsApiSchemaInfo,
-    PhysicsJointType,
-    PhysicsPrimSummary,
-    PhysicsPropertySpec,
-    ScenePhysicsSummary,
-)
-from bowerbot.utils import stage_utils
-from bowerbot.utils.asset_folder_utils import (
-    ensure_root_reference,
-    find_root_file,
-    require_asset_context,
-    resolve_default_prim_name,
-)
-from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 def _phy_layer_path(asset_dir: Path) -> Path:
     """Path to the asset's ``phy.usda``."""
-    return asset_dir / ASWFLayerNames.PHY
+    return asset_dir / constants.ASWFLayerNames.PHY
 
 
 def ensure_physics_layer(asset_dir: Path) -> Path:
@@ -70,7 +48,7 @@ def ensure_physics_layer(asset_dir: Path) -> Path:
     if path.exists():
         return path
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     layer = Sdf.Layer.CreateNew(str(path))
     layer.defaultPrim = default_prim_name
     over = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
@@ -81,24 +59,24 @@ def ensure_physics_layer(asset_dir: Path) -> Path:
 
 def ensure_physics_referenced(asset_dir: Path) -> None:
     """Ensure the asset root references ``phy.usda``."""
-    ensure_root_reference(asset_dir, ASWFLayerNames.PHY)
+    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.PHY)
 
 
 # ── Schema introspection ──
 
 
 def list_api_properties(
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     *,
     instance_name: str | None = None,
-) -> PhysicsApiSchemaInfo:
+) -> schemas.PhysicsApiSchemaInfo:
     """Live schema-registry view of every property the API declares.
 
     For multi-apply APIs (DriveAPI, LimitAPI) *instance_name* is
     required; property names are returned with the instance substituted
     (e.g. ``drive:angular:physics:stiffness``).
     """
-    if api_name in PhysicsRules.MULTI_APPLY_APIS and not instance_name:
+    if api_name in constants.PhysicsRules.MULTI_APPLY_APIS and not instance_name:
         raise ValueError(
             f"{api_name.value} is a multi-apply API. "
             "Provide instance_name (e.g. 'angular', 'linear').",
@@ -113,43 +91,43 @@ def list_api_properties(
             "USD build is missing UsdPhysics.",
         )
 
-    properties: list[PhysicsPropertySpec] = []
+    properties: list[schemas.PhysicsPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
         real_name = (
-            prop_name.replace(PhysicsRules.INSTANCE_NAME_PLACEHOLDER, instance_name)
+            prop_name.replace(constants.PhysicsRules.INSTANCE_NAME_PLACEHOLDER, instance_name)
             if instance_name else prop_name
         )
         attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
         if attr_spec is not None:
-            properties.append(PhysicsPropertySpec(
+            properties.append(schemas.PhysicsPropertySpec(
                 name=real_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=to_jsonable(attr_spec.default),
+                default=utils.usd_schema.to_jsonable(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
-                documentation=property_doc(
+                documentation=utils.usd_schema.property_doc(
                     prim_def, prop_name, attr_spec,
                 ),
             ))
             continue
         rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
         if rel_spec is not None:
-            properties.append(PhysicsPropertySpec(
+            properties.append(schemas.PhysicsPropertySpec(
                 name=real_name,
                 kind="relationship",
-                documentation=property_doc(
+                documentation=utils.usd_schema.property_doc(
                     prim_def, prop_name, rel_spec,
                 ),
             ))
 
     target_req = (
-        "UsdPhysics joint prim" if api_name in PhysicsRules.MULTI_APPLY_APIS
-        else f"UsdGeom.{PhysicsUsd.API_TARGETS[api_name].__name__}"
+        "UsdPhysics joint prim" if api_name in constants.PhysicsRules.MULTI_APPLY_APIS
+        else f"UsdGeom.{constants.PhysicsUsd.API_TARGETS[api_name].__name__}"
     )
-    companion = PhysicsRules.COMPANION_APIS.get(api_name)
-    return PhysicsApiSchemaInfo(
+    companion = constants.PhysicsRules.COMPANION_APIS.get(api_name)
+    return schemas.PhysicsApiSchemaInfo(
         api_name=api_name.value,
         target_requirement=target_req,
         requires_companion_api=companion.value if companion else None,
@@ -158,20 +136,20 @@ def list_api_properties(
 
 
 def validate_instance_name(
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     instance_name: str,
     joint_type_name: str,
 ) -> None:
     """Refuse if *instance_name* is invalid for *api_name* on *joint_type*."""
     try:
-        jt = PhysicsJointType(joint_type_name)
+        jt = schemas.PhysicsJointType(joint_type_name)
     except ValueError:
         raise ValueError(
             f"{api_name.value} can only be applied to a UsdPhysics "
             f"joint prim; got type {joint_type_name!r}.",
         ) from None
 
-    valid = PhysicsRules.INSTANCES_BY_API[api_name].get(jt, frozenset())
+    valid = constants.PhysicsRules.INSTANCES_BY_API[api_name].get(jt, frozenset())
     if not valid:
         raise ValueError(
             f"{api_name.value} is not supported on {jt.value}.",
@@ -184,9 +162,9 @@ def validate_instance_name(
         )
 
 
-def _apply_multi(prim: Usd.Prim, api_name: PhysicsApiName, instance_name: str) -> None:
+def _apply_multi(prim: Usd.Prim, api_name: schemas.PhysicsApiName, instance_name: str) -> None:
     """Apply a multi-apply API with the given instance name."""
-    PhysicsUsd.APIS[api_name].Apply(prim, instance_name)
+    constants.PhysicsUsd.APIS[api_name].Apply(prim, instance_name)
 
 
 # ── API application ──
@@ -195,7 +173,7 @@ def _apply_multi(prim: Usd.Prim, api_name: PhysicsApiName, instance_name: str) -
 def apply_api(
     asset_dir: Path,
     prim_path: str,
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     attributes: dict[str, Any] | None = None,
     relationships: dict[str, list[str]] | None = None,
     *,
@@ -204,7 +182,7 @@ def apply_api(
     """Apply ``api_name`` to *prim_path* and author opinions in ``phy.usda``."""
     attributes = attributes or {}
     relationships = relationships or {}
-    is_multi = api_name in PhysicsRules.MULTI_APPLY_APIS
+    is_multi = api_name in constants.PhysicsRules.MULTI_APPLY_APIS
 
     schema_info = list_api_properties(
         api_name, instance_name=instance_name,
@@ -212,7 +190,7 @@ def apply_api(
     _refuse_unknown(api_name, attributes, schema_info, "attribute")
     _refuse_unknown(api_name, relationships, schema_info, "relationship")
 
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         raise ValueError(f"No root file in asset {asset_dir.name}")
 
@@ -231,7 +209,7 @@ def apply_api(
     else:
         target = resolve_typed_target(requested, api_name)
         target_path = str(target.GetPath())
-        if api_name == PhysicsApiName.ARTICULATION_ROOT:
+        if api_name == schemas.PhysicsApiName.ARTICULATION_ROOT:
             check_articulation_root_nesting(composed, target_path)
     del composed
 
@@ -239,17 +217,17 @@ def apply_api(
     stage = Usd.Stage.Open(str(_phy_layer_path(asset_dir)))
     prim = stage.OverridePrim(Sdf.Path(target_path))
 
-    companion = PhysicsRules.COMPANION_APIS.get(api_name)
+    companion = constants.PhysicsRules.COMPANION_APIS.get(api_name)
     if companion is not None:
-        PhysicsUsd.APIS[companion].Apply(prim)
+        constants.PhysicsUsd.APIS[companion].Apply(prim)
     if is_multi:
         _apply_multi(prim, api_name, instance_name)
     else:
-        PhysicsUsd.APIS[api_name].Apply(prim)
+        constants.PhysicsUsd.APIS[api_name].Apply(prim)
 
     for name, value in attributes.items():
         attr = prim.GetAttribute(name)
-        stage_utils.set_prim_attribute(
+        utils.stage.set_prim_attribute(
             stage, target_path, name, value,
             expected_type=attr.GetTypeName(),
         )
@@ -285,7 +263,7 @@ def apply_api(
 def remove_api(
     asset_dir: Path,
     prim_path: str,
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     *,
     instance_name: str | None = None,
 ) -> bool:
@@ -306,7 +284,7 @@ def remove_api(
 
 def ensure_physics_scope(stage: Usd.Stage) -> str:
     """Create ``/Scene/Physics`` as a Scope if missing; return its path."""
-    scope_path = SceneNamespace.PHYSICS
+    scope_path = constants.SceneNamespace.PHYSICS
     if not stage.GetPrimAtPath(scope_path).IsValid():
         stage.DefinePrim(scope_path, "Scope")
     return scope_path
@@ -314,7 +292,7 @@ def ensure_physics_scope(stage: Usd.Stage) -> str:
 
 def list_physics_scenes(stage: Usd.Stage) -> list[dict[str, Any]]:
     """Return every ``UsdPhysics.Scene`` prim under ``/Scene/Physics``."""
-    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
+    scope = stage.GetPrimAtPath(constants.SceneNamespace.PHYSICS)
     if not scope or not scope.IsValid():
         return []
     return [
@@ -335,7 +313,7 @@ def list_physics_scenes(stage: Usd.Stage) -> list[dict[str, Any]]:
 
 def remove_physics_scene(stage: Usd.Stage, name: str) -> bool:
     """Remove a ``UsdPhysics.Scene`` prim by name; return True if removed."""
-    path = f"{SceneNamespace.PHYSICS}/{name}"
+    path = f"{constants.SceneNamespace.PHYSICS}/{name}"
     prim = stage.GetPrimAtPath(path)
     if not prim or not prim.IsValid() or not prim.IsA(UsdPhysics.Scene):
         return False
@@ -386,7 +364,7 @@ def ensure_physics_scene(
 def apply_api_scene(
     stage: Usd.Stage,
     prim_path: str,
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     attributes: dict[str, Any] | None = None,
     relationships: dict[str, list[str]] | None = None,
     *,
@@ -395,7 +373,7 @@ def apply_api_scene(
     """Apply ``api_name`` on scene.usda; auto-ensures a ``UsdPhysics.Scene``."""
     attributes = attributes or {}
     relationships = relationships or {}
-    is_multi = api_name in PhysicsRules.MULTI_APPLY_APIS
+    is_multi = api_name in constants.PhysicsRules.MULTI_APPLY_APIS
 
     schema_info = list_api_properties(
         api_name, instance_name=instance_name,
@@ -417,20 +395,20 @@ def apply_api_scene(
     else:
         target = resolve_typed_target(prim, api_name)
         target_path = str(target.GetPath())
-        if api_name == PhysicsApiName.ARTICULATION_ROOT:
+        if api_name == schemas.PhysicsApiName.ARTICULATION_ROOT:
             check_articulation_root_nesting(stage, target_path)
 
-    companion = PhysicsRules.COMPANION_APIS.get(api_name)
+    companion = constants.PhysicsRules.COMPANION_APIS.get(api_name)
     if companion is not None:
-        PhysicsUsd.APIS[companion].Apply(target)
+        constants.PhysicsUsd.APIS[companion].Apply(target)
     if is_multi:
         _apply_multi(target, api_name, instance_name)
     else:
-        PhysicsUsd.APIS[api_name].Apply(target)
+        constants.PhysicsUsd.APIS[api_name].Apply(target)
 
     for name, value in attributes.items():
         attr = target.GetAttribute(name)
-        stage_utils.set_prim_attribute(
+        utils.stage.set_prim_attribute(
             stage, target_path, name, value,
             expected_type=attr.GetTypeName(),
         )
@@ -462,7 +440,7 @@ def apply_api_scene(
 def remove_api_scene(
     stage: Usd.Stage,
     prim_path: str,
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     *,
     instance_name: str | None = None,
 ) -> bool:
@@ -494,11 +472,11 @@ def find_masking_scene_opinions(
     if not attr_names and not rel_names:
         return []
 
-    placements = stage_utils.find_asset_placements(stage, asset_dir)
+    placements = utils.stage.find_asset_placements(stage, asset_dir)
     if not placements:
         return []
 
-    default_prim = resolve_default_prim_name(asset_dir)
+    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
     asset_prefix = f"/{default_prim}"
     tail = (
         asset_local_path[len(asset_prefix):]
@@ -539,7 +517,7 @@ def clear_masking_scene_opinions(
             spec.RemoveProperty(prop_spec)
             touched_paths.add(prim_path)
     for prim_path in touched_paths:
-        stage_utils.prune_empty_overrides(layer, prim_path)
+        utils.stage.prune_empty_overrides(layer, prim_path)
     if touched_paths:
         layer.Save()
 
@@ -548,7 +526,7 @@ def enforce_masking_policy(
     stage: Usd.Stage,
     asset_dir: Path,
     asset_local_path: str,
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     attributes: dict[str, Any] | None,
     relationships: dict[str, list[str]] | None,
     *,
@@ -576,7 +554,7 @@ def enforce_masking_policy(
 
 
 def format_masking_override_error(
-    api_name: PhysicsApiName, masking: list[tuple[str, str, str]],
+    api_name: schemas.PhysicsApiName, masking: list[tuple[str, str, str]],
 ) -> str:
     """Render a refuse-or-acknowledge error listing every masking opinion."""
     lines = [
@@ -598,31 +576,31 @@ def format_masking_override_error(
 # ── Inspection ──
 
 
-def get_physics_summary(asset_dir: Path) -> AssetPhysicsSummary:
+def get_physics_summary(asset_dir: Path) -> schemas.AssetPhysicsSummary:
     """Every authored physics opinion in the asset's ``phy.usda``."""
     phy_path = _phy_layer_path(asset_dir)
     if not phy_path.exists():
-        return AssetPhysicsSummary(asset_path=str(asset_dir))
+        return schemas.AssetPhysicsSummary(asset_path=str(asset_dir))
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
     if layer is None:
-        return AssetPhysicsSummary(
+        return schemas.AssetPhysicsSummary(
             asset_path=str(asset_dir), has_physics_layer=True,
         )
 
-    prims: list[PhysicsPrimSummary] = []
+    prims: list[schemas.PhysicsPrimSummary] = []
 
     def visit(path: Sdf.Path) -> None:
         spec = layer.GetObjectAtPath(path)
         if not isinstance(spec, Sdf.PrimSpec):
             return
         apis = _read_api_schemas(spec)
-        attrs = {a.name: to_jsonable(a.default) for a in spec.attributes}
+        attrs = {a.name: utils.usd_schema.to_jsonable(a.default) for a in spec.attributes}
         rels = {
             r.name: [str(t) for t in r.targetPathList.explicitItems]
             for r in spec.relationships
         }
         if apis or attrs or rels:
-            prims.append(PhysicsPrimSummary(
+            prims.append(schemas.PhysicsPrimSummary(
                 prim_path=str(path),
                 applied_apis=apis,
                 attributes=attrs,
@@ -630,20 +608,20 @@ def get_physics_summary(asset_dir: Path) -> AssetPhysicsSummary:
             ))
 
     layer.Traverse(Sdf.Path.absoluteRootPath, visit)
-    return AssetPhysicsSummary(
+    return schemas.AssetPhysicsSummary(
         asset_path=str(asset_dir), has_physics_layer=True, prims=prims,
     )
 
 
 def get_scene_physics_summary(
     stage: Usd.Stage, prim_path: str,
-) -> ScenePhysicsSummary:
+) -> schemas.ScenePhysicsSummary:
     """Scene-side physics opinions on *prim_path* and its descendants."""
     layer = stage.GetRootLayer()
     if layer.GetPrimAtPath(prim_path) is None:
-        return ScenePhysicsSummary(prim_path=prim_path)
+        return schemas.ScenePhysicsSummary(prim_path=prim_path)
 
-    prims: list[PhysicsPrimSummary] = []
+    prims: list[schemas.PhysicsPrimSummary] = []
 
     def visit(path: Sdf.Path) -> None:
         spec = layer.GetObjectAtPath(path)
@@ -651,7 +629,7 @@ def get_scene_physics_summary(
             return
         apis = _read_api_schemas(spec)
         attrs = {
-            a.name: to_jsonable(a.default)
+            a.name: utils.usd_schema.to_jsonable(a.default)
             for a in spec.attributes
             if a.name.startswith("physics:")
         }
@@ -662,7 +640,7 @@ def get_scene_physics_summary(
             or r.name == "material:binding:physics"
         }
         if apis or attrs or rels:
-            prims.append(PhysicsPrimSummary(
+            prims.append(schemas.PhysicsPrimSummary(
                 prim_path=str(path),
                 applied_apis=apis,
                 attributes=attrs,
@@ -670,12 +648,12 @@ def get_scene_physics_summary(
             ))
 
     layer.Traverse(Sdf.Path(prim_path), visit)
-    return ScenePhysicsSummary(prim_path=prim_path, prims=prims)
+    return schemas.ScenePhysicsSummary(prim_path=prim_path, prims=prims)
 
 
 def _group_prim_path(name: str) -> str:
     """Path to a group prim, flat-sibling of PhysicsScene under /Scene/Physics."""
-    return f"{SceneNamespace.PHYSICS}/{name}"
+    return f"{constants.SceneNamespace.PHYSICS}/{name}"
 
 
 def _resolve_group_path(name_or_path: str) -> str:
@@ -769,18 +747,18 @@ def remove_collision_group(
     return removed
 
 
-def list_collision_groups(stage: Usd.Stage) -> CollisionGroupsSummary:
+def list_collision_groups(stage: Usd.Stage) -> schemas.CollisionGroupsSummary:
     """Return every ``UsdPhysicsCollisionGroup`` under ``/Scene/Physics``."""
-    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
+    scope = stage.GetPrimAtPath(constants.SceneNamespace.PHYSICS)
     if not scope or not scope.IsValid():
-        return CollisionGroupsSummary()
+        return schemas.CollisionGroupsSummary()
 
     summaries = [
         _summarize_group(child)
         for child in scope.GetChildren()
         if child.IsA(UsdPhysics.CollisionGroup)
     ]
-    return CollisionGroupsSummary(groups=summaries)
+    return schemas.CollisionGroupsSummary(groups=summaries)
 
 
 def cleanup_if_empty(asset_dir: Path) -> bool:
@@ -814,7 +792,7 @@ def validate_scope(scope: str) -> str:
 def autodetect_scope(stage: Usd.Stage, prim_path: str) -> str:
     """Return ``'asset'`` if *prim_path* resolves through an ASWF placement; else ``'scene'``."""
     try:
-        require_asset_context(stage, prim_path)
+        utils.asset_folder.require_asset_context(stage, prim_path)
     except ValueError:
         return "scene"
     return "asset"
@@ -830,15 +808,15 @@ def parse_vec3(
         raise ValueError(
             f"{name!r} must be a list of 3 numbers; got {value!r}",
         )
-    x, y, z = (stage_utils.coerce_number(v, name) for v in value)
+    x, y, z = (utils.stage.coerce_number(v, name) for v in value)
     return x, y, z
 
 
 def resolve_typed_target(
-    prim: Usd.Prim, api_name: PhysicsApiName,
+    prim: Usd.Prim, api_name: schemas.PhysicsApiName,
 ) -> Usd.Prim:
     """Return *prim* or its unique descendant matching the API's target type."""
-    cls = PhysicsUsd.API_TARGETS[api_name]
+    cls = constants.PhysicsUsd.API_TARGETS[api_name]
     if prim.IsA(cls):
         return prim
     candidates = [
@@ -861,9 +839,9 @@ def resolve_typed_target(
 
 
 def _refuse_unknown(
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     provided: dict[str, Any],
-    schema_info: PhysicsApiSchemaInfo,
+    schema_info: schemas.PhysicsApiSchemaInfo,
     kind: str,
 ) -> None:
     """Refuse property names the schema does not declare."""
@@ -891,7 +869,7 @@ def _read_api_schemas(prim_spec: Sdf.PrimSpec) -> list[str]:
 # ── Joints + articulations ──
 
 
-def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
+def list_joint_properties(joint_type: schemas.PhysicsJointType) -> schemas.PhysicsApiSchemaInfo:
     """Schema-registry view of every property a typed joint declares."""
     prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(joint_type.value)
     if prim_def is None:
@@ -900,30 +878,30 @@ def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
             "USD build is missing UsdPhysics.",
         )
 
-    properties: list[PhysicsPropertySpec] = []
+    properties: list[schemas.PhysicsPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
         attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
         if attr_spec is not None:
-            properties.append(PhysicsPropertySpec(
+            properties.append(schemas.PhysicsPropertySpec(
                 name=prop_name,
                 kind="attribute",
                 type_name=str(attr_spec.typeName),
-                default=to_jsonable(attr_spec.default),
+                default=utils.usd_schema.to_jsonable(attr_spec.default),
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
-                documentation=property_doc(prim_def, prop_name, attr_spec),
+                documentation=utils.usd_schema.property_doc(prim_def, prop_name, attr_spec),
             ))
             continue
         rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
         if rel_spec is not None:
-            properties.append(PhysicsPropertySpec(
+            properties.append(schemas.PhysicsPropertySpec(
                 name=prop_name,
                 kind="relationship",
-                documentation=property_doc(prim_def, prop_name, rel_spec),
+                documentation=utils.usd_schema.property_doc(prim_def, prop_name, rel_spec),
             ))
 
-    return PhysicsApiSchemaInfo(
+    return schemas.PhysicsApiSchemaInfo(
         api_name=joint_type.value,
         target_requirement="(typed prim)",
         properties=properties,
@@ -932,7 +910,7 @@ def list_joint_properties(joint_type: PhysicsJointType) -> PhysicsApiSchemaInfo:
 
 def create_joint_scene(
     stage: Usd.Stage,
-    joint_type: PhysicsJointType,
+    joint_type: schemas.PhysicsJointType,
     name: str,
     body0: str | None,
     body1: str | None,
@@ -945,8 +923,8 @@ def create_joint_scene(
     _refuse_unknown_joint_properties(joint_type, attributes)
 
     ensure_physics_scene(stage)
-    prim_path = f"{SceneNamespace.PHYSICS}/{name}"
-    joint = PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
+    prim_path = f"{constants.SceneNamespace.PHYSICS}/{name}"
+    joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
     _set_body_rel(joint, "physics:body1", body1)
@@ -969,7 +947,7 @@ def create_joint_scene(
 
 def create_joint_asset(
     asset_dir: Path,
-    joint_type: PhysicsJointType,
+    joint_type: schemas.PhysicsJointType,
     name: str,
     body0: str | None,
     body1: str | None,
@@ -980,7 +958,7 @@ def create_joint_asset(
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
 
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         raise ValueError(f"No root file in asset {asset_dir.name}")
     composed = Usd.Stage.Open(str(root_file))
@@ -989,13 +967,13 @@ def create_joint_asset(
 
     ensure_physics_layer(asset_dir)
     stage = Usd.Stage.Open(str(_phy_layer_path(asset_dir)))
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    joints_scope_path = f"/{default_prim_name}/{PhysicsNamespace.JOINTS_SCOPE}"
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    joints_scope_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}"
     if not stage.GetPrimAtPath(joints_scope_path).IsValid():
         stage.DefinePrim(joints_scope_path, "Scope")
 
     prim_path = f"{joints_scope_path}/{name}"
-    joint = PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
+    joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
     _set_body_rel(joint, "physics:body1", body1)
@@ -1043,8 +1021,8 @@ def remove_joint_asset(asset_dir: Path, name: str) -> bool:
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
     if layer is None:
         return False
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    prim_path = f"/{default_prim_name}/{PhysicsNamespace.JOINTS_SCOPE}/{name}"
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    prim_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}/{name}"
     if layer.GetPrimAtPath(prim_path) is None:
         return False
     edit = Sdf.BatchNamespaceEdit()
@@ -1057,29 +1035,29 @@ def remove_joint_asset(asset_dir: Path, name: str) -> bool:
 
 def list_joints_scene(
     stage: Usd.Stage, under_prim_path: str | None = None,
-) -> JointsSummary:
+) -> schemas.JointsSummary:
     """Return every supported joint prim under *under_prim_path* (default scene root)."""
     root = (
         stage.GetPrimAtPath(under_prim_path)
         if under_prim_path else stage.GetPseudoRoot()
     )
     if not root or not root.IsValid():
-        return JointsSummary()
-    joints: list[JointSummary] = []
+        return schemas.JointsSummary()
+    joints: list[schemas.JointSummary] = []
     for prim in Usd.PrimRange(root):
         if _is_supported_joint_prim(prim):
             joints.append(_summarize_joint(prim))
-    return JointsSummary(joints=joints)
+    return schemas.JointsSummary(joints=joints)
 
 
-def list_joints_asset(asset_dir: Path) -> JointsSummary:
+def list_joints_asset(asset_dir: Path) -> schemas.JointsSummary:
     """Return every joint prim authored in the asset's ``phy.usda``."""
     phy_path = _phy_layer_path(asset_dir)
     if not phy_path.exists():
-        return JointsSummary()
+        return schemas.JointsSummary()
     stage = Usd.Stage.Open(str(phy_path))
     if stage is None:
-        return JointsSummary()
+        return schemas.JointsSummary()
     return list_joints_scene(stage)
 
 
@@ -1087,7 +1065,7 @@ def _validate_joint_name(name: str) -> None:
     """Refuse empty names or names with whitespace / path separators."""
     if not name:
         raise ValueError("Joint name cannot be empty.")
-    bad = [c for c in name if c in NamingRules.FORBIDDEN_CHARS]
+    bad = [c for c in name if c in constants.NamingRules.FORBIDDEN_CHARS]
     if bad:
         raise ValueError(
             f"Joint name {name!r} has invalid characters "
@@ -1130,7 +1108,7 @@ def _validate_joint_bodies(
 
 
 def _refuse_unknown_joint_properties(
-    joint_type: PhysicsJointType, attributes: dict[str, Any],
+    joint_type: schemas.PhysicsJointType, attributes: dict[str, Any],
 ) -> None:
     """Refuse attribute names the joint schema does not declare."""
     info = list_joint_properties(joint_type)
@@ -1160,7 +1138,7 @@ def _set_body_rel(joint, rel_name: str, target_path: str | None) -> None:
 
 
 def _author_joint_attributes(
-    joint, attributes: dict[str, Any], joint_type: PhysicsJointType,
+    joint, attributes: dict[str, Any], joint_type: schemas.PhysicsJointType,
 ) -> None:
     """Set caller-provided joint attributes after typed-prim definition."""
     prim = joint.GetPrim()
@@ -1171,7 +1149,7 @@ def _author_joint_attributes(
                 f"Attribute {name!r} not resolvable on {joint_type.value} "
                 f"at {prim.GetPath()}",
             )
-        stage_utils.set_prim_attribute(
+        utils.stage.set_prim_attribute(
             prim.GetStage(), str(prim.GetPath()), name, value,
             expected_type=attr.GetTypeName(),
         )
@@ -1190,16 +1168,16 @@ def _ancestor_has_api(prim: Usd.Prim, api_name: str) -> bool:
 
 def _is_supported_joint_prim(prim: Usd.Prim) -> bool:
     """Whether *prim* is one of the five supported joint typed prims."""
-    return any(prim.IsA(cls) for cls in PhysicsUsd.JOINTS.values())
+    return any(prim.IsA(cls) for cls in constants.PhysicsUsd.JOINTS.values())
 
 
 def _is_supported_joint_spec(spec: Sdf.PrimSpec) -> bool:
     """Spec-side check (no stage) for joint typeName in our whitelist."""
     type_name = str(spec.typeName) if spec.typeName else ""
-    return type_name in {jt.value for jt in PhysicsJointType}
+    return type_name in {jt.value for jt in schemas.PhysicsJointType}
 
 
-def _summarize_joint(prim: Usd.Prim) -> JointSummary:
+def _summarize_joint(prim: Usd.Prim) -> schemas.JointSummary:
     """Read a joint prim into a summary."""
     type_name = prim.GetTypeName()
     body0_rel = prim.GetRelationship("physics:body0")
@@ -1216,9 +1194,9 @@ def _summarize_joint(prim: Usd.Prim) -> JointSummary:
             continue
         if not a.HasAuthoredValue():
             continue
-        attrs[name] = to_jsonable(a.Get())
+        attrs[name] = utils.usd_schema.to_jsonable(a.Get())
 
-    return JointSummary(
+    return schemas.JointSummary(
         prim_path=str(prim.GetPath()),
         joint_type=str(type_name),
         body0=str(body0_targets[0]) if body0_targets else None,
@@ -1272,7 +1250,7 @@ def _validate_group_name(name: str) -> None:
     """Refuse empty names or names with whitespace / path separators."""
     if not name:
         raise ValueError("Collision group name cannot be empty.")
-    bad = [c for c in name if c in NamingRules.FORBIDDEN_CHARS]
+    bad = [c for c in name if c in constants.NamingRules.FORBIDDEN_CHARS]
     if bad:
         raise ValueError(
             f"Collision group name {name!r} has invalid characters "
@@ -1280,7 +1258,7 @@ def _validate_group_name(name: str) -> None:
         )
 
 
-def _summarize_group(prim: Usd.Prim) -> CollisionGroupSummary:
+def _summarize_group(prim: Usd.Prim) -> schemas.CollisionGroupSummary:
     """Read a ``UsdPhysicsCollisionGroup`` prim into a summary model."""
     group = UsdPhysics.CollisionGroup(prim)
     collection = group.GetCollidersCollectionAPI()
@@ -1291,7 +1269,7 @@ def _summarize_group(prim: Usd.Prim) -> CollisionGroupSummary:
     invert_attr = group.GetInvertFilteredGroupsAttr()
     merge_attr = group.GetMergeGroupNameAttr()
 
-    return CollisionGroupSummary(
+    return schemas.CollisionGroupSummary(
         name=prim.GetName(),
         prim_path=str(prim.GetPath()),
         includes=[str(t) for t in includes_rel.GetTargets()]
@@ -1309,7 +1287,7 @@ def _summarize_group(prim: Usd.Prim) -> CollisionGroupSummary:
 
 def _find_dependent_groups(stage: Usd.Stage, group_prim_path: str) -> list[str]:
     """Names of other groups whose ``filteredGroups`` targets *group_prim_path*."""
-    scope = stage.GetPrimAtPath(SceneNamespace.PHYSICS)
+    scope = stage.GetPrimAtPath(constants.SceneNamespace.PHYSICS)
     if not scope or not scope.IsValid():
         return []
     target = Sdf.Path(group_prim_path)
@@ -1328,7 +1306,7 @@ def _find_dependent_groups(stage: Usd.Stage, group_prim_path: str) -> list[str]:
 def _remove_api_from_layer(
     layer: Sdf.Layer,
     prim_path: str,
-    api_name: PhysicsApiName,
+    api_name: schemas.PhysicsApiName,
     *,
     instance_name: str | None = None,
 ) -> bool:
@@ -1338,8 +1316,8 @@ def _remove_api_from_layer(
         return False
 
     authored = set(_read_api_schemas(prim_spec))
-    targets: list[PhysicsApiName] = [api_name]
-    for dependent in PhysicsRules.DEPENDENT_APIS.get(api_name, ()):
+    targets: list[schemas.PhysicsApiName] = [api_name]
+    for dependent in constants.PhysicsRules.DEPENDENT_APIS.get(api_name, ()):
         if dependent.value in authored:
             targets.append(dependent)
 
@@ -1347,14 +1325,16 @@ def _remove_api_from_layer(
     for name in targets:
         token = (
             f"{name.value}:{instance_name}"
-            if name in PhysicsRules.MULTI_APPLY_APIS and instance_name
+            if name in constants.PhysicsRules.MULTI_APPLY_APIS and instance_name
             else name.value
         )
         if _drop_from_api_listop(prim_spec, token):
             touched = True
         props = list_api_properties(
             name,
-            instance_name=instance_name if name in PhysicsRules.MULTI_APPLY_APIS else None,
+            instance_name=(
+                instance_name if name in constants.PhysicsRules.MULTI_APPLY_APIS else None
+            ),
         )
         for prop in props.properties:
             container = (
@@ -1368,7 +1348,7 @@ def _remove_api_from_layer(
 
     if touched:
         layer.Save()
-        stage_utils.prune_empty_overrides(layer, prim_path)
+        utils.stage.prune_empty_overrides(layer, prim_path)
     return touched
 
 
@@ -1392,18 +1372,18 @@ def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
 
 def _drop_physics_reference(asset_dir: Path) -> None:
     """Remove ``./phy.usda`` from the asset root's reference list."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return
     layer = Sdf.Layer.FindOrOpen(str(root_file))
     if layer is None:
         return
     prim_spec = layer.GetPrimAtPath(
-        f"/{resolve_default_prim_name(asset_dir)}",
+        f"/{utils.asset_folder.resolve_default_prim_name(asset_dir)}",
     )
     if prim_spec is None:
         return
-    target = f"./{ASWFLayerNames.PHY}"
+    target = f"./{constants.ASWFLayerNames.PHY}"
     ref_list = prim_spec.referenceList
     for items in (
         ref_list.prependedItems,

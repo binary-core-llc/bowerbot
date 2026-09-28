@@ -25,14 +25,12 @@ version bumps; external skill packages depend on a compatible bowerbot
 range in their own ``pyproject.toml`` and trust this surface.
 """
 
-from bowerbot.skills.base import (
-    Skill,
-    SkillCategory,
-    SkillConfigError,
-    SkillContext,
-    Tool,
-    ToolResult,
-)
+from bowerbot.skills.base import Skill
+from bowerbot.skills.base import SkillCategory
+from bowerbot.skills.base import SkillConfigError
+from bowerbot.skills.base import SkillContext
+from bowerbot.skills.base import Tool
+from bowerbot.skills.base import ToolResult
 from bowerbot.skills.registry import SkillRegistry
 
 __all__ = [

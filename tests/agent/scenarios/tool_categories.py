@@ -7,9 +7,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pxr import Usd, UsdGeom, UsdLux, UsdShade
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdLux
+from pxr import UsdShade
 
-from tests.agent.runner import AgentScenario, ScenarioContext
+from tests.agent import runner
 
 
 def _stage_path(project_dir: Path) -> Path:
@@ -52,13 +55,13 @@ def _setup_three_dynamic_bodies(project_dir: Path) -> None:
     stage.Save()
 
 
-def _assert_snapshot_round_trip(ctx: ScenarioContext) -> None:
+def _assert_snapshot_round_trip(ctx: runner.ScenarioContext) -> None:
     called = {tc.tool_name for tc in ctx.all_tool_calls}
     assert "save_scene_snapshot" in called
     assert "list_scene_snapshots" in called or "delete_scene_snapshot" in called
 
 
-def _assert_material_bound(ctx: ScenarioContext) -> None:
+def _assert_material_bound(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
     bound = False
@@ -75,7 +78,7 @@ def _assert_material_bound(ctx: ScenarioContext) -> None:
     )
 
 
-def _assert_light_intensity_changed(ctx: ScenarioContext) -> None:
+def _assert_light_intensity_changed(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
     light = stage.GetPrimAtPath("/Scene/Lighting/KeyLight")
@@ -86,14 +89,14 @@ def _assert_light_intensity_changed(ctx: ScenarioContext) -> None:
     )
 
 
-def _assert_light_removed(ctx: ScenarioContext) -> None:
+def _assert_light_removed(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
     light = stage.GetPrimAtPath("/Scene/Lighting/KeyLight")
     assert not (light and light.IsValid()), "KeyLight should be gone"
 
 
-def _assert_three_rigid_bodies(ctx: ScenarioContext) -> None:
+def _assert_three_rigid_bodies(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
     rb = [
@@ -103,7 +106,7 @@ def _assert_three_rigid_bodies(ctx: ScenarioContext) -> None:
     assert len(rb) >= 3, f"Expected at least 3 RigidBody prims, got: {rb}"
 
 
-snapshot_full_cycle = AgentScenario(
+snapshot_full_cycle = runner.AgentScenario(
     name="category_snapshot_full_cycle",
     description="Save a named snapshot, list snapshots, delete it.",
     tier="category",
@@ -117,7 +120,7 @@ snapshot_full_cycle = AgentScenario(
 )
 
 
-material_create_and_bind = AgentScenario(
+material_create_and_bind = runner.AgentScenario(
     name="category_material_create_and_bind",
     description="Place a real library asset, create a procedural material, bind it.",
     tier="category",
@@ -131,7 +134,7 @@ material_create_and_bind = AgentScenario(
 )
 
 
-bind_existing_library_material = AgentScenario(
+bind_existing_library_material = runner.AgentScenario(
     name="category_bind_existing_library_material",
     description="Place a real library asset and bind an existing library material.",
     tier="category",
@@ -145,7 +148,7 @@ bind_existing_library_material = AgentScenario(
 )
 
 
-light_dim = AgentScenario(
+light_dim = runner.AgentScenario(
     name="category_light_dim",
     description="Dim an existing light to about a quarter intensity.",
     tier="category",
@@ -159,7 +162,7 @@ light_dim = AgentScenario(
 )
 
 
-light_remove = AgentScenario(
+light_remove = runner.AgentScenario(
     name="category_light_remove",
     description="Ask to remove the KeyLight; ensure it is gone.",
     tier="category",
@@ -172,7 +175,7 @@ light_remove = AgentScenario(
 )
 
 
-goal_make_falling_stack = AgentScenario(
+goal_make_falling_stack = runner.AgentScenario(
     name="category_goal_make_falling_stack",
     description="Apply rigid bodies + collision so three stacked cubes fall.",
     tier="category",

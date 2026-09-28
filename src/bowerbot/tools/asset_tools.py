@@ -7,104 +7,110 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.constants import PlacementRules
-from bowerbot.schemas import LayoutPattern, PositionMode
+from bowerbot import constants
+from bowerbot import scene_state
+from bowerbot import schemas
+from bowerbot import skills
 from bowerbot.services import asset_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_project, require_stage
+from bowerbot.tools import _helpers
 
 
-def place_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Add an asset reference to the scene at the given group/position."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = asset_service.place_asset(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def place_asset_inside(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Nest an asset inside an ASWF container's ``contents.usda``."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = asset_service.place_asset_inside(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def place_layout(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Place many assets in one batch from enumerated or parametric layout entries."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = asset_service.place_layout(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_project_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_project_assets(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List every asset in the project directory, with in-scene flags."""
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = asset_service.list_project_assets(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def delete_project_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def delete_project_asset(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Delete an asset folder/file from the project, if unreferenced."""
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = asset_service.delete_project_asset(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def cleanup_unused_contents(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def cleanup_unused_contents(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Drop empty contents.usda layers from asset folders, per asset or project-wide."""
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = asset_service.cleanup_unused_contents(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def freeze_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Bake an existing project asset's root transforms into vertex data."""
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = asset_service.freeze_asset(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def delete_project_texture(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def delete_project_texture(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Delete a texture from the project's ``textures/`` dir, if unreferenced."""
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = asset_service.delete_project_texture(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="place_asset",
         description=(
             "Place a 3D asset into the current scene. The asset is added as a "
@@ -182,7 +188,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="place_layout",
         description=(
             "Place MANY assets into the scene in a single call, the batch form "
@@ -208,8 +214,8 @@ TOOLS: list[Tool] = [
                 "placements": {
                     "type": "array",
                     "description": (
-                        "Each entry places one asset at many transforms; at "
-                        f"most {PlacementRules.MAX_LAYOUT_PLACEMENTS} placements per call."
+                        "Each entry places one asset at many transforms; at most "
+                        f"{constants.PlacementRules.MAX_LAYOUT_PLACEMENTS} placements per call."
                     ),
                     "items": {
                         "type": "object",
@@ -303,7 +309,7 @@ TOOLS: list[Tool] = [
                                 "properties": {
                                     "type": {
                                         "type": "string",
-                                        "enum": [p.value for p in LayoutPattern],
+                                        "enum": [p.value for p in schemas.LayoutPattern],
                                         "description": (
                                             "'grid' repeats along X/Y(/Z); 'linear' "
                                             "repeats along one direction step."
@@ -354,7 +360,7 @@ TOOLS: list[Tool] = [
             "required": ["placements"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="place_asset_inside",
         description=(
             "Place a 3D asset NESTED INSIDE another asset (the container). "
@@ -420,7 +426,7 @@ TOOLS: list[Tool] = [
                 },
                 "position_mode": {
                     "type": "string",
-                    "enum": [m.value for m in PositionMode],
+                    "enum": [m.value for m in schemas.PositionMode],
                     "description": (
                         "How to interpret translate values: 'absolute' = "
                         "world-space coordinates (as returned by list_scene / "
@@ -431,7 +437,7 @@ TOOLS: list[Tool] = [
                         "for negative Y); if translate_y is omitted the asset is "
                         "placed 0.5 m above the top surface."
                     ),
-                    "default": PositionMode.ABSOLUTE.value,
+                    "default": schemas.PositionMode.ABSOLUTE.value,
                 },
                 "fix_root_prim": {
                     "type": "boolean",
@@ -468,7 +474,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_project_assets",
         description=(
             "List asset folders in the current project's assets directory. "
@@ -486,7 +492,7 @@ TOOLS: list[Tool] = [
             },
         },
     ),
-    Tool(
+    skills.Tool(
         name="delete_project_asset",
         description=(
             "Delete an asset from the project's assets directory. Works for "
@@ -511,7 +517,7 @@ TOOLS: list[Tool] = [
             "required": ["name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="delete_project_texture",
         description=(
             "Delete a texture file from the project's textures/ directory. "
@@ -531,7 +537,7 @@ TOOLS: list[Tool] = [
             "required": ["file_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="freeze_asset",
         description=(
             "Bake project assets' root transforms (translate/rotate/scale/"
@@ -556,7 +562,7 @@ TOOLS: list[Tool] = [
             },
         },
     ),
-    Tool(
+    skills.Tool(
         name="cleanup_unused_contents",
         description=(
             "Drop empty contents.usda layers from asset folders. Use this "

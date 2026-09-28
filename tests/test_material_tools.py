@@ -7,9 +7,11 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Usd, UsdGeom, UsdShade
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdShade
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -26,14 +28,14 @@ def _asset(directory: Path, name: str) -> Path:
 
 def _setup(tmp):
     tmp_path = Path(tmp)
-    state, project = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, project = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return tmp_path, state, project
 
 
 def _place(tmp_path, state, name="chair"):
     asset = _asset(tmp_path, name)
-    r = asyncio.run(exec_tool(state, "place_asset", {
+    r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
         "asset_file_path": str(asset), "asset_name": name.title(),
         "group": "Furniture",
         "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -52,7 +54,7 @@ def test_create_material():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "create_material", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path,
             "material_name": "matte_black",
             "base_color_r": 0.05,
@@ -73,7 +75,7 @@ def test_create_material_metallic():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "create_material", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path,
             "material_name": "gold",
             "base_color_r": 1.0, "base_color_g": 0.84, "base_color_b": 0.0,
@@ -85,8 +87,8 @@ def test_create_material_metallic():
 def test_create_material_missing_stage():
     """Fails when no stage is open."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
-        r = asyncio.run(exec_tool(state, "create_material", {
+        state, _ = _helpers.make_state(Path(tmp))
+        r = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": "/Scene/Furniture/Chair/asset/Mesh",
             "material_name": "x",
         }))
@@ -101,7 +103,7 @@ def test_create_material_shared_refuses():
         _place(tmp_path, state, "stool")
 
         mesh_path = f"{p1.data['prim_path']}/asset/Mesh"
-        r = asyncio.run(exec_tool(state, "create_material", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "red",
         }))
         assert not r.success
@@ -115,7 +117,7 @@ def test_create_material_shared_with_confirm():
         _place(tmp_path, state, "stool")
 
         mesh_path = f"{p1.data['prim_path']}/asset/Mesh"
-        r = asyncio.run(exec_tool(state, "create_material", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "red",
             "confirm_shared_modification": True,
         }))
@@ -132,10 +134,10 @@ def test_remove_material():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "create_material", {
+        asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "temp",
         }))
-        r = asyncio.run(exec_tool(state, "remove_material", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_material", {
             "prim_path": mesh_path,
         }))
         assert r.success, r.error
@@ -148,7 +150,7 @@ def test_list_materials_empty():
     """Empty scene returns empty materials list."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_materials"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_materials"))
         assert r.success, r.error
 
 
@@ -159,10 +161,10 @@ def test_list_materials_after_create():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "create_material", {
+        asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "wood",
         }))
-        r = asyncio.run(exec_tool(state, "list_materials"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_materials"))
         assert r.success, r.error
         assert len(r.data["materials"]) >= 1
 
@@ -177,10 +179,10 @@ def test_cleanup_unused_materials_noop():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "create_material", {
+        asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "clean",
         }))
-        r = asyncio.run(exec_tool(state, "cleanup_unused_materials"))
+        r = asyncio.run(_helpers.exec_tool(state, "cleanup_unused_materials"))
         assert r.success, r.error
 
 
@@ -191,14 +193,14 @@ def test_cleanup_removes_orphan_after_unbind():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "create_material", {
+        asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "orphan",
         }))
-        asyncio.run(exec_tool(state, "remove_material", {
+        asyncio.run(_helpers.exec_tool(state, "remove_material", {
             "prim_path": mesh_path,
         }))
 
-        r = asyncio.run(exec_tool(state, "cleanup_unused_materials"))
+        r = asyncio.run(_helpers.exec_tool(state, "cleanup_unused_materials"))
         assert r.success, r.error
 
 
@@ -212,7 +214,7 @@ def test_create_material_with_opacity():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "create_material", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path,
             "material_name": "glass",
             "base_color_r": 0.9, "base_color_g": 0.95,
@@ -232,10 +234,10 @@ def test_create_two_materials_same_asset():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r1 = asyncio.run(exec_tool(state, "create_material", {
+        r1 = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "paint_a",
         }))
-        r2 = asyncio.run(exec_tool(state, "create_material", {
+        r2 = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "paint_b",
         }))
         assert r1.success, r1.error
@@ -252,10 +254,10 @@ def test_remove_material_clears_binding_on_disk():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "create_material", {
+        asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "temp",
         }))
-        asyncio.run(exec_tool(state, "remove_material", {
+        asyncio.run(_helpers.exec_tool(state, "remove_material", {
             "prim_path": mesh_path,
         }))
 
@@ -277,10 +279,10 @@ def test_list_materials_has_prim_path():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "create_material", {
+        asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": mesh_path, "material_name": "walnut",
         }))
-        r = asyncio.run(exec_tool(state, "list_materials"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_materials"))
         assert r.success, r.error
         mat = r.data["materials"][0]
         assert "material_path" in mat

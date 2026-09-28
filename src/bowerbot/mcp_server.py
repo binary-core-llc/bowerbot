@@ -10,7 +10,8 @@ import contextlib
 import json
 import logging
 from collections.abc import AsyncIterator
-from importlib.metadata import PackageNotFoundError, version
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version
 
 import mcp.types as types
 import uvicorn
@@ -21,10 +22,10 @@ from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.routing import Mount
 
+from bowerbot import config
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot import tool_router
-from bowerbot.config import McpSettings, Settings, Transport
-from bowerbot.skills.registry import SkillRegistry
-from bowerbot.state import SceneState
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ def _to_mcp_tools(schemas: list[dict]) -> list[types.Tool]:
     return tools
 
 
-def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
+def _build_server(state: scene_state.SceneState, skill_registry: skills.SkillRegistry) -> Server:
     """Wire the list-tools and call-tool handlers onto a new MCP server."""
     server: Server = Server("bowerbot", version=_server_version())
 
@@ -78,7 +79,7 @@ def _build_server(state: SceneState, skill_registry: SkillRegistry) -> Server:
     return server
 
 
-def _security_settings(mcp: McpSettings) -> TransportSecuritySettings:
+def _security_settings(mcp: config.McpSettings) -> TransportSecuritySettings:
     """DNS-rebinding protection: accept only the configured local origin."""
     hosts = {
         f"{mcp.host}:{mcp.port}",
@@ -92,10 +93,10 @@ def _security_settings(mcp: McpSettings) -> TransportSecuritySettings:
     )
 
 
-def build_app(settings: Settings) -> Starlette:
+def build_app(settings: config.Settings) -> Starlette:
     """Build the ASGI app that serves the MCP tool surface over HTTP."""
-    state = SceneState.from_settings(settings)
-    skill_registry = SkillRegistry()
+    state = scene_state.SceneState.from_settings(settings)
+    skill_registry = skills.SkillRegistry()
     skill_registry.load_from_settings(settings)
     server = _build_server(state, skill_registry)
     manager = StreamableHTTPSessionManager(
@@ -124,10 +125,10 @@ def build_app(settings: Settings) -> Starlette:
     )
 
 
-async def _run_stdio(settings: Settings) -> None:
+async def _run_stdio(settings: config.Settings) -> None:
     """Serve the MCP tool surface to a client that spawned us over stdio."""
-    state = SceneState.from_settings(settings)
-    skill_registry = SkillRegistry()
+    state = scene_state.SceneState.from_settings(settings)
+    skill_registry = skills.SkillRegistry()
     skill_registry.load_from_settings(settings)
     server = _build_server(state, skill_registry)
     logger.info(
@@ -139,9 +140,9 @@ async def _run_stdio(settings: Settings) -> None:
         await server.run(read, write, server.create_initialization_options())
 
 
-def serve(settings: Settings) -> None:
+def serve(settings: config.Settings) -> None:
     """Run the MCP server (blocking) over the configured transport."""
-    if settings.mcp.transport is Transport.HTTP:
+    if settings.mcp.transport is config.Transport.HTTP:
         uvicorn.run(
             build_app(settings),
             host=settings.mcp.host,

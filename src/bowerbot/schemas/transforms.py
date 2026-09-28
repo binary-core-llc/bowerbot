@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
-from bowerbot.schemas.assets import AssetMetadata
+from bowerbot.schemas import assets
 
 Vec3 = tuple[float, float, float]
 
@@ -50,7 +50,7 @@ class SceneObject(BaseModel):
     """An object placed in the scene graph."""
 
     prim_path: str  # e.g. "/Scene/Furniture/Table_01"
-    asset: AssetMetadata
+    asset: assets.AssetMetadata
     translate: tuple[float, float, float] = (0.0, 0.0, 0.0)
     rotate: tuple[float, float, float] = (0.0, 0.0, 0.0)
     scale: tuple[float, float, float] = (1.0, 1.0, 1.0)

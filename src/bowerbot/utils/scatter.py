@@ -11,51 +11,24 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from pxr import Gf, Sdf, Usd, UsdGeom, Vt
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import Vt
 
-from bowerbot.constants import (
-    ScatterDefaults,
-    ScatterNamespace,
-    ScatterRules,
-    ScatterTuning,
-    SurfaceTuning,
-)
-from bowerbot.schemas import (
-    AssetMetadata,
-    ScatterAlign,
-    ScatterArrangement,
-    ScatterAsset,
-    ScatterAssetOrder,
-    ScatterDropAlign,
-    ScatterInstanceSet,
-    ScatterOutput,
-    ScatterPathCircle,
-    ScatterPathFacing,
-    ScatterPathParams,
-    ScatterPathSide,
-    ScatterPoseParams,
-    ScatterPrototype,
-    ScatterRegion,
-    ScatterRegionFalloff,
-    ScatterSurfaceParams,
-    SceneObject,
-    SurfaceIndex,
-    SurfaceTriangles,
-)
-from bowerbot.schemas.scatter import ScatterAcceptance
-from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
-from bowerbot.schemas.transforms import Vec3
-from bowerbot.utils import asset_intake_utils, layout_utils, stage_utils, surface_utils
-from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 # ── parameters and naming ──
 
 
 def scatter_prim_path(group: str, name: str) -> str:
     """``/Scene/<group>/<name>`` for a scatter, validating both parts."""
-    group_path = layout_utils.scene_group_path(group)
-    prim_name = safe_prim_name(name)
-    if not is_valid_prim_name(prim_name):
+    group_path = utils.layout.scene_group_path(group)
+    prim_name = utils.naming.safe_prim_name(name)
+    if not utils.naming.is_valid_prim_name(prim_name):
         msg = (
             f"name '{name}' is not a valid USD prim name (letters, digits, "
             "underscores; must start with a letter or underscore)."
@@ -97,11 +70,11 @@ def parse_scale_range(raw: list[float] | None) -> tuple[float, float]:
 
 def parse_region(
     stage: Usd.Stage, raw: dict[str, Any] | None, up: int,
-) -> ScatterRegion | None:
+) -> schemas.ScatterRegion | None:
     """Validate a raw ``region`` and resolve its ``center_prim`` to a centre point."""
     if raw is None:
         return None
-    falloff = ScatterRegionFalloff(raw.get("falloff", ScatterRegionFalloff.NONE))
+    falloff = schemas.ScatterRegionFalloff(raw.get("falloff", schemas.ScatterRegionFalloff.NONE))
     polygon = raw.get("polygon")
     if polygon is not None:
         if any(raw.get(key) is not None for key in ("center", "center_prim", "radius")):
@@ -110,21 +83,21 @@ def parse_region(
                 "(center/center_prim + radius), not both."
             )
             raise ValueError(msg)
-        return ScatterRegion(polygon=[tuple(point) for point in polygon], falloff=falloff)
+        return schemas.ScatterRegion(polygon=[tuple(point) for point in polygon], falloff=falloff)
     if raw.get("radius") is None:
         msg = "a circular region needs 'radius'."
         raise ValueError(msg)
     center = _circle_center(stage, raw, up, "a circular region")
-    return ScatterRegion(center=center, radius=float(raw["radius"]), falloff=falloff)
+    return schemas.ScatterRegion(center=center, radius=float(raw["radius"]), falloff=falloff)
 
 
 def parse_path_circle(
     stage: Usd.Stage, raw: dict[str, Any] | None, up: int,
-) -> ScatterPathCircle | None:
+) -> schemas.ScatterPathCircle | None:
     """Validate a raw path ``circle`` and resolve its ``center_prim`` to a centre point."""
     if raw is None:
         return None
-    return ScatterPathCircle(
+    return schemas.ScatterPathCircle(
         center=_circle_center(stage, raw, up, "'circle'"),
         radius=float(raw["radius"]),
         start_angle_degrees=float(raw.get("start_angle_degrees", 0.0)),
@@ -135,24 +108,24 @@ def parse_path_circle(
 
 
 def resolve_asset_sources(
-    assets: list[ScatterAsset],
+    assets: list[schemas.ScatterAsset],
     *,
     project_dir: Path | None,
     library_dir: Path | None,
-) -> list[tuple[ScatterAsset, Path]]:
+) -> list[tuple[schemas.ScatterAsset, Path]]:
     """Resolve every asset in the mix to a root file, reporting all problems at once."""
     problems: list[str] = []
-    resolved: list[tuple[ScatterAsset, Path]] = []
+    resolved: list[tuple[schemas.ScatterAsset, Path]] = []
     targets: dict[str, Path] = {}
     for idx, entry in enumerate(assets):
         try:
-            path = layout_utils.resolve_layout_asset(
+            path = utils.layout.resolve_layout_asset(
                 entry.asset, project_dir=project_dir, library_dir=library_dir,
             )
         except ValueError as e:
             problems.append(f"assets[{idx}]: {e}")
             continue
-        target = asset_intake_utils.intake_target_name(path, library_dir)
+        target = utils.intake.intake_target_name(path, library_dir)
         prior = targets.setdefault(target, path)
         if prior != path:
             problems.append(
@@ -169,12 +142,12 @@ def resolve_asset_sources(
 
 def stage_prototypes(
     stage: Usd.Stage,
-    sources: list[tuple[ScatterAsset, Path]],
+    sources: list[tuple[schemas.ScatterAsset, Path]],
     *,
     assets_dir: Path,
     library_dir: Path | None,
     project_dir: Path,
-) -> list[ScatterPrototype]:
+) -> list[schemas.ScatterPrototype]:
     """Intake every source into the project and measure its conformed bounds."""
     fix_prim: dict[Path, bool] = {}
     fix_xform: dict[Path, bool] = {}
@@ -186,7 +159,7 @@ def stage_prototypes(
     problems: list[str] = []
     for path in fix_prim:
         try:
-            reports[path] = asset_intake_utils.prepare_asset(
+            reports[path] = utils.intake.prepare_asset(
                 path, assets_dir, library_dir=library_dir,
                 fix_root_prim=fix_prim[path], fix_root_transforms=fix_xform[path],
             )
@@ -196,17 +169,17 @@ def stage_prototypes(
         summary = f"asset intake failed ({len(problems)} asset(s)):"
         raise ValueError("\n".join([summary, *problems]))
 
-    up = surface_utils.axis_index(UsdGeom.GetStageUpAxis(stage))
-    prototypes: list[ScatterPrototype] = []
+    up = utils.surface.axis_index(UsdGeom.GetStageUpAxis(stage))
+    prototypes: list[schemas.ScatterPrototype] = []
     used: set[str] = set()
     for entry, path in sources:
         report = reports[path]
-        unit_scale, correction = stage_utils.asset_conform(stage, report.scene_ref_path)
+        unit_scale, correction = utils.stage.asset_conform(stage, report.scene_ref_path)
         bmin, bmax, base_min, base_max, points = _conformed_extents(
             project_dir / report.scene_ref_path, unit_scale, correction, up,
         )
-        base = safe_prim_name(Path(report.asset_folder_name).stem) or "proto"
-        if not is_valid_prim_name(base):
+        base = utils.naming.safe_prim_name(Path(report.asset_folder_name).stem) or "proto"
+        if not utils.naming.is_valid_prim_name(base):
             base = f"proto_{base}"
         name = base
         n = 2
@@ -214,7 +187,7 @@ def stage_prototypes(
             name = f"{base}_{n}"
             n += 1
         used.add(name)
-        prototypes.append(ScatterPrototype(
+        prototypes.append(schemas.ScatterPrototype(
             name=name, source=str(path), scene_ref=report.scene_ref_path,
             weight=entry.weight,
             bounds_min=tuple(bmin.tolist()), bounds_max=tuple(bmax.tolist()),
@@ -225,10 +198,10 @@ def stage_prototypes(
 
 
 def pick_prototypes(
-    rng: np.random.Generator, weights: list[float], n: int, order: ScatterAssetOrder,
-) -> IntArray:
+    rng: np.random.Generator, weights: list[float], n: int, order: schemas.ScatterAssetOrder,
+) -> schemas.IntArray:
     """Prototype index per instance: weighted random, or cycling in order."""
-    if order is ScatterAssetOrder.CYCLE:
+    if order is schemas.ScatterAssetOrder.CYCLE:
         return np.arange(n, dtype=np.int64) % len(weights)
     w = np.asarray(weights, dtype=np.float64)
     return rng.choice(len(weights), size=n, p=w / w.sum()).astype(np.int64)
@@ -236,40 +209,40 @@ def pick_prototypes(
 
 def random_scales(
     rng: np.random.Generator, scale_range: tuple[float, float], n: int,
-) -> FloatArray:
+) -> schemas.FloatArray:
     """Uniform per-instance scale within *scale_range*, as (n, 3)."""
     low, high = scale_range
     s = rng.uniform(low, high, n) if high > low else np.full(n, low)
     return np.repeat(s[:, None], 3, axis=1)
 
 
-def side_signs(sides: ScatterPathSide) -> list[int]:
+def side_signs(sides: schemas.ScatterPathSide) -> list[int]:
     """Lateral offset signs (+1 left, -1 right, 0 on the line) for *sides*."""
     return {
-        ScatterPathSide.CENTER: [0],
-        ScatterPathSide.LEFT: [1],
-        ScatterPathSide.RIGHT: [-1],
-        ScatterPathSide.BOTH: [1, -1],
+        schemas.ScatterPathSide.CENTER: [0],
+        schemas.ScatterPathSide.LEFT: [1],
+        schemas.ScatterPathSide.RIGHT: [-1],
+        schemas.ScatterPathSide.BOTH: [1, -1],
     }[sides]
 
 
 def surface_on_accept(
-    surface: ScatterSurfaceParams,
+    surface: schemas.ScatterSurfaceParams,
     *,
-    avoid: SurfaceIndex | None,
+    avoid: schemas.SurfaceIndex | None,
     up: int,
     noise_scale: float,
     seed: int,
-) -> ScatterAcceptance:
+) -> schemas.ScatterAcceptance:
     """Build the per-point acceptance probability for scatter_on_surface."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     region = surface.region
 
-    def accept(points: FloatArray, _tris: IntArray) -> FloatArray:
+    def accept(points: schemas.FloatArray, _tris: schemas.IntArray) -> schemas.FloatArray:
         prob = region_mask(points, region, up).astype(np.float64)
         prob *= region_falloff(points, region, up)
         if avoid is not None and points.shape[0]:
-            covered = surface_utils.plan_coverage(
+            covered = utils.surface.plan_coverage(
                 avoid, points[:, axes[0]], points[:, axes[1]], surface.avoid_margin,
             )
             prob[covered] = 0.0
@@ -284,11 +257,13 @@ def surface_on_accept(
 # ── regions ──
 
 
-def region_mask(points: FloatArray, region: ScatterRegion | None, up: int) -> BoolArray:
+def region_mask(
+    points: schemas.FloatArray, region: schemas.ScatterRegion | None, up: int,
+) -> schemas.BoolArray:
     """Which *points* fall inside *region* in plan view."""
     if region is None:
         return np.ones(points.shape[0], dtype=bool)
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     if region.polygon is not None:
         polygon = np.asarray(region.polygon, dtype=np.float64)[:, axes]
         return _point_in_polygon(points[:, axes], polygon)
@@ -296,24 +271,30 @@ def region_mask(points: FloatArray, region: ScatterRegion | None, up: int) -> Bo
     return _plan_distance(points, center, up) <= radius
 
 
-def region_falloff(points: FloatArray, region: ScatterRegion | None, up: int) -> FloatArray:
+def region_falloff(
+    points: schemas.FloatArray, region: schemas.ScatterRegion | None, up: int,
+) -> schemas.FloatArray:
     """Density multiplier fading from a circular region's centre to its edge."""
-    if region is None or region.polygon is not None or region.falloff is ScatterRegionFalloff.NONE:
+    if (
+        region is None
+        or region.polygon is not None
+        or region.falloff is schemas.ScatterRegionFalloff.NONE
+    ):
         return np.ones(points.shape[0])
     center, radius = _region_circle(region)
     t = np.clip(_plan_distance(points, center, up) / radius, 0.0, 1.0)
-    if region.falloff is ScatterRegionFalloff.LINEAR:
+    if region.falloff is schemas.ScatterRegionFalloff.LINEAR:
         return 1.0 - t
     return 1.0 - t * t * (3.0 - 2.0 * t)
 
 
 def region_plan_bounds(
-    region: ScatterRegion | None, up: int,
-) -> tuple[FloatArray, FloatArray] | None:
+    region: schemas.ScatterRegion | None, up: int,
+) -> tuple[schemas.FloatArray, schemas.FloatArray] | None:
     """Plan-view bounding box of *region*, or ``None`` for no region."""
     if region is None:
         return None
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     if region.polygon is not None:
         plan = np.asarray(region.polygon)[:, axes]
         return plan.min(axis=0), plan.max(axis=0)
@@ -324,7 +305,7 @@ def region_plan_bounds(
 # ── density variation ──
 
 
-def density_noise(points: FloatArray, scale: float, seed: int) -> FloatArray:
+def density_noise(points: schemas.FloatArray, scale: float, seed: int) -> schemas.FloatArray:
     """Smooth, seeded 3D noise in [0, 1] with features about *scale* across."""
     total = np.zeros(points.shape[0])
     amp_sum = 0.0
@@ -343,17 +324,17 @@ def density_noise(points: FloatArray, scale: float, seed: int) -> FloatArray:
 
 
 def eligible_triangles(
-    triangles: SurfaceTriangles,
+    triangles: schemas.SurfaceTriangles,
     up: int,
     *,
     max_slope_degrees: float,
-    region: ScatterRegion | None,
-) -> BoolArray:
+    region: schemas.ScatterRegion | None,
+) -> schemas.BoolArray:
     """Triangles that are flat enough and overlap the region in plan view."""
-    mask = surface_utils.slope_mask(triangles, up, max_slope_degrees)
+    mask = utils.surface.slope_mask(triangles, up, max_slope_degrees)
     bounds = region_plan_bounds(region, up)
     if bounds is not None and triangles.count:
-        axes = list(surface_utils.horizontal_axes(up))
+        axes = list(utils.surface.horizontal_axes(up))
         tri = np.stack(
             [triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]], axis=1,
         )
@@ -363,7 +344,9 @@ def eligible_triangles(
     return mask
 
 
-def no_surface_message(triangles: SurfaceTriangles, up: int, max_slope_degrees: float) -> str:
+def no_surface_message(
+    triangles: schemas.SurfaceTriangles, up: int, max_slope_degrees: float,
+) -> str:
     """Explain why no triangle qualified, pointing at the likely fix."""
     if triangles.count == 0:
         return (
@@ -387,16 +370,16 @@ def no_surface_message(triangles: SurfaceTriangles, up: int, max_slope_degrees: 
 
 def scatter_surface_points(
     rng: np.random.Generator,
-    triangles: SurfaceTriangles,
-    tri_mask: BoolArray,
+    triangles: schemas.SurfaceTriangles,
+    tri_mask: schemas.BoolArray,
     *,
     up: int,
     mpu: float,
     count: int | None,
     density: float | None,
-    accept: ScatterAcceptance,
+    accept: schemas.ScatterAcceptance,
     min_spacing: float | None,
-) -> tuple[FloatArray, IntArray, list[str]]:
+) -> tuple[schemas.FloatArray, schemas.IntArray, list[str]]:
     """Sample random surface points for a count or density."""
     weights = triangles.areas * tri_mask
     area = float(weights.sum())
@@ -406,11 +389,11 @@ def scatter_surface_points(
     elif density is not None:
         target = int(round(density * area * mpu * mpu))
     else:
-        raise ValueError(ScatterRules.COUNT_OR_DENSITY)
-    if target > ScatterRules.MAX_INSTANCES:
+        raise ValueError(constants.ScatterRules.COUNT_OR_DENSITY)
+    if target > constants.ScatterRules.MAX_INSTANCES:
         msg = (
             f"this scatter would create about {target:,} instances; the maximum "
-            f"per call is {ScatterRules.MAX_INSTANCES:,}. Lower the density or count, "
+            f"per call is {constants.ScatterRules.MAX_INSTANCES:,}. Lower the density or count, "
             "or split the area with regions."
         )
         raise ValueError(msg)
@@ -421,8 +404,8 @@ def scatter_surface_points(
 
     if min_spacing is not None:
         pool = min(
-            max(target * ScatterTuning.SPACING_OVERSAMPLE, 1024),
-            ScatterTuning.MAX_SPACING_CANDIDATES,
+            max(target * constants.ScatterTuning.SPACING_OVERSAMPLE, 1024),
+            constants.ScatterTuning.MAX_SPACING_CANDIDATES,
         )
         points, tris = _accepted_samples(rng, triangles, weights, pool, accept, exact=True)
         keep = _greedy_min_spacing(points, min_spacing, target)
@@ -445,13 +428,13 @@ def scatter_surface_points(
 
 def estimate_surface_count(
     rng: np.random.Generator,
-    triangles: SurfaceTriangles,
-    tri_mask: BoolArray,
+    triangles: schemas.SurfaceTriangles,
+    tri_mask: schemas.BoolArray,
     *,
     mpu: float,
     count: int | None,
     density: float | None,
-    accept: ScatterAcceptance,
+    accept: schemas.ScatterAcceptance,
 ) -> tuple[int, float]:
     """Estimate ``(instances, eligible_area_m2)`` without generating the scatter."""
     weights = triangles.areas * tri_mask
@@ -459,24 +442,24 @@ def estimate_surface_count(
     if count is not None:
         return count, area_m2
     if density is None:
-        raise ValueError(ScatterRules.COUNT_OR_DENSITY)
+        raise ValueError(constants.ScatterRules.COUNT_OR_DENSITY)
     raw = density * area_m2
     probe = min(int(raw) + 1, 20_000)
-    points, tris = surface_utils.sample_on_triangles(rng, triangles, weights, probe)
+    points, tris = utils.surface.sample_on_triangles(rng, triangles, weights, probe)
     rate = float(np.mean(accept(points, tris))) if probe else 0.0
     return int(round(raw * rate)), area_m2
 
 
 def rows_plan_points(
     rng: np.random.Generator,
-    lo: FloatArray,
-    hi: FloatArray,
+    lo: schemas.FloatArray,
+    hi: schemas.FloatArray,
     *,
     spacing: float,
     row_spacing: float,
     direction_degrees: float,
     jitter: float,
-) -> FloatArray:
+) -> schemas.FloatArray:
     """A rotated lattice of plan points covering ``[lo, hi]`` (rows x in-row)."""
     theta = math.radians(direction_degrees)
     along = np.array([math.cos(theta), math.sin(theta)], dtype=np.float64)
@@ -488,10 +471,11 @@ def rows_plan_points(
     v = corners @ across
     us = np.arange(u.min(), u.max() + 1e-9, spacing, dtype=np.float64)
     vs = np.arange(v.min(), v.max() + 1e-9, row_spacing, dtype=np.float64)
-    if us.size * vs.size > ScatterRules.MAX_INSTANCES:
+    if us.size * vs.size > constants.ScatterRules.MAX_INSTANCES:
         msg = (
             f"rows would create {us.size * vs.size:,} lattice points; the maximum "
-            f"is {ScatterRules.MAX_INSTANCES:,}. Increase spacing/row_spacing or add a region."
+            f"is {constants.ScatterRules.MAX_INSTANCES:,}. "
+            "Increase spacing/row_spacing or add a region."
         )
         raise ValueError(msg)
     uu, vv = np.meshgrid(us, vs, indexing="ij")
@@ -501,9 +485,9 @@ def rows_plan_points(
     return plan
 
 
-def plan_to_world(plan: FloatArray, up: int, height: float = 0.0) -> FloatArray:
+def plan_to_world(plan: schemas.FloatArray, up: int, height: float = 0.0) -> schemas.FloatArray:
     """Lift plan-view points to 3D at *height* on the up axis."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     pts = np.full((plan.shape[0], 3), height, dtype=np.float64)
     pts[:, axes] = plan
     return pts
@@ -511,33 +495,33 @@ def plan_to_world(plan: FloatArray, up: int, height: float = 0.0) -> FloatArray:
 
 def pile_instances(
     rng: np.random.Generator,
-    index: SurfaceIndex,
-    prototypes: list[ScatterPrototype],
-    proto_idx: IntArray,
-    scales: FloatArray,
+    index: schemas.SurfaceIndex,
+    prototypes: list[schemas.ScatterPrototype],
+    proto_idx: schemas.IntArray,
+    scales: schemas.FloatArray,
     *,
     up: int,
-    center: FloatArray,
+    center: schemas.FloatArray,
     radius: float,
     repose_degrees: float,
     tilt_degrees: float,
-) -> tuple[FloatArray, FloatArray, BoolArray, float]:
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.BoolArray, float]:
     """Heap pieces under a repose cone, resting on the ground and on each other."""
     n = proto_idx.shape[0]
-    if n > ScatterRules.MAX_PILE_PIECES:
-        msg = f"a pile holds at most {ScatterRules.MAX_PILE_PIECES:,} pieces per call."
+    if n > constants.ScatterRules.MAX_PILE_PIECES:
+        msg = f"a pile holds at most {constants.ScatterRules.MAX_PILE_PIECES:,} pieces per call."
         raise ValueError(msg)
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     slope = math.tan(math.radians(repose_degrees))
     orientations = pile_orientations(rng, prototypes, proto_idx, up, tilt_degrees)
 
     extents = np.array([np.subtract(p.bounds_max, p.bounds_min) for p in prototypes])
     sizes = extents[proto_idx] * scales
     reach = float(sizes.max())
-    volume = float(np.prod(sizes, axis=1).sum()) * ScatterTuning.PILE_SOLIDITY
+    volume = float(np.prod(sizes, axis=1).sum()) * constants.ScatterTuning.PILE_SOLIDITY
     natural = (3.0 * volume / (math.pi * max(slope, 1e-3))) ** (1.0 / 3.0)
     half = max(radius, 1.5 * natural) + reach
-    cell = max(float(sizes.min()) / 4.0, 2.0 * half / ScatterTuning.PILE_GRID)
+    cell = max(float(sizes.min()) / 4.0, 2.0 * half / constants.ScatterTuning.PILE_GRID)
     dims = int(2.0 * half / cell) + 1
     c_plan = center[axes]
     origin = c_plan - half
@@ -545,7 +529,7 @@ def pile_instances(
     gb = origin[1] + (np.arange(dims) + 0.5) * cell
     aa, bb = np.meshgrid(ga, gb, indexing="ij")
     probe = plan_to_world(np.stack([aa.ravel(), bb.ravel()], axis=1), up)
-    hit, heights, _ = surface_utils.surface_under(index, probe, mode="top")
+    hit, heights, _ = utils.surface.surface_under(index, probe, mode="top")
     field = np.where(hit, heights, np.nan).reshape(dims, dims)
     if np.isnan(field).all():
         msg = "no surface lies under the pile region; check the region centre and surfaces."
@@ -575,9 +559,9 @@ def pile_instances(
         lowest = float(under.min())
 
         best: tuple[float, int, int, float] | None = None
-        for _ in range(ScatterTuning.PILE_GROWTH_STEPS):
-            dist = base_radius * np.sqrt(rng.random(ScatterTuning.PILE_TRIES))
-            angle = rng.random(ScatterTuning.PILE_TRIES) * 2.0 * math.pi
+        for _ in range(constants.ScatterTuning.PILE_GROWTH_STEPS):
+            dist = base_radius * np.sqrt(rng.random(constants.ScatterTuning.PILE_TRIES))
+            angle = rng.random(constants.ScatterTuning.PILE_TRIES) * 2.0 * math.pi
             ia = np.floor((c_plan[0] + dist * np.cos(angle) - origin[0]) / cell).astype(np.int64)
             ib = np.floor((c_plan[1] + dist * np.sin(angle) - origin[1]) / cell).astype(np.int64)
             ca = ia[:, None] + cells[None, :, 0]
@@ -603,7 +587,7 @@ def pile_instances(
                 k = int(fits[np.argmin(rest[fits] + lowest)])
                 best = (float(excess[k]), int(ia[k]), int(ib[k]), float(rest[k]))
                 break
-            base_radius = min(base_radius * ScatterTuning.PILE_GROWTH, max_radius)
+            base_radius = min(base_radius * constants.ScatterTuning.PILE_GROWTH, max_radius)
         if best is None:
             continue
 
@@ -620,15 +604,15 @@ def pile_instances(
 
 def pile_orientations(
     rng: np.random.Generator,
-    prototypes: list[ScatterPrototype],
-    proto_idx: IntArray,
+    prototypes: list[schemas.ScatterPrototype],
+    proto_idx: schemas.IntArray,
     up: int,
     tilt_degrees: float,
-) -> FloatArray:
+) -> schemas.FloatArray:
     """Lay each piece on its flattest side with a random spin and a small tilt."""
     n = int(proto_idx.shape[0])
-    up_vec = surface_utils.up_vector(up)
-    axes = surface_utils.horizontal_axes(up)
+    up_vec = utils.surface.up_vector(up)
+    axes = utils.surface.horizontal_axes(up)
     extents = np.array([np.subtract(p.bounds_max, p.bounds_min) for p in prototypes])[proto_idx]
     thin = np.argmin(extents, axis=1)
     q = np.tile([1.0, 0.0, 0.0, 0.0], (n, 1))
@@ -651,32 +635,32 @@ def pile_orientations(
 
 
 def generate_surface_scatter(
-    surface: ScatterSurfaceParams,
-    pose: ScatterPoseParams,
+    surface: schemas.ScatterSurfaceParams,
+    pose: schemas.ScatterPoseParams,
     *,
-    triangles: SurfaceTriangles,
-    avoid: SurfaceIndex | None,
-    prototypes: list[ScatterPrototype],
+    triangles: schemas.SurfaceTriangles,
+    avoid: schemas.SurfaceIndex | None,
+    prototypes: list[schemas.ScatterPrototype],
     up: int,
     mpu: float,
     seed: int,
-) -> tuple[ScatterInstanceSet, list[str]]:
+) -> tuple[schemas.ScatterInstanceSet, list[str]]:
     """Compute every instance of a scatter_on_surface call in world space."""
     rng = np.random.default_rng(seed)
     tri_mask = _require_eligible(triangles, up, surface)
     weights = [proto.weight for proto in prototypes]
     warnings: list[str] = []
 
-    if surface.arrangement is ScatterArrangement.PILE:
-        index = surface_utils.build_vertical_index(triangles, up, up_facing_only=True)
+    if surface.arrangement is schemas.ScatterArrangement.PILE:
+        index = utils.surface.build_vertical_index(triangles, up, up_facing_only=True)
         count, center, radius = _pile_setup(surface)
-        proto_idx = pick_prototypes(rng, weights, count, ScatterAssetOrder.RANDOM)
+        proto_idx = pick_prototypes(rng, weights, count, schemas.ScatterAssetOrder.RANDOM)
         scales = random_scales(rng, pose.scale_range, count)
         positions, orientations, placed, base_radius = pile_instances(
             rng, index, prototypes, proto_idx, scales,
             up=up, center=center,
             radius=radius, repose_degrees=surface.repose_degrees,
-            tilt_degrees=pose.tilt_jitter_degrees or ScatterDefaults.PILE_TILT_DEGREES,
+            tilt_degrees=pose.tilt_jitter_degrees or constants.ScatterDefaults.PILE_TILT_DEGREES,
         )
         if not placed.all():
             warnings.append(
@@ -689,7 +673,7 @@ def generate_surface_scatter(
                 f"heap of radius {radius:g}, so it spread to a radius of "
                 f"{base_radius:.2f}. Raise the radius or repose_degrees, or lower count.",
             )
-        return ScatterInstanceSet(
+        return schemas.ScatterInstanceSet(
             proto_indices=proto_idx[placed], positions=positions[placed],
             orientations=orientations[placed], scales=scales[placed],
         ), warnings
@@ -698,7 +682,7 @@ def generate_surface_scatter(
         surface, avoid=avoid, up=up,
         noise_scale=_noise_scale(surface, triangles, up), seed=seed,
     )
-    if surface.arrangement is ScatterArrangement.ROWS:
+    if surface.arrangement is schemas.ScatterArrangement.ROWS:
         contacts, tris = _rows_contacts(rng, surface, triangles, tri_mask, up)
         keep = rng.random(contacts.shape[0]) < accept(contacts, tris)
         contacts, tris = contacts[keep], tris[keep]
@@ -710,12 +694,12 @@ def generate_surface_scatter(
 
     n = contacts.shape[0]
     normals = triangles.normals[tris]
-    proto_idx = pick_prototypes(rng, weights, n, ScatterAssetOrder.RANDOM)
+    proto_idx = pick_prototypes(rng, weights, n, schemas.ScatterAssetOrder.RANDOM)
     scales = random_scales(rng, pose.scale_range, n)
     headings = random_headings(rng, n, up, random_yaw=pose.random_yaw)
-    index = surface_utils.build_vertical_index(triangles, up, up_facing_only=True)
+    index = utils.surface.build_vertical_index(triangles, up, up_facing_only=True)
     settle = np.ones(n, dtype=bool)
-    if pose.align is ScatterAlign.SURFACE:
+    if pose.align is schemas.ScatterAlign.SURFACE:
         base_min, base_max = prototype_bases(prototypes, proto_idx)
         normals, settle = ground_normals(
             index, contacts, headings, scales, base_min, base_max, normals, up,
@@ -728,17 +712,17 @@ def generate_surface_scatter(
         contacts, orientations, scales, prototypes, proto_idx, up,
         embed=pose.embed, settle=settle, index=index,
     )
-    return ScatterInstanceSet(
+    return schemas.ScatterInstanceSet(
         proto_indices=proto_idx, positions=positions,
         orientations=orientations, scales=scales,
     ), warnings
 
 
 def estimate_surface_scatter(
-    surface: ScatterSurfaceParams,
+    surface: schemas.ScatterSurfaceParams,
     *,
-    triangles: SurfaceTriangles,
-    avoid: SurfaceIndex | None,
+    triangles: schemas.SurfaceTriangles,
+    avoid: schemas.SurfaceIndex | None,
     up: int,
     mpu: float,
     seed: int,
@@ -749,14 +733,14 @@ def estimate_surface_scatter(
     area_m2 = float((triangles.areas * tri_mask).sum()) * mpu * mpu * _eligible_share(
         np.random.default_rng([seed, 1]), surface, triangles, tri_mask, avoid, up,
     )
-    if surface.arrangement is ScatterArrangement.PILE:
+    if surface.arrangement is schemas.ScatterArrangement.PILE:
         count, _, _ = _pile_setup(surface)
         return count, area_m2
     accept = surface_on_accept(
         surface, avoid=avoid, up=up,
         noise_scale=_noise_scale(surface, triangles, up), seed=seed,
     )
-    if surface.arrangement is ScatterArrangement.ROWS:
+    if surface.arrangement is schemas.ScatterArrangement.ROWS:
         contacts, tris = _rows_contacts(rng, surface, triangles, tri_mask, up)
         return int(round(float(accept(contacts, tris).sum()))), area_m2
     estimate, _ = estimate_surface_count(
@@ -770,8 +754,8 @@ def estimate_surface_scatter(
 
 
 def build_path(
-    stage: Usd.Stage, path: ScatterPathParams, up: int,
-) -> tuple[FloatArray, bool, FloatArray]:
+    stage: Usd.Stage, path: schemas.ScatterPathParams, up: int,
+) -> tuple[schemas.FloatArray, bool, schemas.FloatArray]:
     """Return ``(points, closed, centre)`` for the requested path in world space."""
     if path.points is not None:
         points = np.asarray(path.points, dtype=np.float64)
@@ -779,11 +763,11 @@ def build_path(
     if path.circle is not None:
         circle = path.circle
         center = np.asarray(circle.center, dtype=np.float64)
-        axes = list(surface_utils.horizontal_axes(up))
+        axes = list(utils.surface.horizontal_axes(up))
         angles = math.radians(circle.start_angle_degrees) + np.linspace(
-            0.0, 2.0 * math.pi, ScatterTuning.PATH_SEGMENTS, endpoint=False,
+            0.0, 2.0 * math.pi, constants.ScatterTuning.PATH_SEGMENTS, endpoint=False,
         )
-        points = np.repeat(center[None, :], ScatterTuning.PATH_SEGMENTS, axis=0)
+        points = np.repeat(center[None, :], constants.ScatterTuning.PATH_SEGMENTS, axis=0)
         points[:, axes[0]] += circle.radius * np.cos(angles)
         points[:, axes[1]] += circle.radius * np.sin(angles)
         return points, True, center
@@ -794,14 +778,14 @@ def build_path(
 
 
 def path_stations(
-    points: FloatArray,
+    points: schemas.FloatArray,
     closed: bool,
     up: int,
     *,
     count: int | None,
     spacing: float,
     start_offset: float,
-) -> tuple[FloatArray, FloatArray, float]:
+) -> tuple[schemas.FloatArray, schemas.FloatArray, float]:
     """Arc-length stations along the path, with the chord half-step and path length."""
     length = _plan_length(points, closed, up)
     if length <= 0:
@@ -823,18 +807,18 @@ def path_stations(
     else:
         stations = np.arange(start_offset, length + 1e-9, spacing)
         step = spacing
-    if stations.size > ScatterRules.MAX_INSTANCES:
+    if stations.size > constants.ScatterRules.MAX_INSTANCES:
         msg = f"the path would create {stations.size:,} stations; increase spacing."
         raise ValueError(msg)
     return stations, np.full(stations.size, step / 2.0), length
 
 
 def sample_path(
-    points: FloatArray, closed: bool, up: int, stations: FloatArray,
-) -> FloatArray:
+    points: schemas.FloatArray, closed: bool, up: int, stations: schemas.FloatArray,
+) -> schemas.FloatArray:
     """Interpolate 3D positions at plan arc-length *stations*."""
     pts = np.vstack([points, points[:1]]) if closed else points
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     seg = np.diff(pts[:, axes], axis=0)
     seg_len = np.hypot(seg[:, 0], seg[:, 1])
     cum = np.concatenate([[0.0], np.cumsum(seg_len)])
@@ -846,8 +830,12 @@ def sample_path(
 
 
 def path_tangents(
-    points: FloatArray, closed: bool, up: int, stations: FloatArray, half: FloatArray,
-) -> FloatArray:
+    points: schemas.FloatArray,
+    closed: bool,
+    up: int,
+    stations: schemas.FloatArray,
+    half: schemas.FloatArray,
+) -> schemas.FloatArray:
     """Unit plan-view tangents from the chord across each station."""
     ahead = sample_path(points, closed, up, stations + half)
     behind = sample_path(points, closed, up, stations - half)
@@ -861,35 +849,37 @@ def path_tangents(
     return chord / norm[:, None]
 
 
-def prototype_length(proto: ScatterPrototype, up: int, facing: ScatterPathFacing) -> float:
+def prototype_length(
+    proto: schemas.ScatterPrototype, up: int, facing: schemas.ScatterPathFacing,
+) -> float:
     """Extent a prototype occupies along the path for automatic spacing."""
     side_axis, front_axis = _side_and_front_axes(up)
     extent = np.subtract(proto.bounds_max, proto.bounds_min)
-    if facing is ScatterPathFacing.TANGENT:
+    if facing is schemas.ScatterPathFacing.TANGENT:
         return float(max(extent[side_axis], extent[front_axis]))
     return float(extent[side_axis])
 
 
 def facing_yaw(
-    facing: ScatterPathFacing,
+    facing: schemas.ScatterPathFacing,
     *,
     rng: np.random.Generator,
     up: int,
-    positions: FloatArray,
-    tangents: FloatArray,
-    side_sign: FloatArray,
-    center: FloatArray,
+    positions: schemas.FloatArray,
+    tangents: schemas.FloatArray,
+    side_sign: schemas.FloatArray,
+    center: schemas.FloatArray,
     direction_degrees: float | None,
-    prototypes: list[ScatterPrototype],
-    proto_idx: IntArray,
-) -> FloatArray:
+    prototypes: list[schemas.ScatterPrototype],
+    proto_idx: schemas.IntArray,
+) -> schemas.FloatArray:
     """Yaw turning each prototype's front (+Z in Y-up, -Y in Z-up) toward *facing*."""
     n = int(positions.shape[0])
-    up_vec = surface_utils.up_vector(up)
+    up_vec = utils.surface.up_vector(up)
     front = _front_vector(up)
-    if facing is ScatterPathFacing.RANDOM:
+    if facing is schemas.ScatterPathFacing.RANDOM:
         return rng.random(n) * 2.0 * math.pi
-    if facing is ScatterPathFacing.TANGENT:
+    if facing is schemas.ScatterPathFacing.TANGENT:
         side_axis, front_axis = _side_and_front_axes(up)
         long_is_side = np.array([
             np.subtract(p.bounds_max, p.bounds_min)[side_axis]
@@ -900,21 +890,21 @@ def facing_yaw(
         side[side_axis] = 1.0
         ref = np.where(long_is_side[:, None], side, front)
         return _signed_angle(ref, tangents, up_vec)
-    if facing is ScatterPathFacing.PATH:
+    if facing is schemas.ScatterPathFacing.PATH:
         left = np.cross(up_vec, tangents)
         toward = -left * side_sign[:, None]
         toward = np.where((side_sign == 0)[:, None], tangents, toward)
         return _signed_angle(np.broadcast_to(front, toward.shape), toward, up_vec)
-    if facing in (ScatterPathFacing.CENTER, ScatterPathFacing.OUTWARD):
+    if facing in (schemas.ScatterPathFacing.CENTER, schemas.ScatterPathFacing.OUTWARD):
         target = center[None, :] - positions
         target[:, up] = 0.0
         norm = np.linalg.norm(target, axis=1)
         target = np.where(norm[:, None] > 1e-12, target / np.maximum(norm, 1e-12)[:, None],
                           tangents)
-        if facing is ScatterPathFacing.OUTWARD:
+        if facing is schemas.ScatterPathFacing.OUTWARD:
             target = -target
         return _signed_angle(np.broadcast_to(front, target.shape), target, up_vec)
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     theta = math.radians(direction_degrees or 0.0)
     fixed = np.zeros(3)
     fixed[axes[0]] = math.cos(theta)
@@ -923,17 +913,17 @@ def facing_yaw(
 
 def generate_path_scatter(
     stage: Usd.Stage,
-    path: ScatterPathParams,
-    pose: ScatterPoseParams,
+    path: schemas.ScatterPathParams,
+    pose: schemas.ScatterPoseParams,
     *,
-    prototypes: list[ScatterPrototype],
-    index: SurfaceIndex | None,
+    prototypes: list[schemas.ScatterPrototype],
+    index: schemas.SurfaceIndex | None,
     up: int,
     seed: int,
-) -> tuple[ScatterInstanceSet, list[str]]:
+) -> tuple[schemas.ScatterInstanceSet, list[str]]:
     """Compute every instance of a scatter_along_path call in world space."""
     rng = np.random.default_rng(seed)
-    up_vec = surface_utils.up_vector(up)
+    up_vec = utils.surface.up_vector(up)
     points, closed, center = build_path(stage, path, up)
     spacing = path.spacing
     if path.count is None and spacing is None:
@@ -962,7 +952,7 @@ def generate_path_scatter(
     normals = np.repeat(up_vec[None, :], n, axis=0)
     warnings: list[str] = []
     if index is not None:
-        hit, heights, tris = surface_utils.surface_under(
+        hit, heights, tris = utils.surface.surface_under(
             index, contacts, mode="nearest", reference=contacts[:, up].copy(),
         )
         contacts[hit, up] = heights[hit]
@@ -980,12 +970,12 @@ def generate_path_scatter(
     ) + math.radians(path.yaw_offset_degrees)
     headings = quat_axis_angle(up_vec, yaw)
     orientations = headings
-    settle = np.full(n, pose.align is ScatterAlign.UP)
+    settle = np.full(n, pose.align is schemas.ScatterAlign.UP)
     if path.follow_slope and index is not None:
         pitch = _path_pitch(index, points, closed, up, stations, half, station_idx, lateral)
         axis = np.cross(tangent, up_vec)
         orientations = quat_mul(quat_axis_angle(axis, pitch), orientations)
-    if pose.align is ScatterAlign.SURFACE:
+    if pose.align is schemas.ScatterAlign.SURFACE:
         if index is not None:
             base_min, base_max = prototype_bases(prototypes, proto_idx)
             normals, settle = ground_normals(
@@ -998,14 +988,14 @@ def generate_path_scatter(
         contacts, orientations, scales, prototypes, proto_idx, up,
         embed=pose.embed, settle=settle, index=index,
     )
-    return ScatterInstanceSet(
+    return schemas.ScatterInstanceSet(
         proto_indices=proto_idx, positions=positions,
         orientations=orientations, scales=scales,
     ), warnings
 
 
 def estimate_path_scatter(
-    stage: Usd.Stage, path: ScatterPathParams, up: int,
+    stage: Usd.Stage, path: schemas.ScatterPathParams, up: int,
 ) -> tuple[int | None, float]:
     """Return ``(instances or None when spacing is automatic, path_length)``."""
     points, closed, _ = build_path(stage, path, up)
@@ -1022,14 +1012,14 @@ def estimate_path_scatter(
 # ── orientation ──
 
 
-def quat_axis_angle(axis: FloatArray, angle: FloatArray) -> FloatArray:
+def quat_axis_angle(axis: schemas.FloatArray, angle: schemas.FloatArray) -> schemas.FloatArray:
     """Quaternions ``(w, x, y, z)`` rotating *angle* radians about unit *axis*."""
     axis = np.broadcast_to(axis, (angle.shape[0], 3))
     half = angle / 2.0
     return np.column_stack([np.cos(half), axis * np.sin(half)[:, None]])
 
 
-def quat_mul(a: FloatArray, b: FloatArray) -> FloatArray:
+def quat_mul(a: schemas.FloatArray, b: schemas.FloatArray) -> schemas.FloatArray:
     """Hamilton product ``a * b`` (apply *b* first, then *a*)."""
     w1, x1, y1, z1 = a.T
     w2, x2, y2, z2 = b.T
@@ -1041,7 +1031,7 @@ def quat_mul(a: FloatArray, b: FloatArray) -> FloatArray:
     ])
 
 
-def quat_rotate(q: FloatArray, v: FloatArray) -> FloatArray:
+def quat_rotate(q: schemas.FloatArray, v: schemas.FloatArray) -> schemas.FloatArray:
     """Rotate vectors *v* (n, 3) by quaternions *q* (n, 4)."""
     w = q[:, :1]
     u = q[:, 1:]
@@ -1049,7 +1039,7 @@ def quat_rotate(q: FloatArray, v: FloatArray) -> FloatArray:
     return v + w * t + np.cross(u, t)
 
 
-def quat_between(src: FloatArray, dst: FloatArray) -> FloatArray:
+def quat_between(src: schemas.FloatArray, dst: schemas.FloatArray) -> schemas.FloatArray:
     """Shortest-arc quaternions turning unit *src* (3,) onto each unit *dst*."""
     d = dst @ src
     axis = np.cross(np.broadcast_to(src, dst.shape), dst)
@@ -1064,15 +1054,15 @@ def quat_between(src: FloatArray, dst: FloatArray) -> FloatArray:
     return q / np.linalg.norm(q, axis=1)[:, None]
 
 
-def quat_conj(q: FloatArray) -> FloatArray:
+def quat_conj(q: schemas.FloatArray) -> schemas.FloatArray:
     """Inverse of unit quaternions ``(w, x, y, z)``."""
     return q * np.array([1.0, -1.0, -1.0, -1.0], dtype=np.float64)
 
 
-def quat_heading(q: FloatArray, up: int) -> FloatArray:
+def quat_heading(q: schemas.FloatArray, up: int) -> schemas.FloatArray:
     """The turn about up alone that keeps each rotation's heading (tilt removed)."""
-    axes = surface_utils.horizontal_axes(up)
-    up_vec = surface_utils.up_vector(up)
+    axes = utils.surface.horizontal_axes(up)
+    up_vec = utils.surface.up_vector(up)
     angle = np.zeros(q.shape[0])
     todo = np.ones(q.shape[0], dtype=bool)
     for axis in axes:
@@ -1090,39 +1080,39 @@ def quat_heading(q: FloatArray, up: int) -> FloatArray:
 
 def random_headings(
     rng: np.random.Generator, n: int, up: int, *, random_yaw: bool,
-) -> FloatArray:
+) -> schemas.FloatArray:
     """Yaw-only rotations about up: uniformly random, or none."""
     yaw = rng.random(n) * 2.0 * math.pi if random_yaw else np.zeros(n)
-    return quat_axis_angle(surface_utils.up_vector(up), yaw)
+    return quat_axis_angle(utils.surface.up_vector(up), yaw)
 
 
 def surface_orientations(
     rng: np.random.Generator,
-    headings: FloatArray,
-    normals: FloatArray,
+    headings: schemas.FloatArray,
+    normals: schemas.FloatArray,
     up: int,
     *,
-    align: ScatterAlign,
+    align: schemas.ScatterAlign,
     tilt_jitter_degrees: float,
-) -> FloatArray:
+) -> schemas.FloatArray:
     """*headings*, optional random tilt, then (optionally) align to normals."""
     n = int(normals.shape[0])
-    up_vec = surface_utils.up_vector(up)
+    up_vec = utils.surface.up_vector(up)
     q = headings
     if tilt_jitter_degrees > 0:
-        axes = surface_utils.horizontal_axes(up)
+        axes = utils.surface.horizontal_axes(up)
         phi = rng.random(n) * 2.0 * math.pi
         axis = np.zeros((n, 3))
         axis[:, axes[0]] = np.cos(phi)
         axis[:, axes[1]] = np.sin(phi)
         tilt = rng.random(n) * math.radians(tilt_jitter_degrees)
         q = quat_mul(quat_axis_angle(axis, tilt), q)
-    if align is ScatterAlign.SURFACE:
+    if align is schemas.ScatterAlign.SURFACE:
         q = quat_mul(quat_between(up_vec, normals), q)
     return q
 
 
-def quat_to_rotate_xyz(q: FloatArray) -> list[tuple[float, float, float]]:
+def quat_to_rotate_xyz(q: schemas.FloatArray) -> list[tuple[float, float, float]]:
     """Convert ``(w, x, y, z)`` quaternions to xformOp:rotateXYZ degrees."""
     out: list[tuple[float, float, float]] = []
     for w, x, y, z in q.tolist():
@@ -1136,23 +1126,23 @@ def quat_to_rotate_xyz(q: FloatArray) -> list[tuple[float, float, float]]:
 
 
 def rest_positions(
-    contacts: FloatArray,
-    orientations: FloatArray,
-    scales: FloatArray,
-    prototypes: list[ScatterPrototype],
-    proto_idx: IntArray,
+    contacts: schemas.FloatArray,
+    orientations: schemas.FloatArray,
+    scales: schemas.FloatArray,
+    prototypes: list[schemas.ScatterPrototype],
+    proto_idx: schemas.IntArray,
     up: int,
     *,
     embed: float,
-    settle: BoolArray,
-    index: SurfaceIndex | None,
-) -> FloatArray:
+    settle: schemas.BoolArray,
+    index: schemas.SurfaceIndex | None,
+) -> schemas.FloatArray:
     """Set each piece's base centre on its contact point, then settle and embed it."""
     bmin = np.stack([p.bounds_min for p in prototypes])[proto_idx]
     bmax = np.stack([p.bounds_max for p in prototypes])[proto_idx]
     base_min, base_max = prototype_bases(prototypes, proto_idx)
     base = (base_min + base_max) / 2.0
-    up_vec = surface_utils.up_vector(up)
+    up_vec = utils.surface.up_vector(up)
     positions = contacts - quat_rotate(orientations, base * scales)
     if index is not None and settle.any():
         samples = base_samples(
@@ -1169,8 +1159,8 @@ def rest_positions(
 
 
 def prototype_bases(
-    prototypes: list[ScatterPrototype], proto_idx: IntArray,
-) -> tuple[FloatArray, FloatArray]:
+    prototypes: list[schemas.ScatterPrototype], proto_idx: schemas.IntArray,
+) -> tuple[schemas.FloatArray, schemas.FloatArray]:
     """Per-instance ``(base_min, base_max)`` of each instance's prototype."""
     base_min = np.stack([p.base_min for p in prototypes])[proto_idx]
     base_max = np.stack([p.base_max for p in prototypes])[proto_idx]
@@ -1178,23 +1168,23 @@ def prototype_bases(
 
 
 def ground_normals(
-    index: SurfaceIndex,
-    contacts: FloatArray,
-    headings: FloatArray,
-    scales: FloatArray,
-    base_min: FloatArray,
-    base_max: FloatArray,
-    fallback: FloatArray,
+    index: schemas.SurfaceIndex,
+    contacts: schemas.FloatArray,
+    headings: schemas.FloatArray,
+    scales: schemas.FloatArray,
+    base_min: schemas.FloatArray,
+    base_max: schemas.FloatArray,
+    fallback: schemas.FloatArray,
     up: int,
-) -> tuple[FloatArray, BoolArray]:
+) -> tuple[schemas.FloatArray, schemas.BoolArray]:
     """Normal of the ground fitted under each base footprint, else *fallback*."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     center = (base_min + base_max) / 2.0
     positions = contacts - quat_rotate(headings, center * scales)
     samples = base_samples(positions, headings, scales, base_min, base_max, up)
     n, k, _ = samples.shape
     flat = samples.reshape(-1, 3)
-    hit, heights, _ = surface_utils.surface_under(
+    hit, heights, _ = utils.surface.surface_under(
         index, flat, mode="nearest", reference=flat[:, up].copy(),
     )
     w = hit.reshape(n, k).astype(np.float64)
@@ -1203,7 +1193,7 @@ def ground_normals(
     h = np.where(hit, heights, 0.0).reshape(n, k) - contacts[:, None, up]
     count = np.maximum(w.sum(axis=1), 1.0)
 
-    def mean(v: FloatArray) -> FloatArray:
+    def mean(v: schemas.FloatArray) -> schemas.FloatArray:
         return (w * v).sum(axis=1) / count
 
     ma, mb, mh = mean(a), mean(b), mean(h)
@@ -1215,8 +1205,8 @@ def ground_normals(
     det = caa * cbb - cab * cab
     fitted = (
         (w.sum(axis=1) >= 3)
-        & (det > 1e-6 * (caa + cbb) ** 2 + SurfaceTuning.EPSILON)
-        & (fallback[:, up] >= math.cos(math.radians(ScatterTuning.FIT_MAX_SLOPE_DEGREES)))
+        & (det > 1e-6 * (caa + cbb) ** 2 + constants.SurfaceTuning.EPSILON)
+        & (fallback[:, up] >= math.cos(math.radians(constants.ScatterTuning.FIT_MAX_SLOPE_DEGREES)))
     )
     safe = np.where(fitted, det, 1.0)
     normals = np.zeros((n, 3))
@@ -1228,16 +1218,16 @@ def ground_normals(
 
 
 def base_samples(
-    positions: FloatArray,
-    orientations: FloatArray,
-    scales: FloatArray,
-    base_min: FloatArray,
-    base_max: FloatArray,
+    positions: schemas.FloatArray,
+    orientations: schemas.FloatArray,
+    scales: schemas.FloatArray,
+    base_min: schemas.FloatArray,
+    base_max: schemas.FloatArray,
     up: int,
-) -> FloatArray:
+) -> schemas.FloatArray:
     """``(n, k, 3)`` points on each piece's base footprint, in the positions' frame."""
-    axes = list(surface_utils.horizontal_axes(up))
-    t = np.linspace(0.0, 1.0, ScatterTuning.BASE_GRID)
+    axes = list(utils.surface.horizontal_axes(up))
+    t = np.linspace(0.0, 1.0, constants.ScatterTuning.BASE_GRID)
     ta, tb = (g.ravel() for g in np.meshgrid(t, t, indexing="ij"))
     n, k = positions.shape[0], ta.size
     local = np.repeat(base_min[:, None, :], k, axis=1)
@@ -1250,12 +1240,12 @@ def base_samples(
 
 
 def settle_shift(
-    index: SurfaceIndex, samples: FloatArray, up: int,
-) -> tuple[FloatArray, BoolArray]:
+    index: schemas.SurfaceIndex, samples: schemas.FloatArray, up: int,
+) -> tuple[schemas.FloatArray, schemas.BoolArray]:
     """Up shift that lands each piece's highest base sample on the surface."""
     n, k, _ = samples.shape
     flat = samples.reshape(-1, 3)
-    hit, heights, _ = surface_utils.surface_under(
+    hit, heights, _ = utils.surface.surface_under(
         index, flat, mode="nearest", reference=flat[:, up].copy(),
     )
     gap = np.where(hit, flat[:, up] - np.where(hit, heights, 0.0), -np.inf).reshape(n, k)
@@ -1268,8 +1258,8 @@ def settle_shift(
 
 
 def to_local(
-    stage: Usd.Stage, parent_path: str, instances: ScatterInstanceSet,
-) -> ScatterInstanceSet:
+    stage: Usd.Stage, parent_path: str, instances: schemas.ScatterInstanceSet,
+) -> schemas.ScatterInstanceSet:
     """Re-express world-space instances in the frame of *parent_path*."""
     parent = stage.GetPrimAtPath(parent_path)
     if not parent.IsValid():
@@ -1278,13 +1268,13 @@ def to_local(
     if world == Gf.Matrix4d(1.0):
         return instances
     inverse = world.GetInverse()
-    matrix = surface_utils.gf_matrix_to_numpy(inverse)
+    matrix = utils.surface.gf_matrix_to_numpy(inverse)
     positions = instances.positions @ matrix[:3, :3] + matrix[3, :3]
     rot = inverse.RemoveScaleShear().ExtractRotationQuat()
     parent_q = np.array([[rot.GetReal(), *rot.GetImaginary()]])
     orientations = quat_mul(np.repeat(parent_q, instances.count, axis=0),
                             instances.orientations)
-    return ScatterInstanceSet(
+    return schemas.ScatterInstanceSet(
         proto_indices=instances.proto_indices, positions=positions,
         orientations=orientations, scales=instances.scales,
     )
@@ -1294,24 +1284,24 @@ def write_scatter(
     stage: Usd.Stage,
     *,
     prim_path: str,
-    output: ScatterOutput,
-    prototypes: list[ScatterPrototype],
-    instances: ScatterInstanceSet,
+    output: schemas.ScatterOutput,
+    prototypes: list[schemas.ScatterPrototype],
+    instances: schemas.ScatterInstanceSet,
     first_index: int,
 ) -> dict[str, Any]:
     """Author a scatter in scene.usda as a PointInstancer or as placements."""
     if stage.GetPrimAtPath(prim_path).IsValid():
         stage.RemovePrim(prim_path)
-    if output is ScatterOutput.PLACEMENTS:
-        if instances.count > ScatterRules.MAX_PLACEMENTS:
+    if output is schemas.ScatterOutput.PLACEMENTS:
+        if instances.count > constants.ScatterRules.MAX_PLACEMENTS:
             msg = (
                 f"{instances.count:,} instances is too many for output='placements' "
-                f"(max {ScatterRules.MAX_PLACEMENTS:,}); use output='instancer'."
+                f"(max {constants.ScatterRules.MAX_PLACEMENTS:,}); use output='instancer'."
             )
             raise ValueError(msg)
         stage.DefinePrim(prim_path, "Xform")
         local = to_local(stage, prim_path, instances)
-        stage_utils.add_references(
+        utils.stage.add_references(
             stage, placement_objects(prim_path, prototypes, local, first_index),
         )
         return {"placements": instances.count, "warnings": []}
@@ -1323,8 +1313,8 @@ def write_scatter(
 def write_instancer(
     stage: Usd.Stage,
     prim_path: str,
-    prototypes: list[ScatterPrototype],
-    instances: ScatterInstanceSet,
+    prototypes: list[schemas.ScatterPrototype],
+    instances: schemas.ScatterInstanceSet,
 ) -> None:
     """Author a PointInstancer whose prototypes are placement wrappers of the assets."""
     instancer = UsdGeom.PointInstancer.Define(stage, prim_path)
@@ -1333,12 +1323,12 @@ def write_instancer(
     xformable.AddRotateXYZOp().Set(Gf.Vec3f(0.0, 0.0, 0.0))
     xformable.AddScaleOp().Set(Gf.Vec3f(1.0, 1.0, 1.0))
 
-    prototypes_path = f"{prim_path}/{ScatterNamespace.PROTOTYPES}"
+    prototypes_path = f"{prim_path}/{constants.ScatterNamespace.PROTOTYPES}"
     stage.DefinePrim(prototypes_path, "Scope")
-    stage_utils.add_references(stage, [
-        SceneObject(
+    utils.stage.add_references(stage, [
+        schemas.SceneObject(
             prim_path=f"{prototypes_path}/{proto.name}",
-            asset=AssetMetadata(
+            asset=schemas.AssetMetadata(
                 name=proto.name, source_skill="local", source_id=proto.source,
                 file_path=proto.scene_ref,
             ),
@@ -1371,9 +1361,9 @@ def write_instancer(
 
 def instancer_size_warning(count: int) -> list[str]:
     """Warn when an instancer makes scene.usda heavy to re-save."""
-    if count <= ScatterTuning.LARGE_SCATTER:
+    if count <= constants.ScatterTuning.LARGE_SCATTER:
         return []
-    megabytes = count * ScatterTuning.ASCII_BYTES_PER_INSTANCE / 1e6
+    megabytes = count * constants.ScatterTuning.ASCII_BYTES_PER_INSTANCE / 1e6
     return [
         f"{count:,} instances add about {megabytes:,.0f} MB to scene.usda, which "
         "BowerBot re-saves after every edit. Lower the density, or split the area "
@@ -1383,18 +1373,18 @@ def instancer_size_warning(count: int) -> list[str]:
 
 def placement_objects(
     group_path: str,
-    prototypes: list[ScatterPrototype],
-    instances: ScatterInstanceSet,
+    prototypes: list[schemas.ScatterPrototype],
+    instances: schemas.ScatterInstanceSet,
     first_index: int,
-) -> list[SceneObject]:
+) -> list[schemas.SceneObject]:
     """One placement wrapper per instance under *group_path*, numbered from *first_index*."""
     rotations = quat_to_rotate_xyz(instances.orientations)
-    objects: list[SceneObject] = []
+    objects: list[schemas.SceneObject] = []
     for i in range(instances.count):
         proto = prototypes[int(instances.proto_indices[i])]
-        objects.append(SceneObject(
+        objects.append(schemas.SceneObject(
             prim_path=f"{group_path}/{proto.name}_{first_index + i:02d}",
-            asset=AssetMetadata(
+            asset=schemas.AssetMetadata(
                 name=proto.name, source_skill="local", source_id=proto.source,
                 file_path=proto.scene_ref,
             ),
@@ -1406,7 +1396,7 @@ def placement_objects(
 
 
 def count_by_prototype(
-    prototypes: list[ScatterPrototype], instances: ScatterInstanceSet,
+    prototypes: list[schemas.ScatterPrototype], instances: schemas.ScatterInstanceSet,
 ) -> dict[str, int]:
     """Instances per prototype name."""
     counts = np.bincount(instances.proto_indices, minlength=len(prototypes))
@@ -1422,7 +1412,7 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
     for target in instancer.GetPrototypesRel().GetTargets():
         proto = stage.GetPrimAtPath(target)
         child = proto.GetChild("asset") if proto.IsValid() else proto
-        refs = stage_utils.get_prim_ref_paths(child) if child and child.IsValid() else []
+        refs = utils.stage.get_prim_ref_paths(child) if child and child.IsValid() else []
         prototypes.append(refs[0] if refs else str(target))
     return {
         "prim_path": str(prim.GetPath()),
@@ -1430,8 +1420,8 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
         "type": "PointInstancer",
         "instances": len(indices),
         "prototypes": prototypes,
-        "position": stage_utils.extract_position(prim),
-        "bounds": stage_utils.world_bounds(prim, bbox_cache),
+        "position": utils.stage.extract_position(prim),
+        "bounds": utils.stage.world_bounds(prim, bbox_cache),
     }
 
 
@@ -1443,7 +1433,7 @@ def drop_targets(stage: Usd.Stage, prim_paths: list[str]) -> tuple[list[str], li
     wrappers: list[str] = []
     scatters: list[str] = []
     for prim_path in prim_paths:
-        if stage_utils.parse_nested_contents_path(prim_path) is not None:
+        if utils.stage.parse_nested_contents_path(prim_path) is not None:
             msg = (
                 f"{prim_path} is a nested placement inside an asset; "
                 "drop_to_surface moves scene-level placements only."
@@ -1475,7 +1465,11 @@ def drop_targets(stage: Usd.Stage, prim_paths: list[str]) -> tuple[list[str], li
 
 
 def drop_scatter(
-    stage: Usd.Stage, prim_path: str, index: SurfaceIndex, *, align: ScatterDropAlign,
+    stage: Usd.Stage,
+    prim_path: str,
+    index: schemas.SurfaceIndex,
+    *,
+    align: schemas.ScatterDropAlign,
 ) -> dict[str, Any]:
     """Reseat a scatter's instances on the surface in place, optionally re-tilting them."""
     up = index.up
@@ -1495,7 +1489,7 @@ def drop_scatter(
     scales = np.asarray(raw_s, dtype=np.float64) if raw_s else np.ones((n, 3))
 
     world_gf = UsdGeom.XformCache(time).GetLocalToWorldTransform(instancer.GetPrim())
-    world = surface_utils.gf_matrix_to_numpy(world_gf)
+    world = utils.surface.gf_matrix_to_numpy(world_gf)
     to_local = np.linalg.inv(world)
     targets = instancer.GetPrototypesRel().GetTargets()
     proto_min = np.zeros((len(targets), 3))
@@ -1507,16 +1501,16 @@ def drop_scatter(
     base_min, base_max = proto_min[proto_idx], proto_max[proto_idx]
 
     retilted = 0
-    if align is ScatterDropAlign.SURFACE:
+    if align is schemas.ScatterDropAlign.SURFACE:
         rotation = world_gf.RemoveScaleShear().ExtractRotationQuat()
         to_world_q = np.tile([rotation.GetReal(), *rotation.GetImaginary()], (n, 1))
         world_scale = float(np.cbrt(abs(np.linalg.det(world[:3, :3]))))
-        up_vec = surface_utils.up_vector(up)
+        up_vec = utils.surface.up_vector(up)
         base = (base_min + base_max) / 2.0
         centers_local = positions + quat_rotate(orientations, base * scales)
         centers = centers_local @ world[:3, :3] + world[3, :3]
         headings = quat_heading(quat_mul(to_world_q, orientations), up)
-        hit, _, tris = surface_utils.surface_under(
+        hit, _, tris = utils.surface.surface_under(
             index, centers, mode="nearest", reference=centers[:, up].copy(),
         )
         fallback = np.where(
@@ -1538,7 +1532,7 @@ def drop_scatter(
     shift, supported = settle_shift(index, world_samples.reshape(samples.shape), up)
     if not supported.any():
         return {"prim_path": prim_path, "supported": False}
-    delta = np.outer(shift, surface_utils.up_vector(up)) @ to_local[:3, :3]
+    delta = np.outer(shift, utils.surface.up_vector(up)) @ to_local[:3, :3]
     if retilted:
         instancer.GetOrientationsAttr().Set(Vt.QuathArray.FromNumpy(
             np.ascontiguousarray(orientations[:, [1, 2, 3, 0]], dtype=np.float16),
@@ -1549,7 +1543,7 @@ def drop_scatter(
     extent = instancer.ComputeExtentAtTime(time, time)
     if extent:
         instancer.CreateExtentAttr(extent)
-    stranded = np.flatnonzero(~supported)[:ScatterTuning.STRANDED_REPORT]
+    stranded = np.flatnonzero(~supported)[:constants.ScatterTuning.STRANDED_REPORT]
     stranded_at = world_samples.reshape(samples.shape)[stranded].mean(axis=1)
     return {
         "prim_path": prim_path,
@@ -1572,27 +1566,27 @@ def drop_scatter(
 def drop_prim(
     stage: Usd.Stage,
     prim_path: str,
-    index: SurfaceIndex,
+    index: schemas.SurfaceIndex,
     *,
-    align: ScatterDropAlign,
+    align: schemas.ScatterDropAlign,
 ) -> dict[str, Any]:
     """Move one placement so it rests on the highest surface under its footprint."""
     up = index.up
     axes = list(index.axes)
     prim = stage.GetPrimAtPath(prim_path)
-    bmin, bmax = surface_utils.prim_world_box(stage, prim_path)
-    grid = np.linspace(0.1, 0.9, ScatterTuning.DROP_FOOTPRINT)
+    bmin, bmax = utils.surface.prim_world_box(stage, prim_path)
+    grid = np.linspace(0.1, 0.9, constants.ScatterTuning.DROP_FOOTPRINT)
     ga, gb = np.meshgrid(grid, grid, indexing="ij")
     footprint = np.zeros((ga.size, 3))
     footprint[:, axes[0]] = bmin[axes[0]] + ga.ravel() * (bmax[axes[0]] - bmin[axes[0]])
     footprint[:, axes[1]] = bmin[axes[1]] + gb.ravel() * (bmax[axes[1]] - bmin[axes[1]])
     ceiling = np.full(footprint.shape[0], bmax[up])
-    hit, heights, _ = surface_utils.surface_under(
+    hit, heights, _ = utils.surface.surface_under(
         index, footprint, mode="below", reference=ceiling,
     )
     if not hit.any():
         # Fully buried: use the nearest ground above instead.
-        hit, heights, _ = surface_utils.surface_under(
+        hit, heights, _ = utils.surface.surface_under(
             index, footprint, mode="nearest", reference=ceiling,
         )
     if not hit.any():
@@ -1609,11 +1603,11 @@ def drop_prim(
     ) if prim.GetParent().IsA(UsdGeom.Xformable) else Gf.Matrix4d(1.0)
     to_parent = parent_world.GetInverse()
     old_local = np.array(translate_op.Get() or Gf.Vec3d(0.0, 0.0, 0.0), dtype=np.float64)
-    up_vec = surface_utils.up_vector(up)
+    up_vec = utils.surface.up_vector(up)
 
     rotate_value = None
     world_shift = np.zeros(3)
-    if align is ScatterDropAlign.SURFACE and int(hit.sum()) >= 3:
+    if align is schemas.ScatterDropAlign.SURFACE and int(hit.sum()) >= 3:
         pts = footprint[hit].copy()
         pts[:, up] = heights[hit]
         design = np.column_stack([pts[:, axes[0]], pts[:, axes[1]], np.ones(pts.shape[0])])
@@ -1674,7 +1668,7 @@ def _circle_center(
         raise ValueError(msg)
     if raw.get("center") is not None:
         return _vec3(raw["center"])
-    bmin, bmax = surface_utils.prim_world_box(stage, raw["center_prim"])
+    bmin, bmax = utils.surface.prim_world_box(stage, raw["center_prim"])
     center = (bmin + bmax) / 2.0
     center[up] = bmin[up]
     return tuple(center.tolist())
@@ -1682,7 +1676,10 @@ def _circle_center(
 
 def _conformed_extents(
     root_file: Path, unit_scale: float, correction: float | None, up: int,
-) -> tuple[FloatArray, FloatArray, FloatArray, FloatArray, FloatArray]:
+) -> tuple[
+    schemas.FloatArray, schemas.FloatArray, schemas.FloatArray, schemas.FloatArray,
+    schemas.FloatArray,
+]:
     """Conformed bounds, base footprint and vertex sample of an asset."""
     stage = Usd.Stage.Open(str(root_file))
     root = stage.GetDefaultPrim() if stage else None
@@ -1697,9 +1694,9 @@ def _conformed_extents(
         msg = f"{root_file.name} has no geometry bounds, so it cannot rest on a surface."
         raise ValueError(msg)
     corners = np.array([list(rng.GetCorner(i)) for i in range(8)])
-    triangles = surface_utils.collect_triangles(
+    triangles = utils.surface.collect_triangles(
         stage, [str(root.GetPath())],
-        up=surface_utils.axis_index(UsdGeom.GetStageUpAxis(stage)),
+        up=utils.surface.axis_index(UsdGeom.GetStageUpAxis(stage)),
     )
     points = (
         np.concatenate([
@@ -1709,7 +1706,7 @@ def _conformed_extents(
         if triangles.count else corners
     )
     if correction is not None:
-        rotate = surface_utils.gf_matrix_to_numpy(
+        rotate = utils.surface.gf_matrix_to_numpy(
             Gf.Matrix4d().SetRotate(Gf.Rotation(Gf.Vec3d.XAxis(), correction)),
         )[:3, :3]
         corners = corners @ rotate
@@ -1718,17 +1715,24 @@ def _conformed_extents(
     points *= unit_scale
     base_min, base_max = _base_footprint(points, up)
     shape = np.unique(points, axis=0)
-    if shape.shape[0] > ScatterTuning.SHAPE_POINTS:
-        picks = np.linspace(0, shape.shape[0] - 1, ScatterTuning.SHAPE_POINTS).astype(np.int64)
+    if shape.shape[0] > constants.ScatterTuning.SHAPE_POINTS:
+        picks = np.linspace(
+            0, shape.shape[0] - 1, constants.ScatterTuning.SHAPE_POINTS,
+        ).astype(np.int64)
         shape = shape[picks]
     return corners.min(axis=0), corners.max(axis=0), base_min, base_max, shape
 
 
-def _base_footprint(points: FloatArray, up: int) -> tuple[FloatArray, FloatArray]:
+def _base_footprint(
+    points: schemas.FloatArray, up: int,
+) -> tuple[schemas.FloatArray, schemas.FloatArray]:
     """Box around the lowest slice of *points*: what meets the ground when upright."""
     bottom = float(points[:, up].min())
     top = float(points[:, up].max())
-    cutoff = bottom + ScatterTuning.BASE_SLICE * (top - bottom) + SurfaceTuning.EPSILON
+    cutoff = (
+        bottom + constants.ScatterTuning.BASE_SLICE * (top - bottom)
+        + constants.SurfaceTuning.EPSILON
+    )
     base = points[points[:, up] <= cutoff]
     base_min = base.min(axis=0)
     base_max = base.max(axis=0)
@@ -1736,9 +1740,9 @@ def _base_footprint(points: FloatArray, up: int) -> tuple[FloatArray, FloatArray
     return base_min, base_max
 
 
-def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> FloatArray:
+def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.FloatArray:
     """World-space vertices of a prototype, or its box corners if it has no mesh."""
-    triangles = surface_utils.collect_triangles(stage, [prim_path], up=up)
+    triangles = utils.surface.collect_triangles(stage, [prim_path], up=up)
     if triangles.count:
         return np.concatenate([triangles.v0, triangles.v1, triangles.v2])
     cache = UsdGeom.BBoxCache(
@@ -1751,8 +1755,8 @@ def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> FloatArray:
     return np.array([list(rng.GetCorner(i)) for i in range(8)])
 
 def _require_eligible(
-    triangles: SurfaceTriangles, up: int, surface: ScatterSurfaceParams,
-) -> BoolArray:
+    triangles: schemas.SurfaceTriangles, up: int, surface: schemas.ScatterSurfaceParams,
+) -> schemas.BoolArray:
     """Eligible-triangle mask, refusing with a diagnosis when nothing qualifies."""
     mask = eligible_triangles(
         triangles, up, max_slope_degrees=surface.max_slope_degrees, region=surface.region,
@@ -1766,34 +1770,34 @@ def _require_eligible(
 
 
 def _noise_scale(
-    surface: ScatterSurfaceParams, triangles: SurfaceTriangles, up: int,
+    surface: schemas.ScatterSurfaceParams, triangles: schemas.SurfaceTriangles, up: int,
 ) -> float:
     """Variation feature size: explicit, else a fifth of the covered extent."""
     if surface.variation_scale is not None:
         return surface.variation_scale
-    bounds = region_plan_bounds(surface.region, up) or surface_utils.plan_bounds(triangles, up)
+    bounds = region_plan_bounds(surface.region, up) or utils.surface.plan_bounds(triangles, up)
     return max(float(np.max(bounds[1] - bounds[0])) / 5.0, 1e-6)
 
 
 def _rows_contacts(
     rng: np.random.Generator,
-    surface: ScatterSurfaceParams,
-    triangles: SurfaceTriangles,
-    tri_mask: BoolArray,
+    surface: schemas.ScatterSurfaceParams,
+    triangles: schemas.SurfaceTriangles,
+    tri_mask: schemas.BoolArray,
     up: int,
-) -> tuple[FloatArray, IntArray]:
+) -> tuple[schemas.FloatArray, schemas.IntArray]:
     """Row lattice points projected straight down onto the top surface."""
     if surface.spacing is None or surface.row_spacing is None:
         msg = "arrangement 'rows' needs spacing and row_spacing."
         raise ValueError(msg)
-    lo, hi = region_plan_bounds(surface.region, up) or surface_utils.plan_bounds(triangles, up)
+    lo, hi = region_plan_bounds(surface.region, up) or utils.surface.plan_bounds(triangles, up)
     plan = rows_plan_points(
         rng, lo, hi, spacing=surface.spacing, row_spacing=surface.row_spacing,
         direction_degrees=surface.row_direction_degrees, jitter=surface.jitter,
     )
     points = plan_to_world(plan, up)
-    index = surface_utils.build_vertical_index(triangles, up, up_facing_only=True)
-    hit, heights, tris = surface_utils.surface_under(index, points, mode="top")
+    index = utils.surface.build_vertical_index(triangles, up, up_facing_only=True)
+    hit, heights, tris = utils.surface.surface_under(index, points, mode="top")
     ok = hit.copy()
     ok[hit] = tri_mask[tris[hit]]
     points = points[ok]
@@ -1802,25 +1806,25 @@ def _rows_contacts(
 
 
 def _path_pitch(
-    index: SurfaceIndex,
-    points: FloatArray,
+    index: schemas.SurfaceIndex,
+    points: schemas.FloatArray,
     closed: bool,
     up: int,
-    stations: FloatArray,
-    half: FloatArray,
-    station_idx: IntArray,
-    lateral: FloatArray,
-) -> FloatArray:
+    stations: schemas.FloatArray,
+    half: schemas.FloatArray,
+    station_idx: schemas.IntArray,
+    lateral: schemas.FloatArray,
+) -> schemas.FloatArray:
     """Pitch (radians) of the surface along the path across each instance."""
     ahead = sample_path(points, closed, up, stations + half)[station_idx] + lateral
     behind = sample_path(points, closed, up, stations - half)[station_idx] + lateral
-    hit_a, h_a, _ = surface_utils.surface_under(
+    hit_a, h_a, _ = utils.surface.surface_under(
         index, ahead, mode="nearest", reference=ahead[:, up].copy(),
     )
-    hit_b, h_b, _ = surface_utils.surface_under(
+    hit_b, h_b, _ = utils.surface.surface_under(
         index, behind, mode="nearest", reference=behind[:, up].copy(),
     )
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     run = np.linalg.norm((ahead - behind)[:, axes], axis=1)
     rise = np.where(hit_a & hit_b, h_a - h_b, 0.0)
     return np.arctan2(rise, np.maximum(run, 1e-9))
@@ -1828,20 +1832,20 @@ def _path_pitch(
 
 def _accepted_samples(
     rng: np.random.Generator,
-    triangles: SurfaceTriangles,
-    weights: FloatArray,
+    triangles: schemas.SurfaceTriangles,
+    weights: schemas.FloatArray,
     target: int,
-    accept: ScatterAcceptance,
+    accept: schemas.ScatterAcceptance,
     *,
     exact: bool,
-) -> tuple[FloatArray, IntArray]:
+) -> tuple[schemas.FloatArray, schemas.IntArray]:
     """Sample then thin by *accept*; with *exact*, keep sampling until *target*."""
     batch = target
-    kept_pts: list[FloatArray] = []
-    kept_tris: list[IntArray] = []
+    kept_pts: list[schemas.FloatArray] = []
+    kept_tris: list[schemas.IntArray] = []
     got = 0
-    for _ in range(ScatterTuning.MAX_SAMPLE_ROUNDS if exact else 1):
-        points, tris = surface_utils.sample_on_triangles(rng, triangles, weights, batch)
+    for _ in range(constants.ScatterTuning.MAX_SAMPLE_ROUNDS if exact else 1):
+        points, tris = utils.surface.sample_on_triangles(rng, triangles, weights, batch)
         prob = accept(points, tris)
         keep = rng.random(points.shape[0]) < prob
         kept_pts.append(points[keep])
@@ -1850,7 +1854,9 @@ def _accepted_samples(
         if not exact or got >= target:
             break
         rate = max(float(keep.mean()) if keep.size else 0.0, 1e-3)
-        batch = int(min(max((target - got) / rate * 1.25, 1024), ScatterTuning.MAX_SAMPLE_BATCH))
+        batch = int(min(
+            max((target - got) / rate * 1.25, 1024), constants.ScatterTuning.MAX_SAMPLE_BATCH,
+        ))
     points = np.concatenate(kept_pts) if kept_pts else np.zeros((0, 3))
     tris = np.concatenate(kept_tris) if kept_tris else np.zeros(0, dtype=np.int64)
     if exact:
@@ -1860,30 +1866,32 @@ def _accepted_samples(
 
 def _eligible_share(
     rng: np.random.Generator,
-    surface: ScatterSurfaceParams,
-    triangles: SurfaceTriangles,
-    tri_mask: BoolArray,
-    avoid: SurfaceIndex | None,
+    surface: schemas.ScatterSurfaceParams,
+    triangles: schemas.SurfaceTriangles,
+    tri_mask: schemas.BoolArray,
+    avoid: schemas.SurfaceIndex | None,
     up: int,
 ) -> float:
     """Share of the eligible area inside the region and clear of avoid."""
     if surface.region is None and avoid is None:
         return 1.0
-    points, _ = surface_utils.sample_on_triangles(
-        rng, triangles, triangles.areas * tri_mask, ScatterTuning.AREA_PROBE,
+    points, _ = utils.surface.sample_on_triangles(
+        rng, triangles, triangles.areas * tri_mask, constants.ScatterTuning.AREA_PROBE,
     )
     if points.shape[0] == 0:
         return 0.0
     keep = region_mask(points, surface.region, up)
     if avoid is not None:
-        axes = list(surface_utils.horizontal_axes(up))
-        keep &= ~surface_utils.plan_coverage(
+        axes = list(utils.surface.horizontal_axes(up))
+        keep &= ~utils.surface.plan_coverage(
             avoid, points[:, axes[0]], points[:, axes[1]], surface.avoid_margin,
         )
     return float(keep.mean())
 
 
-def _greedy_min_spacing(points: FloatArray, spacing: float, limit: int) -> FloatArray:
+def _greedy_min_spacing(
+    points: schemas.FloatArray, spacing: float, limit: int,
+) -> schemas.FloatArray:
     """Keep points in order unless one already kept lies closer than *spacing*."""
     cell = spacing
     r2 = spacing * spacing
@@ -1914,7 +1922,7 @@ def _greedy_min_spacing(points: FloatArray, spacing: float, limit: int) -> Float
     return np.asarray(kept, dtype=np.int64)
 
 
-def _value_noise(p: FloatArray, seed: int) -> FloatArray:
+def _value_noise(p: schemas.FloatArray, seed: int) -> schemas.FloatArray:
     """Trilinear value noise on an integer lattice hashed with *seed*."""
     cell = np.floor(p)
     f = p - cell
@@ -1932,7 +1940,9 @@ def _value_noise(p: FloatArray, seed: int) -> FloatArray:
     return result
 
 
-def _lattice_hash(ix: IntArray, iy: IntArray, iz: IntArray, seed: int) -> FloatArray:
+def _lattice_hash(
+    ix: schemas.IntArray, iy: schemas.IntArray, iz: schemas.IntArray, seed: int,
+) -> schemas.FloatArray:
     """Deterministic hash of lattice coordinates to [0, 1) (splitmix64 finalizer)."""
     h = (
         ix.astype(np.uint64) * np.uint64(0x9E3779B185EBCA87)
@@ -1945,11 +1955,11 @@ def _lattice_hash(ix: IntArray, iy: IntArray, iz: IntArray, seed: int) -> FloatA
     h ^= h >> np.uint64(27)
     h *= np.uint64(0x94D049BB133111EB)
     h ^= h >> np.uint64(31)
-    top_bits: FloatArray = (h >> np.uint64(11)).astype(np.float64)
+    top_bits: schemas.FloatArray = (h >> np.uint64(11)).astype(np.float64)
     return top_bits / float(1 << 53)
 
 
-def _point_in_polygon(plan: FloatArray, polygon: FloatArray) -> BoolArray:
+def _point_in_polygon(plan: schemas.FloatArray, polygon: schemas.FloatArray) -> schemas.BoolArray:
     """Even-odd test of plan points against a closed polygon."""
     inside = np.zeros(plan.shape[0], dtype=bool)
     x, y = plan[:, 0], plan[:, 1]
@@ -1961,7 +1971,9 @@ def _point_in_polygon(plan: FloatArray, polygon: FloatArray) -> BoolArray:
     return inside
 
 
-def _curve_points(stage: Usd.Stage, prim_path: str) -> tuple[FloatArray, bool, FloatArray]:
+def _curve_points(
+    stage: Usd.Stage, prim_path: str,
+) -> tuple[schemas.FloatArray, bool, schemas.FloatArray]:
     """World-space control points of the first curve on a BasisCurves prim."""
     prim = stage.GetPrimAtPath(prim_path)
     if not prim.IsValid() or not prim.IsA(UsdGeom.BasisCurves):
@@ -1974,7 +1986,7 @@ def _curve_points(stage: Usd.Stage, prim_path: str) -> tuple[FloatArray, bool, F
     if points.shape[0] < 2:
         msg = f"curve_prim {prim_path} has fewer than 2 points."
         raise ValueError(msg)
-    world = surface_utils.gf_matrix_to_numpy(
+    world = utils.surface.gf_matrix_to_numpy(
         UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default()),
     )
     points = points @ world[:3, :3] + world[3, :3]
@@ -1982,19 +1994,19 @@ def _curve_points(stage: Usd.Stage, prim_path: str) -> tuple[FloatArray, bool, F
     return points, closed, points.mean(axis=0)
 
 
-def _plan_length(points: FloatArray, closed: bool, up: int) -> float:
+def _plan_length(points: schemas.FloatArray, closed: bool, up: int) -> float:
     pts = np.vstack([points, points[:1]]) if closed else points
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     seg = np.diff(pts[:, axes], axis=0)
     return float(np.hypot(seg[:, 0], seg[:, 1]).sum())
 
 
 def _segment_direction(
-    points: FloatArray, closed: bool, up: int, stations: FloatArray,
-) -> FloatArray:
+    points: schemas.FloatArray, closed: bool, up: int, stations: schemas.FloatArray,
+) -> schemas.FloatArray:
     """Direction of the path segment containing each station (tangent fallback)."""
     pts = np.vstack([points, points[:1]]) if closed else points
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     seg = np.diff(pts, axis=0)
     seg[:, up] = 0.0
     seg_len = np.hypot(*seg[:, axes].T)
@@ -2009,12 +2021,14 @@ def _side_and_front_axes(up: int) -> tuple[int, int]:
     return 0, (2 if up == 1 else 1)
 
 
-def _front_vector(up: int) -> FloatArray:
+def _front_vector(up: int) -> schemas.FloatArray:
     """Prototype front direction: +Z in Y-up scenes, -Y in Z-up scenes."""
     return np.array([0.0, 0.0, 1.0]) if up == 1 else np.array([0.0, -1.0, 0.0])
 
 
-def _signed_angle(src: FloatArray, dst: FloatArray, axis: FloatArray) -> FloatArray:
+def _signed_angle(
+    src: schemas.FloatArray, dst: schemas.FloatArray, axis: schemas.FloatArray,
+) -> schemas.FloatArray:
     """Signed angle (radians) about *axis* turning each *src* onto each *dst*."""
     src = np.broadcast_to(src, dst.shape)
     cross = np.cross(src, dst)
@@ -2027,7 +2041,7 @@ def _is_placement_wrapper(prim: Usd.Prim) -> bool:
     return (
         prim.IsA(UsdGeom.Xformable)
         and child.IsValid()
-        and bool(stage_utils.get_prim_ref_paths(child))
+        and bool(utils.stage.get_prim_ref_paths(child))
     )
 
 
@@ -2052,13 +2066,13 @@ def _rotate_xyz_rotation(value: Any) -> Gf.Rotation:
     )
 
 
-def _vec3(values: Any) -> Vec3:
+def _vec3(values: Any) -> schemas.Vec3:
     """Three floats from any length-3 sequence."""
     x, y, z = (float(v) for v in values)
     return x, y, z
 
 
-def _region_circle(region: ScatterRegion) -> tuple[FloatArray, float]:
+def _region_circle(region: schemas.ScatterRegion) -> tuple[schemas.FloatArray, float]:
     """A circular region's centre and radius."""
     if region.center is None or region.radius is None:
         msg = "a region needs a polygon, or a center and a radius."
@@ -2066,14 +2080,16 @@ def _region_circle(region: ScatterRegion) -> tuple[FloatArray, float]:
     return np.asarray(region.center, dtype=np.float64), region.radius
 
 
-def _plan_distance(points: FloatArray, center: FloatArray, up: int) -> FloatArray:
+def _plan_distance(
+    points: schemas.FloatArray, center: schemas.FloatArray, up: int,
+) -> schemas.FloatArray:
     """Plan-view distance from each point to *center*."""
-    axes = list(surface_utils.horizontal_axes(up))
+    axes = list(utils.surface.horizontal_axes(up))
     offset = points[:, axes] - center[axes]
     return np.hypot(offset[:, 0], offset[:, 1])
 
 
-def _pile_setup(surface: ScatterSurfaceParams) -> tuple[int, FloatArray, float]:
+def _pile_setup(surface: schemas.ScatterSurfaceParams) -> tuple[int, schemas.FloatArray, float]:
     """A pile's piece count, centre and base radius."""
     region = surface.region
     if surface.count is None or region is None or region.polygon is not None:

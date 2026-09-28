@@ -9,11 +9,18 @@ import json
 import os
 from pathlib import Path
 
-from pxr import Gf, Kind, Sdf, Sdr, Usd, UsdGeom, UsdShade, UsdUtils
+from pxr import Gf
+from pxr import Kind
+from pxr import Sdf
+from pxr import Sdr
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdShade
+from pxr import UsdUtils
 
-from bowerbot.constants import NamespaceRules, TransformUsd
-from bowerbot.schemas import SceneObject
-from bowerbot.utils.naming_utils import safe_file_name
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 # ── Reference inspection ──
 
@@ -229,7 +236,7 @@ def _is_empty_override(spec: Sdf.PrimSpec) -> bool:
             or arc.deletedItems
         ):
             return False
-    authored = set(spec.ListInfoKeys()) - NamespaceRules.INTRINSIC_PRIM_INFO_KEYS
+    authored = set(spec.ListInfoKeys()) - constants.NamespaceRules.INTRINSIC_PRIM_INFO_KEYS
     return not authored
 
 
@@ -265,7 +272,7 @@ def _add_xform_op(
     """Return the xform op for *attribute_name*, adding to xformOpOrder if missing."""
     suffix = attribute_name[len("xformOp:"):]
     base, _, namespace = suffix.partition(":")
-    spec = TransformUsd.XFORM_OPS.get(base)
+    spec = constants.TransformUsd.XFORM_OPS.get(base)
     if spec is None:
         return None
     op_type, value_type = spec
@@ -419,7 +426,7 @@ def save_scene_snapshot(
 ) -> Path:
     """Flatten the composed scene into a named, self-contained snapshot file."""
     scene_path = Path(scene_path)
-    safe = safe_file_name(name)
+    safe = utils.naming.safe_file_name(name)
     if not safe:
         raise ValueError(
             f"Snapshot name {name!r} is empty after sanitization. "
@@ -498,7 +505,7 @@ def list_scene_snapshots(scene_path: Path) -> list[dict[str, object]]:
 def delete_scene_snapshot(scene_path: Path, name: str) -> Path:
     """Delete a named snapshot file alongside scene.usda."""
     scene_path = Path(scene_path)
-    safe = safe_file_name(name)
+    safe = utils.naming.safe_file_name(name)
     if not safe:
         raise ValueError(f"Invalid snapshot name: {name!r}")
     snapshot_path = scene_path.parent / f"{safe}.usda"
@@ -537,12 +544,12 @@ def save_stage(stage: Usd.Stage) -> None:
 # ── References ──
 
 
-def add_reference(stage: Usd.Stage, scene_object: SceneObject) -> None:
+def add_reference(stage: Usd.Stage, scene_object: schemas.SceneObject) -> None:
     """Reference an asset under a wrapper Xform, conformed to the scene's units and up-axis."""
     add_references(stage, [scene_object])
 
 
-def add_references(stage: Usd.Stage, scene_objects: list[SceneObject]) -> None:
+def add_references(stage: Usd.Stage, scene_objects: list[schemas.SceneObject]) -> None:
     """Author a batch of asset references, computing conform once per unique asset."""
     conform: dict[str, tuple[float, float | None]] = {}
     for scene_object in scene_objects:

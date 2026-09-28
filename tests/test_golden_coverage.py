@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from bowerbot import dispatcher
-from tests.golden.scenarios import SCENARIOS
+from tests.golden import scenarios
 
 EXPECTED = Path(__file__).parent / "golden" / "expected"
 
@@ -69,7 +69,7 @@ def _usage() -> tuple[dict[str, set[str]], dict[tuple[str, str], set[Any]]]:
         elif isinstance(value, str | bool) and schema and "enum" in schema:
             values[(tool, prefix.rstrip("."))].add(value)
 
-    for scenario in SCENARIOS:
+    for scenario in scenarios.SCENARIOS:
         if scenario.open_project:
             used["create_project"].update({"name", "up_axis", "meters_per_unit"})
             values[("create_project", "up_axis")].update(c.up_axis for c in scenario.conventions)

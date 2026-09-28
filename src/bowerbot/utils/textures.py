@@ -10,8 +10,8 @@ from pathlib import Path
 
 from pxr import Usd
 
-from bowerbot.constants import ASWFLayerNames
-from bowerbot.schemas import HDRIFormat, TextureCategory
+from bowerbot import constants
+from bowerbot import schemas
 
 
 def copy_texture_to_project(source: Path, project_dir: Path) -> str:
@@ -19,14 +19,14 @@ def copy_texture_to_project(source: Path, project_dir: Path) -> str:
 
     Skips the copy if the destination already exists.
     """
-    tex_dir = project_dir / ASWFLayerNames.TEXTURES
+    tex_dir = project_dir / constants.ASWFLayerNames.TEXTURES
     tex_dir.mkdir(parents=True, exist_ok=True)
 
     dest = tex_dir / source.name
     if not dest.exists():
         shutil.copy2(source, dest)
 
-    return f"./{ASWFLayerNames.TEXTURES}/{source.name}"
+    return f"./{constants.ASWFLayerNames.TEXTURES}/{source.name}"
 
 
 def stage_scene_texture(
@@ -57,8 +57,8 @@ def stage_asset_value(
     if not filename:
         return value
 
-    project_rel = f"./{ASWFLayerNames.TEXTURES}/{filename}"
-    if (project_dir / ASWFLayerNames.TEXTURES / filename).exists():
+    project_rel = f"./{constants.ASWFLayerNames.TEXTURES}/{filename}"
+    if (project_dir / constants.ASWFLayerNames.TEXTURES / filename).exists():
         return project_rel
 
     candidates: list[Path] = []
@@ -110,7 +110,7 @@ def find_texture_references(
 
 def find_textures(
     library_dir: Path,
-    category: TextureCategory,
+    category: schemas.TextureCategory,
     *,
     query: str | None = None,
 ) -> list[dict[str, str]]:
@@ -140,5 +140,5 @@ def _format(path: Path) -> dict[str, str]:
 
 def _classify(path: Path) -> str:
     """Return ``hdri`` for HDRI extensions, ``material`` otherwise."""
-    hdri_exts = {f.value for f in HDRIFormat}
+    hdri_exts = {f.value for f in schemas.HDRIFormat}
     return "hdri" if path.suffix.lower() in hdri_exts else "material"

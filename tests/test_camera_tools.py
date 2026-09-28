@@ -7,27 +7,29 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Usd, UsdGeom
+from pxr import Gf
+from pxr import Usd
+from pxr import UsdGeom
 
-from bowerbot.config import UpAxis
-from bowerbot.project import Project
-from bowerbot.state import SceneState
-from tests._helpers import exec_tool, make_state
+from bowerbot import config
+from bowerbot import project_folder
+from bowerbot import scene_state
+from tests import _helpers
 
 
 def _setup(tmp):
     tmp_path = Path(tmp)
-    state, project = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, project = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return tmp_path, state, project
 
 
 def _setup_z_up(tmp):
-    project = Project.create(Path(tmp), "test", up_axis=UpAxis.Z)
-    state = SceneState()
+    project = project_folder.Project.create(Path(tmp), "test", up_axis=config.UpAxis.Z)
+    state = scene_state.SceneState()
     state.project = project
     state.stage_path = project.scene_path
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return state, project
 
 
@@ -45,7 +47,7 @@ def test_list_camera_properties():
     """Returns Camera attributes including focalLength and projection tokens."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_camera_properties", {}))
+        r = asyncio.run(_helpers.exec_tool(state, "list_camera_properties", {}))
         assert r.success, r.error
         by_name = {p["name"]: p for p in r.data["properties"]}
         assert "focalLength" in by_name
@@ -60,7 +62,7 @@ def test_create_camera_defaults():
     """Creates a camera with translate, rotate, and a scaled clippingRange."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Hero_Cam",
             "translate_x": 1.0, "translate_y": 2.0, "translate_z": 3.0,
         }))
@@ -83,7 +85,7 @@ def test_create_camera_look_at_points_at_target():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
         eye, target = (10.0, 5.0, 10.0), (0.0, 1.0, 0.0)
-        r = asyncio.run(exec_tool(state, "create_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
             "translate_x": eye[0], "translate_y": eye[1], "translate_z": eye[2],
             "look_at": list(target),
@@ -100,7 +102,7 @@ def test_create_camera_look_at_z_up():
     with tempfile.TemporaryDirectory() as tmp:
         state, project = _setup_z_up(tmp)
         eye, target = (10.0, -10.0, 5.0), (0.0, 0.0, 1.0)
-        r = asyncio.run(exec_tool(state, "create_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
             "translate_x": eye[0], "translate_y": eye[1], "translate_z": eye[2],
             "look_at": list(target),
@@ -124,7 +126,7 @@ def test_create_camera_rejects_both_aims():
     """Passing look_at and rotate angles together is refused."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
             "look_at": [0, 0, 0],
             "rotate_x": -30.0,
@@ -137,7 +139,7 @@ def test_create_camera_attributes():
     """Camera attributes author by exact name through the coercion path."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
             "attributes": {"focalLength": 35, "fStop": 2.8},
         }))
@@ -153,7 +155,7 @@ def test_create_camera_unknown_attribute_refused():
     """An unknown attribute name is refused and nothing is authored."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
             "attributes": {"focalLenght": 35},
         }))
@@ -169,13 +171,13 @@ def test_update_camera_look_at_from_current_position():
     """look_at without new translate re-aims from the camera's position."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_camera", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
             "translate_x": 0.0, "translate_y": 2.0, "translate_z": 10.0,
         }))
         path = created.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "update_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_camera", {
             "prim_path": path,
             "look_at": [5.0, 0.0, 0.0],
         }))
@@ -192,12 +194,12 @@ def test_update_camera_translate():
     """New translate values are authored on the existing op."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_camera", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
         }))
         path = created.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "update_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_camera", {
             "prim_path": path,
             "translate_x": 4.0, "translate_y": 5.0, "translate_z": 6.0,
         }))
@@ -212,10 +214,10 @@ def test_update_camera_rejects_non_camera():
     """Updating a non-camera prim is refused."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
         }))
-        r = asyncio.run(exec_tool(state, "update_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_camera", {
             "prim_path": created.data["prim_path"],
             "translate_x": 1.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -230,12 +232,12 @@ def test_remove_camera():
     """Removes the camera and reports suspect variant sets."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_camera", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
         }))
         path = created.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "remove_camera", {"prim_path": path}))
+        r = asyncio.run(_helpers.exec_tool(state, "remove_camera", {"prim_path": path}))
         assert r.success, r.error
         assert "suspect_variant_sets" in r.data
 
@@ -247,10 +249,10 @@ def test_remove_camera_rejects_non_camera():
     """Removing a non-camera prim via remove_camera is refused."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
         }))
-        r = asyncio.run(exec_tool(state, "remove_camera", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_camera", {
             "prim_path": created.data["prim_path"],
         }))
         assert not r.success
@@ -264,11 +266,11 @@ def test_list_scene_shows_camera():
     """list_scene reports cameras with kind, projection, and focal length."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_camera", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_camera", {
             "camera_name": "Cam",
             "attributes": {"focalLength": 35},
         }))
-        r = asyncio.run(exec_tool(state, "list_scene", {}))
+        r = asyncio.run(_helpers.exec_tool(state, "list_scene", {}))
         assert r.success, r.error
         cameras = [o for o in r.data["objects"] if o.get("kind") == "camera"]
         assert len(cameras) == 1

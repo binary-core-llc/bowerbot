@@ -13,19 +13,20 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from typing import Any
 
 import litellm
 
-from bowerbot import dispatcher, tool_router
-from bowerbot.config import Settings
-from bowerbot.logging_setup import sanitize
-from bowerbot.prompts import load_prompt
-from bowerbot.skills.base import ToolResult
-from bowerbot.skills.registry import SkillRegistry
-from bowerbot.state import SceneState
-from bowerbot.token_manager import TokenManager
+from bowerbot import config
+from bowerbot import dispatcher
+from bowerbot import logging_setup
+from bowerbot import prompts
+from bowerbot import scene_state
+from bowerbot import skills
+from bowerbot import token_manager
+from bowerbot import tool_router
 
 logger = logging.getLogger(__name__)
 
@@ -36,19 +37,19 @@ MAX_VALIDATION_RETRIES = 2
 class AgentRuntime:
     """LLM tool-calling loop bound to a single :class:`SceneState`."""
 
-    settings: Settings
-    state: SceneState
-    skill_registry: SkillRegistry
+    settings: config.Settings
+    state: scene_state.SceneState
+    skill_registry: skills.SkillRegistry
     conversation_history: list[dict[str, Any]] = field(default_factory=list)
     _system_prompt: str = field(default="", init=False)
     _tools: list[dict[str, Any]] = field(default_factory=list, init=False)
-    _token_manager: TokenManager = field(init=False)
+    _token_manager: token_manager.TokenManager = field(init=False)
 
     def __post_init__(self) -> None:
         """Assemble the system prompt and cache the tool list."""
         self._system_prompt = self._build_system_prompt()
         self._tools = tool_router.combined_tool_schemas(self.skill_registry)
-        self._token_manager = TokenManager(self.settings.llm)
+        self._token_manager = token_manager.TokenManager(self.settings.llm)
 
         logger.info(
             "System prompt: %d chars, %d scene tools + %d skill(s)",
@@ -60,18 +61,18 @@ class AgentRuntime:
     def _build_system_prompt(self) -> str:
         """Stitch together core + scene-building + skill prompt sections."""
         sections = [
-            load_prompt("core"),
-            f"# Projects\n\n{load_prompt('projects')}",
-            f"# Scene Building\n\n{load_prompt('scene_building')}",
-            f"# Asset Library\n\n{load_prompt('library')}",
-            f"# Placing Assets\n\n{load_prompt('assets')}",
-            f"# Scatter\n\n{load_prompt('scatter')}",
-            f"# Lighting\n\n{load_prompt('lights')}",
-            f"# Cameras\n\n{load_prompt('cameras')}",
-            f"# Materials\n\n{load_prompt('materials')}",
-            f"# Textures\n\n{load_prompt('textures')}",
-            f"# Variant Sets\n\n{load_prompt('variants')}",
-            f"# Physics\n\n{load_prompt('physics')}",
+            prompts.load_prompt("core"),
+            f"# Projects\n\n{prompts.load_prompt('projects')}",
+            f"# Scene Building\n\n{prompts.load_prompt('scene_building')}",
+            f"# Asset Library\n\n{prompts.load_prompt('library')}",
+            f"# Placing Assets\n\n{prompts.load_prompt('assets')}",
+            f"# Scatter\n\n{prompts.load_prompt('scatter')}",
+            f"# Lighting\n\n{prompts.load_prompt('lights')}",
+            f"# Cameras\n\n{prompts.load_prompt('cameras')}",
+            f"# Materials\n\n{prompts.load_prompt('materials')}",
+            f"# Textures\n\n{prompts.load_prompt('textures')}",
+            f"# Variant Sets\n\n{prompts.load_prompt('variants')}",
+            f"# Physics\n\n{prompts.load_prompt('physics')}",
         ]
         skill_prompts = self.skill_registry.get_skill_prompts()
         if skill_prompts:
@@ -144,7 +145,7 @@ class AgentRuntime:
         func_name = tool_call.function.name
         func_args = json.loads(tool_call.function.arguments)
         logger.info(
-            "tool-call name=%s params=%s", func_name, sanitize(func_args),
+            "tool-call name=%s params=%s", func_name, logging_setup.sanitize(func_args),
         )
 
         result = await self._dispatch_tool(func_name, func_args)
@@ -158,7 +159,7 @@ class AgentRuntime:
 
     async def _dispatch_tool(
         self, func_name: str, func_args: dict[str, Any],
-    ) -> ToolResult:
+    ) -> skills.ToolResult:
         """Route a tool call to the dispatcher or the skill registry."""
         return await tool_router.route(
             self.state, self.skill_registry, func_name, func_args,

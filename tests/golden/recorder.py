@@ -51,20 +51,26 @@ import tempfile
 import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 from string import Template
 from typing import Any
 
-from pxr import Sdf, Usd, UsdGeom, UsdShade, UsdUtils, Vt
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdShade
+from pxr import UsdUtils
+from pxr import Vt
 
 from bowerbot import dispatcher
-from bowerbot.skills.base import ToolResult
-from bowerbot.state import SceneState
-from bowerbot.utils.validation_utils import validate_stage
-from tests.golden.checks import StepFacts, run_checks
-from tests.golden.library import build_library
-from tests.golden.model import Convention, Meters, Point, Scenario, Step, in_convention
+from bowerbot import scene_state
+from bowerbot import skills
+from bowerbot import utils
+from tests.golden import checks
+from tests.golden import library
+from tests.golden import model
 
 PROJECT_NAME = "golden"
 CRASH_MARK = "CRASHED (the exception escaped the dispatcher):"
@@ -178,7 +184,11 @@ def listing_order(*, reverse: bool) -> Iterator[None]:
 
 
 def record(
-    scenario: Scenario, convention: Convention, workdir: Path, *, reverse_listings: bool = False,
+    scenario: model.Scenario,
+    convention: model.Convention,
+    workdir: Path,
+    *,
+    reverse_listings: bool = False,
 ) -> list[StepRecord]:
     """Run *scenario* in *convention* under *workdir*; return one snapshot per step.
 
@@ -190,16 +200,18 @@ def record(
         return _record(scenario, convention, workdir)
 
 
-def _record(scenario: Scenario, convention: Convention, workdir: Path) -> list[StepRecord]:
-    library = build_library(workdir / "library")
+def _record(
+    scenario: model.Scenario, convention: model.Convention, workdir: Path,
+) -> list[StepRecord]:
+    library_dir = library.build_library(workdir / "library")
     projects = workdir / "projects"
-    normalize = _Normalizer(workdir, library, projects)
-    state = SceneState(
-        library_dir=library if scenario.library else None, projects_dir=projects,
+    normalize = _Normalizer(workdir, library_dir, projects)
+    state = scene_state.SceneState(
+        library_dir=library_dir if scenario.library else None, projects_dir=projects,
     )
-    saved: dict[str, str] = {"lib": str(library)}
+    saved: dict[str, str] = {"lib": str(library_dir)}
     opening = (
-        Step(
+        model.Step(
             "create_project",
             {"name": PROJECT_NAME, "up_axis": convention.up_axis,
              "meters_per_unit": convention.meters_per_unit},
@@ -210,7 +222,7 @@ def _record(scenario: Scenario, convention: Convention, workdir: Path) -> list[S
         ),
     ) if scenario.open_project else ()
     steps = (*opening, *scenario.steps)
-    library_before = _tree_hash(library)
+    library_before = _tree_hash(library_dir)
     previous = _Capture()
     records: list[StepRecord] = []
     for index, step in enumerate(steps):
@@ -220,9 +232,9 @@ def _record(scenario: Scenario, convention: Convention, workdir: Path) -> list[S
             saved[step.save] = str(result.data[step.save_key])
         copy = workdir / f"snapshot_{index:02d}"
         current = state.project.path if state.project is not None else None
-        units = Convention("current", state.up_axis.value, state.meters_per_unit)
+        units = model.Convention("current", state.up_axis.value, state.meters_per_unit)
         capture = _capture(current, copy, units, normalize)
-        library_after = _tree_hash(library)
+        library_after = _tree_hash(library_dir)
         text = _render(
             index, step, params, result, [normalize(line) for line in printed],
             previous, capture, library_before != library_after, normalize,
@@ -236,7 +248,9 @@ def _record(scenario: Scenario, convention: Convention, workdir: Path) -> list[S
 # ── Running a step ──
 
 
-def _run(state: SceneState, tool: str, params: dict[str, Any]) -> tuple[ToolResult, list[str]]:
+def _run(
+    state: scene_state.SceneState, tool: str, params: dict[str, Any],
+) -> tuple[skills.ToolResult, list[str]]:
     """Call *tool* through the dispatcher; return its result and what USD printed meanwhile.
 
     An exception that escapes the dispatcher is recorded as a crash, not raised.
@@ -251,7 +265,9 @@ def _run(state: SceneState, tool: str, params: dict[str, Any]) -> tuple[ToolResu
         try:
             result = asyncio.run(dispatcher.execute(state, tool, params))
         except Exception as exc:  # noqa: BLE001 - a crash is an outcome to record
-            result = ToolResult(success=False, error=f"{CRASH_MARK} {type(exc).__name__}: {exc}")
+            result = skills.ToolResult(
+                success=False, error=f"{CRASH_MARK} {type(exc).__name__}: {exc}",
+            )
         finally:
             sys.stderr.flush()
             os.dup2(saved_fd, 2)
@@ -263,7 +279,7 @@ def _run(state: SceneState, tool: str, params: dict[str, Any]) -> tuple[ToolResu
 
 
 def _resolve(
-    value: Any, saved: dict[str, str], convention: Convention, *, top: bool = True,
+    value: Any, saved: dict[str, str], convention: model.Convention, *, top: bool = True,
 ) -> Any:
     """Turn a step's params into what is sent: names filled in, points and lengths converted.
 
@@ -273,8 +289,8 @@ def _resolve(
     if isinstance(value, dict):
         out: dict[str, Any] = {}
         for key, item in value.items():
-            if top and key == "translate" and isinstance(item, Point):
-                x, y, z = in_convention(item, convention)
+            if top and key == "translate" and isinstance(item, model.Point):
+                x, y, z = model.in_convention(item, convention)
                 out.update(translate_x=x, translate_y=y, translate_z=z)
             else:
                 out[Template(key).safe_substitute(saved)] = _resolve(
@@ -283,9 +299,9 @@ def _resolve(
         return out
     if isinstance(value, list | tuple):
         return [_resolve(item, saved, convention, top=False) for item in value]
-    if isinstance(value, Point):
-        return list(in_convention(value, convention))
-    if isinstance(value, Meters):
+    if isinstance(value, model.Point):
+        return list(model.in_convention(value, convention))
+    if isinstance(value, model.Meters):
         return round(value.value / convention.meters_per_unit, 9) + 0.0
     if isinstance(value, str):
         return Template(value).safe_substitute(saved)
@@ -305,7 +321,7 @@ def _tree_hash(root: Path) -> str:
 
 
 def _capture(
-    project: Path | None, copy: Path, convention: Convention, normalize: _Normalizer,
+    project: Path | None, copy: Path, convention: model.Convention, normalize: _Normalizer,
 ) -> _Capture:
     """Read the current project as it is on disk, through a fresh copy."""
     if project is None or not project.is_dir():
@@ -333,7 +349,7 @@ def _capture(
     capture.dangling = _dangling(capture.facts)
     capture.unbound_materials = _unbound_materials(capture.facts, capture.files)
     capture.unused = _unused(copy)
-    result = validate_stage(
+    result = utils.validation.validate_stage(
         scene,
         expected_meters_per_unit=convention.meters_per_unit,
         expected_up_axis=convention.up_axis,
@@ -569,9 +585,9 @@ def _absolute_paths(copy: Path, normalize: _Normalizer) -> list[str]:
 
 def _render(
     index: int,
-    step: Step,
+    step: model.Step,
     params: dict[str, Any],
-    result: ToolResult,
+    result: skills.ToolResult,
     printed: list[str],
     previous: _Capture,
     capture: _Capture,
@@ -585,14 +601,14 @@ def _render(
         issue for issue in capture.issues
         if issue.startswith("[error]") and issue not in previous.issues
     ]
-    facts = StepFacts(
+    facts = checks.StepFacts(
         tool=step.tool, params=params, ok=result.success,
         crashed=(result.error or "").startswith(CRASH_MARK), data=data,
         files_changed=files_changed, scene_changed=scene_changed,
         before=previous.facts, after=capture.facts,
         valid_before=previous.valid, valid_after=capture.valid, new_errors=new_errors,
     )
-    flags = run_checks(facts)
+    flags = checks.run_checks(facts)
     if library_changed:
         flags.insert(0, "⚠ CRITICAL: the asset library changed on disk")
     flags += _answer_flags(data, capture.facts)

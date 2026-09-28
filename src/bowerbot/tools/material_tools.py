@@ -7,69 +7,71 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot.services import material_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
+from bowerbot.tools import _helpers
 
 
-def create_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def create_material(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Author a procedural MaterialX material and bind it to a prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = material_service.create_material(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def bind_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def bind_material(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Copy a material from a file into the asset and bind it to a prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = material_service.bind_material(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_material(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_material(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Remove a material binding from a prim inside an ASWF asset."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = material_service.remove_material(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_materials(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List every material across the project's asset folders."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = material_service.list_materials(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def cleanup_unused_materials(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def cleanup_unused_materials(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Delete material definitions no prim binds to."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = material_service.cleanup_unused_materials(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="create_material",
         description=(
             "Create a procedural hybrid material and bind it to a prim. "
@@ -158,7 +160,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "material_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="bind_material",
         description=(
             "Bind a material to a prim. Copies the material into the asset's "
@@ -207,7 +209,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "material_file"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_materials",
         description=(
             "List all materials across the project's ASWF asset folders and "
@@ -218,7 +220,7 @@ TOOLS: list[Tool] = [
         ),
         parameters={"type": "object", "properties": {}},
     ),
-    Tool(
+    skills.Tool(
         name="remove_material",
         description=(
             "Remove a material binding from a prim inside an ASWF asset. "
@@ -242,7 +244,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="cleanup_unused_materials",
         description=(
             "Delete material definitions from an asset's mtl.usda that no "

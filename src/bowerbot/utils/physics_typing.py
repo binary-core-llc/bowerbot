@@ -5,14 +5,15 @@
 
 from __future__ import annotations
 
-from pxr import Usd, UsdPhysics
+from pxr import Usd
+from pxr import UsdPhysics
 
-from bowerbot.constants import PhysicsUsd
+from bowerbot import constants
 
 
 def is_joint(prim: Usd.Prim | None) -> bool:
     """Whether *prim* is one of the supported UsdPhysics joint typed prims."""
-    return prim is not None and any(prim.IsA(c) for c in PhysicsUsd.JOINTS.values())
+    return prim is not None and any(prim.IsA(c) for c in constants.PhysicsUsd.JOINTS.values())
 
 
 def is_physics_scene(prim: Usd.Prim | None) -> bool:

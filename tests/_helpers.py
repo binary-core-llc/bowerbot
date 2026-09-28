@@ -12,25 +12,25 @@ from __future__ import annotations
 from pathlib import Path
 
 from bowerbot import dispatcher
-from bowerbot.project import Project
-from bowerbot.skills.base import ToolResult
-from bowerbot.state import SceneState
+from bowerbot import project_folder
+from bowerbot import scene_state
+from bowerbot import skills
 
 
 def make_state(
     tmp_path: Path,
     project_name: str = "test",
-) -> tuple[SceneState, Project]:
+) -> tuple[scene_state.SceneState, project_folder.Project]:
     """Create a fresh project and a ``SceneState`` bound to it."""
-    project = Project.create(tmp_path, project_name)
-    state = SceneState()
+    project = project_folder.Project.create(tmp_path, project_name)
+    state = scene_state.SceneState()
     state.project = project
     state.stage_path = project.scene_path
     return state, project
 
 
 async def exec_tool(
-    state: SceneState, tool_name: str, params: dict | None = None,
-) -> ToolResult:
+    state: scene_state.SceneState, tool_name: str, params: dict | None = None,
+) -> skills.ToolResult:
     """Dispatch a tool call against *state*."""
     return await dispatcher.execute(state, tool_name, params or {})

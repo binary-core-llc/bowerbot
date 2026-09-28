@@ -7,7 +7,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdGeom, UsdPhysics
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdPhysics
 
 
 def _stage_path(project_dir: Path) -> Path:

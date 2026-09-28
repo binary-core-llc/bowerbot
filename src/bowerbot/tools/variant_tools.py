@@ -7,249 +7,263 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot.services import variant_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
+from bowerbot.tools import _helpers
 
 
-def add_asset_material_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def add_asset_material_variant(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Author a material-binding variant on the asset's root prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.add_asset_material_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
-def add_asset_geometry_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def add_asset_geometry_variant(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Author a geometry/LOD variant via payload arc overrides."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.add_asset_geometry_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
-def setup_asset_geometry_variants(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def setup_asset_geometry_variants(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Initial setup of an LOD variant set in Pixar's canonical pattern."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.setup_asset_geometry_variants(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def add_asset_attribute_variant(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Author an attribute-override variant on the asset's root prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.add_asset_attribute_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def add_asset_configuration_variant(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Author a configuration variant via prim activation toggles."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.add_asset_configuration_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def add_scene_lighting_attribute_variant(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Author a scene-lighting attribute variant on /Scene/Lighting children."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.add_scene_lighting_attribute_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def add_scene_lighting_selection_variant(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Author a scene-lighting selection variant via active toggles on /Scene/Lighting children."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.add_scene_lighting_selection_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def add_scene_model_selection_variant(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Author a scene model-selection variant: swap which asset is referenced at a placement."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.add_scene_model_selection_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def select_scene_variant(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Set the active variant on a scene-level carrier prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.select_scene_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def remove_scene_variant(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Remove a single variant from a scene-level variant set on a carrier prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.remove_scene_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def remove_scene_variant_set(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Remove an entire scene-level variant set from a carrier prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.remove_scene_variant_set(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_variants(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_variants(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List variant sets, variants, and selections on an asset."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.list_variants(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_asset_geo_files(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_asset_geo_files(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """List alternate geometry files available for geometry variants."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.list_asset_geo_files(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
-def select_asset_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def select_asset_variant(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Set the asset's ship default variant selection."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.select_asset_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 def select_asset_variant_for_instance(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Override variant selection on one scene placement."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.select_asset_variant_for_instance(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_asset_variant(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_asset_variant(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Remove a single variant from a variant set on one asset."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.remove_asset_variant(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_asset_variant_set(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_asset_variant_set(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Remove an entire variant set from one asset."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = variant_service.remove_asset_variant_set(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
+        return skills.ToolResult(success=False, error=str(e))
     except KeyError as e:
-        return ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=f"Missing required parameter: {e.args[0]!r}")
+    return skills.ToolResult(success=True, data=data)
 
 
 _PRIM_PATH = {
@@ -315,8 +329,8 @@ _CONFIRM_MASKED = {
 }
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="add_asset_material_variant",
         description=(
             "Author a material-binding variant on an asset. Each entry in "
@@ -353,7 +367,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="setup_asset_geometry_variants",
         description=(
             "Initial setup of an LOD/geometry-swap variant set on an asset. "
@@ -408,7 +422,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="add_asset_geometry_variant",
         description=(
             "Author a geometry/LOD variant by overriding payload arcs. Each "
@@ -443,7 +457,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="add_asset_configuration_variant",
         description=(
             "Author a configuration variant by toggling prim activation. "
@@ -478,7 +492,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="add_asset_attribute_variant",
         description=(
             "Author an attribute-override variant on an asset. Use for "
@@ -526,7 +540,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="add_scene_lighting_attribute_variant",
         description=(
             "Author a SCENE-LEVEL lighting attribute variant on "
@@ -570,7 +584,7 @@ TOOLS: list[Tool] = [
             "required": ["variant_set", "variant_name", "overrides"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="add_scene_lighting_selection_variant",
         description=(
             "Author a SCENE-LEVEL lighting selection variant on "
@@ -608,7 +622,7 @@ TOOLS: list[Tool] = [
             "required": ["variant_set", "variant_name", "activations"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="add_scene_model_selection_variant",
         description=(
             "Author a SCENE-LEVEL model-selection variant on a scene "
@@ -675,7 +689,7 @@ TOOLS: list[Tool] = [
             ],
         },
     ),
-    Tool(
+    skills.Tool(
         name="select_scene_variant",
         description=(
             "Set the active variant on a scene-level carrier prim "
@@ -693,7 +707,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "variant_set", "variant_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_scene_variant",
         description=(
             "Remove a single variant from a scene-level variant set on "
@@ -712,7 +726,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "variant_set", "variant_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_scene_variant_set",
         description=(
             "Remove an entire scene-level variant set (all variants) "
@@ -734,7 +748,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "variant_set"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_asset_geo_files",
         description=(
             "List alternate geometry files (LODs, swap geometry, "
@@ -750,7 +764,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_variants",
         description=(
             "List all variant sets, their variants, and the current "
@@ -765,7 +779,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="select_asset_variant",
         description=(
             "Set the asset's SHIP DEFAULT variant selection (in <asset>.usda). "
@@ -785,7 +799,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "variant_set", "variant_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="select_asset_variant_for_instance",
         description=(
             "Override the variant selection on ONE scene placement. The "
@@ -815,7 +829,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "variant_set", "variant_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_asset_variant",
         description=(
             "Remove a single variant from a variant set on one asset. "
@@ -834,7 +848,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "variant_set", "variant_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_asset_variant_set",
         description=(
             "Remove an entire variant set (all its variants) from one "

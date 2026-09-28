@@ -7,7 +7,7 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _seed_textures(lib_dir: Path) -> None:
@@ -31,10 +31,10 @@ def test_search_textures_finds_hdri():
         lib_dir.mkdir()
         _seed_textures(lib_dir)
 
-        state, _ = make_state(tmp_path)
+        state, _ = _helpers.make_state(tmp_path)
         state.library_dir = lib_dir
 
-        r = asyncio.run(exec_tool(state, "search_textures", {
+        r = asyncio.run(_helpers.exec_tool(state, "search_textures", {
             "query": "studio", "category": "hdri",
         }))
         assert r.success, r.error
@@ -49,10 +49,10 @@ def test_search_textures_no_match():
         lib_dir.mkdir()
         _seed_textures(lib_dir)
 
-        state, _ = make_state(tmp_path)
+        state, _ = _helpers.make_state(tmp_path)
         state.library_dir = lib_dir
 
-        r = asyncio.run(exec_tool(state, "search_textures", {
+        r = asyncio.run(_helpers.exec_tool(state, "search_textures", {
             "query": "nonexistent", "category": "hdri",
         }))
         assert r.success, r.error
@@ -70,10 +70,10 @@ def test_list_textures_hdri():
         lib_dir.mkdir()
         _seed_textures(lib_dir)
 
-        state, _ = make_state(tmp_path)
+        state, _ = _helpers.make_state(tmp_path)
         state.library_dir = lib_dir
 
-        r = asyncio.run(exec_tool(state, "list_textures", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_textures", {
             "category": "hdri",
         }))
         assert r.success, r.error
@@ -87,10 +87,10 @@ def test_list_textures_empty_library():
         lib_dir = tmp_path / "library"
         lib_dir.mkdir()
 
-        state, _ = make_state(tmp_path)
+        state, _ = _helpers.make_state(tmp_path)
         state.library_dir = lib_dir
 
-        r = asyncio.run(exec_tool(state, "list_textures", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_textures", {
             "category": "hdri",
         }))
         assert r.success, r.error

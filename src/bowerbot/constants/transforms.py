@@ -3,7 +3,8 @@
 
 """Transform values: the xformOps BowerBot authors."""
 
-from pxr import Sdf, UsdGeom
+from pxr import Sdf
+from pxr import UsdGeom
 
 
 class TransformUsd:

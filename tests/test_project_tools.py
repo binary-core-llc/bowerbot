@@ -7,19 +7,19 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from bowerbot.state import SceneState
-from tests._helpers import exec_tool
+from bowerbot import scene_state
+from tests import _helpers
 
 
 def _state(tmp):
     tmp_path = Path(tmp)
-    state = SceneState(projects_dir=tmp_path / "scenes")
+    state = scene_state.SceneState(projects_dir=tmp_path / "scenes")
     return tmp_path, state
 
 
 def _create(state, name):
     """Create a project through the tool with the required axis + units."""
-    return asyncio.run(exec_tool(
+    return asyncio.run(_helpers.exec_tool(
         state, "create_project",
         {"name": name, "up_axis": "Y", "meters_per_unit": 1.0},
     ))
@@ -62,7 +62,7 @@ def test_create_project_requires_axis_and_units():
     """create_project refuses without up_axis and meters_per_unit."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "create_project", {"name": "bare"}))
+        r = asyncio.run(_helpers.exec_tool(state, "create_project", {"name": "bare"}))
         assert not r.success
         assert "up_axis" in r.error
 
@@ -70,7 +70,7 @@ def test_create_project_requires_axis_and_units():
 def test_create_project_no_projects_dir():
     """Without a projects dir, create_project is refused."""
     with tempfile.TemporaryDirectory():
-        state = SceneState()
+        state = scene_state.SceneState()
         r = _create(state, "x")
         assert not r.success
 
@@ -86,7 +86,7 @@ def test_open_project_focuses_it():
         # Drop focus, then re-open.
         state.project = None
         state.stage = None
-        r = asyncio.run(exec_tool(state, "open_project", {"name": "alpha"}))
+        r = asyncio.run(_helpers.exec_tool(state, "open_project", {"name": "alpha"}))
         assert r.success, r.error
         assert state.project.name == "alpha"
         assert state.stage is not None
@@ -96,7 +96,7 @@ def test_open_project_nonexistent():
     """Opening a project that does not exist returns an error."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "open_project", {"name": "ghost"}))
+        r = asyncio.run(_helpers.exec_tool(state, "open_project", {"name": "ghost"}))
         assert not r.success
         assert "not found" in r.error
 
@@ -108,7 +108,7 @@ def test_open_project_switches_focus():
         _create(state, "one")
         _create(state, "two")
         assert state.project.name == "two"
-        r = asyncio.run(exec_tool(state, "open_project", {"name": "one"}))
+        r = asyncio.run(_helpers.exec_tool(state, "open_project", {"name": "one"}))
         assert r.success, r.error
         assert state.project.name == "one"
 
@@ -120,7 +120,7 @@ def test_list_projects_empty():
     """No projects yet returns an empty list."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "list_projects"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_projects"))
         assert r.success, r.error
         assert r.data["count"] == 0
         assert r.data["current"] is None
@@ -132,7 +132,7 @@ def test_list_projects_flags_current():
         _, state = _state(tmp)
         _create(state, "a")
         _create(state, "b")
-        r = asyncio.run(exec_tool(state, "list_projects"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_projects"))
         assert r.success, r.error
         assert r.data["count"] == 2
         assert r.data["current"] == "b"
@@ -147,7 +147,7 @@ def test_get_current_project_none():
     """Reports no project when none is focused."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "get_current_project"))
+        r = asyncio.run(_helpers.exec_tool(state, "get_current_project"))
         assert r.success, r.error
         assert r.data["current"] is None
 
@@ -157,7 +157,7 @@ def test_get_current_project_after_create():
     with tempfile.TemporaryDirectory() as tmp:
         _, state = _state(tmp)
         _create(state, "focused")
-        r = asyncio.run(exec_tool(state, "get_current_project"))
+        r = asyncio.run(_helpers.exec_tool(state, "get_current_project"))
         assert r.success, r.error
         assert r.data["current"] == "focused"
 
@@ -169,5 +169,5 @@ def test_authoring_without_project_is_refused():
     """A place/author tool refuses when no project is focused."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "list_scene"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_scene"))
         assert not r.success

@@ -4,13 +4,14 @@
 """Test token management: compression, summarization, and budget tracking."""
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
+from unittest.mock import patch
 
-from bowerbot.config import LLMSettings
-from bowerbot.token_manager import TokenCounter, TokenManager, TokenUsage
+from bowerbot import config
+from bowerbot import token_manager
 
 
-def make_settings(**overrides) -> LLMSettings:
+def make_settings(**overrides) -> config.LLMSettings:
     """Create LLMSettings with test defaults."""
     defaults = {
         "model": "gpt-4o",
@@ -23,7 +24,7 @@ def make_settings(**overrides) -> LLMSettings:
         "summary_max_tokens": 512,
     }
     defaults.update(overrides)
-    return LLMSettings(**defaults)
+    return config.LLMSettings(**defaults)
 
 
 def build_history(user_turns: int) -> list[dict]:
@@ -71,7 +72,7 @@ def build_history_with_tools(user_turns: int) -> list[dict]:
 def test_token_counter_fallback():
     """TokenCounter falls back to char-based estimate on error."""
     with patch("litellm.token_counter", side_effect=Exception("no tokenizer")):
-        count = TokenCounter.count_messages(
+        count = token_manager.TokenCounter.count_messages(
             "unknown-model",
             [{"role": "user", "content": "hello world"}],
         )
@@ -81,7 +82,7 @@ def test_token_counter_fallback():
 def test_token_counter_context_limit_fallback():
     """get_context_limit returns 128k default on error."""
     with patch("litellm.get_model_info", side_effect=Exception("unknown")):
-        limit = TokenCounter.get_context_limit("unknown-model")
+        limit = token_manager.TokenCounter.get_context_limit("unknown-model")
         assert limit == 128_000
 
 
@@ -91,7 +92,7 @@ def test_token_counter_context_limit_fallback():
 def test_compress_old_list_scene_results():
     """Old list_scene tool results are compressed to summaries."""
     settings = make_settings()
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history_with_tools(user_turns=5)
 
@@ -111,7 +112,7 @@ def test_compress_old_list_scene_results():
 def test_recent_tool_results_preserved():
     """Tool results within the age threshold are NOT compressed."""
     settings = make_settings()
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history_with_tools(user_turns=2)
 
@@ -129,7 +130,7 @@ def test_recent_tool_results_preserved():
 def test_compress_search_results():
     """Old search results with uid/name are compressed."""
     settings = make_settings()
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     search_result = json.dumps([
         {"uid": "abc123", "name": "Round Table", "tags": ["furniture"]},
@@ -168,7 +169,7 @@ def test_compress_search_results():
 def test_compress_non_json_tool_results_unchanged():
     """Non-JSON tool results pass through without modification."""
     settings = make_settings()
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     result = manager._compress_single_result("plain text result")
     assert result == "plain text result"
@@ -180,7 +181,7 @@ def test_compress_non_json_tool_results_unchanged():
 def test_safe_split_on_user_message():
     """Split point lands on a user message boundary."""
     settings = make_settings(min_keep_recent=4)
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history(user_turns=6)
     split = manager._find_safe_split(history)
@@ -192,7 +193,7 @@ def test_safe_split_on_user_message():
 def test_safe_split_short_history():
     """Short history returns split=0 (no summarization needed)."""
     settings = make_settings(min_keep_recent=6)
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history(user_turns=2)
     split = manager._find_safe_split(history)
@@ -203,7 +204,7 @@ def test_safe_split_short_history():
 def test_safe_split_never_breaks_tool_pairs():
     """Split never lands on a tool result message."""
     settings = make_settings(min_keep_recent=4)
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history_with_tools(user_turns=6)
     split = manager._find_safe_split(history)
@@ -225,12 +226,12 @@ def test_safe_split_never_breaks_tool_pairs():
 async def test_prepare_messages_under_budget():
     """When under budget, messages pass through with compression only."""
     settings = make_settings(context_window=100_000)
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history(user_turns=3)
 
     with patch.object(
-        TokenCounter, "count_messages", return_value=500
+        token_manager.TokenCounter, "count_messages", return_value=500
     ):
         messages, usage = await manager.prepare_messages("system prompt", history)
 
@@ -247,7 +248,7 @@ async def test_prepare_messages_triggers_summarization():
         max_tokens=200,
         summarization_threshold=0.5,
     )
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history(user_turns=10)
 
@@ -265,7 +266,7 @@ async def test_prepare_messages_triggers_summarization():
     ]
 
     with (
-        patch.object(TokenCounter, "count_messages", side_effect=mock_count),
+        patch.object(token_manager.TokenCounter, "count_messages", side_effect=mock_count),
         patch("litellm.acompletion", return_value=mock_response),
     ):
         messages, usage = await manager.prepare_messages("system prompt", history)
@@ -280,7 +281,7 @@ async def test_prepare_messages_fallback_on_summarization_failure():
         max_tokens=200,
         summarization_threshold=0.5,
     )
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     history = build_history(user_turns=10)
 
@@ -292,7 +293,7 @@ async def test_prepare_messages_fallback_on_summarization_failure():
         return 500 if call_count == 1 else 100
 
     with (
-        patch.object(TokenCounter, "count_messages", side_effect=mock_count),
+        patch.object(token_manager.TokenCounter, "count_messages", side_effect=mock_count),
         patch("litellm.acompletion", side_effect=Exception("API error")),
     ):
         messages, usage = await manager.prepare_messages("system prompt", history)
@@ -313,7 +314,7 @@ async def test_prepare_messages_fallback_on_summarization_failure():
 def test_format_history_truncates_long_tool_results():
     """Tool results over 500 chars are truncated in the summary input."""
     settings = make_settings()
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     messages = [
         {"role": "tool", "content": "x" * 1000},
@@ -327,7 +328,7 @@ def test_format_history_truncates_long_tool_results():
 def test_format_history_includes_tool_call_names():
     """Assistant messages with tool_calls show the tool names."""
     settings = make_settings()
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     messages = [
         {
@@ -350,7 +351,7 @@ def test_format_history_includes_tool_call_names():
 
 def test_token_usage_dataclass():
     """TokenUsage holds the expected fields."""
-    usage = TokenUsage(
+    usage = token_manager.TokenUsage(
         prompt_tokens=1500,
         context_budget=8000,
         history_compressed=True,
@@ -368,7 +369,7 @@ def test_token_usage_dataclass():
 def test_token_budget_calculation():
     """Token budget = context_window - max_tokens."""
     settings = make_settings(context_window=8000, max_tokens=1000)
-    manager = TokenManager(settings)
+    manager = token_manager.TokenManager(settings)
 
     assert manager.token_budget == 7000
 
@@ -377,7 +378,7 @@ def test_token_budget_auto_detect():
     """When context_window is None, auto-detect from litellm."""
     settings = make_settings(context_window=None, max_tokens=1000)
 
-    with patch.object(TokenCounter, "get_context_limit", return_value=128_000):
-        manager = TokenManager(settings)
+    with patch.object(token_manager.TokenCounter, "get_context_limit", return_value=128_000):
+        manager = token_manager.TokenManager(settings)
 
     assert manager.token_budget == 127_000

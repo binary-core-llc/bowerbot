@@ -10,26 +10,19 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from bowerbot.schemas import (
-    GridPattern,
-    LayoutEntry,
-    LayoutPattern,
-    LinearPattern,
-    TransformParams,
-)
-from bowerbot.schemas.transforms import Vec3
-from bowerbot.utils.naming_utils import is_valid_prim_name, safe_prim_name
+from bowerbot import schemas
+from bowerbot import utils
 
 
 def validate_layout_entries(
     raw_entries: list[Any],
-) -> tuple[list[tuple[int, LayoutEntry]], list[str]]:
+) -> tuple[list[tuple[int, schemas.LayoutEntry]], list[str]]:
     """Validate raw entries into LayoutEntry models, collecting per-entry problems."""
-    valid: list[tuple[int, LayoutEntry]] = []
+    valid: list[tuple[int, schemas.LayoutEntry]] = []
     problems: list[str] = []
     for idx, raw in enumerate(raw_entries):
         try:
-            valid.append((idx, LayoutEntry.model_validate(raw)))
+            valid.append((idx, schemas.LayoutEntry.model_validate(raw)))
         except ValidationError as e:
             problems.extend(_render_entry_error(idx, e))
     return valid, problems
@@ -65,12 +58,12 @@ def resolve_layout_asset(
 
 def scene_group_path(group: str) -> str:
     """Build the /Scene scope path for a group, sanitizing each nested segment."""
-    segments = [name for seg in group.split("/") if (name := safe_prim_name(seg))]
+    segments = [name for seg in group.split("/") if (name := utils.naming.safe_prim_name(seg))]
     if not segments:
         msg = "a layout entry 'group' must name a non-empty scene scope."
         raise ValueError(msg)
     for segment in segments:
-        if not is_valid_prim_name(segment):
+        if not utils.naming.is_valid_prim_name(segment):
             msg = (
                 f"group segment '{segment}' is not a valid USD prim name "
                 f"(it must start with a letter or underscore)."
@@ -79,18 +72,18 @@ def scene_group_path(group: str) -> str:
     return "/Scene/" + "/".join(segments)
 
 
-def count_entry(entry: LayoutEntry) -> int:
+def count_entry(entry: schemas.LayoutEntry) -> int:
     """Return how many placements an entry expands to, without materializing them."""
     if entry.transforms is not None:
         return len(entry.transforms)
     pattern = entry.pattern
-    if pattern.type == LayoutPattern.GRID:
+    if pattern.type == schemas.LayoutPattern.GRID:
         nx, ny, nz = _pad3(pattern.count, 1)
         return nx * ny * nz
     return pattern.count
 
 
-def expand_entry(entry: LayoutEntry) -> list[TransformParams]:
+def expand_entry(entry: schemas.LayoutEntry) -> list[schemas.TransformParams]:
     """Expand one validated entry into per-instance transforms."""
     if entry.transforms is not None:
         return [
@@ -119,24 +112,24 @@ def _render_entry_error(idx: int, error: ValidationError) -> list[str]:
 
 
 def _transform(
-    translate: Vec3, rotate: Vec3 | None, scale: float | Vec3 | None,
-) -> TransformParams:
+    translate: schemas.Vec3, rotate: schemas.Vec3 | None, scale: float | schemas.Vec3 | None,
+) -> schemas.TransformParams:
     """Build a TransformParams, letting the schema supply identity rotate/scale."""
-    fields: dict[str, Vec3] = {"translate": translate}
+    fields: dict[str, schemas.Vec3] = {"translate": translate}
     if rotate is not None:
         fields["rotate"] = rotate
     if scale is not None:
         fields["scale"] = (
             (scale, scale, scale) if isinstance(scale, (int, float)) else scale
         )
-    return TransformParams(**fields)
+    return schemas.TransformParams(**fields)
 
 
-def _expand_pattern(pattern: GridPattern | LinearPattern) -> list[Vec3]:
+def _expand_pattern(pattern: schemas.GridPattern | schemas.LinearPattern) -> list[schemas.Vec3]:
     """Generate translate tuples for a grid or linear pattern."""
     ox, oy, oz = pattern.origin
     sx, sy, sz = _pad3(pattern.spacing, 0.0)
-    if pattern.type == LayoutPattern.GRID:
+    if pattern.type == schemas.LayoutPattern.GRID:
         nx, ny, nz = _pad3(pattern.count, 1)
         return [
             (ox + i * sx, oy + j * sy, oz + k * sz)

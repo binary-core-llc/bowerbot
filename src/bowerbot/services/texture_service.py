@@ -7,20 +7,20 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import TextureCategory
-from bowerbot.state import SceneState
-from bowerbot.utils import texture_utils
+from bowerbot import scene_state
+from bowerbot import schemas
+from bowerbot import utils
 
 
-def list_textures(state: SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
+def list_textures(state: scene_state.SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
     """List every texture in the user's library, optionally filtered."""
-    category = TextureCategory(params.get("category", "all"))
-    return texture_utils.find_textures(state.library_dir, category)
+    category = schemas.TextureCategory(params.get("category", "all"))
+    return utils.textures.find_textures(state.library_dir, category)
 
 
-def search_textures(state: SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
+def search_textures(state: scene_state.SceneState, params: dict[str, Any]) -> list[dict[str, str]]:
     """Search the user's library for textures matching a query."""
-    category = TextureCategory(params.get("category", "all"))
-    return texture_utils.find_textures(
+    category = schemas.TextureCategory(params.get("category", "all"))
+    return utils.textures.find_textures(
         state.library_dir, category, query=params.get("query", ""),
     )

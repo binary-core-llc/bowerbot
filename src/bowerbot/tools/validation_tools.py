@@ -7,36 +7,36 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot.services import validation_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
+from bowerbot.tools import _helpers
 
 
-def validate_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def validate_scene(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Run scene validation against the active stage."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = validation_service.validate_scene(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def package_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def package_scene(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Bundle the active scene into a ``.usdz``."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = validation_service.package_scene(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="validate_scene",
         description=(
             "Run validation checks on the current scene. Checks: "
@@ -54,7 +54,7 @@ TOOLS: list[Tool] = [
         ),
         parameters={"type": "object", "properties": {}},
     ),
-    Tool(
+    skills.Tool(
         name="package_scene",
         description=(
             "Package the current scene into a .usdz file for distribution. "

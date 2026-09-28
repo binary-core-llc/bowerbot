@@ -14,12 +14,13 @@ pytestmark = pytest.mark.integration
 
 
 async def test_agent_anthropic():
-    from pxr import Usd, UsdGeom
+    from pxr import Usd
+    from pxr import UsdGeom
 
-    from bowerbot.agent import AgentRuntime
-    from bowerbot.config import LLMSettings, Settings, SkillConfig
-    from bowerbot.skills.registry import SkillRegistry
-    from bowerbot.state import SceneState
+    from bowerbot import agent
+    from bowerbot import config
+    from bowerbot import scene_state
+    from bowerbot import skills
 
     # Create test assets
     tmp = tempfile.mkdtemp()
@@ -33,27 +34,27 @@ async def test_agent_anthropic():
         stage.SetDefaultPrim(root)
         stage.Save()
 
-    settings = Settings(
-        llm=LLMSettings(
+    settings = config.Settings(
+        llm=config.LLMSettings(
             model="anthropic/claude-sonnet-4-6",
             temperature=0.1,
             max_tokens=1024,
         ),
         skills={
-            "local": SkillConfig(enabled=True, config={"paths": [str(asset_dir)]}),
+            "local": config.SkillConfig(enabled=True, config={"paths": [str(asset_dir)]}),
         },
     )
 
-    state = SceneState()
-    registry = SkillRegistry()
+    state = scene_state.SceneState()
+    registry = skills.SkillRegistry()
     registry.load_from_settings(settings)
-    agent = AgentRuntime(
+    runtime = agent.AgentRuntime(
         settings=settings,
         state=state,
         skill_registry=registry,
     )
 
-    response = await agent.process("Find me a table in my local assets.")
+    response = await runtime.process("Find me a table in my local assets.")
 
     assert "table" in response.lower(), f"Response doesn't mention table: {response}"
 

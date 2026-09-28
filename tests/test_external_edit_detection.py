@@ -10,8 +10,8 @@ import os
 import tempfile
 from pathlib import Path
 
-from bowerbot.state import SceneState
-from tests._helpers import exec_tool, make_state
+from bowerbot import scene_state
+from tests import _helpers
 
 
 def _bump_mtime(path: Path) -> None:
@@ -21,12 +21,12 @@ def _bump_mtime(path: Path) -> None:
 
 
 def test_no_changes_when_baseline_unset():
-    state = SceneState()
+    state = scene_state.SceneState()
     assert state.detect_external_changes() is False
 
 
 def test_no_changes_when_stage_path_missing():
-    state = SceneState(
+    state = scene_state.SceneState(
         stage_path=Path("/nonexistent/scene.usda"),
     )
     state.mark_saved()
@@ -35,16 +35,16 @@ def test_no_changes_when_stage_path_missing():
 
 def test_mark_saved_then_no_changes():
     with tempfile.TemporaryDirectory() as tmp:
-        state, project = make_state(Path(tmp))
-        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
+        state, project = _helpers.make_state(Path(tmp))
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "scene"}))
         state.mark_saved()
         assert state.detect_external_changes() is False
 
 
 def test_external_content_change_is_detected():
     with tempfile.TemporaryDirectory() as tmp:
-        state, project = make_state(Path(tmp))
-        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
+        state, project = _helpers.make_state(Path(tmp))
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "scene"}))
         state.mark_saved()
 
         state.stage_path.write_text(
@@ -58,8 +58,8 @@ def test_external_content_change_is_detected():
 
 def test_mtime_bump_without_content_change_is_not_detected():
     with tempfile.TemporaryDirectory() as tmp:
-        state, project = make_state(Path(tmp))
-        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
+        state, project = _helpers.make_state(Path(tmp))
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "scene"}))
         state.mark_saved()
 
         _bump_mtime(state.stage_path)
@@ -69,8 +69,8 @@ def test_mtime_bump_without_content_change_is_not_detected():
 
 def test_mark_saved_after_change_resets_baseline():
     with tempfile.TemporaryDirectory() as tmp:
-        state, project = make_state(Path(tmp))
-        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
+        state, project = _helpers.make_state(Path(tmp))
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "scene"}))
         state.mark_saved()
 
         state.stage_path.write_text(

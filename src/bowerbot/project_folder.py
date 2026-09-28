@@ -17,14 +17,15 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import UTC, datetime
+from datetime import UTC
+from datetime import datetime
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field
 
-from bowerbot.config import UpAxis
-from bowerbot.utils.naming_utils import safe_project_name
-from bowerbot.utils.stage_utils import create_empty_scene
+from bowerbot import config
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class ProjectMeta(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     scene_file: str = "scene.usda"
-    up_axis: UpAxis = UpAxis.Y
+    up_axis: config.UpAxis = config.UpAxis.Y
     meters_per_unit: float = 1.0
 
 
@@ -80,11 +81,11 @@ class Project:
         projects_dir: Path,
         name: str,
         *,
-        up_axis: UpAxis = UpAxis.Y,
+        up_axis: config.UpAxis = config.UpAxis.Y,
         meters_per_unit: float = 1.0,
     ) -> Project:
         """Create a new project directory and initialize it."""
-        safe_name = safe_project_name(name)
+        safe_name = utils.naming.safe_project_name(name)
         if not safe_name:
             safe_name = "untitled"
 
@@ -105,7 +106,7 @@ class Project:
         project.save()
 
         # Create empty scene file with the project's up-axis and units
-        create_empty_scene(
+        utils.stage.create_empty_scene(
             project.scene_path,
             up_axis=meta.up_axis,
             meters_per_unit=meta.meters_per_unit,
@@ -136,7 +137,7 @@ class Project:
 
         # Ensure project invariants
         project.assets_dir.mkdir(parents=True, exist_ok=True)
-        create_empty_scene(
+        utils.stage.create_empty_scene(
             project.scene_path,
             up_axis=meta.up_axis,
             meters_per_unit=meta.meters_per_unit,

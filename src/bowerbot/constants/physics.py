@@ -3,77 +3,80 @@
 
 """Physics values: UsdPhysics schema classes and the rules for applying them."""
 
-from pxr import UsdGeom, UsdPhysics
+from pxr import UsdGeom
+from pxr import UsdPhysics
 
-from bowerbot.schemas import PhysicsApiName, PhysicsJointType
+from bowerbot import schemas
 
 
 class PhysicsUsd:
     """UsdPhysics and UsdGeom schema classes behind each API and joint type."""
 
-    APIS: dict[PhysicsApiName, type] = {
-        PhysicsApiName.RIGID_BODY: UsdPhysics.RigidBodyAPI,
-        PhysicsApiName.MASS: UsdPhysics.MassAPI,
-        PhysicsApiName.COLLISION: UsdPhysics.CollisionAPI,
-        PhysicsApiName.MESH_COLLISION: UsdPhysics.MeshCollisionAPI,
-        PhysicsApiName.ARTICULATION_ROOT: UsdPhysics.ArticulationRootAPI,
-        PhysicsApiName.DRIVE: UsdPhysics.DriveAPI,
-        PhysicsApiName.LIMIT: UsdPhysics.LimitAPI,
+    APIS: dict[schemas.PhysicsApiName, type] = {
+        schemas.PhysicsApiName.RIGID_BODY: UsdPhysics.RigidBodyAPI,
+        schemas.PhysicsApiName.MASS: UsdPhysics.MassAPI,
+        schemas.PhysicsApiName.COLLISION: UsdPhysics.CollisionAPI,
+        schemas.PhysicsApiName.MESH_COLLISION: UsdPhysics.MeshCollisionAPI,
+        schemas.PhysicsApiName.ARTICULATION_ROOT: UsdPhysics.ArticulationRootAPI,
+        schemas.PhysicsApiName.DRIVE: UsdPhysics.DriveAPI,
+        schemas.PhysicsApiName.LIMIT: UsdPhysics.LimitAPI,
     }
     # Prim base type each single-apply API requires per the UsdPhysics spec.
     # Multi-apply APIs (Drive, Limit) target joint prims directly.
-    API_TARGETS: dict[PhysicsApiName, type] = {
-        PhysicsApiName.RIGID_BODY: UsdGeom.Xformable,
-        PhysicsApiName.MASS: UsdGeom.Xformable,
-        PhysicsApiName.COLLISION: UsdGeom.Gprim,
-        PhysicsApiName.MESH_COLLISION: UsdGeom.Mesh,
-        PhysicsApiName.ARTICULATION_ROOT: UsdGeom.Xformable,
+    API_TARGETS: dict[schemas.PhysicsApiName, type] = {
+        schemas.PhysicsApiName.RIGID_BODY: UsdGeom.Xformable,
+        schemas.PhysicsApiName.MASS: UsdGeom.Xformable,
+        schemas.PhysicsApiName.COLLISION: UsdGeom.Gprim,
+        schemas.PhysicsApiName.MESH_COLLISION: UsdGeom.Mesh,
+        schemas.PhysicsApiName.ARTICULATION_ROOT: UsdGeom.Xformable,
     }
-    JOINTS: dict[PhysicsJointType, type] = {
-        PhysicsJointType.REVOLUTE: UsdPhysics.RevoluteJoint,
-        PhysicsJointType.PRISMATIC: UsdPhysics.PrismaticJoint,
-        PhysicsJointType.SPHERICAL: UsdPhysics.SphericalJoint,
-        PhysicsJointType.FIXED: UsdPhysics.FixedJoint,
-        PhysicsJointType.DISTANCE: UsdPhysics.DistanceJoint,
+    JOINTS: dict[schemas.PhysicsJointType, type] = {
+        schemas.PhysicsJointType.REVOLUTE: UsdPhysics.RevoluteJoint,
+        schemas.PhysicsJointType.PRISMATIC: UsdPhysics.PrismaticJoint,
+        schemas.PhysicsJointType.SPHERICAL: UsdPhysics.SphericalJoint,
+        schemas.PhysicsJointType.FIXED: UsdPhysics.FixedJoint,
+        schemas.PhysicsJointType.DISTANCE: UsdPhysics.DistanceJoint,
     }
 
 
 class PhysicsRules:
     """Which APIs go together, and which instance names each joint accepts."""
 
-    MULTI_APPLY_APIS: frozenset[PhysicsApiName] = frozenset({
-        PhysicsApiName.DRIVE,
-        PhysicsApiName.LIMIT,
+    MULTI_APPLY_APIS: frozenset[schemas.PhysicsApiName] = frozenset({
+        schemas.PhysicsApiName.DRIVE,
+        schemas.PhysicsApiName.LIMIT,
     })
     # Stands for the instance name in a multi-apply API's property names.
     INSTANCE_NAME_PLACEHOLDER = "__INSTANCE_NAME__"
     # Drive instance names each joint type accepts.
-    DRIVE_INSTANCES: dict[PhysicsJointType, frozenset[str]] = {
-        PhysicsJointType.REVOLUTE: frozenset({"angular"}),
-        PhysicsJointType.PRISMATIC: frozenset({"linear"}),
-        PhysicsJointType.SPHERICAL: frozenset(),
-        PhysicsJointType.FIXED: frozenset(),
-        PhysicsJointType.DISTANCE: frozenset(),
+    DRIVE_INSTANCES: dict[schemas.PhysicsJointType, frozenset[str]] = {
+        schemas.PhysicsJointType.REVOLUTE: frozenset({"angular"}),
+        schemas.PhysicsJointType.PRISMATIC: frozenset({"linear"}),
+        schemas.PhysicsJointType.SPHERICAL: frozenset(),
+        schemas.PhysicsJointType.FIXED: frozenset(),
+        schemas.PhysicsJointType.DISTANCE: frozenset(),
     }
     # Limit instance names each joint type accepts.
-    LIMIT_INSTANCES: dict[PhysicsJointType, frozenset[str]] = {
-        PhysicsJointType.REVOLUTE: frozenset({"angular"}),
-        PhysicsJointType.PRISMATIC: frozenset({"linear"}),
-        PhysicsJointType.SPHERICAL: frozenset({"rotX", "rotY", "rotZ"}),
-        PhysicsJointType.FIXED: frozenset(),
-        PhysicsJointType.DISTANCE: frozenset({"distance"}),
+    LIMIT_INSTANCES: dict[schemas.PhysicsJointType, frozenset[str]] = {
+        schemas.PhysicsJointType.REVOLUTE: frozenset({"angular"}),
+        schemas.PhysicsJointType.PRISMATIC: frozenset({"linear"}),
+        schemas.PhysicsJointType.SPHERICAL: frozenset({"rotX", "rotY", "rotZ"}),
+        schemas.PhysicsJointType.FIXED: frozenset(),
+        schemas.PhysicsJointType.DISTANCE: frozenset({"distance"}),
     }
-    INSTANCES_BY_API: dict[PhysicsApiName, dict[PhysicsJointType, frozenset[str]]] = {
-        PhysicsApiName.DRIVE: DRIVE_INSTANCES,
-        PhysicsApiName.LIMIT: LIMIT_INSTANCES,
+    INSTANCES_BY_API: dict[
+        schemas.PhysicsApiName, dict[schemas.PhysicsJointType, frozenset[str]],
+    ] = {
+        schemas.PhysicsApiName.DRIVE: DRIVE_INSTANCES,
+        schemas.PhysicsApiName.LIMIT: LIMIT_INSTANCES,
     }
     # MeshCollisionAPI is meaningless without CollisionAPI per the spec.
-    COMPANION_APIS: dict[PhysicsApiName, PhysicsApiName] = {
-        PhysicsApiName.MESH_COLLISION: PhysicsApiName.COLLISION,
+    COMPANION_APIS: dict[schemas.PhysicsApiName, schemas.PhysicsApiName] = {
+        schemas.PhysicsApiName.MESH_COLLISION: schemas.PhysicsApiName.COLLISION,
     }
     # Dropping CollisionAPI also drops MeshCollisionAPI.
-    DEPENDENT_APIS: dict[PhysicsApiName, tuple[PhysicsApiName, ...]] = {
-        PhysicsApiName.COLLISION: (PhysicsApiName.MESH_COLLISION,),
+    DEPENDENT_APIS: dict[schemas.PhysicsApiName, tuple[schemas.PhysicsApiName, ...]] = {
+        schemas.PhysicsApiName.COLLISION: (schemas.PhysicsApiName.MESH_COLLISION,),
     }
 
 

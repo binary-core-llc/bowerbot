@@ -11,23 +11,30 @@ knobs), ``<Domain>Namespace`` (prim and file names BowerBot authors) and
 ``bowerbot.constants``; this package re-exports every class.
 """
 
-from bowerbot.constants.asset_folder import AssetFolderRules, ASWFLayerNames
-from bowerbot.constants.cameras import CameraDefaults, CameraTuning
+from bowerbot.constants.asset_folder import AssetFolderRules
+from bowerbot.constants.asset_folder import ASWFLayerNames
+from bowerbot.constants.cameras import CameraDefaults
+from bowerbot.constants.cameras import CameraTuning
 from bowerbot.constants.intake import IntakeRules
-from bowerbot.constants.library import LibraryDefaults, LibraryRules
-from bowerbot.constants.lights import LightDefaults, LightRules, LightUsd
-from bowerbot.constants.materials import MaterialRules, MaterialXShaders, PreviewSurfaceShader
+from bowerbot.constants.library import LibraryDefaults
+from bowerbot.constants.library import LibraryRules
+from bowerbot.constants.lights import LightDefaults
+from bowerbot.constants.lights import LightRules
+from bowerbot.constants.lights import LightUsd
+from bowerbot.constants.materials import MaterialRules
+from bowerbot.constants.materials import MaterialXShaders
+from bowerbot.constants.materials import PreviewSurfaceShader
 from bowerbot.constants.metrics import MetricsUsd
 from bowerbot.constants.namespace import NamespaceRules
 from bowerbot.constants.naming import NamingRules
-from bowerbot.constants.physics import PhysicsNamespace, PhysicsRules, PhysicsUsd
+from bowerbot.constants.physics import PhysicsNamespace
+from bowerbot.constants.physics import PhysicsRules
+from bowerbot.constants.physics import PhysicsUsd
 from bowerbot.constants.placement import PlacementRules
-from bowerbot.constants.scatter import (
-    ScatterDefaults,
-    ScatterNamespace,
-    ScatterRules,
-    ScatterTuning,
-)
+from bowerbot.constants.scatter import ScatterDefaults
+from bowerbot.constants.scatter import ScatterNamespace
+from bowerbot.constants.scatter import ScatterRules
+from bowerbot.constants.scatter import ScatterTuning
 from bowerbot.constants.scene import SceneNamespace
 from bowerbot.constants.surface import SurfaceTuning
 from bowerbot.constants.transforms import TransformUsd

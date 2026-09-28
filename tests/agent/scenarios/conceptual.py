@@ -10,7 +10,7 @@ user asked a question; mutating the stage would be wrong).
 
 from __future__ import annotations
 
-from tests.agent.runner import AgentScenario, ScenarioContext
+from tests.agent import runner
 
 _AUTHORING_TOOLS = frozenset({
     "place_asset", "create_light", "create_material",
@@ -21,7 +21,7 @@ _AUTHORING_TOOLS = frozenset({
 })
 
 
-def _assert_no_authoring(ctx: ScenarioContext) -> None:
+def _assert_no_authoring(ctx: runner.ScenarioContext) -> None:
     called = {tc.tool_name for tc in ctx.all_tool_calls}
     overlap = _AUTHORING_TOOLS & called
     assert not overlap, (
@@ -30,7 +30,7 @@ def _assert_no_authoring(ctx: ScenarioContext) -> None:
     )
 
 
-conceptual_approximation_types = AgentScenario(
+conceptual_approximation_types = runner.AgentScenario(
     name="conceptual_approximation_types",
     description="Ask the agent to explain convex hull vs convex decomposition.",
     tier="conceptual",
@@ -43,7 +43,7 @@ conceptual_approximation_types = AgentScenario(
 )
 
 
-conceptual_rigid_vs_static = AgentScenario(
+conceptual_rigid_vs_static = runner.AgentScenario(
     name="conceptual_rigid_vs_static",
     description="Ask whether to use a rigid body or static collider for a floor.",
     tier="conceptual",

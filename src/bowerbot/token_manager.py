@@ -22,7 +22,7 @@ from typing import Any
 
 import litellm
 
-from bowerbot.config import LLMSettings
+from bowerbot import config
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class TokenManager:
        older messages are summarized via a short LLM call.
     """
 
-    def __init__(self, llm_settings: LLMSettings) -> None:
+    def __init__(self, llm_settings: config.LLMSettings) -> None:
         self._settings = llm_settings
         self._model = llm_settings.model
         self._counter = TokenCounter()

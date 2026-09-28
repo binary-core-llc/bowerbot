@@ -7,26 +7,26 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.constants import LibraryDefaults
-from bowerbot.state import SceneState
-from bowerbot.utils import library_utils
+from bowerbot import constants
+from bowerbot import scene_state
+from bowerbot import utils
 
 
-def list_assets(state: SceneState, params: dict[str, Any]) -> dict[str, object]:
+def list_assets(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, object]:
     """List library assets with optional category filter; truncated to *limit*."""
-    matches = library_utils.scan_library(
+    matches = utils.library.scan_library(
         state.library_dir, category=params.get("category", "all"),
     )
-    return library_utils.truncate_with_total(
-        matches, params.get("limit", LibraryDefaults.SEARCH_LIMIT),
+    return utils.library.truncate_with_total(
+        matches, params.get("limit", constants.LibraryDefaults.SEARCH_LIMIT),
     )
 
 
-def search_assets(state: SceneState, params: dict[str, Any]) -> dict[str, object]:
+def search_assets(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, object]:
     """Search the user's library by name across every category; truncated to *limit*."""
-    matches = library_utils.scan_library(
+    matches = utils.library.scan_library(
         state.library_dir, query=params.get("query", ""), category="all",
     )
-    return library_utils.truncate_with_total(
-        matches, params.get("limit", LibraryDefaults.SEARCH_LIMIT),
+    return utils.library.truncate_with_total(
+        matches, params.get("limit", constants.LibraryDefaults.SEARCH_LIMIT),
     )

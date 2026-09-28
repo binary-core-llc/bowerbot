@@ -20,12 +20,13 @@ async def test_agent_with_local_assets():
     import tempfile
     from pathlib import Path
 
-    from pxr import Usd, UsdGeom
+    from pxr import Usd
+    from pxr import UsdGeom
 
-    from bowerbot.agent import AgentRuntime
-    from bowerbot.config import LLMSettings, Settings, SkillConfig
-    from bowerbot.skills.registry import SkillRegistry
-    from bowerbot.state import SceneState
+    from bowerbot import agent
+    from bowerbot import config
+    from bowerbot import scene_state
+    from bowerbot import skills
 
     # 1. Create test assets on disk
     tmp = tempfile.mkdtemp()
@@ -45,25 +46,25 @@ async def test_agent_with_local_assets():
     print(f"  Created 5 test assets in {asset_dir}")
 
     # 2. Configure agent
-    settings = Settings(
-        llm=LLMSettings(
+    settings = config.Settings(
+        llm=config.LLMSettings(
             model="gpt-4o",
             temperature=0.1,
             max_tokens=1024,
         ),
         skills={
-            "local": SkillConfig(
+            "local": config.SkillConfig(
                 enabled=True,
                 config={"paths": [str(asset_dir)]},
             ),
         },
     )
 
-    state = SceneState()
-    registry = SkillRegistry()
+    state = scene_state.SceneState()
+    registry = skills.SkillRegistry()
     registry.load_from_settings(settings)
 
-    agent = AgentRuntime(
+    runtime = agent.AgentRuntime(
         settings=settings,
         state=state,
         skill_registry=registry,
@@ -74,7 +75,7 @@ async def test_agent_with_local_assets():
 
     # 3. Run the agent
     print("\n  Sending prompt to agent...")
-    response = await agent.process(
+    response = await runtime.process(
         "Search for a table and a chair in my local assets."
     )
 
@@ -86,7 +87,7 @@ async def test_agent_with_local_assets():
     # 4. Verify the agent actually used tools and found assets
     # Check conversation history for tool calls
     tool_calls_made = [
-        msg for msg in agent.conversation_history
+        msg for msg in runtime.conversation_history
         if msg.get("role") == "tool"
     ]
     assert len(tool_calls_made) > 0, "Agent never called any tools!"

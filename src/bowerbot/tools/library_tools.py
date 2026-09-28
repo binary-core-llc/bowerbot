@@ -7,41 +7,41 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.constants import LibraryDefaults, LibraryRules
+from bowerbot import constants
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot.services import library_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_library_dir
+from bowerbot.tools import _helpers
 
 _CATEGORY_VALUES: list[str] = (
-    [c.value for c in LibraryRules.CATEGORIES] + [LibraryRules.ANY_CATEGORY]
+    [c.value for c in constants.LibraryRules.CATEGORIES] + [constants.LibraryRules.ANY_CATEGORY]
 )
 
 
-def search_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def search_assets(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Search the user's asset library for USDs matching a query."""
-    if (err := require_library_dir(state)):
+    if (err := _helpers.require_library_dir(state)):
         return err
     try:
         data = library_service.search_assets(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_assets(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_assets(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List every USD asset in the user's library, optionally filtered."""
-    if (err := require_library_dir(state)):
+    if (err := _helpers.require_library_dir(state)):
         return err
     try:
         data = library_service.list_assets(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="search_assets",
         description=(
             "Search the user's asset library by name across every category. "
@@ -64,15 +64,15 @@ TOOLS: list[Tool] = [
                     "type": "integer",
                     "description": (
                         f"Maximum number of results to return "
-                        f"(default {LibraryDefaults.SEARCH_LIMIT}, minimum 1)."
+                        f"(default {constants.LibraryDefaults.SEARCH_LIMIT}, minimum 1)."
                     ),
-                    "default": LibraryDefaults.SEARCH_LIMIT,
+                    "default": constants.LibraryDefaults.SEARCH_LIMIT,
                 },
             },
             "required": ["query"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_assets",
         description=(
             "Browse the user's asset library, optionally filtered by "
@@ -97,9 +97,9 @@ TOOLS: list[Tool] = [
                     "type": "integer",
                     "description": (
                         f"Maximum number of results to return "
-                        f"(default {LibraryDefaults.SEARCH_LIMIT}, minimum 1)."
+                        f"(default {constants.LibraryDefaults.SEARCH_LIMIT}, minimum 1)."
                     ),
-                    "default": LibraryDefaults.SEARCH_LIMIT,
+                    "default": constants.LibraryDefaults.SEARCH_LIMIT,
                 },
             },
         },

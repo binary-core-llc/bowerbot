@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from pxr import Sdf, Usd
+from pxr import Sdf
+from pxr import Usd
 
 
 def property_doc(

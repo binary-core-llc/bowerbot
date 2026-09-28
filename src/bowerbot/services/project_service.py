@@ -8,17 +8,17 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from bowerbot.config import UpAxis
-from bowerbot.project import Project
-from bowerbot.state import SceneState
-from bowerbot.utils.naming_utils import safe_project_name
+from bowerbot import config
+from bowerbot import project_folder
+from bowerbot import scene_state
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
 
-def list_projects(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def list_projects(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """List every project in the projects directory."""
-    projects = Project.list_projects(state.projects_dir)
+    projects = project_folder.Project.list_projects(state.projects_dir)
     return {
         "projects": [
             {
@@ -33,7 +33,7 @@ def list_projects(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def create_project(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a new project and focus it."""
     name = params["name"]
     if "up_axis" not in params or "meters_per_unit" not in params:
@@ -42,11 +42,11 @@ def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             "(1.0 = meters, 0.01 = centimeters, 0.001 = millimeters)."
         )
         raise ValueError(msg)
-    up_axis = UpAxis(params["up_axis"])
+    up_axis = config.UpAxis(params["up_axis"])
     meters_per_unit = float(params["meters_per_unit"])
     state.projects_dir.mkdir(parents=True, exist_ok=True)
     try:
-        project = Project.create(
+        project = project_folder.Project.create(
             state.projects_dir, name,
             up_axis=up_axis, meters_per_unit=meters_per_unit,
         )
@@ -71,18 +71,18 @@ def create_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def open_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def open_project(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Open an existing project and focus it."""
     name = params["name"]
-    project_path = state.projects_dir / safe_project_name(name)
+    project_path = state.projects_dir / utils.naming.safe_project_name(name)
     if not (project_path / "project.json").exists():
-        available = [p.name for p in Project.list_projects(state.projects_dir)]
+        available = [p.name for p in project_folder.Project.list_projects(state.projects_dir)]
         msg = (
             f"Project '{name}' not found. "
             f"Available projects: {available or 'none'}."
         )
         raise ValueError(msg)
-    project = Project.load(project_path)
+    project = project_folder.Project.load(project_path)
     state.bind_project(project)
     logger.info("Focused project %s", project.name)
     return {
@@ -94,7 +94,7 @@ def open_project(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_current_project(
-    state: SceneState, params: dict[str, Any],
+    state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Report the currently focused project, or none."""
     if state.project is None:

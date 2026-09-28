@@ -9,15 +9,15 @@ from pathlib import Path
 
 from mcp.shared.memory import create_connected_server_and_client_session
 
-from bowerbot import mcp_server, tool_router
-from bowerbot.config import McpSettings, Mode, Settings, Transport
-from bowerbot.skills.base import SkillCategory, ToolResult
-from bowerbot.skills.registry import SkillRegistry
-from bowerbot.state import SceneState
+from bowerbot import config
+from bowerbot import mcp_server
+from bowerbot import scene_state
+from bowerbot import skills
+from bowerbot import tool_router
 
 
 def _settings(tmp):
-    return Settings(
+    return config.Settings(
         projects_dir=Path(tmp) / "scenes",
         assets_dir=Path(tmp) / "assets",
     )
@@ -25,8 +25,8 @@ def _settings(tmp):
 
 def _server_and_state(tmp):
     settings = _settings(tmp)
-    state = SceneState.from_settings(settings)
-    registry = SkillRegistry()
+    state = scene_state.SceneState.from_settings(settings)
+    registry = skills.SkillRegistry()
     registry.load_from_settings(settings)
     return mcp_server._build_server(state, registry), state
 
@@ -36,18 +36,18 @@ def _server_and_state(tmp):
 
 def test_mode_defaults_to_agent():
     """A fresh config is in agent mode."""
-    assert Settings().mode is Mode.AGENT
+    assert config.Settings().mode is config.Mode.AGENT
 
 
 def test_mode_parses_mcp():
     """The mode field accepts 'mcp'."""
-    assert Settings(mode="mcp").mode is Mode.MCP
+    assert config.Settings(mode="mcp").mode is config.Mode.MCP
 
 
 def test_mcp_settings_defaults():
     """MCP server defaults to stdio, with http bound to localhost:8181 at /mcp."""
-    s = Settings().mcp
-    assert s.transport is Transport.STDIO
+    s = config.Settings().mcp
+    assert s.transport is config.Transport.STDIO
     assert s.host == "127.0.0.1"
     assert s.port == 8181
     assert s.path == "/mcp"
@@ -55,12 +55,12 @@ def test_mcp_settings_defaults():
 
 def test_mcp_transport_parses_http():
     """The transport field accepts 'http'."""
-    assert Settings(mcp={"transport": "http"}).mcp.transport is Transport.HTTP
+    assert config.Settings(mcp={"transport": "http"}).mcp.transport is config.Transport.HTTP
 
 
 def test_http_security_locks_to_configured_origin():
     """The HTTP transport enables DNS-rebinding protection scoped to its origin."""
-    s = mcp_server._security_settings(McpSettings(host="127.0.0.1", port=8181))
+    s = mcp_server._security_settings(config.McpSettings(host="127.0.0.1", port=8181))
     assert s.enable_dns_rebinding_protection
     assert "127.0.0.1:8181" in s.allowed_hosts
     assert "localhost:8181" in s.allowed_hosts
@@ -71,7 +71,7 @@ def test_http_security_locks_to_configured_origin():
 def test_mcp_app_mounts_configured_path():
     """build_app mounts the server at the configured path."""
     with tempfile.TemporaryDirectory() as tmp:
-        settings = Settings(
+        settings = config.Settings(
             mode="mcp",
             mcp={"host": "0.0.0.0", "port": 9000, "path": "/bowerbot"},
             projects_dir=Path(tmp) / "scenes",
@@ -87,7 +87,7 @@ def test_mcp_app_mounts_configured_path():
 def test_combined_schemas_include_core_tools():
     """The combined tool list includes core tools."""
     with tempfile.TemporaryDirectory() as tmp:
-        registry = SkillRegistry()
+        registry = skills.SkillRegistry()
         registry.load_from_settings(_settings(tmp))
         names = {
             s["function"]["name"]
@@ -101,8 +101,8 @@ def test_router_dispatches_core_tool():
     """route() sends a core tool to the dispatcher."""
     with tempfile.TemporaryDirectory() as tmp:
         settings = _settings(tmp)
-        state = SceneState.from_settings(settings)
-        registry = SkillRegistry()
+        state = scene_state.SceneState.from_settings(settings)
+        registry = skills.SkillRegistry()
         registry.load_from_settings(settings)
         r = asyncio.run(
             tool_router.route(
@@ -132,14 +132,14 @@ def test_router_dispatches_skill_tool():
 
         @property
         def category(self):
-            return SkillCategory.ASSET_PROVIDER
+            return skills.SkillCategory.ASSET_PROVIDER
 
         async def execute(self, tool_name, params, ctx):
-            return ToolResult(success=True, data={"echo": tool_name})
+            return skills.ToolResult(success=True, data={"echo": tool_name})
 
     with tempfile.TemporaryDirectory() as tmp:
-        state = SceneState.from_settings(_settings(tmp))
-        registry = SkillRegistry()
+        state = scene_state.SceneState.from_settings(_settings(tmp))
+        registry = skills.SkillRegistry()
         registry._skills["stub"] = _StubSkill()
         registry._library_dir = Path(tmp)
         r = asyncio.run(

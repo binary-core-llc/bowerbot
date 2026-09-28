@@ -64,7 +64,7 @@ def stage_asset_value(
     if src.is_absolute() and src.exists():
         candidates.append(src)
     if library_dir is not None and library_dir.exists():
-        candidates.extend(library_dir.rglob(filename))
+        candidates.extend(sorted(library_dir.rglob(filename)))
     for candidate in candidates:
         if candidate.is_file():
             return copy_texture_to_project(candidate, project_dir)
@@ -82,7 +82,7 @@ def find_texture_references(
 ) -> list[str]:
     """Scan *project_dir* for USD files that reference *file_name*."""
     referencing: list[str] = []
-    for usd_file in project_dir.rglob("*"):
+    for usd_file in sorted(project_dir.rglob("*")):
         if usd_file.suffix not in (".usd", ".usda", ".usdc"):
             continue
         try:
@@ -120,7 +120,7 @@ def find_textures(
     needle = query.lower() if query else None
     return [
         _format(p)
-        for p in library_dir.rglob("*")
+        for p in sorted(library_dir.rglob("*"))
         if p.is_file()
         and p.suffix.lower() in extensions
         and (needle is None or needle in p.stem.lower())

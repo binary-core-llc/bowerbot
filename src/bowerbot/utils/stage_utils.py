@@ -43,7 +43,7 @@ def find_asset_references(
 ) -> list[str]:
     """Scan *project_dir* for USD files referencing *folder_name* in any variant body or payload."""
     referencing: list[str] = []
-    for usd_file in project_dir.rglob("*"):
+    for usd_file in sorted(project_dir.rglob("*")):
         if usd_file.suffix not in (".usd", ".usda", ".usdc"):
             continue
         if skip_dir is not None:

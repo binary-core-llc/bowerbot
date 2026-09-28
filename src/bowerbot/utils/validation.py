@@ -19,7 +19,6 @@ from pxr import UsdValidation
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -249,7 +248,7 @@ def _check_references(stage: Usd.Stage) -> list[schemas.ValidationIssue]:
     stage_dir = Path(stage.GetRootLayer().realPath).parent
 
     for prim in stage.Traverse():
-        for asset_path in utils.stage.get_prim_ref_paths(prim):
+        for asset_path in usd.references.get_prim_ref_paths(prim):
             if Path(asset_path).exists():
                 continue
             if (stage_dir / asset_path).exists():
@@ -384,7 +383,7 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[schemas.ValidationIssu
     stage_dir = Path(stage.GetRootLayer().realPath).parent
 
     for prim in stage.Traverse():
-        for ref_path in utils.stage.get_prim_ref_paths(prim):
+        for ref_path in usd.references.get_prim_ref_paths(prim):
             resolved = (stage_dir / ref_path).resolve()
             if not resolved.exists():
                 continue

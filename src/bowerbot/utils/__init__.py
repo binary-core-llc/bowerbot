@@ -21,7 +21,6 @@ Modules not moved into a group yet are called as ``utils.<module>.<function>``.
 from bowerbot.utils import asset_folder
 from bowerbot.utils import authoring
 from bowerbot.utils import cameras
-from bowerbot.utils import dependencies
 from bowerbot.utils import geometry
 from bowerbot.utils import inspection
 from bowerbot.utils import intake
@@ -43,7 +42,6 @@ __all__ = [
     "asset_folder",
     "authoring",
     "cameras",
-    "dependencies",
     "geometry",
     "inspection",
     "intake",

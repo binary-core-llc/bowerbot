@@ -923,6 +923,8 @@ src/bowerbot/
                                #   follow (variant overs, relationship targets, empty overs)
       transforms.py            #   xformOps: read and write translate and rotate, bake
                                #   transforms into geometry, rotation math
+      references.py            #   References and payloads: read and clear them, find
+                               #   what a layer references, walk dependencies
       naming.py                #   Valid and safe USD names: prims, variants, joints,
                                #   collision groups
       values.py                #   JSON <-> USD values: numbers and vectors from tool
@@ -960,7 +962,6 @@ src/bowerbot/
     geometry.py                #   Bounds, unit conversion, layout math
     layout.py                  #   place_layout expansion: grid/linear patterns,
                                #   asset resolution
-    dependencies.py            #   USD dependency tree walker
 ```
 
 **Design principles**

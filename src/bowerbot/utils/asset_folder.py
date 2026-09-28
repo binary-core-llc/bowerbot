@@ -63,7 +63,7 @@ def resolve_asset_dir_for_prim(
     stage_dir = Path(stage.GetRootLayer().realPath).parent
 
     def _check(prim: Usd.Prim) -> tuple[Path | None, str | None]:
-        for ref_path in utils.stage.get_prim_ref_paths(prim):
+        for ref_path in usd.references.get_prim_ref_paths(prim):
             resolved = (stage_dir / ref_path).resolve()
             if not resolved.exists() or not resolved.parent.is_dir():
                 continue
@@ -298,7 +298,7 @@ def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
         return
 
     ref_path = f"./{layer_file}"
-    if ref_path in utils.stage.get_prim_ref_paths(root_prim):
+    if ref_path in usd.references.get_prim_ref_paths(root_prim):
         return
 
     del stage
@@ -451,7 +451,7 @@ def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:
     usd_set = {p.resolve() for p in usd_files}
     referenced: set[Path] = set()
     for candidate in usd_files:
-        found, _missing = utils.dependencies.resolve(candidate)
+        found, _missing = usd.references.resolve_dependencies(candidate)
         for dep in found:
             dep_resolved = dep.resolve()
             if dep_resolved == candidate.resolve():

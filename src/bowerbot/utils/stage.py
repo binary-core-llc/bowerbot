@@ -22,25 +22,6 @@ from bowerbot.utils import usd
 # ── Reference inspection ──
 
 
-def get_prim_ref_paths(prim: Usd.Prim) -> list[str]:
-    """Return all reference asset paths authored on *prim*."""
-    refs = prim.GetMetadata("references")
-    if not refs:
-        return []
-    paths: list[str] = []
-    for ref_list in (
-        refs.prependedItems,
-        refs.appendedItems,
-        refs.explicitItems,
-    ):
-        if not ref_list:
-            continue
-        for ref in ref_list:
-            if ref.assetPath:
-                paths.append(ref.assetPath)
-    return paths
-
-
 def find_asset_references(
     project_dir: Path,
     folder_name: str,
@@ -60,36 +41,9 @@ def find_asset_references(
         layer = Sdf.Layer.FindOrOpen(str(usd_file))
         if layer is None:
             continue
-        if _layer_references_folder(layer, folder_name):
+        if usd.references.layer_references_folder(layer, folder_name):
             referencing.append(str(usd_file.relative_to(project_dir)))
     return referencing
-
-
-def _layer_references_folder(layer: Sdf.Layer, folder_name: str) -> bool:
-    """Whether any prim spec in *layer* (including variant bodies) references *folder_name*."""
-    found = [False]
-
-    def visit(path: Sdf.Path) -> None:
-        if found[0]:
-            return
-        spec = layer.GetObjectAtPath(path)
-        if not isinstance(spec, Sdf.PrimSpec):
-            return
-        for proxy in (spec.referenceList, spec.payloadList):
-            for items in (
-                proxy.prependedItems,
-                proxy.appendedItems,
-                proxy.addedItems,
-                proxy.explicitItems,
-                proxy.orderedItems,
-            ):
-                for arc in items:
-                    if folder_name in arc.assetPath:
-                        found[0] = True
-                        return
-
-    layer.Traverse(Sdf.Path.absoluteRootPath, visit)
-    return found[0]
 
 
 # ── Open / save ──
@@ -325,14 +279,6 @@ def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
     return results
 
 
-def get_all_ref_paths(stage: Usd.Stage) -> set[str]:
-    """Collect every reference asset path authored on the stage."""
-    refs: set[str] = set()
-    for prim in stage.Traverse():
-        refs.update(get_prim_ref_paths(prim))
-    return refs
-
-
 def count_scene_refs_to_asset_dir(stage: Usd.Stage, asset_dir: Path) -> int:
     """Count how many prims in the scene reference *asset_dir*."""
     return len(find_asset_placements(stage, asset_dir))
@@ -347,7 +293,7 @@ def find_asset_placements(stage: Usd.Stage, asset_dir: Path) -> list[str]:
     target_dir = asset_dir.resolve()
     placements: list[str] = []
     for prim in stage.Traverse():
-        for ref_path in get_prim_ref_paths(prim):
+        for ref_path in usd.references.get_prim_ref_paths(prim):
             resolved = (stage_dir / ref_path).resolve()
             if resolved.exists() and resolved.parent == target_dir:
                 placements.append(str(prim.GetPath()))

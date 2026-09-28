@@ -108,7 +108,7 @@ def _format_geometry_prim(
     bbox_cache: UsdGeom.BBoxCache,
 ) -> dict:
     """Format a referenced-asset or scene-authored Gprim for ``list_prims``."""
-    ref_paths = utils.stage.get_prim_ref_paths(prim)
+    ref_paths = usd.references.get_prim_ref_paths(prim)
     return {
         "prim_path": str(prim.GetPath()),
         "kind": "asset" if ref_paths else "geometry",

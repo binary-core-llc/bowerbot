@@ -486,8 +486,8 @@ def add_scene_model_selection_variant(
 
     promoted: str | None = None
     set_exists = set_name in wrapper.GetVariantSets().GetNames()
-    if not set_exists and utils.variants.has_direct_references(state.stage, asset_child):
-        existing = utils.stage.get_prim_ref_paths(state.stage.GetPrimAtPath(asset_child))
+    if not set_exists and usd.references.has_direct_references(state.stage, asset_child):
+        existing = usd.references.get_prim_ref_paths(state.stage.GetPrimAtPath(asset_child))
         if existing:
             raw = Path(existing[0]).parent.name or Path(existing[0]).stem
             if raw == "assets":
@@ -505,7 +505,7 @@ def add_scene_model_selection_variant(
                 state.stage, prim_path, set_name, promoted,
                 author_refs(list(existing)), set_as_default=True,
             )
-            utils.variants.clear_direct_references(state.stage, asset_child)
+            usd.references.clear_direct_references(state.stage, asset_child)
             state.stage = utils.stage.open_stage(state.stage_path)
 
     utils.variants.apply_scene_variant(

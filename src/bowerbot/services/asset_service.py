@@ -361,7 +361,7 @@ def list_project_assets(state: scene_state.SceneState, params: dict[str, Any]) -
         return {"assets": [], "message": "No assets directory found."}
 
     referenced = (
-        utils.stage.get_all_ref_paths(state.stage) if state.stage else set()
+        usd.references.get_all_ref_paths(state.stage) if state.stage else set()
     )
     query = (params.get("query") or "").lower()
 

@@ -57,7 +57,7 @@ def ensure_variants_referenced(asset_dir: Path) -> None:
     if root_prim is None:
         return
 
-    if f"./{constants.ASWFLayerNames.VARIANTS}" in utils.stage.get_prim_ref_paths(root_prim):
+    if f"./{constants.ASWFLayerNames.VARIANTS}" in usd.references.get_prim_ref_paths(root_prim):
         return
 
     del stage
@@ -1059,26 +1059,6 @@ def restore_active_scene_variant_references_to_direct_ref(
         target_prim.GetReferences().AddReference(ref)
     stage.Save()
     return target_variant.name
-
-
-def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:
-    """Whether *prim_path* has any directly-authored reference arc in scene.usda."""
-    layer = stage.GetRootLayer()
-    spec = layer.GetPrimAtPath(prim_path)
-    if spec is None:
-        return False
-    return spec.HasInfo("references")
-
-
-def clear_direct_references(stage: Usd.Stage, prim_path: str) -> None:
-    """Remove all directly-authored reference arcs at *prim_path* in scene.usda."""
-    layer = stage.GetRootLayer()
-    spec = layer.GetPrimAtPath(prim_path)
-    if spec is None:
-        return
-    if spec.HasInfo("references"):
-        spec.ClearInfo("references")
-        layer.Save()
 
 
 def _variant_body_authors_references(variant_spec: Sdf.VariantSpec) -> bool:

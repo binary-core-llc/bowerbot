@@ -8,38 +8,17 @@ every public symbol so call sites don't need to know which file a
 schema lives in.
 """
 
-from bowerbot.schemas.assets import (
-    AppleUSDZConstraints,
-    AssetCategory,
-    AssetFormat,
-    AssetMetadata,
-    ASWFLayerNames,
-)
-from bowerbot.schemas.cameras import (
-    DEFAULT_CLIPPING_RANGE_METERS,
-    CameraParams,
-    CameraPropertySpec,
-    CameraSchemaInfo,
-)
+from bowerbot.schemas.assets import AssetCategory, AssetFormat, AssetMetadata
+from bowerbot.schemas.cameras import CameraParams, CameraPropertySpec, CameraSchemaInfo
 from bowerbot.schemas.intake import DetectionOutcome, FolderDetection, IntakeReport
-from bowerbot.schemas.layout import (
-    MAX_LAYOUT_PLACEMENTS,
-    GridPattern,
-    LayoutEntry,
-    LayoutTransform,
-    LinearPattern,
-)
+from bowerbot.schemas.layout import GridPattern, LayoutEntry, LayoutTransform, LinearPattern
 from bowerbot.schemas.lights import (
     LightParams,
     LightPropertySpec,
     LightType,
     LightTypeSchemaInfo,
 )
-from bowerbot.schemas.materials import (
-    MaterialXShaders,
-    PreviewSurfaceShader,
-    ProceduralMaterialParams,
-)
+from bowerbot.schemas.materials import ProceduralMaterialParams
 from bowerbot.schemas.physics import (
     AssetPhysicsSummary,
     CollisionGroupsSummary,
@@ -55,15 +34,12 @@ from bowerbot.schemas.physics import (
     ScenePhysicsSummary,
 )
 from bowerbot.schemas.scatter import (
-    MAX_SCATTER_INSTANCES,
-    MAX_SCATTER_PLACEMENTS,
     ScatterAlign,
     ScatterArrangement,
     ScatterAsset,
     ScatterAssetOrder,
     ScatterDropAlign,
     ScatterInstanceSet,
-    ScatterNamespace,
     ScatterOutput,
     ScatterPathCircle,
     ScatterPathFacing,
@@ -75,7 +51,6 @@ from bowerbot.schemas.scatter import (
     ScatterRegionFalloff,
     ScatterSurfaceParams,
 )
-from bowerbot.schemas.scene import SceneNamespace
 from bowerbot.schemas.surface import SurfaceIndex, SurfaceTriangles
 from bowerbot.schemas.textures import HDRIFormat, TextureCategory
 from bowerbot.schemas.transforms import (
@@ -94,12 +69,6 @@ from bowerbot.schemas.variants import (
 )
 
 __all__ = [
-    "DEFAULT_CLIPPING_RANGE_METERS",
-    "MAX_LAYOUT_PLACEMENTS",
-    "MAX_SCATTER_INSTANCES",
-    "MAX_SCATTER_PLACEMENTS",
-    "AppleUSDZConstraints",
-    "ASWFLayerNames",
     "AssetCategory",
     "AssetFormat",
     "AssetMetadata",
@@ -124,7 +93,6 @@ __all__ = [
     "LightType",
     "LightTypeSchemaInfo",
     "LinearPattern",
-    "MaterialXShaders",
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",
     "PhysicsJointType",
@@ -132,7 +100,6 @@ __all__ = [
     "PhysicsPropertySpec",
     "PhysicsSummary",
     "PositionMode",
-    "PreviewSurfaceShader",
     "ProceduralMaterialParams",
     "ScatterAlign",
     "ScatterArrangement",
@@ -140,7 +107,6 @@ __all__ = [
     "ScatterAssetOrder",
     "ScatterDropAlign",
     "ScatterInstanceSet",
-    "ScatterNamespace",
     "ScatterOutput",
     "ScatterPathCircle",
     "ScatterPathFacing",
@@ -151,7 +117,6 @@ __all__ = [
     "ScatterRegion",
     "ScatterRegionFalloff",
     "ScatterSurfaceParams",
-    "SceneNamespace",
     "SceneObject",
     "ScenePhysicsSummary",
     "SceneVariantsSummary",

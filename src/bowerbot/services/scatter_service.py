@@ -8,20 +8,19 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from bowerbot.constants import ScatterNamespace, SceneNamespace
 from bowerbot.schemas import (
     ScatterAlign,
     ScatterArrangement,
     ScatterAsset,
     ScatterAssetOrder,
     ScatterDropAlign,
-    ScatterNamespace,
     ScatterOutput,
     ScatterPathFacing,
     ScatterPathParams,
     ScatterPathSide,
     ScatterPoseParams,
     ScatterSurfaceParams,
-    SceneNamespace,
 )
 from bowerbot.state import SceneState
 from bowerbot.utils import scatter_utils, stage_utils, surface_utils

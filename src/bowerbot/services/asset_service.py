@@ -10,14 +10,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from bowerbot.schemas import (
-    MAX_LAYOUT_PLACEMENTS,
-    AssetMetadata,
-    ASWFLayerNames,
-    PositionMode,
-    SceneObject,
-    TransformParams,
-)
+from bowerbot.constants import ASWFLayerNames, PlacementRules
+from bowerbot.schemas import AssetMetadata, PositionMode, SceneObject, TransformParams
 from bowerbot.state import SceneState
 from bowerbot.utils import (
     asset_intake_utils,
@@ -151,10 +145,10 @@ def place_layout(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
         })
 
     placed = sum(item["count"] for item in items)
-    if placed > MAX_LAYOUT_PLACEMENTS:
+    if placed > PlacementRules.MAX_LAYOUT_PLACEMENTS:
         problems.append(
             f"layout expands to {placed} placements; the maximum per call "
-            f"is {MAX_LAYOUT_PLACEMENTS}.",
+            f"is {PlacementRules.MAX_LAYOUT_PLACEMENTS}.",
         )
     if problems:
         summary = f"layout validation failed ({len(problems)} problem(s)):"

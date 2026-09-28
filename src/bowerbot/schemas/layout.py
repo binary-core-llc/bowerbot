@@ -9,11 +9,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from bowerbot.schemas.transforms import LayoutPattern
-
-MAX_LAYOUT_PLACEMENTS = 100_000
-
-Vec3 = tuple[float, float, float]
+from bowerbot.schemas.transforms import LayoutPattern, Vec3
 
 
 class GridPattern(BaseModel):

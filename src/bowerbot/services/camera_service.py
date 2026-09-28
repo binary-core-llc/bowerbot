@@ -10,11 +10,8 @@ from typing import Any
 
 from pxr import Sdf
 
-from bowerbot.schemas import (
-    DEFAULT_CLIPPING_RANGE_METERS,
-    CameraParams,
-    SceneNamespace,
-)
+from bowerbot.constants import CameraDefaults, SceneNamespace
+from bowerbot.schemas import CameraParams
 from bowerbot.state import SceneState
 from bowerbot.utils import camera_utils, geometry_utils, stage_utils, variant_utils
 from bowerbot.utils.naming_utils import safe_prim_name
@@ -52,7 +49,7 @@ def create_camera(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     if rotate is None:
         rotate = (0.0, 0.0, 0.0)
 
-    near, far = DEFAULT_CLIPPING_RANGE_METERS
+    near, far = CameraDefaults.CLIPPING_RANGE_METERS
     attributes.setdefault(
         "clippingRange",
         [near / state.meters_per_unit, far / state.meters_per_unit],

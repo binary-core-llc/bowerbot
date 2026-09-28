@@ -786,8 +786,9 @@ BowerBot automatically handles transient API errors:
 
 BowerBot is organized FastAPI-style:
 
-- **schemas/** describe data (pydantic models + enums)
-- **utils/** are pure-function primitives (no `SceneState`, no orchestration)
+- **schemas/** describe data (pydantic models, enums, type aliases)
+- **constants/** hold fixed values, grouped in classes by role (`<Domain>Rules`, `Defaults`, `Tuning`, `Namespace`, `Usd`)
+- **utils/** are pure-function primitives (functions only: no `SceneState`, no orchestration, no values)
 - **services/** are state-aware orchestrators, one function per tool, signature `(state, params)`, calls utils and other services freely, raises on errors
 - **tools/** are the LLM-facing surface, thin adapters that guard preconditions, call ONE service, wrap the result in `ToolResult`
 
@@ -819,18 +820,36 @@ src/bowerbot/
     textures.md
     variants.md
 
-  schemas/            # Pydantic models and enums, grouped by domain
-    assets.py         #   Asset formats, categories, ASWF layer names, metadata
+  constants/          # Fixed values in classes by role, grouped by domain
+    asset_folder.py   #   ASWFLayerNames, AssetFolderRules (layer extensions, reference order)
+    cameras.py        #   CameraDefaults, CameraTuning
+    intake.py         #   IntakeRules (root-file name hints)
+    library.py        #   LibraryRules, LibraryDefaults
+    lights.py         #   LightUsd (UsdLux classes), LightRules, LightDefaults
+    materials.py      #   MaterialXShaders, PreviewSurfaceShader, MaterialRules
+    metrics.py        #   MetricsUsd (up vectors)
+    namespace.py      #   NamespaceRules (what makes an over empty)
+    naming.py         #   NamingRules (prim-name pattern, refused characters)
+    physics.py        #   PhysicsUsd (UsdPhysics classes), PhysicsRules, PhysicsNamespace
+    placement.py      #   PlacementRules
+    scatter.py        #   ScatterNamespace, ScatterRules, ScatterDefaults, ScatterTuning
+    scene.py          #   SceneNamespace (canonical /Scene/* layout)
+    surface.py        #   SurfaceTuning
+    transforms.py     #   TransformUsd (xformOp types)
+    validation.py     #   AppleUSDZConstraints
+
+  schemas/            # Pydantic models, enums and type aliases, grouped by domain
+    assets.py         #   Asset formats, categories, metadata
     cameras.py        #   CameraParams, CameraPropertySpec, CameraSchemaInfo
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
     lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
-    materials.py      #   MaterialXShaders, ProceduralMaterialParams
+    materials.py      #   ProceduralMaterialParams
+    opinions.py       #   OpinionKind (what a masking scene opinion sets)
     physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
                       #   PhysicsApiSchemaInfo, joint/collision-group summaries
     scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
                       #   ScatterAsset/Region, ScatterPrototype, ScatterInstanceSet
-    scene.py          #   SceneNamespace (canonical /Scene/* layout)
     surface.py        #   SurfaceTriangles, SurfaceIndex
     textures.py       #   HDRI / image / texture-category enums
     transforms.py     #   TransformParams, PositionMode, SceneObject
@@ -928,12 +947,12 @@ src/bowerbot/
 **Design principles**
 
 - **Tool ↔ service ↔ prompt 1:1:1**: every public tool function has a same-named public service function and is described in some `prompts/*.md` file. A test in `tests/test_tool_service_prompt_invariant.py` fails the build if this ever drifts.
-- **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums) and a small set of state objects (`SceneState`, `Project`).
+- **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums), `constants/` (fixed values) and a small set of state objects (`SceneState`, `Project`).
 - **Tools are thin**: guard preconditions, call ONE service, wrap in `ToolResult`. No business logic, no util calls, no cross-service routing.
 - **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
 - **Utils are pure primitives**: no `SceneState`, no other services. Composable building blocks.
 - **State lives in one place**: `SceneState` holds the open stage, the project binding, the asset library path, and the object counter; tool handlers thread it into service calls.
-- **All `pxr` is in `services/` and `utils/`**: the rest of the codebase never imports `pxr` directly.
+- **All `pxr` is in `services/`, `utils/` and `constants/`**: the rest of the codebase never imports `pxr` directly.
 - **Prompts are content**: editable `.md` files, not Python constants.
 - **Skills are external integrations**: new asset providers ship as Python packages discovered via entry points.
 - **One config file**: `~/.bowerbot/config.json`, no `.env`.

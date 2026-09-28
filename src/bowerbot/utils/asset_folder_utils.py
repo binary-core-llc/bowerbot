@@ -17,11 +17,8 @@ from pathlib import Path
 
 from pxr import Sdf, Usd, UsdGeom
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-    DetectionOutcome,
-    FolderDetection,
-)
+from bowerbot.constants import AssetFolderRules, ASWFLayerNames, IntakeRules
+from bowerbot.schemas import DetectionOutcome, FolderDetection
 from bowerbot.utils.dependency_utils import resolve as resolve_dependencies
 from bowerbot.utils.stage_utils import (
     count_scene_refs_to_asset_dir,
@@ -29,17 +26,6 @@ from bowerbot.utils.stage_utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-_USD_EXTS: frozenset[str] = frozenset({".usd", ".usda", ".usdc"})
-_ROOT_NAME_HINTS: tuple[str, ...] = ("root", "main", "asset")
-
-CANONICAL_REFERENCE_ORDER: tuple[str, ...] = (
-    ASWFLayerNames.VARIANTS,
-    ASWFLayerNames.CONTENTS,
-    ASWFLayerNames.LGT,
-    ASWFLayerNames.MTL,
-    ASWFLayerNames.PHY,
-)
 
 
 # ── Folder structure ──
@@ -84,7 +70,7 @@ def resolve_asset_dir_for_prim(
             if not resolved.exists() or not resolved.parent.is_dir():
                 continue
             folder = resolved.parent
-            for ext in _USD_EXTS:
+            for ext in AssetFolderRules.USD_LAYER_EXTENSIONS:
                 if resolved.name == f"{folder.name}{ext}":
                     return folder, str(prim.GetPath())
         return None, None
@@ -188,11 +174,11 @@ def list_alternate_geo_files(asset_dir: Path) -> list[str]:
         ASWFLayerNames.CONTENTS,
         ASWFLayerNames.VARIANTS,
     }
-    canonical |= {f"{asset_dir.name}{ext}" for ext in _USD_EXTS}
+    canonical |= {f"{asset_dir.name}{ext}" for ext in AssetFolderRules.USD_LAYER_EXTENSIONS}
     return sorted(
         p.name for p in asset_dir.iterdir()
         if p.is_file()
-        and p.suffix.lower() in _USD_EXTS
+        and p.suffix.lower() in AssetFolderRules.USD_LAYER_EXTENSIONS
         and p.name not in canonical
     )
 
@@ -357,7 +343,7 @@ def rebuild_root_references(asset_dir: Path) -> None:
     if geo_path.exists():
         root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
 
-    for layer_file in CANONICAL_REFERENCE_ORDER:
+    for layer_file in AssetFolderRules.CANONICAL_REFERENCE_ORDER:
         if (asset_dir / layer_file).exists():
             root_prim.GetReferences().AddReference(f"./{layer_file}")
 
@@ -413,7 +399,7 @@ def detect_folder_root(folder: Path) -> FolderDetection:
 
     usd_files = sorted(
         p for p in folder.iterdir()
-        if p.is_file() and p.suffix.lower() in _USD_EXTS
+        if p.is_file() and p.suffix.lower() in AssetFolderRules.USD_LAYER_EXTENSIONS
     )
     if not usd_files:
         return FolderDetection(
@@ -495,7 +481,7 @@ def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:
 
 def _name_tiebreak(candidates: list[Path], folder_name: str) -> Path | None:
     """Pick the preferred candidate by filename convention, or ``None``."""
-    for stem in (folder_name, *_ROOT_NAME_HINTS):
+    for stem in (folder_name, *IntakeRules.ROOT_NAME_HINTS):
         matches = [p for p in candidates if p.stem == stem]
         if len(matches) == 1:
             return matches[0]

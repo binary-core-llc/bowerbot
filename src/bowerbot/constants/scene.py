@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Canonical scene namespace constants."""
+"""Scene values: the canonical prim paths of scene.usda."""
 
 
 class SceneNamespace:

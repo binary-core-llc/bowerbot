@@ -10,12 +10,8 @@ from pathlib import Path
 
 from pxr import Gf, Sdf, Usd, UsdShade
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-    MaterialXShaders,
-    PreviewSurfaceShader,
-    ProceduralMaterialParams,
-)
+from bowerbot.constants import ASWFLayerNames, MaterialXShaders, PreviewSurfaceShader
+from bowerbot.schemas import ProceduralMaterialParams
 from bowerbot.utils.asset_folder_utils import (
     ensure_layer_scope,
     ensure_root_reference,

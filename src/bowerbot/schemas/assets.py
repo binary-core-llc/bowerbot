@@ -26,36 +26,6 @@ class AssetCategory(StrEnum):
     PACKAGE = "package"  # ASWF-compliant asset folder
 
 
-class ASWFLayerNames:
-    """ASWF USD Working Group standard layer file names.
-
-    Centralized so no hardcoded strings are scattered across the
-    codebase.
-
-    Reference: https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md
-    """
-
-    GEO = "geo.usda"
-    MTL = "mtl.usda"
-    LGT = "lgt.usda"
-    PHY = "phy.usda"            # Physics APIs (RigidBody/Mass/Collision)
-    CONTENTS = "contents.usda"  # Nested asset references placed inside this asset
-    VARIANTS = "variants.usda"  # Variant set declarations + opinions
-    MAPS = "maps"
-    TEXTURES = "textures"
-
-
-class AppleUSDZConstraints:
-    """Apple consumer USDZ subset (AR Quick Look on iOS Files/Safari/iMessage).
-
-    Targets the broadest Apple consumer path. visionOS and iOS 18+
-    RealityKit are permissive supersets (MaterialX, subdivision) but
-    the strict subset works everywhere.
-    """
-
-    TEXTURE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})
-
-
 class AssetMetadata(BaseModel):
     """Metadata for a 3D asset sourced from any skill."""
 

@@ -9,7 +9,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from bowerbot.schemas import ASWFLayerNames, ProceduralMaterialParams
+from bowerbot.constants import ASWFLayerNames
+from bowerbot.schemas import ProceduralMaterialParams
 from bowerbot.state import SceneState
 from bowerbot.utils import material_utils, stage_utils
 from bowerbot.utils.asset_folder_utils import (

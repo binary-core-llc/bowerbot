@@ -7,14 +7,11 @@ from __future__ import annotations
 
 from pxr import Gf, Usd, UsdGeom
 
+from bowerbot.constants import CameraTuning, MetricsUsd
 from bowerbot.schemas import CameraParams, CameraPropertySpec, CameraSchemaInfo
+from bowerbot.schemas.transforms import Vec3
 from bowerbot.utils.stage_utils import extract_position, set_prim_attribute
 from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
-
-Vec3 = tuple[float, float, float]
-
-_UP_VECTORS = {"Y": Gf.Vec3d(0, 1, 0), "Z": Gf.Vec3d(0, 0, 1)}
-_UP_ALIGNED_DOT = 0.999
 
 
 def list_camera_properties() -> CameraSchemaInfo:
@@ -52,9 +49,9 @@ def look_at_rotation(eye: Vec3, target: Vec3, up_axis: str) -> Vec3:
     if (target_v - eye_v).GetLength() == 0:
         raise ValueError("look_at target must differ from the camera position.")
     forward = (target_v - eye_v).GetNormalized()
-    up = _UP_VECTORS[up_axis]
-    if abs(Gf.Dot(forward, up)) > _UP_ALIGNED_DOT:
-        up = _UP_VECTORS["Y"] if up_axis == "Z" else _UP_VECTORS["Z"]
+    up = MetricsUsd.UP_VECTORS[up_axis]
+    if abs(Gf.Dot(forward, up)) > CameraTuning.UP_ALIGNED_DOT:
+        up = MetricsUsd.UP_VECTORS["Y"] if up_axis == "Z" else MetricsUsd.UP_VECTORS["Z"]
     view = Gf.Matrix4d().SetLookAt(eye_v, target_v, up)
     rz, ry, rx = view.GetInverse().ExtractRotation().Decompose(
         Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis(),

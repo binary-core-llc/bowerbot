@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
@@ -12,15 +13,8 @@ from pydantic import BaseModel, ConfigDict
 from bowerbot.schemas.surface import FloatArray, IntArray
 from bowerbot.schemas.transforms import Vec3
 
-MAX_SCATTER_INSTANCES = 1_000_000
-MAX_SCATTER_PLACEMENTS = 10_000
-
-
-class ScatterNamespace:
-    """Canonical names BowerBot uses when authoring a scatter."""
-
-    DEFAULT_GROUP = "Scatter"
-    PROTOTYPES = "Prototypes"
+# Keep-probability per sampled point, given its position and triangle.
+ScatterAcceptance = Callable[[FloatArray, IntArray], FloatArray]
 
 
 class ScatterOutput(StrEnum):

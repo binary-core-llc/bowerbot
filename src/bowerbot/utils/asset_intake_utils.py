@@ -19,12 +19,8 @@ from pathlib import Path
 
 from pxr import Gf, Sdf, Usd, UsdGeom, UsdUtils
 
-from bowerbot.schemas import (
-    ASWFLayerNames,
-    DetectionOutcome,
-    IntakeReport,
-    TransformParams,
-)
+from bowerbot.constants import ASWFLayerNames
+from bowerbot.schemas import DetectionOutcome, IntakeReport, TransformParams
 from bowerbot.utils.asset_folder_utils import (
     detect_folder_root,
     ensure_layer_scope,

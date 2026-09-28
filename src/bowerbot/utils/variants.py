@@ -20,7 +20,6 @@ from pxr import UsdLux
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
@@ -248,7 +247,7 @@ def find_masking_scene_opinions(
     relationship name, typically ``"material:binding"``), or ``"active"``
     (key is always ``"active"`` — the prim's active metadata).
     """
-    placements = utils.stage.find_asset_placements(stage, asset_dir)
+    placements = authoring.placement.find_asset_placements(stage, asset_dir)
     if not placements:
         return []
     layer = stage.GetRootLayer()
@@ -633,40 +632,6 @@ def suspect_variant_sets_in_asset(
 
 
 # ── Per-asset placement scrub ──
-
-
-def clear_scene_variant_selections(
-    stage: Usd.Stage,
-    asset_dir: Path,
-    set_name: str,
-    variant_name: str | None = None,
-) -> int:
-    """Drop ``variantSelections[set_name]`` from every placement of the asset.
-
-    When *variant_name* is given, only drop selections whose current value
-    matches it. Prunes empty over ancestors left behind on each touched
-    placement. Returns the number of placements scrubbed.
-    """
-    placements = utils.stage.find_asset_placements(stage, asset_dir)
-    if not placements:
-        return 0
-    layer = stage.GetRootLayer()
-    scrubbed = 0
-    for placement in placements:
-        spec = layer.GetPrimAtPath(placement)
-        if spec is None:
-            continue
-        sels = spec.variantSelections
-        if set_name not in sels:
-            continue
-        if variant_name is not None and sels[set_name] != variant_name:
-            continue
-        del sels[set_name]
-        scrubbed += 1
-        usd.namespace.prune_empty_overrides(layer, placement)
-    if scrubbed:
-        layer.Save()
-    return scrubbed
 
 
 def resolve_attribute_types_for_overrides(

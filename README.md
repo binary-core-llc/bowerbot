@@ -948,13 +948,14 @@ src/bowerbot/
                                #   units and bounds, building one
       asset_variants.py        #   An asset's variants.usda: variant sets and payloads,
                                #   default selections, removal
-    stage.py                   #   Placing asset references, finding placements,
-                               #   list_prim_children (moving to authoring/ and features/)
+      placement.py             #   How the scene refers to asset folders: /Scene
+                               #   placements, nested assets, container frames
+    stage.py                   #   list_prim_children (moving to features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
     intake.py                  #   intake_folder, intake_usdz, ASWF compliance repair
-    asset_folder.py            #   The asset folder behind a scene prim, mapping prim
-                               #   paths into it (moving to authoring/)
+    asset_folder.py            #   resolve_asset_file_path, check_shared_modification
+                               #   (moving to authoring/library, features/materials)
     library.py                 #   scan_library, find_package_for
     lights.py                  #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle
@@ -972,8 +973,7 @@ src/bowerbot/
                                #   suspect sets (variant-set operations are in
                                #   usd/variant_sets, an asset's variants.usda in
                                #   authoring/asset_variants)
-    geometry.py                #   Placement math: position from bounds offsets, grid
-                               #   layout suggestions
+    geometry.py                #   suggest_grid_layout
     layout.py                  #   place_layout expansion: grid/linear patterns,
                                #   asset resolution
 ```

@@ -65,7 +65,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         return result
 
     try:
-        asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+        asset_dir, ref_prim_path = authoring.placement.require_asset_context(
             state.stage, prim_path,
         )
     except ValueError as exc:
@@ -74,7 +74,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
             "an asset placement. Retry the call with scope='scene' to "
             "author physics on this prim directly in scene.usda.",
         ) from None
-    asset_local_path = utils.asset_folder.normalize_asset_prim_path(
+    asset_local_path = authoring.placement.normalize_asset_prim_path(
         prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
     )
 
@@ -145,7 +145,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
         }
 
     try:
-        asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+        asset_dir, ref_prim_path = authoring.placement.require_asset_context(
             state.stage, prim_path,
         )
     except ValueError as exc:
@@ -154,7 +154,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
             "an asset placement. Retry the call with scope='scene' to "
             "remove physics from this prim directly in scene.usda.",
         ) from None
-    asset_local_path = utils.asset_folder.normalize_asset_prim_path(
+    asset_local_path = authoring.placement.normalize_asset_prim_path(
         prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
     )
 
@@ -263,7 +263,7 @@ def get_physics_summary(
 ) -> dict[str, Any]:
     """Return asset-side + scene-side physics opinions for a prim path."""
     prim_path = params["prim_path"]
-    asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, prim_path)
+    asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
 
     asset_summary = (
         utils.physics.get_physics_summary(asset_dir)
@@ -314,12 +314,12 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             "scope='asset' requires body0, body1, or "
             "asset_anchor_prim_path so BowerBot can find the asset folder.",
         )
-    asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(state.stage, asset_anchor)
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(state.stage, asset_anchor)
 
     for label, body in (("body0", body0), ("body1", body1)):
         if not body:
             continue
-        body_asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, body)
+        body_asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, body)
         if body_asset_dir is None:
             raise ValueError(
                 f"scope='asset' but {label}={body!r} is not inside "
@@ -336,11 +336,11 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     asset_body0 = (
-        utils.asset_folder.normalize_asset_prim_path(body0, ref_prim_path, default_prim)
+        authoring.placement.normalize_asset_prim_path(body0, ref_prim_path, default_prim)
         if body0 else None
     )
     asset_body1 = (
-        utils.asset_folder.normalize_asset_prim_path(body1, ref_prim_path, default_prim)
+        authoring.placement.normalize_asset_prim_path(body1, ref_prim_path, default_prim)
         if body1 else None
     )
 
@@ -381,7 +381,7 @@ def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             "scope='asset' requires asset_anchor_prim_path (a scene "
             "placement of the asset) to locate the asset folder.",
         )
-    asset_dir, _ = utils.asset_folder.require_asset_context(state.stage, asset_anchor)
+    asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_anchor)
     name = params["name"]
     removed = utils.physics.remove_joint_asset(asset_dir, name)
     if removed:
@@ -410,7 +410,7 @@ def list_joints(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
             "scope='asset' requires asset_anchor_prim_path (a scene "
             "placement of the asset) to locate the asset folder.",
         )
-    asset_dir, _ = utils.asset_folder.require_asset_context(state.stage, asset_anchor)
+    asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_anchor)
     return utils.physics.list_joints_asset(asset_dir).model_dump()
 
 

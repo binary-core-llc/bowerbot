@@ -29,7 +29,7 @@ def add_asset_material_variant(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a material-binding variant on the asset's root prim."""
-    asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, params["prim_path"],
     )
     set_name = params["variant_set"]
@@ -41,8 +41,8 @@ def add_asset_material_variant(
     )
     default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     bindings = {
-        utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim):
-            utils.asset_folder.normalize_asset_prim_path(v, ref_prim_path, default_prim)
+        authoring.placement.normalize_asset_prim_path(k, ref_prim_path, default_prim):
+            authoring.placement.normalize_asset_prim_path(v, ref_prim_path, default_prim)
         for k, v in raw.items()
     }
     set_as_default = bool(params.get("set_as_default", False))
@@ -88,7 +88,7 @@ def add_asset_geometry_variant(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a geometry/LOD variant via payload arc overrides."""
-    asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, params["prim_path"],
     )
     set_name = params["variant_set"]
@@ -100,7 +100,7 @@ def add_asset_geometry_variant(
     )
     default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     payloads = {
-        utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim): v
+        authoring.placement.normalize_asset_prim_path(k, ref_prim_path, default_prim): v
         for k, v in raw.items()
     }
     set_as_default = bool(params.get("set_as_default", False))
@@ -155,7 +155,7 @@ def setup_asset_geometry_variants(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Initial setup of an LOD variant set in Pixar's canonical pattern."""
-    asset_dir, _ = utils.asset_folder.require_asset_context(state.stage, params["prim_path"])
+    asset_dir, _ = authoring.placement.require_asset_context(state.stage, params["prim_path"])
     set_name = params["variant_set"]
     default_variant = params["default_variant"]
     variants = usd.values.require_dict_param(
@@ -186,7 +186,7 @@ def add_asset_attribute_variant(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author an attribute-override variant on the asset's root prim."""
-    asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, params["prim_path"],
     )
     set_name = params["variant_set"]
@@ -198,7 +198,7 @@ def add_asset_attribute_variant(
     )
     default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     overrides = {
-        utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim): dict(v)
+        authoring.placement.normalize_asset_prim_path(k, ref_prim_path, default_prim): dict(v)
         for k, v in raw.items()
     }
     set_as_default = bool(params.get("set_as_default", False))
@@ -258,7 +258,7 @@ def add_asset_configuration_variant(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Author a configuration variant via prim activation toggles."""
-    asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, params["prim_path"],
     )
     set_name = params["variant_set"]
@@ -270,7 +270,7 @@ def add_asset_configuration_variant(
     )
     default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     activations = {
-        utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim): bool(v)
+        authoring.placement.normalize_asset_prim_path(k, ref_prim_path, default_prim): bool(v)
         for k, v in raw.items()
     }
     set_as_default = bool(params.get("set_as_default", False))
@@ -539,7 +539,7 @@ def list_asset_geo_files(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """List alternate geometry files available for geometry variants."""
-    asset_dir = utils.asset_folder.require_asset_context(state.stage, params["prim_path"])[0]
+    asset_dir = authoring.placement.require_asset_context(state.stage, params["prim_path"])[0]
     files = authoring.asset_folder.list_alternate_geo_files(asset_dir)
     return {
         "asset_path": str(asset_dir),
@@ -568,7 +568,7 @@ def list_variants(state: scene_state.SceneState, params: dict[str, Any]) -> dict
 
 def select_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Set the asset's ship default variant selection."""
-    asset_dir = utils.asset_folder.require_asset_context(state.stage, params["prim_path"])[0]
+    asset_dir = authoring.placement.require_asset_context(state.stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     usd.naming.validate_variant_name(set_name, "variant set")
@@ -641,7 +641,7 @@ def select_asset_variant_for_instance(
 
 def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a single variant from a variant set."""
-    asset_dir = utils.asset_folder.require_asset_context(state.stage, params["prim_path"])[0]
+    asset_dir = authoring.placement.require_asset_context(state.stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     usd.naming.validate_variant_name(set_name, "variant set")
@@ -661,7 +661,7 @@ def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
             )
             if current == variant_name:
                 authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        utils.variants.clear_scene_variant_selections(
+        authoring.placement.clear_scene_variant_selections(
             state.stage, asset_dir, set_name, scrub_target,
         )
         utils.variants.restore_canonical_geo_if_needed(asset_dir)
@@ -798,14 +798,14 @@ def remove_asset_variant_set(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Remove an entire variant set from one asset."""
-    asset_dir = utils.asset_folder.require_asset_context(state.stage, params["prim_path"])[0]
+    asset_dir = authoring.placement.require_asset_context(state.stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     usd.naming.validate_variant_name(set_name, "variant set")
 
     removed = authoring.asset_variants.remove_variant_set(asset_dir, set_name)
     if removed:
         authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        utils.variants.clear_scene_variant_selections(
+        authoring.placement.clear_scene_variant_selections(
             state.stage, asset_dir, set_name,
         )
         utils.variants.restore_canonical_geo_if_needed(asset_dir)

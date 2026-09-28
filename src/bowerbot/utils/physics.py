@@ -29,7 +29,6 @@ from pxr import UsdPhysics
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
@@ -446,7 +445,7 @@ def find_masking_scene_opinions(
     if not attr_names and not rel_names:
         return []
 
-    placements = utils.stage.find_asset_placements(stage, asset_dir)
+    placements = authoring.placement.find_asset_placements(stage, asset_dir)
     if not placements:
         return []
 
@@ -766,7 +765,7 @@ def validate_scope(scope: str) -> str:
 def autodetect_scope(stage: Usd.Stage, prim_path: str) -> str:
     """Return ``'asset'`` if *prim_path* resolves through an ASWF placement; else ``'scene'``."""
     try:
-        utils.asset_folder.require_asset_context(stage, prim_path)
+        authoring.placement.require_asset_context(stage, prim_path)
     except ValueError:
         return "scene"
     return "asset"

@@ -20,6 +20,7 @@ from pxr import Vt
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 # ── parameters and naming ──
@@ -27,7 +28,7 @@ from bowerbot.utils import usd
 
 def scatter_prim_path(group: str, name: str) -> str:
     """``/Scene/<group>/<name>`` for a scatter, validating both parts."""
-    group_path = utils.layout.scene_group_path(group)
+    group_path = authoring.placement.scene_group_path(group)
     prim_name = usd.naming.safe_prim_name(name)
     if not usd.naming.is_valid_prim_name(prim_name):
         msg = (
@@ -1237,7 +1238,7 @@ def write_scatter(
             raise ValueError(msg)
         stage.DefinePrim(prim_path, "Xform")
         local = to_local(stage, prim_path, instances)
-        utils.stage.add_references(
+        authoring.placement.add_references(
             stage, placement_objects(prim_path, prototypes, local, first_index),
         )
         return {"placements": instances.count, "warnings": []}
@@ -1261,7 +1262,7 @@ def write_instancer(
 
     prototypes_path = f"{prim_path}/{constants.ScatterNamespace.PROTOTYPES}"
     stage.DefinePrim(prototypes_path, "Scope")
-    utils.stage.add_references(stage, [
+    authoring.placement.add_references(stage, [
         schemas.SceneObject(
             prim_path=f"{prototypes_path}/{proto.name}",
             asset=schemas.AssetMetadata(
@@ -1369,7 +1370,7 @@ def drop_targets(stage: Usd.Stage, prim_paths: list[str]) -> tuple[list[str], li
     wrappers: list[str] = []
     scatters: list[str] = []
     for prim_path in prim_paths:
-        if utils.stage.parse_nested_contents_path(prim_path) is not None:
+        if authoring.placement.parse_nested_contents_path(prim_path) is not None:
             msg = (
                 f"{prim_path} is a nested placement inside an asset; "
                 "drop_to_surface moves scene-level placements only."
@@ -1387,7 +1388,7 @@ def drop_targets(stage: Usd.Stage, prim_paths: list[str]) -> tuple[list[str], li
                 if path not in scatters:
                     scatters.append(path)
                 continue
-            if _is_placement_wrapper(candidate):
+            if authoring.placement.is_placement_wrapper(candidate):
                 if path not in wrappers:
                     wrappers.append(path)
                 iterator.PruneChildren()
@@ -1972,16 +1973,6 @@ def _signed_angle(
     src = np.broadcast_to(src, dst.shape)
     cross = np.cross(src, dst)
     return np.arctan2(cross @ axis, (src * dst).sum(axis=1))
-
-
-def _is_placement_wrapper(prim: Usd.Prim) -> bool:
-    """A scene placement wrapper: an Xformable whose ``asset`` child carries a reference."""
-    child = prim.GetChild("asset")
-    return (
-        prim.IsA(UsdGeom.Xformable)
-        and child.IsValid()
-        and bool(usd.references.get_prim_ref_paths(child))
-    )
 
 
 def _region_circle(region: schemas.ScatterRegion) -> tuple[schemas.FloatArray, float]:

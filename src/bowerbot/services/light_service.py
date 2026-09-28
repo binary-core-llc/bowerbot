@@ -52,7 +52,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 f"asset_prim_path."
             )
             raise ValueError(msg)
-        asset_dir, ref_prim_path = utils.asset_folder.resolve_asset_dir_for_prim(
+        asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
             state.stage, asset_prim_path,
         )
         if asset_dir is None or ref_prim_path is None:
@@ -65,12 +65,12 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         mode = schemas.PositionMode(
             params.get("position_mode", schemas.PositionMode.BOUNDS_OFFSET.value),
         )
-        tx, ty, tz = utils.geometry.resolve_asset_position(
+        tx, ty, tz = authoring.placement.resolve_asset_position(
             mode,
             authoring.asset_folder.get_geometry_bounds(asset_dir),
             tx, ty, tz,
             has_explicit_y=params.get("translate_y") is not None,
-            world_to_local_mat=utils.stage.get_container_world_inverse(
+            world_to_local_mat=authoring.placement.get_container_world_inverse(
                 state.stage, asset_prim_path,
             ),
             asset_mpu=authoring.asset_folder.get_mpu(asset_dir),
@@ -139,7 +139,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Update a light's xform / HDRI texture in its asset or in scene.usda."""
     prim_path = params["prim_path"]
-    asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, prim_path)
+    asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
 
     translate = usd.values.unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
@@ -154,12 +154,12 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             mode = schemas.PositionMode(
                 params.get("position_mode", schemas.PositionMode.BOUNDS_OFFSET.value),
             )
-            translate = utils.geometry.resolve_asset_position(
+            translate = authoring.placement.resolve_asset_position(
                 mode,
                 authoring.asset_folder.get_geometry_bounds(asset_dir),
                 *translate,
                 has_explicit_y=params.get("translate_y") is not None,
-                world_to_local_mat=utils.stage.get_container_world_inverse(
+                world_to_local_mat=authoring.placement.get_container_world_inverse(
                     state.stage, prim_path,
                 ),
                 asset_mpu=authoring.asset_folder.get_mpu(asset_dir),
@@ -196,7 +196,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a scene-level or asset-level light."""
     prim_path = params["prim_path"]
-    asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, prim_path)
+    asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
 
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]

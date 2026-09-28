@@ -11,7 +11,6 @@ from typing import Any
 from pydantic import ValidationError
 
 from bowerbot import schemas
-from bowerbot.utils import usd
 
 
 def validate_layout_entries(
@@ -54,22 +53,6 @@ def resolve_layout_asset(
     searched = ", ".join(str(c) for c in candidates) or "no roots available"
     msg = f"asset '{raw}' not found (searched: {searched})."
     raise ValueError(msg)
-
-
-def scene_group_path(group: str) -> str:
-    """Build the /Scene scope path for a group, sanitizing each nested segment."""
-    segments = [name for seg in group.split("/") if (name := usd.naming.safe_prim_name(seg))]
-    if not segments:
-        msg = "a layout entry 'group' must name a non-empty scene scope."
-        raise ValueError(msg)
-    for segment in segments:
-        if not usd.naming.is_valid_prim_name(segment):
-            msg = (
-                f"group segment '{segment}' is not a valid USD prim name "
-                f"(it must start with a letter or underscore)."
-            )
-            raise ValueError(msg)
-    return "/Scene/" + "/".join(segments)
 
 
 def count_entry(entry: schemas.LayoutEntry) -> int:

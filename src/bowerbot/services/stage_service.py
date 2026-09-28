@@ -69,7 +69,7 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     old_path = params["old_path"]
     new_path = params["new_path"]
 
-    if utils.stage.parse_nested_contents_path(old_path) is not None:
+    if authoring.placement.parse_nested_contents_path(old_path) is not None:
         msg = (
             f"Cannot rename {old_path}: it lives inside a referenced "
             "asset's contents.usda. Renaming at scene level would "
@@ -100,14 +100,14 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     """Remove an object from the scene, scrubbing every rel that targeted it."""
     prim_path = params["prim_path"]
 
-    nested = utils.stage.parse_nested_contents_path(prim_path)
+    nested = authoring.placement.parse_nested_contents_path(prim_path)
     if nested is not None:
-        container_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, prim_path)
+        container_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
         if container_dir is None:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
         group, prim_name = nested
-        success = utils.intake.remove_nested_asset_reference(
+        success = authoring.placement.remove_nested_asset_reference(
             container_dir, group, prim_name,
         )
         if not success:
@@ -145,23 +145,23 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
     tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
     ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
 
-    nested = utils.stage.parse_nested_contents_path(prim_path)
+    nested = authoring.placement.parse_nested_contents_path(prim_path)
     if nested is not None:
-        container_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, prim_path)
+        container_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
         if container_dir is None:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
         group, prim_name = nested
 
         container_prim_path = prim_path.split("/asset/contents/")[0]
-        local = utils.stage.world_to_local_point(
+        local = authoring.placement.world_to_local_point(
             state.stage, container_prim_path, tx, ty, tz,
         )
         if local is None:
             msg = f"Failed to compute world-to-local for {container_prim_path}"
             raise RuntimeError(msg)
 
-        success = utils.intake.update_nested_asset_transform(
+        success = authoring.placement.update_nested_asset_transform(
             container_dir, group, prim_name,
             translate=local,
             rotate=(0.0, ry, 0.0),

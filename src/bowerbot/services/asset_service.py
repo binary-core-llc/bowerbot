@@ -65,7 +65,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         rotate=(0.0, ry, 0.0),
     )
 
-    utils.stage.add_reference(state.stage, scene_object)
+    authoring.placement.add_reference(state.stage, scene_object)
     authoring.stage.save_stage(state.stage)
     state.touch_project()
 
@@ -102,7 +102,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 project_dir=project_dir,
                 library_dir=state.library_dir,
             )
-            group_path = utils.layout.scene_group_path(entry.group)
+            group_path = authoring.placement.scene_group_path(entry.group)
         except ValueError as e:
             problems.append(f"placements[{idx}]: {e}")
             continue
@@ -214,7 +214,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                     rotate=transform.rotate,
                     scale=transform.scale,
                 ))
-        utils.stage.add_references(state.stage, objects)
+        authoring.placement.add_references(state.stage, objects)
         authoring.stage.save_stage(state.stage)
     except Exception:
         state.object_count = object_count_snapshot
@@ -254,7 +254,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    container_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(
+    container_dir, _ = authoring.placement.resolve_asset_dir_for_prim(
         state.stage, container_prim_path,
     )
     if container_dir is None:
@@ -265,7 +265,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         )
         raise ValueError(msg)
 
-    instance_count = utils.stage.count_scene_refs_to_asset_dir(
+    instance_count = authoring.placement.count_scene_refs_to_asset_dir(
         state.stage, container_dir,
     )
     confirmed = bool(params.get("confirm_shared_modification", False))
@@ -295,18 +295,18 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     mode = schemas.PositionMode(
         params.get("position_mode", schemas.PositionMode.ABSOLUTE.value),
     )
-    tx, ty, tz = utils.geometry.resolve_asset_position(
+    tx, ty, tz = authoring.placement.resolve_asset_position(
         mode,
         authoring.asset_folder.get_geometry_bounds(container_dir),
         tx, ty, tz,
         has_explicit_y=params.get("translate_y") is not None,
-        world_to_local_mat=utils.stage.get_container_world_inverse(
+        world_to_local_mat=authoring.placement.get_container_world_inverse(
             state.stage, container_prim_path,
         ),
         asset_mpu=authoring.asset_folder.get_mpu(container_dir),
     )
 
-    ref_asset_path = utils.asset_folder.compute_ref_asset_path(
+    ref_asset_path = authoring.placement.compute_ref_asset_path(
         report.scene_ref_path, assets_dir, container_dir,
     )
 
@@ -315,7 +315,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
     try:
-        utils.intake.add_nested_asset_reference(
+        authoring.placement.add_nested_asset_reference(
             container_dir=container_dir,
             group=group,
             prim_name=prim_name,
@@ -395,7 +395,7 @@ def cleanup_unused_contents(
     asset_prim_path = params.get("asset_prim_path")
 
     if asset_prim_path:
-        asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, asset_prim_path)
+        asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, asset_prim_path)
         if asset_dir is None:
             msg = (
                 f"Cannot find ASWF asset folder for {asset_prim_path}. "
@@ -403,7 +403,7 @@ def cleanup_unused_contents(
             )
             raise ValueError(msg)
 
-        removed = utils.intake.cleanup_unused_contents_in_folder(asset_dir)
+        removed = authoring.placement.cleanup_unused_contents_in_folder(asset_dir)
         state.stage = authoring.stage.open_stage(state.stage_path)
         logger.info(
             "Cleaned %d empty group(s) from %s/contents",
@@ -427,7 +427,7 @@ def cleanup_unused_contents(
             continue
         if not (entry / constants.ASWFLayerNames.CONTENTS).exists():
             continue
-        removed = utils.intake.cleanup_unused_contents_in_folder(entry)
+        removed = authoring.placement.cleanup_unused_contents_in_folder(entry)
         if removed:
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)

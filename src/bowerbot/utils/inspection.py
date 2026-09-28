@@ -115,5 +115,5 @@ def _format_geometry_prim(
         "type": str(prim.GetTypeName()) or None,
         "asset": ref_paths[0] if ref_paths else None,
         "position": position,
-        "bounds": utils.stage.world_bounds(prim, bbox_cache),
+        "bounds": usd.bounds.world_bounds(prim, bbox_cache),
     }

@@ -276,24 +276,6 @@ def plan_bounds(
     return pts.min(axis=0), pts.max(axis=0)
 
 
-def prim_world_box(
-    stage: Usd.Stage, prim_path: str,
-) -> tuple[schemas.FloatArray, schemas.FloatArray]:
-    """World-aligned bounding box ``(min, max)`` of a prim; raises if empty."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim.IsValid():
-        msg = f"Prim not found: {prim_path}"
-        raise ValueError(msg)
-    cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render],
-    )
-    rng = cache.ComputeWorldBound(prim).ComputeAlignedRange()
-    if rng.IsEmpty():
-        msg = f"Prim {prim_path} has no geometry bounds."
-        raise ValueError(msg)
-    return np.array(rng.GetMin()), np.array(rng.GetMax())
-
-
 # ── internals ──
 
 

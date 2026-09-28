@@ -9,12 +9,14 @@ or tools. It uses only other modules in this group (plus ``constants`` and
 ``usd.naming.safe_prim_name(...)``.
 """
 
+from bowerbot.utils.usd import bounds
 from bowerbot.utils.usd import metrics
 from bowerbot.utils.usd import naming
 from bowerbot.utils.usd import transforms
 from bowerbot.utils.usd import values
 
 __all__ = [
+    "bounds",
     "metrics",
     "naming",
     "transforms",

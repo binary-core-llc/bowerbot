@@ -1357,7 +1357,7 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
         "instances": len(indices),
         "prototypes": prototypes,
         "position": usd.transforms.extract_position(prim),
-        "bounds": utils.stage.world_bounds(prim, bbox_cache),
+        "bounds": usd.bounds.world_bounds(prim, bbox_cache),
     }
 
 
@@ -1513,7 +1513,7 @@ def drop_prim(
     up = index.up
     axes = list(index.axes)
     prim = stage.GetPrimAtPath(prim_path)
-    bmin, bmax = utils.surface.prim_world_box(stage, prim_path)
+    bmin, bmax = usd.bounds.prim_world_box(stage, prim_path)
     grid = np.linspace(0.1, 0.9, constants.ScatterTuning.DROP_FOOTPRINT)
     ga, gb = np.meshgrid(grid, grid, indexing="ij")
     footprint = np.zeros((ga.size, 3))
@@ -1607,7 +1607,7 @@ def _circle_center(
         raise ValueError(msg)
     if raw.get("center") is not None:
         return usd.values.vec3(raw["center"])
-    bmin, bmax = utils.surface.prim_world_box(stage, raw["center_prim"])
+    bmin, bmax = usd.bounds.prim_world_box(stage, raw["center_prim"])
     center = (bmin + bmax) / 2.0
     center[up] = bmin[up]
     return tuple(center.tolist())

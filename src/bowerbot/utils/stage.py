@@ -666,7 +666,7 @@ def list_prim_children(stage: Usd.Stage, prim_path: str) -> list[dict]:
             "is_mesh": type_name == "Mesh",
             "is_bindable": True,
             "current_material": str(bound_mat.GetPath()) if bound_mat else None,
-            "bounds": world_bounds(prim, bbox_cache),
+            "bounds": usd.bounds.world_bounds(prim, bbox_cache),
         })
     return results
 
@@ -765,19 +765,5 @@ def world_to_local_point(
 
 
 # ── Internal helpers ──
-
-
-def world_bounds(
-    prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
-) -> dict | None:
-    """Compute world-aligned AABB for a prim, rounded to 4 decimals."""
-    rng = bbox_cache.ComputeWorldBound(prim).ComputeAlignedRange()
-    if rng.IsEmpty():
-        return None
-    mn, mx = rng.GetMin(), rng.GetMax()
-    return {
-        "min": {"x": round(mn[0], 4), "y": round(mn[1], 4), "z": round(mn[2], 4)},
-        "max": {"x": round(mx[0], 4), "y": round(mx[1], 4), "z": round(mx[2], 4)},
-    }
 
 

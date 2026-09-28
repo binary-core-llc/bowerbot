@@ -554,7 +554,7 @@ def list_variants(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     prim_path = params["prim_path"]
     if state.stage is None:
         raise ValueError("No scene stage is open.")
-    summary = utils.variants.get_scene_variants_summary(state.stage, prim_path)
+    summary = usd.variant_sets.get_scene_variants_summary(state.stage, prim_path)
     return {
         "prim_path": summary.prim_path,
         "carriers": [c.model_dump() for c in summary.carriers],
@@ -598,7 +598,7 @@ def select_asset_variant_for_instance(
 
     if state.stage is None:
         raise ValueError("No scene stage is open.")
-    carriers = utils.variants.find_variant_carriers(
+    carriers = usd.variant_sets.find_variant_carriers(
         state.stage, prim_path, set_name,
     )
     if not carriers:
@@ -707,7 +707,7 @@ def select_scene_variant(
             f"Available: {list(vset.GetVariantNames())}",
         )
 
-    utils.variants.set_scene_variant_default(
+    usd.variant_sets.set_scene_variant_default(
         state.stage, prim_path, set_name, variant_name,
     )
     if state.stage_path is not None:
@@ -735,7 +735,7 @@ def remove_scene_variant(
 
     if state.stage is None:
         raise ValueError("No scene stage is open.")
-    removed = utils.variants.remove_scene_variant(
+    removed = usd.variant_sets.remove_scene_variant(
         state.stage, prim_path, set_name, variant_name,
     )
     suspects: list[dict] = []
@@ -773,7 +773,7 @@ def remove_scene_variant_set(
     demoted = utils.variants.restore_active_scene_variant_references_to_direct_ref(
         state.stage, prim_path, set_name,
     )
-    removed = utils.variants.remove_scene_variant_set(
+    removed = usd.variant_sets.remove_scene_variant_set(
         state.stage, prim_path, set_name,
     )
     if state.stage_path is not None:

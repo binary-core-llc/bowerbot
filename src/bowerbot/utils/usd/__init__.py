@@ -17,6 +17,7 @@ from bowerbot.utils.usd import naming
 from bowerbot.utils.usd import references
 from bowerbot.utils.usd import transforms
 from bowerbot.utils.usd import values
+from bowerbot.utils.usd import variant_sets
 
 __all__ = [
     "attributes",
@@ -27,4 +28,5 @@ __all__ = [
     "references",
     "transforms",
     "values",
+    "variant_sets",
 ]

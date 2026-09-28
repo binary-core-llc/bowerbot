@@ -925,6 +925,8 @@ src/bowerbot/
                                #   transforms into geometry, rotation math
       references.py            #   References and payloads: read and clear them, find
                                #   what a layer references, walk dependencies
+      variant_sets.py          #   USD variant sets: author inside a variant, read,
+                               #   select and remove variant sets
       naming.py                #   Valid and safe USD names: prims, variants, joints,
                                #   collision groups
       values.py                #   JSON <-> USD values: numbers and vectors from tool

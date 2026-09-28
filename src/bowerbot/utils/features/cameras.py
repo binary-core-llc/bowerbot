@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Camera utils — author and aim scene-level UsdGeom Camera prims."""
+"""The camera tools: create, update and aim scene-level cameras; list the Camera schema."""
 
 from __future__ import annotations
 
@@ -13,53 +13,7 @@ from bowerbot import constants
 from bowerbot import schemas
 from bowerbot.utils import usd
 
-
-def list_camera_properties() -> schemas.CameraSchemaInfo:
-    """Live schema-registry view of every attribute the Camera prim declares."""
-    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition("Camera")
-    if prim_def is None:
-        raise ValueError(
-            "USD schema registry does not know Camera. "
-            "USD build is missing UsdGeom.",
-        )
-
-    properties: list[schemas.CameraPropertySpec] = []
-    for prop_name in UsdGeom.Camera.GetSchemaAttributeNames(False):
-        name = str(prop_name)
-        attr_spec = prim_def.GetSchemaAttributeSpec(name)
-        if attr_spec is None:
-            continue
-        properties.append(schemas.CameraPropertySpec(
-            name=name,
-            kind="attribute",
-            type_name=str(attr_spec.typeName),
-            default=usd.values.to_jsonable(attr_spec.default),
-            allowed_tokens=[
-                str(t) for t in (attr_spec.allowedTokens or [])
-            ],
-            documentation=usd.attributes.property_doc(prim_def, name, attr_spec),
-        ))
-
-    return schemas.CameraSchemaInfo(properties=properties)
-
-
-def look_at_rotation(eye: schemas.Vec3, target: schemas.Vec3, up_axis: str) -> schemas.Vec3:
-    """Return rotateXYZ degrees aiming a camera's -Z axis from *eye* at *target*."""
-    eye_v, target_v = Gf.Vec3d(*eye), Gf.Vec3d(*target)
-    if (target_v - eye_v).GetLength() == 0:
-        raise ValueError("look_at target must differ from the camera position.")
-    forward = (target_v - eye_v).GetNormalized()
-    up = constants.MetricsUsd.UP_VECTORS[up_axis]
-    if abs(Gf.Dot(forward, up)) > constants.CameraTuning.UP_ALIGNED_DOT:
-        up = (
-            constants.MetricsUsd.UP_VECTORS["Y"] if up_axis == "Z"
-            else constants.MetricsUsd.UP_VECTORS["Z"]
-        )
-    view = Gf.Matrix4d().SetLookAt(eye_v, target_v, up)
-    rz, ry, rx = view.GetInverse().ExtractRotation().Decompose(
-        Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis(),
-    )
-    return (rx, ry, rz)
+# ── Creating and updating cameras ──
 
 
 def create_camera(stage: Usd.Stage, prim_path: str, camera: schemas.CameraParams) -> None:
@@ -91,19 +45,6 @@ def update_camera(
         _set_op(ops, "xformOp:translate", Gf.Vec3d(*translate), prim_path)
     if rotate is not None:
         _set_op(ops, "xformOp:rotateXYZ", Gf.Vec3f(*rotate), prim_path)
-
-
-def _set_op(
-    ops: dict, op_name: str, value: object, prim_path: str,
-) -> None:
-    """Set one authored xform op, refusing layouts create_camera did not author."""
-    op = ops.get(op_name)
-    if op is None:
-        raise ValueError(
-            f"{prim_path} has no {op_name} op; adjust its xform ops with "
-            f"set_prim_attribute instead.",
-        )
-    op.Set(value)
 
 
 def require_camera(stage: Usd.Stage, prim_path: str) -> Usd.Prim:
@@ -139,3 +80,71 @@ def refuse_unknown_camera_attributes(attributes: dict) -> None:
         )
 
 
+# ── Aiming a camera ──
+
+
+def look_at_rotation(eye: schemas.Vec3, target: schemas.Vec3, up_axis: str) -> schemas.Vec3:
+    """Return rotateXYZ degrees aiming a camera's -Z axis from *eye* at *target*."""
+    eye_v, target_v = Gf.Vec3d(*eye), Gf.Vec3d(*target)
+    if (target_v - eye_v).GetLength() == 0:
+        raise ValueError("look_at target must differ from the camera position.")
+    forward = (target_v - eye_v).GetNormalized()
+    up = constants.MetricsUsd.UP_VECTORS[up_axis]
+    if abs(Gf.Dot(forward, up)) > constants.CameraTuning.UP_ALIGNED_DOT:
+        up = (
+            constants.MetricsUsd.UP_VECTORS["Y"] if up_axis == "Z"
+            else constants.MetricsUsd.UP_VECTORS["Z"]
+        )
+    view = Gf.Matrix4d().SetLookAt(eye_v, target_v, up)
+    rz, ry, rx = view.GetInverse().ExtractRotation().Decompose(
+        Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis(),
+    )
+    return (rx, ry, rz)
+
+
+# ── The Camera schema ──
+
+
+def list_camera_properties() -> schemas.CameraSchemaInfo:
+    """Live schema-registry view of every attribute the Camera prim declares."""
+    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition("Camera")
+    if prim_def is None:
+        raise ValueError(
+            "USD schema registry does not know Camera. "
+            "USD build is missing UsdGeom.",
+        )
+
+    properties: list[schemas.CameraPropertySpec] = []
+    for prop_name in UsdGeom.Camera.GetSchemaAttributeNames(False):
+        name = str(prop_name)
+        attr_spec = prim_def.GetSchemaAttributeSpec(name)
+        if attr_spec is None:
+            continue
+        properties.append(schemas.CameraPropertySpec(
+            name=name,
+            kind="attribute",
+            type_name=str(attr_spec.typeName),
+            default=usd.values.to_jsonable(attr_spec.default),
+            allowed_tokens=[
+                str(t) for t in (attr_spec.allowedTokens or [])
+            ],
+            documentation=usd.attributes.property_doc(prim_def, name, attr_spec),
+        ))
+
+    return schemas.CameraSchemaInfo(properties=properties)
+
+
+# ── Helpers ──
+
+
+def _set_op(
+    ops: dict, op_name: str, value: object, prim_path: str,
+) -> None:
+    """Set one authored xform op, refusing layouts create_camera did not author."""
+    op = ops.get(op_name)
+    if op is None:
+        raise ValueError(
+            f"{prim_path} has no {op_name} op; adjust its xform ops with "
+            f"set_prim_attribute instead.",
+        )
+    op.Set(value)

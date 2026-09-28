@@ -20,7 +20,6 @@ Modules not moved into a group yet are called as ``utils.<module>.<function>``.
 
 from bowerbot.utils import asset_folder
 from bowerbot.utils import authoring
-from bowerbot.utils import cameras
 from bowerbot.utils import features
 from bowerbot.utils import geometry
 from bowerbot.utils import layout
@@ -35,7 +34,6 @@ from bowerbot.utils import variants
 __all__ = [
     "asset_folder",
     "authoring",
-    "cameras",
     "features",
     "geometry",
     "layout",

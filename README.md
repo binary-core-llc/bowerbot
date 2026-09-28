@@ -959,12 +959,12 @@ src/bowerbot/
     features/                  # The logic behind each tool family
       inspection.py            #   Describing the scene: list_scene entries for every
                                #   kind of prim, a prim's parts
+      cameras.py               #   The camera tools: create, update and aim cameras,
+                               #   list the Camera schema
     asset_folder.py            #   check_shared_modification (moving to
                                #   features/materials)
     lights.py                  #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle
-    cameras.py                 #   Camera authoring: create/update/remove, look_at
-                               #   aiming, list_camera_properties
     materials.py               #   material_in_folder primitives, find_first_material
     physics.py                 #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement

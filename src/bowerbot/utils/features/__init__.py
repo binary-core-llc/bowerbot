@@ -9,8 +9,10 @@ service calls both. Callers write ``from bowerbot.utils import features``,
 then ``features.inspection.list_prims(...)``.
 """
 
+from bowerbot.utils.features import cameras
 from bowerbot.utils.features import inspection
 
 __all__ = [
+    "cameras",
     "inspection",
 ]

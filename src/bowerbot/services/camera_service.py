@@ -15,6 +15,7 @@ from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
 from bowerbot.utils import authoring
+from bowerbot.utils import features
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def list_camera_properties(
     _state: scene_state.SceneState, _params: dict[str, Any],
 ) -> dict[str, Any]:
     """Return every attribute the Camera prim schema declares."""
-    return utils.cameras.list_camera_properties().model_dump()
+    return features.cameras.list_camera_properties().model_dump()
 
 
 def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
@@ -42,7 +43,7 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     ty = float(params.get("translate_y", 0.0))
     tz = float(params.get("translate_z", 0.0))
     if look_at is not None:
-        rotate = utils.cameras.look_at_rotation(
+        rotate = features.cameras.look_at_rotation(
             (tx, ty, tz),
             tuple(float(v) for v in look_at),
             state.up_axis.value,
@@ -63,7 +64,7 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         translate=(tx, ty, tz), rotate=rotate, attributes=attributes,
     )
     try:
-        utils.cameras.create_camera(state.stage, prim_path, camera)
+        features.cameras.create_camera(state.stage, prim_path, camera)
         authoring.stage.save_stage(state.stage)
     except Exception:
         state.stage.Reload()
@@ -96,19 +97,19 @@ def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     if look_at is not None and rotate is not None:
         raise ValueError("pass exactly one of 'look_at' or rotate angles.")
 
-    prim = utils.cameras.require_camera(state.stage, prim_path)
+    prim = features.cameras.require_camera(state.stage, prim_path)
     if look_at is not None:
         eye = (
             translate if translate is not None
             else usd.transforms.local_translation(prim)
         )
-        rotate = utils.cameras.look_at_rotation(
+        rotate = features.cameras.look_at_rotation(
             eye,
             tuple(float(v) for v in look_at),
             state.up_axis.value,
         )
 
-    utils.cameras.update_camera(
+    features.cameras.update_camera(
         state.stage, prim_path, translate=translate, rotate=rotate,
     )
     authoring.stage.save_stage(state.stage)
@@ -124,7 +125,7 @@ def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
 def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a scene camera."""
     prim_path = params["prim_path"]
-    utils.cameras.require_camera(state.stage, prim_path)
+    features.cameras.require_camera(state.stage, prim_path)
 
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
     success = usd.namespace.remove_prim(state.stage, prim_path)

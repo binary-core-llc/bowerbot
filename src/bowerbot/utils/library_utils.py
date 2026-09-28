@@ -79,7 +79,7 @@ def scan_library(
         if category == ALL or category == entry["category"]:
             results.append(entry)
 
-    for f in library_dir.rglob("*"):
+    for f in sorted(library_dir.rglob("*")):
         if not f.is_file():
             continue
         if f.suffix.lower() not in _USD_EXTENSIONS:
@@ -108,7 +108,7 @@ def _normalize_for_search(value: str) -> str:
 def _find_top_level_packages(library_dir: Path) -> dict[Path, Path]:
     """Return ``{folder_path: root_file}`` for every package at the top level."""
     packages: dict[Path, Path] = {}
-    for entry in library_dir.iterdir():
+    for entry in sorted(library_dir.iterdir()):
         if not entry.is_dir() or entry.name in _NON_ASSET_DIRS:
             continue
         detection = detect_folder_root(entry)

@@ -115,9 +115,9 @@ def update_light(
             tex_attr.Set(Sdf.AssetPath(texture))
 
     if translate is not None:
-        utils.stage.update_translate_op(prim, Gf.Vec3d(*translate))
+        usd.transforms.update_translate_op(prim, Gf.Vec3d(*translate))
     if rotate is not None:
-        utils.stage.update_rotate_op(prim, Gf.Vec3f(*rotate))
+        usd.transforms.update_rotate_op(prim, Gf.Vec3f(*rotate))
 
 
 def write_light_attributes(
@@ -285,7 +285,7 @@ def update_light_in_folder(
 
     factor = utils.geometry.unit_factor(asset_dir)
     if translate is not None:
-        utils.stage.update_translate_op(
+        usd.transforms.update_translate_op(
             prim,
             Gf.Vec3d(
                 translate[0] * factor,
@@ -294,7 +294,7 @@ def update_light_in_folder(
             ),
         )
     if rotate is not None:
-        utils.stage.update_rotate_op(prim, Gf.Vec3f(*rotate))
+        usd.transforms.update_rotate_op(prim, Gf.Vec3f(*rotate))
 
     stage.Save()
     logger.info(

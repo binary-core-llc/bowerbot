@@ -117,12 +117,6 @@ def require_camera(stage: Usd.Stage, prim_path: str) -> Usd.Prim:
     return prim
 
 
-def camera_translate(prim: Usd.Prim) -> schemas.Vec3:
-    """Return the camera's local translation."""
-    t = UsdGeom.Xformable(prim).GetLocalTransformation().ExtractTranslation()
-    return (t[0], t[1], t[2])
-
-
 def write_camera_attributes(
     stage: Usd.Stage, prim_path: str, attributes: dict,
 ) -> None:
@@ -155,5 +149,5 @@ def format_camera_prim(prim: Usd.Prim) -> dict:
         "type": str(prim.GetTypeName()),
         "projection": str(camera.GetProjectionAttr().Get()),
         "focal_length": float(camera.GetFocalLengthAttr().Get()),
-        "position": utils.stage.extract_position(prim),
+        "position": usd.transforms.extract_position(prim),
     }

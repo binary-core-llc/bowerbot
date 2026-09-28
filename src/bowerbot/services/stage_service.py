@@ -11,6 +11,7 @@ from typing import Any
 from bowerbot import scene_state
 from bowerbot import utils
 from bowerbot.utils import authoring
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +139,7 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
     if not prim.IsValid():
         raise ValueError(f"Prim not found: {prim_path}")
 
-    cur_tx, cur_ty, cur_tz, cur_ry = utils.stage.read_translate_and_rotate_y(prim)
+    cur_tx, cur_ty, cur_tz, cur_ry = usd.transforms.read_translate_and_rotate_y(prim)
     tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
     ty = float(params["translate_y"]) if params.get("translate_y") is not None else cur_ty
     tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
@@ -170,7 +171,7 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             raise RuntimeError(msg)
         state.stage = utils.stage.open_stage(state.stage_path)
     else:
-        utils.stage.set_transform(
+        usd.transforms.set_transform(
             state.stage, prim_path,
             translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
         )

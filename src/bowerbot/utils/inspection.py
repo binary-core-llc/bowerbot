@@ -13,6 +13,7 @@ from pxr import UsdGeom
 from pxr import UsdLux
 
 from bowerbot import utils
+from bowerbot.utils import usd
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
@@ -67,7 +68,7 @@ def _classify(
         if scene_gprim and not has_refs and not is_light
         else prim
     )
-    position = utils.stage.extract_position(target)
+    position = usd.transforms.extract_position(target)
     if is_light:
         return utils.lights.format_light_prim(target, position)
     return _format_geometry_prim(target, position, bbox_cache)

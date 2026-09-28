@@ -8,7 +8,6 @@ from __future__ import annotations
 import math
 
 import numpy as np
-from pxr import Gf
 from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
@@ -55,7 +54,7 @@ def collect_triangles(
                     seen.add(key)
                     footprints = _instancer_footprints(
                         UsdGeom.PointInstancer(prim),
-                        gf_matrix_to_numpy(xform_cache.GetLocalToWorldTransform(prim)),
+                        usd.transforms.gf_matrix_to_numpy(xform_cache.GetLocalToWorldTransform(prim)),
                         up,
                     )
                     if footprints is not None:
@@ -68,7 +67,7 @@ def collect_triangles(
             if local is None:
                 continue
             a, b, c = local
-            matrix = gf_matrix_to_numpy(xform_cache.GetLocalToWorldTransform(prim))
+            matrix = usd.transforms.gf_matrix_to_numpy(xform_cache.GetLocalToWorldTransform(prim))
             if np.linalg.det(matrix[:3, :3]) < 0:
                 b, c = c, b
             parts.append((
@@ -293,11 +292,6 @@ def prim_world_box(
         msg = f"Prim {prim_path} has no geometry bounds."
         raise ValueError(msg)
     return np.array(rng.GetMin()), np.array(rng.GetMax())
-
-
-def gf_matrix_to_numpy(matrix: Gf.Matrix4d) -> schemas.FloatArray:
-    """A Gf.Matrix4d as a (4, 4) float64 array (row-vector convention)."""
-    return np.array(matrix, dtype=np.float64)
 
 
 # ── internals ──

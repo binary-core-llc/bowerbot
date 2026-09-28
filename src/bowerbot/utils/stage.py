@@ -247,7 +247,7 @@ def _create_attribute_on_demand(
 ) -> Usd.Attribute:
     """Create an attribute; xformOp:* routes through Xformable so xformOpOrder updates."""
     if attribute_name.startswith("xformOp:") and prim.IsA(UsdGeom.Xformable):
-        op = _add_xform_op(UsdGeom.Xformable(prim), attribute_name)
+        op = usd.transforms.add_xform_op(UsdGeom.Xformable(prim), attribute_name)
         if op is not None:
             return op.GetAttr()
 
@@ -263,25 +263,6 @@ def _create_attribute_on_demand(
 
     inferred = usd.values.infer_sdf_type(value)
     return prim.CreateAttribute(attribute_name, inferred, custom=False)
-
-
-def _add_xform_op(
-    xformable: UsdGeom.Xformable, attribute_name: str,
-) -> UsdGeom.XformOp | None:
-    """Return the xform op for *attribute_name*, adding to xformOpOrder if missing."""
-    suffix = attribute_name[len("xformOp:"):]
-    base, _, namespace = suffix.partition(":")
-    spec = constants.TransformUsd.XFORM_OPS.get(base)
-    if spec is None:
-        return None
-    op_type, value_type = spec
-    current_order = xformable.GetXformOpOrderAttr().Get() or ()
-    if attribute_name in current_order:
-        attr = xformable.GetPrim().CreateAttribute(
-            attribute_name, value_type, custom=False,
-        )
-        return UsdGeom.XformOp(attr)
-    return xformable.AddXformOp(op_type, opSuffix=namespace or "")
 
 
 def _resolve_shader_input_type(
@@ -477,55 +458,6 @@ def unique_prim_path(stage: Usd.Stage, parent: str, base_name: str) -> str:
 
 
 # ── Transforms / namespace edits ──
-
-
-def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, float]:
-    """Return ``(tx, ty, tz, ry)`` resolved on ``prim``; missing ops read as 0."""
-    xformable = UsdGeom.Xformable(prim)
-    tx = ty = tz = ry = 0.0
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
-            value = op.Get()
-            if value is not None:
-                tx, ty, tz = float(value[0]), float(value[1]), float(value[2])
-        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            value = op.Get()
-            if value is not None:
-                ry = float(value[1])
-    return tx, ty, tz, ry
-
-
-def set_transform(
-    stage: Usd.Stage,
-    prim_path: str,
-    translate: tuple[float, float, float],
-    rotate: tuple[float, float, float] = (0.0, 0.0, 0.0),
-) -> None:
-    """Update translate/rotate on an existing prim in place."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim.IsValid():
-        msg = f"Prim not found: {prim_path}"
-        raise ValueError(msg)
-
-    xformable = UsdGeom.Xformable(prim)
-    tx, ty, tz = translate
-    rx, ry, rz = rotate
-
-    found_translate = False
-    found_rotate = False
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
-            if op.GetOpName() == "xformOp:translate":
-                op.Set(Gf.Vec3d(tx, ty, tz))
-                found_translate = True
-        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            op.Set(Gf.Vec3f(rx, ry, rz))
-            found_rotate = True
-
-    if not found_translate:
-        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-    if not found_rotate and any(v != 0.0 for v in (rx, ry, rz)):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
 
 
 def rename_prim(stage: Usd.Stage, old_path: str, new_path: str) -> bool:
@@ -833,33 +765,6 @@ def world_to_local_point(
 
 
 # ── Internal helpers ──
-
-
-def update_translate_op(prim: Usd.Prim, value: Gf.Vec3d) -> None:
-    """Update the first translate xform op on *prim*."""
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpName() == "xformOp:translate":
-            op.Set(value)
-            return
-
-
-def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
-    """Update the first rotateXYZ xform op on *prim*."""
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            op.Set(value)
-            return
-
-
-def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
-    """Return the translate component of a prim's local transform."""
-    xformable = UsdGeom.Xformable(prim)
-    if not xformable:
-        return None
-    t = xformable.GetLocalTransformation().ExtractTranslation()
-    return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
 
 
 def world_bounds(

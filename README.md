@@ -916,6 +916,8 @@ src/bowerbot/
     usd/                       # USD building blocks: generic OpenUSD operations
       metrics.py               #   metersPerUnit and upAxis: read them, conform an
                                #   asset to the scene, world axes
+      transforms.py            #   xformOps: read and write translate and rotate, bake
+                               #   transforms into geometry, rotation math
       naming.py                #   Valid and safe USD names: prims, variants, joints,
                                #   collision groups
       values.py                #   JSON <-> USD values: numbers and vectors from tool

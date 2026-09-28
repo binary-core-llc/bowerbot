@@ -544,7 +544,7 @@ def pile_instances(
     max_radius = half - reach
     for i in range(n):
         proto = prototypes[int(proto_idx[i])]
-        pts = quat_rotate(
+        pts = usd.transforms.quat_rotate(
             np.repeat(orientations[i:i + 1], proto.points.shape[0], axis=0),
             proto.points * scales[i],
         )
@@ -622,17 +622,24 @@ def pile_orientations(
         # A quarter turn about the third axis stands the thinnest axis up.
         turn = np.zeros((n, 3))
         turn[np.flatnonzero(lay), 3 - thin[lay] - up] = 1.0
-        q[lay] = quat_axis_angle(turn[lay], np.full(int(lay.sum()), math.pi / 2.0))
+        q[lay] = usd.transforms.quat_axis_angle(turn[lay], np.full(int(lay.sum()), math.pi / 2.0))
     flip_axis = np.zeros(3)
     flip_axis[axes[0]] = 1.0
-    q = quat_mul(quat_axis_angle(flip_axis, np.where(rng.random(n) < 0.5, math.pi, 0.0)), q)
-    q = quat_mul(quat_axis_angle(up_vec, rng.random(n) * 2.0 * math.pi), q)
+    q = usd.transforms.quat_mul(
+        usd.transforms.quat_axis_angle(
+            flip_axis, np.where(rng.random(n) < 0.5, math.pi, 0.0),
+        ),
+        q,
+    )
+    q = usd.transforms.quat_mul(
+        usd.transforms.quat_axis_angle(up_vec, rng.random(n) * 2.0 * math.pi), q,
+    )
     phi = rng.random(n) * 2.0 * math.pi
     tilt_axis = np.zeros((n, 3))
     tilt_axis[:, axes[0]] = np.cos(phi)
     tilt_axis[:, axes[1]] = np.sin(phi)
     tilt = rng.random(n) * math.radians(tilt_degrees)
-    return quat_mul(quat_axis_angle(tilt_axis, tilt), q)
+    return usd.transforms.quat_mul(usd.transforms.quat_axis_angle(tilt_axis, tilt), q)
 
 
 def generate_surface_scatter(
@@ -969,20 +976,24 @@ def generate_path_scatter(
         side_sign=sign, center=center, direction_degrees=path.direction_degrees,
         prototypes=prototypes, proto_idx=proto_idx,
     ) + math.radians(path.yaw_offset_degrees)
-    headings = quat_axis_angle(up_vec, yaw)
+    headings = usd.transforms.quat_axis_angle(up_vec, yaw)
     orientations = headings
     settle = np.full(n, pose.align is schemas.ScatterAlign.UP)
     if path.follow_slope and index is not None:
         pitch = _path_pitch(index, points, closed, up, stations, half, station_idx, lateral)
         axis = np.cross(tangent, up_vec)
-        orientations = quat_mul(quat_axis_angle(axis, pitch), orientations)
+        orientations = usd.transforms.quat_mul(
+            usd.transforms.quat_axis_angle(axis, pitch), orientations,
+        )
     if pose.align is schemas.ScatterAlign.SURFACE:
         if index is not None:
             base_min, base_max = prototype_bases(prototypes, proto_idx)
             normals, settle = ground_normals(
                 index, contacts, headings, scales, base_min, base_max, normals, up,
             )
-        orientations = quat_mul(quat_between(up_vec, normals), orientations)
+        orientations = usd.transforms.quat_mul(
+            usd.transforms.quat_between(up_vec, normals), orientations,
+        )
     if path.follow_slope:
         settle[:] = False
     positions = rest_positions(
@@ -1013,78 +1024,12 @@ def estimate_path_scatter(
 # ── orientation ──
 
 
-def quat_axis_angle(axis: schemas.FloatArray, angle: schemas.FloatArray) -> schemas.FloatArray:
-    """Quaternions ``(w, x, y, z)`` rotating *angle* radians about unit *axis*."""
-    axis = np.broadcast_to(axis, (angle.shape[0], 3))
-    half = angle / 2.0
-    return np.column_stack([np.cos(half), axis * np.sin(half)[:, None]])
-
-
-def quat_mul(a: schemas.FloatArray, b: schemas.FloatArray) -> schemas.FloatArray:
-    """Hamilton product ``a * b`` (apply *b* first, then *a*)."""
-    w1, x1, y1, z1 = a.T
-    w2, x2, y2, z2 = b.T
-    return np.column_stack([
-        w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
-        w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
-        w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
-        w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
-    ])
-
-
-def quat_rotate(q: schemas.FloatArray, v: schemas.FloatArray) -> schemas.FloatArray:
-    """Rotate vectors *v* (n, 3) by quaternions *q* (n, 4)."""
-    w = q[:, :1]
-    u = q[:, 1:]
-    t = 2.0 * np.cross(u, v)
-    return v + w * t + np.cross(u, t)
-
-
-def quat_between(src: schemas.FloatArray, dst: schemas.FloatArray) -> schemas.FloatArray:
-    """Shortest-arc quaternions turning unit *src* (3,) onto each unit *dst*."""
-    d = dst @ src
-    axis = np.cross(np.broadcast_to(src, dst.shape), dst)
-    q = np.column_stack([1.0 + d, axis])
-    opposite = d < -1.0 + 1e-9
-    if opposite.any():
-        perp = np.cross(src, [1.0, 0.0, 0.0])
-        if np.linalg.norm(perp) < 1e-6:
-            perp = np.cross(src, [0.0, 0.0, 1.0])
-        perp /= np.linalg.norm(perp)
-        q[opposite] = np.concatenate([[0.0], perp])
-    return q / np.linalg.norm(q, axis=1)[:, None]
-
-
-def quat_conj(q: schemas.FloatArray) -> schemas.FloatArray:
-    """Inverse of unit quaternions ``(w, x, y, z)``."""
-    return q * np.array([1.0, -1.0, -1.0, -1.0], dtype=np.float64)
-
-
-def quat_heading(q: schemas.FloatArray, up: int) -> schemas.FloatArray:
-    """The turn about up alone that keeps each rotation's heading (tilt removed)."""
-    axes = usd.metrics.horizontal_axes(up)
-    up_vec = usd.metrics.up_vector(up)
-    angle = np.zeros(q.shape[0])
-    todo = np.ones(q.shape[0], dtype=bool)
-    for axis in axes:
-        ref = np.zeros(3)
-        ref[axis] = 1.0
-        f = quat_rotate(q[todo], np.tile(ref, (int(todo.sum()), 1)))
-        f[:, up] = 0.0
-        # A vertical reference axis has no heading; try the other one.
-        clear = np.linalg.norm(f, axis=1) > 1e-6
-        rows = np.flatnonzero(todo)[clear]
-        angle[rows] = np.arctan2(np.cross(ref, f[clear]) @ up_vec, f[clear] @ ref)
-        todo[rows] = False
-    return quat_axis_angle(up_vec, angle)
-
-
 def random_headings(
     rng: np.random.Generator, n: int, up: int, *, random_yaw: bool,
 ) -> schemas.FloatArray:
     """Yaw-only rotations about up: uniformly random, or none."""
     yaw = rng.random(n) * 2.0 * math.pi if random_yaw else np.zeros(n)
-    return quat_axis_angle(usd.metrics.up_vector(up), yaw)
+    return usd.transforms.quat_axis_angle(usd.metrics.up_vector(up), yaw)
 
 
 def surface_orientations(
@@ -1107,20 +1052,10 @@ def surface_orientations(
         axis[:, axes[0]] = np.cos(phi)
         axis[:, axes[1]] = np.sin(phi)
         tilt = rng.random(n) * math.radians(tilt_jitter_degrees)
-        q = quat_mul(quat_axis_angle(axis, tilt), q)
+        q = usd.transforms.quat_mul(usd.transforms.quat_axis_angle(axis, tilt), q)
     if align is schemas.ScatterAlign.SURFACE:
-        q = quat_mul(quat_between(up_vec, normals), q)
+        q = usd.transforms.quat_mul(usd.transforms.quat_between(up_vec, normals), q)
     return q
-
-
-def quat_to_rotate_xyz(q: schemas.FloatArray) -> list[tuple[float, float, float]]:
-    """Convert ``(w, x, y, z)`` quaternions to xformOp:rotateXYZ degrees."""
-    out: list[tuple[float, float, float]] = []
-    for w, x, y, z in q.tolist():
-        rotation = Gf.Rotation(Gf.Quatd(w, Gf.Vec3d(x, y, z)))
-        rz, ry, rx = rotation.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
-        out.append(_smallest_rotate_xyz(rx, ry, rz))
-    return out
 
 
 # ── resting ──
@@ -1144,7 +1079,7 @@ def rest_positions(
     base_min, base_max = prototype_bases(prototypes, proto_idx)
     base = (base_min + base_max) / 2.0
     up_vec = usd.metrics.up_vector(up)
-    positions = contacts - quat_rotate(orientations, base * scales)
+    positions = contacts - usd.transforms.quat_rotate(orientations, base * scales)
     if index is not None and settle.any():
         samples = base_samples(
             positions[settle], orientations[settle], scales[settle],
@@ -1154,7 +1089,7 @@ def rest_positions(
         positions[settle, up] += shift
     height = (bmax[:, up] - bmin[:, up]) * scales[:, up]
     if embed > 0:
-        local_up = quat_rotate(orientations, np.broadcast_to(up_vec, contacts.shape))
+        local_up = usd.transforms.quat_rotate(orientations, np.broadcast_to(up_vec, contacts.shape))
         positions -= local_up * (embed * height)[:, None]
     return positions
 
@@ -1181,7 +1116,7 @@ def ground_normals(
     """Normal of the ground fitted under each base footprint, else *fallback*."""
     axes = list(usd.metrics.horizontal_axes(up))
     center = (base_min + base_max) / 2.0
-    positions = contacts - quat_rotate(headings, center * scales)
+    positions = contacts - usd.transforms.quat_rotate(headings, center * scales)
     samples = base_samples(positions, headings, scales, base_min, base_max, up)
     n, k, _ = samples.shape
     flat = samples.reshape(-1, 3)
@@ -1236,7 +1171,7 @@ def base_samples(
     local[:, :, axes[0]] += ta[None, :] * extent[:, None, axes[0]]
     local[:, :, axes[1]] += tb[None, :] * extent[:, None, axes[1]]
     local *= scales[:, None, :]
-    rotated = quat_rotate(np.repeat(orientations, k, axis=0), local.reshape(-1, 3))
+    rotated = usd.transforms.quat_rotate(np.repeat(orientations, k, axis=0), local.reshape(-1, 3))
     return positions[:, None, :] + rotated.reshape(n, k, 3)
 
 
@@ -1269,11 +1204,11 @@ def to_local(
     if world == Gf.Matrix4d(1.0):
         return instances
     inverse = world.GetInverse()
-    matrix = utils.surface.gf_matrix_to_numpy(inverse)
+    matrix = usd.transforms.gf_matrix_to_numpy(inverse)
     positions = instances.positions @ matrix[:3, :3] + matrix[3, :3]
     rot = inverse.RemoveScaleShear().ExtractRotationQuat()
     parent_q = np.array([[rot.GetReal(), *rot.GetImaginary()]])
-    orientations = quat_mul(np.repeat(parent_q, instances.count, axis=0),
+    orientations = usd.transforms.quat_mul(np.repeat(parent_q, instances.count, axis=0),
                             instances.orientations)
     return schemas.ScatterInstanceSet(
         proto_indices=instances.proto_indices, positions=positions,
@@ -1379,7 +1314,7 @@ def placement_objects(
     first_index: int,
 ) -> list[schemas.SceneObject]:
     """One placement wrapper per instance under *group_path*, numbered from *first_index*."""
-    rotations = quat_to_rotate_xyz(instances.orientations)
+    rotations = usd.transforms.quat_to_rotate_xyz(instances.orientations)
     objects: list[schemas.SceneObject] = []
     for i in range(instances.count):
         proto = prototypes[int(instances.proto_indices[i])]
@@ -1421,7 +1356,7 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
         "type": "PointInstancer",
         "instances": len(indices),
         "prototypes": prototypes,
-        "position": utils.stage.extract_position(prim),
+        "position": usd.transforms.extract_position(prim),
         "bounds": utils.stage.world_bounds(prim, bbox_cache),
     }
 
@@ -1490,7 +1425,7 @@ def drop_scatter(
     scales = np.asarray(raw_s, dtype=np.float64) if raw_s else np.ones((n, 3))
 
     world_gf = UsdGeom.XformCache(time).GetLocalToWorldTransform(instancer.GetPrim())
-    world = utils.surface.gf_matrix_to_numpy(world_gf)
+    world = usd.transforms.gf_matrix_to_numpy(world_gf)
     to_local = np.linalg.inv(world)
     targets = instancer.GetPrototypesRel().GetTargets()
     proto_min = np.zeros((len(targets), 3))
@@ -1508,9 +1443,11 @@ def drop_scatter(
         world_scale = float(np.cbrt(abs(np.linalg.det(world[:3, :3]))))
         up_vec = usd.metrics.up_vector(up)
         base = (base_min + base_max) / 2.0
-        centers_local = positions + quat_rotate(orientations, base * scales)
+        centers_local = positions + usd.transforms.quat_rotate(orientations, base * scales)
         centers = centers_local @ world[:3, :3] + world[3, :3]
-        headings = quat_heading(quat_mul(to_world_q, orientations), up)
+        headings = usd.transforms.quat_heading(
+            usd.transforms.quat_mul(to_world_q, orientations), up,
+        )
         hit, _, tris = utils.surface.surface_under(
             index, centers, mode="nearest", reference=centers[:, up].copy(),
         )
@@ -1521,11 +1458,12 @@ def drop_scatter(
             index, centers, headings, scales * world_scale, base_min, base_max,
             fallback, up,
         )
-        tilted = quat_mul(
-            quat_conj(to_world_q), quat_mul(quat_between(up_vec, normals), headings),
+        tilted = usd.transforms.quat_mul(
+            usd.transforms.quat_conj(to_world_q),
+            usd.transforms.quat_mul(usd.transforms.quat_between(up_vec, normals), headings),
         )
         orientations = np.where(fitted[:, None], tilted, orientations)
-        positions = centers_local - quat_rotate(orientations, base * scales)
+        positions = centers_local - usd.transforms.quat_rotate(orientations, base * scales)
         retilted = int(fitted.sum())
 
     samples = base_samples(positions, orientations, scales, base_min, base_max, up)
@@ -1616,12 +1554,12 @@ def drop_prim(
         normal = np.zeros(3)
         normal[axes[0]], normal[axes[1]], normal[up] = -coef[0], -coef[1], 1.0
         normal /= np.linalg.norm(normal)
-        tilt = quat_between(up_vec, normal[None, :])[0]
+        tilt = usd.transforms.quat_between(up_vec, normal[None, :])[0]
         rotate_op = ops.get(UsdGeom.XformOp.TypeRotateXYZ)
         if rotate_op is None:
             msg = f"{prim_path} has no rotateXYZ op; use align='keep' to drop it upright."
             raise ValueError(msg)
-        old_rot = _rotate_xyz_rotation(rotate_op.Get())
+        old_rot = usd.transforms.rotate_xyz_rotation(rotate_op.Get())
         tilt_rot = Gf.Rotation(Gf.Quatd(tilt[0], Gf.Vec3d(*tilt[1:].tolist())))
         new_rot = old_rot * tilt_rot
         rz, ry, rx = new_rot.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
@@ -1633,7 +1571,7 @@ def drop_prim(
         )
         base = (bmin + bmax) / 2.0
         base[up] = bmin[up]
-        swung = base + quat_rotate(tilt[None, :], (pivot - base)[None, :])[0]
+        swung = base + usd.transforms.quat_rotate(tilt[None, :], (pivot - base)[None, :])[0]
         world_shift += swung - pivot
         fitted = coef[0] * pts[:, axes[0]] + coef[1] * pts[:, axes[1]] + coef[2]
         residual = float(np.max(pts[:, up] - fitted))
@@ -1707,7 +1645,7 @@ def _conformed_extents(
         if triangles.count else corners
     )
     if correction is not None:
-        rotate = utils.surface.gf_matrix_to_numpy(
+        rotate = usd.transforms.gf_matrix_to_numpy(
             Gf.Matrix4d().SetRotate(Gf.Rotation(Gf.Vec3d.XAxis(), correction)),
         )[:3, :3]
         corners = corners @ rotate
@@ -1987,7 +1925,7 @@ def _curve_points(
     if points.shape[0] < 2:
         msg = f"curve_prim {prim_path} has fewer than 2 points."
         raise ValueError(msg)
-    world = utils.surface.gf_matrix_to_numpy(
+    world = usd.transforms.gf_matrix_to_numpy(
         UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default()),
     )
     points = points @ world[:3, :3] + world[3, :3]
@@ -2043,27 +1981,6 @@ def _is_placement_wrapper(prim: Usd.Prim) -> bool:
         prim.IsA(UsdGeom.Xformable)
         and child.IsValid()
         and bool(utils.stage.get_prim_ref_paths(child))
-    )
-
-
-def _smallest_rotate_xyz(rx: float, ry: float, rz: float) -> tuple[float, float, float]:
-    """Smaller of the two equivalent rotateXYZ triples, so a yaw stays (0, yaw, 0)."""
-    def wrap(angle: float) -> float:
-        wrapped = (angle + 180.0) % 360.0 - 180.0
-        return 0.0 if abs(wrapped) < 1e-6 else round(wrapped, 4)
-
-    first = (wrap(rx), wrap(ry), wrap(rz))
-    second = (wrap(rx + 180.0), wrap(180.0 - ry), wrap(rz + 180.0))
-    return min(first, second, key=lambda angles: sum(abs(a) for a in angles))
-
-
-def _rotate_xyz_rotation(value: Any) -> Gf.Rotation:
-    """Gf.Rotation equal to an xformOp:rotateXYZ value (X applied first)."""
-    rx, ry, rz = (float(v) for v in (value or (0.0, 0.0, 0.0)))
-    return (
-        Gf.Rotation(Gf.Vec3d.XAxis(), rx)
-        * Gf.Rotation(Gf.Vec3d.YAxis(), ry)
-        * Gf.Rotation(Gf.Vec3d.ZAxis(), rz)
     )
 
 

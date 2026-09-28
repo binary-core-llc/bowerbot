@@ -11,10 +11,12 @@ or tools. It uses only other modules in this group (plus ``constants`` and
 
 from bowerbot.utils.usd import metrics
 from bowerbot.utils.usd import naming
+from bowerbot.utils.usd import transforms
 from bowerbot.utils.usd import values
 
 __all__ = [
     "metrics",
     "naming",
+    "transforms",
     "values",
 ]

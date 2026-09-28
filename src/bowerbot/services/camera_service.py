@@ -99,7 +99,7 @@ def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     if look_at is not None:
         eye = (
             translate if translate is not None
-            else utils.cameras.camera_translate(prim)
+            else usd.transforms.local_translation(prim)
         )
         rotate = utils.cameras.look_at_rotation(
             eye,

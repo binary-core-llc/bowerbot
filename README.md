@@ -956,9 +956,9 @@ src/bowerbot/
                                #   localize, check and repair (ASWF compliance)
       opinions.py              #   Scene.usda opinions that would mask a write into an
                                #   asset layer or a variant
-    stage.py                   #   list_prim_children (moving to features/)
-    inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
-                               #   physics, placements, geometry)
+    features/                  # The logic behind each tool family
+      inspection.py            #   Describing the scene: list_scene entries for every
+                               #   kind of prim, a prim's parts
     asset_folder.py            #   check_shared_modification (moving to
                                #   features/materials)
     lights.py                  #   All light authoring: create/update/remove,
@@ -968,7 +968,6 @@ src/bowerbot/
     materials.py               #   material_in_folder primitives, find_first_material
     physics.py                 #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
-    physics_typing.py          #   is_joint / is_physics_scene / is_collision_group / ...
     scatter.py                 #   Distributions (random/rows/pile/path), resting,
                                #   orientation, PointInstancer + placement authoring
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants

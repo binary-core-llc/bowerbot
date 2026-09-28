@@ -139,14 +139,3 @@ def refuse_unknown_camera_attributes(attributes: dict) -> None:
         )
 
 
-def format_camera_prim(prim: Usd.Prim) -> dict:
-    """Format a Camera prim for ``list_prims``."""
-    camera = UsdGeom.Camera(prim)
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "camera",
-        "type": str(prim.GetTypeName()),
-        "projection": str(camera.GetProjectionAttr().Get()),
-        "focal_length": float(camera.GetFocalLengthAttr().Get()),
-        "position": usd.transforms.extract_position(prim),
-    }

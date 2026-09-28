@@ -11,6 +11,7 @@ from typing import Any
 from bowerbot import scene_state
 from bowerbot import utils
 from bowerbot.utils import authoring
+from bowerbot.utils import features
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     state.stage_path = state.project.scene_path
     if state.stage_path.exists():
         state.stage = authoring.stage.open_stage(state.stage_path)
-        state.object_count = len(utils.inspection.list_prims(state.stage))
+        state.object_count = len(features.inspection.list_prims(state.stage))
         logger.info("Reopened existing stage: %s", state.stage_path)
         return {
             "stage_path": str(state.stage_path),
@@ -56,7 +57,7 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 def list_scene(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """List the scene contents: every managed object, each tagged with its kind."""
     del params
-    objects = utils.inspection.list_prims(state.stage)
+    objects = features.inspection.list_prims(state.stage)
     return {
         "object_count": len(objects),
         "objects": objects,
@@ -287,7 +288,7 @@ def delete_scene_snapshot(
 def list_prim_children(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """List geometry parts under a prim path."""
     prim_path = params["prim_path"]
-    children = utils.stage.list_prim_children(state.stage, prim_path)
+    children = features.inspection.list_prim_children(state.stage, prim_path)
     if not children:
         return {
             "prim_path": prim_path,

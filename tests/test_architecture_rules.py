@@ -10,6 +10,8 @@
   only through ``usd``, never a module outside the group.
 - ``utils/authoring/`` holds BowerBot's authoring model: a module there uses
   ``usd`` and ``authoring``, never ``features``.
+- ``utils/features/`` holds the logic behind each tool family: a module there
+  uses ``usd`` and ``authoring``, never another feature.
 - ``constants/`` holds fixed values, grouped in classes.
 - ``schemas/`` holds data shapes (pydantic models, enums, dataclasses) and
   type aliases, never values, and never imports ``pxr``.
@@ -299,4 +301,26 @@ def test_authoring_never_uses_features(path: Path) -> None:
         for alias in node.names
         if alias.name not in {"usd", "authoring"}
     ]
+    assert not problems, f"utils/{_utils_id(path)}:\n" + "\n".join(problems)
+
+
+@pytest.mark.parametrize(
+    "path", sorted((PACKAGE / "utils" / "features").glob("*.py")), ids=_utils_id,
+)
+def test_features_never_use_other_features(path: Path) -> None:
+    """A ``features/`` module uses ``usd`` and ``authoring``, never another feature."""
+    problems = []
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        names = [alias.name for alias in node.names]
+        if node.module == "bowerbot" and "utils" in names:
+            problems.append(
+                f"line {node.lineno}: imports all of utils; import usd and authoring instead",
+            )
+        if node.module == "bowerbot.utils" and set(names) - {"usd", "authoring"}:
+            problems.append(
+                f"line {node.lineno}: imports {names} from utils; "
+                "only usd and authoring are allowed",
+            )
     assert not problems, f"utils/{_utils_id(path)}:\n" + "\n".join(problems)

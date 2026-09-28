@@ -156,31 +156,6 @@ def get_light_texture(stage: Usd.Stage, prim_path: str) -> str | None:
     return tex_val.path if hasattr(tex_val, "path") else str(tex_val)
 
 
-def format_light_prim(
-    prim: Usd.Prim, position: dict[str, float] | None,
-) -> dict:
-    """Format a light prim for ``list_prims``."""
-    data: dict = {
-        "prim_path": str(prim.GetPath()),
-        "kind": "light",
-        "light_type": prim.GetTypeName(),
-        "position": position,
-    }
-    intensity_attr = prim.GetAttribute("inputs:intensity")
-    if intensity_attr:
-        data["intensity"] = intensity_attr.Get()
-    exposure_attr = prim.GetAttribute("inputs:exposure")
-    if exposure_attr:
-        data["exposure"] = exposure_attr.Get()
-    color_attr = prim.GetAttribute("inputs:color")
-    if color_attr:
-        c = color_attr.Get()
-        data["color"] = {
-            "r": round(c[0], 3), "g": round(c[1], 3), "b": round(c[2], 3),
-        }
-    return data
-
-
 def add_light_to_folder(
     asset_dir: Path,
     light_name: str,

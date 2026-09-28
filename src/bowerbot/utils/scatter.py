@@ -1339,28 +1339,6 @@ def count_by_prototype(
     return {proto.name: int(c) for proto, c in zip(prototypes, counts, strict=True)}
 
 
-def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[str, Any]:
-    """``list_scene`` entry for a scatter PointInstancer."""
-    instancer = UsdGeom.PointInstancer(prim)
-    indices = instancer.GetProtoIndicesAttr().Get() or []
-    stage = prim.GetStage()
-    prototypes = []
-    for target in instancer.GetPrototypesRel().GetTargets():
-        proto = stage.GetPrimAtPath(target)
-        child = proto.GetChild("asset") if proto.IsValid() else proto
-        refs = usd.references.get_prim_ref_paths(child) if child and child.IsValid() else []
-        prototypes.append(refs[0] if refs else str(target))
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "scatter",
-        "type": "PointInstancer",
-        "instances": len(indices),
-        "prototypes": prototypes,
-        "position": usd.transforms.extract_position(prim),
-        "bounds": usd.bounds.world_bounds(prim, bbox_cache),
-    }
-
-
 # ── drop to surface ──
 
 

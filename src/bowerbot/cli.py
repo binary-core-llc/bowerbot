@@ -26,8 +26,8 @@ from bowerbot import mcp_server
 from bowerbot import project_folder
 from bowerbot import scene_state
 from bowerbot import skills
-from bowerbot import utils
 from bowerbot.utils import authoring
+from bowerbot.utils import features
 
 theme = Theme({
     "sf": "bold green",
@@ -219,7 +219,7 @@ def _start_chat(settings: config.Settings, project: project_folder.Project | Non
     )
 
     if project and project.scene_path.exists() and state.object_count > 0:
-        objects = utils.inspection.list_prims(state.stage)
+        objects = features.inspection.list_prims(state.stage)
         object_summary = "\n".join(
             _format_object_summary(o) for o in objects
         )

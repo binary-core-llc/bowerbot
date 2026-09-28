@@ -1237,35 +1237,3 @@ def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
     return touched
 
 
-def format_physics_scene_prim(prim: Usd.Prim) -> dict:
-    """Format a ``UsdPhysics.Scene`` for ``list_prims``."""
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "physics_scene",
-        "type": str(prim.GetTypeName()),
-    }
-
-
-def format_joint_prim(prim: Usd.Prim) -> dict:
-    """Format a UsdPhysics joint for ``list_prims``."""
-    body0_rel = prim.GetRelationship("physics:body0")
-    body1_rel = prim.GetRelationship("physics:body1")
-    body0 = [str(t) for t in body0_rel.GetTargets()] if body0_rel else []
-    body1 = [str(t) for t in body1_rel.GetTargets()] if body1_rel else []
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "joint",
-        "type": str(prim.GetTypeName()),
-        "body0": body0[0] if body0 else None,
-        "body1": body1[0] if body1 else None,
-    }
-
-
-def format_collision_group_prim(prim: Usd.Prim) -> dict:
-    """Format a ``UsdPhysics.CollisionGroup`` for ``list_prims``."""
-    return {
-        "prim_path": str(prim.GetPath()),
-        "kind": "collision_group",
-        "type": str(prim.GetTypeName()),
-        "name": prim.GetName(),
-    }

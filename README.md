@@ -931,6 +931,8 @@ src/bowerbot/
                                #   select and remove variant sets
       naming.py                #   Valid and safe USD names: prims, variants, joints,
                                #   collision groups
+      compliance.py            #   Running USD's own validators on a file and reporting
+                               #   what they find
       values.py                #   JSON <-> USD values: numbers and vectors from tool
                                #   input, USD value types
     authoring/                 # BowerBot's authoring model: asset folders, /Scene,

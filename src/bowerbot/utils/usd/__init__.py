@@ -11,6 +11,7 @@ or tools. It uses only other modules in this group (plus ``constants`` and
 
 from bowerbot.utils.usd import attributes
 from bowerbot.utils.usd import bounds
+from bowerbot.utils.usd import compliance
 from bowerbot.utils.usd import metrics
 from bowerbot.utils.usd import namespace
 from bowerbot.utils.usd import naming
@@ -23,6 +24,7 @@ from bowerbot.utils.usd import variant_sets
 __all__ = [
     "attributes",
     "bounds",
+    "compliance",
     "metrics",
     "namespace",
     "naming",

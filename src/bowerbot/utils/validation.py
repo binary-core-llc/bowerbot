@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import functools
 import logging
 import os
 from pathlib import Path
@@ -15,7 +14,6 @@ from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
 from pxr import UsdUtils
-from pxr import UsdValidation
 
 from bowerbot import constants
 from bowerbot import schemas
@@ -192,15 +190,10 @@ def validate_stage(
     issues.extend(_check_sublayers(stage))
     issues.extend(_check_material_bindings(stage))
     issues.extend(_check_scene_asset_variants(stage))
-    issues.extend(_run_usd_compliance_checker(str(stage_path)))
+    issues.extend(usd.compliance.run_usd_compliance_checker(stage_path))
 
     is_valid = not any(i.severity == schemas.Severity.ERROR for i in issues)
     return schemas.ValidationResult(is_valid=is_valid, issues=issues)
-
-
-def run_usd_compliance_checker(file_path: str | Path) -> list[schemas.ValidationIssue]:
-    """Run USD's ComplianceChecker against *file_path* and surface issues."""
-    return _run_usd_compliance_checker(str(file_path))
 
 
 def _check_default_prim(stage: Usd.Stage) -> list[schemas.ValidationIssue]:
@@ -392,62 +385,6 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[schemas.ValidationIssu
                 continue
             seen.add(asset_dir)
             issues.extend(validate_asset_variants(asset_dir))
-    return issues
-
-
-@functools.cache
-def _validation_context() -> UsdValidation.ValidationContext:
-    """Build a ValidationContext with all registered validators, once.
-
-    A failed build raises and is not cached, so the next call tries again.
-    """
-    registry = UsdValidation.ValidationRegistry()
-    validators = registry.GetOrLoadAllValidators()
-    return UsdValidation.ValidationContext(validators)
-
-
-def _get_validation_context() -> UsdValidation.ValidationContext | None:
-    """The shared ValidationContext, or ``None`` when it cannot be built."""
-    try:
-        return _validation_context()
-    except Exception as exc:
-        logger.warning("Failed to build USD validation context: %s", exc)
-        return None
-
-
-def _run_usd_compliance_checker(file_path: str) -> list[schemas.ValidationIssue]:
-    """Run USD's modern ValidationFramework against *file_path*."""
-    ctx = _get_validation_context()
-    if ctx is None:
-        return []
-
-    stage = Usd.Stage.Open(file_path)
-    if stage is None:
-        return []
-
-    try:
-        errors = ctx.Validate(stage)
-    except Exception as exc:
-        logger.warning("USD validation failed on %s: %s", file_path, exc)
-        return []
-
-    issues: list[schemas.ValidationIssue] = []
-    for err in errors:
-        severity = (
-            schemas.Severity.ERROR
-            if err.GetType() == UsdValidation.ValidationErrorType.Error
-            else schemas.Severity.WARNING
-        )
-        sites = err.GetSites()
-        prim_path = (
-            str(sites[0].GetPrim().GetPath())
-            if sites and sites[0].GetPrim() else None
-        )
-        issues.append(schemas.ValidationIssue(
-            severity=severity,
-            message=f"{err.GetName()}: {err.GetMessage()}",
-            prim_path=prim_path,
-        ))
     return issues
 
 

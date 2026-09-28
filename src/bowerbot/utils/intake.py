@@ -112,7 +112,7 @@ def _validate_intake(
 
     canonical_root = target_folder / report.root_canonical_name
     if canonical_root.exists():
-        compliance_issues = utils.validation.run_usd_compliance_checker(canonical_root)
+        compliance_issues = usd.compliance.run_usd_compliance_checker(canonical_root)
         for issue in compliance_issues:
             report.warnings.append(issue.message)
             logger.info(

@@ -11,7 +11,7 @@ from typing import Any
 from bowerbot import config
 from bowerbot import project_folder
 from bowerbot import scene_state
-from bowerbot import utils
+from bowerbot.utils import authoring
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def create_project(state: scene_state.SceneState, params: dict[str, Any]) -> dic
 def open_project(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Open an existing project and focus it."""
     name = params["name"]
-    project_path = state.projects_dir / utils.naming.safe_project_name(name)
+    project_path = state.projects_dir / authoring.naming.safe_project_name(name)
     if not (project_path / "project.json").exists():
         available = [p.name for p in project_folder.Project.list_projects(state.projects_dir)]
         msg = (

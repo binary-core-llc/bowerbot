@@ -20,7 +20,7 @@ from pxr import UsdUtils
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
+from bowerbot.utils import authoring
 
 # ── Reference inspection ──
 
@@ -426,7 +426,7 @@ def save_scene_snapshot(
 ) -> Path:
     """Flatten the composed scene into a named, self-contained snapshot file."""
     scene_path = Path(scene_path)
-    safe = utils.naming.safe_file_name(name)
+    safe = authoring.naming.safe_file_name(name)
     if not safe:
         raise ValueError(
             f"Snapshot name {name!r} is empty after sanitization. "
@@ -505,7 +505,7 @@ def list_scene_snapshots(scene_path: Path) -> list[dict[str, object]]:
 def delete_scene_snapshot(scene_path: Path, name: str) -> Path:
     """Delete a named snapshot file alongside scene.usda."""
     scene_path = Path(scene_path)
-    safe = utils.naming.safe_file_name(name)
+    safe = authoring.naming.safe_file_name(name)
     if not safe:
         raise ValueError(f"Invalid snapshot name: {name!r}")
     snapshot_path = scene_path.parent / f"{safe}.usda"

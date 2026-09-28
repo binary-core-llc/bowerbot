@@ -20,6 +20,7 @@ from pxr import Vt
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 # ── parameters and naming ──
 
@@ -27,8 +28,8 @@ from bowerbot import utils
 def scatter_prim_path(group: str, name: str) -> str:
     """``/Scene/<group>/<name>`` for a scatter, validating both parts."""
     group_path = utils.layout.scene_group_path(group)
-    prim_name = utils.naming.safe_prim_name(name)
-    if not utils.naming.is_valid_prim_name(prim_name):
+    prim_name = usd.naming.safe_prim_name(name)
+    if not usd.naming.is_valid_prim_name(prim_name):
         msg = (
             f"name '{name}' is not a valid USD prim name (letters, digits, "
             "underscores; must start with a letter or underscore)."
@@ -178,8 +179,8 @@ def stage_prototypes(
         bmin, bmax, base_min, base_max, points = _conformed_extents(
             project_dir / report.scene_ref_path, unit_scale, correction, up,
         )
-        base = utils.naming.safe_prim_name(Path(report.asset_folder_name).stem) or "proto"
-        if not utils.naming.is_valid_prim_name(base):
+        base = usd.naming.safe_prim_name(Path(report.asset_folder_name).stem) or "proto"
+        if not usd.naming.is_valid_prim_name(base):
             base = f"proto_{base}"
         name = base
         n = 2

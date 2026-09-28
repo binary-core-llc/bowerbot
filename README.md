@@ -907,8 +907,19 @@ src/bowerbot/
                            #   SkillCategory, Tool, ToolResult
     registry.py            #   Entry-point discovery and tool routing
 
-  utils/              # Pure-function primitives, one domain per module;
-                      # called as utils.<module>.<function>
+  utils/              # Pure-function primitives, one job per module, grouped by layer:
+                      # usd/ (USD building blocks), authoring/ (BowerBot's authoring
+                      # model), features/ (tool logic). Code imports the group
+                      # (`from bowerbot.utils import usd`) and calls through it,
+                      # e.g. usd.naming.safe_prim_name(); modules not grouped yet
+                      # are called as utils.<module>.<function>
+    usd/                       # USD building blocks: generic OpenUSD operations
+      naming.py                #   Valid and safe USD names: prims, variants, joints,
+                               #   collision groups
+    authoring/                 # BowerBot's authoring model: asset folders, /Scene,
+                               # the library, project textures
+      naming.py                #   Names of BowerBot's files and folders: projects,
+                               #   the scene and its snapshots
     stage.py                   #   USD-stage primitives: open/save, references,
                                #   xform-op edits, namespace edits, set/list_prim_attribute
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
@@ -940,7 +951,6 @@ src/bowerbot/
     layout.py                  #   place_layout expansion: grid/linear patterns,
                                #   asset resolution
     dependencies.py            #   USD dependency tree walker
-    naming.py                  #   Name sanitization for files, prims, projects
     usd_schema.py              #   Shared UsdSchemaRegistry introspection helpers
                                #   (used by both physics and lights)
 ```

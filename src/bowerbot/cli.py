@@ -27,6 +27,7 @@ from bowerbot import project_folder
 from bowerbot import scene_state
 from bowerbot import skills
 from bowerbot import utils
+from bowerbot.utils import authoring
 
 theme = Theme({
     "sf": "bold green",
@@ -316,7 +317,7 @@ def build(prompt: str) -> None:
     try:
         project = project_folder.Project.create(projects_dir, project_name)
     except FileExistsError:
-        safe_name = utils.naming.safe_project_name(project_name)
+        safe_name = authoring.naming.safe_project_name(project_name)
         project = project_folder.Project.load(projects_dir / safe_name)
 
     console.print("[sf]BowerBot[/] Building scene...")

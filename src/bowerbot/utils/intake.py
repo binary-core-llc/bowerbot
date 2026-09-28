@@ -26,6 +26,7 @@ from pxr import UsdUtils
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -242,7 +243,7 @@ def create_asset_folder(
     asset_dir = output_dir / asset_name
     asset_dir.mkdir(parents=True, exist_ok=True)
 
-    mpu, up = utils.asset_folder.read_stage_metadata(geometry_file)
+    mpu, up = usd.metrics.read_stage_metadata(geometry_file)
 
     geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if not geo_path.exists():
@@ -518,7 +519,7 @@ def add_nested_asset_reference(
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
     nested_mpu = (
-        utils.asset_folder.read_asset_mpu_from_file(ref_full_path)
+        usd.metrics.read_asset_mpu_from_file(ref_full_path)
         if ref_full_path.exists() else container_mpu
     )
     unit_scale = (

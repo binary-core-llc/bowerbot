@@ -17,11 +17,11 @@ from pathlib import Path
 
 from pxr import Sdf
 from pxr import Usd
-from pxr import UsdGeom
 
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -353,30 +353,12 @@ def rebuild_root_references(asset_dir: Path) -> None:
 # ── Stage metadata ──
 
 
-def read_stage_metadata(file_path: Path) -> tuple[float, str]:
-    """Return ``(metersPerUnit, upAxis)`` for *file_path*."""
-    stage = Usd.Stage.Open(str(file_path))
-    if stage is None:
-        return 1.0, "Y"
-
-    mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    up = UsdGeom.GetStageUpAxis(stage)
-    up_str = "Y" if up == UsdGeom.Tokens.y else "Z"
-    return mpu, up_str
-
-
 def read_stage_metadata_from_dir(asset_dir: Path) -> tuple[float, str]:
     """Return ``(metersPerUnit, upAxis)`` from an asset's ``geo.usda``."""
     geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if geo_path.exists():
-        return read_stage_metadata(geo_path)
+        return usd.metrics.read_stage_metadata(geo_path)
     return 1.0, "Y"
-
-
-def read_asset_mpu_from_file(asset_file: Path) -> float:
-    """Return ``metersPerUnit`` from any USD file. Defaults to 1.0."""
-    mpu, _ = read_stage_metadata(asset_file)
-    return mpu if mpu > 0 else 1.0
 
 
 # ── Root detection ──

@@ -140,10 +140,10 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     prim_path = params["prim_path"]
     asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, prim_path)
 
-    translate = utils.geometry.unpack_vec3(
+    translate = usd.values.unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
     )
-    rotate = utils.geometry.unpack_vec3(
+    rotate = usd.values.unpack_vec3(
         params, "rotate_x", "rotate_y", "rotate_z",
     )
     texture = params.get("texture")

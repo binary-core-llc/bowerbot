@@ -24,6 +24,7 @@ from typing import Any
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +208,7 @@ def setup_physics_scene(
     """Create ``/Scene/Physics`` and a ``UsdPhysics.Scene`` child."""
     name = params.get("name", "PhysicsScene")
     gravity_magnitude = params.get("gravity_magnitude")
-    gravity_direction = utils.physics.parse_vec3(
+    gravity_direction = usd.values.parse_vec3(
         params.get("gravity_direction"), "gravity_direction",
     )
 

@@ -19,6 +19,7 @@ from pxr import UsdLux
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def list_light_type_properties(light_type: schemas.LightType) -> schemas.LightTy
             name=prop_name,
             kind="attribute",
             type_name=str(attr_spec.typeName),
-            default=utils.usd_schema.to_jsonable(attr_spec.default),
+            default=usd.values.to_jsonable(attr_spec.default),
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],
@@ -64,7 +65,7 @@ def scale_spatial_attributes(
         return dict(attributes)
     return {
         name: (
-            utils.stage.coerce_number(value, f"spatial light input '{name}'") * factor
+            usd.values.coerce_number(value, f"spatial light input '{name}'") * factor
             if name in constants.LightRules.SPATIAL_INPUTS else value
         )
         for name, value in attributes.items()

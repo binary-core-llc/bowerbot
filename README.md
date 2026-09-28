@@ -916,6 +916,8 @@ src/bowerbot/
     usd/                       # USD building blocks: generic OpenUSD operations
       naming.py                #   Valid and safe USD names: prims, variants, joints,
                                #   collision groups
+      values.py                #   JSON <-> USD values: numbers and vectors from tool
+                               #   input, USD value types
     authoring/                 # BowerBot's authoring model: asset folders, /Scene,
                                # the library, project textures
       naming.py                #   Names of BowerBot's files and folders: projects,

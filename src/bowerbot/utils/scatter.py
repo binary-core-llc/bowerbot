@@ -1389,9 +1389,9 @@ def placement_objects(
                 name=proto.name, source_skill="local", source_id=proto.source,
                 file_path=proto.scene_ref,
             ),
-            translate=_vec3(instances.positions[i]),
+            translate=usd.values.vec3(instances.positions[i]),
             rotate=rotations[i],
-            scale=_vec3(instances.scales[i]),
+            scale=usd.values.vec3(instances.scales[i]),
         ))
     return objects
 
@@ -1668,7 +1668,7 @@ def _circle_center(
         msg = f"{label} needs exactly one of 'center' or 'center_prim'."
         raise ValueError(msg)
     if raw.get("center") is not None:
-        return _vec3(raw["center"])
+        return usd.values.vec3(raw["center"])
     bmin, bmax = utils.surface.prim_world_box(stage, raw["center_prim"])
     center = (bmin + bmax) / 2.0
     center[up] = bmin[up]
@@ -2065,12 +2065,6 @@ def _rotate_xyz_rotation(value: Any) -> Gf.Rotation:
         * Gf.Rotation(Gf.Vec3d.YAxis(), ry)
         * Gf.Rotation(Gf.Vec3d.ZAxis(), rz)
     )
-
-
-def _vec3(values: Any) -> schemas.Vec3:
-    """Three floats from any length-3 sequence."""
-    x, y, z = (float(v) for v in values)
-    return x, y, z
 
 
 def _region_circle(region: schemas.ScatterRegion) -> tuple[schemas.FloatArray, float]:

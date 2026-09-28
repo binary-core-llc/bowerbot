@@ -11,7 +11,6 @@ from pxr import UsdGeom
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import usd
 
 
@@ -38,7 +37,7 @@ def list_camera_properties() -> schemas.CameraSchemaInfo:
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],
-            documentation=utils.usd_schema.property_doc(prim_def, name, attr_spec),
+            documentation=usd.attributes.property_doc(prim_def, name, attr_spec),
         ))
 
     return schemas.CameraSchemaInfo(properties=properties)
@@ -124,7 +123,7 @@ def write_camera_attributes(
     for name, value in attributes.items():
         prim = stage.GetPrimAtPath(prim_path)
         attr = prim.GetAttribute(name)
-        utils.stage.set_prim_attribute(
+        usd.attributes.set_prim_attribute(
             stage, prim_path, name, value, expected_type=attr.GetTypeName(),
         )
 

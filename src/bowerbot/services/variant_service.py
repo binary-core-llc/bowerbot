@@ -229,7 +229,7 @@ def add_asset_attribute_variant(
             stage.OverridePrim(path)
             types = resolved_types[path]
             for attr_name, value in attrs.items():
-                utils.stage.set_prim_attribute(
+                usd.attributes.set_prim_attribute(
                     stage, path, attr_name, value,
                     expected_type=types[attr_name],
                 )
@@ -342,10 +342,10 @@ def add_scene_lighting_attribute_variant(
     ):
         state.stage = utils.stage.open_stage(state.stage_path)
 
-    resolved_types = utils.variants.resolve_scene_attribute_types(
+    resolved_types = usd.attributes.resolve_scene_attribute_types(
         state.stage, overrides,
     )
-    utils.variants.refuse_unknown_attributes(state.stage, resolved_types)
+    usd.attributes.refuse_unknown_attributes(state.stage, resolved_types)
     overrides = utils.variants.stage_asset_typed_overrides(
         overrides, resolved_types,
         state.project.path if state.project else None,
@@ -357,7 +357,7 @@ def add_scene_lighting_attribute_variant(
             stage.OverridePrim(path)
             types = resolved_types[path]
             for attr_name, value in attrs.items():
-                utils.stage.set_prim_attribute(
+                usd.attributes.set_prim_attribute(
                     stage, path, attr_name, value,
                     expected_type=types[attr_name],
                 )

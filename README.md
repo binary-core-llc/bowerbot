@@ -916,6 +916,8 @@ src/bowerbot/
     usd/                       # USD building blocks: generic OpenUSD operations
       metrics.py               #   metersPerUnit and upAxis: read them, conform an
                                #   asset to the scene, world axes
+      attributes.py            #   Attributes: read and author them, their declared
+                               #   types, schema documentation
       bounds.py                #   World-space bounding boxes of prims
       namespace.py             #   Renaming, moving and removing prims, and what must
                                #   follow (variant overs, relationship targets, empty overs)
@@ -959,8 +961,6 @@ src/bowerbot/
     layout.py                  #   place_layout expansion: grid/linear patterns,
                                #   asset resolution
     dependencies.py            #   USD dependency tree walker
-    usd_schema.py              #   Shared UsdSchemaRegistry introspection helpers
-                               #   (used by both physics and lights)
 ```
 
 **Design principles**

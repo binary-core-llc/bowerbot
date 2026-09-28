@@ -937,26 +937,6 @@ def stage_asset_typed_overrides(
     return out
 
 
-def resolve_scene_attribute_types(
-    stage: Usd.Stage,
-    overrides: dict[str, dict[str, object]],
-) -> dict[str, dict[str, Sdf.ValueTypeName | None]]:
-    """Look up each scene attribute's declared type from the composed scene stage."""
-    out: dict[str, dict[str, Sdf.ValueTypeName | None]] = {}
-    for prim_path, attrs in overrides.items():
-        resolved: dict[str, Sdf.ValueTypeName | None] = {}
-        prim = stage.GetPrimAtPath(prim_path)
-        for attr_name in attrs:
-            type_name: Sdf.ValueTypeName | None = None
-            if prim and prim.IsValid():
-                attr = prim.GetAttribute(attr_name)
-                if attr.IsValid():
-                    type_name = attr.GetTypeName()
-            resolved[attr_name] = type_name
-        out[prim_path] = resolved
-    return out
-
-
 def require_scene_lighting_carrier(stage: Usd.Stage) -> str:
     """Return the lighting carrier path or raise if it does not exist yet."""
     if stage is None:
@@ -988,38 +968,6 @@ def validate_scene_lighting_targets(
                 f"{path} is not a UsdLux light. Lighting variants target "
                 "UsdLux prims only.",
             )
-
-
-def refuse_unknown_attributes(
-    stage: Usd.Stage,
-    resolved_types: dict[str, dict[str, Sdf.ValueTypeName | None]],
-) -> None:
-    """Raise if any attribute in *resolved_types* does not exist on its target prim."""
-    missing: list[tuple[str, str]] = []
-    for prim_path, types in resolved_types.items():
-        for attr_name, type_name in types.items():
-            if type_name is None:
-                missing.append((prim_path, attr_name))
-    if not missing:
-        return
-
-    lines = ["Attribute(s) do not exist on the target prim(s):"]
-    for prim_path, attr_name in missing:
-        prim = stage.GetPrimAtPath(prim_path) if stage is not None else None
-        available = sorted(
-            a.GetName() for a in prim.GetAttributes()
-            if a.GetName().startswith("inputs:")
-        ) if prim and prim.IsValid() else []
-        leaf = attr_name.split(":")[-1]
-        similar = [a for a in available if leaf and leaf in a]
-        if similar:
-            hint = f" Did you mean: {', '.join(similar[:3])}?"
-        elif available:
-            hint = f" Available inputs on {prim_path}: {', '.join(available[:8])}"
-        else:
-            hint = ""
-        lines.append(f"  '{attr_name}' on {prim_path}.{hint}")
-    raise ValueError("\n".join(lines))
 
 
 # ── Suspect-set detection (selection variants that lost their multi-prim purpose) ──
@@ -1271,7 +1219,7 @@ def refuse_unknown_asset_attributes(
     """Refuse override attributes that do not exist on the asset's composed prims."""
     root_file = utils.asset_folder.find_root_file(asset_dir)
     stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
-    refuse_unknown_attributes(stage, resolved_types)
+    usd.attributes.refuse_unknown_attributes(stage, resolved_types)
 
 
 def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:

@@ -193,7 +193,7 @@ def list_prim_attributes(
 ) -> dict[str, Any]:
     """List every attribute on a prim with type + current value + authored flag."""
     prim_path = params["prim_path"]
-    attributes = utils.stage.list_prim_attributes(state.stage, prim_path)
+    attributes = usd.attributes.list_prim_attributes(state.stage, prim_path)
     return {
         "prim_path": prim_path,
         "attributes": attributes,
@@ -211,7 +211,7 @@ def set_prim_attribute(
     attribute_name = params["attribute_name"]
     value = params.get("value")
 
-    utils.stage.set_prim_attribute(
+    usd.attributes.set_prim_attribute(
         state.stage, prim_path, attribute_name, value,
     )
     utils.stage.save_stage(state.stage)

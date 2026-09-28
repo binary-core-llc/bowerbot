@@ -108,7 +108,7 @@ def list_api_properties(
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
-                documentation=utils.usd_schema.property_doc(
+                documentation=usd.attributes.property_doc(
                     prim_def, prop_name, attr_spec,
                 ),
             ))
@@ -118,7 +118,7 @@ def list_api_properties(
             properties.append(schemas.PhysicsPropertySpec(
                 name=real_name,
                 kind="relationship",
-                documentation=utils.usd_schema.property_doc(
+                documentation=usd.attributes.property_doc(
                     prim_def, prop_name, rel_spec,
                 ),
             ))
@@ -228,7 +228,7 @@ def apply_api(
 
     for name, value in attributes.items():
         attr = prim.GetAttribute(name)
-        utils.stage.set_prim_attribute(
+        usd.attributes.set_prim_attribute(
             stage, target_path, name, value,
             expected_type=attr.GetTypeName(),
         )
@@ -409,7 +409,7 @@ def apply_api_scene(
 
     for name, value in attributes.items():
         attr = target.GetAttribute(name)
-        utils.stage.set_prim_attribute(
+        usd.attributes.set_prim_attribute(
             stage, target_path, name, value,
             expected_type=attr.GetTypeName(),
         )
@@ -877,7 +877,7 @@ def list_joint_properties(joint_type: schemas.PhysicsJointType) -> schemas.Physi
                 allowed_tokens=[
                     str(t) for t in (attr_spec.allowedTokens or [])
                 ],
-                documentation=utils.usd_schema.property_doc(prim_def, prop_name, attr_spec),
+                documentation=usd.attributes.property_doc(prim_def, prop_name, attr_spec),
             ))
             continue
         rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
@@ -885,7 +885,7 @@ def list_joint_properties(joint_type: schemas.PhysicsJointType) -> schemas.Physi
             properties.append(schemas.PhysicsPropertySpec(
                 name=prop_name,
                 kind="relationship",
-                documentation=utils.usd_schema.property_doc(prim_def, prop_name, rel_spec),
+                documentation=usd.attributes.property_doc(prim_def, prop_name, rel_spec),
             ))
 
     return schemas.PhysicsApiSchemaInfo(
@@ -1124,7 +1124,7 @@ def _author_joint_attributes(
                 f"Attribute {name!r} not resolvable on {joint_type.value} "
                 f"at {prim.GetPath()}",
             )
-        utils.stage.set_prim_attribute(
+        usd.attributes.set_prim_attribute(
             prim.GetStage(), str(prim.GetPath()), name, value,
             expected_type=attr.GetTypeName(),
         )

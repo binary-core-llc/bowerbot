@@ -10,7 +10,6 @@ from pathlib import Path
 from pxr import Gf
 from pxr import Kind
 from pxr import Sdf
-from pxr import Sdr
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
@@ -128,116 +127,6 @@ def create_stage(path: str | Path) -> Usd.Stage:
 def open_stage(path: str | Path) -> Usd.Stage:
     """Open a stage with the default (root-layer) edit target."""
     return Usd.Stage.Open(str(path))
-
-
-def list_prim_attributes(
-    stage: Usd.Stage, prim_path: str,
-) -> list[dict[str, object]]:
-    """Return every attribute on the prim with type, current value, authored flag."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim or not prim.IsValid():
-        raise ValueError(f"Prim not found: {prim_path}")
-
-    out: list[dict[str, object]] = []
-    for attr in prim.GetAttributes():
-        out.append({
-            "name": attr.GetName(),
-            "type": str(attr.GetTypeName()),
-            "value": usd.values.usd_value_to_json(attr.Get()),
-            "authored": attr.HasAuthoredValue(),
-        })
-    return out
-
-
-def set_prim_attribute(
-    stage: Usd.Stage,
-    prim_path: str,
-    attribute_name: str,
-    value: object,
-    *,
-    expected_type: Sdf.ValueTypeName | None = None,
-) -> None:
-    """Author or clear an attribute opinion at the stage's current edit target.
-
-    When *expected_type* is provided it overrides value-shape inference and
-    the schema-registry lookup; callers that know the declared type from a
-    separate composition (e.g. variant body authoring against an asset's
-    composed stage) should pass it to avoid the wrong type being authored.
-    """
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim or not prim.IsValid():
-        raise ValueError(f"Prim not found: {prim_path}")
-
-    if value is None:
-        layer = stage.GetEditTarget().GetLayer()
-        prim_spec = layer.GetPrimAtPath(prim_path)
-        if prim_spec is None:
-            return
-        attr_spec = prim_spec.attributes.get(attribute_name)
-        if attr_spec is not None:
-            prim_spec.RemoveProperty(attr_spec)
-            usd.namespace.prune_empty_overrides(layer, prim_path)
-        return
-
-    attr = prim.GetAttribute(attribute_name)
-    if not attr.IsValid():
-        attr = _create_attribute_on_demand(
-            prim, attribute_name, value, expected_type,
-        )
-
-    type_name = expected_type if expected_type is not None else attr.GetTypeName()
-    converted = usd.values.json_to_usd_value(value, type_name)
-    try:
-        attr.Set(converted)
-    except (TypeError, RuntimeError):
-        msg = (
-            f"value {value!r} does not match {attribute_name}'s "
-            f"declared type {type_name}."
-        )
-        raise ValueError(msg) from None
-
-
-def _create_attribute_on_demand(
-    prim: Usd.Prim,
-    attribute_name: str,
-    value: object,
-    expected_type: Sdf.ValueTypeName | None = None,
-) -> Usd.Attribute:
-    """Create an attribute; xformOp:* routes through Xformable so xformOpOrder updates."""
-    if attribute_name.startswith("xformOp:") and prim.IsA(UsdGeom.Xformable):
-        op = usd.transforms.add_xform_op(UsdGeom.Xformable(prim), attribute_name)
-        if op is not None:
-            return op.GetAttr()
-
-    if expected_type is not None:
-        return prim.CreateAttribute(attribute_name, expected_type, custom=False)
-
-    if attribute_name.startswith("inputs:") and prim.IsA(UsdShade.Shader):
-        shader = UsdShade.Shader(prim)
-        base_name = attribute_name[len("inputs:"):]
-        sdr_type = _resolve_shader_input_type(shader, base_name)
-        if sdr_type is not None:
-            return shader.CreateInput(base_name, sdr_type).GetAttr()
-
-    inferred = usd.values.infer_sdf_type(value)
-    return prim.CreateAttribute(attribute_name, inferred, custom=False)
-
-
-def _resolve_shader_input_type(
-    shader: UsdShade.Shader, base_name: str,
-) -> Sdf.ValueTypeName | None:
-    """Look up a shader input's declared type via the Sdr registry."""
-    id_attr = shader.GetIdAttr()
-    info_id = id_attr.Get() if id_attr else None
-    if not info_id:
-        return None
-    node = Sdr.Registry().GetShaderNodeByIdentifier(info_id)
-    if node is None:
-        return None
-    sdr_input = node.GetShaderInput(base_name)
-    if sdr_input is None:
-        return None
-    return sdr_input.GetTypeAsSdfType().GetSdfType()
 
 
 def save_scene_snapshot(

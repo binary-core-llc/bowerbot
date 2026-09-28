@@ -48,7 +48,7 @@ def list_light_type_properties(light_type: schemas.LightType) -> schemas.LightTy
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],
-            documentation=utils.usd_schema.property_doc(prim_def, prop_name, attr_spec),
+            documentation=usd.attributes.property_doc(prim_def, prop_name, attr_spec),
         ))
 
     return schemas.LightTypeSchemaInfo(
@@ -131,7 +131,7 @@ def write_light_attributes(
         attr = prim.GetAttribute(name)
         if not attr:
             continue
-        utils.stage.set_prim_attribute(
+        usd.attributes.set_prim_attribute(
             stage, prim_path, name, value, expected_type=attr.GetTypeName(),
         )
 

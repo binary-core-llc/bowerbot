@@ -36,7 +36,6 @@ from bowerbot.utils import stage
 from bowerbot.utils import surface
 from bowerbot.utils import textures
 from bowerbot.utils import usd
-from bowerbot.utils import usd_schema
 from bowerbot.utils import validation
 from bowerbot.utils import variants
 
@@ -59,7 +58,6 @@ __all__ = [
     "surface",
     "textures",
     "usd",
-    "usd_schema",
     "validation",
     "variants",
 ]

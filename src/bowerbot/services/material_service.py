@@ -143,7 +143,7 @@ def list_materials(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     assets_dir = state.resolve_assets_dir()
     all_materials: list[dict] = []
 
-    for entry in assets_dir.iterdir():
+    for entry in sorted(assets_dir.iterdir()):
         if not entry.is_dir():
             continue
         if not (entry / ASWFLayerNames.MTL).exists():

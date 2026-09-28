@@ -297,13 +297,13 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
     tx, ty, tz = utils.geometry.resolve_asset_position(
         mode,
-        utils.geometry.get_geometry_bounds(container_dir),
+        authoring.asset_folder.get_geometry_bounds(container_dir),
         tx, ty, tz,
         has_explicit_y=params.get("translate_y") is not None,
         world_to_local_mat=utils.stage.get_container_world_inverse(
             state.stage, container_prim_path,
         ),
-        asset_mpu=utils.geometry.get_mpu(container_dir),
+        asset_mpu=authoring.asset_folder.get_mpu(container_dir),
     )
 
     ref_asset_path = utils.asset_folder.compute_ref_asset_path(
@@ -496,7 +496,7 @@ def delete_project_asset(state: scene_state.SceneState, params: dict[str, Any]) 
         raise ValueError(msg)
 
     skip_dir = asset_path if asset_path.is_dir() else None
-    referencing = utils.stage.find_asset_references(
+    referencing = authoring.asset_folder.find_asset_references(
         state.project.path, name, skip_dir=skip_dir,
     )
     if referencing:

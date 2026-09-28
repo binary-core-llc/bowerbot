@@ -39,7 +39,7 @@ def add_asset_material_variant(
         "Each entry maps a mesh prim path to a material prim path "
         "(e.g. {'/Geo/Top': '/Materials/wood'}).",
     )
-    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     bindings = {
         utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim):
             utils.asset_folder.normalize_asset_prim_path(v, ref_prim_path, default_prim)
@@ -98,7 +98,7 @@ def add_asset_geometry_variant(
         "Each entry maps a prim path to a payload asset path "
         "(e.g. {'/Geo': './geo_low.usda'}).",
     )
-    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     payloads = {
         utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim): v
         for k, v in raw.items()
@@ -111,7 +111,7 @@ def add_asset_geometry_variant(
 
     summary = utils.variants.get_variant_summary(asset_dir)
     existing = any(s.name == set_name for s in summary.variant_sets)
-    if not existing and utils.asset_folder.asset_has_root_payload(asset_dir):
+    if not existing and authoring.asset_folder.asset_has_root_payload(asset_dir):
         raise ValueError(
             f"{asset_dir.name} has a direct payload on its root prim, which "
             "blocks variant payload swapping per LIVRPS. Run "
@@ -196,7 +196,7 @@ def add_asset_attribute_variant(
         "Each entry maps a prim path to attribute_name -> value "
         "(e.g. {'lgt/Bulb': {'inputs:color': [0.2, 0.4, 1.0]}}).",
     )
-    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     overrides = {
         utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim): dict(v)
         for k, v in raw.items()
@@ -268,7 +268,7 @@ def add_asset_configuration_variant(
         "Each entry maps a prim path to a boolean active flag "
         "(e.g. {'/Geo/Door': false}).",
     )
-    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     activations = {
         utils.asset_folder.normalize_asset_prim_path(k, ref_prim_path, default_prim): bool(v)
         for k, v in raw.items()
@@ -540,7 +540,7 @@ def list_asset_geo_files(
 ) -> dict[str, Any]:
     """List alternate geometry files available for geometry variants."""
     asset_dir = utils.asset_folder.require_asset_context(state.stage, params["prim_path"])[0]
-    files = utils.asset_folder.list_alternate_geo_files(asset_dir)
+    files = authoring.asset_folder.list_alternate_geo_files(asset_dir)
     return {
         "asset_path": str(asset_dir),
         "geo_files": files,

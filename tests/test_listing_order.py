@@ -20,7 +20,6 @@ from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 
-from bowerbot import utils
 from bowerbot.utils import authoring
 from tests import _helpers
 
@@ -157,7 +156,7 @@ def test_reference_scans(tmp_path, monkeypatch):
         stage.Save()
 
     def asset_refs() -> list[str]:
-        return utils.stage.find_asset_references(tmp_path, "crate")
+        return authoring.asset_folder.find_asset_references(tmp_path, "crate")
 
     def texture_refs() -> list[str]:
         return authoring.textures.find_texture_references(tmp_path, "sky.hdr")

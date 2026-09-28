@@ -30,37 +30,10 @@ from pxr import UsdPhysics
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
-
-
-# ── Layer lifecycle ──
-
-
-def _phy_layer_path(asset_dir: Path) -> Path:
-    """Path to the asset's ``phy.usda``."""
-    return asset_dir / constants.ASWFLayerNames.PHY
-
-
-def ensure_physics_layer(asset_dir: Path) -> Path:
-    """Create ``phy.usda`` if missing."""
-    path = _phy_layer_path(asset_dir)
-    if path.exists():
-        return path
-
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
-    layer = Sdf.Layer.CreateNew(str(path))
-    layer.defaultPrim = default_prim_name
-    over = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
-    over.specifier = Sdf.SpecifierOver
-    layer.Save()
-    return path
-
-
-def ensure_physics_referenced(asset_dir: Path) -> None:
-    """Ensure the asset root references ``phy.usda``."""
-    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.PHY)
 
 
 # ── Schema introspection ──
@@ -191,7 +164,7 @@ def apply_api(
     _refuse_unknown(api_name, attributes, schema_info, "attribute")
     _refuse_unknown(api_name, relationships, schema_info, "relationship")
 
-    root_file = utils.asset_folder.find_root_file(asset_dir)
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         raise ValueError(f"No root file in asset {asset_dir.name}")
 
@@ -214,8 +187,8 @@ def apply_api(
             check_articulation_root_nesting(composed, target_path)
     del composed
 
-    ensure_physics_layer(asset_dir)
-    stage = Usd.Stage.Open(str(_phy_layer_path(asset_dir)))
+    authoring.asset_folder.ensure_physics_layer(asset_dir)
+    stage = Usd.Stage.Open(str(authoring.asset_folder.phy_layer_path(asset_dir)))
     prim = stage.OverridePrim(Sdf.Path(target_path))
 
     companion = constants.PhysicsRules.COMPANION_APIS.get(api_name)
@@ -239,7 +212,7 @@ def apply_api(
         )
 
     stage.Save()
-    ensure_physics_referenced(asset_dir)
+    authoring.asset_folder.ensure_physics_referenced(asset_dir)
 
     logger.info(
         "Applied %s%s on %s in %s/phy.usda",
@@ -269,7 +242,7 @@ def remove_api(
     instance_name: str | None = None,
 ) -> bool:
     """Remove ``api_name`` (and any dependent APIs) from *prim_path*."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = authoring.asset_folder.phy_layer_path(asset_dir)
     if not phy_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
@@ -477,7 +450,7 @@ def find_masking_scene_opinions(
     if not placements:
         return []
 
-    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     asset_prefix = f"/{default_prim}"
     tail = (
         asset_local_path[len(asset_prefix):]
@@ -579,7 +552,7 @@ def format_masking_override_error(
 
 def get_physics_summary(asset_dir: Path) -> schemas.AssetPhysicsSummary:
     """Every authored physics opinion in the asset's ``phy.usda``."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = authoring.asset_folder.phy_layer_path(asset_dir)
     if not phy_path.exists():
         return schemas.AssetPhysicsSummary(asset_path=str(asset_dir))
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
@@ -764,13 +737,13 @@ def list_collision_groups(stage: Usd.Stage) -> schemas.CollisionGroupsSummary:
 
 def cleanup_if_empty(asset_dir: Path) -> bool:
     """Delete ``phy.usda`` and drop its reference when no opinions remain."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = authoring.asset_folder.phy_layer_path(asset_dir)
     if not phy_path.exists():
         return False
     if get_physics_summary(asset_dir).prims:
         return False
 
-    _drop_physics_reference(asset_dir)
+    authoring.asset_folder.drop_physics_reference(asset_dir)
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
     if layer is not None:
         layer.Clear()
@@ -945,16 +918,16 @@ def create_joint_asset(
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
 
-    root_file = utils.asset_folder.find_root_file(asset_dir)
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         raise ValueError(f"No root file in asset {asset_dir.name}")
     composed = Usd.Stage.Open(str(root_file))
     _validate_joint_bodies(composed, body0, body1)
     del composed
 
-    ensure_physics_layer(asset_dir)
-    stage = Usd.Stage.Open(str(_phy_layer_path(asset_dir)))
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    authoring.asset_folder.ensure_physics_layer(asset_dir)
+    stage = Usd.Stage.Open(str(authoring.asset_folder.phy_layer_path(asset_dir)))
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     joints_scope_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}"
     if not stage.GetPrimAtPath(joints_scope_path).IsValid():
         stage.DefinePrim(joints_scope_path, "Scope")
@@ -967,7 +940,7 @@ def create_joint_asset(
     _author_joint_attributes(joint, attributes, joint_type)
 
     stage.Save()
-    ensure_physics_referenced(asset_dir)
+    authoring.asset_folder.ensure_physics_referenced(asset_dir)
 
     logger.info(
         "Created %s asset-level at %s in %s/phy.usda",
@@ -1002,13 +975,13 @@ def remove_joint_scene(stage: Usd.Stage, prim_path: str) -> bool:
 
 def remove_joint_asset(asset_dir: Path, name: str) -> bool:
     """Remove an asset-level joint prim from ``phy.usda``."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = authoring.asset_folder.phy_layer_path(asset_dir)
     if not phy_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
     if layer is None:
         return False
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     prim_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}/{name}"
     if layer.GetPrimAtPath(prim_path) is None:
         return False
@@ -1039,7 +1012,7 @@ def list_joints_scene(
 
 def list_joints_asset(asset_dir: Path) -> schemas.JointsSummary:
     """Return every joint prim authored in the asset's ``phy.usda``."""
-    phy_path = _phy_layer_path(asset_dir)
+    phy_path = authoring.asset_folder.phy_layer_path(asset_dir)
     if not phy_path.exists():
         return schemas.JointsSummary()
     stage = Usd.Stage.Open(str(phy_path))
@@ -1331,33 +1304,6 @@ def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
     if touched:
         prim_spec.SetInfo("apiSchemas", new_op)
     return touched
-
-
-def _drop_physics_reference(asset_dir: Path) -> None:
-    """Remove ``./phy.usda`` from the asset root's reference list."""
-    root_file = utils.asset_folder.find_root_file(asset_dir)
-    if root_file is None:
-        return
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return
-    prim_spec = layer.GetPrimAtPath(
-        f"/{utils.asset_folder.resolve_default_prim_name(asset_dir)}",
-    )
-    if prim_spec is None:
-        return
-    target = f"./{constants.ASWFLayerNames.PHY}"
-    ref_list = prim_spec.referenceList
-    for items in (
-        ref_list.prependedItems,
-        ref_list.appendedItems,
-        ref_list.addedItems,
-        ref_list.explicitItems,
-        ref_list.orderedItems,
-    ):
-        for r in [x for x in items if x.assetPath == target]:
-            items.remove(r)
-    layer.Save()
 
 
 def format_physics_scene_prim(prim: Usd.Prim) -> dict:

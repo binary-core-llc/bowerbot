@@ -16,6 +16,7 @@ from pxr import UsdShade
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -47,8 +48,8 @@ def add_material_to_folder(
         msg = f"Cannot open material file: {material_file}"
         raise RuntimeError(msg)
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
-    utils.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    authoring.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
 
     mat_name = Sdf.Path(material_prim_path).name
     dest_mat_path = Sdf.Path(f"/{default_prim_name}/mtl/{mat_name}")
@@ -60,7 +61,7 @@ def add_material_to_folder(
     mtl_layer.defaultPrim = default_prim_name
     mtl_layer.Save()
 
-    local_prim_path = utils.asset_folder.to_layer_local_path(prim_path, default_prim_name)
+    local_prim_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
     composed_mat_path = f"/{default_prim_name}/mtl/{mat_name}"
 
     stage = Usd.Stage.Open(str(mtl_path))
@@ -72,7 +73,7 @@ def add_material_to_folder(
             UsdShade.MaterialBindingAPI.Apply(prim).Bind(material)
         stage.Save()
 
-    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.MTL)
+    authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.MTL)
 
     logger.info(
         "Added material %s -> %s in %s",
@@ -88,7 +89,7 @@ def create_procedural_material_in_folder(
 ) -> str:
     """Author a MaterialX ``standard_surface`` material and bind it."""
     mtl_path = asset_dir / constants.ASWFLayerNames.MTL
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
 
     mtl_layer = (
         Sdf.Layer.FindOrOpen(str(mtl_path))
@@ -96,7 +97,7 @@ def create_procedural_material_in_folder(
         else Sdf.Layer.CreateNew(str(mtl_path))
     )
 
-    utils.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
+    authoring.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
     mtl_layer.defaultPrim = default_prim_name
     mtl_layer.Save()
 
@@ -111,12 +112,12 @@ def create_procedural_material_in_folder(
     _author_materialx_standard_surface(stage, mat_prim_path, material, params)
     _author_usd_preview_surface(stage, mat_prim_path, material, params)
 
-    local_prim_path = utils.asset_folder.to_layer_local_path(prim_path, default_prim_name)
+    local_prim_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
     target_prim = stage.OverridePrim(local_prim_path)
     UsdShade.MaterialBindingAPI.Apply(target_prim).Bind(material)
 
     stage.Save()
-    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.MTL)
+    authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.MTL)
 
     logger.info(
         "Created procedural material %s -> %s in %s",
@@ -189,8 +190,8 @@ def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None
     if not mtl_path.exists():
         return
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
-    local_path = utils.asset_folder.to_layer_local_path(prim_path, default_prim_name)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    local_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
 
     stage = Usd.Stage.Open(str(mtl_path))
     if stage is None:
@@ -210,7 +211,7 @@ def list_materials_in_folder(asset_dir: Path) -> list[dict]:
     if not mtl_path.exists():
         return []
 
-    root_file = utils.asset_folder.find_root_file(asset_dir)
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return []
 
@@ -251,7 +252,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
     if not mtl_path.exists():
         return []
 
-    root_file = utils.asset_folder.find_root_file(asset_dir)
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return []
 
@@ -270,7 +271,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
     if mtl_layer is None:
         return []
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     mtl_scope_path = Sdf.Path(f"/{default_prim_name}/mtl")
     mtl_scope = mtl_layer.GetPrimAtPath(mtl_scope_path)
     removed: list[str] = []
@@ -296,7 +297,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
     if removed and variants_layer is not None:
         utils.variants.cleanup_if_empty(asset_dir)
 
-    utils.asset_folder.remove_empty_layer(
+    authoring.asset_folder.remove_empty_layer(
         mtl_path, asset_dir, lambda p: p.IsA(UsdShade.Material),
     )
 

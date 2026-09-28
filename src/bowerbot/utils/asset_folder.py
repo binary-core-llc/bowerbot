@@ -1,26 +1,22 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""ASWF asset folder primitives.
+"""Finding the asset folder behind a scene prim, and mapping prim paths into it.
 
-Pure helpers for inspecting and editing the ASWF folder structure
-(root + ``geo.usda`` / ``mtl.usda`` / ``lgt.usda`` / ``contents.usda``).
-Services compose these to read folder metadata, scaffold layers, and
-detect the canonical root.
+The asset folder itself (root file, layers, building one) is in
+``authoring.asset_folder``.
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
 
-from pxr import Sdf
 from pxr import Usd
 
 from bowerbot import constants
-from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -100,15 +96,6 @@ def resolve_asset_dir_for_prim(
     return None, None
 
 
-def find_root_file(asset_dir: Path) -> Path | None:
-    """Return the canonical ASWF root file in *asset_dir*, or ``None``."""
-    for ext in (".usd", ".usda", ".usdc"):
-        candidate = asset_dir / f"{asset_dir.name}{ext}"
-        if candidate.exists():
-            return candidate
-    return None
-
-
 def require_asset_context(
     stage: Usd.Stage, prim_path: str,
 ) -> tuple[Path, str]:
@@ -120,85 +107,6 @@ def require_asset_context(
             "Operation only works on assets placed as ASWF folders (not USDZ).",
         )
     return asset_dir, ref_prim_path
-
-
-def asset_has_root_payload(asset_dir: Path) -> bool:
-    """Return whether the asset's root prim has a directly authored payload."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return False
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return False
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
-    if prim_spec is None:
-        return False
-    plist = prim_spec.payloadList
-    return bool(
-        plist.prependedItems
-        or plist.appendedItems
-        or plist.addedItems
-        or plist.explicitItems,
-    )
-
-
-def clear_root_payload(asset_dir: Path) -> None:
-    """Strip every payload list-op slot from the asset's root prim."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
-    if prim_spec is None:
-        return
-    plist = prim_spec.payloadList
-    plist.ClearEdits()
-    layer.Save()
-
-
-def list_alternate_geo_files(asset_dir: Path) -> list[str]:
-    """USD files in the asset folder that aren't canonical ASWF layers or root."""
-    if not asset_dir.is_dir():
-        return []
-    canonical = {
-        constants.ASWFLayerNames.GEO,
-        constants.ASWFLayerNames.MTL,
-        constants.ASWFLayerNames.LGT,
-        constants.ASWFLayerNames.PHY,
-        constants.ASWFLayerNames.CONTENTS,
-        constants.ASWFLayerNames.VARIANTS,
-    }
-    canonical |= {
-        f"{asset_dir.name}{ext}" for ext in constants.AssetFolderRules.USD_LAYER_EXTENSIONS
-    }
-    return sorted(
-        p.name for p in asset_dir.iterdir()
-        if p.is_file()
-        and p.suffix.lower() in constants.AssetFolderRules.USD_LAYER_EXTENSIONS
-        and p.name not in canonical
-    )
-
-
-def resolve_default_prim_name(asset_dir: Path) -> str:
-    """Return the asset's ``defaultPrim`` name, falling back to folder name."""
-    name = _get_default_prim_name(asset_dir)
-    return name if name else asset_dir.name
-
-
-def to_layer_local_path(prim_path: str, default_prim_name: str) -> str:
-    """Convert a composed prim path to a layer-local path under defaultPrim."""
-    prefix = f"/{default_prim_name}"
-    if prim_path in ("", "/", prefix):
-        return prefix
-    if prim_path.startswith(f"{prefix}/"):
-        return prim_path
-    if not prim_path.startswith("/"):
-        prim_path = f"/{prim_path}"
-    return f"{prefix}{prim_path}"
 
 
 def compute_ref_asset_path(
@@ -256,215 +164,7 @@ def normalize_asset_prim_path(
     if prim_path == ref_prim_path:
         return f"/{default_prim_name}"
     if prim_path.startswith(f"{ref_prim_path}/"):
-        return to_layer_local_path(
+        return authoring.asset_folder.to_layer_local_path(
             prim_path[len(ref_prim_path):], default_prim_name,
         )
-    return to_layer_local_path(prim_path, default_prim_name)
-
-
-def ensure_layer_scope(
-    layer: Sdf.Layer,
-    default_prim_name: str,
-    scope_name: str,
-    scope_type: str,
-) -> None:
-    """Ensure ``/{default_prim_name}/{scope_name}`` exists in *layer*."""
-    root_prim_path = Sdf.Path(f"/{default_prim_name}")
-    scope_path = Sdf.Path(f"/{default_prim_name}/{scope_name}")
-
-    if not layer.GetPrimAtPath(root_prim_path):
-        Sdf.CreatePrimInLayer(layer, root_prim_path)
-        layer.GetPrimAtPath(root_prim_path).specifier = Sdf.SpecifierOver
-
-    if not layer.GetPrimAtPath(scope_path):
-        Sdf.CreatePrimInLayer(layer, scope_path)
-        scope = layer.GetPrimAtPath(scope_path)
-        scope.specifier = Sdf.SpecifierDef
-        scope.typeName = scope_type
-
-
-def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
-    """Ensure the asset's root file references *layer_file*."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return
-
-    root_prim = stage.GetDefaultPrim()
-    if root_prim is None:
-        return
-
-    ref_path = f"./{layer_file}"
-    if ref_path in usd.references.get_prim_ref_paths(root_prim):
-        return
-
-    del stage
-    rebuild_root_references(asset_dir)
-
-
-def remove_empty_layer(
-    layer_path: Path,
-    asset_dir: Path,
-    has_content: Callable[[Usd.Prim], bool],
-) -> None:
-    """Remove *layer_path* when no prim in it satisfies *has_content*."""
-    stage = Usd.Stage.Open(str(layer_path))
-    if stage:
-        for prim in stage.Traverse():
-            if has_content(prim):
-                return
-
-    layer_path.unlink()
-    rebuild_root_references(asset_dir)
-    logger.info("Removed empty %s from %s", layer_path.name, asset_dir.name)
-
-
-def rebuild_root_references(asset_dir: Path) -> None:
-    """Rebuild root composition arcs: geo via payload, others via references."""
-    root_file = find_root_file(asset_dir)
-    if root_file is None:
-        return
-
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return
-
-    root_prim = stage.GetDefaultPrim()
-    if root_prim is None:
-        return
-
-    root_prim.GetReferences().ClearReferences()
-    root_prim.GetPayloads().ClearPayloads()
-
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if geo_path.exists():
-        root_prim.GetPayloads().AddPayload(f"./{constants.ASWFLayerNames.GEO}")
-
-    for layer_file in constants.AssetFolderRules.CANONICAL_REFERENCE_ORDER:
-        if (asset_dir / layer_file).exists():
-            root_prim.GetReferences().AddReference(f"./{layer_file}")
-
-    stage.Save()
-
-
-# ── Stage metadata ──
-
-
-def read_stage_metadata_from_dir(asset_dir: Path) -> tuple[float, str]:
-    """Return ``(metersPerUnit, upAxis)`` from an asset's ``geo.usda``."""
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if geo_path.exists():
-        return usd.metrics.read_stage_metadata(geo_path)
-    return 1.0, "Y"
-
-
-# ── Root detection ──
-
-
-def detect_folder_root(folder: Path) -> schemas.FolderDetection:
-    """Classify *folder* and identify its root USD file when possible.
-
-    USD composition is the source of truth: the file no sibling depends
-    on is the root. With multiple candidates, naming heuristics
-    (``<folder>``, ``root``, ``main``, ``asset``) break the tie.
-    """
-    folder = folder.resolve()
-    if not folder.is_dir():
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.EMPTY,
-            folder=str(folder),
-            reason="not a directory",
-        )
-
-    usd_files = sorted(
-        p for p in folder.iterdir()
-        if p.is_file() and p.suffix.lower() in constants.AssetFolderRules.USD_LAYER_EXTENSIONS
-    )
-    if not usd_files:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.EMPTY,
-            folder=str(folder),
-            reason="no USD files at the top level",
-        )
-
-    if len(usd_files) == 1:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
-            folder=str(folder),
-            root=str(usd_files[0]),
-            reason="only USD file in the folder",
-        )
-
-    candidates = _candidate_roots_by_dep_graph(usd_files)
-
-    if len(candidates) == 1:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
-            folder=str(folder),
-            root=str(candidates[0]),
-            reason="only USD file in the folder not referenced by a sibling",
-        )
-
-    if not candidates:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.AMBIGUOUS,
-            folder=str(folder),
-            candidates=[str(p) for p in usd_files],
-            reason="circular references between siblings",
-        )
-
-    tiebreak = _name_tiebreak(candidates, folder.name)
-    if tiebreak is not None:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
-            folder=str(folder),
-            root=str(tiebreak),
-            reason=f"multiple candidates; picked by naming convention '{tiebreak.stem}'",
-        )
-
-    return schemas.FolderDetection(
-        outcome=schemas.DetectionOutcome.AMBIGUOUS,
-        folder=str(folder),
-        candidates=[str(p) for p in candidates],
-        reason="multiple independent USD files with no cross-references",
-    )
-
-
-# ── Internal helpers ──
-
-
-def _get_default_prim_name(asset_dir: Path) -> str | None:
-    """Return the ``defaultPrim`` recorded in ``geo.usda``, if any."""
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if geo_path.exists():
-        layer = Sdf.Layer.FindOrOpen(str(geo_path))
-        if layer and layer.defaultPrim:
-            return layer.defaultPrim
-    return None
-
-
-def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:
-    """Return files no sibling depends on (so they can't be sub-layers)."""
-    usd_set = {p.resolve() for p in usd_files}
-    referenced: set[Path] = set()
-    for candidate in usd_files:
-        found, _missing = usd.references.resolve_dependencies(candidate)
-        for dep in found:
-            dep_resolved = dep.resolve()
-            if dep_resolved == candidate.resolve():
-                continue
-            if dep_resolved in usd_set:
-                referenced.add(dep_resolved)
-    return [p for p in usd_files if p.resolve() not in referenced]
-
-
-def _name_tiebreak(candidates: list[Path], folder_name: str) -> Path | None:
-    """Pick the preferred candidate by filename convention, or ``None``."""
-    for stem in (folder_name, *constants.IntakeRules.ROOT_NAME_HINTS):
-        matches = [p for p in candidates if p.stem == stem]
-        if len(matches) == 1:
-            return matches[0]
-    return None
+    return authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)

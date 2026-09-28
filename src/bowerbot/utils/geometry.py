@@ -1,75 +1,16 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Geometry math: bounds, units, placement resolution, layout."""
+"""Placement math: an asset's position from bounds offsets, and suggested grid layouts."""
 
 from __future__ import annotations
 
 import math
-from pathlib import Path
 
 from pxr import Gf
-from pxr import Usd
-from pxr import UsdGeom
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
-
-
-def get_geometry_bounds(
-    asset_dir: Path,
-) -> dict[str, dict[str, float]] | None:
-    """Return the asset's geometry bounds in meters, or ``None``."""
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if not geo_path.exists():
-        return None
-
-    stage = Usd.Stage.Open(str(geo_path))
-    if stage is None:
-        return None
-
-    root = stage.GetDefaultPrim()
-    if root is None:
-        return None
-
-    bbox = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
-    rng = bbox.ComputeWorldBound(root).ComputeAlignedRange()
-    if rng.IsEmpty():
-        return None
-
-    mpu, _ = utils.asset_folder.read_stage_metadata_from_dir(asset_dir)
-    mn = rng.GetMin()
-    mx = rng.GetMax()
-
-    return {
-        "min": {"x": mn[0] * mpu, "y": mn[1] * mpu, "z": mn[2] * mpu},
-        "max": {"x": mx[0] * mpu, "y": mx[1] * mpu, "z": mx[2] * mpu},
-        "center": {
-            "x": (mn[0] + mx[0]) / 2 * mpu,
-            "y": (mn[1] + mx[1]) / 2 * mpu,
-            "z": (mn[2] + mx[2]) / 2 * mpu,
-        },
-        "size": {
-            "x": (mx[0] - mn[0]) * mpu,
-            "y": (mx[1] - mn[1]) * mpu,
-            "z": (mx[2] - mn[2]) * mpu,
-        },
-    }
-
-
-def get_mpu(asset_dir: Path) -> float:
-    """Return the asset's ``metersPerUnit``, defaulting to 1.0."""
-    mpu, _ = utils.asset_folder.read_stage_metadata_from_dir(asset_dir)
-    return mpu if mpu > 0 else 1.0
-
-
-def unit_factor(asset_dir: Path) -> float:
-    """Return the factor that converts meters into asset units."""
-    mpu = get_mpu(asset_dir)
-    return 1.0 / mpu if mpu > 0 else 1.0
 
 
 def resolve_asset_position(

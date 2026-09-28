@@ -17,6 +17,7 @@ from pxr import UsdUtils
 
 from bowerbot import constants
 from bowerbot import schemas
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -274,7 +275,7 @@ def validate_asset_variants(asset_dir: Path) -> list[schemas.ValidationIssue]:
     from bowerbot import utils
 
     issues: list[schemas.ValidationIssue] = []
-    root_file = utils.asset_folder.find_root_file(asset_dir)
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return issues
 
@@ -294,7 +295,7 @@ def validate_asset_variants(asset_dir: Path) -> list[schemas.ValidationIssue]:
             ),
         ))
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     root_prim_spec = root_layer.GetPrimAtPath(f"/{default_prim_name}")
     has_ref = False
     if root_prim_spec is not None:

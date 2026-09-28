@@ -11,40 +11,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from pxr import Gf
-from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
 
 from bowerbot import schemas
 from bowerbot.utils import usd
-
-# ── Reference inspection ──
-
-
-def find_asset_references(
-    project_dir: Path,
-    folder_name: str,
-    skip_dir: Path | None = None,
-) -> list[str]:
-    """Scan *project_dir* for USD files referencing *folder_name* in any variant body or payload."""
-    referencing: list[str] = []
-    for usd_file in sorted(project_dir.rglob("*")):
-        if usd_file.suffix not in (".usd", ".usda", ".usdc"):
-            continue
-        if skip_dir is not None:
-            try:
-                usd_file.relative_to(skip_dir)
-                continue
-            except ValueError:
-                pass
-        layer = Sdf.Layer.FindOrOpen(str(usd_file))
-        if layer is None:
-            continue
-        if usd.references.layer_references_folder(layer, folder_name):
-            referencing.append(str(usd_file.relative_to(project_dir)))
-    return referencing
-
 
 # ── References ──
 

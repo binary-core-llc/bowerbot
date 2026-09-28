@@ -18,6 +18,7 @@ from pxr import UsdLux
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -188,7 +189,7 @@ def add_light_to_folder(
 ) -> str:
     """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path."""
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
 
     if lgt_path.exists():
         lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
@@ -197,7 +198,7 @@ def add_light_to_folder(
         lgt_layer.defaultPrim = default_prim_name
 
     lgt_scope_path = Sdf.Path(f"/{default_prim_name}/lgt")
-    utils.asset_folder.ensure_layer_scope(lgt_layer, default_prim_name, "lgt", "Xform")
+    authoring.asset_folder.ensure_layer_scope(lgt_layer, default_prim_name, "lgt", "Xform")
     lgt_layer.Save()
 
     _apply_inverse_transform(asset_dir, lgt_path, lgt_scope_path)
@@ -214,7 +215,7 @@ def add_light_to_folder(
         raise ValueError(msg)
 
     light_prim = light_cls.Define(stage, light_prim_path).GetPrim()
-    factor = utils.geometry.unit_factor(asset_dir)
+    factor = authoring.asset_folder.unit_factor(asset_dir)
 
     write_light_attributes(
         stage, light_prim_path,
@@ -238,7 +239,7 @@ def add_light_to_folder(
         xformable.AddRotateXYZOp().Set(Gf.Vec3f(*light.rotate))
 
     stage.Save()
-    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.LGT)
+    authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.LGT)
 
     logger.info(
         "Added light %s (%s) to %s",
@@ -261,7 +262,7 @@ def update_light_in_folder(
         msg = f"No lights authored in {asset_dir.name}/{constants.ASWFLayerNames.LGT}"
         raise ValueError(msg)
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
 
     stage = Usd.Stage.Open(str(lgt_path))
@@ -282,7 +283,7 @@ def update_light_in_folder(
         if tex_attr:
             tex_attr.Set(Sdf.AssetPath(texture))
 
-    factor = utils.geometry.unit_factor(asset_dir)
+    factor = authoring.asset_folder.unit_factor(asset_dir)
     if translate is not None:
         usd.transforms.update_translate_op(
             prim,
@@ -311,7 +312,7 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     if not lgt_path.exists():
         return
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     light_prim_path = Sdf.Path(f"/{default_prim_name}/lgt/{light_name}")
 
     lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
@@ -331,7 +332,7 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
             usd.namespace.clear_orphan_variant_overs(variants_layer, str(light_prim_path))
         utils.variants.cleanup_if_empty(asset_dir)
 
-    utils.asset_folder.remove_empty_layer(
+    authoring.asset_folder.remove_empty_layer(
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),
     )
 

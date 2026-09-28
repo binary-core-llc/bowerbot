@@ -13,7 +13,7 @@ from pxr import UsdShade
 
 from bowerbot import constants
 from bowerbot import schemas
-from bowerbot import utils
+from bowerbot.utils import authoring
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ def _find_top_level_packages(library_dir: Path) -> dict[Path, Path]:
     for entry in sorted(library_dir.iterdir()):
         if not entry.is_dir() or entry.name in constants.LibraryRules.NON_ASSET_DIRS:
             continue
-        detection = utils.asset_folder.detect_folder_root(entry)
+        detection = authoring.asset_folder.detect_folder_root(entry)
         if detection.outcome is schemas.DetectionOutcome.UNAMBIGUOUS and detection.root:
             packages[entry] = Path(detection.root)
     return packages
@@ -124,7 +124,7 @@ def find_package_for(file_path: Path, library_dir: Path) -> Path | None:
         return None
 
     candidate = library / relative.parts[0]
-    detection = utils.asset_folder.detect_folder_root(candidate)
+    detection = authoring.asset_folder.detect_folder_root(candidate)
     if detection.outcome is schemas.DetectionOutcome.UNAMBIGUOUS:
         return candidate
     return None

@@ -67,13 +67,13 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         )
         tx, ty, tz = utils.geometry.resolve_asset_position(
             mode,
-            utils.geometry.get_geometry_bounds(asset_dir),
+            authoring.asset_folder.get_geometry_bounds(asset_dir),
             tx, ty, tz,
             has_explicit_y=params.get("translate_y") is not None,
             world_to_local_mat=utils.stage.get_container_world_inverse(
                 state.stage, asset_prim_path,
             ),
-            asset_mpu=utils.geometry.get_mpu(asset_dir),
+            asset_mpu=authoring.asset_folder.get_mpu(asset_dir),
         )
 
         light = schemas.LightParams(
@@ -156,13 +156,13 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             )
             translate = utils.geometry.resolve_asset_position(
                 mode,
-                utils.geometry.get_geometry_bounds(asset_dir),
+                authoring.asset_folder.get_geometry_bounds(asset_dir),
                 *translate,
                 has_explicit_y=params.get("translate_y") is not None,
                 world_to_local_mat=utils.stage.get_container_world_inverse(
                     state.stage, prim_path,
                 ),
-                asset_mpu=utils.geometry.get_mpu(asset_dir),
+                asset_mpu=authoring.asset_folder.get_mpu(asset_dir),
             )
         light_name = prim_path.rstrip("/").split("/")[-1]
         utils.lights.update_light_in_folder(

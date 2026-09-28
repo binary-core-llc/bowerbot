@@ -75,7 +75,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
             "author physics on this prim directly in scene.usda.",
         ) from None
     asset_local_path = utils.asset_folder.normalize_asset_prim_path(
-        prim_path, ref_prim_path, utils.asset_folder.resolve_default_prim_name(asset_dir),
+        prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
     )
 
     cleared = utils.physics.enforce_masking_policy(
@@ -155,7 +155,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
             "remove physics from this prim directly in scene.usda.",
         ) from None
     asset_local_path = utils.asset_folder.normalize_asset_prim_path(
-        prim_path, ref_prim_path, utils.asset_folder.resolve_default_prim_name(asset_dir),
+        prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
     )
 
     api_props = utils.physics.list_api_properties(
@@ -334,7 +334,7 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 "Use scope='scene' for cross-asset joints.",
             )
 
-    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     asset_body0 = (
         utils.asset_folder.normalize_asset_prim_path(body0, ref_prim_path, default_prim)
         if body0 else None

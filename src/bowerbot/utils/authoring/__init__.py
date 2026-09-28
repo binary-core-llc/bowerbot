@@ -10,11 +10,13 @@ group (plus ``constants`` and ``schemas``), never a feature. Callers write
 ``authoring.naming.safe_project_name(...)``.
 """
 
+from bowerbot.utils.authoring import asset_folder
 from bowerbot.utils.authoring import naming
 from bowerbot.utils.authoring import stage
 from bowerbot.utils.authoring import textures
 
 __all__ = [
+    "asset_folder",
     "naming",
     "stage",
     "textures",

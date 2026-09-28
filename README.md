@@ -943,13 +943,16 @@ src/bowerbot/
                                #   snapshots
       textures.py              #   Copying textures into the project and asset folders,
                                #   staging file-path values, finding who uses a texture
+      asset_folder.py          #   The ASWF asset folder: root file and defaultPrim, its
+                               #   layers (geo, mtl, lgt, phy, variants, contents),
+                               #   units and bounds, building one
     stage.py                   #   Placing asset references, finding placements,
                                #   list_prim_children (moving to authoring/ and features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
-    intake.py                  #   intake_folder, intake_usdz, create_asset_folder, ASWF
-    asset_folder.py            #   ASWF folder primitives (detect root, layer scopes,
-                               #   resolve_asset_dir_for_prim)
+    intake.py                  #   intake_folder, intake_usdz, ASWF compliance repair
+    asset_folder.py            #   The asset folder behind a scene prim, mapping prim
+                               #   paths into it (moving to authoring/)
     library.py                 #   scan_library, find_package_for
     lights.py                  #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle
@@ -966,7 +969,8 @@ src/bowerbot/
     variants.py                #   variants.usda lifecycle, apply_variant, set/clear
                                #   default, removal + cleanup (variant-set operations
                                #   are in usd/variant_sets)
-    geometry.py                #   Bounds, unit conversion, layout math
+    geometry.py                #   Placement math: position from bounds offsets, grid
+                               #   layout suggestions
     layout.py                  #   place_layout expansion: grid/linear patterns,
                                #   asset resolution
 ```

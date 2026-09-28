@@ -4,8 +4,9 @@
 """Asset intake primitives — bring source folders into the project.
 
 USD-write side of the asset domain: folder copy + canonicalize +
-localize external dependencies, plus loose-file ASWF folder creation
-and ASWF compliance repair, plus nested asset reference authoring.
+localize external dependencies, plus ASWF compliance repair, plus
+nested asset reference authoring. Building an asset folder is in
+``authoring.asset_folder``.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ from pxr import UsdUtils
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -55,7 +57,7 @@ def prepare_asset(
             return report
 
     folder_name = asset_path.stem
-    root_file = create_asset_folder(
+    root_file = authoring.asset_folder.create_asset_folder(
         output_dir=assets_dir,
         asset_name=folder_name,
         geometry_file=asset_path,
@@ -131,7 +133,7 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> schemas.Inta
     localized so the output folder is portable. The root is canonicalized
     to ``<folder>.usda`` and sibling references are rewritten.
     """
-    detection = utils.asset_folder.detect_folder_root(source_folder)
+    detection = authoring.asset_folder.detect_folder_root(source_folder)
     if detection.outcome is schemas.DetectionOutcome.EMPTY:
         msg = f"No USD files found in {source_folder}"
         raise ValueError(msg)
@@ -189,8 +191,8 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> schemas.Inta
             sibling_layer_targets=[p for p in layer_targets if p != copied_root],
         )
 
-        _normalize_root_metadata(canonical_root, target_folder.name)
-        utils.asset_folder.rebuild_root_references(target_folder)
+        authoring.asset_folder.normalize_root_metadata(canonical_root, target_folder.name)
+        authoring.asset_folder.rebuild_root_references(target_folder)
         warnings = _validate_self_contained(canonical_root, target_folder)
     except Exception:
         shutil.rmtree(target_folder, ignore_errors=True)
@@ -232,29 +234,6 @@ def intake_usdz(asset_path: Path, assets_dir: Path) -> schemas.IntakeReport:
 
 
 # ── Loose-file wrapping ──
-
-
-def create_asset_folder(
-    output_dir: Path,
-    asset_name: str,
-    geometry_file: Path,
-) -> Path:
-    """Create an ASWF asset folder with root + ``geo.usda``."""
-    asset_dir = output_dir / asset_name
-    asset_dir.mkdir(parents=True, exist_ok=True)
-
-    mpu, up = usd.metrics.read_stage_metadata(geometry_file)
-
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if not geo_path.exists():
-        _create_geo_layer(geo_path, geometry_file)
-
-    root_path = asset_dir / f"{asset_name}.usda"
-    if not root_path.exists():
-        _create_root_file(root_path, mpu, up)
-
-    logger.info("Created ASWF asset folder: %s", asset_dir)
-    return root_path
 
 
 def ensure_aswf_compliance(
@@ -402,7 +381,7 @@ def add_nested_asset_reference(
 ) -> str:
     """Author a nested asset reference inside a container's ``contents.usda``."""
     contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
 
     if contents_path.exists():
         contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
@@ -410,7 +389,9 @@ def add_nested_asset_reference(
         contents_layer = Sdf.Layer.CreateNew(str(contents_path))
         contents_layer.defaultPrim = default_prim_name
 
-    utils.asset_folder.ensure_layer_scope(contents_layer, default_prim_name, "contents", "Xform")
+    authoring.asset_folder.ensure_layer_scope(
+        contents_layer, default_prim_name, "contents", "Xform",
+    )
     _ensure_group_scope(contents_layer, default_prim_name, group)
     contents_layer.Save()
 
@@ -422,7 +403,7 @@ def add_nested_asset_reference(
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
-    container_mpu = utils.geometry.get_mpu(container_dir)
+    container_mpu = authoring.asset_folder.get_mpu(container_dir)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
@@ -453,7 +434,7 @@ def add_nested_asset_reference(
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()
-    utils.asset_folder.ensure_root_reference(container_dir, constants.ASWFLayerNames.CONTENTS)
+    authoring.asset_folder.ensure_root_reference(container_dir, constants.ASWFLayerNames.CONTENTS)
 
     logger.info(
         "Added nested asset %s -> %s in %s/%s",
@@ -474,7 +455,7 @@ def update_nested_asset_transform(
     if not contents_path.exists():
         return False
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
 
     stage = Usd.Stage.Open(str(contents_path))
@@ -484,7 +465,7 @@ def update_nested_asset_transform(
     if not wrapper or not wrapper.IsValid():
         return False
 
-    container_mpu = utils.geometry.get_mpu(container_dir)
+    container_mpu = authoring.asset_folder.get_mpu(container_dir)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
 
     xformable = UsdGeom.Xformable(wrapper)
@@ -533,7 +514,7 @@ def remove_nested_asset_reference(
     if layer is None:
         return False
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
     parent_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
     parent_spec = layer.GetPrimAtPath(parent_path)
     if parent_spec is not None and prim_name in parent_spec.nameChildren:
@@ -566,7 +547,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
     if layer is None:
         return []
 
-    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
     contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
     contents_spec = layer.GetPrimAtPath(contents_scope_path)
 
@@ -582,7 +563,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
         if removed:
             layer.Save()
 
-    utils.asset_folder.remove_empty_layer(
+    authoring.asset_folder.remove_empty_layer(
         contents_path, container_dir, lambda p: p.HasAuthoredReferences(),
     )
 
@@ -606,7 +587,7 @@ def _reuse_existing_target(target_folder: Path, source_root: Path) -> schemas.In
             f"root '{canonical.name}'. Delete it and retry."
         )
         raise RuntimeError(msg)
-    _normalize_root_metadata(canonical, target_folder.name)
+    authoring.asset_folder.normalize_root_metadata(canonical, target_folder.name)
     return schemas.IntakeReport(
         scene_ref_path=f"assets/{target_folder.name}/{canonical.name}",
         asset_folder_name=target_folder.name,
@@ -744,24 +725,6 @@ def _canonicalize_root(
     return True
 
 
-def _normalize_root_metadata(root_file: Path, asset_name: str) -> None:
-    """Ensure the intaken asset's root prim has Kind + assetInfo + class inherit."""
-    stage = Usd.Stage.Open(str(root_file))
-    if stage is None:
-        return
-    root_prim = stage.GetDefaultPrim()
-    if not root_prim or not root_prim.IsValid():
-        return
-
-    apply_aswf_root_metadata(
-        root_prim,
-        asset_name=asset_name,
-        asset_identifier=f"./{root_file.name}",
-    )
-    _apply_aswf_class_inherits(stage, root_prim.GetName())
-    stage.Save()
-
-
 def _validate_self_contained(
     canonical_root: Path, target_folder: Path,
 ) -> list[str]:
@@ -805,108 +768,6 @@ def _ensure_group_scope(
     group_prim = layer.GetPrimAtPath(group_path)
     group_prim.specifier = Sdf.SpecifierDef
     group_prim.typeName = "Xform"
-
-
-def _create_geo_layer(geo_dest: Path, geometry_source: Path) -> None:
-    """Copy geometry into ``geo.usda`` using Sdf layer copy."""
-    source_layer = Sdf.Layer.FindOrOpen(str(geometry_source))
-    if source_layer is None:
-        msg = f"Cannot open geometry source: {geometry_source}"
-        raise RuntimeError(msg)
-
-    dest_layer = Sdf.Layer.CreateNew(str(geo_dest))
-    for prim_spec in source_layer.rootPrims:
-        Sdf.CopySpec(
-            source_layer, prim_spec.path, dest_layer, prim_spec.path,
-        )
-    dest_layer.defaultPrim = source_layer.defaultPrim
-    dest_layer.Save()
-
-
-def _create_root_file(
-    root_path: Path,
-    meters_per_unit: float,
-    up_axis: str,
-) -> None:
-    """Write the root .usd that references ``geo.usda``."""
-    geo_path = root_path.parent / constants.ASWFLayerNames.GEO
-    default_prim_name = root_path.parent.name
-    if geo_path.exists():
-        geo_layer = Sdf.Layer.FindOrOpen(str(geo_path))
-        if geo_layer and geo_layer.defaultPrim:
-            default_prim_name = geo_layer.defaultPrim
-
-    stage = Usd.Stage.CreateNew(str(root_path))
-    UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
-    UsdGeom.SetStageUpAxis(
-        stage, UsdGeom.Tokens.y if up_axis == "Y" else UsdGeom.Tokens.z,
-    )
-
-    root_prim = stage.DefinePrim(f"/{default_prim_name}", "Xform")
-    stage.SetDefaultPrim(root_prim)
-    root_prim.GetPayloads().AddPayload(f"./{constants.ASWFLayerNames.GEO}")
-
-    apply_aswf_root_metadata(
-        root_prim,
-        asset_name=root_path.parent.name,
-        asset_identifier=f"./{root_path.name}",
-        force=True,
-    )
-    _apply_aswf_class_inherits(stage, default_prim_name)
-
-    stage.Save()
-
-
-def _apply_aswf_class_inherits(
-    stage: Usd.Stage, default_prim_name: str,
-) -> bool:
-    """Add a sibling ``class _class_<name>`` and inherit it from the root."""
-    class_path = f"/_class_{default_prim_name}"
-    class_prim = stage.GetPrimAtPath(class_path)
-    if not class_prim or not class_prim.IsValid():
-        class_prim = stage.OverridePrim(class_path)
-        class_prim.SetSpecifier(Sdf.SpecifierClass)
-        class_prim.SetTypeName("Xform")
-
-    root_prim = stage.GetDefaultPrim()
-    if not root_prim or not root_prim.IsValid():
-        return False
-    inherits = root_prim.GetInherits()
-    existing = inherits.GetAllDirectInherits()
-    if Sdf.Path(class_path) in existing:
-        return False
-    inherits.AddInherit(class_path)
-    return True
-
-
-def apply_aswf_root_metadata(
-    prim: Usd.Prim,
-    *,
-    asset_name: str,
-    asset_identifier: str,
-    kind: str = "component",
-    version: str = "1.0",
-    force: bool = False,
-) -> None:
-    """Apply ASWF-canonical Kind + assetInfo to an asset root prim.
-
-    When *force* is False, only fills missing fields, preserving any
-    metadata already authored upstream (DCC, asset-management system).
-    """
-    model_api = Usd.ModelAPI(prim)
-    if force or not model_api.GetKind():
-        model_api.SetKind(kind)
-
-    existing = prim.GetAssetInfo() or {}
-    info = dict(existing) if not force else {}
-    info.setdefault("identifier", Sdf.AssetPath(asset_identifier))
-    info.setdefault("name", asset_name)
-    info.setdefault("version", version)
-    if force:
-        info["identifier"] = Sdf.AssetPath(asset_identifier)
-        info["name"] = asset_name
-        info["version"] = version
-    prim.SetAssetInfo(info)
 
 
 def _wrap_root_prim(geometry_file: Path) -> None:

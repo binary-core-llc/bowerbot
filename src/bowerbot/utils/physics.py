@@ -427,74 +427,6 @@ def remove_api_scene(
 # ── Scene masking detection (refuse-or-acknowledge) ──
 
 
-def find_masking_scene_opinions(
-    stage: Usd.Stage,
-    asset_dir: Path,
-    asset_local_path: str,
-    attributes: dict[str, Any] | None = None,
-    relationships: dict[str, list[str]] | None = None,
-) -> list[tuple[str, str, str]]:
-    """Scene.usda opinions on placements that would mask a phy.usda write.
-
-    Returns ``(placement_prim_path, kind, key)`` tuples; ``kind`` is
-    ``"attribute"`` or ``"relationship"``. Empty list when no masking
-    opinions exist or the asset has no placements in the open scene.
-    """
-    attr_names = set((attributes or {}).keys())
-    rel_names = set((relationships or {}).keys())
-    if not attr_names and not rel_names:
-        return []
-
-    placements = authoring.placement.find_asset_placements(stage, asset_dir)
-    if not placements:
-        return []
-
-    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    asset_prefix = f"/{default_prim}"
-    tail = (
-        asset_local_path[len(asset_prefix):]
-        if asset_local_path.startswith(asset_prefix)
-        else asset_local_path
-    )
-
-    layer = stage.GetRootLayer()
-    masking: list[tuple[str, str, str]] = []
-    for placement in placements:
-        scene_path = f"{placement}{tail}" if tail else placement
-        spec = layer.GetPrimAtPath(scene_path)
-        if spec is None:
-            continue
-        for name in attr_names:
-            if name in spec.attributes:
-                masking.append((scene_path, "attribute", name))
-        for name in rel_names:
-            if name in spec.relationships:
-                masking.append((scene_path, "relationship", name))
-    return masking
-
-
-def clear_masking_scene_opinions(
-    stage: Usd.Stage,
-    masking: list[tuple[str, str, str]],
-) -> None:
-    """Remove every masking opinion in *masking* from scene.usda."""
-    layer = stage.GetRootLayer()
-    touched_paths: set[str] = set()
-    for prim_path, kind, key in masking:
-        spec = layer.GetPrimAtPath(prim_path)
-        if spec is None:
-            continue
-        container = spec.attributes if kind == "attribute" else spec.relationships
-        prop_spec = container.get(key)
-        if prop_spec is not None:
-            spec.RemoveProperty(prop_spec)
-            touched_paths.add(prim_path)
-    for prim_path in touched_paths:
-        usd.namespace.prune_empty_overrides(layer, prim_path)
-    if touched_paths:
-        layer.Save()
-
-
 def enforce_masking_policy(
     stage: Usd.Stage,
     asset_dir: Path,
@@ -512,14 +444,14 @@ def enforce_masking_policy(
     *confirm* was used). Raises ``ValueError`` with a per-opinion breakdown
     when masking exists and neither *clear* nor *confirm* is set.
     """
-    masking = find_masking_scene_opinions(
+    masking = authoring.opinions.find_physics_masking_opinions(
         stage, asset_dir, asset_local_path,
         attributes=attributes, relationships=relationships,
     )
     if not masking:
         return []
     if clear:
-        clear_masking_scene_opinions(stage, masking)
+        authoring.opinions.clear_physics_masking_opinions(stage, masking)
         return masking
     if confirm:
         return []

@@ -232,44 +232,6 @@ def validate_lod_namespace_stability(
     raise ValueError("\n".join(lines))
 
 
-def find_masking_scene_opinions(
-    stage: Usd.Stage,
-    asset_dir: Path,
-    default_prim: str,
-    target_map: dict[str, Iterable[str]],
-    kind: schemas.OpinionKind,
-) -> list[tuple[str, str]]:
-    """Return (scene_prim_path, key) pairs in scene.usda that would mask a variant body opinion.
-
-    *target_map* maps asset-local prim path -> iterable of keys the variant
-    is about to author at that path. *kind* names which spec slot to inspect:
-    ``"attribute"`` (key is attribute name), ``"relationship"`` (key is
-    relationship name, typically ``"material:binding"``), or ``"active"``
-    (key is always ``"active"`` — the prim's active metadata).
-    """
-    placements = authoring.placement.find_asset_placements(stage, asset_dir)
-    if not placements:
-        return []
-    layer = stage.GetRootLayer()
-    asset_prefix = f"/{default_prim}"
-    masking: list[tuple[str, str]] = []
-    for asset_path, keys in target_map.items():
-        tail = (
-            asset_path[len(asset_prefix):]
-            if asset_path.startswith(asset_prefix)
-            else asset_path
-        )
-        for placement in placements:
-            scene_path = f"{placement}{tail}" if tail else placement
-            spec = layer.GetPrimAtPath(scene_path)
-            if spec is None:
-                continue
-            for key in keys:
-                if _has_authored_opinion(spec, key, kind):
-                    masking.append((scene_path, key))
-    return masking
-
-
 def enforce_no_masking_overrides(
     stage: Usd.Stage,
     asset_dir: Path,
@@ -282,45 +244,17 @@ def enforce_no_masking_overrides(
     confirm: bool,
 ) -> bool:
     """Detect/clear/refuse masking scene opinions; return True if stage needs reload."""
-    masking = find_masking_scene_opinions(
+    masking = authoring.opinions.find_variant_masking_opinions(
         stage, asset_dir, default_prim, target_map, kind,
     )
     if not masking:
         return False
     if clear:
-        clear_masking_scene_opinions(stage, masking, kind)
+        authoring.opinions.clear_variant_masking_opinions(stage, masking, kind)
         return True
     if not confirm:
         raise ValueError(format_masking_override_error(variant_kind, masking))
     return False
-
-
-def clear_masking_scene_opinions(
-    stage: Usd.Stage,
-    opinions: list[tuple[str, str]],
-    kind: schemas.OpinionKind,
-) -> None:
-    """Remove the listed masking opinions from the stage's root layer."""
-    layer = stage.GetRootLayer()
-    touched_paths: set[str] = set()
-    for prim_path, key in opinions:
-        spec = layer.GetPrimAtPath(prim_path)
-        if spec is None:
-            continue
-        if kind == "attribute":
-            attr_spec = spec.attributes.get(key)
-            if attr_spec is not None:
-                spec.RemoveProperty(attr_spec)
-        elif kind == "relationship":
-            rel_spec = spec.relationships.get(key)
-            if rel_spec is not None:
-                spec.RemoveProperty(rel_spec)
-        elif kind == "active":
-            spec.ClearInfo("active")
-        touched_paths.add(prim_path)
-    for prim_path in touched_paths:
-        usd.namespace.prune_empty_overrides(layer, prim_path)
-    layer.Save()
 
 
 def format_masking_override_error(
@@ -341,19 +275,6 @@ def format_masking_override_error(
         "will only take effect on placements without prior overrides).",
     )
     return "\n".join(lines)
-
-
-def _has_authored_opinion(
-    spec: Sdf.PrimSpec, key: str, kind: schemas.OpinionKind,
-) -> bool:
-    """Whether *spec* has an authored opinion at *key* for the given *kind*."""
-    if kind == "attribute":
-        return key in spec.attributes
-    if kind == "relationship":
-        return key in spec.relationships
-    if kind == "active":
-        return spec.HasInfo("active")
-    return False
 
 
 # ── Scene-level variant authoring ──
@@ -396,24 +317,6 @@ def apply_scene_variant(
     )
 
 
-def find_masking_scene_opinions_direct(
-    stage: Usd.Stage,
-    target_map: dict[str, Iterable[str]],
-    kind: schemas.OpinionKind,
-) -> list[tuple[str, str]]:
-    """Return direct scene opinions that would mask a scene-level variant body."""
-    layer = stage.GetRootLayer()
-    masking: list[tuple[str, str]] = []
-    for scene_path, keys in target_map.items():
-        spec = layer.GetPrimAtPath(scene_path)
-        if spec is None:
-            continue
-        for key in keys:
-            if _has_authored_opinion(spec, key, kind):
-                masking.append((scene_path, key))
-    return masking
-
-
 def enforce_no_scene_masking_overrides(
     stage: Usd.Stage,
     target_map: dict[str, Iterable[str]],
@@ -424,11 +327,11 @@ def enforce_no_scene_masking_overrides(
     confirm: bool,
 ) -> bool:
     """Refuse / clear direct scene opinions that mask a scene-level variant body."""
-    masking = find_masking_scene_opinions_direct(stage, target_map, kind)
+    masking = authoring.opinions.find_masking_scene_opinions_direct(stage, target_map, kind)
     if not masking:
         return False
     if clear:
-        clear_masking_scene_opinions(stage, masking, kind)
+        authoring.opinions.clear_variant_masking_opinions(stage, masking, kind)
         return True
     if not confirm:
         raise ValueError(format_masking_override_error(variant_kind, masking))

@@ -954,6 +954,8 @@ src/bowerbot/
                                #   textures, its asset folders, resolving a path
       intake.py                #   Bringing a file or folder into the project: copy,
                                #   localize, check and repair (ASWF compliance)
+      opinions.py              #   Scene.usda opinions that would mask a write into an
+                               #   asset layer or a variant
     stage.py                   #   list_prim_children (moving to features/)
     inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)

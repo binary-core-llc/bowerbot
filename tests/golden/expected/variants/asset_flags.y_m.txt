@@ -1,0 +1,1486 @@
+##### scenario: variants/asset_flags
+##### convention: Y-up, 1.0 meters per unit
+##### set_as_default, confirm_masked and clear_masking_overrides on every asset variant kind.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place lamp/lamp.usda as Lamp
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/lamp/lamp.usda", asset_name="Lamp", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Lamp at /Scene/Props/Lamp_01.
+
+  what changed:
+    + file assets/lamp/geo.usda
+    + file assets/lamp/lamp.usda
+    + file assets/lamp/maps/lamp_diffuse.png
+    + file assets/lamp/mtl.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Lamp_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset [Xform]
+          bounds: (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/Base [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.3, 0.1, 0.3)
+          attr xformOp:translate: (0, 0.05, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+          material shown: (none)
+          world position: (0.0000, 0.0500, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/Shade [Cube]
+          applied APIs: MaterialBindingAPI
+          attr size: 1
+          attr xformOp:scale: (0.4, 0.3, 0.4)
+          attr xformOp:translate: (0, 0.5, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)
+          material shown: /Scene/Props/Lamp_01/asset/mtl/brass
+          rel material:binding: /Scene/Props/Lamp_01/asset/mtl/brass
+          world position: (0.0000, 0.5000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/mtl [Scope]
+    + prim /Scene/Props/Lamp_01/asset/mtl/brass [Material] (+2 prims inside)
+          attr outputs:surface: (no value)
+          connect outputs:surface: /Scene/Props/Lamp_01/asset/mtl/brass/PreviewSurface.outputs:surface
+    ~ /Scene  bounds: (none) → (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Lamp",
+    "intake": {
+      "asset_folder": "lamp",
+      "files_copied": 4,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "lamp.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Lamp at /Scene/Props/Lamp_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Lamp_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/lamp/geo.usda
+  + assets/lamp/lamp.usda
+  + assets/lamp/maps/lamp_diffuse.png
+  + assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/lamp/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp"
+      {
+          def Cube "Base"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.3, 0.1, 0.3)
+              double3 xformOp:translate = (0, 0.05, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Shade"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.4, 0.3, 0.4)
+              double3 xformOp:translate = (0, 0.5, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/lamp/lamp.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp" (
+          assetInfo = {
+              asset identifier = @./lamp.usda@
+              string name = "lamp"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_lamp>
+          kind = "component"
+          prepend payload = @./geo.usda@
+          prepend references = @./mtl.usda@
+      )
+      {
+      }
+
+      class Xform "_class_lamp"
+      {
+      }
+
+  + assets/lamp/maps/lamp_diffuse.png (new):
+      <binary: 70 bytes, sha256:9b25e3bbeaa1ec03>
+  + assets/lamp/mtl.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def "lamp"
+      {
+          def Scope "mtl"
+          {
+              def Material "brass"
+              {
+                  token outputs:surface.connect = </lamp/mtl/brass/PreviewSurface.outputs:surface>
+
+                  def Shader "PreviewSurface"
+                  {
+                      uniform token info:id = "UsdPreviewSurface"
+                      color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+                      token outputs:surface
+                  }
+
+                  def Shader "Diffuse"
+                  {
+                      uniform token info:id = "UsdUVTexture"
+                      asset inputs:file = @./maps/lamp_diffuse.png@
+                  }
+              }
+          }
+
+          over "Shade" (
+              prepend apiSchemas = ["MaterialBindingAPI"]
+          )
+          {
+              rel material:binding = </lamp/mtl/brass>
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Lamp_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/lamp/lamp.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,64 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Lamp_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/lamp/lamp.usda@
+  +                    string name = "lamp"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Base"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.3, 0.1, 0.3)
+  +                    double3 xformOp:translate = (0, 0.05, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Shade" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+  +                {
+  +                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/brass>
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.4, 0.3, 0.4)
+  +                    double3 xformOp:translate = (0, 0.5, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Scope "mtl"
+  +                {
+  +                    def Material "brass"
+  +                    {
+  +                        token outputs:surface.connect = </Scene/Props/Lamp_01/asset/mtl/brass/PreviewSurface.outputs:surface>
+  +
+  +                        def Shader "PreviewSurface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+  +                            token outputs:surface
+  +                        }
+  +
+  +                        def Shader "Diffuse"
+  +                        {
+  +                            uniform token info:id = "UsdUVTexture"
+  +                            asset inputs:file = @<PROJECT>/assets/lamp/maps/lamp_diffuse.png@
+  +                        }
+  +                    }
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 02: create_material
+intent: a second material to switch to
+
+SUMMARY
+  call: create_material(prim_path="/Scene/Props/Lamp_01/asset/Base", material_name="red", base_color_r=0.8, base_color_g=0.1, base_color_b=0.1)
+  current project: golden
+  said: ok: Created procedural material 'red' and bound to /Scene/Props/Lamp_01/asset/Base in lamp/mtl.usda
+
+  what changed:
+    ~ file assets/lamp/mtl.usda
+    + prim /Scene/Props/Lamp_01/asset/mtl/red [Material] (+2 prims inside)
+          attr outputs:mtlx:surface: (no value)
+          attr outputs:surface: (no value)
+          connect outputs:mtlx:surface: /Scene/Props/Lamp_01/asset/mtl/red/standard_surface.outputs:out
+          connect outputs:surface: /Scene/Props/Lamp_01/asset/mtl/red/preview_surface.outputs:surface
+    ~ /Scene/Props/Lamp_01/asset/Base  applied APIs: (none) → MaterialBindingAPI
+    ~ /Scene/Props/Lamp_01/asset/Base  material shown: (none) → /Scene/Props/Lamp_01/asset/mtl/red
+    ~ /Scene/Props/Lamp_01/asset/Base  rel material:binding: (none) → /Scene/Props/Lamp_01/asset/mtl/red
+    ~ validity: valid → INVALID
+    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ this step made the scene invalid
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "lamp",
+    "material": "/lamp/mtl/red",
+    "message": "Created procedural material 'red' and bound to /Scene/Props/Lamp_01/asset/Base in lamp/mtl.usda",
+    "prim_path": "/Scene/Props/Lamp_01/asset/Base"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+  ~ assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/mtl.usda:
+      --- assets/lamp/mtl.usda (before)
+      +++ assets/lamp/mtl.usda (after)
+      @@ -27,4 +27,28 @@
+                   }
+               }
+      +
+      +        def Material "red"
+      +        {
+      +            token outputs:mtlx:surface.connect = </lamp/mtl/red/standard_surface.outputs:out>
+      +            token outputs:surface.connect = </lamp/mtl/red/preview_surface.outputs:surface>
+      +
+      +            def Shader "standard_surface"
+      +            {
+      +                uniform token info:id = "ND_standard_surface_surfaceshader"
+      +                color3f inputs:base_color = (0.8, 0.1, 0.1)
+      +                float inputs:metalness = 0
+      +                float inputs:specular_roughness = 0.5
+      +                token outputs:out
+      +            }
+      +
+      +            def Shader "preview_surface"
+      +            {
+      +                uniform token info:id = "UsdPreviewSurface"
+      +                color3f inputs:diffuseColor = (0.8, 0.1, 0.1)
+      +                float inputs:metallic = 0
+      +                float inputs:roughness = 0.5
+      +                token outputs:surface
+      +            }
+      +        }
+           }
+       
+      @@ -35,4 +59,11 @@
+               rel material:binding = </lamp/mtl/brass>
+           }
+      +
+      +    over "Base" (
+      +        prepend apiSchemas = ["MaterialBindingAPI"]
+      +    )
+      +    {
+      +        rel material:binding = </lamp/mtl/red>
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -30,6 +30,9 @@
+               )
+               {
+  -                def Cube "Base"
+  +                def Cube "Base" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+                   {
+  +                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/red>
+                       double size = 1
+                       float3 xformOp:scale = (0.3, 0.1, 0.3)
+  @@ -68,4 +71,28 @@
+                           }
+                       }
+  +
+  +                    def Material "red"
+  +                    {
+  +                        token outputs:mtlx:surface.connect = </Scene/Props/Lamp_01/asset/mtl/red/standard_surface.outputs:out>
+  +                        token outputs:surface.connect = </Scene/Props/Lamp_01/asset/mtl/red/preview_surface.outputs:surface>
+  +
+  +                        def Shader "standard_surface"
+  +                        {
+  +                            uniform token info:id = "ND_standard_surface_surfaceshader"
+  +                            color3f inputs:base_color = (0.8, 0.1, 0.1)
+  +                            float inputs:metalness = 0
+  +                            float inputs:specular_roughness = 0.5
+  +                            token outputs:out
+  +                        }
+  +
+  +                        def Shader "preview_surface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.8, 0.1, 0.1)
+  +                            float inputs:metallic = 0
+  +                            float inputs:roughness = 0.5
+  +                            token outputs:surface
+  +                        }
+  +                    }
+                   }
+               }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 03: add_asset_material_variant
+intent: a material variant made the default, masking confirmed
+
+SUMMARY
+  call: add_asset_material_variant(prim_path="/Scene/Props/Lamp_01", variant_set="finish", variant_name="red", bindings={"/Scene/Props/Lamp_01/asset/Shade": "/Scene/Props/Lamp_01/asset/mtl/red"}, set_as_default=true, confirm_masked=true)
+  current project: golden
+  said: ok: Added material variant 'red' to 'finish' in lamp
+
+  what changed:
+    ~ file assets/lamp/lamp.usda
+    + file assets/lamp/variants.usda
+    ~ /Scene/Props/Lamp_01/asset  variant set finish: (none) → red of red
+    ~ /Scene/Props/Lamp_01/asset/Shade  material shown: /Scene/Props/Lamp_01/asset/mtl/brass → /Scene/Props/Lamp_01/asset/mtl/red
+    ~ /Scene/Props/Lamp_01/asset/Shade  rel material:binding: /Scene/Props/Lamp_01/asset/mtl/brass → /Scene/Props/Lamp_01/asset/mtl/red
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/lamp",
+    "bindings": {
+      "/lamp/Shade": "/lamp/mtl/red"
+    },
+    "category": "material",
+    "default_selected": true,
+    "message": "Added material variant 'red' to 'finish' in lamp",
+    "variant_name": "red",
+    "variant_set": "finish"
+  }
+
+files:
+    assets/lamp/geo.usda
+  ~ assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+  + assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lamp.usda:
+      --- assets/lamp/lamp.usda (before)
+      +++ assets/lamp/lamp.usda (after)
+      @@ -15,5 +15,11 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      -    prepend references = @./mtl.usda@
+      +    prepend references = [
+      +        @./variants.usda@,
+      +        @./mtl.usda@
+      +    ]
+      +    variants = {
+      +        string finish = "red"
+      +    }
+       )
+       {
+  + assets/lamp/variants.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+      )
+
+      over "lamp" (
+          prepend variantSets = "finish"
+      )
+      {
+          variantSet "finish" = {
+              "red" {
+                  over "Shade" (
+                      prepend apiSchemas = ["MaterialBindingAPI"]
+                  )
+                  {
+                      custom rel material:binding = </lamp/mtl/red>
+                  }
+
+              }
+          }
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -45,5 +45,5 @@
+                   )
+                   {
+  -                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/brass>
+  +                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/red>
+                       double size = 1
+                       float3 xformOp:scale = (0.4, 0.3, 0.4)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 04: add_asset_material_variant
+intent: another, clearing masking overrides first
+
+SUMMARY
+  call: add_asset_material_variant(prim_path="/Scene/Props/Lamp_01", variant_set="finish", variant_name="brass", bindings={"/Scene/Props/Lamp_01/asset/Shade": "/Scene/Props/Lamp_01/asset/mtl/brass"}, clear_masking_overrides=true)
+  current project: golden
+  said: ok: Added material variant 'brass' to 'finish' in lamp
+
+  what changed:
+    ~ file assets/lamp/variants.usda
+    ~ /Scene/Props/Lamp_01/asset  variant set finish: red of red → red of brass, red
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/lamp",
+    "bindings": {
+      "/lamp/Shade": "/lamp/mtl/brass"
+    },
+    "category": "material",
+    "default_selected": false,
+    "message": "Added material variant 'brass' to 'finish' in lamp",
+    "variant_name": "brass",
+    "variant_set": "finish"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+  ~ assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/variants.usda:
+      --- assets/lamp/variants.usda (before)
+      +++ assets/lamp/variants.usda (after)
+      @@ -9,4 +9,13 @@
+       {
+           variantSet "finish" = {
+      +        "brass" {
+      +            over "Shade" (
+      +                prepend apiSchemas = ["MaterialBindingAPI"]
+      +            )
+      +            {
+      +                custom rel material:binding = </lamp/mtl/brass>
+      +            }
+      +
+      +        }
+               "red" {
+                   over "Shade" (
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 05: add_asset_configuration_variant
+intent: a configuration variant made the default
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Props/Lamp_01", variant_set="parts", variant_name="no_shade", activations={"/Scene/Props/Lamp_01/asset/Shade": false}, set_as_default=true, clear_masking_overrides=true)
+  current project: golden
+  said: ok: Added configuration variant 'no_shade' to 'parts' in lamp
+
+  what changed:
+    ~ file assets/lamp/lamp.usda
+    ~ file assets/lamp/variants.usda
+    ~ /Scene  bounds: (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000) → (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+    ~ /Scene/Props/Lamp_01/asset  variant set parts: (none) → no_shade of no_shade
+    ~ /Scene/Props/Lamp_01/asset/Shade  active: (none) → false
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "activations": {
+      "/lamp/Shade": false
+    },
+    "asset_path": "<PROJECT>/assets/lamp",
+    "category": "configuration",
+    "default_selected": true,
+    "message": "Added configuration variant 'no_shade' to 'parts' in lamp",
+    "variant_name": "no_shade",
+    "variant_set": "parts"
+  }
+
+files:
+    assets/lamp/geo.usda
+  ~ assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+  ~ assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lamp.usda:
+      --- assets/lamp/lamp.usda (before)
+      +++ assets/lamp/lamp.usda (after)
+      @@ -21,4 +21,5 @@
+           variants = {
+               string finish = "red"
+      +        string parts = "no_shade"
+           }
+       )
+  ~ assets/lamp/variants.usda:
+      --- assets/lamp/variants.usda (before)
+      +++ assets/lamp/variants.usda (after)
+      @@ -5,5 +5,5 @@
+       
+       over "lamp" (
+      -    prepend variantSets = "finish"
+      +    prepend variantSets = ["finish", "parts"]
+       )
+       {
+      @@ -28,4 +28,14 @@
+               }
+           }
+      +    variantSet "parts" = {
+      +        "no_shade" {
+      +            over "Shade" (
+      +                active = false
+      +            )
+      +            {
+      +            }
+      +
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -38,15 +38,4 @@
+                       float3 xformOp:scale = (0.3, 0.1, 0.3)
+                       double3 xformOp:translate = (0, 0.05, 0)
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                }
+  -
+  -                def Cube "Shade" (
+  -                    apiSchemas = ["MaterialBindingAPI"]
+  -                )
+  -                {
+  -                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/red>
+  -                    double size = 1
+  -                    float3 xformOp:scale = (0.4, 0.3, 0.4)
+  -                    double3 xformOp:translate = (0, 0.5, 0)
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 06: add_asset_configuration_variant
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Props/Lamp_01", variant_set="parts", variant_name="all", activations={"/Scene/Props/Lamp_01/asset/Shade": true}, confirm_masked=true)
+  current project: golden
+  said: ok: Added configuration variant 'all' to 'parts' in lamp
+
+  what changed:
+    ~ file assets/lamp/variants.usda
+    ~ /Scene/Props/Lamp_01/asset  variant set parts: no_shade of no_shade → no_shade of all, no_shade
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "activations": {
+      "/lamp/Shade": true
+    },
+    "asset_path": "<PROJECT>/assets/lamp",
+    "category": "configuration",
+    "default_selected": false,
+    "message": "Added configuration variant 'all' to 'parts' in lamp",
+    "variant_name": "all",
+    "variant_set": "parts"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+  ~ assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/variants.usda:
+      --- assets/lamp/variants.usda (before)
+      +++ assets/lamp/variants.usda (after)
+      @@ -29,4 +29,12 @@
+           }
+           variantSet "parts" = {
+      +        "all" {
+      +            over "Shade" (
+      +                active = true
+      +            )
+      +            {
+      +            }
+      +
+      +        }
+               "no_shade" {
+                   over "Shade" (
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 07: add_asset_attribute_variant
+intent: an attribute variant made the default
+
+SUMMARY
+  call: add_asset_attribute_variant(prim_path="/Scene/Props/Lamp_01", variant_set="tint", variant_name="hidden_base", overrides={"/Scene/Props/Lamp_01/asset/Base": {"visibility": "invisible"}}, set_as_default=true, confirm_masked=true)
+  current project: golden
+  said: ok: Added attribute variant 'hidden_base' to 'tint' in lamp
+
+  what changed:
+    ~ file assets/lamp/lamp.usda
+    ~ file assets/lamp/variants.usda
+    ~ /Scene  bounds: (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500) → (none)
+    ~ /Scene/Props/Lamp_01/asset  variant set tint: (none) → hidden_base of hidden_base
+    ~ /Scene/Props/Lamp_01/asset/Base  attr visibility: (none) → 'invisible'
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/lamp",
+    "category": "attribute",
+    "default_selected": true,
+    "message": "Added attribute variant 'hidden_base' to 'tint' in lamp",
+    "overrides": {
+      "/lamp/Base": {
+        "visibility": "invisible"
+      }
+    },
+    "variant_name": "hidden_base",
+    "variant_set": "tint"
+  }
+
+files:
+    assets/lamp/geo.usda
+  ~ assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+  ~ assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lamp.usda:
+      --- assets/lamp/lamp.usda (before)
+      +++ assets/lamp/lamp.usda (after)
+      @@ -22,4 +22,5 @@
+               string finish = "red"
+               string parts = "no_shade"
+      +        string tint = "hidden_base"
+           }
+       )
+  ~ assets/lamp/variants.usda:
+      --- assets/lamp/variants.usda (before)
+      +++ assets/lamp/variants.usda (after)
+      @@ -5,5 +5,5 @@
+       
+       over "lamp" (
+      -    prepend variantSets = ["finish", "parts"]
+      +    prepend variantSets = ["finish", "parts", "tint"]
+       )
+       {
+      @@ -46,4 +46,13 @@
+               }
+           }
+      +    variantSet "tint" = {
+      +        "hidden_base" {
+      +            over "Base"
+      +            {
+      +                token visibility = "invisible"
+      +            }
+      +
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -36,4 +36,5 @@
+                       rel material:binding = </Scene/Props/Lamp_01/asset/mtl/red>
+                       double size = 1
+  +                    token visibility = "invisible"
+                       float3 xformOp:scale = (0.3, 0.1, 0.3)
+                       double3 xformOp:translate = (0, 0.05, 0)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 08: list_variants
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Props/Lamp_01")
+  current project: golden
+  said: ok: 3 variant set(s) across 1 carrier(s) under /Scene/Props/Lamp_01
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carriers": [
+      {
+        "prim_path": "/Scene/Props/Lamp_01/asset",
+        "variant_sets": [
+          {
+            "name": "finish",
+            "selection": "red",
+            "variants": [
+              "brass",
+              "red"
+            ]
+          },
+          {
+            "name": "parts",
+            "selection": "no_shade",
+            "variants": [
+              "all",
+              "no_shade"
+            ]
+          },
+          {
+            "name": "tint",
+            "selection": "hidden_base",
+            "variants": [
+              "hidden_base"
+            ]
+          }
+        ]
+      }
+    ],
+    "message": "3 variant set(s) across 1 carrier(s) under /Scene/Props/Lamp_01",
+    "prim_path": "/Scene/Props/Lamp_01"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 09: add_asset_material_variant
+intent: an invalid set name
+
+SUMMARY
+  call: add_asset_material_variant(prim_path="/Scene/Props/Lamp_01", variant_set="finish!", variant_name="x", bindings={"/Scene/Props/Lamp_01/asset/Shade": "/Scene/Props/Lamp_01/asset/mtl/red"})
+  current project: golden
+  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSetSpec::New' at line 34 in file /opt/USD/pxr/usd/sdf/variantSetSpec.cpp : 'Cannot create variant set spec with invalid identifier: 'finish!'' Error in 'pxrInternal_v0_26_8__pxrReserved__::Sdf_ListEditor<TypePolicy>::_ValidateEdit [with TypePolicy = pxrInternal_v0_26_8__pxrReserved__::SdfNameKeyPolicy]' at line 262 in file /opt/USD/pxr/usd/sdf/listEditor.h : '"finish!" is not a valid identifier'
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSetSpec::New' at line 34 in file /opt/USD/pxr/usd/sdf/variantSetSpec.cpp : 'Cannot create variant set spec with invalid identifier: 'finish!''\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::Sdf_ListEditor<TypePolicy>::_ValidateEdit [with TypePolicy = pxrInternal_v0_26_8__pxrReserved__::SdfNameKeyPolicy]' at line 262 in file /opt/USD/pxr/usd/sdf/listEditor.h : '\"finish!\" is not a valid identifier'"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 10: remove_asset_variant
+intent: a placement that does not exist
+
+SUMMARY
+  call: remove_asset_variant(prim_path="/Scene/Nope", variant_set="finish", variant_name="red")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ)."
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 11: remove_asset_variant_set
+
+SUMMARY
+  call: remove_asset_variant_set(prim_path="/Scene/Nope", variant_set="finish")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ)."
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 12: select_asset_variant
+
+SUMMARY
+  call: select_asset_variant(prim_path="/Scene/Nope", variant_set="finish", variant_name="red")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ)."
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 13: select_asset_variant_for_instance
+
+SUMMARY
+  call: select_asset_variant_for_instance(prim_path="/Scene/Nope", variant_set="finish", variant_name="red")
+  current project: golden
+  said: REFUSED: Prim not found in scene: /Scene/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found in scene: /Scene/Nope"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+
+
+=== step 14: remove_asset_variant_set
+
+SUMMARY
+  call: remove_asset_variant_set(prim_path="/Scene/Props/Lamp_01", variant_set="tint")
+  current project: golden
+  said: ok: Removed variant set 'tint' from lamp
+
+  what changed:
+    ~ file assets/lamp/lamp.usda
+    ~ file assets/lamp/variants.usda
+    ~ /Scene  bounds: (none) → (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+    ~ /Scene/Props/Lamp_01/asset  variant set tint: hidden_base of hidden_base → (none)
+    ~ /Scene/Props/Lamp_01/asset/Base  attr visibility: 'invisible' → (none)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/lamp",
+    "message": "Removed variant set 'tint' from lamp",
+    "removed": true,
+    "variant_set": "tint"
+  }
+
+files:
+    assets/lamp/geo.usda
+  ~ assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+  ~ assets/lamp/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lamp.usda:
+      --- assets/lamp/lamp.usda (before)
+      +++ assets/lamp/lamp.usda (after)
+      @@ -22,5 +22,4 @@
+               string finish = "red"
+               string parts = "no_shade"
+      -        string tint = "hidden_base"
+           }
+       )
+  ~ assets/lamp/variants.usda:
+      --- assets/lamp/variants.usda (before)
+      +++ assets/lamp/variants.usda (after)
+      @@ -5,5 +5,5 @@
+       
+       over "lamp" (
+      -    prepend variantSets = ["finish", "parts", "tint"]
+      +    prepend variantSets = ["finish", "parts"]
+       )
+       {
+      @@ -46,13 +46,4 @@
+               }
+           }
+      -    variantSet "tint" = {
+      -        "hidden_base" {
+      -            over "Base"
+      -            {
+      -                token visibility = "invisible"
+      -            }
+      -
+      -        }
+      -    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -36,5 +36,4 @@
+                       rel material:binding = </Scene/Props/Lamp_01/asset/mtl/red>
+                       double size = 1
+  -                    token visibility = "invisible"
+                       float3 xformOp:scale = (0.3, 0.1, 0.3)
+                       double3 xformOp:translate = (0, 0.05, 0)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material /Scene/Props/Lamp_01/asset/mtl/red
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.

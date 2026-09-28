@@ -1,0 +1,902 @@
+##### scenario: variants/asset_attribute
+##### convention: Z-up, 0.01 meters per unit
+##### An attribute variant set that changes values on parts.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place table.usda as Table
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/table.usda", asset_name="Table", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Table at /Scene/Furniture/Table_01.
+
+  what changed:
+    + file assets/table/geo.usda
+    + file assets/table/table.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Table_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_L [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (-0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)
+          material shown: (none)
+          world position: (-55.0000, 0.0000, 37.5000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_R [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+          material shown: (none)
+          world position: (55.0000, 0.0000, 37.5000)
+    + prim /Scene/Furniture/Table_01/asset/Top [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.05, 0.8)
+          attr xformOp:translate: (0, 0.75, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 75.0000)
+    ~ /Scene  bounds: (none) → (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Table",
+    "intake": {
+      "asset_folder": "table",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "table.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Table at /Scene/Furniture/Table_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Table_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/table/geo.usda
+  + assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/table/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      def Xform "table"
+      {
+          def Cube "Top"
+          {
+              double size = 1
+              float3 xformOp:scale = (1.2, 0.05, 0.8)
+              double3 xformOp:translate = (0, 0.75, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_L"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (-0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_R"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/table/table.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "table" (
+          assetInfo = {
+              asset identifier = @./table.usda@
+              string name = "table"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_table>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_table"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Table_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/table/table.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,51 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Table_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/table/table.usda@
+  +                    string name = "table"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Top"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (1.2, 0.05, 0.8)
+  +                    double3 xformOp:translate = (0, 0.75, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_L"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (-0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_R"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: add_asset_attribute_variant
+intent: variant big: the Top's size 1.5
+
+SUMMARY
+  call: add_asset_attribute_variant(prim_path="/Scene/Furniture/Table_01", variant_set="size", variant_name="big", overrides={"/Scene/Furniture/Table_01/asset/Top": {"size": 1.5}})
+  current project: golden
+  said: ok: Added attribute variant 'big' to 'size' in table
+
+  what changed:
+    ~ file assets/table/table.usda
+    + file assets/table/variants.usda
+    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500)
+    ~ /Scene/Furniture/Table_01/asset  variant set size: (none) → big of big
+    ~ /Scene/Furniture/Table_01/asset/Top  attr size: 1 → 1.5
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/table",
+    "category": "attribute",
+    "default_selected": false,
+    "message": "Added attribute variant 'big' to 'size' in table",
+    "overrides": {
+      "/table/Top": {
+        "size": 1.5
+      }
+    },
+    "variant_name": "big",
+    "variant_set": "size"
+  }
+
+files:
+    assets/table/geo.usda
+  ~ assets/table/table.usda
+  + assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/table/table.usda:
+      --- assets/table/table.usda (before)
+      +++ assets/table/table.usda (after)
+      @@ -15,4 +15,8 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./variants.usda@
+      +    variants = {
+      +        string size = "big"
+      +    }
+       )
+       {
+  + assets/table/variants.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      over "table" (
+          prepend variantSets = "size"
+      )
+      {
+          variantSet "size" = {
+              "big" {
+                  over "Top"
+                  {
+                      double size = 1.5
+                  }
+
+              }
+          }
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -35,5 +35,5 @@
+                   def Cube "Top"
+                   {
+  -                    double size = 1
+  +                    double size = 1.5
+                       float3 xformOp:scale = (1.2, 0.05, 0.8)
+                       double3 xformOp:translate = (0, 0.75, 0)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-90.0000, -60.0000, 71.2500)..(90.0000, 60.0000, 78.7500)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: add_asset_attribute_variant
+intent: variant hidden_top
+
+SUMMARY
+  call: add_asset_attribute_variant(prim_path="/Scene/Furniture/Table_01", variant_set="size", variant_name="hidden_top", overrides={"/Scene/Furniture/Table_01/asset/Top": {"visibility": "invisible"}})
+  current project: golden
+  said: ok: Added attribute variant 'hidden_top' to 'size' in table
+
+  what changed:
+    ~ file assets/table/variants.usda
+    ~ /Scene/Furniture/Table_01/asset  variant set size: big of big → big of big, hidden_top
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/table",
+    "category": "attribute",
+    "default_selected": false,
+    "message": "Added attribute variant 'hidden_top' to 'size' in table",
+    "overrides": {
+      "/table/Top": {
+        "visibility": "invisible"
+      }
+    },
+    "variant_name": "hidden_top",
+    "variant_set": "size"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+  ~ assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/table/variants.usda:
+      --- assets/table/variants.usda (before)
+      +++ assets/table/variants.usda (after)
+      @@ -16,4 +16,11 @@
+       
+               }
+      +        "hidden_top" {
+      +            over "Top"
+      +            {
+      +                token visibility = "invisible"
+      +            }
+      +
+      +        }
+           }
+       }
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-90.0000, -60.0000, 71.2500)..(90.0000, 60.0000, 78.7500)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: select_asset_variant
+
+SUMMARY
+  call: select_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="size", variant_name="hidden_top")
+  current project: golden
+  said: ok: Selected 'hidden_top' for 'size' in table
+
+  what changed:
+    ~ file assets/table/table.usda
+    ~ /Scene  bounds: (-90.0000, -60.0000, 0.0000)..(90.0000, 60.0000, 78.7500) → (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+    ~ /Scene/Furniture/Table_01/asset  variant set size: big of big, hidden_top → hidden_top of big, hidden_top
+    ~ /Scene/Furniture/Table_01/asset/Top  attr size: 1.5 → 1
+    ~ /Scene/Furniture/Table_01/asset/Top  attr visibility: (none) → 'invisible'
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/table",
+    "message": "Selected 'hidden_top' for 'size' in table",
+    "variant_name": "hidden_top",
+    "variant_set": "size"
+  }
+
+files:
+    assets/table/geo.usda
+  ~ assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/table/table.usda:
+      --- assets/table/table.usda (before)
+      +++ assets/table/table.usda (after)
+      @@ -17,5 +17,5 @@
+           prepend references = @./variants.usda@
+           variants = {
+      -        string size = "big"
+      +        string size = "hidden_top"
+           }
+       )
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -35,5 +35,6 @@
+                   def Cube "Top"
+                   {
+  -                    double size = 1.5
+  +                    double size = 1
+  +                    token visibility = "invisible"
+                       float3 xformOp:scale = (1.2, 0.05, 0.8)
+                       double3 xformOp:translate = (0, 0.75, 0)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: set_prim_attribute
+intent: a scene override on a value the variants set
+
+SUMMARY
+  call: set_prim_attribute(prim_path="/Scene/Furniture/Table_01/asset/Top", attribute_name="size", value=3.0)
+  current project: golden
+  said: ok: Authored /Scene/Furniture/Table_01/asset/Top.size in scene.usda.
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Furniture/Table_01/asset/Top  attr size: 1 → 3
+    ~ /Scene/Furniture/Table_01/asset/Top  bounds: (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000) → (-180.0000, -120.0000, 67.5000)..(180.0000, 120.0000, 82.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attribute_name": "size",
+    "message": "Authored /Scene/Furniture/Table_01/asset/Top.size in scene.usda.",
+    "prim_path": "/Scene/Furniture/Table_01/asset/Top",
+    "value": 3.0
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -25,4 +25,9 @@
+                       float xformOp:rotateX = 90
+                       uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +
+      +                over "Top"
+      +                {
+      +                    double size = 3
+      +                }
+                   }
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -35,5 +35,5 @@
+                   def Cube "Top"
+                   {
+  -                    double size = 1
+  +                    double size = 3
+                       token visibility = "invisible"
+                       float3 xformOp:scale = (1.2, 0.05, 0.8)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-180.0000, -120.0000, 67.5000)..(180.0000, 120.0000, 82.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: add_asset_attribute_variant
+intent: a new variant now masked by the scene override
+
+SUMMARY
+  call: add_asset_attribute_variant(prim_path="/Scene/Furniture/Table_01", variant_set="size", variant_name="small", overrides={"/Scene/Furniture/Table_01/asset/Top": {"size": 0.5}})
+  current project: golden
+  said: REFUSED: Cannot author this attribute variant: 1 per-instance scene opinion(s) would mask it. Per LIVRPS the variant body would be silently overridden at composition time. Conflicting (placement, opinion): /Scene/Furniture/Table_01/asset/Top.size Retry with clear_masking_overrides=true to remove these scene opinions, OR with confirm_masked=true to author anyway (variant will only take effect on placements without prior overrides).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot author this attribute variant: 1 per-instance scene opinion(s) would mask it. Per LIVRPS the variant body would be silently overridden at composition time. Conflicting (placement, opinion):\n  /Scene/Furniture/Table_01/asset/Top.size\nRetry with clear_masking_overrides=true to remove these scene opinions, OR with confirm_masked=true to author anyway (variant will only take effect on placements without prior overrides)."
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-180.0000, -120.0000, 67.5000)..(180.0000, 120.0000, 82.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 07: add_asset_attribute_variant
+intent: clear the masking override first
+
+SUMMARY
+  call: add_asset_attribute_variant(prim_path="/Scene/Furniture/Table_01", variant_set="size", variant_name="small", overrides={"/Scene/Furniture/Table_01/asset/Top": {"size": 0.5}}, clear_masking_overrides=true)
+  current project: golden
+  said: ok: Added attribute variant 'small' to 'size' in table
+
+  what changed:
+    ~ file assets/table/variants.usda
+    ~ file scene.usda
+    ~ /Scene/Furniture/Table_01/asset  variant set size: hidden_top of big, hidden_top → hidden_top of big, hidden_top, small
+    ~ /Scene/Furniture/Table_01/asset/Top  attr size: 3 → 1
+    ~ /Scene/Furniture/Table_01/asset/Top  bounds: (-180.0000, -120.0000, 67.5000)..(180.0000, 120.0000, 82.5000) → (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/table",
+    "category": "attribute",
+    "default_selected": false,
+    "message": "Added attribute variant 'small' to 'size' in table",
+    "overrides": {
+      "/table/Top": {
+        "size": 0.5
+      }
+    },
+    "variant_name": "small",
+    "variant_set": "size"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+  ~ assets/table/variants.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ assets/table/variants.usda:
+      --- assets/table/variants.usda (before)
+      +++ assets/table/variants.usda (after)
+      @@ -23,4 +23,11 @@
+       
+               }
+      +        "small" {
+      +            over "Top"
+      +            {
+      +                double size = 0.5
+      +            }
+      +
+      +        }
+           }
+       }
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -25,9 +25,4 @@
+                       float xformOp:rotateX = 90
+                       uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      -
+      -                over "Top"
+      -                {
+      -                    double size = 3
+      -                }
+                   }
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -35,5 +35,5 @@
+                   def Cube "Top"
+                   {
+  -                    double size = 3
+  +                    double size = 1
+                       token visibility = "invisible"
+                       float3 xformOp:scale = (1.2, 0.05, 0.8)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 08: list_variants
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Furniture/Table_01")
+  current project: golden
+  said: ok: 1 variant set(s) across 1 carrier(s) under /Scene/Furniture/Table_01
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carriers": [
+      {
+        "prim_path": "/Scene/Furniture/Table_01/asset",
+        "variant_sets": [
+          {
+            "name": "size",
+            "selection": "hidden_top",
+            "variants": [
+              "big",
+              "hidden_top",
+              "small"
+            ]
+          }
+        ]
+      }
+    ],
+    "message": "1 variant set(s) across 1 carrier(s) under /Scene/Furniture/Table_01",
+    "prim_path": "/Scene/Furniture/Table_01"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-57.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues

@@ -1,0 +1,674 @@
+##### scenario: library/search_and_list
+##### convention: Y-up, 1.0 meters per unit
+##### The asset library: searches and listings by category.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: search_assets
+
+SUMMARY
+  call: search_assets(query="chair")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair",
+        "path": "<LIBRARY>/chair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair_cm",
+        "path": "<LIBRARY>/chair_cm.usda"
+      }
+    ],
+    "total_matches": 2,
+    "truncated": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: search_assets
+intent: case does not matter
+
+SUMMARY
+  call: search_assets(query="LAMP")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
+      }
+    ],
+    "total_matches": 2,
+    "truncated": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: search_assets
+intent: nothing matches
+
+SUMMARY
+  call: search_assets(query="zzz")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [],
+    "total_matches": 0,
+    "truncated": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: search_assets
+intent: limited to 2
+
+SUMMARY
+  call: search_assets(query="a", limit=2)
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
+      }
+    ],
+    "total_matches": 8,
+    "truncated": true
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: list_assets
+
+SUMMARY
+  call: list_assets()
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "unfrozen",
+        "path": "<LIBRARY>/unfrozen.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair",
+        "path": "<LIBRARY>/chair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "rooted_mesh",
+        "path": "<LIBRARY>/rooted_mesh.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "path_curve",
+        "path": "<LIBRARY>/path_curve.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair_cm",
+        "path": "<LIBRARY>/chair_cm.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "post_z",
+        "path": "<LIBRARY>/post_z.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usdz",
+        "name": "gem",
+        "path": "<LIBRARY>/gem.usdz"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "table",
+        "path": "<LIBRARY>/table.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "ground",
+        "path": "<LIBRARY>/ground.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "crate",
+        "path": "<LIBRARY>/crate.usda"
+      },
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "oak",
+        "path": "<LIBRARY>/materials/oak.usda"
+      },
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "steel",
+        "path": "<LIBRARY>/materials/steel.usda"
+      }
+    ],
+    "total_matches": 14,
+    "truncated": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: list_assets
+
+SUMMARY
+  call: list_assets(category="package")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
+      }
+    ],
+    "total_matches": 2,
+    "truncated": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: list_assets
+
+SUMMARY
+  call: list_assets(category="mtl")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "oak",
+        "path": "<LIBRARY>/materials/oak.usda"
+      },
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "steel",
+        "path": "<LIBRARY>/materials/steel.usda"
+      }
+    ],
+    "total_matches": 2,
+    "truncated": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: list_assets
+
+SUMMARY
+  call: list_assets(category="geo")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "unfrozen",
+        "path": "<LIBRARY>/unfrozen.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair",
+        "path": "<LIBRARY>/chair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "rooted_mesh",
+        "path": "<LIBRARY>/rooted_mesh.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "path_curve",
+        "path": "<LIBRARY>/path_curve.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair_cm",
+        "path": "<LIBRARY>/chair_cm.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "post_z",
+        "path": "<LIBRARY>/post_z.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usdz",
+        "name": "gem",
+        "path": "<LIBRARY>/gem.usdz"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "table",
+        "path": "<LIBRARY>/table.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "ground",
+        "path": "<LIBRARY>/ground.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "crate",
+        "path": "<LIBRARY>/crate.usda"
+      }
+    ],
+    "total_matches": 10,
+    "truncated": false
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues

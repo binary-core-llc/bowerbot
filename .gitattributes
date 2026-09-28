@@ -1,0 +1,2 @@
+# Golden-output recordings: written by tests/test_golden_output.py, collapsed in PR diffs.
+tests/golden/expected/** linguist-generated=true

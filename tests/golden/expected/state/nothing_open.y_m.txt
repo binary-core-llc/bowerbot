@@ -1,0 +1,3767 @@
+##### scenario: state/nothing_open
+##### convention: Y-up, 1.0 meters per unit
+##### Every tool, called before any project is created or opened.
+
+
+=== step 00: add_asset_attribute_variant
+intent: no project is open
+
+SUMMARY
+  call: add_asset_attribute_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v", overrides={"/Scene/Props/Thing_01/asset/A": {"visibility": "invisible"}})
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 01: add_asset_configuration_variant
+intent: no project is open
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v", activations={"/Scene/Props/Thing_01/asset/A": false})
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 02: add_asset_geometry_variant
+intent: no project is open
+
+SUMMARY
+  call: add_asset_geometry_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v", payloads={"/thing": "./geo_low.usda"})
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 03: add_asset_material_variant
+intent: no project is open
+
+SUMMARY
+  call: add_asset_material_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v", bindings={"/Scene/Props/Thing_01/asset/A": "/Scene/Props/Thing_01/asset/mtl/m"})
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 04: add_scene_lighting_attribute_variant
+intent: no project is open
+
+SUMMARY
+  call: add_scene_lighting_attribute_variant(variant_set="s", variant_name="v", overrides={"/Scene/Lighting/Key": {"inputs:intensity": 1.0}})
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 05: add_scene_lighting_selection_variant
+intent: no project is open
+
+SUMMARY
+  call: add_scene_lighting_selection_variant(variant_set="s", variant_name="v", activations={"/Scene/Lighting/Key": true})
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 06: add_scene_model_selection_variant
+intent: no project is open
+
+SUMMARY
+  call: add_scene_model_selection_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v", asset_file_path="<LIBRARY>/crate.usda")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 07: apply_physics_api
+intent: no project is open
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Thing_01", api_name="PhysicsRigidBodyAPI")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 08: bind_material
+intent: no project is open
+
+SUMMARY
+  call: bind_material(prim_path="/Scene/Props/Thing_01", material_file="<LIBRARY>/materials/oak.usda")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 09: cleanup_unused_contents
+intent: no project is open
+
+SUMMARY
+  call: cleanup_unused_contents()
+  current project: (none)
+  said: REFUSED: No project open.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No project open."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 10: cleanup_unused_materials
+intent: no project is open
+
+SUMMARY
+  call: cleanup_unused_materials()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 11: compute_grid_layout
+intent: no project is open
+
+SUMMARY
+  call: compute_grid_layout(count=4)
+  current project: (none)
+  said: ok: Computed 4 positions in grid with 2.0m spacing.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "count": 4,
+    "message": "Computed 4 positions in grid with 2.0m spacing.",
+    "positions": [
+      {
+        "x": 4.0,
+        "z": 3.0
+      },
+      {
+        "x": 6.0,
+        "z": 3.0
+      },
+      {
+        "x": 4.0,
+        "z": 5.0
+      },
+      {
+        "x": 6.0,
+        "z": 5.0
+      }
+    ],
+    "spacing": 2.0
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 12: create_camera
+intent: no project is open
+
+SUMMARY
+  call: create_camera(camera_name="Cam")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 13: create_joint
+intent: no project is open
+
+SUMMARY
+  call: create_joint(joint_type="PhysicsFixedJoint", name="J", body0="/Scene/Props/Thing_01", body1="/Scene/Props/Other_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 14: create_light
+intent: no project is open
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Key")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 15: create_material
+intent: no project is open
+
+SUMMARY
+  call: create_material(prim_path="/Scene/Props/Thing_01", material_name="oak")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 16: create_or_update_collision_group
+intent: no project is open
+
+SUMMARY
+  call: create_or_update_collision_group(name="G")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 17: create_stage
+intent: no project is open
+
+SUMMARY
+  call: create_stage(filename="scene")
+  current project: (none)
+  said: REFUSED: No project open.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No project open."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 18: delete_project_asset
+intent: no project is open
+
+SUMMARY
+  call: delete_project_asset(name="thing")
+  current project: (none)
+  said: REFUSED: No project open.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No project open."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 19: delete_project_texture
+intent: no project is open
+
+SUMMARY
+  call: delete_project_texture(file_name="studio.hdr")
+  current project: (none)
+  said: REFUSED: No project open.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No project open."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 20: delete_scene_snapshot
+intent: no project is open
+
+SUMMARY
+  call: delete_scene_snapshot(name="snap")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 21: drop_to_surface
+intent: no project is open
+
+SUMMARY
+  call: drop_to_surface(prim_paths=["/Scene/Props/Thing_01"])
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 22: freeze_asset
+intent: no project is open
+
+SUMMARY
+  call: freeze_asset()
+  current project: (none)
+  said: REFUSED: No project open.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No project open."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 23: get_current_project
+intent: no project is open
+
+SUMMARY
+  call: get_current_project()
+  current project: (none)
+  said: ok: No project is open. Use create_project or open_project.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "current": null,
+    "message": "No project is open. Use create_project or open_project."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 24: get_physics_summary
+intent: no project is open
+
+SUMMARY
+  call: get_physics_summary(prim_path="/Scene/Props/Thing_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 25: list_asset_geo_files
+intent: no project is open
+
+SUMMARY
+  call: list_asset_geo_files(prim_path="/Scene/Props/Thing_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 26: list_assets
+intent: no project is open
+
+SUMMARY
+  call: list_assets()
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp_lod",
+        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "unfrozen",
+        "path": "<LIBRARY>/unfrozen.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair",
+        "path": "<LIBRARY>/chair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "rooted_mesh",
+        "path": "<LIBRARY>/rooted_mesh.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "path_curve",
+        "path": "<LIBRARY>/path_curve.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair_cm",
+        "path": "<LIBRARY>/chair_cm.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "post_z",
+        "path": "<LIBRARY>/post_z.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usdz",
+        "name": "gem",
+        "path": "<LIBRARY>/gem.usdz"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "table",
+        "path": "<LIBRARY>/table.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "ground",
+        "path": "<LIBRARY>/ground.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "crate",
+        "path": "<LIBRARY>/crate.usda"
+      },
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "oak",
+        "path": "<LIBRARY>/materials/oak.usda"
+      },
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "steel",
+        "path": "<LIBRARY>/materials/steel.usda"
+      }
+    ],
+    "total_matches": 14,
+    "truncated": false
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 27: list_camera_properties
+intent: no project is open
+
+SUMMARY
+  call: list_camera_properties()
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "properties": [
+      {
+        "allowed_tokens": [
+          "perspective",
+          "orthographic"
+        ],
+        "default": "perspective",
+        "documentation": "",
+        "kind": "attribute",
+        "name": "projection",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 20.954999923706055,
+        "documentation": "Horizontal aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
+        "kind": "attribute",
+        "name": "horizontalAperture",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 15.290800094604492,
+        "documentation": "Vertical aperture in tenths of a scene unit; see \n                 \\ref UsdGeom_CameraUnits.",
+        "kind": "attribute",
+        "name": "verticalAperture",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Horizontal aperture offset in the same units as\n                 horizontalAperture.",
+        "kind": "attribute",
+        "name": "horizontalApertureOffset",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Vertical aperture offset in the same units as\n                 verticalAperture.",
+        "kind": "attribute",
+        "name": "verticalApertureOffset",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 50.0,
+        "documentation": "Perspective focal length in tenths of a scene unit; see \n                 .",
+        "kind": "attribute",
+        "name": "focalLength",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1000000)",
+        "documentation": "Near and far clipping distances in scene units; see \n                 .",
+        "kind": "attribute",
+        "name": "clippingRange",
+        "type_name": "float2"
+      },
+      {
+        "allowed_tokens": [],
+        "default": [],
+        "documentation": "Additional, arbitrarily oriented clipping planes.",
+        "kind": "attribute",
+        "name": "clippingPlanes",
+        "type_name": "float4[]"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Lens aperture.",
+        "kind": "attribute",
+        "name": "fStop",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Distance from the camera to the focus plane in scene units; see \n                 .",
+        "kind": "attribute",
+        "name": "focusDistance",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [
+          "mono",
+          "left",
+          "right"
+        ],
+        "default": "mono",
+        "documentation": "If different from mono, the camera is intended to be the left\n                 or right camera of a stereo setup.",
+        "kind": "attribute",
+        "name": "stereoRole",
+        "type_name": "token"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Frame relative shutter open time in UsdTimeCode units (negative\n                 value indicates that the shutter opens before the current\n                 frame time).",
+        "kind": "attribute",
+        "name": "shutter:open",
+        "type_name": "double"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Frame relative shutter close time, analogous comments from\n                 shutter:open apply.",
+        "kind": "attribute",
+        "name": "shutter:close",
+        "type_name": "double"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure compensation, as a log base-2 value.",
+        "kind": "attribute",
+        "name": "exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 100.0,
+        "documentation": "The speed rating of the sensor or film when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:iso",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Time in seconds that the sensor is exposed to light when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:time",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "f-stop of the aperture when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:fStop",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Scalar multiplier representing overall responsivity of the \n                 sensor system to light when calculating exposure.",
+        "kind": "attribute",
+        "name": "exposure:responsivity",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 28: list_collision_groups
+intent: no project is open
+
+SUMMARY
+  call: list_collision_groups()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 29: list_joint_properties
+intent: no project is open
+
+SUMMARY
+  call: list_joint_properties(joint_type="PhysicsFixedJoint")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 30: list_joints
+intent: no project is open
+
+SUMMARY
+  call: list_joints()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 31: list_light_type_properties
+intent: no project is open
+
+SUMMARY
+  call: list_light_type_properties(light_type="SphereLight")
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "SphereLight",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1, 1)",
+        "documentation": "The color of the emitted light, in the\nrendering color space.",
+        "kind": "attribute",
+        "name": "inputs:color",
+        "type_name": "color3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 6500.0,
+        "documentation": "The color temperature of the light, in\ndegrees Kelvin.",
+        "kind": "attribute",
+        "name": "inputs:colorTemperature",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light\non the diffuse response of materials.",
+        "kind": "attribute",
+        "name": "inputs:diffuse",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls whether colorTemperature is\nused.",
+        "kind": "attribute",
+        "name": "inputs:enableColorTemperature",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure setting of the light. Scales\nthe brightness of the light exponentially.",
+        "kind": "attribute",
+        "name": "inputs:exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "The base intensity of the light. Scales the\nbrightness of the light linearly.",
+        "kind": "attribute",
+        "name": "inputs:intensity",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls if the light power should be\nnormalized by the surface area of the light. If enabled, the light power \nremains constant if the light's area or angular size is changed.",
+        "kind": "attribute",
+        "name": "inputs:normalize",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.5,
+        "documentation": "Specifies the radius of the sphere.",
+        "kind": "attribute",
+        "name": "inputs:radius",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light \non the specular response of materials.",
+        "kind": "attribute",
+        "name": "inputs:specular",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 32: list_materials
+intent: no project is open
+
+SUMMARY
+  call: list_materials()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 33: list_physics_api_properties
+intent: no project is open
+
+SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsRigidBodyAPI")
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRigidBodyAPI",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Angular velocity in the same space as the node's xform.",
+        "kind": "attribute",
+        "name": "physics:angularVelocity",
+        "type_name": "vector3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines whether the body is kinematic or not.",
+        "kind": "attribute",
+        "name": "physics:kinematicEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": true,
+        "documentation": "Determines if this PhysicsRigidBodyAPI is enabled.",
+        "kind": "attribute",
+        "name": "physics:rigidBodyEnabled",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Single PhysicsScene that will simulate this body.",
+        "kind": "relationship",
+        "name": "physics:simulationOwner",
+        "type_name": null
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Determines if the body is asleep when the simulation starts.",
+        "kind": "attribute",
+        "name": "physics:startsAsleep",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(0, 0, 0)",
+        "documentation": "Linear velocity in the same space as the node's xform.",
+        "kind": "attribute",
+        "name": "physics:velocity",
+        "type_name": "vector3f"
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "UsdGeom.Xformable"
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 34: list_physics_scenes
+intent: no project is open
+
+SUMMARY
+  call: list_physics_scenes()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 35: list_prim_attributes
+intent: no project is open
+
+SUMMARY
+  call: list_prim_attributes(prim_path="/Scene/Props/Thing_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 36: list_prim_children
+intent: no project is open
+
+SUMMARY
+  call: list_prim_children(prim_path="/Scene/Props/Thing_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 37: list_project_assets
+intent: no project is open
+
+SUMMARY
+  call: list_project_assets()
+  current project: (none)
+  said: REFUSED: No project open.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No project open."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 38: list_projects
+intent: no project is open
+
+SUMMARY
+  call: list_projects()
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "count": 0,
+    "current": null,
+    "projects": []
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 39: list_scene
+intent: no project is open
+
+SUMMARY
+  call: list_scene()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 40: list_scene_snapshots
+intent: no project is open
+
+SUMMARY
+  call: list_scene_snapshots()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 41: list_textures
+intent: no project is open
+
+SUMMARY
+  call: list_textures()
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 42: list_variants
+intent: no project is open
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Props/Thing_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 43: move_asset
+intent: no project is open
+
+SUMMARY
+  call: move_asset(prim_path="/Scene/Props/Thing_01", translate_x=1.0)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 44: open_project
+intent: no project is open
+
+SUMMARY
+  call: open_project(name="nope")
+  current project: (none)
+  said: REFUSED: Project 'nope' not found. Available projects: none.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Project 'nope' not found. Available projects: none."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 45: package_scene
+intent: no project is open
+
+SUMMARY
+  call: package_scene()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 46: place_asset
+intent: no project is open
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 47: place_asset_inside
+intent: no project is open
+
+SUMMARY
+  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", container_prim_path="/Scene/Props/Thing_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 48: place_layout
+intent: no project is open
+
+SUMMARY
+  call: place_layout(placements=[{"asset": "<LIBRARY>/crate.usda", "group": "Props", "transforms": [{"translate": [0, 0, 0]}]}])
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 49: remove_asset_variant
+intent: no project is open
+
+SUMMARY
+  call: remove_asset_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 50: remove_asset_variant_set
+intent: no project is open
+
+SUMMARY
+  call: remove_asset_variant_set(prim_path="/Scene/Props/Thing_01", variant_set="s")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 51: remove_camera
+intent: no project is open
+
+SUMMARY
+  call: remove_camera(prim_path="/Scene/Cameras/Cam")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 52: remove_collision_group
+intent: no project is open
+
+SUMMARY
+  call: remove_collision_group(name="G")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 53: remove_joint
+intent: no project is open
+
+SUMMARY
+  call: remove_joint(scope="scene", prim_path="/Scene/Physics/J")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 54: remove_light
+intent: no project is open
+
+SUMMARY
+  call: remove_light(prim_path="/Scene/Lighting/Key")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 55: remove_material
+intent: no project is open
+
+SUMMARY
+  call: remove_material(prim_path="/Scene/Props/Thing_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 56: remove_physics_api
+intent: no project is open
+
+SUMMARY
+  call: remove_physics_api(prim_path="/Scene/Props/Thing_01", api_name="PhysicsRigidBodyAPI")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 57: remove_physics_scene
+intent: no project is open
+
+SUMMARY
+  call: remove_physics_scene(name="PhysicsScene")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 58: remove_prim
+intent: no project is open
+
+SUMMARY
+  call: remove_prim(prim_path="/Scene/Props/Thing_01")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 59: remove_scene_variant
+intent: no project is open
+
+SUMMARY
+  call: remove_scene_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 60: remove_scene_variant_set
+intent: no project is open
+
+SUMMARY
+  call: remove_scene_variant_set(prim_path="/Scene/Props/Thing_01", variant_set="s")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 61: rename_prim
+intent: no project is open
+
+SUMMARY
+  call: rename_prim(old_path="/Scene/Props/Thing_01", new_path="/Scene/Props/Other")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 62: save_scene_snapshot
+intent: no project is open
+
+SUMMARY
+  call: save_scene_snapshot(name="snap")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 63: scatter_along_path
+intent: no project is open
+
+SUMMARY
+  call: scatter_along_path(name="Row", assets=[{"asset": "<LIBRARY>/crate.usda"}], points=[[0, 0, 0], [4, 0, 0]], count=3)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 64: scatter_on_surface
+intent: no project is open
+
+SUMMARY
+  call: scatter_on_surface(name="Pile", assets=[{"asset": "<LIBRARY>/crate.usda"}], surfaces=["/Scene/Props/Thing_01"], count=3)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 65: search_assets
+intent: no project is open
+
+SUMMARY
+  call: search_assets(query="chair")
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "results": [
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair",
+        "path": "<LIBRARY>/chair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "chair_cm",
+        "path": "<LIBRARY>/chair_cm.usda"
+      }
+    ],
+    "total_matches": 2,
+    "truncated": false
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 66: search_textures
+intent: no project is open
+
+SUMMARY
+  call: search_textures(query="studio")
+  current project: (none)
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {}
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 67: select_asset_variant
+intent: no project is open
+
+SUMMARY
+  call: select_asset_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 68: select_asset_variant_for_instance
+intent: no project is open
+
+SUMMARY
+  call: select_asset_variant_for_instance(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 69: select_scene_variant
+intent: no project is open
+
+SUMMARY
+  call: select_scene_variant(prim_path="/Scene/Props/Thing_01", variant_set="s", variant_name="v")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 70: set_prim_attribute
+intent: no project is open
+
+SUMMARY
+  call: set_prim_attribute(prim_path="/Scene/Props/Thing_01", attribute_name="visibility", value="invisible")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 71: setup_asset_geometry_variants
+intent: no project is open
+
+SUMMARY
+  call: setup_asset_geometry_variants(prim_path="/Scene/Props/Thing_01", variant_set="s", variants={"high": "./geo.usda"}, default_variant="high")
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 72: setup_physics_scene
+intent: no project is open
+
+SUMMARY
+  call: setup_physics_scene()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 73: update_camera
+intent: no project is open
+
+SUMMARY
+  call: update_camera(prim_path="/Scene/Cameras/Cam", translate_x=1.0)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 74: update_light
+intent: no project is open
+
+SUMMARY
+  call: update_light(prim_path="/Scene/Lighting/Key", translate_x=1.0)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 75: validate_scene
+intent: no project is open
+
+SUMMARY
+  call: validate_scene()
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 76: create_project
+intent: no project is open
+
+SUMMARY
+  call: create_project(name="late", up_axis="Y", meters_per_unit=1.0)
+  current project: late
+  said: ok: Created and opened project 'late' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'late' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "late",
+    "object_count": 0,
+    "path": "<PROJECTS>/late",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "late",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues

@@ -1,0 +1,560 @@
+##### scenario: placement/assets_that_need_repair
+##### convention: Y-up, 1.0 meters per unit
+##### Assets with an unfrozen root or a geometry root are refused, then repaired on request.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: a root with a translate and scale
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/unfrozen.usda", asset_name="Unfrozen", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms or nested placement breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms or nested placement breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini)."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: place_asset
+intent: retry, moving the root transform onto the parts
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/unfrozen.usda", asset_name="Unfrozen", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0, fix_root_transforms=true)
+  current project: golden
+  said: ok: Placed Unfrozen at /Scene/Props/Unfrozen_01.
+
+  what changed:
+    + file assets/unfrozen/geo.usda
+    + file assets/unfrozen/unfrozen.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Unfrozen_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Unfrozen_01/asset [Xform]
+          bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Unfrozen_01/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+          material shown: (none)
+          world position: (0.0000, 0.2500, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Unfrozen",
+    "intake": {
+      "asset_folder": "unfrozen",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "unfrozen.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Unfrozen at /Scene/Props/Unfrozen_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Unfrozen_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/unfrozen/geo.usda
+  + assets/unfrozen/unfrozen.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/unfrozen/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "unfrozen"
+      )
+
+      def Xform "unfrozen"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/unfrozen/unfrozen.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "unfrozen"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "unfrozen" (
+          assetInfo = {
+              asset identifier = @./unfrozen.usda@
+              string name = "unfrozen"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_unfrozen>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_unfrozen"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Unfrozen_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/unfrozen/unfrozen.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,32 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Unfrozen_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/unfrozen/unfrozen.usda@
+  +                    string name = "unfrozen"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: a cube as the root prim
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/rooted_mesh.usda", asset_name="RootedMesh", group="Props", translate_x=2.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: Asset 'geo.usda' has a Cube as its root prim instead of an Xform. Per ASWF USD guidelines, the root prim should be an Xform with geometry as children. Ask the user if they want to fix this automatically, then call place_asset again with fix_root_prim set to true.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Asset 'geo.usda' has a Cube as its root prim instead of an Xform. Per ASWF USD guidelines, the root prim should be an Xform with geometry as children. Ask the user if they want to fix this automatically, then call place_asset again with fix_root_prim set to true."
+  }
+
+files:
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: place_asset
+intent: retry, wrapping the root in an Xform
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/rooted_mesh.usda", asset_name="RootedMesh", group="Props", translate_x=2.0, translate_y=0.0, translate_z=0.0, fix_root_prim=true)
+  current project: golden
+  said: ok: Placed RootedMesh at /Scene/Props/RootedMesh_02.
+
+  what changed:
+    + file assets/rooted_mesh/geo.usda
+    + file assets/rooted_mesh/rooted_mesh.usda
+    ~ file scene.usda
+    + prim /Scene/Props/RootedMesh_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (2, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (2.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/RootedMesh_02/asset [Xform]
+          bounds: (1.7500, -0.2500, -0.2500)..(2.2500, 0.2500, 0.2500)
+          kind: component
+          world position: (2.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/RootedMesh_02/asset/mesh [Cube]
+          attr size: 0.5
+          bounds: (1.7500, -0.2500, -0.2500)..(2.2500, 0.2500, 0.2500)
+          material shown: (none)
+          world position: (2.0000, 0.0000, 0.0000)
+    ~ /Scene  bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500) → (-0.2500, -0.2500, -0.2500)..(2.2500, 0.5000, 0.2500)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "RootedMesh",
+    "intake": {
+      "asset_folder": "rooted_mesh",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "rooted_mesh.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed RootedMesh at /Scene/Props/RootedMesh_02.",
+    "position": {
+      "x": 2.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/RootedMesh_02",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/rooted_mesh/geo.usda
+  + assets/rooted_mesh/rooted_mesh.usda
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/rooted_mesh/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "rooted_mesh"
+      )
+
+      def Xform "rooted_mesh"
+      {
+          def Cube "mesh"
+          {
+              double size = 0.5
+          }
+      }
+
+  + assets/rooted_mesh/rooted_mesh.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "rooted_mesh"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "rooted_mesh" (
+          assetInfo = {
+              asset identifier = @./rooted_mesh.usda@
+              string name = "rooted_mesh"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_rooted_mesh>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_rooted_mesh"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -25,4 +25,18 @@
+                   }
+               }
+      +
+      +        def Xform "RootedMesh_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (2, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/rooted_mesh/rooted_mesh.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -39,4 +39,27 @@
+               }
+           }
+  +
+  +        def Xform "RootedMesh_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (2, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/rooted_mesh/rooted_mesh.usda@
+  +                    string name = "rooted_mesh"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "mesh"
+  +                {
+  +                    double size = 0.5
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, -0.2500)..(2.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Unfrozen_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/RootedMesh_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7500, -0.2500, -0.2500)..(2.2500, 0.2500, 0.2500)
+  /Scene/Props/RootedMesh_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7500, -0.2500, -0.2500)..(2.2500, 0.2500, 0.2500)
+  /Scene/Props/RootedMesh_02/asset/mesh  [Cube]  at (2.0000, 0.0000, 0.0000)  bounds (1.7500, -0.2500, -0.2500)..(2.2500, 0.2500, 0.2500)  material (none)
+
+validation:
+  valid, no issues

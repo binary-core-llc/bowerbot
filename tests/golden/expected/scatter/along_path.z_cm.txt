@@ -1,0 +1,2130 @@
+##### scenario: scatter/along_path
+##### convention: Z-up, 0.01 meters per unit
+##### Posts along a line, both sides of it, and around a closed loop.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: a 10 x 10 m ground to scatter on
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/ground.usda", asset_name="Ground", group="Architecture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Ground at /Scene/Architecture/Ground_01.
+
+  what changed:
+    + file assets/ground/geo.usda
+    + file assets/ground/ground.usda
+    ~ file scene.usda
+    + prim /Scene/Architecture [typeless]
+    + prim /Scene/Architecture/Ground_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Architecture/Ground_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Architecture/Ground_01/asset/Plane [Mesh]
+          attr extent: ((-5, 0, -5), (5, 0, 5))
+          attr faceVertexCounts: (4)
+          attr faceVertexIndices: (0, 3, 2, 1)
+          attr points: ((-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5))
+          bounds: (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ /Scene  bounds: (none) → (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Ground",
+    "intake": {
+      "asset_folder": "ground",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "ground.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Ground at /Scene/Architecture/Ground_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Architecture/Ground_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/ground/geo.usda
+  + assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/ground/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+      )
+
+      def Xform "ground"
+      {
+          def Mesh "Plane"
+          {
+              float3[] extent = [(-5, 0, -5), (5, 0, 5)]
+              int[] faceVertexCounts = [4]
+              int[] faceVertexIndices = [0, 3, 2, 1]
+              point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+          }
+      }
+
+  + assets/ground/ground.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "ground" (
+          assetInfo = {
+              asset identifier = @./ground.usda@
+              string name = "ground"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_ground>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_ground"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Architecture"
+      +    {
+      +        def Xform "Ground_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/ground/ground.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,35 @@
+   )
+   {
+  +    def "Architecture"
+  +    {
+  +        def Xform "Ground_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/ground/ground.usda@
+  +                    string name = "ground"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Mesh "Plane"
+  +                {
+  +                    float3[] extent = [(-5, 0, -5), (5, 0, 5)]
+  +                    int[] faceVertexCounts = [4]
+  +                    int[] faceVertexIndices = [0, 3, 2, 1]
+  +                    point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: scatter_along_path
+intent: a crate every 2 m along a line
+
+SUMMARY
+  call: scatter_along_path(name="Fence", assets=[{"asset": "<LIBRARY>/crate.usda"}], points=[[-400.0, 0.0, 0.0], [400.0, 0.0, 0.0]], spacing=200.0)
+  current project: golden
+  said: ok: Placed 5 instance(s) along the path at /Scene/Scatter/Fence (placements).
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Scatter [typeless]
+    + prim /Scene/Scatter/Fence [Xform]
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 90)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (-400, 0, -4.73317e-30)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (-400.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_02/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (-400.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_02/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (-400.0000, 0.0000, 25.0000)
+    + prim /Scene/Scatter/Fence/crate_03 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 90)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (-200, 0, -6.31089e-30)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (-200.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_03/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (-200.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_03/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (-200.0000, 0.0000, 25.0000)
+    + prim /Scene/Scatter/Fence/crate_04 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 90)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, -4.73317e-30)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_04/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_04/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 25.0000)
+    + prim /Scene/Scatter/Fence/crate_05 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 90)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (200, 0, -6.31089e-30)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_05/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_05/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (200.0000, 0.0000, 25.0000)
+    + prim /Scene/Scatter/Fence/crate_06 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 90)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (400, 0, -6.31089e-30)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_06/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Fence/crate_06/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (400.0000, 0.0000, 25.0000)
+    ~ /Scene  bounds: (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000) → (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "by_asset": {
+      "crate": 5
+    },
+    "instances": 5,
+    "message": "Placed 5 instance(s) along the path at /Scene/Scatter/Fence (placements).",
+    "output": "placements",
+    "prim_path": "/Scene/Scatter/Fence",
+    "seed": 3165594908,
+    "warnings": []
+  }
+
+files:
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -28,4 +28,90 @@
+               }
+           }
+      +
+      +    def "Scatter"
+      +    {
+      +        def Xform "Fence"
+      +        {
+      +            def Xform "crate_02"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 90)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (-400, 0, -4.733165431326071e-30)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_03"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 90)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (-200, 0, -6.310887241768095e-30)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_04"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 90)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (0, 0, -4.733165431326071e-30)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_05"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 90)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (200, 0, -6.310887241768095e-30)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_06"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 90)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (400, 0, -6.310887241768095e-30)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -43,4 +43,155 @@
+           }
+       }
+  +
+  +    def "Scatter"
+  +    {
+  +        def Xform "Fence"
+  +        {
+  +            def Xform "crate_02"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 90)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (-400, 0, -4.733165431326071e-30)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_03"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 90)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (-200, 0, -6.310887241768095e-30)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_04"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 90)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (0, 0, -4.733165431326071e-30)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_05"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 90)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (200, 0, -6.310887241768095e-30)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_06"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 90)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (400, 0, -6.310887241768095e-30)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Scatter/Fence  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset/Box  [Cube]  at (-400.0000, 0.0000, 25.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_03  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset/Box  [Cube]  at (-200.0000, 0.0000, 25.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_04  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_05  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_06  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: scatter_along_path
+intent: three stations with a crate on each side
+
+SUMMARY
+  call: scatter_along_path(name="Avenue", assets=[{"asset": "<LIBRARY>/crate.usda"}], points=[[-400.0, -200.0, 0.0], [400.0, -200.0, 0.0]], count=3, sides="both", offset=100.0, facing="path")
+  current project: golden
+  said: ok: Placed 6 instance(s) along the path at /Scene/Scatter/Avenue (placements).
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Scatter/Avenue [Xform]
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_07 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (-400, -100, 2.22045e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (-400.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_07/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+          kind: component
+          world position: (-400.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_07/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+          material shown: (none)
+          world position: (-400.0000, -100.0000, 25.0000)
+    + prim /Scene/Scatter/Avenue/crate_08 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, -180)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (-400, -300, 6.66134e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (-400.0000, -300.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_08/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+          kind: component
+          world position: (-400.0000, -300.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_08/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+          material shown: (none)
+          world position: (-400.0000, -300.0000, 25.0000)
+    + prim /Scene/Scatter/Avenue/crate_09 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, -100, 2.22045e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_09/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+          kind: component
+          world position: (0.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_09/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+          material shown: (none)
+          world position: (0.0000, -100.0000, 25.0000)
+    + prim /Scene/Scatter/Avenue/crate_10 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, -180)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, -300, 6.66134e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, -300.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_10/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+          kind: component
+          world position: (0.0000, -300.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_10/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+          material shown: (none)
+          world position: (0.0000, -300.0000, 25.0000)
+    + prim /Scene/Scatter/Avenue/crate_11 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (400, -100, 2.22045e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (400.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_11/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+          kind: component
+          world position: (400.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_11/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+          material shown: (none)
+          world position: (400.0000, -100.0000, 25.0000)
+    + prim /Scene/Scatter/Avenue/crate_12 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, -180)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (400, -300, 6.66134e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (400.0000, -300.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_12/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+          kind: component
+          world position: (400.0000, -300.0000, 0.0000)
+    + prim /Scene/Scatter/Avenue/crate_12/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+          material shown: (none)
+          world position: (400.0000, -300.0000, 25.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "by_asset": {
+      "crate": 6
+    },
+    "instances": 6,
+    "message": "Placed 6 instance(s) along the path at /Scene/Scatter/Avenue (placements).",
+    "output": "placements",
+    "prim_path": "/Scene/Scatter/Avenue",
+    "seed": 4280177569,
+    "warnings": []
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -113,4 +113,103 @@
+                   }
+               }
+      +
+      +        def Xform "Avenue"
+      +        {
+      +            def Xform "crate_07"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 0)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (-400, -100, 2.2204460492503124e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_08"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, -180)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (-400, -300, 6.661338147750939e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_09"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 0)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (0, -100, 2.2204460492503118e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_10"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, -180)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (0, -300, 6.661338147750939e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_11"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 0)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (400, -100, 2.2204460492503118e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_12"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, -180)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (400, -300, 6.661338147750939e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -193,4 +193,181 @@
+               }
+           }
+  +
+  +        def Xform "Avenue"
+  +        {
+  +            def Xform "crate_07"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 0)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (-400, -100, 2.2204460492503124e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_08"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, -180)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (-400, -300, 6.661338147750939e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_09"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 0)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (0, -100, 2.2204460492503118e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_10"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, -180)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (0, -300, 6.661338147750939e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_11"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 0)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (400, -100, 2.2204460492503118e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_12"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, -180)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (400, -300, 6.661338147750939e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Scatter/Fence  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset/Box  [Cube]  at (-400.0000, 0.0000, 25.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_03  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset/Box  [Cube]  at (-200.0000, 0.0000, 25.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_04  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_05  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_06  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07  [Xform]  at (-400.0000, -100.0000, 0.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07/asset  [Xform]  at (-400.0000, -100.0000, 0.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07/asset/Box  [Cube]  at (-400.0000, -100.0000, 25.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_08  [Xform]  at (-400.0000, -300.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_08/asset  [Xform]  at (-400.0000, -300.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_08/asset/Box  [Cube]  at (-400.0000, -300.0000, 25.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_09  [Xform]  at (0.0000, -100.0000, 0.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_09/asset  [Xform]  at (0.0000, -100.0000, 0.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_09/asset/Box  [Cube]  at (0.0000, -100.0000, 25.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_10  [Xform]  at (0.0000, -300.0000, 0.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_10/asset  [Xform]  at (0.0000, -300.0000, 0.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_10/asset/Box  [Cube]  at (0.0000, -300.0000, 25.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_11  [Xform]  at (400.0000, -100.0000, 0.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_11/asset  [Xform]  at (400.0000, -100.0000, 0.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_11/asset/Box  [Cube]  at (400.0000, -100.0000, 25.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_12  [Xform]  at (400.0000, -300.0000, 0.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_12/asset  [Xform]  at (400.0000, -300.0000, 0.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_12/asset/Box  [Cube]  at (400.0000, -300.0000, 25.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: scatter_along_path
+intent: four crates around a closed square, snapped to the ground
+
+SUMMARY
+  call: scatter_along_path(name="Ring", assets=[{"asset": "<LIBRARY>/crate.usda"}], points=[[-100.0, 100.0, 0.0], [100.0, 100.0, 0.0], [100.0, -100.0, 0.0], [-100.0, -100.0, 0.0]], closed=true, count=4, surfaces=["/Scene/Architecture/Ground_01"])
+  current project: golden
+  said: ok: Placed 4 instance(s) along the path at /Scene/Scatter/Ring (placements).
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Scatter/Ring [Xform]
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_13 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 135)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (-100, 100, -2.45038e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (-100.0000, 100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_13/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)
+          kind: component
+          world position: (-100.0000, 100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_13/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)
+          material shown: (none)
+          world position: (-100.0000, 100.0000, 25.0000)
+    + prim /Scene/Scatter/Ring/crate_14 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 45)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (100, 100, -2.45038e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (100.0000, 100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_14/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)
+          kind: component
+          world position: (100.0000, 100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_14/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)
+          material shown: (none)
+          world position: (100.0000, 100.0000, 25.0000)
+    + prim /Scene/Scatter/Ring/crate_15 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, -45)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (100, -100, 1.99051e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (100.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_15/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)
+          kind: component
+          world position: (100.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_15/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)
+          material shown: (none)
+          world position: (100.0000, -100.0000, 25.0000)
+    + prim /Scene/Scatter/Ring/crate_16 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, -135)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (-100, -100, 1.99051e-14)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (-100.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_16/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)
+          kind: component
+          world position: (-100.0000, -100.0000, 0.0000)
+    + prim /Scene/Scatter/Ring/crate_16/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)
+          material shown: (none)
+          world position: (-100.0000, -100.0000, 25.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "by_asset": {
+      "crate": 4
+    },
+    "instances": 4,
+    "message": "Placed 4 instance(s) along the path at /Scene/Scatter/Ring (placements).",
+    "output": "placements",
+    "prim_path": "/Scene/Scatter/Ring",
+    "seed": 614683060,
+    "warnings": []
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -212,4 +212,71 @@
+                   }
+               }
+      +
+      +        def Xform "Ring"
+      +        {
+      +            def Xform "crate_13"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 135)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (-100, 100, -2.450380766279623e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_14"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, 45)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (100, 100, -2.4503807662796224e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_15"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, -45)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (100, -100, 1.990511332221005e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +
+      +            def Xform "crate_16"
+      +            {
+      +                float3 xformOp:rotateXYZ = (0, 0, -135)
+      +                float3 xformOp:scale = (100, 100, 100)
+      +                double3 xformOp:translate = (-100, -100, 1.9905113322210025e-14)
+      +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +                def Xform "asset" (
+      +                    prepend references = @assets/crate/crate.usda@
+      +                )
+      +                {
+      +                    float xformOp:rotateX = 90
+      +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +                }
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -370,4 +370,123 @@
+               }
+           }
+  +
+  +        def Xform "Ring"
+  +        {
+  +            def Xform "crate_13"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 135)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (-100, 100, -2.450380766279623e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_14"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, 45)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (100, 100, -2.4503807662796224e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_15"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, -45)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (100, -100, 1.990511332221005e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +
+  +            def Xform "crate_16"
+  +            {
+  +                float3 xformOp:rotateXYZ = (0, 0, -135)
+  +                float3 xformOp:scale = (100, 100, 100)
+  +                double3 xformOp:translate = (-100, -100, 1.9905113322210025e-14)
+  +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +                def Xform "asset" (
+  +                    assetInfo = {
+  +                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                        string name = "crate"
+  +                        string version = "1.0"
+  +                    }
+  +                    kind = "component"
+  +                )
+  +                {
+  +                    float xformOp:rotateX = 90
+  +                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                        double3 xformOp:translate = (0, 0.25, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Scatter/Fence  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset/Box  [Cube]  at (-400.0000, 0.0000, 25.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_03  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset/Box  [Cube]  at (-200.0000, 0.0000, 25.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_04  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_05  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_06  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07  [Xform]  at (-400.0000, -100.0000, 0.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07/asset  [Xform]  at (-400.0000, -100.0000, 0.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07/asset/Box  [Cube]  at (-400.0000, -100.0000, 25.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_08  [Xform]  at (-400.0000, -300.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_08/asset  [Xform]  at (-400.0000, -300.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_08/asset/Box  [Cube]  at (-400.0000, -300.0000, 25.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_09  [Xform]  at (0.0000, -100.0000, 0.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_09/asset  [Xform]  at (0.0000, -100.0000, 0.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_09/asset/Box  [Cube]  at (0.0000, -100.0000, 25.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_10  [Xform]  at (0.0000, -300.0000, 0.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_10/asset  [Xform]  at (0.0000, -300.0000, 0.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_10/asset/Box  [Cube]  at (0.0000, -300.0000, 25.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_11  [Xform]  at (400.0000, -100.0000, 0.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_11/asset  [Xform]  at (400.0000, -100.0000, 0.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_11/asset/Box  [Cube]  at (400.0000, -100.0000, 25.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_12  [Xform]  at (400.0000, -300.0000, 0.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_12/asset  [Xform]  at (400.0000, -300.0000, 0.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_12/asset/Box  [Cube]  at (400.0000, -300.0000, 25.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Ring  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-135.3553, -135.3553, 0.0000)..(135.3553, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_13  [Xform]  at (-100.0000, 100.0000, 0.0000)  bounds (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_13/asset  [Xform]  at (-100.0000, 100.0000, 0.0000)  bounds (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_13/asset/Box  [Cube]  at (-100.0000, 100.0000, 25.0000)  bounds (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)  material (none)
+  /Scene/Scatter/Ring/crate_14  [Xform]  at (100.0000, 100.0000, 0.0000)  bounds (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_14/asset  [Xform]  at (100.0000, 100.0000, 0.0000)  bounds (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_14/asset/Box  [Cube]  at (100.0000, 100.0000, 25.0000)  bounds (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)  material (none)
+  /Scene/Scatter/Ring/crate_15  [Xform]  at (100.0000, -100.0000, 0.0000)  bounds (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_15/asset  [Xform]  at (100.0000, -100.0000, 0.0000)  bounds (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_15/asset/Box  [Cube]  at (100.0000, -100.0000, 25.0000)  bounds (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)  material (none)
+  /Scene/Scatter/Ring/crate_16  [Xform]  at (-100.0000, -100.0000, 0.0000)  bounds (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_16/asset  [Xform]  at (-100.0000, -100.0000, 0.0000)  bounds (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_16/asset/Box  [Cube]  at (-100.0000, -100.0000, 25.0000)  bounds (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: list_scene
+
+SUMMARY
+  call: list_scene()
+  current project: golden
+  said: ok: Scene has 16 object(s).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Scene has 16 object(s).",
+    "object_count": 16,
+    "objects": [
+      {
+        "asset": "assets/ground/ground.usda",
+        "bounds": {
+          "max": {
+            "x": 500.0,
+            "y": 500.0,
+            "z": 0.0
+          },
+          "min": {
+            "x": -500.0,
+            "y": -500.0,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Architecture/Ground_01/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": -375.0,
+            "y": 25.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": -425.0,
+            "y": -25.0,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Fence/crate_02/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": -175.0,
+            "y": 25.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": -225.0,
+            "y": -25.0,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Fence/crate_03/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 25.0,
+            "y": 25.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": -25.0,
+            "y": -25.0,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Fence/crate_04/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 225.0,
+            "y": 25.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": 175.0,
+            "y": -25.0,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Fence/crate_05/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 425.0,
+            "y": 25.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": 375.0,
+            "y": -25.0,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Fence/crate_06/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": -375.0,
+            "y": -75.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": -425.0,
+            "y": -125.0,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Avenue/crate_07/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": -375.0,
+            "y": -275.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": -425.0,
+            "y": -325.0,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Avenue/crate_08/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 25.0,
+            "y": -75.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": -25.0,
+            "y": -125.0,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Avenue/crate_09/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 25.0,
+            "y": -275.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": -25.0,
+            "y": -325.0,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Avenue/crate_10/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 425.0,
+            "y": -75.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": 375.0,
+            "y": -125.0,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Avenue/crate_11/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 425.0,
+            "y": -275.0,
+            "z": 50.0
+          },
+          "min": {
+            "x": 375.0,
+            "y": -325.0,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Avenue/crate_12/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": -64.6447,
+            "y": 135.3553,
+            "z": 50.0
+          },
+          "min": {
+            "x": -135.3553,
+            "y": 64.6447,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Ring/crate_13/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 135.3553,
+            "y": 135.3553,
+            "z": 50.0
+          },
+          "min": {
+            "x": 64.6447,
+            "y": 64.6447,
+            "z": -0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Ring/crate_14/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": 135.3553,
+            "y": -64.6447,
+            "z": 50.0
+          },
+          "min": {
+            "x": 64.6447,
+            "y": -135.3553,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Ring/crate_15/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/crate/crate.usda",
+        "bounds": {
+          "max": {
+            "x": -64.6447,
+            "y": -64.6447,
+            "z": 50.0
+          },
+          "min": {
+            "x": -135.3553,
+            "y": -135.3553,
+            "z": 0.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Scatter/Ring/crate_16/asset",
+        "type": "Xform"
+      }
+    ]
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Scatter/Fence  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset  [Xform]  at (-400.0000, 0.0000, 0.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_02/asset/Box  [Cube]  at (-400.0000, 0.0000, 25.0000)  bounds (-425.0000, -25.0000, 0.0000)..(-375.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_03  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset  [Xform]  at (-200.0000, 0.0000, 0.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_03/asset/Box  [Cube]  at (-200.0000, 0.0000, 25.0000)  bounds (-225.0000, -25.0000, 0.0000)..(-175.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_04  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_04/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_05  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_05/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Fence/crate_06  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Scatter/Fence/crate_06/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07  [Xform]  at (-400.0000, -100.0000, 0.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07/asset  [Xform]  at (-400.0000, -100.0000, 0.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_07/asset/Box  [Cube]  at (-400.0000, -100.0000, 25.0000)  bounds (-425.0000, -125.0000, 0.0000)..(-375.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_08  [Xform]  at (-400.0000, -300.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_08/asset  [Xform]  at (-400.0000, -300.0000, 0.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_08/asset/Box  [Cube]  at (-400.0000, -300.0000, 25.0000)  bounds (-425.0000, -325.0000, 0.0000)..(-375.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_09  [Xform]  at (0.0000, -100.0000, 0.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_09/asset  [Xform]  at (0.0000, -100.0000, 0.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_09/asset/Box  [Cube]  at (0.0000, -100.0000, 25.0000)  bounds (-25.0000, -125.0000, 0.0000)..(25.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_10  [Xform]  at (0.0000, -300.0000, 0.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_10/asset  [Xform]  at (0.0000, -300.0000, 0.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_10/asset/Box  [Cube]  at (0.0000, -300.0000, 25.0000)  bounds (-25.0000, -325.0000, 0.0000)..(25.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_11  [Xform]  at (400.0000, -100.0000, 0.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_11/asset  [Xform]  at (400.0000, -100.0000, 0.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_11/asset/Box  [Cube]  at (400.0000, -100.0000, 25.0000)  bounds (375.0000, -125.0000, 0.0000)..(425.0000, -75.0000, 50.0000)  material (none)
+  /Scene/Scatter/Avenue/crate_12  [Xform]  at (400.0000, -300.0000, 0.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_12/asset  [Xform]  at (400.0000, -300.0000, 0.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)
+  /Scene/Scatter/Avenue/crate_12/asset/Box  [Cube]  at (400.0000, -300.0000, 25.0000)  bounds (375.0000, -325.0000, 0.0000)..(425.0000, -275.0000, 50.0000)  material (none)
+  /Scene/Scatter/Ring  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-135.3553, -135.3553, 0.0000)..(135.3553, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_13  [Xform]  at (-100.0000, 100.0000, 0.0000)  bounds (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_13/asset  [Xform]  at (-100.0000, 100.0000, 0.0000)  bounds (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_13/asset/Box  [Cube]  at (-100.0000, 100.0000, 25.0000)  bounds (-135.3553, 64.6447, 0.0000)..(-64.6447, 135.3553, 50.0000)  material (none)
+  /Scene/Scatter/Ring/crate_14  [Xform]  at (100.0000, 100.0000, 0.0000)  bounds (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_14/asset  [Xform]  at (100.0000, 100.0000, 0.0000)  bounds (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)
+  /Scene/Scatter/Ring/crate_14/asset/Box  [Cube]  at (100.0000, 100.0000, 25.0000)  bounds (64.6447, 64.6447, 0.0000)..(135.3553, 135.3553, 50.0000)  material (none)
+  /Scene/Scatter/Ring/crate_15  [Xform]  at (100.0000, -100.0000, 0.0000)  bounds (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_15/asset  [Xform]  at (100.0000, -100.0000, 0.0000)  bounds (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_15/asset/Box  [Cube]  at (100.0000, -100.0000, 25.0000)  bounds (64.6447, -135.3553, 0.0000)..(135.3553, -64.6447, 50.0000)  material (none)
+  /Scene/Scatter/Ring/crate_16  [Xform]  at (-100.0000, -100.0000, 0.0000)  bounds (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_16/asset  [Xform]  at (-100.0000, -100.0000, 0.0000)  bounds (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)
+  /Scene/Scatter/Ring/crate_16/asset/Box  [Cube]  at (-100.0000, -100.0000, 25.0000)  bounds (-135.3553, -135.3553, 0.0000)..(-64.6447, -64.6447, 50.0000)  material (none)
+
+validation:
+  valid, no issues

@@ -1,0 +1,1157 @@
+##### scenario: lights/refusals_and_properties
+##### convention: Y-up, 1.0 meters per unit
+##### Light property listings, and light calls that cannot work.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: list_light_type_properties
+
+SUMMARY
+  call: list_light_type_properties(light_type="DistantLight")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DistantLight",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": 0.5299999713897705,
+        "documentation": "The angular diameter of the light in \ndegrees. The fallback value is 0.53. Higher values make the light rays less \nparallel, thereby increasing shadow softness, but also increasing the overall \namount of light.",
+        "kind": "attribute",
+        "name": "inputs:angle",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1, 1)",
+        "documentation": "The color of the emitted light, in the\nrendering color space.",
+        "kind": "attribute",
+        "name": "inputs:color",
+        "type_name": "color3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 6500.0,
+        "documentation": "The color temperature of the light, in\ndegrees Kelvin.",
+        "kind": "attribute",
+        "name": "inputs:colorTemperature",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light\non the diffuse response of materials.",
+        "kind": "attribute",
+        "name": "inputs:diffuse",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls whether colorTemperature is\nused.",
+        "kind": "attribute",
+        "name": "inputs:enableColorTemperature",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure setting of the light. Scales\nthe brightness of the light exponentially.",
+        "kind": "attribute",
+        "name": "inputs:exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 50000.0,
+        "documentation": "Scales the brightness the DistantLight\nlinearly, with a fallback value of 50000 to approximate sunlight.",
+        "kind": "attribute",
+        "name": "inputs:intensity",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls if the light power should be\nnormalized by the surface area of the light. If enabled, the light power \nremains constant if the light's area or angular size is changed.",
+        "kind": "attribute",
+        "name": "inputs:normalize",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light \non the specular response of materials.",
+        "kind": "attribute",
+        "name": "inputs:specular",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: list_light_type_properties
+
+SUMMARY
+  call: list_light_type_properties(light_type="DomeLight")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1, 1)",
+        "documentation": "The color of the emitted light, in the\nrendering color space.",
+        "kind": "attribute",
+        "name": "inputs:color",
+        "type_name": "color3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 6500.0,
+        "documentation": "The color temperature of the light, in\ndegrees Kelvin.",
+        "kind": "attribute",
+        "name": "inputs:colorTemperature",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light\non the diffuse response of materials.",
+        "kind": "attribute",
+        "name": "inputs:diffuse",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls whether colorTemperature is\nused.",
+        "kind": "attribute",
+        "name": "inputs:enableColorTemperature",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure setting of the light. Scales\nthe brightness of the light exponentially.",
+        "kind": "attribute",
+        "name": "inputs:exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "The base intensity of the light. Scales the\nbrightness of the light linearly.",
+        "kind": "attribute",
+        "name": "inputs:intensity",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls if the light power should be\nnormalized by the surface area of the light. If enabled, the light power \nremains constant if the light's area or angular size is changed.",
+        "kind": "attribute",
+        "name": "inputs:normalize",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light \non the specular response of materials.",
+        "kind": "attribute",
+        "name": "inputs:specular",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Specifies the color texture (typically an \nHDR image intended for IBL) used by the DomeLight.",
+        "kind": "attribute",
+        "name": "inputs:texture:file",
+        "type_name": "asset"
+      },
+      {
+        "allowed_tokens": [
+          "automatic",
+          "latlong",
+          "mirroredBall",
+          "angular",
+          "cubeMapVerticalCross"
+        ],
+        "default": "automatic",
+        "documentation": "Specifies the parameterization of the color\ntexture. Values include: automatic, latlong, mirroredBall, angular, and \ncubeMapVerticalCross.",
+        "kind": "attribute",
+        "name": "inputs:texture:format",
+        "type_name": "token"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: list_light_type_properties
+
+SUMMARY
+  call: list_light_type_properties(light_type="SphereLight")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "SphereLight",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1, 1)",
+        "documentation": "The color of the emitted light, in the\nrendering color space.",
+        "kind": "attribute",
+        "name": "inputs:color",
+        "type_name": "color3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 6500.0,
+        "documentation": "The color temperature of the light, in\ndegrees Kelvin.",
+        "kind": "attribute",
+        "name": "inputs:colorTemperature",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light\non the diffuse response of materials.",
+        "kind": "attribute",
+        "name": "inputs:diffuse",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls whether colorTemperature is\nused.",
+        "kind": "attribute",
+        "name": "inputs:enableColorTemperature",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure setting of the light. Scales\nthe brightness of the light exponentially.",
+        "kind": "attribute",
+        "name": "inputs:exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "The base intensity of the light. Scales the\nbrightness of the light linearly.",
+        "kind": "attribute",
+        "name": "inputs:intensity",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls if the light power should be\nnormalized by the surface area of the light. If enabled, the light power \nremains constant if the light's area or angular size is changed.",
+        "kind": "attribute",
+        "name": "inputs:normalize",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.5,
+        "documentation": "Specifies the radius of the sphere.",
+        "kind": "attribute",
+        "name": "inputs:radius",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light \non the specular response of materials.",
+        "kind": "attribute",
+        "name": "inputs:specular",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: list_light_type_properties
+
+SUMMARY
+  call: list_light_type_properties(light_type="RectLight")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "RectLight",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1, 1)",
+        "documentation": "The color of the emitted light, in the\nrendering color space.",
+        "kind": "attribute",
+        "name": "inputs:color",
+        "type_name": "color3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 6500.0,
+        "documentation": "The color temperature of the light, in\ndegrees Kelvin.",
+        "kind": "attribute",
+        "name": "inputs:colorTemperature",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light\non the diffuse response of materials.",
+        "kind": "attribute",
+        "name": "inputs:diffuse",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls whether colorTemperature is\nused.",
+        "kind": "attribute",
+        "name": "inputs:enableColorTemperature",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure setting of the light. Scales\nthe brightness of the light exponentially.",
+        "kind": "attribute",
+        "name": "inputs:exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Specifies the height of the rectangle in \nthe local Y axis.",
+        "kind": "attribute",
+        "name": "inputs:height",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "The base intensity of the light. Scales the\nbrightness of the light linearly.",
+        "kind": "attribute",
+        "name": "inputs:intensity",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls if the light power should be\nnormalized by the surface area of the light. If enabled, the light power \nremains constant if the light's area or angular size is changed.",
+        "kind": "attribute",
+        "name": "inputs:normalize",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light \non the specular response of materials.",
+        "kind": "attribute",
+        "name": "inputs:specular",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "An optional color texture set on the\nrectangle.",
+        "kind": "attribute",
+        "name": "inputs:texture:file",
+        "type_name": "asset"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Specifies the width of the rectangle in the \nlocal X axis.",
+        "kind": "attribute",
+        "name": "inputs:width",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: list_light_type_properties
+
+SUMMARY
+  call: list_light_type_properties(light_type="DiskLight")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DiskLight",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1, 1)",
+        "documentation": "The color of the emitted light, in the\nrendering color space.",
+        "kind": "attribute",
+        "name": "inputs:color",
+        "type_name": "color3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 6500.0,
+        "documentation": "The color temperature of the light, in\ndegrees Kelvin.",
+        "kind": "attribute",
+        "name": "inputs:colorTemperature",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light\non the diffuse response of materials.",
+        "kind": "attribute",
+        "name": "inputs:diffuse",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls whether colorTemperature is\nused.",
+        "kind": "attribute",
+        "name": "inputs:enableColorTemperature",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure setting of the light. Scales\nthe brightness of the light exponentially.",
+        "kind": "attribute",
+        "name": "inputs:exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "The base intensity of the light. Scales the\nbrightness of the light linearly.",
+        "kind": "attribute",
+        "name": "inputs:intensity",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls if the light power should be\nnormalized by the surface area of the light. If enabled, the light power \nremains constant if the light's area or angular size is changed.",
+        "kind": "attribute",
+        "name": "inputs:normalize",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.5,
+        "documentation": "Specifies the radius of the disk.",
+        "kind": "attribute",
+        "name": "inputs:radius",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light \non the specular response of materials.",
+        "kind": "attribute",
+        "name": "inputs:specular",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: list_light_type_properties
+
+SUMMARY
+  call: list_light_type_properties(light_type="CylinderLight")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "CylinderLight",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": "(1, 1, 1)",
+        "documentation": "The color of the emitted light, in the\nrendering color space.",
+        "kind": "attribute",
+        "name": "inputs:color",
+        "type_name": "color3f"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 6500.0,
+        "documentation": "The color temperature of the light, in\ndegrees Kelvin.",
+        "kind": "attribute",
+        "name": "inputs:colorTemperature",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light\non the diffuse response of materials.",
+        "kind": "attribute",
+        "name": "inputs:diffuse",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls whether colorTemperature is\nused.",
+        "kind": "attribute",
+        "name": "inputs:enableColorTemperature",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.0,
+        "documentation": "Exposure setting of the light. Scales\nthe brightness of the light exponentially.",
+        "kind": "attribute",
+        "name": "inputs:exposure",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "The base intensity of the light. Scales the\nbrightness of the light linearly.",
+        "kind": "attribute",
+        "name": "inputs:intensity",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "Specifies the length of the cylinder in\nthe local X axis.",
+        "kind": "attribute",
+        "name": "inputs:length",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": false,
+        "documentation": "Controls if the light power should be\nnormalized by the surface area of the light. If enabled, the light power \nremains constant if the light's area or angular size is changed.",
+        "kind": "attribute",
+        "name": "inputs:normalize",
+        "type_name": "bool"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 0.5,
+        "documentation": "Specifies the radius of the cylinder.",
+        "kind": "attribute",
+        "name": "inputs:radius",
+        "type_name": "float"
+      },
+      {
+        "allowed_tokens": [],
+        "default": 1.0,
+        "documentation": "A multiplier for the effect of this light \non the specular response of materials.",
+        "kind": "attribute",
+        "name": "inputs:specular",
+        "type_name": "float"
+      }
+    ]
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: create_light
+intent: an attribute the light type does not have
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Bad", attributes={"inputs:nope": 1.0})
+  current project: golden
+  said: ok: Created SphereLight at /Scene/Lighting/Bad
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Bad [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "SphereLight",
+    "message": "Created SphereLight at /Scene/Lighting/Bad",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Bad"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,12 @@
+       )
+       {
+      +    def "Lighting"
+      +    {
+      +        def SphereLight "Bad"
+      +        {
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,12 @@
+   )
+   {
+  +    def "Lighting"
+  +    {
+  +        def SphereLight "Bad"
+  +        {
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: create_light
+intent: a texture on a light type without a texture input
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Bad", texture="<LIBRARY>/hdri/studio.hdr")
+  current project: golden
+  said: ok: Created SphereLight at /Scene/Lighting/Bad_02
+
+  what changed:
+    ~ file scene.usda
+    + file textures/studio.hdr
+    + prim /Scene/Lighting/Bad_02 [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    not used by the scene: textures/studio.hdr
+
+  checks:
+    ⚠ left behind a file nothing in the scene uses: textures/studio.hdr
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "SphereLight",
+    "message": "Created SphereLight at /Scene/Lighting/Bad_02",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Bad_02"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+  + textures/studio.hdr
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -17,4 +17,10 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +
+      +        def SphereLight "Bad_02"
+      +        {
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+           }
+       }
+  + textures/studio.hdr (new):
+      <binary: 49 bytes, sha256:a6047f6d65ac4310>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -19,4 +19,10 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+  +
+  +        def SphereLight "Bad_02"
+  +        {
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 09: create_light
+intent: inside an asset that does not exist
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Bad", asset_prim_path="/Scene/Nope")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Nope. Asset-level lights only work on ASWF folder assets.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: textures/studio.hdr
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Nope. Asset-level lights only work on ASWF folder assets."
+  }
+
+files:
+    project.json
+    scene.usda
+    textures/studio.hdr
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 10: update_light
+intent: a light that does not exist
+
+SUMMARY
+  call: update_light(prim_path="/Scene/Lighting/Nope", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: Prim not found: /Scene/Lighting/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: textures/studio.hdr
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found: /Scene/Lighting/Nope"
+  }
+
+files:
+    project.json
+    scene.usda
+    textures/studio.hdr
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 11: remove_light
+
+SUMMARY
+  call: remove_light(prim_path="/Scene/Lighting/Nope")
+  current project: golden
+  said: REFUSED: Prim not found: /Scene/Lighting/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: textures/studio.hdr
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found: /Scene/Lighting/Nope"
+  }
+
+files:
+    project.json
+    scene.usda
+    textures/studio.hdr
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+
+validation:
+  valid, no issues

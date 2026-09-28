@@ -1,0 +1,832 @@
+##### scenario: variants/refusals
+##### convention: Y-up, 1.0 meters per unit
+##### Variant calls that cannot work.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place table.usda as Table
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/table.usda", asset_name="Table", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Table at /Scene/Furniture/Table_01.
+
+  what changed:
+    + file assets/table/geo.usda
+    + file assets/table/table.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Table_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset [Xform]
+          bounds: (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_L [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (-0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (-0.5500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_R [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (0.5500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Top [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.05, 0.8)
+          attr xformOp:translate: (0, 0.75, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)
+          material shown: (none)
+          world position: (0.0000, 0.7500, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Table",
+    "intake": {
+      "asset_folder": "table",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "table.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Table at /Scene/Furniture/Table_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Table_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/table/geo.usda
+  + assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/table/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      def Xform "table"
+      {
+          def Cube "Top"
+          {
+              double size = 1
+              float3 xformOp:scale = (1.2, 0.05, 0.8)
+              double3 xformOp:translate = (0, 0.75, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_L"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (-0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_R"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/table/table.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "table" (
+          assetInfo = {
+              asset identifier = @./table.usda@
+              string name = "table"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_table>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_table"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Table_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/table/table.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,48 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Table_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/table/table.usda@
+  +                    string name = "table"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Top"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (1.2, 0.05, 0.8)
+  +                    double3 xformOp:translate = (0, 0.75, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_L"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (-0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_R"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: add_asset_configuration_variant
+intent: a set name with a space
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="bad name", variant_name="x", activations={"/Scene/Furniture/Table_01/asset/Leg_L": false})
+  current project: golden
+  said: REFUSED: Invalid variant set name: 'bad name'
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Invalid variant set name: 'bad name'"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: add_asset_configuration_variant
+intent: a part that does not exist
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="legs", variant_name="x", activations={"/Scene/Furniture/Table_01/asset/Nope": false})
+  current project: golden
+  said: ok: Added configuration variant 'x' to 'legs' in table
+
+  what changed:
+    ~ file assets/table/table.usda
+    + file assets/table/variants.usda
+    + prim /Scene/Furniture/Table_01/asset/Nope [typeless]
+          active: false
+          specifier: over
+    ~ /Scene/Furniture/Table_01/asset  variant set legs: (none) → x of x
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "activations": {
+      "/table/Nope": false
+    },
+    "asset_path": "<PROJECT>/assets/table",
+    "category": "configuration",
+    "default_selected": false,
+    "message": "Added configuration variant 'x' to 'legs' in table",
+    "variant_name": "x",
+    "variant_set": "legs"
+  }
+
+files:
+    assets/table/geo.usda
+  ~ assets/table/table.usda
+  + assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/table/table.usda:
+      --- assets/table/table.usda (before)
+      +++ assets/table/table.usda (after)
+      @@ -15,4 +15,8 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./variants.usda@
+      +    variants = {
+      +        string legs = "x"
+      +    }
+       )
+       {
+  + assets/table/variants.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      over "table" (
+          prepend variantSets = "legs"
+      )
+      {
+          variantSet "legs" = {
+              "x" {
+                  over "Nope" (
+                      active = false
+                  )
+                  {
+                  }
+
+              }
+          }
+      }
+
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: add_asset_material_variant
+intent: a material that does not exist
+
+SUMMARY
+  call: add_asset_material_variant(prim_path="/Scene/Furniture/Table_01", variant_set="finish", variant_name="x", bindings={"/Scene/Furniture/Table_01/asset/Top": "/Scene/Furniture/Table_01/asset/mtl/nope"})
+  current project: golden
+  said: ok: Added material variant 'x' to 'finish' in table
+
+  what changed:
+    ~ file assets/table/table.usda
+    ~ file assets/table/variants.usda
+    ~ /Scene/Furniture/Table_01/asset  variant set finish: (none) → x of x
+    ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
+    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/nope
+    ~ validity: valid → INVALID
+    + issue [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
+    + issue [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+
+  project state after the step:
+    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+
+  checks:
+    ⚠ this step made the scene invalid
+    ⚠ left behind a dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/table",
+    "bindings": {
+      "/table/Top": "/table/mtl/nope"
+    },
+    "category": "material",
+    "default_selected": false,
+    "message": "Added material variant 'x' to 'finish' in table",
+    "variant_name": "x",
+    "variant_set": "finish"
+  }
+
+files:
+    assets/table/geo.usda
+  ~ assets/table/table.usda
+  ~ assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/table/table.usda:
+      --- assets/table/table.usda (before)
+      +++ assets/table/table.usda (after)
+      @@ -17,4 +17,5 @@
+           prepend references = @./variants.usda@
+           variants = {
+      +        string finish = "x"
+               string legs = "x"
+           }
+  ~ assets/table/variants.usda:
+      --- assets/table/variants.usda (before)
+      +++ assets/table/variants.usda (after)
+      @@ -5,5 +5,5 @@
+       
+       over "table" (
+      -    prepend variantSets = "legs"
+      +    prepend variantSets = ["legs", "finish"]
+       )
+       {
+      @@ -18,4 +18,15 @@
+               }
+           }
+      +    variantSet "finish" = {
+      +        "x" {
+      +            over "Top" (
+      +                prepend apiSchemas = ["MaterialBindingAPI"]
+      +            )
+      +            {
+      +                custom rel material:binding = </table/mtl/nope>
+      +            }
+      +
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -30,6 +30,9 @@
+               )
+               {
+  -                def Cube "Top"
+  +                def Cube "Top" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+                   {
+  +                    custom rel material:binding = </Scene/Furniture/Table_01/asset/mtl/nope>
+                       double size = 1
+                       float3 xformOp:scale = (1.2, 0.05, 0.8)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
+  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+
+
+=== step 05: select_asset_variant
+intent: a set that does not exist
+
+SUMMARY
+  call: select_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="nope", variant_name="x")
+  current project: golden
+  said: ok: Selected 'x' for 'nope' in table
+
+  what changed:
+    ~ file assets/table/table.usda
+
+  project state after the step:
+    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+
+  checks:
+    ⚠ no prim at or under /Scene/Furniture/Table_01 has a variant set named 'nope'
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/table",
+    "message": "Selected 'x' for 'nope' in table",
+    "variant_name": "x",
+    "variant_set": "nope"
+  }
+
+files:
+    assets/table/geo.usda
+  ~ assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/table/table.usda:
+      --- assets/table/table.usda (before)
+      +++ assets/table/table.usda (after)
+      @@ -19,4 +19,5 @@
+               string finish = "x"
+               string legs = "x"
+      +        string nope = "x"
+           }
+       )
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
+  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+
+
+=== step 06: remove_asset_variant
+
+SUMMARY
+  call: remove_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="nope", variant_name="x")
+  current project: golden
+  said: ok: Variant 'x' not found in 'nope'
+
+  what changed:
+    nothing
+
+  project state after the step:
+    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/table",
+    "message": "Variant 'x' not found in 'nope'",
+    "removed": false,
+    "variant_name": "x",
+    "variant_set": "nope"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
+  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+
+
+=== step 07: list_variants
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Nope")
+  current project: golden
+  said: REFUSED: Prim not found in scene: /Scene/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found in scene: /Scene/Nope"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
+  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+
+
+=== step 08: add_asset_configuration_variant
+intent: no activations
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="legs", variant_name="x", activations={})
+  current project: golden
+  said: REFUSED: 'activations' is required and must be a non-empty object. Each entry maps a prim path to a boolean active flag (e.g. {'/Geo/Door': false}).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "'activations' is required and must be a non-empty object. Each entry maps a prim path to a boolean active flag (e.g. {'/Geo/Door': false})."
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
+  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope

@@ -1,0 +1,1157 @@
+##### scenario: editing/snapshots
+##### convention: Y-up, 1.0 meters per unit
+##### Named snapshots: save, list, overwrite, delete.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place chair.usda as Chair in Furniture
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Chair at /Scene/Furniture/Chair_01.
+
+  what changed:
+    + file assets/chair/chair.usda
+    + file assets/chair/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Chair_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_01/asset [Xform]
+          bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_01/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)
+          material shown: (none)
+          world position: (0.0000, 0.7000, -0.2000)
+    + prim /Scene/Furniture/Chair_01/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)
+          material shown: (none)
+          world position: (0.0000, 0.4500, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Chair",
+    "intake": {
+      "asset_folder": "chair",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "chair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Chair at /Scene/Furniture/Chair_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Chair_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/chair/chair.usda
+  + assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/chair/chair.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "chair" (
+          assetInfo = {
+              asset identifier = @./chair.usda@
+              string name = "chair"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_chair>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_chair"
+      {
+      }
+
+  + assets/chair/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+      )
+
+      def Xform "chair"
+      {
+          def Cube "Seat"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.05, 0.45)
+              double3 xformOp:translate = (0, 0.45, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Back"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.5, 0.05)
+              double3 xformOp:translate = (0, 0.7, -0.2)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Chair_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/chair/chair.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,40 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Chair_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                    string name = "chair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                    double3 xformOp:translate = (0, 0.45, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Back"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: save_scene_snapshot
+
+SUMMARY
+  call: save_scene_snapshot(name="first")
+  current project: golden
+  said: ok: Saved snapshot 'first' to first.usda. scene.usda is unchanged; the snapshot is a self-contained frozen copy.
+
+  what changed:
+    + file first.usda
+
+  project state after the step:
+    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+
+  checks:
+    ⚠ left behind an absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Saved snapshot 'first' to first.usda. scene.usda is unchanged; the snapshot is a self-contained frozen copy.",
+    "scene_path": "<PROJECT>/scene.usda",
+    "snapshot_name": "first",
+    "snapshot_path": "<PROJECT>/first.usda"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+  + first.usda
+    project.json
+    scene.usda
+
+file changes:
+  + first.usda (new):
+      #usda 1.0
+      (
+          customLayerData = {
+          }
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+          def "Furniture"
+          {
+              def Xform "Chair_01"
+              {
+                  float3 xformOp:rotateXYZ = (0, 0, 0)
+                  float3 xformOp:scale = (1, 1, 1)
+                  double3 xformOp:translate = (0, 0, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+                  def Xform "asset" (
+                      prepend references = @<PROJECT>/assets/chair/chair.usda@
+                  )
+                  {
+                  }
+              }
+          }
+      }
+
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: place crate.usda as Crate in Props
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=1.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Crate at /Scene/Props/Crate_02.
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Crate_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (1, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (1.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset [Xform]
+          bounds: (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+          kind: component
+          world position: (1.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+          material shown: (none)
+          world position: (1.0000, 0.2500, 0.0000)
+    ~ /Scene  bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250) → (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+
+  project state after the step:
+    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Crate",
+    "intake": {
+      "asset_folder": "crate",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "crate.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Crate at /Scene/Props/Crate_02.",
+    "position": {
+      "x": 1.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Crate_02",
+    "rotation_y": 0.0
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    first.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -26,4 +26,21 @@
+               }
+           }
+      +
+      +    def "Props"
+      +    {
+      +        def Xform "Crate_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (1, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -48,4 +48,33 @@
+           }
+       }
+  +
+  +    def "Props"
+  +    {
+  +        def Xform "Crate_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (1, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: save_scene_snapshot
+intent: the name is taken
+
+SUMMARY
+  call: save_scene_snapshot(name="first")
+  current project: golden
+  said: REFUSED: first.usda already exists. Re-run with force=true to overwrite.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "first.usda already exists. Re-run with force=true to overwrite."
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    first.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: save_scene_snapshot
+intent: overwrite it
+
+SUMMARY
+  call: save_scene_snapshot(name="first", force=true)
+  current project: golden
+  said: ok: Saved snapshot 'first' to first.usda. scene.usda is unchanged; the snapshot is a self-contained frozen copy.
+
+  what changed:
+    ~ file first.usda
+
+  project state after the step:
+    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+
+  checks:
+    ⚠ left behind an absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Saved snapshot 'first' to first.usda. scene.usda is unchanged; the snapshot is a self-contained frozen copy.",
+    "scene_path": "<PROJECT>/scene.usda",
+    "snapshot_name": "first",
+    "snapshot_path": "<PROJECT>/first.usda"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+  ~ first.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ first.usda:
+      --- first.usda (before)
+      +++ first.usda (after)
+      @@ -28,4 +28,21 @@
+               }
+           }
+      +
+      +    def "Props"
+      +    {
+      +        def Xform "Crate_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (1, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @<PROJECT>/assets/crate/crate.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: save_scene_snapshot
+intent: the scene's own name
+
+SUMMARY
+  call: save_scene_snapshot(name="scene")
+  current project: golden
+  said: REFUSED: Snapshot name 'scene' collides with scene.usda. Pick a different name.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Snapshot name 'scene' collides with scene.usda. Pick a different name."
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    first.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 07: save_scene_snapshot
+intent: a name to be cleaned
+
+SUMMARY
+  call: save_scene_snapshot(name="with space!")
+  current project: golden
+  said: ok: Saved snapshot 'withspace' to withspace.usda. scene.usda is unchanged; the snapshot is a self-contained frozen copy.
+
+  what changed:
+    + file withspace.usda
+
+  project state after the step:
+    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+
+  checks:
+    ⚠ left behind an absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
+    ⚠ left behind an absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Saved snapshot 'withspace' to withspace.usda. scene.usda is unchanged; the snapshot is a self-contained frozen copy.",
+    "scene_path": "<PROJECT>/scene.usda",
+    "snapshot_name": "withspace",
+    "snapshot_path": "<PROJECT>/withspace.usda"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    first.usda
+    project.json
+    scene.usda
+  + withspace.usda
+
+file changes:
+  + withspace.usda (new):
+      #usda 1.0
+      (
+          customLayerData = {
+          }
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+          def "Furniture"
+          {
+              def Xform "Chair_01"
+              {
+                  float3 xformOp:rotateXYZ = (0, 0, 0)
+                  float3 xformOp:scale = (1, 1, 1)
+                  double3 xformOp:translate = (0, 0, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+                  def Xform "asset" (
+                      prepend references = @<PROJECT>/assets/chair/chair.usda@
+                  )
+                  {
+                  }
+              }
+          }
+
+          def "Props"
+          {
+              def Xform "Crate_02"
+              {
+                  float3 xformOp:rotateXYZ = (0, 0, 0)
+                  float3 xformOp:scale = (1, 1, 1)
+                  double3 xformOp:translate = (1, 0, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+                  def Xform "asset" (
+                      prepend references = @<PROJECT>/assets/crate/crate.usda@
+                  )
+                  {
+                  }
+              }
+          }
+      }
+
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 08: list_scene_snapshots
+
+SUMMARY
+  call: list_scene_snapshots()
+  current project: golden
+  said: ok: Found 2 snapshot(s) alongside scene.usda.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Found 2 snapshot(s) alongside scene.usda.",
+    "scene_path": "<PROJECT>/scene.usda",
+    "snapshot_count": 2,
+    "snapshots": [
+      {
+        "name": "first",
+        "path": "<PROJECT>/first.usda",
+        "size_bytes": 1250
+      },
+      {
+        "name": "withspace",
+        "path": "<PROJECT>/withspace.usda",
+        "size_bytes": 1250
+      }
+    ]
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    first.usda
+    project.json
+    scene.usda
+    withspace.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 09: delete_scene_snapshot
+
+SUMMARY
+  call: delete_scene_snapshot(name="first")
+  current project: golden
+  said: ok: Deleted snapshot first.usda
+
+  what changed:
+    - file first.usda
+
+  project state after the step:
+    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Deleted snapshot first.usda",
+    "snapshot_name": "first",
+    "snapshot_path": "<PROJECT>/first.usda"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+  - first.usda
+    project.json
+    scene.usda
+    withspace.usda
+
+file changes:
+  - first.usda (removed)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 10: delete_scene_snapshot
+intent: a snapshot that does not exist
+
+SUMMARY
+  call: delete_scene_snapshot(name="nope")
+  current project: golden
+  said: REFUSED: Snapshot not found: nope.usda
+
+  what changed:
+    nothing
+
+  project state after the step:
+    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Snapshot not found: nope.usda"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+    scene.usda
+    withspace.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 11: list_scene_snapshots
+
+SUMMARY
+  call: list_scene_snapshots()
+  current project: golden
+  said: ok: Found 1 snapshot(s) alongside scene.usda.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
+    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Found 1 snapshot(s) alongside scene.usda.",
+    "scene_path": "<PROJECT>/scene.usda",
+    "snapshot_count": 1,
+    "snapshots": [
+      {
+        "name": "withspace",
+        "path": "<PROJECT>/withspace.usda",
+        "size_bytes": 1250
+      }
+    ]
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+    scene.usda
+    withspace.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.0000, -0.2500)..(1.2500, 0.9500, 0.2500)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (1.0000, 0.0000, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (1.0000, 0.2500, 0.0000)  bounds (0.7500, 0.0000, -0.2500)..(1.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues

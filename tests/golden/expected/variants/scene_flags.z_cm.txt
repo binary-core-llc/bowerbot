@@ -1,0 +1,1703 @@
+##### scenario: variants/scene_flags
+##### convention: Z-up, 0.01 meters per unit
+##### Scene lighting and model-selection variants: flags, defaults, repairs and refusals.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: create_light
+intent: a light named Key
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Key", translate_x=0.0, translate_y=0.0, translate_z=300.0)
+  current project: golden
+  said: ok: Created SphereLight at /Scene/Lighting/Key
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Key [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 0, 300)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+          world position: (0.0000, 0.0000, 300.0000)
+    ~ /Scene  bounds: (none) → (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "SphereLight",
+    "message": "Created SphereLight at /Scene/Lighting/Key",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 300.0
+    },
+    "prim_path": "/Scene/Lighting/Key"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,12 @@
+       )
+       {
+      +    def "Lighting"
+      +    {
+      +        def SphereLight "Key"
+      +        {
+      +            double3 xformOp:translate = (0, 0, 300)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,12 @@
+   )
+   {
+  +    def "Lighting"
+  +    {
+  +        def SphereLight "Key"
+  +        {
+  +            double3 xformOp:translate = (0, 0, 300)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 300.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: create_light
+intent: a light named Fill
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Fill", translate_x=200.0, translate_y=0.0, translate_z=300.0)
+  current project: golden
+  said: ok: Created SphereLight at /Scene/Lighting/Fill
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Lighting/Fill [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (200, 0, 300)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+          world position: (200.0000, 0.0000, 300.0000)
+    ~ /Scene  bounds: (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000) → (-0.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "SphereLight",
+    "message": "Created SphereLight at /Scene/Lighting/Fill",
+    "position": {
+      "x": 200.0,
+      "y": 0.0,
+      "z": 300.0
+    },
+    "prim_path": "/Scene/Lighting/Fill"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -17,4 +17,10 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +
+      +        def SphereLight "Fill"
+      +        {
+      +            double3 xformOp:translate = (200, 0, 300)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -19,4 +19,10 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+  +
+  +        def SphereLight "Fill"
+  +        {
+  +            double3 xformOp:translate = (200, 0, 300)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 300.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: place chair.usda as Seat
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Seat", group="Furniture", translate_x=400.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Seat at /Scene/Furniture/Seat_01.
+
+  what changed:
+    + file assets/chair/chair.usda
+    + file assets/chair/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Seat_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (400, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Seat_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+          kind: component
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Seat_01/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)
+          material shown: (none)
+          world position: (400.0000, 20.0000, 70.0000)
+    + prim /Scene/Furniture/Seat_01/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)
+          material shown: (none)
+          world position: (400.0000, 0.0000, 45.0000)
+    ~ /Scene  bounds: (-0.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000) → (-0.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Seat",
+    "intake": {
+      "asset_folder": "chair",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "chair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Seat at /Scene/Furniture/Seat_01.",
+    "position": {
+      "x": 400.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Seat_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/chair/chair.usda
+  + assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/chair/chair.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "chair" (
+          assetInfo = {
+              asset identifier = @./chair.usda@
+              string name = "chair"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_chair>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_chair"
+      {
+      }
+
+  + assets/chair/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+      )
+
+      def Xform "chair"
+      {
+          def Cube "Seat"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.05, 0.45)
+              double3 xformOp:translate = (0, 0.45, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Back"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.5, 0.05)
+              double3 xformOp:translate = (0, 0.7, -0.2)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -24,4 +24,23 @@
+               }
+           }
+      +
+      +    def "Furniture"
+      +    {
+      +        def Xform "Seat_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (400, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/chair/chair.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -26,4 +26,44 @@
+           }
+       }
+  +
+  +    def "Furniture"
+  +    {
+  +        def Xform "Seat_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (400, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                    string name = "chair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                    double3 xformOp:translate = (0, 0.45, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Back"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 300.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: set_prim_attribute
+intent: a scene value on the key light
+
+SUMMARY
+  call: set_prim_attribute(prim_path="/Scene/Lighting/Key", attribute_name="inputs:intensity", value=700.0)
+  current project: golden
+  said: ok: Authored /Scene/Lighting/Key.inputs:intensity in scene.usda.
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Lighting/Key  attr inputs:intensity: (none) → 700
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attribute_name": "inputs:intensity",
+    "message": "Authored /Scene/Lighting/Key.inputs:intensity in scene.usda.",
+    "prim_path": "/Scene/Lighting/Key",
+    "value": 700.0
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -14,4 +14,5 @@
+               def SphereLight "Key"
+               {
+      +            float inputs:intensity = 700
+                   double3 xformOp:translate = (0, 0, 300)
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -16,4 +16,5 @@
+           def SphereLight "Key"
+           {
+  +            float inputs:intensity = 700
+               double3 xformOp:translate = (0, 0, 300)
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 300.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: add_scene_lighting_attribute_variant
+intent: masked by the value just set
+
+SUMMARY
+  call: add_scene_lighting_attribute_variant(variant_set="mood", variant_name="dim", overrides={"/Scene/Lighting/Key": {"inputs:intensity": 10.0}})
+  current project: golden
+  said: REFUSED: Cannot author this lighting attribute variant: 1 per-instance scene opinion(s) would mask it. Per LIVRPS the variant body would be silently overridden at composition time. Conflicting (placement, opinion): /Scene/Lighting/Key.inputs:intensity Retry with clear_masking_overrides=true to remove these scene opinions, OR with confirm_masked=true to author anyway (variant will only take effect on placements without prior overrides).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot author this lighting attribute variant: 1 per-instance scene opinion(s) would mask it. Per LIVRPS the variant body would be silently overridden at composition time. Conflicting (placement, opinion):\n  /Scene/Lighting/Key.inputs:intensity\nRetry with clear_masking_overrides=true to remove these scene opinions, OR with confirm_masked=true to author anyway (variant will only take effect on placements without prior overrides)."
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 300.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: add_scene_lighting_attribute_variant
+intent: author it anyway
+
+SUMMARY
+  call: add_scene_lighting_attribute_variant(variant_set="mood", variant_name="dim", overrides={"/Scene/Lighting/Key": {"inputs:intensity": 10.0}}, confirm_masked=true)
+  current project: golden
+  said: ok: Added scene lighting attribute variant 'dim' to 'mood' on /Scene/Lighting
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Lighting  variant set mood: (none) → dim of dim
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carrier_prim_path": "/Scene/Lighting",
+    "category": "lighting",
+    "default_selected": false,
+    "message": "Added scene lighting attribute variant 'dim' to 'mood' on /Scene/Lighting",
+    "overrides": {
+      "/Scene/Lighting/Key": {
+        "inputs:intensity": 10.0
+      }
+    },
+    "variant_name": "dim",
+    "variant_set": "mood"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,5 +10,10 @@
+       )
+       {
+      -    def "Lighting"
+      +    def "Lighting" (
+      +        variants = {
+      +            string mood = "dim"
+      +        }
+      +        prepend variantSets = "mood"
+      +    )
+           {
+               def SphereLight "Key"
+      @@ -23,4 +28,13 @@
+                   double3 xformOp:translate = (200, 0, 300)
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +        variantSet "mood" = {
+      +            "dim" {
+      +                over "Key"
+      +                {
+      +                    float inputs:intensity = 10
+      +                }
+      +
+      +            }
+               }
+           }
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 300.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 07: add_scene_lighting_attribute_variant
+intent: clear the masking value first
+
+SUMMARY
+  call: add_scene_lighting_attribute_variant(variant_set="mood", variant_name="bright", overrides={"/Scene/Lighting/Key": {"inputs:intensity": 2000.0}}, clear_masking_overrides=true)
+  current project: golden
+  said: ok: Added scene lighting attribute variant 'bright' to 'mood' on /Scene/Lighting
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Lighting  variant set mood: dim of dim → dim of bright, dim
+    ~ /Scene/Lighting/Key  attr inputs:intensity: 700 → 10
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carrier_prim_path": "/Scene/Lighting",
+    "category": "lighting",
+    "default_selected": false,
+    "message": "Added scene lighting attribute variant 'bright' to 'mood' on /Scene/Lighting",
+    "overrides": {
+      "/Scene/Lighting/Key": {
+        "inputs:intensity": 2000.0
+      }
+    },
+    "variant_name": "bright",
+    "variant_set": "mood"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -19,5 +19,4 @@
+               def SphereLight "Key"
+               {
+      -            float inputs:intensity = 700
+                   double3 xformOp:translate = (0, 0, 300)
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+      @@ -30,4 +29,11 @@
+               }
+               variantSet "mood" = {
+      +            "bright" {
+      +                over "Key"
+      +                {
+      +                    float inputs:intensity = 2000
+      +                }
+      +
+      +            }
+                   "dim" {
+                       over "Key"
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -16,5 +16,5 @@
+           def SphereLight "Key"
+           {
+  -            float inputs:intensity = 700
+  +            float inputs:intensity = 10
+               double3 xformOp:translate = (0, 0, 300)
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 300.0000)  bounds (-0.5000, -0.5000, 299.5000)..(0.5000, 0.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 08: add_scene_lighting_selection_variant
+intent: a light selection made the default
+
+SUMMARY
+  call: add_scene_lighting_selection_variant(variant_set="rig", variant_name="fill_only", activations={"/Scene/Lighting/Key": false, "/Scene/Lighting/Fill": true}, set_as_default=true, clear_masking_overrides=true)
+  current project: golden
+  said: ok: Added scene lighting selection variant 'fill_only' to 'rig' on /Scene/Lighting
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene  bounds: (-0.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000) → (199.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+    ~ /Scene/Lighting  variant set rig: (none) → fill_only of fill_only
+    ~ /Scene/Lighting/Key  active: (none) → false
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "activations": {
+      "/Scene/Lighting/Fill": true,
+      "/Scene/Lighting/Key": false
+    },
+    "carrier_prim_path": "/Scene/Lighting",
+    "category": "lighting",
+    "default_selected": true,
+    "message": "Added scene lighting selection variant 'fill_only' to 'rig' on /Scene/Lighting",
+    "variant_name": "fill_only",
+    "variant_set": "rig"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -13,6 +13,7 @@
+               variants = {
+                   string mood = "dim"
+      +            string rig = "fill_only"
+               }
+      -        prepend variantSets = "mood"
+      +        prepend variantSets = ["mood", "rig"]
+           )
+           {
+      @@ -44,4 +45,20 @@
+                   }
+               }
+      +        variantSet "rig" = {
+      +            "fill_only" {
+      +                over "Key" (
+      +                    active = false
+      +                )
+      +                {
+      +                }
+      +
+      +                over "Fill" (
+      +                    active = true
+      +                )
+      +                {
+      +                }
+      +
+      +            }
+      +        }
+           }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -14,12 +14,7 @@
+       def "Lighting"
+       {
+  -        def SphereLight "Key"
+  -        {
+  -            float inputs:intensity = 10
+  -            double3 xformOp:translate = (0, 0, 300)
+  -            uniform token[] xformOpOrder = ["xformOp:translate"]
+  -        }
+  -
+  -        def SphereLight "Fill"
+  +        def SphereLight "Fill" (
+  +            active = true
+  +        )
+           {
+               double3 xformOp:translate = (200, 0, 300)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 09: add_scene_lighting_selection_variant
+
+SUMMARY
+  call: add_scene_lighting_selection_variant(variant_set="rig", variant_name="both", activations={"/Scene/Lighting/Key": true, "/Scene/Lighting/Fill": true}, confirm_masked=true)
+  current project: golden
+  said: ok: Added scene lighting selection variant 'both' to 'rig' on /Scene/Lighting
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Lighting  variant set rig: fill_only of fill_only → fill_only of both, fill_only
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "activations": {
+      "/Scene/Lighting/Fill": true,
+      "/Scene/Lighting/Key": true
+    },
+    "carrier_prim_path": "/Scene/Lighting",
+    "category": "lighting",
+    "default_selected": false,
+    "message": "Added scene lighting selection variant 'both' to 'rig' on /Scene/Lighting",
+    "variant_name": "both",
+    "variant_set": "rig"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -46,4 +46,18 @@
+               }
+               variantSet "rig" = {
+      +            "both" {
+      +                over "Key" (
+      +                    active = true
+      +                )
+      +                {
+      +                }
+      +
+      +                over "Fill" (
+      +                    active = true
+      +                )
+      +                {
+      +                }
+      +
+      +            }
+                   "fill_only" {
+                       over "Key" (
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 10: add_scene_lighting_selection_variant
+intent: a target outside /Scene/Lighting
+
+SUMMARY
+  call: add_scene_lighting_selection_variant(variant_set="rig", variant_name="chair", activations={"/Scene/Furniture/Seat_01": false})
+  current project: golden
+  said: REFUSED: Lighting variant targets must be under /Scene/Lighting. Got: /Scene/Furniture/Seat_01
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Lighting variant targets must be under /Scene/Lighting. Got: /Scene/Furniture/Seat_01"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 11: add_scene_model_selection_variant
+intent: an alternative whose root is not frozen
+
+SUMMARY
+  call: add_scene_model_selection_variant(prim_path="/Scene/Furniture/Seat_01", variant_set="model", variant_name="unfrozen", asset_file_path="<LIBRARY>/unfrozen.usda")
+  current project: golden
+  said: REFUSED: Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms or nested placement breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms or nested placement breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini)."
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Seat_01/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Seat_01/asset/Back  [Cube]  at (400.0000, 20.0000, 70.0000)  bounds (377.5000, 17.5000, 45.0000)..(422.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 12: add_scene_model_selection_variant
+intent: retry with the repair, made the default
+
+SUMMARY
+  call: add_scene_model_selection_variant(prim_path="/Scene/Furniture/Seat_01", variant_set="model", variant_name="unfrozen", asset_file_path="<LIBRARY>/unfrozen.usda", fix_root_transforms=true, set_as_default=true)
+  current project: golden
+  said: ok: Added scene model-selection variant 'unfrozen' to 'model' on /Scene/Furniture/Seat_01 (auto-promoted existing as 'chair')
+
+  what changed:
+    + file assets/unfrozen/geo.usda
+    + file assets/unfrozen/unfrozen.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture/Seat_01/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (400.0000, 0.0000, 25.0000)
+    - prim /Scene/Furniture/Seat_01/asset/Back [Cube]
+    - prim /Scene/Furniture/Seat_01/asset/Seat [Cube]
+    ~ /Scene  bounds: (199.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 300.5000) → (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+    ~ /Scene/Furniture/Seat_01  variant set model: (none) → unfrozen of chair, unfrozen
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "unfrozen",
+    "asset_reference": "./assets/unfrozen/unfrozen.usda",
+    "carrier_prim_path": "/Scene/Furniture/Seat_01",
+    "category": "model_selection",
+    "default_selected": true,
+    "message": "Added scene model-selection variant 'unfrozen' to 'model' on /Scene/Furniture/Seat_01 (auto-promoted existing as 'chair')",
+    "promoted_existing_variant": "chair",
+    "variant_name": "unfrozen",
+    "variant_set": "model"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+  + assets/unfrozen/geo.usda
+  + assets/unfrozen/unfrozen.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/unfrozen/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "unfrozen"
+      )
+
+      def Xform "unfrozen"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/unfrozen/unfrozen.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "unfrozen"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "unfrozen" (
+          assetInfo = {
+              asset identifier = @./unfrozen.usda@
+              string name = "unfrozen"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_unfrozen>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_unfrozen"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -79,5 +79,10 @@
+           def "Furniture"
+           {
+      -        def Xform "Seat_01"
+      +        def Xform "Seat_01" (
+      +            variants = {
+      +                string model = "unfrozen"
+      +            }
+      +            prepend variantSets = "model"
+      +        )
+               {
+                   float3 xformOp:rotateXYZ = (0, 0, 0)
+      @@ -86,10 +91,26 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+       
+      -            def Xform "asset" (
+      -                prepend references = @assets/chair/chair.usda@
+      -            )
+      +            def Xform "asset"
+                   {
+                       float xformOp:rotateX = 90
+                       uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +            variantSet "model" = {
+      +                "chair" {
+      +                    over "asset" (
+      +                        prepend references = @assets/chair/chair.usda@
+      +                    )
+      +                    {
+      +                    }
+      +
+      +                }
+      +                "unfrozen" {
+      +                    over "asset" (
+      +                        prepend references = @./assets/unfrozen/unfrozen.usda@
+      +                    )
+      +                    {
+      +                    }
+      +
+      +                }
+                   }
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -34,6 +34,6 @@
+               def Xform "asset" (
+                   assetInfo = {
+  -                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  -                    string name = "chair"
+  +                    asset identifier = @<PROJECT>/assets/unfrozen/unfrozen.usda@
+  +                    string name = "unfrozen"
+                       string version = "1.0"
+                   }
+  @@ -44,17 +44,9 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Seat"
+  +                def Cube "Box"
+                   {
+                       double size = 1
+  -                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  -                    double3 xformOp:translate = (0, 0.45, 0)
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                }
+  -
+  -                def Cube "Back"
+  -                {
+  -                    double size = 1
+  -                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  -                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 13: add_scene_model_selection_variant
+intent: an alternative with a geometry root, wrapped
+
+SUMMARY
+  call: add_scene_model_selection_variant(prim_path="/Scene/Furniture/Seat_01", variant_set="model", variant_name="cube", asset_file_path="<LIBRARY>/rooted_mesh.usda", fix_root_prim=true)
+  current project: golden
+  said: ok: Added scene model-selection variant 'cube' to 'model' on /Scene/Furniture/Seat_01
+
+  what changed:
+    + file assets/rooted_mesh/geo.usda
+    + file assets/rooted_mesh/rooted_mesh.usda
+    ~ file scene.usda
+    ~ /Scene/Furniture/Seat_01  variant set model: unfrozen of chair, unfrozen → unfrozen of chair, cube, unfrozen
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "rooted_mesh",
+    "asset_reference": "./assets/rooted_mesh/rooted_mesh.usda",
+    "carrier_prim_path": "/Scene/Furniture/Seat_01",
+    "category": "model_selection",
+    "default_selected": false,
+    "message": "Added scene model-selection variant 'cube' to 'model' on /Scene/Furniture/Seat_01",
+    "promoted_existing_variant": null,
+    "variant_name": "cube",
+    "variant_set": "model"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+  + assets/rooted_mesh/geo.usda
+  + assets/rooted_mesh/rooted_mesh.usda
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/rooted_mesh/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "rooted_mesh"
+      )
+
+      def Xform "rooted_mesh"
+      {
+          def Cube "mesh"
+          {
+              double size = 0.5
+          }
+      }
+
+  + assets/rooted_mesh/rooted_mesh.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "rooted_mesh"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "rooted_mesh" (
+          assetInfo = {
+              asset identifier = @./rooted_mesh.usda@
+              string name = "rooted_mesh"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_rooted_mesh>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_rooted_mesh"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -105,4 +105,12 @@
+       
+                       }
+      +                "cube" {
+      +                    over "asset" (
+      +                        prepend references = @./assets/rooted_mesh/rooted_mesh.usda@
+      +                    )
+      +                    {
+      +                    }
+      +
+      +                }
+                       "unfrozen" {
+                           over "asset" (
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 14: add_scene_model_selection_variant
+intent: an alternative that does not exist
+
+SUMMARY
+  call: add_scene_model_selection_variant(prim_path="/Scene/Furniture/Seat_01", variant_set="model", variant_name="nope", asset_file_path="<LIBRARY>/nope.usda")
+  current project: golden
+  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/nope.usda@'
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/nope.usda@'"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/rooted_mesh/geo.usda
+    assets/rooted_mesh/rooted_mesh.usda
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 15: list_variants
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Furniture/Seat_01")
+  current project: golden
+  said: ok: 1 variant set(s) across 1 carrier(s) under /Scene/Furniture/Seat_01
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carriers": [
+      {
+        "prim_path": "/Scene/Furniture/Seat_01",
+        "variant_sets": [
+          {
+            "name": "model",
+            "selection": "unfrozen",
+            "variants": [
+              "chair",
+              "cube",
+              "unfrozen"
+            ]
+          }
+        ]
+      }
+    ],
+    "message": "1 variant set(s) across 1 carrier(s) under /Scene/Furniture/Seat_01",
+    "prim_path": "/Scene/Furniture/Seat_01"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/rooted_mesh/geo.usda
+    assets/rooted_mesh/rooted_mesh.usda
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 16: select_scene_variant
+
+SUMMARY
+  call: select_scene_variant(prim_path="/Scene/Nope", variant_set="model", variant_name="cube")
+  current project: golden
+  said: REFUSED: Carrier prim not found: /Scene/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Carrier prim not found: /Scene/Nope"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/rooted_mesh/geo.usda
+    assets/rooted_mesh/rooted_mesh.usda
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 17: remove_scene_variant
+
+SUMMARY
+  call: remove_scene_variant(prim_path="/Scene/Nope", variant_set="model", variant_name="cube")
+  current project: golden
+  said: ok: Variant 'cube' not found in 'model' on /Scene/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carrier_prim_path": "/Scene/Nope",
+    "message": "Variant 'cube' not found in 'model' on /Scene/Nope",
+    "removed": false,
+    "scope": "scene",
+    "suspect_variant_sets": [],
+    "variant_name": "cube",
+    "variant_set": "model"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/rooted_mesh/geo.usda
+    assets/rooted_mesh/rooted_mesh.usda
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 18: remove_scene_variant_set
+
+SUMMARY
+  call: remove_scene_variant_set(prim_path="/Scene/Nope", variant_set="model")
+  current project: golden
+  said: ok: Variant set 'model' not found on /Scene/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carrier_prim_path": "/Scene/Nope",
+    "demoted_to_direct_ref": null,
+    "message": "Variant set 'model' not found on /Scene/Nope",
+    "removed": false,
+    "scope": "scene",
+    "variant_set": "model"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/rooted_mesh/geo.usda
+    assets/rooted_mesh/rooted_mesh.usda
+    assets/unfrozen/geo.usda
+    assets/unfrozen/unfrozen.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (199.5000, -25.0000, 0.0000)..(425.0000, 25.0000, 300.5000)
+  /Scene/Lighting/Fill  [SphereLight]  at (200.0000, 0.0000, 300.0000)  bounds (199.5000, -0.5000, 299.5000)..(200.5000, 0.5000, 300.5000)
+  /Scene/Furniture/Seat_01  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Seat_01/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues

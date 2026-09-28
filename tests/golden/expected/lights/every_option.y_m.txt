@@ -1,0 +1,1029 @@
+##### scenario: lights/every_option
+##### convention: Y-up, 1.0 meters per unit
+##### The remaining light and camera options.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place lamp/lamp.usda as Lamp
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/lamp/lamp.usda", asset_name="Lamp", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Lamp at /Scene/Props/Lamp_01.
+
+  what changed:
+    + file assets/lamp/geo.usda
+    + file assets/lamp/lamp.usda
+    + file assets/lamp/maps/lamp_diffuse.png
+    + file assets/lamp/mtl.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Lamp_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset [Xform]
+          bounds: (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/Base [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.3, 0.1, 0.3)
+          attr xformOp:translate: (0, 0.05, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)
+          material shown: (none)
+          world position: (0.0000, 0.0500, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/Shade [Cube]
+          applied APIs: MaterialBindingAPI
+          attr size: 1
+          attr xformOp:scale: (0.4, 0.3, 0.4)
+          attr xformOp:translate: (0, 0.5, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)
+          material shown: /Scene/Props/Lamp_01/asset/mtl/brass
+          rel material:binding: /Scene/Props/Lamp_01/asset/mtl/brass
+          world position: (0.0000, 0.5000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/mtl [Scope]
+    + prim /Scene/Props/Lamp_01/asset/mtl/brass [Material] (+2 prims inside)
+          attr outputs:surface: (no value)
+          connect outputs:surface: /Scene/Props/Lamp_01/asset/mtl/brass/PreviewSurface.outputs:surface
+    ~ /Scene  bounds: (none) → (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Lamp",
+    "intake": {
+      "asset_folder": "lamp",
+      "files_copied": 4,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "lamp.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Lamp at /Scene/Props/Lamp_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Lamp_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/lamp/geo.usda
+  + assets/lamp/lamp.usda
+  + assets/lamp/maps/lamp_diffuse.png
+  + assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/lamp/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp"
+      {
+          def Cube "Base"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.3, 0.1, 0.3)
+              double3 xformOp:translate = (0, 0.05, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Shade"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.4, 0.3, 0.4)
+              double3 xformOp:translate = (0, 0.5, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/lamp/lamp.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp" (
+          assetInfo = {
+              asset identifier = @./lamp.usda@
+              string name = "lamp"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_lamp>
+          kind = "component"
+          prepend payload = @./geo.usda@
+          prepend references = @./mtl.usda@
+      )
+      {
+      }
+
+      class Xform "_class_lamp"
+      {
+      }
+
+  + assets/lamp/maps/lamp_diffuse.png (new):
+      <binary: 70 bytes, sha256:9b25e3bbeaa1ec03>
+  + assets/lamp/mtl.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def "lamp"
+      {
+          def Scope "mtl"
+          {
+              def Material "brass"
+              {
+                  token outputs:surface.connect = </lamp/mtl/brass/PreviewSurface.outputs:surface>
+
+                  def Shader "PreviewSurface"
+                  {
+                      uniform token info:id = "UsdPreviewSurface"
+                      color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+                      token outputs:surface
+                  }
+
+                  def Shader "Diffuse"
+                  {
+                      uniform token info:id = "UsdUVTexture"
+                      asset inputs:file = @./maps/lamp_diffuse.png@
+                  }
+              }
+          }
+
+          over "Shade" (
+              prepend apiSchemas = ["MaterialBindingAPI"]
+          )
+          {
+              rel material:binding = </lamp/mtl/brass>
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Lamp_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/lamp/lamp.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,64 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Lamp_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/lamp/lamp.usda@
+  +                    string name = "lamp"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Base"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.3, 0.1, 0.3)
+  +                    double3 xformOp:translate = (0, 0.05, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Shade" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+  +                {
+  +                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/brass>
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.4, 0.3, 0.4)
+  +                    double3 xformOp:translate = (0, 0.5, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Scope "mtl"
+  +                {
+  +                    def Material "brass"
+  +                    {
+  +                        token outputs:surface.connect = </Scene/Props/Lamp_01/asset/mtl/brass/PreviewSurface.outputs:surface>
+  +
+  +                        def Shader "PreviewSurface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+  +                            token outputs:surface
+  +                        }
+  +
+  +                        def Shader "Diffuse"
+  +                        {
+  +                            uniform token info:id = "UsdUVTexture"
+  +                            asset inputs:file = @<PROJECT>/assets/lamp/maps/lamp_diffuse.png@
+  +                        }
+  +                    }
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 02: create_light
+intent: turned on all three axes
+
+SUMMARY
+  call: create_light(light_type="DiskLight", light_name="Disk", translate_x=0.0, translate_y=3.0, translate_z=0.0, rotate_x=10.0, rotate_y=20.0, rotate_z=30.0)
+  current project: golden
+  said: ok: Created DiskLight at /Scene/Lighting/Disk
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Disk [DiskLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:rotateXYZ: (10, 20, 30)
+          attr xformOp:translate: (0, 3, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')
+          bounds: (-0.6274, 2.3238, -0.2526)..(0.6274, 3.6762, 0.2526)
+          world position: (0.0000, 3.0000, 0.0000)
+    ~ /Scene  bounds: (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000) → (-0.6274, 0.0000, -0.2526)..(0.6274, 3.6762, 0.2526)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DiskLight",
+    "message": "Created DiskLight at /Scene/Lighting/Disk",
+    "position": {
+      "x": 0.0,
+      "y": 3.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Disk"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -26,4 +26,14 @@
+               }
+           }
+      +
+      +    def "Lighting"
+      +    {
+      +        def DiskLight "Disk"
+      +        {
+      +            float3 xformOp:rotateXYZ = (10, 20, 30)
+      +            double3 xformOp:translate = (0, 3, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -72,4 +72,14 @@
+           }
+       }
+  +
+  +    def "Lighting"
+  +    {
+  +        def DiskLight "Disk"
+  +        {
+  +            float3 xformOp:rotateXYZ = (10, 20, 30)
+  +            double3 xformOp:translate = (0, 3, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6274, 0.0000, -0.2526)..(0.6274, 3.6762, 0.2526)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2000, 0.0000, -0.2000)..(0.2000, 0.6500, 0.2000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.6274, 2.3238, -0.2526)..(0.6274, 3.6762, 0.2526)
+
+validation:
+  valid, no issues
+
+
+=== step 03: create_light
+intent: an asset light placed by bounds offset
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Glow", asset_prim_path="/Scene/Props/Lamp_01", position_mode="bounds_offset", translate_x=0.0, translate_y=0.1, translate_z=0.0)
+  current project: golden
+  said: ok: Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Props/Lamp_01/asset/lgt/Glow
+
+  what changed:
+    ~ file assets/lamp/lamp.usda
+    + file assets/lamp/lgt.usda
+    + prim /Scene/Props/Lamp_01/asset/lgt [Xform]
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Lamp_01/asset/lgt/Glow [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 0.75, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (-0.5000, 0.2500, -0.5000)..(0.5000, 1.2500, 0.5000)
+          world position: (0.0000, 0.7500, 0.0000)
+    ~ /Scene  bounds: (-0.6274, 0.0000, -0.2526)..(0.6274, 3.6762, 0.2526) → (-0.6274, 0.0000, -0.5000)..(0.6274, 3.6762, 0.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "lamp",
+    "light_type": "SphereLight",
+    "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Props/Lamp_01/asset/lgt/Glow",
+    "position": {
+      "x": 0.0,
+      "y": 0.7500000059604645,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Glow"
+  }
+
+files:
+    assets/lamp/geo.usda
+  ~ assets/lamp/lamp.usda
+  + assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lamp.usda:
+      --- assets/lamp/lamp.usda (before)
+      +++ assets/lamp/lamp.usda (after)
+      @@ -15,5 +15,8 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      -    prepend references = @./mtl.usda@
+      +    prepend references = [
+      +        @./lgt.usda@,
+      +        @./mtl.usda@
+      +    ]
+       )
+       {
+  + assets/lamp/lgt.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+      )
+
+      def "lamp"
+      {
+          def Xform "lgt"
+          {
+              def SphereLight "Glow"
+              {
+                  double3 xformOp:translate = (0, 0.7500000059604645, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate"]
+              }
+          }
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -69,4 +69,13 @@
+                       }
+                   }
+  +
+  +                def Xform "lgt"
+  +                {
+  +                    def SphereLight "Glow"
+  +                    {
+  +                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate"]
+  +                    }
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6274, 0.0000, -0.5000)..(0.6274, 3.6762, 0.5000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2500, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7500, 0.0000)  bounds (-0.5000, 0.2500, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.6274, 2.3238, -0.2526)..(0.6274, 3.6762, 0.2526)
+
+validation:
+  valid, no issues
+
+
+=== step 04: update_light
+
+SUMMARY
+  call: update_light(prim_path="/Scene/Lighting/Disk", rotate_y=90.0, rotate_z=0.0)
+  current project: golden
+  said: ok: Updated light at /Scene/Lighting/Disk
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene  bounds: (-0.6274, 0.0000, -0.5000)..(0.6274, 3.6762, 0.5000) → (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+    ~ /Scene/Lighting/Disk  attr xformOp:rotateXYZ: (10, 20, 30) → (0, 90, 0)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated light at /Scene/Lighting/Disk",
+    "prim_path": "/Scene/Lighting/Disk"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -31,5 +31,5 @@
+               def DiskLight "Disk"
+               {
+      -            float3 xformOp:rotateXYZ = (10, 20, 30)
+      +            float3 xformOp:rotateXYZ = (0, 90, 0)
+                   double3 xformOp:translate = (0, 3, 0)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -86,5 +86,5 @@
+           def DiskLight "Disk"
+           {
+  -            float3 xformOp:rotateXYZ = (10, 20, 30)
+  +            float3 xformOp:rotateXYZ = (0, 90, 0)
+               double3 xformOp:translate = (0, 3, 0)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2500, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7500, 0.0000)  bounds (-0.5000, 0.2500, -0.5000)..(0.5000, 1.2500, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: update_light
+
+SUMMARY
+  call: update_light(prim_path="/Scene/Props/Lamp_01/asset/lgt/Glow", position_mode="absolute", translate_x=0.0, translate_y=0.8, translate_z=0.0)
+  current project: golden
+  said: ok: Updated light at /Scene/Props/Lamp_01/asset/lgt/Glow
+
+  what changed:
+    ~ file assets/lamp/lgt.usda
+    ~ /Scene  bounds: (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000) → (-0.5000, -0.4500, -0.5000)..(0.5000, 3.5000, 0.5000)
+    ~ /Scene/Props/Lamp_01/asset/lgt/Glow  attr xformOp:translate: (0, 0.75, 0) → (0, 0.05, 0)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated light at /Scene/Props/Lamp_01/asset/lgt/Glow",
+    "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Glow"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+  ~ assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lgt.usda:
+      --- assets/lamp/lgt.usda (before)
+      +++ assets/lamp/lgt.usda (after)
+      @@ -10,5 +10,5 @@
+               def SphereLight "Glow"
+               {
+      -            double3 xformOp:translate = (0, 0.7500000059604645, 0)
+      +            double3 xformOp:translate = (0, 0.04999999403953559, 0)
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -74,5 +74,5 @@
+                       def SphereLight "Glow"
+                       {
+  -                        double3 xformOp:translate = (0, 0.7500000059604645, 0)
+  +                        double3 xformOp:translate = (0, 0.04999999403953559, 0)
+                           uniform token[] xformOpOrder = ["xformOp:translate"]
+                       }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.4500, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.4500, -0.5000)..(0.5000, 0.6500, 0.5000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.4500, -0.5000)..(0.5000, 0.6500, 0.5000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.4500, -0.5000)..(0.5000, 0.5500, 0.5000)
+  /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.0500, 0.0000)  bounds (-0.5000, -0.4500, -0.5000)..(0.5000, 0.5500, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: update_light
+
+SUMMARY
+  call: update_light(prim_path="/Scene/Props/Lamp_01/asset/lgt/Glow", position_mode="bounds_offset", translate_x=0.0, translate_y=0.05, translate_z=0.0)
+  current project: golden
+  said: ok: Updated light at /Scene/Props/Lamp_01/asset/lgt/Glow
+
+  what changed:
+    ~ file assets/lamp/lgt.usda
+    ~ /Scene  bounds: (-0.5000, -0.4500, -0.5000)..(0.5000, 3.5000, 0.5000) → (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+    ~ /Scene/Props/Lamp_01/asset/lgt/Glow  attr xformOp:translate: (0, 0.05, 0) → (0, 0.7, 0)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated light at /Scene/Props/Lamp_01/asset/lgt/Glow",
+    "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Glow"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+  ~ assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lgt.usda:
+      --- assets/lamp/lgt.usda (before)
+      +++ assets/lamp/lgt.usda (after)
+      @@ -10,5 +10,5 @@
+               def SphereLight "Glow"
+               {
+      -            double3 xformOp:translate = (0, 0.04999999403953559, 0)
+      +            double3 xformOp:translate = (0, 0.7000000059604645, 0)
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -74,5 +74,5 @@
+                       def SphereLight "Glow"
+                       {
+  -                        double3 xformOp:translate = (0, 0.04999999403953559, 0)
+  +                        double3 xformOp:translate = (0, 0.7000000059604645, 0)
+                           uniform token[] xformOpOrder = ["xformOp:translate"]
+                       }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: create_camera
+
+SUMMARY
+  call: create_camera(camera_name="Tilted", translate_x=0.0, translate_y=2.0, translate_z=4.0, rotate_x=-10.0, rotate_y=15.0, rotate_z=5.0)
+  current project: golden
+  said: ok: Created camera at /Scene/Cameras/Tilted
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Cameras [typeless]
+    + prim /Scene/Cameras/Tilted [Camera]
+          attr clippingRange: (0.01, 100000)
+          attr xformOp:rotateXYZ: (-10, 15, 5)
+          attr xformOp:translate: (0, 2, 4)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')
+          world position: (0.0000, 2.0000, 4.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created camera at /Scene/Cameras/Tilted",
+    "position": {
+      "x": 0.0,
+      "y": 2.0,
+      "z": 4.0
+    },
+    "prim_path": "/Scene/Cameras/Tilted",
+    "rotation": {
+      "x": -10.0,
+      "y": 15.0,
+      "z": 5.0
+    }
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -36,4 +36,15 @@
+               }
+           }
+      +
+      +    def "Cameras"
+      +    {
+      +        def Camera "Tilted"
+      +        {
+      +            float2 clippingRange = (0.01, 100000)
+      +            float3 xformOp:rotateXYZ = (-10, 15, 5)
+      +            double3 xformOp:translate = (0, 2, 4)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -91,4 +91,15 @@
+           }
+       }
+  +
+  +    def "Cameras"
+  +    {
+  +        def Camera "Tilted"
+  +        {
+  +            float2 clippingRange = (0.01, 100000)
+  +            float3 xformOp:rotateXYZ = (-10, 15, 5)
+  +            double3 xformOp:translate = (0, 2, 4)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+  /Scene/Cameras/Tilted  [Camera]  at (0.0000, 2.0000, 4.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: update_camera
+
+SUMMARY
+  call: update_camera(prim_path="/Scene/Cameras/Tilted", rotate_x=-20.0, rotate_y=0.0)
+  current project: golden
+  said: ok: Updated camera at /Scene/Cameras/Tilted
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Cameras/Tilted  attr xformOp:rotateXYZ: (-10, 15, 5) → (-20, 0, 0)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated camera at /Scene/Cameras/Tilted",
+    "prim_path": "/Scene/Cameras/Tilted"
+  }
+
+files:
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+    assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -42,5 +42,5 @@
+               {
+                   float2 clippingRange = (0.01, 100000)
+      -            float3 xformOp:rotateXYZ = (-10, 15, 5)
+      +            float3 xformOp:rotateXYZ = (-20, 0, 0)
+                   double3 xformOp:translate = (0, 2, 4)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -97,5 +97,5 @@
+           {
+               float2 clippingRange = (0.01, 100000)
+  -            float3 xformOp:rotateXYZ = (-10, 15, 5)
+  +            float3 xformOp:rotateXYZ = (-20, 0, 0)
+               double3 xformOp:translate = (0, 2, 4)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
+  /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.2000, 0.3500, -0.2000)..(0.2000, 0.6500, 0.2000)  material /Scene/Props/Lamp_01/asset/mtl/brass
+  /Scene/Props/Lamp_01/asset/mtl  [Scope]
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+  /Scene/Cameras/Tilted  [Camera]  at (0.0000, 2.0000, 4.0000)
+
+validation:
+  valid, no issues

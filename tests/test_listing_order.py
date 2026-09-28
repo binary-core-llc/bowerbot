@@ -16,10 +16,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pxr import Sdf, Usd, UsdGeom
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
 
-from bowerbot.utils import stage_utils, texture_utils
-from tests._helpers import exec_tool, make_state
+from bowerbot import utils
+from tests import _helpers
 
 
 class _ReversedScan:
@@ -84,17 +86,17 @@ def test_asset_search_and_listing(tmp_path, monkeypatch):
     for rel in ("b_pkg/b_pkg.usda", "a_pkg/a_pkg.usda", "zeta.usda", "materials/mid.usda",
                 "alpha.usda"):
         _asset(library / rel)
-    state, _ = make_state(tmp_path)
+    state, _ = _helpers.make_state(tmp_path)
     state.library_dir = library
 
     def listing() -> list[str]:
-        return _names(asyncio.run(exec_tool(state, "list_assets", {})))
+        return _names(asyncio.run(_helpers.exec_tool(state, "list_assets", {})))
 
     def limited() -> list[str]:
-        return _names(asyncio.run(exec_tool(state, "list_assets", {"limit": 3})))
+        return _names(asyncio.run(_helpers.exec_tool(state, "list_assets", {"limit": 3})))
 
     def search() -> list[str]:
-        return _names(asyncio.run(exec_tool(state, "search_assets", {"query": "a"})))
+        return _names(asyncio.run(_helpers.exec_tool(state, "search_assets", {"query": "a"})))
 
     for call in (listing, limited, search):
         disk_order, reversed_order = _both_orders(monkeypatch, call)
@@ -109,14 +111,14 @@ def test_texture_search_and_listing(tmp_path, monkeypatch):
     for rel in ("hdri/sky_b.hdr", "hdri/sky_a.hdr", "wood.png", "maps/stone.png"):
         (library / rel).parent.mkdir(parents=True, exist_ok=True)
         (library / rel).write_bytes(b"x")
-    state, _ = make_state(tmp_path)
+    state, _ = _helpers.make_state(tmp_path)
     state.library_dir = library
 
     def listing() -> list[str]:
-        return _names(asyncio.run(exec_tool(state, "list_textures", {})))
+        return _names(asyncio.run(_helpers.exec_tool(state, "list_textures", {})))
 
     def search() -> list[str]:
-        return _names(asyncio.run(exec_tool(state, "search_textures", {"query": "sky"})))
+        return _names(asyncio.run(_helpers.exec_tool(state, "search_textures", {"query": "sky"})))
 
     for call in (listing, search):
         disk_order, reversed_order = _both_orders(monkeypatch, call)
@@ -135,7 +137,7 @@ def test_same_named_textures_copy_the_same_file(tmp_path, monkeypatch):
     def copied() -> bytes:
         project = tmp_path / f"project_{next(projects)}"
         project.mkdir()
-        rel = texture_utils.stage_asset_value("wood.png", project, library)
+        rel = utils.textures.stage_asset_value("wood.png", project, library)
         return (project / rel).read_bytes()
 
     disk_order, reversed_order = _both_orders(monkeypatch, copied)
@@ -154,10 +156,10 @@ def test_reference_scans(tmp_path, monkeypatch):
         stage.Save()
 
     def asset_refs() -> list[str]:
-        return stage_utils.find_asset_references(tmp_path, "crate")
+        return utils.stage.find_asset_references(tmp_path, "crate")
 
     def texture_refs() -> list[str]:
-        return texture_utils.find_texture_references(tmp_path, "sky.hdr")
+        return utils.textures.find_texture_references(tmp_path, "sky.hdr")
 
     for call in (asset_refs, texture_refs):
         disk_order, reversed_order = _both_orders(monkeypatch, call)
@@ -166,23 +168,23 @@ def test_reference_scans(tmp_path, monkeypatch):
 
 def test_list_materials(tmp_path, monkeypatch):
     """Materials are listed asset folder by asset folder, alphabetically."""
-    state, _ = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, _ = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     for name in ("table", "chair"):
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(_asset(tmp_path / "sources" / f"{name}.usda")),
             "asset_name": name.title(), "group": "Furniture",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         assert placed.success, placed.error
-        made = asyncio.run(exec_tool(state, "create_material", {
+        made = asyncio.run(_helpers.exec_tool(state, "create_material", {
             "prim_path": f"{placed.data['prim_path']}/asset/Mesh",
             "material_name": f"{name}_paint",
         }))
         assert made.success, made.error
 
     def folders() -> list[str]:
-        result = asyncio.run(exec_tool(state, "list_materials"))
+        result = asyncio.run(_helpers.exec_tool(state, "list_materials"))
         assert result.success, result.error
         return [material["asset_folder"] for material in result.data["materials"]]
 

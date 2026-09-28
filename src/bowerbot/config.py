@@ -18,7 +18,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 # Global config directory

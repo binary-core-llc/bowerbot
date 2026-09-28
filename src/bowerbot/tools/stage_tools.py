@@ -7,144 +7,150 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot.services import stage_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_project, require_stage
+from bowerbot.tools import _helpers
 
 
-def create_stage(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Create or reopen the project's scene file."""
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = stage_service.create_stage(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_scene(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List the scene contents: every managed object, each tagged with its kind."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.list_scene(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def rename_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Move/rename a prim to a new path in the scene hierarchy."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.rename_prim(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_prim(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Remove an object from the scene by prim path."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.remove_prim(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def move_asset(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Move an existing prim to a new position/rotation."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.move_asset(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_prim_attributes(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_prim_attributes(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """List every attribute on a prim with type + current value."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.list_prim_attributes(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def set_prim_attribute(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def set_prim_attribute(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Author an attribute opinion on a prim (per-instance, scene.usda)."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.set_prim_attribute(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def save_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def save_scene_snapshot(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Flatten the composed scene into a named, self-contained snapshot file."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.save_scene_snapshot(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_scene_snapshots(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_scene_snapshots(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """List every snapshot .usda file alongside scene.usda."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.list_scene_snapshots(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def delete_scene_snapshot(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def delete_scene_snapshot(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Delete a named snapshot file."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.delete_scene_snapshot(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_prim_children(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_prim_children(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List geometry parts under a prim path."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = stage_service.list_prim_children(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def compute_grid_layout(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def compute_grid_layout(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Compute evenly spaced positions for N objects in a grid."""
     try:
         data = stage_service.compute_grid_layout(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="create_stage",
         description=(
             "Create or reopen the project's scene file. Creates an empty "
@@ -170,7 +176,7 @@ TOOLS: list[Tool] = [
             },
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_scene",
         description=(
             "List the contents of the scene. Returns object_count and an "
@@ -189,7 +195,7 @@ TOOLS: list[Tool] = [
         ),
         parameters={"type": "object", "properties": {}},
     ),
-    Tool(
+    skills.Tool(
         name="rename_prim",
         description=(
             "Move/rename a prim to a new path in the scene hierarchy. "
@@ -216,7 +222,7 @@ TOOLS: list[Tool] = [
             "required": ["old_path", "new_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_prim",
         description=(
             "Remove an object from the scene by its prim path. Also scrubs "
@@ -238,7 +244,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="move_asset",
         description=(
             "Move an existing object. Any axis (translate_x, translate_y, "
@@ -286,7 +292,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_prim_children",
         description=(
             "List all geometry parts inside a referenced asset. "
@@ -311,7 +317,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="compute_grid_layout",
         description=(
             "Compute evenly spaced positions for N objects in a grid, "
@@ -334,7 +340,7 @@ TOOLS: list[Tool] = [
             "required": ["count"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_prim_attributes",
         description=(
             "List every attribute on a USD prim with type and current "
@@ -361,7 +367,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="set_prim_attribute",
         description=(
             "Author or clear an attribute opinion on a prim in scene.usda. "
@@ -414,7 +420,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "attribute_name", "value"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="save_scene_snapshot",
         description=(
             "Save a named, self-contained frozen copy of the current "
@@ -454,7 +460,7 @@ TOOLS: list[Tool] = [
             "required": ["name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_scene_snapshots",
         description=(
             "List every snapshot .usda file alongside scene.usda in the "
@@ -464,7 +470,7 @@ TOOLS: list[Tool] = [
         ),
         parameters={"type": "object", "properties": {}},
     ),
-    Tool(
+    skills.Tool(
         name="delete_scene_snapshot",
         description=(
             "Delete a named snapshot file. Refuses to delete scene.usda. "

@@ -801,8 +801,8 @@ src/bowerbot/
   tool_router.py      # Shared router over core tools + skills (used by both modes)
   cli.py              # Click CLI; dispatches to agent runtime or MCP server by mode
   config.py           # Settings (incl. mode: agent|mcp) from ~/.bowerbot/config.json
-  project.py          # Project lifecycle (create / load / resume)
-  state.py            # SceneState: the context threaded through every tool handler
+  project_folder.py   # Project lifecycle (create / load / resume)
+  scene_state.py      # SceneState: the context threaded through every tool handler
   dispatcher.py       # Aggregates core tool defs + routes core tool calls to handlers
   token_manager.py    # Conversation compression and summarization (agent mode)
 
@@ -907,46 +907,48 @@ src/bowerbot/
                            #   SkillCategory, Tool, ToolResult
     registry.py            #   Entry-point discovery and tool routing
 
-  utils/              # Pure-function primitives. One domain per file.
-    stage_utils.py             #   USD-stage primitives: open/save, references,
+  utils/              # Pure-function primitives, one domain per module;
+                      # called as utils.<module>.<function>
+    stage.py                   #   USD-stage primitives: open/save, references,
                                #   xform-op edits, namespace edits, set/list_prim_attribute
-    inspection_utils.py        #   Cross-domain list_prims dispatcher (lights, cameras,
+    inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
                                #   physics, placements, geometry)
-    asset_intake_utils.py      #   intake_folder, intake_usdz, create_asset_folder, ASWF
-    asset_folder_utils.py      #   ASWF folder primitives (detect root, layer scopes,
+    intake.py                  #   intake_folder, intake_usdz, create_asset_folder, ASWF
+    asset_folder.py            #   ASWF folder primitives (detect root, layer scopes,
                                #   resolve_asset_dir_for_prim)
-    library_utils.py           #   scan_library, find_package_for
-    light_utils.py             #   All light authoring: create/update/remove,
+    library.py                 #   scan_library, find_package_for
+    lights.py                  #   All light authoring: create/update/remove,
                                #   list_light_type_properties, lgt.usda lifecycle,
                                #   HDRI staging
-    camera_utils.py            #   Camera authoring: create/update/remove, look_at
+    cameras.py                 #   Camera authoring: create/update/remove, look_at
                                #   aiming, list_camera_properties
-    material_utils.py          #   material_in_folder primitives, find_first_material
-    texture_utils.py           #   find_textures, copy_texture_to_project,
+    materials.py               #   material_in_folder primitives, find_first_material
+    textures.py                #   find_textures, copy_texture_to_project,
                                #   find_texture_references
-    physics_utils.py           #   All physics authoring: APIs, joints, collision groups,
+    physics.py                 #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
-    physics_typing_utils.py    #   is_joint / is_physics_scene / is_collision_group / ...
-    scatter_utils.py           #   Distributions (random/rows/pile/path), resting,
+    physics_typing.py          #   is_joint / is_physics_scene / is_collision_group / ...
+    scatter.py                 #   Distributions (random/rows/pile/path), resting,
                                #   orientation, PointInstancer + placement authoring
-    surface_utils.py           #   World-space triangles from gprims, vertical ray
+    surface.py                 #   World-space triangles from gprims, vertical ray
                                #   queries, plan coverage, area sampling (numpy)
-    scene_integrity_utils.py   #   Generic dangling-rel/target scrubbers
-    validation_utils.py        #   validate_stage, package_to_usdz, validate_asset_variants
-    variant_utils.py           #   variants.usda lifecycle, author_in_variant keystone,
+    integrity.py               #   Generic dangling-rel/target scrubbers
+    validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
+    variants.py                #   variants.usda lifecycle, author_in_variant keystone,
                                #   apply_variant, set/clear_default, removal + cleanup
-    geometry_utils.py          #   Bounds, unit conversion, layout math
-    layout_utils.py            #   place_layout expansion: grid/linear patterns,
+    geometry.py                #   Bounds, unit conversion, layout math
+    layout.py                  #   place_layout expansion: grid/linear patterns,
                                #   asset resolution
-    dependency_utils.py        #   USD dependency tree walker
-    naming_utils.py            #   Name sanitization for files, prims, projects
-    usd_schema_utils.py        #   Shared UsdSchemaRegistry introspection helpers
-                               #   (used by both physics_utils and light_utils)
+    dependencies.py            #   USD dependency tree walker
+    naming.py                  #   Name sanitization for files, prims, projects
+    usd_schema.py              #   Shared UsdSchemaRegistry introspection helpers
+                               #   (used by both physics and lights)
 ```
 
 **Design principles**
 
 - **Tool ↔ service ↔ prompt 1:1:1**: every public tool function has a same-named public service function and is described in some `prompts/*.md` file. A test in `tests/test_tool_service_prompt_invariant.py` fails the build if this ever drifts.
+- **Modules, not names, one per line**: BowerBot code imports modules, each on its own line (`from bowerbot import schemas`, `from bowerbot import utils`), and reaches everything through them: `schemas.LightParams`, `utils.lights.create_light(...)`. Only the package `__init__` files that re-export names import them directly. ruff enforces one import per line (`typing` and `collections.abc` excepted).
 - **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums), `constants/` (fixed values) and a small set of state objects (`SceneState`, `Project`).
 - **Tools are thin**: guard preconditions, call ONE service, wrap in `ToolResult`. No business logic, no util calls, no cross-service routing.
 - **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
@@ -985,7 +987,7 @@ Two layers of authority. The naming convention makes routing explicit.
 - **Asset-level** variants live in `<asset>/variants.usda`, referenced (not sublayered) into the asset root. Four orchestrators: material bindings, geometry/LOD payloads, configuration activations, and attribute overrides. The asset's "ship default" lives on the root prim in `<asset>.usda`, never inside `variants.usda`.
 - **Scene-level** variants live inline in `scene.usda` on a carrier prim. Three orchestrators: lighting attribute swaps and lighting selection on `/Scene/Lighting`, plus model selection on the placement wrapper. Lighting selection swaps which UsdLux is active across pre-placed siblings (DiskLight vs RectLight). Model selection swaps which asset reference loads at a placement (chair vs stool).
 - Tool names carry an explicit `asset_` or `scene_` prefix so the LLM never has to guess which layer of authority a call writes to.
-- Foundation: `utils/variant_utils.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
+- Foundation: `utils.variants.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
 - Per-instance overrides: any placement can author `variants = { "set" = "value" }` inline in `scene.usda` to pick a different variant from the asset's default.
 - Validation runs on `validate_scene` before packaging (referenced not sublayered, default selection present, no orphan reference, naming).
 

@@ -7,9 +7,12 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Usd, UsdGeom, UsdPhysics
+from pxr import Gf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdPhysics
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -43,14 +46,14 @@ def _mesh_asset(directory: Path, name: str) -> Path:
 
 def _setup(tmp):
     tmp_path = Path(tmp)
-    state, project = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, project = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return tmp_path, state, project
 
 
 def _place(tmp_path, state, name="box"):
     asset = _asset(tmp_path, name)
-    r = asyncio.run(exec_tool(state, "place_asset", {
+    r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
         "asset_file_path": str(asset), "asset_name": name.title(),
         "group": "Props",
         "translate_x": 0.0, "translate_y": 1.0, "translate_z": 0.0,
@@ -66,7 +69,7 @@ def test_list_physics_api_properties_rigid_body():
     """Returns properties for PhysicsRigidBodyAPI."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_api_properties", {
             "api_name": "PhysicsRigidBodyAPI",
         }))
         assert r.success, r.error
@@ -79,7 +82,7 @@ def test_list_physics_api_properties_collision():
     """Returns properties for PhysicsCollisionAPI."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_api_properties", {
             "api_name": "PhysicsCollisionAPI",
         }))
         assert r.success, r.error
@@ -91,7 +94,7 @@ def test_list_physics_api_properties_mass():
     """Returns properties for PhysicsMassAPI."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_api_properties", {
             "api_name": "PhysicsMassAPI",
         }))
         assert r.success, r.error
@@ -103,7 +106,7 @@ def test_list_physics_api_properties_invalid():
     """Returns error for unknown API name."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_api_properties", {
             "api_name": "FakeAPI",
         }))
         assert not r.success
@@ -119,9 +122,9 @@ def test_apply_rigid_body_scene_scope():
         placed = _place(tmp_path, state)
         prim_path = placed.data["prim_path"]
 
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": prim_path,
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
@@ -138,7 +141,7 @@ def test_apply_collision_with_companion():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         mesh_asset = _mesh_asset(tmp_path, "wall")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(mesh_asset), "asset_name": "Wall",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -146,7 +149,7 @@ def test_apply_collision_with_companion():
         assert placed.success, placed.error
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsMeshCollisionAPI",
             "scope": "scene",
@@ -162,7 +165,7 @@ def test_apply_physics_api_asset_scope():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsCollisionAPI",
         }))
@@ -177,7 +180,7 @@ def test_apply_physics_api_invalid_prim():
     """Fails for nonexistent prim."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": "/Scene/Nope",
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
@@ -195,12 +198,12 @@ def test_remove_physics_api():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsCollisionAPI",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsCollisionAPI",
         }))
@@ -214,7 +217,7 @@ def test_setup_physics_scene():
     """Creates /Scene/Physics/PhysicsScene."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        r = asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         assert r.success, r.error
 
         stage = Usd.Stage.Open(str(project.scene_path))
@@ -227,7 +230,7 @@ def test_setup_physics_scene_custom_gravity():
     """Creates scene with custom gravity magnitude and echoes it back."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "setup_physics_scene", {
+        r = asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {
             "gravity_magnitude": 1.62,
         }))
         assert r.success, r.error
@@ -238,7 +241,7 @@ def test_setup_physics_scene_reports_resolved_gravity():
     """With no gravity params, the response reports the authored Earth gravity, not null."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        r = asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         assert r.success, r.error
         assert r.data["gravity_magnitude"] == 9.81
         assert r.data["gravity_direction"] == [0.0, -1.0, 0.0]
@@ -260,12 +263,12 @@ def test_get_physics_summary():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsCollisionAPI",
         }))
 
-        r = asyncio.run(exec_tool(state, "get_physics_summary", {
+        r = asyncio.run(_helpers.exec_tool(state, "get_physics_summary", {
             "prim_path": placed.data["prim_path"],
         }))
         assert r.success, r.error
@@ -279,7 +282,7 @@ def test_list_joint_properties_revolute():
     """Returns properties for PhysicsRevoluteJoint."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_joint_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_joint_properties", {
             "joint_type": "PhysicsRevoluteJoint",
         }))
         assert r.success, r.error
@@ -291,7 +294,7 @@ def test_list_joint_properties_fixed():
     """Returns properties for PhysicsFixedJoint."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_joint_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_joint_properties", {
             "joint_type": "PhysicsFixedJoint",
         }))
         assert r.success, r.error
@@ -307,15 +310,15 @@ def test_create_fixed_joint_scene_scope():
         p1 = _place(tmp_path, state, "a")
         p2 = _place(tmp_path, state, "b")
 
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         for p in [p1, p2]:
-            asyncio.run(exec_tool(state, "apply_physics_api", {
+            asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
                 "prim_path": p.data["prim_path"],
                 "api_name": "PhysicsRigidBodyAPI",
                 "scope": "scene",
             }))
 
-        r = asyncio.run(exec_tool(state, "create_joint", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_joint", {
             "joint_type": "PhysicsFixedJoint",
             "name": "weld",
             "body0": p1.data["prim_path"],
@@ -333,15 +336,15 @@ def test_list_joints_after_create():
         p1 = _place(tmp_path, state, "c")
         p2 = _place(tmp_path, state, "d")
 
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         for p in [p1, p2]:
-            asyncio.run(exec_tool(state, "apply_physics_api", {
+            asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
                 "prim_path": p.data["prim_path"],
                 "api_name": "PhysicsRigidBodyAPI",
                 "scope": "scene",
             }))
 
-        asyncio.run(exec_tool(state, "create_joint", {
+        asyncio.run(_helpers.exec_tool(state, "create_joint", {
             "joint_type": "PhysicsFixedJoint",
             "name": "link",
             "body0": p1.data["prim_path"],
@@ -349,7 +352,7 @@ def test_list_joints_after_create():
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "list_joints", {"scope": "scene"}))
+        r = asyncio.run(_helpers.exec_tool(state, "list_joints", {"scope": "scene"}))
         assert r.success, r.error
         assert len(r.data["joints"]) >= 1
 
@@ -361,15 +364,15 @@ def test_remove_joint():
         p1 = _place(tmp_path, state, "e")
         p2 = _place(tmp_path, state, "f")
 
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         for p in [p1, p2]:
-            asyncio.run(exec_tool(state, "apply_physics_api", {
+            asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
                 "prim_path": p.data["prim_path"],
                 "api_name": "PhysicsRigidBodyAPI",
                 "scope": "scene",
             }))
 
-        created = asyncio.run(exec_tool(state, "create_joint", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_joint", {
             "joint_type": "PhysicsFixedJoint",
             "name": "temp",
             "body0": p1.data["prim_path"],
@@ -377,7 +380,7 @@ def test_remove_joint():
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_joint", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_joint", {
             "prim_path": created.data["prim_path"],
             "scope": "scene",
         }))
@@ -394,9 +397,9 @@ def test_create_collision_group():
         tmp_path, state, project = _setup(tmp)
         placed = _place(tmp_path, state)
 
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "create_or_update_collision_group", {
                 "name": "Walls",
                 "includes": [placed.data["prim_path"]],
@@ -414,13 +417,13 @@ def test_list_collision_groups():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "create_or_update_collision_group", {"name": "Floor"},
         ))
 
-        r = asyncio.run(exec_tool(state, "list_collision_groups"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_collision_groups"))
         assert r.success, r.error
         assert len(r.data["groups"]) >= 1
 
@@ -430,13 +433,13 @@ def test_remove_collision_group():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "create_or_update_collision_group", {"name": "Temp"},
         ))
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "remove_collision_group", {"name": "Temp"},
         ))
         assert r.success, r.error
@@ -451,9 +454,9 @@ def test_apply_rigid_body_with_attributes():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
@@ -470,15 +473,15 @@ def test_apply_mass_api():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsMassAPI",
             "scope": "scene",
@@ -492,9 +495,9 @@ def test_apply_articulation_root():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsArticulationRootAPI",
             "scope": "scene",
@@ -510,19 +513,19 @@ def test_remove_collision_cascades_mesh_collision():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         mesh_asset = _mesh_asset(tmp_path, "panel")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(mesh_asset),
             "asset_name": "Panel", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsMeshCollisionAPI",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsCollisionAPI",
         }))
@@ -536,7 +539,7 @@ def test_list_physics_api_properties_mesh_collision():
     """Returns properties for PhysicsMeshCollisionAPI."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "list_physics_api_properties",
             {"api_name": "PhysicsMeshCollisionAPI"},
         ))
@@ -549,7 +552,7 @@ def test_list_physics_api_properties_articulation():
     """Returns properties for PhysicsArticulationRootAPI."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "list_physics_api_properties",
             {"api_name": "PhysicsArticulationRootAPI"},
         ))
@@ -566,15 +569,15 @@ def test_create_revolute_joint():
         p1 = _place(tmp_path, state, "g")
         p2 = _place(tmp_path, state, "h")
 
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         for p in [p1, p2]:
-            asyncio.run(exec_tool(state, "apply_physics_api", {
+            asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
                 "prim_path": p.data["prim_path"],
                 "api_name": "PhysicsRigidBodyAPI",
                 "scope": "scene",
             }))
 
-        r = asyncio.run(exec_tool(state, "create_joint", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_joint", {
             "joint_type": "PhysicsRevoluteJoint",
             "name": "hinge",
             "body0": p1.data["prim_path"],
@@ -594,16 +597,16 @@ def test_update_collision_group():
         tmp_path, state, _ = _setup(tmp)
         p1 = _place(tmp_path, state, "i")
         p2 = _place(tmp_path, state, "j")
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        asyncio.run(exec_tool(
+        asyncio.run(_helpers.exec_tool(
             state, "create_or_update_collision_group", {
                 "name": "Env",
                 "includes": [p1.data["prim_path"]],
             },
         ))
 
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "create_or_update_collision_group", {
                 "name": "Env",
                 "includes": [p2.data["prim_path"]],
@@ -620,15 +623,15 @@ def test_get_physics_summary_scene_scope():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "get_physics_summary", {
+        r = asyncio.run(_helpers.exec_tool(state, "get_physics_summary", {
             "prim_path": placed.data["prim_path"],
         }))
         assert r.success, r.error
@@ -643,7 +646,7 @@ def test_setup_physics_scene_custom_name():
     """Creates a physics scene with a custom name."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "setup_physics_scene", {
+        r = asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {
             "name": "SimScene",
         }))
         assert r.success, r.error
@@ -657,14 +660,14 @@ def _joint_with_bodies(tmp_path, state):
     """Place two assets, apply RigidBody, create a RevoluteJoint."""
     p1 = _place(tmp_path, state, "arm")
     p2 = _place(tmp_path, state, "hand")
-    asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+    asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
     for p in [p1, p2]:
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": p.data["prim_path"],
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
         }))
-    joint = asyncio.run(exec_tool(state, "create_joint", {
+    joint = asyncio.run(_helpers.exec_tool(state, "create_joint", {
         "joint_type": "PhysicsRevoluteJoint",
         "name": "hinge",
         "body0": p1.data["prim_path"],
@@ -679,7 +682,7 @@ def test_list_drive_api_properties():
     """Returns DriveAPI properties with instance name substituted."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_api_properties", {
             "api_name": "PhysicsDriveAPI",
             "instance_name": "angular",
         }))
@@ -694,7 +697,7 @@ def test_list_drive_api_requires_instance_name():
     """Fails when instance_name is omitted for a multi-apply API."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_api_properties", {
             "api_name": "PhysicsDriveAPI",
         }))
         assert not r.success
@@ -706,7 +709,7 @@ def test_apply_drive_api_on_revolute_joint():
         tmp_path, state, project = _setup(tmp)
         joint_path = _joint_with_bodies(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsDriveAPI",
             "instance_name": "angular",
@@ -732,14 +735,14 @@ def test_apply_drive_api_refuses_spherical():
         tmp_path, state, _ = _setup(tmp)
         p1 = _place(tmp_path, state, "ball")
         p2 = _place(tmp_path, state, "socket")
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         for p in [p1, p2]:
-            asyncio.run(exec_tool(state, "apply_physics_api", {
+            asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
                 "prim_path": p.data["prim_path"],
                 "api_name": "PhysicsRigidBodyAPI",
                 "scope": "scene",
             }))
-        joint = asyncio.run(exec_tool(state, "create_joint", {
+        joint = asyncio.run(_helpers.exec_tool(state, "create_joint", {
             "joint_type": "PhysicsSphericalJoint",
             "name": "ball_socket",
             "body0": p1.data["prim_path"],
@@ -747,7 +750,7 @@ def test_apply_drive_api_refuses_spherical():
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint.data["prim_path"],
             "api_name": "PhysicsDriveAPI",
             "instance_name": "angular",
@@ -762,7 +765,7 @@ def test_apply_drive_api_refuses_bad_instance():
         tmp_path, state, _ = _setup(tmp)
         joint_path = _joint_with_bodies(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsDriveAPI",
             "instance_name": "linear",
@@ -778,14 +781,14 @@ def test_remove_drive_api():
         tmp_path, state, _ = _setup(tmp)
         joint_path = _joint_with_bodies(tmp_path, state)
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsDriveAPI",
             "instance_name": "angular",
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsDriveAPI",
             "instance_name": "angular",
@@ -802,7 +805,7 @@ def test_list_limit_api_properties():
     """Returns LimitAPI properties with instance name substituted."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_api_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_api_properties", {
             "api_name": "PhysicsLimitAPI",
             "instance_name": "angular",
         }))
@@ -818,7 +821,7 @@ def test_apply_limit_api_on_revolute_joint():
         tmp_path, state, project = _setup(tmp)
         joint_path = _joint_with_bodies(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsLimitAPI",
             "instance_name": "angular",
@@ -841,14 +844,14 @@ def test_apply_limit_api_distance_on_distance_joint():
         tmp_path, state, _ = _setup(tmp)
         p1 = _place(tmp_path, state, "anchor")
         p2 = _place(tmp_path, state, "tether")
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         for p in [p1, p2]:
-            asyncio.run(exec_tool(state, "apply_physics_api", {
+            asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
                 "prim_path": p.data["prim_path"],
                 "api_name": "PhysicsRigidBodyAPI",
                 "scope": "scene",
             }))
-        joint = asyncio.run(exec_tool(state, "create_joint", {
+        joint = asyncio.run(_helpers.exec_tool(state, "create_joint", {
             "joint_type": "PhysicsDistanceJoint",
             "name": "rope",
             "body0": p1.data["prim_path"],
@@ -856,7 +859,7 @@ def test_apply_limit_api_distance_on_distance_joint():
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint.data["prim_path"],
             "api_name": "PhysicsLimitAPI",
             "instance_name": "distance",
@@ -875,14 +878,14 @@ def test_apply_limit_api_refuses_fixed_joint():
         tmp_path, state, _ = _setup(tmp)
         p1 = _place(tmp_path, state, "base")
         p2 = _place(tmp_path, state, "top")
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
         for p in [p1, p2]:
-            asyncio.run(exec_tool(state, "apply_physics_api", {
+            asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
                 "prim_path": p.data["prim_path"],
                 "api_name": "PhysicsRigidBodyAPI",
                 "scope": "scene",
             }))
-        joint = asyncio.run(exec_tool(state, "create_joint", {
+        joint = asyncio.run(_helpers.exec_tool(state, "create_joint", {
             "joint_type": "PhysicsFixedJoint",
             "name": "weld",
             "body0": p1.data["prim_path"],
@@ -890,7 +893,7 @@ def test_apply_limit_api_refuses_fixed_joint():
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "apply_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint.data["prim_path"],
             "api_name": "PhysicsLimitAPI",
             "instance_name": "angular",
@@ -904,14 +907,14 @@ def test_remove_api_message_when_present():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
@@ -926,9 +929,9 @@ def test_remove_api_message_when_not_present():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": placed.data["prim_path"],
             "api_name": "PhysicsRigidBodyAPI",
             "scope": "scene",
@@ -943,23 +946,23 @@ def test_remove_api_cascade_message():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         mesh_asset = _mesh_asset(tmp_path, "slab")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(mesh_asset),
             "asset_name": "Slab", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsMeshCollisionAPI",
         }))
-        asyncio.run(exec_tool(state, "remove_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsCollisionAPI",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": mesh_path,
             "api_name": "PhysicsMeshCollisionAPI",
         }))
@@ -974,14 +977,14 @@ def test_remove_drive_api_message():
         tmp_path, state, _ = _setup(tmp)
         joint_path = _joint_with_bodies(tmp_path, state)
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsDriveAPI",
             "instance_name": "angular",
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsDriveAPI",
             "instance_name": "angular",
@@ -999,9 +1002,9 @@ def test_list_physics_scenes():
     """Lists created PhysicsScene prims."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {}))
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
 
-        r = asyncio.run(exec_tool(state, "list_physics_scenes"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_scenes"))
         assert r.success, r.error
         assert r.data["count"] >= 1
         names = {s["name"] for s in r.data["scenes"]}
@@ -1012,7 +1015,7 @@ def test_list_physics_scenes_empty():
     """Returns empty when no PhysicsScene exists."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_physics_scenes"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_physics_scenes"))
         assert r.success, r.error
         assert r.data["count"] == 0
 
@@ -1021,11 +1024,11 @@ def test_remove_physics_scene_success():
     """Removes a PhysicsScene prim by name."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        asyncio.run(exec_tool(state, "setup_physics_scene", {
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {
             "name": "ToDelete",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_scene", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_scene", {
             "name": "ToDelete",
         }))
         assert r.success, r.error
@@ -1042,7 +1045,7 @@ def test_remove_physics_scene_not_found():
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
 
-        r = asyncio.run(exec_tool(state, "remove_physics_scene", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_scene", {
             "name": "Nonexistent",
         }))
         assert r.success, r.error
@@ -1056,14 +1059,14 @@ def test_remove_limit_api():
         tmp_path, state, _ = _setup(tmp)
         joint_path = _joint_with_bodies(tmp_path, state)
 
-        asyncio.run(exec_tool(state, "apply_physics_api", {
+        asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsLimitAPI",
             "instance_name": "angular",
             "scope": "scene",
         }))
 
-        r = asyncio.run(exec_tool(state, "remove_physics_api", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
             "prim_path": joint_path,
             "api_name": "PhysicsLimitAPI",
             "instance_name": "angular",

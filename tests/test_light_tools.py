@@ -7,9 +7,12 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdGeom, UsdLux
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdLux
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -26,8 +29,8 @@ def _asset(directory: Path, name: str) -> Path:
 
 def _setup(tmp):
     tmp_path = Path(tmp)
-    state, project = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, project = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return tmp_path, state, project
 
 
@@ -38,7 +41,7 @@ def test_list_light_type_properties_sphere():
     """Returns inputs for SphereLight including radius."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_light_type_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_light_type_properties", {
             "light_type": "SphereLight",
         }))
         assert r.success, r.error
@@ -52,7 +55,7 @@ def test_list_light_type_properties_distant():
     """Returns inputs for DistantLight including angle."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_light_type_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_light_type_properties", {
             "light_type": "DistantLight",
         }))
         assert r.success, r.error
@@ -64,7 +67,7 @@ def test_list_light_type_properties_dome():
     """Returns inputs for DomeLight including texture:file."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_light_type_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_light_type_properties", {
             "light_type": "DomeLight",
         }))
         assert r.success, r.error
@@ -76,7 +79,7 @@ def test_list_light_type_properties_rect():
     """Returns inputs for RectLight including width and height."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_light_type_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_light_type_properties", {
             "light_type": "RectLight",
         }))
         assert r.success, r.error
@@ -89,7 +92,7 @@ def test_list_light_type_properties_cylinder():
     """Returns inputs for CylinderLight including length."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_light_type_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_light_type_properties", {
             "light_type": "CylinderLight",
         }))
         assert r.success, r.error
@@ -102,7 +105,7 @@ def test_list_light_type_properties_invalid():
     """Returns error for unknown light type."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_light_type_properties", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_light_type_properties", {
             "light_type": "FakeLight",
         }))
         assert not r.success
@@ -115,7 +118,7 @@ def test_create_sphere_light():
     """Creates a SphereLight with attributes at scene level."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight",
             "light_name": "Key",
             "translate_x": 3.0, "translate_y": 2.0, "translate_z": 1.0,
@@ -136,7 +139,7 @@ def test_create_distant_light():
     """Creates a DistantLight with angle and rotation."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "DistantLight",
             "light_name": "Sun",
             "rotate_x": -45.0,
@@ -157,7 +160,7 @@ def test_create_dome_light_with_texture():
         hdri = tmp_path / "studio.hdr"
         hdri.write_bytes(b"fake-hdri")
 
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "DomeLight",
             "light_name": "Env",
             "texture": str(hdri),
@@ -177,7 +180,7 @@ def test_create_rect_light():
     """Creates a RectLight with width and height."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "RectLight",
             "light_name": "Panel",
             "attributes": {
@@ -199,7 +202,7 @@ def test_create_disk_light():
     """Creates a DiskLight with radius."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "DiskLight",
             "light_name": "Fill",
             "attributes": {"inputs:radius": 0.3},
@@ -215,7 +218,7 @@ def test_create_cylinder_light():
     """Creates a CylinderLight with radius and length."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "CylinderLight",
             "light_name": "Tube",
             "attributes": {"inputs:radius": 0.02, "inputs:length": 1.2},
@@ -231,10 +234,10 @@ def test_create_light_unique_naming():
     """Second light with same name gets a _02 suffix."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r1 = asyncio.run(exec_tool(state, "create_light", {
+        r1 = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Bulb",
         }))
-        r2 = asyncio.run(exec_tool(state, "create_light", {
+        r2 = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Bulb",
         }))
         assert r1.success and r2.success
@@ -247,14 +250,14 @@ def test_create_light_with_light_linking():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "hero")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Hero",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         hero_path = placed.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "RectLight", "light_name": "Rim",
             "light_link_includes": [hero_path],
         }))
@@ -275,13 +278,13 @@ def test_create_asset_light():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "lamp")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
 
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "asset_prim_path": placed.data["prim_path"],
             "light_type": "SphereLight",
             "light_name": "Bulb",
@@ -299,13 +302,13 @@ def test_create_asset_scene_only_light_refused():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "lamp")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         for light_type in ("DomeLight", "DistantLight"):
-            r = asyncio.run(exec_tool(state, "create_light", {
+            r = asyncio.run(_helpers.exec_tool(state, "create_light", {
                 "asset_prim_path": placed.data["prim_path"],
                 "light_type": light_type,
                 "light_name": "Env",
@@ -320,8 +323,8 @@ def test_create_asset_scene_only_light_refused():
 def test_create_light_missing_stage():
     """Fails when no stage has been created."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
-        r = asyncio.run(exec_tool(state, "create_light", {
+        state, _ = _helpers.make_state(Path(tmp))
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "X",
         }))
         assert not r.success
@@ -334,13 +337,13 @@ def test_update_light_position():
     """Updates a light's translate."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Key",
             "translate_x": 1.0, "translate_y": 1.0, "translate_z": 1.0,
         }))
         prim_path = created.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "update_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_light", {
             "prim_path": prim_path,
             "translate_x": 5.0, "translate_y": 3.0, "translate_z": 2.0,
         }))
@@ -357,11 +360,11 @@ def test_update_light_rotation():
     """Updates a light's rotation."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "DiskLight", "light_name": "Down",
         }))
 
-        r = asyncio.run(exec_tool(state, "update_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_light", {
             "prim_path": created.data["prim_path"],
             "rotate_x": -90.0,
         }))
@@ -372,7 +375,7 @@ def test_update_light_texture():
     """Stages an HDRI on update and sets inputs:texture:file."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "DomeLight", "light_name": "Env",
             "attributes": {"inputs:intensity": 1.0},
         }))
@@ -380,7 +383,7 @@ def test_update_light_texture():
         hdri = tmp_path / "sunset.hdr"
         hdri.write_bytes(b"fake-hdri")
 
-        r = asyncio.run(exec_tool(state, "update_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_light", {
             "prim_path": created.data["prim_path"],
             "texture": str(hdri),
         }))
@@ -393,12 +396,12 @@ def test_update_asset_rect_light_texture_into_asset():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "panel")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Panel",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "asset_prim_path": placed.data["prim_path"],
             "light_type": "RectLight",
             "light_name": "Screen",
@@ -407,7 +410,7 @@ def test_update_asset_rect_light_texture_into_asset():
 
         tex = tmp_path / "screen.png"
         tex.write_bytes(b"fake-png")
-        r = asyncio.run(exec_tool(state, "update_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_light", {
             "prim_path": created.data["prim_path"],
             "texture": str(tex),
         }))
@@ -427,7 +430,7 @@ def test_update_light_nonexistent_prim():
     """Fails for a prim that does not exist."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "update_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "update_light", {
             "prim_path": "/Scene/Lighting/NoSuchLight",
             "translate_x": 1.0,
         }))
@@ -441,12 +444,12 @@ def test_remove_scene_light():
     """Removes a scene-level light."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, project = _setup(tmp)
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "Temp",
         }))
         prim_path = created.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "remove_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_light", {
             "prim_path": prim_path,
         }))
         assert r.success, r.error
@@ -460,19 +463,19 @@ def test_remove_asset_light():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "lamp")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "asset_prim_path": placed.data["prim_path"],
             "light_type": "SphereLight", "light_name": "Bulb",
         }))
         assert created.success, created.error
 
-        r = asyncio.run(exec_tool(state, "remove_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_light", {
             "prim_path": created.data["prim_path"],
         }))
         assert r.success, r.error
@@ -483,7 +486,7 @@ def test_remove_light_nonexistent_prim():
     """Fails for a prim that does not exist."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "remove_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_light", {
             "prim_path": "/Scene/Lighting/Ghost",
         }))
         assert not r.success
@@ -509,14 +512,14 @@ def test_create_asset_light_spatial_string_coerced():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _cm_asset(tmp_path, "cmlamp")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         assert placed.success, placed.error
 
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "asset_prim_path": placed.data["prim_path"],
             "light_type": "SphereLight", "light_name": "Bulb",
             "attributes": {"inputs:radius": "0.05"},
@@ -533,14 +536,14 @@ def test_create_asset_light_spatial_garbage_refused():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         asset = _cm_asset(tmp_path, "cmlamp2")
-        placed = asyncio.run(exec_tool(state, "place_asset", {
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Lamp",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
         }))
         assert placed.success, placed.error
 
-        r = asyncio.run(exec_tool(state, "create_light", {
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "asset_prim_path": placed.data["prim_path"],
             "light_type": "SphereLight", "light_name": "Bulb",
             "attributes": {"inputs:radius": "big"},

@@ -18,14 +18,15 @@ logging.basicConfig(level=logging.INFO, format="  %(name)s: %(message)s")
 
 async def test_full_scene_build():
     """Natural language prompt produces a .usdz file."""
-    from pxr import Usd, UsdGeom
+    from pxr import Usd
+    from pxr import UsdGeom
 
-    from bowerbot.agent import AgentRuntime
-    from bowerbot.config import LLMSettings, Settings, SkillConfig
-    from bowerbot.project import Project
-    from bowerbot.skills.registry import SkillRegistry
-    from bowerbot.state import SceneState
-    from bowerbot.utils import stage_utils as stage_service
+    from bowerbot import agent
+    from bowerbot import config
+    from bowerbot import project_folder
+    from bowerbot import scene_state
+    from bowerbot import skills
+    from bowerbot import utils
 
     tmp = tempfile.mkdtemp()
     tmp_path = Path(tmp)
@@ -45,8 +46,8 @@ async def test_full_scene_build():
 
     print(f"  Created 4 test assets in {asset_dir}")
 
-    settings = Settings(
-        llm=LLMSettings(
+    settings = config.Settings(
+        llm=config.LLMSettings(
             model="gpt-4o",
             temperature=0.1,
             max_tokens=4096,
@@ -54,24 +55,24 @@ async def test_full_scene_build():
         assets_dir=str(asset_dir),
         projects_dir=str(tmp_path / "projects"),
         skills={
-            "local": SkillConfig(enabled=True),
+            "local": config.SkillConfig(enabled=True),
         },
     )
 
-    project = Project.create(Path(settings.projects_dir), "e2e_test")
+    project = project_folder.Project.create(Path(settings.projects_dir), "e2e_test")
 
-    state = SceneState()
+    state = scene_state.SceneState()
     state.project = project
     state.stage_path = project.scene_path
     if project.scene_path.exists():
-        state.stage = stage_service.open_stage(project.scene_path)
+        state.stage = utils.stage.open_stage(project.scene_path)
 
-    registry = SkillRegistry()
+    registry = skills.SkillRegistry()
     registry.load_from_settings(settings)
 
     print(f"  Skills: {registry.enabled_skills}")
 
-    agent = AgentRuntime(
+    runtime = agent.AgentRuntime(
         settings=settings,
         state=state,
         skill_registry=registry,
@@ -87,7 +88,7 @@ async def test_full_scene_build():
     )
 
     print(f"\n  Prompt: {prompt}\n")
-    response = await agent.process(prompt)
+    response = await runtime.process(prompt)
 
     print("\n  === AGENT RESPONSE ===")
     for line in response.split("\n"):
@@ -107,7 +108,7 @@ async def test_full_scene_build():
     assert default_prim.IsValid(), "No defaultPrim"
     print(f"  defaultPrim: {default_prim.GetPath()}")
 
-    tool_calls = [m for m in agent.conversation_history if m.get("role") == "tool"]
+    tool_calls = [m for m in runtime.conversation_history if m.get("role") == "tool"]
     assert len(tool_calls) > 0, "Agent never called any tools"
     print(f"  Tool results received: {len(tool_calls)}")
 

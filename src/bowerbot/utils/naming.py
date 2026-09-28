@@ -3,12 +3,12 @@
 
 """Name sanitization for files, prims, and projects."""
 
-from bowerbot.constants import NamingRules
+from bowerbot import constants
 
 
 def is_valid_prim_name(name: str) -> bool:
     """Whether *name* is a legal USD prim identifier."""
-    return NamingRules.PRIM_NAME.match(name) is not None
+    return constants.NamingRules.PRIM_NAME.match(name) is not None
 
 
 def safe_file_name(name: str) -> str:

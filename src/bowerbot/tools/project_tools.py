@@ -7,56 +7,56 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot.services import project_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_projects_dir
+from bowerbot.tools import _helpers
 
 
-def list_projects(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_projects(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List every project in the projects directory."""
-    if (err := require_projects_dir(state)):
+    if (err := _helpers.require_projects_dir(state)):
         return err
     try:
         data = project_service.list_projects(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def create_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def create_project(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Create a new project and focus it."""
-    if (err := require_projects_dir(state)):
+    if (err := _helpers.require_projects_dir(state)):
         return err
     try:
         data = project_service.create_project(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def open_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def open_project(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Open an existing project and focus it."""
-    if (err := require_projects_dir(state)):
+    if (err := _helpers.require_projects_dir(state)):
         return err
     try:
         data = project_service.open_project(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def get_current_project(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def get_current_project(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Report the currently focused project, or none."""
     try:
         data = project_service.get_current_project(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="list_projects",
         description=(
             "List every BowerBot project. Each entry has the project's "
@@ -68,7 +68,7 @@ TOOLS: list[Tool] = [
         ),
         parameters={"type": "object", "properties": {}},
     ),
-    Tool(
+    skills.Tool(
         name="create_project",
         description=(
             "Create a new BowerBot project and immediately focus it. "
@@ -110,7 +110,7 @@ TOOLS: list[Tool] = [
             "required": ["name", "up_axis", "meters_per_unit"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="open_project",
         description=(
             "Open an existing BowerBot project and focus it. Every "
@@ -135,7 +135,7 @@ TOOLS: list[Tool] = [
             "required": ["name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="get_current_project",
         description=(
             "Report which project is currently focused, including its "

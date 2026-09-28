@@ -5,183 +5,308 @@
 
 from __future__ import annotations
 
-from tests.golden.model import Meters, Point, Scenario, Step, at
+from tests.golden import model
 
 
-def _place(asset: str, name: str, group: str = "Props", x: float = 0.0,
-           save: str | None = None, note: str = "", **extra: object) -> Step:
-    return Step(
+def _place(
+    asset: str,
+    name: str,
+    group: str = "Props",
+    x: float = 0.0,
+    save: str | None = None,
+    note: str = "",
+    **extra: object,
+) -> model.Step:
+    return model.Step(
         "place_asset",
-        {"asset_file_path": f"$lib/{asset}", "asset_name": name, "group": group, **at(x), **extra},
-        save=save, note=note or f"place {asset} as {name} in {group}",
+        {
+            "asset_file_path": f"$lib/{asset}",
+            "asset_name": name,
+            "group": group,
+            **model.at(x),
+            **extra,
+        },
+        save=save,
+        note=note or f"place {asset} as {name} in {group}",
     )
 
 
 SCENARIOS = (
-    Scenario(
+    model.Scenario(
         "placement/every_library_asset",
         "Each kind of library asset is placed: loose files, other units and axes, a folder, "
         "a package.",
         (
             _place("table.usda", "Table", "Furniture", 0.0, note="a loose file with three parts"),
-            _place("chair_cm.usda", "ChairCm", "Furniture", 2.0,
-                   note="a chair authored in centimeters"),
+            _place(
+                "chair_cm.usda", "ChairCm", "Furniture", 2.0, note="a chair authored in centimeters"
+            ),
             _place("post_z.usda", "Post", "Architecture", 4.0, note="a post authored Z-up"),
-            _place("lamp/lamp.usda", "Lamp", "Props", 6.0,
-                   note="an ASWF folder with its own materials and textures"),
+            _place(
+                "lamp/lamp.usda",
+                "Lamp",
+                "Props",
+                6.0,
+                note="an ASWF folder with its own materials and textures",
+            ),
             _place("gem.usdz", "Gem", "Products", 8.0, note="a USDZ package"),
             _place("ground.usda", "Ground", "Architecture", 0.0, note="a ground mesh"),
-            Step("list_scene", note="every placement, where it stands and how big it is"),
-            Step("list_project_assets", note="the copies the project now holds"),
+            model.Step("list_scene", note="every placement, where it stands and how big it is"),
+            model.Step("list_project_assets", note="the copies the project now holds"),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/same_asset_twice",
         "Two placements of one asset share one project copy and get the next number.",
         (
             _place("chair.usda", "Chair", "Furniture", 0.0, save="first"),
             _place("chair.usda", "Chair", "Furniture", 1.0, save="second"),
             _place("chair.usda", "chair", "Furniture", 2.0, note="the same name in lowercase"),
-            Step("list_project_assets"),
+            model.Step("list_project_assets"),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/rotation_and_relative_paths",
         "A turned placement, and an asset named by its path inside the library.",
         (
-            Step("place_asset",
-                 {"asset_file_path": "chair.usda", "asset_name": "Chair", "group": "Furniture",
-                  **at(1.0, 0.0, 2.0), "rotate_y": 90.0},
-                 save="chair", note="a library-relative path, turned 90 degrees"),
-            Step("list_prim_children", {"prim_path": "$chair"}),
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "chair.usda",
+                    "asset_name": "Chair",
+                    "group": "Furniture",
+                    **model.at(1.0, 0.0, 2.0),
+                    "rotate_y": 90.0,
+                },
+                save="chair",
+                note="a library-relative path, turned 90 degrees",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$chair"}),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/assets_that_need_repair",
         "Assets with an unfrozen root or a geometry root are refused, then repaired on request.",
         (
             _place("unfrozen.usda", "Unfrozen", note="a root with a translate and scale"),
-            _place("unfrozen.usda", "Unfrozen", fix_root_transforms=True,
-                   note="retry, moving the root transform onto the parts"),
+            _place(
+                "unfrozen.usda",
+                "Unfrozen",
+                fix_root_transforms=True,
+                note="retry, moving the root transform onto the parts",
+            ),
             _place("rooted_mesh.usda", "RootedMesh", x=2.0, note="a cube as the root prim"),
-            _place("rooted_mesh.usda", "RootedMesh", x=2.0, fix_root_prim=True,
-                   note="retry, wrapping the root in an Xform"),
+            _place(
+                "rooted_mesh.usda",
+                "RootedMesh",
+                x=2.0,
+                fix_root_prim=True,
+                note="retry, wrapping the root in an Xform",
+            ),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/refusals",
         "Placements that cannot work are refused and change nothing.",
         (
             _place("nope.usda", "Nope", note="a file that does not exist"),
             _place("hdri/studio.hdr", "Hdr", note="not a USD file"),
-            Step("place_asset",
-                 {"asset_file_path": "$lib/table.usda", "asset_name": "Table",
-                  "group": "Kitchen", **at(0.0)},
-                 note="a group outside the allowed list"),
-            Step("place_asset", {"asset_file_path": "$lib/table.usda", "asset_name": "Table",
-                                 "group": "Props"},
-                 note="no position"),
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/table.usda",
+                    "asset_name": "Table",
+                    "group": "Kitchen",
+                    **model.at(0.0),
+                },
+                note="a group outside the allowed list",
+            ),
+            model.Step(
+                "place_asset",
+                {"asset_file_path": "$lib/table.usda", "asset_name": "Table", "group": "Props"},
+                note="no position",
+            ),
             _place("table.usda", "", note="an empty name"),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/nested",
         "Assets placed inside another asset's folder, and what that shares.",
         (
             _place("table.usda", "Table", "Furniture", save="table"),
-            Step("place_asset_inside",
-                 {"asset_file_path": "$lib/crate.usda", "asset_name": "Crate",
-                  "container_prim_path": "$table", "group": "Props", **at(0.0, 0.0, 0.0)},
-                 save="crate", note="a crate on the table (default position mode)"),
-            Step("place_asset_inside",
-                 {"asset_file_path": "$lib/crate.usda", "asset_name": "Crate",
-                  "container_prim_path": "$table", "group": "Props",
-                  **at(0.3, 0.8, 0.0), "position_mode": "absolute"},
-                 note="a second crate at an absolute position"),
-            Step("list_prim_children", {"prim_path": "$table"}),
-            _place("table.usda", "Table", "Furniture", 3.0, save="table_2",
-                   note="a second table: it shares the folder, and so the crates"),
-            Step("place_asset_inside",
-                 {"asset_file_path": "$lib/chair.usda", "asset_name": "Chair",
-                  "container_prim_path": "$table", "group": "Props", **at(0.0)},
-                 note="nesting into a shared folder asks first"),
-            Step("place_asset_inside",
-                 {"asset_file_path": "$lib/chair.usda", "asset_name": "Chair",
-                  "container_prim_path": "$table", "group": "Props", **at(0.0),
-                  "confirm_shared_modification": True},
-                 note="confirmed"),
-            Step("remove_prim", {"prim_path": "$crate"}, note="remove the first crate"),
-            Step("cleanup_unused_contents", note="clean up nested contents nothing uses"),
+            model.Step(
+                "place_asset_inside",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "container_prim_path": "$table",
+                    "group": "Props",
+                    **model.at(0.0, 0.0, 0.0),
+                },
+                save="crate",
+                note="a crate on the table (default position mode)",
+            ),
+            model.Step(
+                "place_asset_inside",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "container_prim_path": "$table",
+                    "group": "Props",
+                    **model.at(0.3, 0.8, 0.0),
+                    "position_mode": "absolute",
+                },
+                note="a second crate at an absolute position",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$table"}),
+            _place(
+                "table.usda",
+                "Table",
+                "Furniture",
+                3.0,
+                save="table_2",
+                note="a second table: it shares the folder, and so the crates",
+            ),
+            model.Step(
+                "place_asset_inside",
+                {
+                    "asset_file_path": "$lib/chair.usda",
+                    "asset_name": "Chair",
+                    "container_prim_path": "$table",
+                    "group": "Props",
+                    **model.at(0.0),
+                },
+                note="nesting into a shared folder asks first",
+            ),
+            model.Step(
+                "place_asset_inside",
+                {
+                    "asset_file_path": "$lib/chair.usda",
+                    "asset_name": "Chair",
+                    "container_prim_path": "$table",
+                    "group": "Props",
+                    **model.at(0.0),
+                    "confirm_shared_modification": True,
+                },
+                note="confirmed",
+            ),
+            model.Step("remove_prim", {"prim_path": "$crate"}, note="remove the first crate"),
+            model.Step("cleanup_unused_contents", note="clean up nested contents nothing uses"),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/layout",
         "place_layout: patterns, enumerated transforms, validation first.",
         (
-            Step("place_layout", {
-                "validate_only": True,
-                "placements": [
-                    {"asset": "$lib/crate.usda", "group": "Props",
-                     "pattern": {"type": "grid", "origin": Point(0.0, 0.0, 0.0),
-                                 "count": [3, 2], "spacing": [Meters(1.0), Meters(1.0)]}},
-                ],
-            }, note="lint a grid without placing it"),
-            Step("place_layout", {
-                "placements": [
-                    {"asset": "$lib/crate.usda", "group": "Props",
-                     "pattern": {"type": "grid", "origin": Point(0.0, 0.0, 0.0),
-                                 "count": [3, 2], "spacing": [Meters(1.0), Meters(1.0)]}},
-                    {"asset": "$lib/chair.usda", "group": "Furniture", "name": "Seat",
-                     "transforms": [{"translate": Point(5.0, 0.0, 0.0)},
-                                    {"translate": Point(6.0, 0.0, 0.0), "rotate": [0, 90, 0]}]},
-                    {"asset": "$lib/table.usda", "group": "Furniture",
-                     "pattern": {"type": "linear", "origin": Point(0.0, 0.0, 4.0), "count": 2,
-                                 "spacing": Point(2.0, 0.0, 0.0)}},
-                ],
-            }, note="a crate grid, two named chairs, a row of two tables"),
-            Step("place_layout", {
-                "placements": [
-                    {"asset": "$lib/nope.usda", "group": "Props",
-                     "transforms": [{"translate": Point(0.0, 0.0, 0.0)}]},
-                    {"asset": "$lib/crate.usda", "group": "Props"},
-                ],
-            }, note="two bad entries: both are reported, nothing is placed"),
-            Step("list_scene"),
+            model.Step(
+                "place_layout",
+                {
+                    "validate_only": True,
+                    "placements": [
+                        {
+                            "asset": "$lib/crate.usda",
+                            "group": "Props",
+                            "pattern": {
+                                "type": "grid",
+                                "origin": model.Point(0.0, 0.0, 0.0),
+                                "count": [3, 2],
+                                "spacing": [model.Meters(1.0), model.Meters(1.0)],
+                            },
+                        },
+                    ],
+                },
+                note="lint a grid without placing it",
+            ),
+            model.Step(
+                "place_layout",
+                {
+                    "placements": [
+                        {
+                            "asset": "$lib/crate.usda",
+                            "group": "Props",
+                            "pattern": {
+                                "type": "grid",
+                                "origin": model.Point(0.0, 0.0, 0.0),
+                                "count": [3, 2],
+                                "spacing": [model.Meters(1.0), model.Meters(1.0)],
+                            },
+                        },
+                        {
+                            "asset": "$lib/chair.usda",
+                            "group": "Furniture",
+                            "name": "Seat",
+                            "transforms": [
+                                {"translate": model.Point(5.0, 0.0, 0.0)},
+                                {"translate": model.Point(6.0, 0.0, 0.0), "rotate": [0, 90, 0]},
+                            ],
+                        },
+                        {
+                            "asset": "$lib/table.usda",
+                            "group": "Furniture",
+                            "pattern": {
+                                "type": "linear",
+                                "origin": model.Point(0.0, 0.0, 4.0),
+                                "count": 2,
+                                "spacing": model.Point(2.0, 0.0, 0.0),
+                            },
+                        },
+                    ],
+                },
+                note="a crate grid, two named chairs, a row of two tables",
+            ),
+            model.Step(
+                "place_layout",
+                {
+                    "placements": [
+                        {
+                            "asset": "$lib/nope.usda",
+                            "group": "Props",
+                            "transforms": [{"translate": model.Point(0.0, 0.0, 0.0)}],
+                        },
+                        {"asset": "$lib/crate.usda", "group": "Props"},
+                    ],
+                },
+                note="two bad entries: both are reported, nothing is placed",
+            ),
+            model.Step("list_scene"),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/project_assets",
         "The project's asset copies: listing, deleting, and what is still in use.",
         (
             _place("chair.usda", "Chair", "Furniture", save="chair"),
             _place("crate.usda", "Crate", "Props", 1.0, save="crate"),
-            Step("list_project_assets"),
-            Step("list_project_assets", {"query": "cra"}, note="filtered"),
-            Step("delete_project_asset", {"name": "crate"}, note="still used by a placement"),
-            Step("remove_prim", {"prim_path": "$crate"}),
-            Step("list_project_assets", note="the crate copy is now unused"),
-            Step("delete_project_asset", {"name": "crate"}),
-            Step("delete_project_asset", {"name": "nope"}, note="an asset the project lacks"),
-            Step("delete_project_texture", {"file_name": "nope.png"},
-                 note="a texture the project lacks"),
+            model.Step("list_project_assets"),
+            model.Step("list_project_assets", {"query": "cra"}, note="filtered"),
+            model.Step("delete_project_asset", {"name": "crate"}, note="still used by a placement"),
+            model.Step("remove_prim", {"prim_path": "$crate"}),
+            model.Step("list_project_assets", note="the crate copy is now unused"),
+            model.Step("delete_project_asset", {"name": "crate"}),
+            model.Step("delete_project_asset", {"name": "nope"}, note="an asset the project lacks"),
+            model.Step(
+                "delete_project_texture",
+                {"file_name": "nope.png"},
+                note="a texture the project lacks",
+            ),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/freeze_asset",
         "freeze_asset moves a project asset's root transform onto its parts.",
         (
             _place("unfrozen.usda", "Unfrozen", fix_root_transforms=True, save="unfrozen"),
-            Step("freeze_asset", {"name": "unfrozen"}, note="already frozen on intake"),
-            Step("freeze_asset", note="every project asset"),
-            Step("freeze_asset", {"name": "nope"}, note="an asset the project lacks"),
+            model.Step("freeze_asset", {"name": "unfrozen"}, note="already frozen on intake"),
+            model.Step("freeze_asset", note="every project asset"),
+            model.Step("freeze_asset", {"name": "nope"}, note="an asset the project lacks"),
         ),
     ),
-    Scenario(
+    model.Scenario(
         "placement/read_only_calls",
         "Placement listings on an empty project.",
         (
-            Step("list_project_assets"),
-            Step("cleanup_unused_contents"),
+            model.Step("list_project_assets"),
+            model.Step("cleanup_unused_contents"),
         ),
     ),
 )

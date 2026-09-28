@@ -9,14 +9,9 @@ import logging
 
 import pytest
 
-from bowerbot.config import LLMSettings, LoggingSettings, Settings
-from bowerbot.logging_setup import (
-    configure_logging,
-    log_tool_result,
-    sanitize,
-    session_id,
-)
-from bowerbot.skills.base import ToolResult
+from bowerbot import config
+from bowerbot import logging_setup
+from bowerbot import skills
 
 
 @pytest.fixture(autouse=True)
@@ -31,18 +26,18 @@ def _reset_bowerbot_logging():
     root.setLevel(logging.WARNING)
 
 
-def _settings_with_logging(tmp_path, monkeypatch, **logging_kwargs) -> Settings:
+def _settings_with_logging(tmp_path, monkeypatch, **logging_kwargs) -> config.Settings:
     """Build a Settings instance with logging routed under *tmp_path*."""
-    monkeypatch.setattr("bowerbot.logging_setup.BOWERBOT_HOME", tmp_path)
-    return Settings(
-        llm=LLMSettings(model="gpt-4.1", api_key="dummy"),
-        logging=LoggingSettings(**logging_kwargs),
+    monkeypatch.setattr("bowerbot.config.BOWERBOT_HOME", tmp_path)
+    return config.Settings(
+        llm=config.LLMSettings(model="gpt-4.1", api_key="dummy"),
+        logging=config.LoggingSettings(**logging_kwargs),
     )
 
 
 def test_configure_logging_creates_log_file(tmp_path, monkeypatch):
     settings = _settings_with_logging(tmp_path, monkeypatch)
-    log_file = configure_logging(settings)
+    log_file = logging_setup.configure_logging(settings)
 
     assert log_file is not None
     assert log_file == tmp_path / "logs" / "bowerbot.log"
@@ -55,12 +50,12 @@ def test_configure_logging_creates_log_file(tmp_path, monkeypatch):
     content = log_file.read_text(encoding="utf-8")
     assert "session-start" in content
     assert "hello" in content
-    assert session_id() in content
+    assert logging_setup.session_id() in content
 
 
 def test_configure_logging_disabled_returns_none(tmp_path, monkeypatch):
     settings = _settings_with_logging(tmp_path, monkeypatch, enabled=False)
-    log_file = configure_logging(settings)
+    log_file = logging_setup.configure_logging(settings)
     assert log_file is None
 
     logger = logging.getLogger("bowerbot.test")
@@ -69,9 +64,9 @@ def test_configure_logging_disabled_returns_none(tmp_path, monkeypatch):
 
 def test_configure_logging_is_idempotent(tmp_path, monkeypatch):
     settings = _settings_with_logging(tmp_path, monkeypatch)
-    configure_logging(settings)
+    logging_setup.configure_logging(settings)
     handlers_first = list(logging.getLogger("bowerbot").handlers)
-    configure_logging(settings)
+    logging_setup.configure_logging(settings)
     handlers_second = list(logging.getLogger("bowerbot").handlers)
 
     # Same number of handlers after second call (old ones get replaced).
@@ -80,7 +75,7 @@ def test_configure_logging_is_idempotent(tmp_path, monkeypatch):
 
 def test_configure_logging_does_not_propagate_to_root(tmp_path, monkeypatch):
     settings = _settings_with_logging(tmp_path, monkeypatch)
-    configure_logging(settings)
+    logging_setup.configure_logging(settings)
     assert logging.getLogger("bowerbot").propagate is False
 
 
@@ -93,7 +88,7 @@ def test_sanitize_redacts_secret_keys():
         "client_secret": "sssh",
         "prim_path": "/Scene/Foo",
     }
-    out = sanitize(payload)
+    out = logging_setup.sanitize(payload)
     assert out["api_key"] == "[REDACTED]"
     assert out["API_KEY"] == "[REDACTED]"
     assert out["auth_token"] == "[REDACTED]"
@@ -113,7 +108,7 @@ def test_sanitize_recurses_into_nested_structures():
             {"api_key": "leak", "name": "ok"},
         ],
     }
-    out = sanitize(payload)
+    out = logging_setup.sanitize(payload)
     assert out["config"]["skills"]["sketchfab"]["token"] == "[REDACTED]"
     assert out["config"]["skills"]["sketchfab"]["enabled"] is True
     assert out["items"][0]["api_key"] == "[REDACTED]"
@@ -122,14 +117,14 @@ def test_sanitize_recurses_into_nested_structures():
 
 def test_sanitize_truncates_long_strings():
     long_val = "x" * 500
-    out = sanitize({"some_field": long_val})
+    out = logging_setup.sanitize({"some_field": long_val})
     assert len(out["some_field"]) < len(long_val)
     assert out["some_field"].endswith("[+300]")
 
 
 def test_logger_writes_with_session_prefix(tmp_path, monkeypatch):
     settings = _settings_with_logging(tmp_path, monkeypatch)
-    log_file = configure_logging(settings)
+    log_file = logging_setup.configure_logging(settings)
 
     logger = logging.getLogger("bowerbot.dispatcher")
     logger.info("tool-call name=test params={}")
@@ -139,7 +134,7 @@ def test_logger_writes_with_session_prefix(tmp_path, monkeypatch):
     content = log_file.read_text(encoding="utf-8")
     lines = [line for line in content.splitlines() if "tool-call" in line]
     assert lines
-    sid = session_id()
+    sid = logging_setup.session_id()
     assert any(sid in line for line in lines)
 
 
@@ -147,8 +142,8 @@ def test_log_tool_result_ok(caplog):
     """Success result emits tool-ok with the tool name."""
     logger = logging.getLogger("bowerbot.test")
     with caplog.at_level(logging.INFO, logger="bowerbot.test"):
-        log_tool_result(
-            logger, "create_light", ToolResult(success=True, data={}),
+        logging_setup.log_tool_result(
+            logger, "create_light", skills.ToolResult(success=True, data={}),
         )
     msgs = [r.message for r in caplog.records]
     assert any("tool-ok name=create_light" in m for m in msgs)
@@ -158,9 +153,9 @@ def test_log_tool_result_error(caplog):
     """Failure result emits tool-error with the error message."""
     logger = logging.getLogger("bowerbot.test")
     with caplog.at_level(logging.INFO, logger="bowerbot.test"):
-        log_tool_result(
+        logging_setup.log_tool_result(
             logger, "create_light",
-            ToolResult(success=False, error="boom"),
+            skills.ToolResult(success=False, error="boom"),
         )
     msgs = [r.message for r in caplog.records]
     assert any(
@@ -173,8 +168,7 @@ def test_skill_tool_call_logs_uniformly_with_core(caplog):
     """Skill tool calls produce identical tool-ok / tool-error lines."""
     import asyncio
 
-    from bowerbot.skills.base import SkillCategory
-    from bowerbot.skills.registry import SkillRegistry
+    from bowerbot import skills
 
     class _StubSkill:
         name = "stub"
@@ -191,14 +185,14 @@ def test_skill_tool_call_logs_uniformly_with_core(caplog):
 
         @property
         def category(self):
-            return SkillCategory.ASSET_PROVIDER
+            return skills.SkillCategory.ASSET_PROVIDER
 
         async def execute(self, tool_name, params, ctx):
             if tool_name == "ok":
-                return ToolResult(success=True, data={"hi": "there"})
-            return ToolResult(success=False, error="bad request")
+                return skills.ToolResult(success=True, data={"hi": "there"})
+            return skills.ToolResult(success=False, error="bad request")
 
-    registry = SkillRegistry()
+    registry = skills.SkillRegistry()
     registry._skills["stub"] = _StubSkill()
     registry._library_dir = tmp = __import__("pathlib").Path(".")
     del tmp
@@ -219,8 +213,7 @@ def test_skill_crash_logs_tool_error(caplog):
     """A skill that raises gets converted to a tool-error log line."""
     import asyncio
 
-    from bowerbot.skills.base import SkillCategory
-    from bowerbot.skills.registry import SkillRegistry
+    from bowerbot import skills
 
     class _CrashSkill:
         name = "crashy"
@@ -237,12 +230,12 @@ def test_skill_crash_logs_tool_error(caplog):
 
         @property
         def category(self):
-            return SkillCategory.ASSET_PROVIDER
+            return skills.SkillCategory.ASSET_PROVIDER
 
         async def execute(self, tool_name, params, ctx):
             raise RuntimeError("kaboom")
 
-    registry = SkillRegistry()
+    registry = skills.SkillRegistry()
     registry._skills["crashy"] = _CrashSkill()
     registry._library_dir = __import__("pathlib").Path(".")
 
@@ -259,7 +252,7 @@ def test_rotating_handler_respects_max_bytes(tmp_path, monkeypatch):
     settings = _settings_with_logging(
         tmp_path, monkeypatch, max_bytes=1024, backup_count=2,
     )
-    log_file = configure_logging(settings)
+    log_file = logging_setup.configure_logging(settings)
 
     logger = logging.getLogger("bowerbot.test")
     payload = "x" * 200

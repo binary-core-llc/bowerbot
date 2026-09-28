@@ -7,59 +7,59 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import LightType, PositionMode
+from bowerbot import scene_state
+from bowerbot import schemas
+from bowerbot import skills
 from bowerbot.services import light_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
+from bowerbot.tools import _helpers
 
 
 def list_light_type_properties(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Return every UsdLux input the given light type declares."""
     try:
         data = light_service.list_light_type_properties(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def create_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Create a scene-level or asset-level light."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = light_service.create_light(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def update_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Update an existing scene-level or asset-level light."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = light_service.update_light(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_light(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Remove a scene-level or asset-level light."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = light_service.remove_light(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="list_light_type_properties",
         description=(
             "Live UsdLux schema view of every inputs:* attribute the given "
@@ -77,7 +77,7 @@ TOOLS: list[Tool] = [
             "properties": {
                 "light_type": {
                     "type": "string",
-                    "enum": [t.value for t in LightType],
+                    "enum": [t.value for t in schemas.LightType],
                     "description": (
                         "Light type to introspect. DistantLight = sun/"
                         "directional, DomeLight = environment/HDRI, "
@@ -89,7 +89,7 @@ TOOLS: list[Tool] = [
             "required": ["light_type"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="create_light",
         description=(
             "Create a USD light. By default creates a scene-level light in "
@@ -113,7 +113,7 @@ TOOLS: list[Tool] = [
             "properties": {
                 "light_type": {
                     "type": "string",
-                    "enum": [t.value for t in LightType],
+                    "enum": [t.value for t in schemas.LightType],
                     "description": (
                         "Type of light. DistantLight = sun/directional, "
                         "DomeLight = environment/HDRI, SphereLight = point, "
@@ -138,7 +138,7 @@ TOOLS: list[Tool] = [
                 },
                 "position_mode": {
                     "type": "string",
-                    "enum": [m.value for m in PositionMode],
+                    "enum": [m.value for m in schemas.PositionMode],
                     "description": (
                         "Asset-level lights only. How to interpret translate "
                         "values: 'absolute' = world-space coordinates (as "
@@ -148,7 +148,7 @@ TOOLS: list[Tool] = [
                         "offsets from the asset's bounding box surfaces "
                         "(e.g. a bulb 0.5m above a lamp)."
                     ),
-                    "default": PositionMode.BOUNDS_OFFSET.value,
+                    "default": schemas.PositionMode.BOUNDS_OFFSET.value,
                 },
                 "translate_x": {
                     "type": "number",
@@ -222,7 +222,7 @@ TOOLS: list[Tool] = [
             "required": ["light_type", "light_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="update_light",
         description=(
             "Update an existing light's position, rotation, or texture. "
@@ -250,7 +250,7 @@ TOOLS: list[Tool] = [
                 },
                 "position_mode": {
                     "type": "string",
-                    "enum": [m.value for m in PositionMode],
+                    "enum": [m.value for m in schemas.PositionMode],
                     "description": (
                         "Asset-level lights only. How to interpret "
                         "translate values: 'absolute' = world-space "
@@ -258,7 +258,7 @@ TOOLS: list[Tool] = [
                         "frame); 'bounds_offset' = offsets from the "
                         "asset's bounding box surfaces."
                     ),
-                    "default": PositionMode.BOUNDS_OFFSET.value,
+                    "default": schemas.PositionMode.BOUNDS_OFFSET.value,
                 },
                 "translate_x": {"type": "number", "description": "New X position."},
                 "translate_y": {"type": "number", "description": "New Y position."},
@@ -282,7 +282,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_light",
         description=(
             "Remove a light from the scene. Works for both scene-level and "

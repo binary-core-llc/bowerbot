@@ -5,26 +5,21 @@
 
 from __future__ import annotations
 
-from tests.agent.runner import AgentScenario, ScenarioContext
-from tests.agent.scenarios._fixtures import (
-    get_prim_paths_with_api,
-    get_typed_prim_paths,
-    setup_scene_with_ground_and_box,
-    setup_scene_with_three_rigid_bodies,
-)
+from tests.agent import runner
+from tests.agent.scenarios import _fixtures
 
 
-def _assert_mass_authored(ctx: ScenarioContext) -> None:
+def _assert_mass_authored(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
-    paths = get_prim_paths_with_api(stage, "PhysicsMassAPI")
+    paths = _fixtures.get_prim_paths_with_api(stage, "PhysicsMassAPI")
     assert paths, (
         f"Expected PhysicsMassAPI to be applied after mass iteration. "
         f"Tool calls: {[tc.tool_name for tc in ctx.all_tool_calls]}"
     )
 
 
-def _assert_kinematic_set_somewhere(ctx: ScenarioContext) -> None:
+def _assert_kinematic_set_somewhere(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
     found = False
@@ -41,28 +36,28 @@ def _assert_kinematic_set_somewhere(ctx: ScenarioContext) -> None:
     )
 
 
-def _assert_multiple_bodies_have_collision(ctx: ScenarioContext) -> None:
+def _assert_multiple_bodies_have_collision(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
-    coll = get_prim_paths_with_api(stage, "PhysicsCollisionAPI")
+    coll = _fixtures.get_prim_paths_with_api(stage, "PhysicsCollisionAPI")
     assert len(coll) >= 2, (
         f"Expected collision authored on 2+ prims after 'do the same '"
         f"for the other boxes'. Got: {coll}"
     )
 
 
-def _assert_physics_scene_present(ctx: ScenarioContext) -> None:
+def _assert_physics_scene_present(ctx: runner.ScenarioContext) -> None:
     stage = ctx.stage
     assert stage is not None
-    scenes = get_typed_prim_paths(stage, "PhysicsScene")
+    scenes = _fixtures.get_typed_prim_paths(stage, "PhysicsScene")
     assert scenes, "Expected a UsdPhysics.Scene to be present."
 
 
-iteration_make_it_heavier = AgentScenario(
+iteration_make_it_heavier = runner.AgentScenario(
     name="iteration_make_it_heavier",
     description="Apply physics, then change mass on follow-up turn.",
     tier="iteration",
-    setup=setup_scene_with_ground_and_box,
+    setup=_fixtures.setup_scene_with_ground_and_box,
     prompts=[
         "Make the box a rigid body that falls under gravity.",
         "Now make it much heavier — like 50 kilograms.",
@@ -71,11 +66,11 @@ iteration_make_it_heavier = AgentScenario(
 )
 
 
-iteration_change_to_kinematic = AgentScenario(
+iteration_change_to_kinematic = runner.AgentScenario(
     name="iteration_change_to_kinematic",
     description="Toggle a dynamic body to kinematic on follow-up.",
     tier="iteration",
-    setup=setup_scene_with_ground_and_box,
+    setup=_fixtures.setup_scene_with_ground_and_box,
     prompts=[
         "Make the box a dynamic rigid body.",
         "Actually, switch it to kinematic — I want to animate it manually "
@@ -85,11 +80,11 @@ iteration_change_to_kinematic = AgentScenario(
 )
 
 
-iteration_do_same_for_others = AgentScenario(
+iteration_do_same_for_others = runner.AgentScenario(
     name="iteration_do_same_for_others",
     description="Generalise an applied operation across siblings.",
     tier="iteration",
-    setup=setup_scene_with_three_rigid_bodies,
+    setup=_fixtures.setup_scene_with_three_rigid_bodies,
     prompts=[
         "Add convex-hull collision to Box_01.",
         "Now do the same for the other two boxes.",

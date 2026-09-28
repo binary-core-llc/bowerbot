@@ -7,110 +7,102 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from bowerbot.config import Settings, SkillConfig
-from bowerbot.skills import (
-    Skill,
-    SkillCategory,
-    SkillConfigError,
-    SkillContext,
-    SkillRegistry,
-    Tool,
-    ToolResult,
-)
-from bowerbot.state import SceneState
+from bowerbot import config
+from bowerbot import scene_state
+from bowerbot import skills
 
 
-class _StubSkill(Skill):
+class _StubSkill(skills.Skill):
     """Minimal Skill implementation used to exercise the registry."""
 
     name = "stub"
-    category = SkillCategory.ASSET_PROVIDER
+    category = skills.SkillCategory.ASSET_PROVIDER
 
-    def get_tools(self) -> list[Tool]:
-        return [Tool(name="ping", description="Returns pong.", parameters={})]
+    def get_tools(self) -> list[skills.Tool]:
+        return [skills.Tool(name="ping", description="Returns pong.", parameters={})]
 
     async def execute(
-        self, tool_name: str, params: dict, ctx: SkillContext,
-    ) -> ToolResult:
+        self, tool_name: str, params: dict, ctx: skills.SkillContext,
+    ) -> skills.ToolResult:
         if tool_name == "ping":
-            return ToolResult(success=True, data="pong")
-        return ToolResult(success=False, error=f"Unknown tool: {tool_name}")
+            return skills.ToolResult(success=True, data="pong")
+        return skills.ToolResult(success=False, error=f"Unknown tool: {tool_name}")
 
     def validate_config(self) -> None:
         return
 
 
-class _ExternalSkill(Skill):
+class _ExternalSkill(skills.Skill):
     """Stand-in for a third-party skill installed via entry points."""
 
     name = "external_provider"
-    category = SkillCategory.ASSET_PROVIDER
+    category = skills.SkillCategory.ASSET_PROVIDER
 
-    def get_tools(self) -> list[Tool]:
-        return [Tool(name="ping", description="Returns pong.", parameters={})]
+    def get_tools(self) -> list[skills.Tool]:
+        return [skills.Tool(name="ping", description="Returns pong.", parameters={})]
 
     async def execute(
-        self, tool_name: str, params: dict, ctx: SkillContext,
-    ) -> ToolResult:
-        return ToolResult(success=True, data="pong")
+        self, tool_name: str, params: dict, ctx: skills.SkillContext,
+    ) -> skills.ToolResult:
+        return skills.ToolResult(success=True, data="pong")
 
     def validate_config(self) -> None:
         return
 
 
-class _MisnamedExternalSkill(Skill):
+class _MisnamedExternalSkill(skills.Skill):
     """Skill whose name attribute does not match its entry point name."""
 
     name = "actual_name"
-    category = SkillCategory.ASSET_PROVIDER
+    category = skills.SkillCategory.ASSET_PROVIDER
 
-    def get_tools(self) -> list[Tool]:
-        return [Tool(name="ping", description="Returns pong.", parameters={})]
+    def get_tools(self) -> list[skills.Tool]:
+        return [skills.Tool(name="ping", description="Returns pong.", parameters={})]
 
     async def execute(
-        self, tool_name: str, params: dict, ctx: SkillContext,
-    ) -> ToolResult:
-        return ToolResult(success=True, data="pong")
+        self, tool_name: str, params: dict, ctx: skills.SkillContext,
+    ) -> skills.ToolResult:
+        return skills.ToolResult(success=True, data="pong")
 
     def validate_config(self) -> None:
         return
 
 
-class _MisconfiguredSkill(Skill):
+class _MisconfiguredSkill(skills.Skill):
     """Skill whose validate_config always raises SkillConfigError."""
 
     name = "broken"
-    category = SkillCategory.ASSET_PROVIDER
+    category = skills.SkillCategory.ASSET_PROVIDER
 
     def __init__(self, **_: object) -> None:
         return
 
-    def get_tools(self) -> list[Tool]:
+    def get_tools(self) -> list[skills.Tool]:
         return []
 
     async def execute(
-        self, tool_name: str, params: dict, ctx: SkillContext,
-    ) -> ToolResult:
-        return ToolResult(success=True)
+        self, tool_name: str, params: dict, ctx: skills.SkillContext,
+    ) -> skills.ToolResult:
+        return skills.ToolResult(success=True)
 
     def validate_config(self) -> None:
-        raise SkillConfigError("missing token")
+        raise skills.SkillConfigError("missing token")
 
 
-class _ContextEcho(Skill):
+class _ContextEcho(skills.Skill):
     """Skill that echoes the SkillContext it receives, for assertion."""
 
     name = "echo"
-    category = SkillCategory.ASSET_PROVIDER
+    category = skills.SkillCategory.ASSET_PROVIDER
     cache_subdir = "cache/echo"
 
-    def get_tools(self) -> list[Tool]:
-        return [Tool(name="ctx", description="Echoes context.", parameters={})]
+    def get_tools(self) -> list[skills.Tool]:
+        return [skills.Tool(name="ctx", description="Echoes context.", parameters={})]
 
     async def execute(
-        self, tool_name: str, params: dict, ctx: SkillContext,
-    ) -> ToolResult:
-        return ToolResult(
+        self, tool_name: str, params: dict, ctx: skills.SkillContext,
+    ) -> skills.ToolResult:
+        return skills.ToolResult(
             success=True,
             data={
                 "library_dir": str(ctx.library_dir),
@@ -127,7 +119,7 @@ class _ContextEcho(Skill):
 def test_registry_routes_tool_to_qualified_skill():
     """SkillRegistry namespaces tools as ``<skill>__<tool>`` and routes correctly."""
     with tempfile.TemporaryDirectory() as tmp:
-        registry = SkillRegistry()
+        registry = skills.SkillRegistry()
         registry._library_dir = Path(tmp)
         registry.register(_StubSkill())
 
@@ -141,7 +133,7 @@ def test_registry_routes_tool_to_qualified_skill():
 
 def test_registry_rejects_unknown_skill():
     """Calls to unknown qualified names return a clear error."""
-    registry = SkillRegistry()
+    registry = skills.SkillRegistry()
     result = asyncio.run(registry.execute_tool("ghost__ping", {}))
     assert not result.success
     assert "Skill not found" in result.error
@@ -149,8 +141,8 @@ def test_registry_rejects_unknown_skill():
 
 def test_registry_loads_no_skills_when_disabled():
     """A registry with all skills disabled exposes no tools."""
-    settings = Settings(skills={"sketchfab": SkillConfig(enabled=False)})
-    registry = SkillRegistry()
+    settings = config.Settings(skills={"sketchfab": config.SkillConfig(enabled=False)})
+    registry = skills.SkillRegistry()
     registry.load_from_settings(settings)
     assert registry.skill_count == 0
     assert registry.get_all_tools() == []
@@ -160,7 +152,7 @@ def test_skill_context_carries_library_and_cache_dirs():
     """SkillContext exposes library_dir and the skill's cache_dir."""
     with tempfile.TemporaryDirectory() as tmp:
         library = Path(tmp)
-        registry = SkillRegistry()
+        registry = skills.SkillRegistry()
         registry._library_dir = library
         registry.register(_ContextEcho())
 
@@ -187,11 +179,11 @@ def test_skill_context_carries_project_and_scene_when_state_provided():
             path = project_dir
             assets_dir = project_dir / "assets"
 
-        state = SceneState(library_dir=library)
+        state = scene_state.SceneState(library_dir=library)
         state.project = _FakeProject()
         state.stage_path = scene_path
 
-        registry = SkillRegistry()
+        registry = skills.SkillRegistry()
         registry._library_dir = library
         registry.register(_ContextEcho())
 
@@ -226,8 +218,8 @@ def test_registry_discovers_external_skill_via_entry_points(monkeypatch):
 
     monkeypatch.setattr(registry_mod, "entry_points", _fake_entry_points)
 
-    settings = Settings(skills={"external_provider": SkillConfig(enabled=True)})
-    registry = SkillRegistry()
+    settings = config.Settings(skills={"external_provider": config.SkillConfig(enabled=True)})
+    registry = skills.SkillRegistry()
     registry.load_from_settings(settings)
 
     assert registry.skill_count == 1
@@ -257,8 +249,8 @@ def test_registry_skips_skill_when_entry_point_name_mismatches(monkeypatch, capl
         lambda *, group: (fake_ep,) if group == "bowerbot.skills" else (),
     )
 
-    settings = Settings(skills={"declared_name": SkillConfig(enabled=True)})
-    registry = SkillRegistry()
+    settings = config.Settings(skills={"declared_name": config.SkillConfig(enabled=True)})
+    registry = skills.SkillRegistry()
     with caplog.at_level(logging.ERROR, logger="bowerbot.skills.registry"):
         registry.load_from_settings(settings)
 
@@ -285,8 +277,8 @@ def test_registry_skips_skill_when_validate_config_raises(monkeypatch, caplog):
         lambda *, group: (fake_ep,) if group == "bowerbot.skills" else (),
     )
 
-    settings = Settings(skills={"broken": SkillConfig(enabled=True)})
-    registry = SkillRegistry()
+    settings = config.Settings(skills={"broken": config.SkillConfig(enabled=True)})
+    registry = skills.SkillRegistry()
     with caplog.at_level(logging.WARNING, logger="bowerbot.skills.registry"):
         registry.load_from_settings(settings)
 

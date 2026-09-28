@@ -19,32 +19,33 @@ from typing import Any
 
 import jsonschema
 
-from bowerbot.logging_setup import log_tool_result
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools import (
-    asset_tools,
-    camera_tools,
-    library_tools,
-    light_tools,
-    material_tools,
-    physics_tools,
-    project_tools,
-    scatter_tools,
-    stage_tools,
-    texture_tools,
-    validation_tools,
-    variant_tools,
-)
+from bowerbot import logging_setup
+from bowerbot import scene_state
+from bowerbot import skills
+from bowerbot.tools import asset_tools
+from bowerbot.tools import camera_tools
+from bowerbot.tools import library_tools
+from bowerbot.tools import light_tools
+from bowerbot.tools import material_tools
+from bowerbot.tools import physics_tools
+from bowerbot.tools import project_tools
+from bowerbot.tools import scatter_tools
+from bowerbot.tools import stage_tools
+from bowerbot.tools import texture_tools
+from bowerbot.tools import validation_tools
+from bowerbot.tools import variant_tools
 
 logger = logging.getLogger(__name__)
 
-ToolHandler = Callable[[SceneState, dict[str, Any]], ToolResult | Awaitable[ToolResult]]
+ToolHandler = Callable[
+    [scene_state.SceneState, dict[str, Any]],
+    skills.ToolResult | Awaitable[skills.ToolResult],
+]
 
 
-def _collect_tools() -> list[Tool]:
+def _collect_tools() -> list[skills.Tool]:
     """Flatten every tool module's ``TOOLS`` list into one registry."""
-    tools: list[Tool] = []
+    tools: list[skills.Tool] = []
     tools.extend(project_tools.TOOLS)
     tools.extend(stage_tools.TOOLS)
     tools.extend(asset_tools.TOOLS)
@@ -72,7 +73,7 @@ def _collect_handlers() -> dict[str, ToolHandler]:
     return handlers
 
 
-TOOLS: list[Tool] = _collect_tools()
+TOOLS: list[skills.Tool] = _collect_tools()
 HANDLERS: dict[str, ToolHandler] = _collect_handlers()
 
 
@@ -86,12 +87,12 @@ def get_tool_names() -> set[str]:
     return set(HANDLERS.keys())
 
 
-_TOOLS_BY_NAME: dict[str, Tool] = {t.name: t for t in TOOLS}
+_TOOLS_BY_NAME: dict[str, skills.Tool] = {t.name: t for t in TOOLS}
 
 
 async def execute(
-    state: SceneState, tool_name: str, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, tool_name: str, params: dict[str, Any],
+) -> skills.ToolResult:
     """Route a tool call by name to its registered handler."""
     if state.stage is not None and state.detect_external_changes():
         logger.info(
@@ -104,7 +105,7 @@ async def execute(
     handler = HANDLERS.get(tool_name)
     if handler is None:
         logger.warning("tool-unknown name=%s", tool_name)
-        return ToolResult(
+        return skills.ToolResult(
             success=False, error=f"Unknown tool: {tool_name}",
         )
 
@@ -113,13 +114,13 @@ async def execute(
         rejection = _reject_invalid_params(tool_name, params)
     if rejection is not None:
         logger.info("tool-bad-params name=%s error=%s", tool_name, rejection)
-        return ToolResult(success=False, error=rejection)
+        return skills.ToolResult(success=False, error=rejection)
 
     result = handler(state, params)
     if inspect.isawaitable(result):
         result = await result
 
-    log_tool_result(logger, tool_name, result)
+    logging_setup.log_tool_result(logger, tool_name, result)
     state.mark_saved()
     return result
 

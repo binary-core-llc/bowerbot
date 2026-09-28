@@ -12,14 +12,11 @@ inline.
 
 from __future__ import annotations
 
-from tests.agent.runner import AgentScenario, ScenarioContext
-from tests.agent.scenarios._fixtures import (
-    setup_scene_with_ground_and_box,
-    setup_scene_with_one_cube,
-)
+from tests.agent import runner
+from tests.agent.scenarios import _fixtures
 
 
-def _assert_inspection_before_authoring(ctx: ScenarioContext) -> None:
+def _assert_inspection_before_authoring(ctx: runner.ScenarioContext) -> None:
     """If anything was authored, at least one inspection tool ran first."""
     authoring = {
         "place_asset", "create_light", "create_material",
@@ -42,21 +39,21 @@ def _assert_inspection_before_authoring(ctx: ScenarioContext) -> None:
     )
 
 
-vague_add_lighting = AgentScenario(
+vague_add_lighting = runner.AgentScenario(
     name="vague_add_lighting",
     description="'Add some lighting'; tests whether the agent inspects first.",
     tier="vague",
-    setup=setup_scene_with_ground_and_box,
+    setup=_fixtures.setup_scene_with_ground_and_box,
     prompts=["add some lighting to this scene"],
     assertions=[_assert_inspection_before_authoring],
 )
 
 
-vague_make_it_realistic = AgentScenario(
+vague_make_it_realistic = runner.AgentScenario(
     name="vague_make_it_realistic",
     description="'Make it look realistic' is intentionally underspecified.",
     tier="vague",
-    setup=setup_scene_with_one_cube,
+    setup=_fixtures.setup_scene_with_one_cube,
     prompts=[
         "I have a cube and I want my scene to look more realistic. What "
         "would you suggest? Should I add materials, lights, physics?",
@@ -65,12 +62,12 @@ vague_make_it_realistic = AgentScenario(
 )
 
 
-vague_set_up_physics = AgentScenario(
+vague_set_up_physics = runner.AgentScenario(
     name="vague_set_up_physics",
     description="'Set up the physics' on a populated scene.",
     tier="vague",
     suites=("smoke", "full"),
-    setup=setup_scene_with_ground_and_box,
+    setup=_fixtures.setup_scene_with_ground_and_box,
     prompts=[
         "Set up the physics in this scene. I don't know exactly what I "
         "need yet, but I want to be able to simulate things.",

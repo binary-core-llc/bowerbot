@@ -8,9 +8,13 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdShade
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdShade
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -27,14 +31,14 @@ def _asset(directory: Path, name: str) -> Path:
 
 def _setup(tmp):
     tmp_path = Path(tmp)
-    state, project = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, project = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return tmp_path, state, project
 
 
 def _place(tmp_path, state, name="table", group="Furniture"):
     asset = _asset(tmp_path, name)
-    r = asyncio.run(exec_tool(state, "place_asset", {
+    r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
         "asset_file_path": str(asset), "asset_name": name.title(),
         "group": group,
         "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
@@ -99,7 +103,7 @@ def test_place_asset_relative_path_from_project():
         project_sub.mkdir()
         shutil.copy2(asset, project_sub / "cup.usda")
 
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": "my_assets/cup.usda",
             "asset_name": "Cup", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -118,7 +122,7 @@ def test_place_asset_relative_path_from_library():
         shutil.copy2(asset, lib_dir / "mug.usda")
         state.library_dir = lib_dir
 
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": "mug.usda",
             "asset_name": "Mug", "group": "Products",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -130,7 +134,7 @@ def test_place_asset_relative_path_not_found():
     """Fails when relative path doesn't exist in project or library."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": "nonexistent/ghost.usda",
             "asset_name": "Ghost", "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -149,7 +153,7 @@ def test_place_asset_inside_relative_path():
         project_sub.mkdir()
         shutil.copy2(nested, project_sub / "book.usda")
 
-        r = asyncio.run(exec_tool(state, "place_asset_inside", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
             "asset_file_path": "imports/book.usda",
             "asset_name": "Book",
             "container_prim_path": container.data["prim_path"],
@@ -162,9 +166,9 @@ def test_place_asset_inside_relative_path():
 def test_place_asset_missing_stage():
     """Fails when no stage is open."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
+        state, _ = _helpers.make_state(Path(tmp))
         asset = _asset(Path(tmp), "x")
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "X",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -182,7 +186,7 @@ def test_place_asset_inside():
         container = _place(tmp_path, state, "building", "Architecture")
 
         nested_src = _asset(tmp_path, "counter")
-        r = asyncio.run(exec_tool(state, "place_asset_inside", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
             "asset_file_path": str(nested_src),
             "asset_name": "Counter",
             "container_prim_path": container.data["prim_path"],
@@ -203,7 +207,7 @@ def test_place_layout_grid_pattern():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "tile")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(asset),
                 "group": "Building/Floor",
@@ -234,7 +238,7 @@ def test_place_layout_linear_pattern_intakes_once():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "barrel")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(asset),
                 "group": "Props",
@@ -255,7 +259,7 @@ def test_place_layout_enumerated_transforms():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "crate")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(asset),
                 "group": "Props",
@@ -277,7 +281,7 @@ def test_place_layout_rejects_both_modes():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "thing")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(asset),
                 "group": "Props",
@@ -295,9 +299,9 @@ def test_place_layout_rejects_both_modes():
 def test_place_layout_missing_stage():
     """Fails when no stage is open."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
+        state, _ = _helpers.make_state(Path(tmp))
         asset = _asset(Path(tmp), "x")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(asset), "group": "Props",
                 "transforms": [{"translate": [0, 0, 0]}],
@@ -311,7 +315,7 @@ def test_place_layout_aggregates_all_problems():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "tile")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [
                 {"asset": str(asset), "group": "Props"},
                 {"asset": "ghost.usda", "group": "Props",
@@ -331,7 +335,7 @@ def test_place_layout_validate_only():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "tile")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "validate_only": True,
             "placements": [{
                 "asset": str(asset), "group": "Props",
@@ -357,9 +361,9 @@ def test_place_layout_rolls_back_on_failure(monkeypatch):
             raise RuntimeError("disk full")
 
         monkeypatch.setattr(
-            "bowerbot.services.asset_service.stage_utils.save_stage", boom,
+            "bowerbot.utils.stage.save_stage", boom,
         )
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(asset), "group": "Props",
                 "pattern": {"type": "grid", "origin": [0, 0, 0],
@@ -379,7 +383,7 @@ def test_place_layout_rejects_folder_asset():
         tmp_path, state, _ = _setup(tmp)
         folder = tmp_path / "tile"
         folder.mkdir()
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(folder), "group": "Props",
                 "transforms": [{"translate": [0, 0, 0]}],
@@ -394,7 +398,7 @@ def test_place_layout_rejects_3d_count_with_2d_spacing():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "tile")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{
                 "asset": str(asset), "group": "Props",
                 "pattern": {"type": "grid", "origin": [0, 0, 0],
@@ -410,7 +414,7 @@ def test_place_layout_rejects_invalid_prim_names():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "tile")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "validate_only": True,
             "placements": [{
                 "asset": str(asset), "group": "2ndFloor",
@@ -426,7 +430,7 @@ def test_place_layout_rejects_oversized_layout():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         asset = _asset(tmp_path, "tile")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "validate_only": True,
             "placements": [{
                 "asset": str(asset), "group": "Props",
@@ -444,7 +448,7 @@ def test_place_layout_same_file_two_spellings_no_collision():
         tmp_path, state, _ = _setup(tmp)
         state.library_dir = tmp_path
         asset = _asset(tmp_path, "tile")
-        r = asyncio.run(exec_tool(state, "place_layout", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [
                 {"asset": str(asset), "group": "Props",
                  "transforms": [{"translate": [0, 0, 0]}]},
@@ -463,8 +467,8 @@ def test_place_layout_same_file_two_spellings_no_collision():
 def test_list_project_assets_empty():
     """Empty project returns empty list."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
-        r = asyncio.run(exec_tool(state, "list_project_assets"))
+        state, _ = _helpers.make_state(Path(tmp))
+        r = asyncio.run(_helpers.exec_tool(state, "list_project_assets"))
         assert r.success, r.error
         assert r.data["assets"] == []
 
@@ -475,7 +479,7 @@ def test_list_project_assets_after_placement():
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state, "sofa")
 
-        r = asyncio.run(exec_tool(state, "list_project_assets"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_project_assets"))
         assert r.success, r.error
         assert r.data["total"] >= 1
 
@@ -489,7 +493,7 @@ def test_delete_project_asset_unreferenced():
         tmp_path, state, project = _setup(tmp)
         placed = _place(tmp_path, state, "rug", "Props")
 
-        asyncio.run(exec_tool(state, "remove_prim", {
+        asyncio.run(_helpers.exec_tool(state, "remove_prim", {
             "prim_path": placed.data["prim_path"],
         }))
 
@@ -497,7 +501,7 @@ def test_delete_project_asset_unreferenced():
             d for d in project.assets_dir.iterdir()
             if d.is_dir() and "rug" in d.name
         )
-        r = asyncio.run(exec_tool(state, "delete_project_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "delete_project_asset", {
             "name": folder.name,
         }))
         assert r.success, r.error
@@ -514,7 +518,7 @@ def test_delete_project_asset_refuses_when_referenced():
             d for d in project.assets_dir.iterdir()
             if d.is_dir() and "desk" in d.name
         )
-        r = asyncio.run(exec_tool(state, "delete_project_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "delete_project_asset", {
             "name": folder.name,
         }))
         assert not r.success
@@ -529,7 +533,7 @@ def test_cleanup_unused_contents_noop():
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "cleanup_unused_contents"))
+        r = asyncio.run(_helpers.exec_tool(state, "cleanup_unused_contents"))
         assert r.success, r.error
         assert r.data["total_removed"] == 0
 
@@ -546,7 +550,7 @@ def test_freeze_asset_noop_clean():
         folder = next(
             d for d in project.assets_dir.iterdir() if d.is_dir()
         )
-        r = asyncio.run(exec_tool(state, "freeze_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "freeze_asset", {
             "name": folder.name,
         }))
         assert r.success, r.error
@@ -565,7 +569,7 @@ def test_delete_project_texture_unreferenced():
         tex = tex_dir / "wood.png"
         tex.write_bytes(b"fake")
 
-        r = asyncio.run(exec_tool(state, "delete_project_texture", {
+        r = asyncio.run(_helpers.exec_tool(state, "delete_project_texture", {
             "file_name": "wood.png",
         }))
         assert r.success, r.error
@@ -591,7 +595,7 @@ def test_delete_project_texture_refuses_when_referenced():
         ).Set(Sdf.AssetPath("./textures/marble.exr"))
         ref_stage.Save()
 
-        r = asyncio.run(exec_tool(state, "delete_project_texture", {
+        r = asyncio.run(_helpers.exec_tool(state, "delete_project_texture", {
             "file_name": "marble.exr",
         }))
         assert not r.success
@@ -606,7 +610,7 @@ def test_place_asset_with_rotation():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "chair")
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Chair",
             "group": "Furniture",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -640,7 +644,7 @@ def test_place_asset_inside_nested_visible_in_scene():
         container = _place(tmp_path, state, "shelf", "Furniture")
 
         nested = _asset(tmp_path, "book")
-        r = asyncio.run(exec_tool(state, "place_asset_inside", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
             "asset_file_path": str(nested),
             "asset_name": "Book",
             "container_prim_path": container.data["prim_path"],
@@ -690,7 +694,7 @@ def test_freeze_asset_bakes_root_xform():
         root_prim.GetPayloads().AddPayload("./geo.usda")
         root_stage.Save()
 
-        r = asyncio.run(exec_tool(state, "freeze_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "freeze_asset", {
             "name": "shifted",
         }))
         assert r.success, r.error
@@ -707,7 +711,7 @@ def test_list_project_assets_shows_name():
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state, "mug", "Products")
 
-        r = asyncio.run(exec_tool(state, "list_project_assets"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_project_assets"))
         assert r.success, r.error
         asset = r.data["assets"][0]
         assert "name" in asset

@@ -7,7 +7,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdShade, UsdUtils
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdShade
+from pxr import UsdUtils
 
 # A tiny, fixed PNG (1x1 pixel) and HDR payload: real image bytes, so file
 # copies and hashes are stable.

@@ -8,14 +8,16 @@ import json
 import tempfile
 from pathlib import Path
 
-from pxr import Gf, Usd, UsdGeom
+from pxr import Gf
+from pxr import Usd
+from pxr import UsdGeom
 
-from bowerbot.config import UpAxis
-from bowerbot.project import Project
+from bowerbot import config
+from bowerbot import project_folder
+from bowerbot import scene_state
+from bowerbot import utils
 from bowerbot.services import project_service
-from bowerbot.state import SceneState
-from bowerbot.utils import stage_utils
-from tests._helpers import exec_tool
+from tests import _helpers
 
 
 def _make_asset(directory: Path, name: str, up_axis: str) -> Path:
@@ -32,8 +34,8 @@ def _make_asset(directory: Path, name: str, up_axis: str) -> Path:
     return path
 
 
-def _state(tmp: str) -> SceneState:
-    state = SceneState()
+def _state(tmp: str) -> scene_state.SceneState:
+    state = scene_state.SceneState()
     state.projects_dir = Path(tmp)
     return state
 
@@ -44,8 +46,8 @@ def _state(tmp: str) -> SceneState:
 def test_create_project_authors_up_axis_and_units():
     """A Z-up centimeter project authors those into scene.usda and project.json."""
     with tempfile.TemporaryDirectory() as tmp:
-        project = Project.create(
-            Path(tmp), "warehouse", up_axis=UpAxis.Z, meters_per_unit=0.01,
+        project = project_folder.Project.create(
+            Path(tmp), "warehouse", up_axis=config.UpAxis.Z, meters_per_unit=0.01,
         )
         stage = Usd.Stage.Open(str(project.scene_path))
         assert UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.z
@@ -58,7 +60,7 @@ def test_create_project_authors_up_axis_and_units():
 def test_create_project_defaults_to_y_meters():
     """Defaults are Y-up, meters."""
     with tempfile.TemporaryDirectory() as tmp:
-        project = Project.create(Path(tmp), "p")
+        project = project_folder.Project.create(Path(tmp), "p")
         stage = Usd.Stage.Open(str(project.scene_path))
         assert UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.y
         assert UsdGeom.GetStageMetersPerUnit(stage) == 1.0
@@ -74,8 +76,8 @@ def test_old_project_json_migrates_to_defaults():
             json.dumps({"name": "legacy", "scene_file": "scene.usda"}),
             encoding="utf-8",
         )
-        project = Project.load(pdir)
-        assert project.meta.up_axis is UpAxis.Y
+        project = project_folder.Project.load(pdir)
+        assert project.meta.up_axis is config.UpAxis.Y
         assert project.meta.meters_per_unit == 1.0
 
 
@@ -91,7 +93,7 @@ def test_create_project_service_threads_and_focuses():
         )
         assert data["up_axis"] == "Z"
         assert data["meters_per_unit"] == 0.01
-        assert state.up_axis is UpAxis.Z
+        assert state.up_axis is config.UpAxis.Z
         assert state.meters_per_unit == 0.01
 
 
@@ -99,7 +101,7 @@ def test_create_project_tool_accepts_params():
     """The create_project tool accepts up_axis + meters_per_unit."""
     with tempfile.TemporaryDirectory() as tmp:
         state = _state(tmp)
-        r = asyncio.run(exec_tool(
+        r = asyncio.run(_helpers.exec_tool(
             state, "create_project",
             {"name": "wh", "up_axis": "Z", "meters_per_unit": 0.01},
         ))
@@ -122,23 +124,23 @@ def test_up_axis_correction_signs():
         y_scene = Usd.Stage.CreateNew(str(d / "y_scene.usda"))
         UsdGeom.SetStageUpAxis(y_scene, UsdGeom.Tokens.y)
         y_scene.Save()
-        assert stage_utils.asset_conform(z_scene, str(y_asset))[1] == 90.0
-        assert stage_utils.asset_conform(y_scene, str(z_asset))[1] == -90.0
-        assert stage_utils.asset_conform(y_scene, str(y_asset))[1] is None
+        assert utils.stage.asset_conform(z_scene, str(y_asset))[1] == 90.0
+        assert utils.stage.asset_conform(y_scene, str(z_asset))[1] == -90.0
+        assert utils.stage.asset_conform(y_scene, str(y_asset))[1] is None
 
 
 def test_y_asset_stands_up_in_z_scene():
     """A Y-up asset placed in a Z-up project gets a +90 rotateX mapping +Y to +Z."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        project = Project.create(tmp_path, "wh", up_axis=UpAxis.Z)
-        state = SceneState(up_axis=UpAxis.Z)
+        project = project_folder.Project.create(tmp_path, "wh", up_axis=config.UpAxis.Z)
+        state = scene_state.SceneState(up_axis=config.UpAxis.Z)
         state.project = project
         state.stage_path = project.scene_path
-        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "scene"}))
 
         asset = _make_asset(tmp_path, "widget", "Y")
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Widget",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
@@ -158,14 +160,14 @@ def test_matching_axis_adds_no_correction():
     """A Y-up asset in a Y-up project authors no corrective rotation."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        project = Project.create(tmp_path, "studio", up_axis=UpAxis.Y)
-        state = SceneState(up_axis=UpAxis.Y)
+        project = project_folder.Project.create(tmp_path, "studio", up_axis=config.UpAxis.Y)
+        state = scene_state.SceneState(up_axis=config.UpAxis.Y)
         state.project = project
         state.stage_path = project.scene_path
-        asyncio.run(exec_tool(state, "create_stage", {"filename": "scene"}))
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "scene"}))
 
         asset = _make_asset(tmp_path, "widget", "Y")
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": str(asset), "asset_name": "Widget",
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,

@@ -14,21 +14,21 @@ logging.basicConfig(level=logging.INFO, format="  %(name)s: %(message)s")
 
 
 async def test_sketchfab_mug():
-    from bowerbot.agent import AgentRuntime
-    from bowerbot.config import load_settings
-    from bowerbot.skills.registry import SkillRegistry
-    from bowerbot.state import SceneState
+    from bowerbot import agent
+    from bowerbot import config
+    from bowerbot import scene_state
+    from bowerbot import skills
 
-    settings = load_settings()
+    settings = config.load_settings()
 
-    state = SceneState.from_settings(settings)
-    registry = SkillRegistry()
+    state = scene_state.SceneState.from_settings(settings)
+    registry = skills.SkillRegistry()
     registry.load_from_settings(settings)
 
     print(f"  Skills: {registry.enabled_skills}")
     print(f"  Tools: {[t['function']['name'] for t in registry.get_all_tools()]}")
 
-    agent = AgentRuntime(settings=settings, state=state, skill_registry=registry)
+    runtime = agent.AgentRuntime(settings=settings, state=state, skill_registry=registry)
 
     prompt = (
         "Search my Sketchfab account for a mug. "
@@ -38,7 +38,7 @@ async def test_sketchfab_mug():
     )
 
     print(f"\n  Prompt: {prompt}\n")
-    response = await agent.process(prompt)
+    response = await runtime.process(prompt)
 
     print("\n  === AGENT RESPONSE ===")
     for line in response.split("\n"):

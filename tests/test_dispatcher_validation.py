@@ -7,12 +7,12 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _state(tmp):
-    state, _ = make_state(Path(tmp))
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "t"}))
+    state, _ = _helpers.make_state(Path(tmp))
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "t"}))
     return state
 
 
@@ -20,7 +20,7 @@ def test_rejects_wrong_scalar_type():
     """A string where the schema declares a number is rejected before the handler."""
     with tempfile.TemporaryDirectory() as tmp:
         state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "place_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
             "asset_file_path": "x.usda", "asset_name": "X", "group": "Props",
             "translate_x": "abc", "translate_y": 0.0, "translate_z": 0.0,
         }))
@@ -32,7 +32,7 @@ def test_rejects_string_boolean_flag():
     """The string 'false' is rejected for boolean params instead of acting as True."""
     with tempfile.TemporaryDirectory() as tmp:
         state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "save_scene_snapshot", {
+        r = asyncio.run(_helpers.exec_tool(state, "save_scene_snapshot", {
             "name": "s", "force": "false",
         }))
         assert not r.success
@@ -43,7 +43,7 @@ def test_rejects_string_vector():
     """A char-decomposable string is rejected for array params."""
     with tempfile.TemporaryDirectory() as tmp:
         state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "setup_physics_scene", {
+        r = asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {
             "gravity_direction": "012",
         }))
         assert not r.success
@@ -54,7 +54,7 @@ def test_missing_required_param_rejected():
     """A call missing a schema-required param is rejected with the curated message."""
     with tempfile.TemporaryDirectory() as tmp:
         state = _state(tmp)
-        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+        r = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": "/Scene",
         }))
         assert not r.success

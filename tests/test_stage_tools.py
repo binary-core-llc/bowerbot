@@ -7,9 +7,11 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdGeom
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
 
-from tests._helpers import exec_tool, make_state
+from tests import _helpers
 
 
 def _asset(directory: Path, name: str) -> Path:
@@ -26,14 +28,14 @@ def _asset(directory: Path, name: str) -> Path:
 
 def _setup(tmp):
     tmp_path = Path(tmp)
-    state, project = make_state(tmp_path)
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+    state, project = _helpers.make_state(tmp_path)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
     return tmp_path, state, project
 
 
 def _place(tmp_path, state, name="table", group="Furniture"):
     asset = _asset(tmp_path, name)
-    r = asyncio.run(exec_tool(state, "place_asset", {
+    r = asyncio.run(_helpers.exec_tool(state, "place_asset", {
         "asset_file_path": str(asset), "asset_name": name.title(),
         "group": group,
         "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
@@ -61,7 +63,7 @@ def test_create_stage_idempotent():
     """Calling create_stage twice does not error."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "create_stage", {"filename": "test"}))
+        r = asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
         assert r.success, r.error
 
 
@@ -72,7 +74,7 @@ def test_list_scene_empty():
     """Empty scene returns an empty list."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_scene"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_scene"))
         assert r.success, r.error
         assert r.data["objects"] == []
 
@@ -83,7 +85,7 @@ def test_list_scene_with_assets():
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "list_scene"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_scene"))
         assert r.success, r.error
         assert len(r.data["objects"]) >= 1
         obj = r.data["objects"][0]
@@ -104,7 +106,7 @@ def test_rename_prim():
 
         parent = str(Sdf.Path(old_path).GetParentPath())
         new_path = f"{parent}/{new_name}"
-        r = asyncio.run(exec_tool(state, "rename_prim", {
+        r = asyncio.run(_helpers.exec_tool(state, "rename_prim", {
             "old_path": old_path, "new_path": new_path,
         }))
         assert r.success, r.error
@@ -118,7 +120,7 @@ def test_rename_prim_invalid_path():
     """Fails for a nonexistent prim."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "rename_prim", {
+        r = asyncio.run(_helpers.exec_tool(state, "rename_prim", {
             "old_path": "/Scene/Nope", "new_path": "/Scene/X",
         }))
         assert not r.success
@@ -134,7 +136,7 @@ def test_remove_prim():
         placed = _place(tmp_path, state)
         prim_path = placed.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "remove_prim", {"prim_path": prim_path}))
+        r = asyncio.run(_helpers.exec_tool(state, "remove_prim", {"prim_path": prim_path}))
         assert r.success, r.error
 
         stage = Usd.Stage.Open(str(project.scene_path))
@@ -145,7 +147,7 @@ def test_remove_prim_invalid_path():
     """Fails for a nonexistent prim."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "remove_prim", {
+        r = asyncio.run(_helpers.exec_tool(state, "remove_prim", {
             "prim_path": "/Scene/Ghost",
         }))
         assert not r.success
@@ -161,7 +163,7 @@ def test_move_asset():
         placed = _place(tmp_path, state)
         prim_path = placed.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "move_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "move_asset", {
             "prim_path": prim_path,
             "translate_x": 10.0, "translate_y": 0.0, "translate_z": 8.0,
         }))
@@ -184,7 +186,7 @@ def test_list_prim_attributes():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "list_prim_attributes", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_prim_attributes", {
             "prim_path": mesh_path,
         }))
         assert r.success, r.error
@@ -196,7 +198,7 @@ def test_list_prim_attributes_invalid_path():
     """Fails for a nonexistent prim."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_prim_attributes", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_prim_attributes", {
             "prim_path": "/Scene/Nope",
         }))
         assert not r.success
@@ -212,7 +214,7 @@ def test_set_prim_attribute():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+        r = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": mesh_path,
             "attribute_name": "size",
             "value": 2.5,
@@ -231,13 +233,13 @@ def test_set_prim_attribute_null_clears():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        asyncio.run(exec_tool(state, "set_prim_attribute", {
+        asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": mesh_path,
             "attribute_name": "size",
             "value": 5.0,
         }))
 
-        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+        r = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": mesh_path,
             "attribute_name": "size",
             "value": None,
@@ -256,7 +258,7 @@ def test_set_prim_attribute_json_string_vector():
         placed = _place(tmp_path, state)
         wrapper = placed.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+        r = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": wrapper,
             "attribute_name": "xformOp:translate",
             "value": "[1, 2, 3]",
@@ -275,7 +277,7 @@ def test_set_prim_attribute_garbage_string_refused():
         placed = _place(tmp_path, state)
         mesh_path = f"{placed.data['prim_path']}/asset/Mesh"
 
-        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+        r = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": mesh_path,
             "attribute_name": "size",
             "value": "garbage",
@@ -290,7 +292,7 @@ def test_set_prim_attribute_wrong_arity_refused():
         tmp_path, state, _ = _setup(tmp)
         placed = _place(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+        r = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": placed.data["prim_path"],
             "attribute_name": "xformOp:translate",
             "value": [1.0, 2.0],
@@ -308,16 +310,16 @@ def test_snapshot_lifecycle():
         tmp_path, state, project = _setup(tmp)
         _place(tmp_path, state)
 
-        r = asyncio.run(exec_tool(state, "save_scene_snapshot", {"name": "v1"}))
+        r = asyncio.run(_helpers.exec_tool(state, "save_scene_snapshot", {"name": "v1"}))
         assert r.success, r.error
         assert (project.path / "v1.usda").exists()
 
-        r = asyncio.run(exec_tool(state, "list_scene_snapshots"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_scene_snapshots"))
         assert r.success, r.error
         names = [s["name"] for s in r.data["snapshots"]]
         assert "v1" in names
 
-        r = asyncio.run(exec_tool(state, "delete_scene_snapshot", {"name": "v1"}))
+        r = asyncio.run(_helpers.exec_tool(state, "delete_scene_snapshot", {"name": "v1"}))
         assert r.success, r.error
         assert not (project.path / "v1.usda").exists()
 
@@ -326,7 +328,7 @@ def test_delete_snapshot_nonexistent():
     """Fails when deleting a snapshot that does not exist."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "delete_scene_snapshot", {"name": "nope"}))
+        r = asyncio.run(_helpers.exec_tool(state, "delete_scene_snapshot", {"name": "nope"}))
         assert not r.success
 
 
@@ -340,7 +342,7 @@ def test_list_prim_children():
         placed = _place(tmp_path, state)
         prim_path = placed.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "list_prim_children", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_prim_children", {
             "prim_path": prim_path,
         }))
         assert r.success, r.error
@@ -354,7 +356,7 @@ def test_list_prim_children_invalid_path():
     """Returns empty for a nonexistent prim."""
     with tempfile.TemporaryDirectory() as tmp:
         _, state, _ = _setup(tmp)
-        r = asyncio.run(exec_tool(state, "list_prim_children", {
+        r = asyncio.run(_helpers.exec_tool(state, "list_prim_children", {
             "prim_path": "/Scene/Nope",
         }))
         assert r.success
@@ -367,8 +369,8 @@ def test_list_prim_children_invalid_path():
 def test_compute_grid_layout():
     """Returns the correct number of positions with spacing."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
-        r = asyncio.run(exec_tool(state, "compute_grid_layout", {
+        state, _ = _helpers.make_state(Path(tmp))
+        r = asyncio.run(_helpers.exec_tool(state, "compute_grid_layout", {
             "count": 6, "spacing": 2.5,
         }))
         assert r.success, r.error
@@ -378,8 +380,8 @@ def test_compute_grid_layout():
 def test_compute_grid_layout_single():
     """Single position returns one entry at origin."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
-        r = asyncio.run(exec_tool(state, "compute_grid_layout", {
+        state, _ = _helpers.make_state(Path(tmp))
+        r = asyncio.run(_helpers.exec_tool(state, "compute_grid_layout", {
             "count": 1, "spacing": 1.0,
         }))
         assert r.success, r.error
@@ -396,7 +398,7 @@ def test_move_asset_with_rotation():
         placed = _place(tmp_path, state)
         prim_path = placed.data["prim_path"]
 
-        r = asyncio.run(exec_tool(state, "move_asset", {
+        r = asyncio.run(_helpers.exec_tool(state, "move_asset", {
             "prim_path": prim_path,
             "translate_x": 5.0, "translate_y": 0.0, "translate_z": 3.0,
             "rotate_y": 90.0,
@@ -414,13 +416,13 @@ def test_set_prim_attribute_color_vec3():
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state)
 
-        created = asyncio.run(exec_tool(state, "create_light", {
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "SphereLight", "light_name": "L",
             "attributes": {"inputs:intensity": 100.0},
         }))
         assert created.success, created.error
 
-        r = asyncio.run(exec_tool(state, "set_prim_attribute", {
+        r = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
             "prim_path": created.data["prim_path"],
             "attribute_name": "inputs:color",
             "value": [0.1, 0.2, 0.9],
@@ -436,11 +438,11 @@ def test_list_scene_with_lights_and_assets():
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, _ = _setup(tmp)
         _place(tmp_path, state)
-        asyncio.run(exec_tool(state, "create_light", {
+        asyncio.run(_helpers.exec_tool(state, "create_light", {
             "light_type": "DistantLight", "light_name": "Sun",
         }))
 
-        r = asyncio.run(exec_tool(state, "list_scene"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_scene"))
         assert r.success, r.error
         kinds = {obj.get("kind") for obj in r.data["objects"]}
         assert "asset" in kinds or "geometry" in kinds
@@ -457,13 +459,13 @@ def test_remove_prim_updates_object_count():
         p1 = _place(tmp_path, state, "a")
         _place(tmp_path, state, "b")
 
-        before = asyncio.run(exec_tool(state, "list_scene"))
+        before = asyncio.run(_helpers.exec_tool(state, "list_scene"))
         count_before = before.data["object_count"]
 
-        asyncio.run(exec_tool(state, "remove_prim", {
+        asyncio.run(_helpers.exec_tool(state, "remove_prim", {
             "prim_path": p1.data["prim_path"],
         }))
-        after = asyncio.run(exec_tool(state, "list_scene"))
+        after = asyncio.run(_helpers.exec_tool(state, "list_scene"))
         assert after.data["object_count"] == count_before - 1
 
 
@@ -473,8 +475,8 @@ def test_remove_prim_updates_object_count():
 def test_compute_grid_layout_large():
     """Large grid (16 items) returns correct count."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, _ = make_state(Path(tmp))
-        r = asyncio.run(exec_tool(state, "compute_grid_layout", {
+        state, _ = _helpers.make_state(Path(tmp))
+        r = asyncio.run(_helpers.exec_tool(state, "compute_grid_layout", {
             "count": 16, "spacing": 2.0,
         }))
         assert r.success, r.error
@@ -491,12 +493,12 @@ def test_multiple_snapshots():
         _place(tmp_path, state)
 
         for name in ("alpha", "beta", "gamma"):
-            r = asyncio.run(exec_tool(
+            r = asyncio.run(_helpers.exec_tool(
                 state, "save_scene_snapshot", {"name": name},
             ))
             assert r.success, r.error
 
-        r = asyncio.run(exec_tool(state, "list_scene_snapshots"))
+        r = asyncio.run(_helpers.exec_tool(state, "list_scene_snapshots"))
         assert r.success, r.error
         names = {s["name"] for s in r.data["snapshots"]}
         assert names == {"alpha", "beta", "gamma"}

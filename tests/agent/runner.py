@@ -28,19 +28,19 @@ import datetime as dt
 import json
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 from typing import Any
 
 from pxr import Usd
 
-from bowerbot.agent import AgentRuntime
-from bowerbot.config import Settings
-from bowerbot.project import Project
-from bowerbot.skills.base import ToolResult
-from bowerbot.skills.registry import SkillRegistry
-from bowerbot.state import SceneState
-from bowerbot.utils import inspection_utils, stage_utils
+from bowerbot import agent
+from bowerbot import config
+from bowerbot import project_folder
+from bowerbot import scene_state
+from bowerbot import skills
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class ScenarioContext:
     scenario_name: str
     project_dir: Path
     scene_path: Path
-    state: SceneState
+    state: scene_state.SceneState
     turns: list[TurnRecord]
 
     @property
@@ -116,7 +116,7 @@ class AgentScenario:
     suites: tuple[str, ...] = ("full",)
 
 
-class _RecordingAgent(AgentRuntime):
+class _RecordingAgent(agent.AgentRuntime):
     """AgentRuntime subclass that records every tool call into the active turn."""
 
     def __post_init__(self) -> None:
@@ -132,7 +132,7 @@ class _RecordingAgent(AgentRuntime):
 
     async def _dispatch_tool(
         self, func_name: str, func_args: dict[str, Any],
-    ) -> ToolResult:
+    ) -> skills.ToolResult:
         """Dispatch via AgentRuntime then record the call + result."""
         result = await super()._dispatch_tool(func_name, func_args)
         self._current_turn_calls.append(ToolCallRecord(
@@ -151,7 +151,7 @@ class ScenarioRunner:
 
     def __init__(
         self,
-        settings: Settings,
+        settings: config.Settings,
         project_root: Path,
         artifact_root: Path,
     ) -> None:
@@ -166,23 +166,23 @@ class ScenarioRunner:
             scenario.setup(project.path)
 
         state = self._build_state(project)
-        agent = _RecordingAgent(
+        runtime = _RecordingAgent(
             settings=self.settings,
             state=state,
-            skill_registry=SkillRegistry(),
+            skill_registry=skills.SkillRegistry(),
         )
 
         turns: list[TurnRecord] = []
         for index, prompt in enumerate(scenario.prompts):
-            turn_calls = agent.start_prompt(index)
+            turn_calls = runtime.start_prompt(index)
             try:
-                response = await agent.process(prompt)
+                response = await runtime.process(prompt)
             except Exception as exc:
                 response = f"[AGENT ERROR] {type(exc).__name__}: {exc}"
                 logger.exception(
                     "Scenario %s turn %s raised", scenario.name, index,
                 )
-            usage = self._last_usage(agent)
+            usage = self._last_usage(runtime)
             turns.append(TurnRecord(
                 prompt=prompt,
                 response=response,
@@ -192,7 +192,7 @@ class ScenarioRunner:
             ))
 
         if state.project is not None and state.project.scene_path.exists():
-            state.stage = stage_utils.open_stage(state.project.scene_path)
+            state.stage = utils.stage.open_stage(state.project.scene_path)
 
         ctx = ScenarioContext(
             scenario_name=scenario.name,
@@ -217,21 +217,21 @@ class ScenarioRunner:
 
         return ctx
 
-    def _build_project(self, scenario_name: str) -> Project:
+    def _build_project(self, scenario_name: str) -> project_folder.Project:
         """Create a fresh project directory for the scenario."""
         self.project_root.mkdir(parents=True, exist_ok=True)
-        return Project.create(self.project_root, scenario_name)
+        return project_folder.Project.create(self.project_root, scenario_name)
 
-    def _build_state(self, project: Project) -> SceneState:
+    def _build_state(self, project: project_folder.Project) -> scene_state.SceneState:
         """Build a SceneState bound to *project*, opening its scene if present."""
-        state = SceneState(
+        state = scene_state.SceneState(
             library_dir=Path(self.settings.assets_dir),
         )
         state.project = project
         state.stage_path = project.scene_path
         if project.scene_path.exists():
-            state.stage = stage_utils.open_stage(project.scene_path)
-            state.object_count = len(inspection_utils.list_prims(state.stage))
+            state.stage = utils.stage.open_stage(project.scene_path)
+            state.object_count = len(utils.inspection.list_prims(state.stage))
             state.mark_saved()
         return state
 

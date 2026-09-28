@@ -7,58 +7,49 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.constants import ScatterNamespace, ScatterRules
-from bowerbot.schemas import (
-    ScatterAlign,
-    ScatterArrangement,
-    ScatterAssetOrder,
-    ScatterDropAlign,
-    ScatterOutput,
-    ScatterPathFacing,
-    ScatterPathSide,
-    ScatterRegionFalloff,
-)
+from bowerbot import constants
+from bowerbot import scene_state
+from bowerbot import schemas
+from bowerbot import skills
 from bowerbot.services import scatter_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_project, require_stage
+from bowerbot.tools import _helpers
 
 
-def scatter_on_surface(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Distribute assets over surfaces, each resting on the surface it lands on."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = scatter_service.scatter_on_surface(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def scatter_along_path(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Place assets along a path, circle or curve, resting on the surface below."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
-    if (err := require_project(state)):
+    if (err := _helpers.require_project(state)):
         return err
     try:
         data = scatter_service.scatter_along_path(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def drop_to_surface(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Drop existing placements onto the surface beneath them."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = scatter_service.drop_to_surface(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 _VEC3 = {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
@@ -94,7 +85,7 @@ _COMMON = {
         "type": "string", "minLength": 1,
         "description": (
             "Scene group, e.g. 'Nature' or 'Street/Props' "
-            f"(default '{ScatterNamespace.DEFAULT_GROUP}')."
+            f"(default '{constants.ScatterNamespace.DEFAULT_GROUP}')."
         ),
     },
     "assets": _ASSETS,
@@ -132,13 +123,13 @@ _COMMON = {
     },
 }
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="scatter_on_surface",
         description=(
             "Distribute many copies of one or more assets over surface prims "
             "(ground, floors, terrain, rocks, hulls, shelves), from a handful to "
-            f"a million (max {ScatterRules.MAX_INSTANCES:,}). Every piece rests on the "
+            f"a million (max {constants.ScatterRules.MAX_INSTANCES:,}). Every piece rests on the "
             "actual triangles it lands on, however uneven, sloped or curved, "
             "conformed to the scene's up-axis and units. Arrangements: 'random' "
             "(count or density; optional min_spacing, patchy 'variation', "
@@ -149,7 +140,7 @@ TOOLS: list[Tool] = [
             "place_asset. Default output is one PointInstancer at "
             "/Scene/<group>/<name> whose prototypes reference the assets (light "
             "for large counts; the scatter moves or is removed as one prim); "
-            f"output='placements' writes up to {ScatterRules.MAX_PLACEMENTS:,} "
+            f"output='placements' writes up to {constants.ScatterRules.MAX_PLACEMENTS:,} "
             "individually editable placements, like place_layout. Lengths are "
             "scene units; density is instances per square meter. Use "
             "validate_only first for large densities."
@@ -166,7 +157,7 @@ TOOLS: list[Tool] = [
                     ),
                 },
                 "arrangement": {
-                    "type": "string", "enum": [a.value for a in ScatterArrangement],
+                    "type": "string", "enum": [a.value for a in schemas.ScatterArrangement],
                     "description": "random (default), rows, or pile.",
                 },
                 "count": {
@@ -204,7 +195,8 @@ TOOLS: list[Tool] = [
                         "center_prim": {"type": "string"},
                         "radius": {"type": "number", "exclusiveMinimum": 0},
                         "falloff": {
-                            "type": "string", "enum": [f.value for f in ScatterRegionFalloff],
+                            "type": "string",
+                            "enum": [f.value for f in schemas.ScatterRegionFalloff],
                         },
                         "polygon": {"type": "array", "items": _VEC3, "minItems": 3},
                     },
@@ -228,7 +220,7 @@ TOOLS: list[Tool] = [
                     ),
                 },
                 "align": {
-                    "type": "string", "enum": [a.value for a in ScatterAlign],
+                    "type": "string", "enum": [a.value for a in schemas.ScatterAlign],
                     "description": (
                         "'surface' (default) tilts pieces to the surface normal "
                         "(stones, debris, moss); 'up' keeps them upright (trees, "
@@ -267,14 +259,14 @@ TOOLS: list[Tool] = [
                     "description": "pile: steepest slope the heap holds (default 35).",
                 },
                 "output": {
-                    "type": "string", "enum": [o.value for o in ScatterOutput],
+                    "type": "string", "enum": [o.value for o in schemas.ScatterOutput],
                     "description": "instancer (default) or placements.",
                 },
             },
             "required": ["name", "assets", "surfaces"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="scatter_along_path",
         description=(
             "Place assets along a path: a polyline ('points'), a circle around a "
@@ -335,7 +327,7 @@ TOOLS: list[Tool] = [
                     "description": "Distance along the path before the first station.",
                 },
                 "sides": {
-                    "type": "string", "enum": [s.value for s in ScatterPathSide],
+                    "type": "string", "enum": [s.value for s in schemas.ScatterPathSide],
                     "description": "On the line (center, default), left, right, or both.",
                 },
                 "offset": {
@@ -343,7 +335,7 @@ TOOLS: list[Tool] = [
                     "description": "Sideways distance from the line for left/right/both.",
                 },
                 "facing": {
-                    "type": "string", "enum": [f.value for f in ScatterPathFacing],
+                    "type": "string", "enum": [f.value for f in schemas.ScatterPathFacing],
                     "description": (
                         "tangent (default; long axis follows the path), path "
                         "(face the line), center, outward, fixed, random."
@@ -358,7 +350,7 @@ TOOLS: list[Tool] = [
                     "description": "Extra spin for assets whose front is not the convention.",
                 },
                 "align": {
-                    "type": "string", "enum": [a.value for a in ScatterAlign],
+                    "type": "string", "enum": [a.value for a in schemas.ScatterAlign],
                     "description": "'up' (default) keeps pieces upright; 'surface' tilts.",
                 },
                 "follow_slope": {
@@ -376,18 +368,18 @@ TOOLS: list[Tool] = [
                     ),
                 },
                 "asset_order": {
-                    "type": "string", "enum": [o.value for o in ScatterAssetOrder],
+                    "type": "string", "enum": [o.value for o in schemas.ScatterAssetOrder],
                     "description": "random (weighted, default) or cycle through assets in order.",
                 },
                 "output": {
-                    "type": "string", "enum": [o.value for o in ScatterOutput],
+                    "type": "string", "enum": [o.value for o in schemas.ScatterOutput],
                     "description": "placements (default) or instancer.",
                 },
             },
             "required": ["name", "assets"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="drop_to_surface",
         description=(
             "Drop objects already in the scene onto the surface beneath them so "
@@ -413,7 +405,7 @@ TOOLS: list[Tool] = [
                     "description": "Surfaces to land on (default: all other scene geometry).",
                 },
                 "align": {
-                    "type": "string", "enum": [a.value for a in ScatterDropAlign],
+                    "type": "string", "enum": [a.value for a in schemas.ScatterDropAlign],
                     "description": "keep (default) or surface.",
                 },
             },

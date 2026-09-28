@@ -8,7 +8,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pxr import Sdf, Usd
+from pxr import Sdf
+from pxr import Usd
 
 logger = logging.getLogger(__name__)
 

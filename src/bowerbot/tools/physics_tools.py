@@ -7,185 +7,185 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import PhysicsApiName, PhysicsJointType
+from bowerbot import scene_state
+from bowerbot import schemas
+from bowerbot import skills
 from bowerbot.services import physics_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
+from bowerbot.tools import _helpers
 
 
 def list_physics_api_properties(
-    _state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    _state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Return live schema-registry info for a UsdPhysics applied API."""
     try:
         data = physics_service.list_physics_api_properties(_state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def apply_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Apply a UsdPhysics applied API to a prim and author opinions."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.apply_physics_api(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_physics_api(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Remove a UsdPhysics applied API from a prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.remove_physics_api(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def setup_physics_scene(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def setup_physics_scene(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Create the scene's PhysicsScene singleton with gravity attributes."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.setup_physics_scene(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 def list_physics_scenes(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Return every UsdPhysics.Scene prim under /Scene/Physics."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.list_physics_scenes(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 def remove_physics_scene(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Remove a UsdPhysics.Scene prim by name."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.remove_physics_scene(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def get_physics_summary(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def get_physics_summary(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Return asset-side and scene-side physics opinions for a prim path."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.get_physics_summary(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 def list_joint_properties(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Schema-registry introspection for a typed joint prim."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.list_joint_properties(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def create_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Create a typed joint connecting two bodies."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.create_joint(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_joint(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Remove a joint prim (asset-level or scene-level)."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.remove_joint(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_joints(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_joints(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List joints scene-wide, scoped under a prim, or inside an asset folder."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.list_joints(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 def create_or_update_collision_group(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Create or update a UsdPhysicsCollisionGroup under /Scene/Physics/Groups."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.create_or_update_collision_group(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 def remove_collision_group(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Remove a collision group; refuses if other groups depend on it."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.remove_collision_group(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 def list_collision_groups(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """List every collision group with membership, filters, and merge token."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = physics_service.list_collision_groups(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-_API_VALUES = [a.value for a in PhysicsApiName]
-_JOINT_TYPE_VALUES = [j.value for j in PhysicsJointType]
+_API_VALUES = [a.value for a in schemas.PhysicsApiName]
+_JOINT_TYPE_VALUES = [j.value for j in schemas.PhysicsJointType]
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="list_physics_api_properties",
         description=(
             "Discover the attributes and relationships a UsdPhysics applied "
@@ -234,7 +234,7 @@ TOOLS: list[Tool] = [
             "required": ["api_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="apply_physics_api",
         description=(
             "Apply a UsdPhysics applied API to a prim and author the "
@@ -371,7 +371,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "api_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_physics_api",
         description=(
             "Remove a UsdPhysics applied API and its authored opinions "
@@ -423,7 +423,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path", "api_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="setup_physics_scene",
         description=(
             "Create the scene's PhysicsScene singleton at "
@@ -471,7 +471,7 @@ TOOLS: list[Tool] = [
             },
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_physics_scenes",
         description=(
             "List every UsdPhysics.Scene prim under /Scene/Physics. "
@@ -481,7 +481,7 @@ TOOLS: list[Tool] = [
         ),
         parameters={"type": "object", "properties": {}},
     ),
-    Tool(
+    skills.Tool(
         name="remove_physics_scene",
         description=(
             "Remove a UsdPhysics.Scene prim by name from /Scene/Physics. "
@@ -501,7 +501,7 @@ TOOLS: list[Tool] = [
             "required": ["name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="get_physics_summary",
         description=(
             "Inspect every authored physics opinion on a prim and its "
@@ -530,7 +530,7 @@ TOOLS: list[Tool] = [
 ]
 
 
-TOOLS.append(Tool(
+TOOLS.append(skills.Tool(
     name="create_or_update_collision_group",
     description=(
         "Create or update a UsdPhysicsCollisionGroup typed prim at "
@@ -605,7 +605,7 @@ TOOLS.append(Tool(
         "required": ["name"],
     },
 ))
-TOOLS.append(Tool(
+TOOLS.append(skills.Tool(
     name="remove_collision_group",
     description=(
         "Remove a UsdPhysicsCollisionGroup. Refuses if other groups "
@@ -633,7 +633,7 @@ TOOLS.append(Tool(
         "required": ["name"],
     },
 ))
-TOOLS.append(Tool(
+TOOLS.append(skills.Tool(
     name="list_joint_properties",
     description=(
         "Schema-registry introspection for a UsdPhysics typed joint "
@@ -656,7 +656,7 @@ TOOLS.append(Tool(
         "required": ["joint_type"],
     },
 ))
-TOOLS.append(Tool(
+TOOLS.append(skills.Tool(
     name="create_joint",
     description=(
         "Create a typed UsdPhysics joint connecting two bodies. "
@@ -757,7 +757,7 @@ TOOLS.append(Tool(
         "required": ["joint_type", "name"],
     },
 ))
-TOOLS.append(Tool(
+TOOLS.append(skills.Tool(
     name="remove_joint",
     description=(
         "Remove a typed joint prim. For scope='scene', pass the "
@@ -799,7 +799,7 @@ TOOLS.append(Tool(
         },
     },
 ))
-TOOLS.append(Tool(
+TOOLS.append(skills.Tool(
     name="list_joints",
     description=(
         "List every typed joint prim. For scope='scene', returns "
@@ -836,7 +836,7 @@ TOOLS.append(Tool(
         },
     },
 ))
-TOOLS.append(Tool(
+TOOLS.append(skills.Tool(
     name="list_collision_groups",
     description=(
         "Return every UsdPhysicsCollisionGroup under /Scene/Physics "

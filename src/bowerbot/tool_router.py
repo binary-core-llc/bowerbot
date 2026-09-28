@@ -13,24 +13,24 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from bowerbot import dispatcher
-from bowerbot.skills.base import ToolResult
-from bowerbot.state import SceneState
+from bowerbot import scene_state
+from bowerbot import skills
 
 if TYPE_CHECKING:
-    from bowerbot.skills.registry import SkillRegistry
+    from bowerbot import skills
 
 
-def combined_tool_schemas(skill_registry: SkillRegistry) -> list[dict[str, Any]]:
+def combined_tool_schemas(skill_registry: skills.SkillRegistry) -> list[dict[str, Any]]:
     """Every tool the client can call: core tools plus enabled skills."""
     return dispatcher.get_tool_schemas() + skill_registry.get_all_tools()
 
 
 async def route(
-    state: SceneState,
-    skill_registry: SkillRegistry,
+    state: scene_state.SceneState,
+    skill_registry: skills.SkillRegistry,
     tool_name: str,
     params: dict[str, Any],
-) -> ToolResult:
+) -> skills.ToolResult:
     """Route a tool call to the core dispatcher or a skill."""
     if tool_name in dispatcher.get_tool_names():
         return await dispatcher.execute(state, tool_name, params)

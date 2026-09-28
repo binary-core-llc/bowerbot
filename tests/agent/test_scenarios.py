@@ -7,21 +7,19 @@ from __future__ import annotations
 
 import pytest
 
-from tests.agent.runner import AgentScenario, ScenarioRunner
-from tests.agent.scenarios import (
-    conceptual,
-    discovery,
-    exploratory,
-    iteration,
-    physics_goals,
-    recovery,
-    refusals,
-    tool_categories,
-    tool_coverage,
-    vague_intent,
-)
+from tests.agent import runner
+from tests.agent.scenarios import conceptual
+from tests.agent.scenarios import discovery
+from tests.agent.scenarios import exploratory
+from tests.agent.scenarios import iteration
+from tests.agent.scenarios import physics_goals
+from tests.agent.scenarios import recovery
+from tests.agent.scenarios import refusals
+from tests.agent.scenarios import tool_categories
+from tests.agent.scenarios import tool_coverage
+from tests.agent.scenarios import vague_intent
 
-_ALL_SCENARIOS: list[AgentScenario] = (
+_ALL_SCENARIOS: list[runner.AgentScenario] = (
     discovery.ALL
     + vague_intent.ALL
     + physics_goals.ALL
@@ -49,8 +47,8 @@ def _params() -> list:
 @pytest.mark.agent_integration
 @pytest.mark.parametrize("scenario", _params())
 async def test_agent_scenario(
-    scenario: AgentScenario,
-    scenario_runner: ScenarioRunner,
+    scenario: runner.AgentScenario,
+    scenario_runner: runner.ScenarioRunner,
 ) -> None:
     """Run one agent scenario end-to-end and apply its assertions."""
     await scenario_runner.run(scenario)

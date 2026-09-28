@@ -7,14 +7,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.state import SceneState
-from bowerbot.utils import validation_utils
+from bowerbot import scene_state
+from bowerbot import utils
 
 
-def validate_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def validate_scene(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Run the validator against the active stage file."""
     del params
-    result = validation_utils.validate_stage(
+    result = utils.validation.validate_stage(
         state.stage_path,
         expected_meters_per_unit=state.meters_per_unit,
         expected_up_axis=state.up_axis,
@@ -34,14 +34,14 @@ def validate_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def package_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
+def package_scene(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bundle the active scene into a ``.usdz`` alongside the stage file."""
     for_apple = bool(params.get("for_apple_ar_quick_look", False))
 
     apple_issues: list[dict[str, Any]] = []
     apple_errors: list[dict[str, Any]] = []
     if for_apple:
-        apple_result = validation_utils.validate_for_ar_quick_look(state.stage_path)
+        apple_result = utils.validation.validate_for_ar_quick_look(state.stage_path)
         apple_issues = [
             {"severity": i.severity.value, "message": i.message, "prim": i.prim_path}
             for i in apple_result.issues
@@ -63,7 +63,7 @@ def package_scene(state: SceneState, params: dict[str, Any]) -> dict[str, Any]:
             }
 
     output_path = state.stage_path.with_suffix(".usdz")
-    result_path = validation_utils.package_to_usdz(state.stage_path, output_path)
+    result_path = utils.validation.package_to_usdz(state.stage_path, output_path)
     return {
         "usdz_path": str(result_path),
         "for_apple_ar_quick_look": for_apple,

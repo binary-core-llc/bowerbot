@@ -5,37 +5,65 @@
 
 from __future__ import annotations
 
-from tests.golden.model import Y_M, Scenario, Step
+from tests.golden import model
 
 P = "/Scene/Props/Thing_01"
 
 # Plausible arguments for every tool; with no project open, each call shows how
 # the tool answers when there is nothing to work on.
 ARGS: dict[str, dict[str, object]] = {
-    "add_asset_attribute_variant": {"prim_path": P, "variant_set": "s", "variant_name": "v",
-                                    "overrides": {f"{P}/asset/A": {"visibility": "invisible"}}},
-    "add_asset_configuration_variant": {"prim_path": P, "variant_set": "s", "variant_name": "v",
-                                        "activations": {f"{P}/asset/A": False}},
-    "add_asset_geometry_variant": {"prim_path": P, "variant_set": "s", "variant_name": "v",
-                                   "payloads": {"/thing": "./geo_low.usda"}},
-    "add_asset_material_variant": {"prim_path": P, "variant_set": "s", "variant_name": "v",
-                                   "bindings": {f"{P}/asset/A": f"{P}/asset/mtl/m"}},
+    "add_asset_attribute_variant": {
+        "prim_path": P,
+        "variant_set": "s",
+        "variant_name": "v",
+        "overrides": {f"{P}/asset/A": {"visibility": "invisible"}},
+    },
+    "add_asset_configuration_variant": {
+        "prim_path": P,
+        "variant_set": "s",
+        "variant_name": "v",
+        "activations": {f"{P}/asset/A": False},
+    },
+    "add_asset_geometry_variant": {
+        "prim_path": P,
+        "variant_set": "s",
+        "variant_name": "v",
+        "payloads": {"/thing": "./geo_low.usda"},
+    },
+    "add_asset_material_variant": {
+        "prim_path": P,
+        "variant_set": "s",
+        "variant_name": "v",
+        "bindings": {f"{P}/asset/A": f"{P}/asset/mtl/m"},
+    },
     "add_scene_lighting_attribute_variant": {
-        "variant_set": "s", "variant_name": "v",
-        "overrides": {"/Scene/Lighting/Key": {"inputs:intensity": 1.0}}},
+        "variant_set": "s",
+        "variant_name": "v",
+        "overrides": {"/Scene/Lighting/Key": {"inputs:intensity": 1.0}},
+    },
     "add_scene_lighting_selection_variant": {
-        "variant_set": "s", "variant_name": "v", "activations": {"/Scene/Lighting/Key": True}},
-    "add_scene_model_selection_variant": {"prim_path": P, "variant_set": "s",
-                                          "variant_name": "v",
-                                          "asset_file_path": "$lib/crate.usda"},
+        "variant_set": "s",
+        "variant_name": "v",
+        "activations": {"/Scene/Lighting/Key": True},
+    },
+    "add_scene_model_selection_variant": {
+        "prim_path": P,
+        "variant_set": "s",
+        "variant_name": "v",
+        "asset_file_path": "$lib/crate.usda",
+    },
     "apply_physics_api": {"prim_path": P, "api_name": "PhysicsRigidBodyAPI"},
     "bind_material": {"prim_path": P, "material_file": "$lib/materials/oak.usda"},
     "cleanup_unused_contents": {},
     "cleanup_unused_materials": {},
     "compute_grid_layout": {"count": 4},
     "create_camera": {"camera_name": "Cam"},
-    "create_joint": {"joint_type": "PhysicsFixedJoint", "name": "J", "body0": P,
-                     "body1": "/Scene/Props/Other_01"},
+    "create_joint": {
+        "joint_type": "PhysicsFixedJoint",
+        "name": "J",
+        "body0": P,
+        "body1": "/Scene/Props/Other_01",
+    },
     "create_light": {"light_type": "SphereLight", "light_name": "Key"},
     "create_material": {"prim_path": P, "material_name": "oak"},
     "create_or_update_collision_group": {"name": "G"},
@@ -68,14 +96,28 @@ ARGS: dict[str, dict[str, object]] = {
     "move_asset": {"prim_path": P, "translate_x": 1.0},
     "open_project": {"name": "nope"},
     "package_scene": {},
-    "place_asset": {"asset_file_path": "$lib/crate.usda", "asset_name": "Crate",
-                    "group": "Props", "translate_x": 0.0, "translate_y": 0.0,
-                    "translate_z": 0.0},
-    "place_asset_inside": {"asset_file_path": "$lib/crate.usda", "asset_name": "Crate",
-                           "container_prim_path": P, "group": "Props", "translate_x": 0.0,
-                           "translate_y": 0.0, "translate_z": 0.0},
-    "place_layout": {"placements": [{"asset": "$lib/crate.usda", "group": "Props",
-                                     "transforms": [{"translate": [0, 0, 0]}]}]},
+    "place_asset": {
+        "asset_file_path": "$lib/crate.usda",
+        "asset_name": "Crate",
+        "group": "Props",
+        "translate_x": 0.0,
+        "translate_y": 0.0,
+        "translate_z": 0.0,
+    },
+    "place_asset_inside": {
+        "asset_file_path": "$lib/crate.usda",
+        "asset_name": "Crate",
+        "container_prim_path": P,
+        "group": "Props",
+        "translate_x": 0.0,
+        "translate_y": 0.0,
+        "translate_z": 0.0,
+    },
+    "place_layout": {
+        "placements": [
+            {"asset": "$lib/crate.usda", "group": "Props", "transforms": [{"translate": [0, 0, 0]}]}
+        ]
+    },
     "remove_asset_variant": {"prim_path": P, "variant_set": "s", "variant_name": "v"},
     "remove_asset_variant_set": {"prim_path": P, "variant_set": "s"},
     "remove_camera": {"prim_path": "/Scene/Cameras/Cam"},
@@ -90,21 +132,30 @@ ARGS: dict[str, dict[str, object]] = {
     "remove_scene_variant_set": {"prim_path": P, "variant_set": "s"},
     "rename_prim": {"old_path": P, "new_path": "/Scene/Props/Other"},
     "save_scene_snapshot": {"name": "snap"},
-    "scatter_along_path": {"name": "Row", "assets": [{"asset": "$lib/crate.usda"}],
-                           "points": [[0, 0, 0], [4, 0, 0]], "count": 3},
-    "scatter_on_surface": {"name": "Pile", "assets": [{"asset": "$lib/crate.usda"}],
-                           "surfaces": [P], "count": 3},
+    "scatter_along_path": {
+        "name": "Row",
+        "assets": [{"asset": "$lib/crate.usda"}],
+        "points": [[0, 0, 0], [4, 0, 0]],
+        "count": 3,
+    },
+    "scatter_on_surface": {
+        "name": "Pile",
+        "assets": [{"asset": "$lib/crate.usda"}],
+        "surfaces": [P],
+        "count": 3,
+    },
     "search_assets": {"query": "chair"},
     "search_textures": {"query": "studio"},
     "select_asset_variant": {"prim_path": P, "variant_set": "s", "variant_name": "v"},
-    "select_asset_variant_for_instance": {"prim_path": P, "variant_set": "s",
-                                          "variant_name": "v"},
+    "select_asset_variant_for_instance": {"prim_path": P, "variant_set": "s", "variant_name": "v"},
     "select_scene_variant": {"prim_path": P, "variant_set": "s", "variant_name": "v"},
-    "set_prim_attribute": {"prim_path": P, "attribute_name": "visibility",
-                           "value": "invisible"},
-    "setup_asset_geometry_variants": {"prim_path": P, "variant_set": "s",
-                                      "variants": {"high": "./geo.usda"},
-                                      "default_variant": "high"},
+    "set_prim_attribute": {"prim_path": P, "attribute_name": "visibility", "value": "invisible"},
+    "setup_asset_geometry_variants": {
+        "prim_path": P,
+        "variant_set": "s",
+        "variants": {"high": "./geo.usda"},
+        "default_variant": "high",
+    },
     "setup_physics_scene": {},
     "update_camera": {"prim_path": "/Scene/Cameras/Cam", "translate_x": 1.0},
     "update_light": {"prim_path": "/Scene/Lighting/Key", "translate_x": 1.0},
@@ -115,21 +166,31 @@ ARGS: dict[str, dict[str, object]] = {
 # create_project opens a project, so it runs last.
 ORDER = sorted(name for name in ARGS if name != "create_project") + ["create_project"]
 
-LIBRARY_TOOLS = ("search_assets", "list_assets", "search_textures", "list_textures",
-                 "place_asset", "bind_material")
+LIBRARY_TOOLS = (
+    "search_assets",
+    "list_assets",
+    "search_textures",
+    "list_textures",
+    "place_asset",
+    "bind_material",
+)
 
 SCENARIOS = (
-    Scenario(
+    model.Scenario(
         "state/nothing_open",
         "Every tool, called before any project is created or opened.",
-        tuple(Step(name, ARGS[name], note="no project is open") for name in ORDER),
-        conventions=(Y_M,), open_project=False,
+        tuple(model.Step(name, ARGS[name], note="no project is open") for name in ORDER),
+        conventions=(model.Y_M,),
+        open_project=False,
     ),
-    Scenario(
+    model.Scenario(
         "state/no_library",
         "Library, texture and placement tools with no asset library configured.",
-        tuple(Step(name, ARGS[name], note="no asset library configured")
-              for name in LIBRARY_TOOLS),
-        conventions=(Y_M,), library=False,
+        tuple(
+            model.Step(name, ARGS[name], note="no asset library configured")
+            for name in LIBRARY_TOOLS
+        ),
+        conventions=(model.Y_M,),
+        library=False,
     ),
 )

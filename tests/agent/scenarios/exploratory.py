@@ -7,9 +7,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdGeom, UsdPhysics
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdPhysics
 
-from tests.agent.runner import AgentScenario, ScenarioContext
+from tests.agent import runner
 
 
 def _stage_path(project_dir: Path) -> Path:
@@ -57,12 +60,12 @@ def _setup_with_light_target(project_dir: Path) -> None:
     stage.Save()
 
 
-def _no_assertions(ctx: ScenarioContext) -> None:
+def _no_assertions(ctx: runner.ScenarioContext) -> None:
     """Read-only walkthrough — assertions deferred to artifact inspection."""
     del ctx
 
 
-vague_random_rotation = AgentScenario(
+vague_random_rotation = runner.AgentScenario(
     name="explore_vague_random_rotation",
     description="User wants 'random' 3D tilt on a box — exercises full xformOp path.",
     tier="explore",
@@ -76,7 +79,7 @@ vague_random_rotation = AgentScenario(
 )
 
 
-scale_object = AgentScenario(
+scale_object = runner.AgentScenario(
     name="explore_scale_object",
     description="Conversational 'make twice as big' — requires xformOp:scale.",
     tier="explore",
@@ -89,7 +92,7 @@ scale_object = AgentScenario(
 )
 
 
-delete_in_group = AgentScenario(
+delete_in_group = runner.AgentScenario(
     name="explore_delete_in_group",
     description="Delete an asset that lives in a collision group; verify integrity.",
     tier="explore",
@@ -103,7 +106,7 @@ delete_in_group = AgentScenario(
 )
 
 
-warm_sunset_light = AgentScenario(
+warm_sunset_light = runner.AgentScenario(
     name="explore_warm_sunset_light",
     description="Conversational light setup — tests UsdLux attribute setting.",
     tier="explore",
@@ -117,7 +120,7 @@ warm_sunset_light = AgentScenario(
 )
 
 
-iterate_all_boxes = AgentScenario(
+iterate_all_boxes = runner.AgentScenario(
     name="explore_iterate_all_boxes",
     description="Apply same change to N prims — tests introspection + iteration.",
     tier="explore",

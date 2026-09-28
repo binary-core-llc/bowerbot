@@ -10,17 +10,12 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from bowerbot.config import Settings
-from bowerbot.logging_setup import log_tool_result
-from bowerbot.skills.base import (
-    Skill,
-    SkillConfigError,
-    SkillContext,
-    ToolResult,
-)
+from bowerbot import config
+from bowerbot import logging_setup
+from bowerbot.skills import base
 
 if TYPE_CHECKING:
-    from bowerbot.state import SceneState
+    from bowerbot import scene_state
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +26,15 @@ class SkillRegistry:
     """Central registry for all BowerBot skills."""
 
     def __init__(self) -> None:
-        self._skills: dict[str, Skill] = {}
+        self._skills: dict[str, base.Skill] = {}
         self._library_dir: Path | None = None
 
-    def register(self, skill: Skill) -> None:
+    def register(self, skill: base.Skill) -> None:
         """Register a skill instance after its config validates."""
         skill.validate_config()
         self._skills[skill.name] = skill
 
-    def load_from_settings(self, settings: Settings) -> None:
+    def load_from_settings(self, settings: config.Settings) -> None:
         """Discover and load all enabled skills from entry points."""
         self._library_dir = Path(settings.assets_dir)
 
@@ -56,7 +51,7 @@ class SkillRegistry:
                     skill_name, skill_name,
                 )
 
-    def _load_one_entry_point(self, ep: Any, settings: Settings) -> None:
+    def _load_one_entry_point(self, ep: Any, settings: config.Settings) -> None:
         """Instantiate and register a single discovered skill.
 
         Skips with a clear log message on any of three failure modes:
@@ -71,8 +66,8 @@ class SkillRegistry:
 
         try:
             skill_cls = ep.load()
-            config = skill_config.config if skill_config else {}
-            skill = skill_cls(**config)
+            skill_settings = skill_config.config if skill_config else {}
+            skill = skill_cls(**skill_settings)
         except Exception:
             logger.warning(
                 "Failed to load skill: %s (%s)",
@@ -91,7 +86,7 @@ class SkillRegistry:
         try:
             self.register(skill)
             logger.info("Loaded skill: %s (%s)", ep_name, ep.value)
-        except SkillConfigError as e:
+        except base.SkillConfigError as e:
             logger.warning(
                 "Skill '%s' is misconfigured and will be skipped: %s",
                 ep_name, e,
@@ -118,24 +113,24 @@ class SkillRegistry:
         self,
         qualified_name: str,
         params: dict[str, Any],
-        state: SceneState | None = None,
-    ) -> ToolResult:
+        state: scene_state.SceneState | None = None,
+    ) -> base.ToolResult:
         """Execute a tool by its qualified name (``skill__tool``)."""
         parts = qualified_name.split("__", 1)
         if len(parts) != 2:
-            result = ToolResult(
+            result = base.ToolResult(
                 success=False, error=f"Invalid tool name: {qualified_name}",
             )
-            log_tool_result(logger, qualified_name, result)
+            logging_setup.log_tool_result(logger, qualified_name, result)
             return result
 
         skill_name, tool_name = parts
         skill = self._skills.get(skill_name)
         if skill is None:
-            result = ToolResult(
+            result = base.ToolResult(
                 success=False, error=f"Skill not found: {skill_name}",
             )
-            log_tool_result(logger, qualified_name, result)
+            logging_setup.log_tool_result(logger, qualified_name, result)
             return result
 
         ctx = self._build_context(skill, state)
@@ -145,16 +140,16 @@ class SkillRegistry:
             logger.exception(
                 "skill-crash name=%s", qualified_name,
             )
-            result = ToolResult(
+            result = base.ToolResult(
                 success=False,
                 error=f"{qualified_name} crashed: {e}",
             )
-        log_tool_result(logger, qualified_name, result)
+        logging_setup.log_tool_result(logger, qualified_name, result)
         return result
 
     def _build_context(
-        self, skill: Skill, state: SceneState | None,
-    ) -> SkillContext:
+        self, skill: base.Skill, state: scene_state.SceneState | None,
+    ) -> base.SkillContext:
         """Build a fresh :class:`SkillContext` for a single tool call."""
         if self._library_dir is None:
             msg = "SkillRegistry.load_from_settings was not called"
@@ -165,7 +160,7 @@ class SkillRegistry:
             cache_dir = self._library_dir / skill.cache_subdir
             cache_dir.mkdir(parents=True, exist_ok=True)
 
-        return SkillContext(
+        return base.SkillContext(
             library_dir=self._library_dir,
             cache_dir=cache_dir,
             project_dir=state.project_dir if state else None,

@@ -8,13 +8,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
-from bowerbot.schemas.surface import FloatArray, IntArray
-from bowerbot.schemas.transforms import Vec3
+from bowerbot.schemas import surface
+from bowerbot.schemas import transforms
 
 # Keep-probability per sampled point, given its position and triangle.
-ScatterAcceptance = Callable[[FloatArray, IntArray], FloatArray]
+ScatterAcceptance = Callable[[surface.FloatArray, surface.IntArray], surface.FloatArray]
 
 
 class ScatterOutput(StrEnum):
@@ -93,16 +94,16 @@ class ScatterAsset(BaseModel):
 class ScatterRegion(BaseModel):
     """A plan-view area: a circle (``center`` + ``radius``) or a ``polygon``."""
 
-    center: Vec3 | None = None
+    center: transforms.Vec3 | None = None
     radius: float | None = None
     falloff: ScatterRegionFalloff = ScatterRegionFalloff.NONE
-    polygon: list[Vec3] | None = None
+    polygon: list[transforms.Vec3] | None = None
 
 
 class ScatterPathCircle(BaseModel):
     """A closed circular path around ``center``."""
 
-    center: Vec3
+    center: transforms.Vec3
     radius: float
     start_angle_degrees: float = 0.0
 
@@ -139,7 +140,7 @@ class ScatterSurfaceParams(BaseModel):
 class ScatterPathParams(BaseModel):
     """Distribution settings for placing along a polyline, circle, or curve."""
 
-    points: list[Vec3] | None = None
+    points: list[transforms.Vec3] | None = None
     closed: bool = False
     circle: ScatterPathCircle | None = None
     curve_prim: str | None = None
@@ -165,11 +166,11 @@ class ScatterPrototype(BaseModel):
     source: str
     scene_ref: str
     weight: float
-    bounds_min: Vec3
-    bounds_max: Vec3
-    base_min: Vec3
-    base_max: Vec3
-    points: FloatArray
+    bounds_min: transforms.Vec3
+    bounds_max: transforms.Vec3
+    base_min: transforms.Vec3
+    base_max: transforms.Vec3
+    points: surface.FloatArray
 
 
 class ScatterInstanceSet(BaseModel):
@@ -177,10 +178,10 @@ class ScatterInstanceSet(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
 
-    proto_indices: IntArray
-    positions: FloatArray
-    orientations: FloatArray
-    scales: FloatArray
+    proto_indices: surface.IntArray
+    positions: surface.FloatArray
+    orientations: surface.FloatArray
+    scales: surface.FloatArray
 
     @property
     def count(self) -> int:

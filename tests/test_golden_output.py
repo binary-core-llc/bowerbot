@@ -22,9 +22,9 @@ from pathlib import Path
 
 import pytest
 
-from tests.golden.model import Convention, Scenario
-from tests.golden.recorder import StepRecord, record
-from tests.golden.scenarios import SCENARIOS
+from tests.golden import model
+from tests.golden import recorder
+from tests.golden import scenarios
 
 EXPECTED = Path(__file__).parent / "golden" / "expected"
 UPDATE = os.environ.get("BOWERBOT_UPDATE_GOLDEN") == "1"
@@ -32,16 +32,16 @@ STEP_MARK = "=== step "
 
 CASES = [
     pytest.param(scenario, convention, id=f"{scenario.name}[{convention.key}]")
-    for scenario in SCENARIOS
+    for scenario in scenarios.SCENARIOS
     for convention in scenario.conventions
 ]
 
 
-def _recording_path(scenario: Scenario, convention: Convention) -> Path:
+def _recording_path(scenario: model.Scenario, convention: model.Convention) -> Path:
     return EXPECTED / f"{scenario.name}.{convention.key}.txt"
 
 
-def _header(scenario: Scenario, convention: Convention) -> str:
+def _header(scenario: model.Scenario, convention: model.Convention) -> str:
     return (
         f"##### scenario: {scenario.name}\n"
         f"##### convention: {convention.up_axis}-up, {convention.meters_per_unit} meters per unit\n"
@@ -49,7 +49,9 @@ def _header(scenario: Scenario, convention: Convention) -> str:
     )
 
 
-def _join(scenario: Scenario, convention: Convention, steps: list[StepRecord]) -> str:
+def _join(
+    scenario: model.Scenario, convention: model.Convention, steps: list[recorder.StepRecord],
+) -> str:
     return "\n\n".join([_header(scenario, convention), *(step.text for step in steps)])
 
 
@@ -65,7 +67,9 @@ def _split_steps(text: str) -> list[str]:
     return [part.strip("\n") for part in parts if part.startswith(STEP_MARK)]
 
 
-def _compare(scenario: Scenario, convention: Convention, now: str, when: str = "") -> None:
+def _compare(
+    scenario: model.Scenario, convention: model.Convention, now: str, when: str = "",
+) -> None:
     """Fail with the first step where *now* differs from the recording."""
     path = _recording_path(scenario, convention)
     assert path.is_file(), f"no recording for {scenario.name} [{convention.key}]; record it first"
@@ -88,8 +92,10 @@ def _compare(scenario: Scenario, convention: Convention, now: str, when: str = "
 
 
 @pytest.mark.parametrize(("scenario", "convention"), CASES)
-def test_golden_output(scenario: Scenario, convention: Convention, tmp_path: Path) -> None:
-    now = _join(scenario, convention, record(scenario, convention, tmp_path))
+def test_golden_output(
+    scenario: model.Scenario, convention: model.Convention, tmp_path: Path,
+) -> None:
+    now = _join(scenario, convention, recorder.record(scenario, convention, tmp_path))
     if UPDATE:
         path = _recording_path(scenario, convention)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,7 +106,7 @@ def test_golden_output(scenario: Scenario, convention: Convention, tmp_path: Pat
 
 @pytest.mark.parametrize(("scenario", "convention"), CASES)
 def test_golden_output_ignores_listing_order(
-    scenario: Scenario, convention: Convention, tmp_path: Path,
+    scenario: model.Scenario, convention: model.Convention, tmp_path: Path,
 ) -> None:
     """The same recording with every folder listed in reverse order.
 
@@ -109,5 +115,6 @@ def test_golden_output_ignores_listing_order(
     """
     if UPDATE:
         pytest.skip("re-recording")
-    now = _join(scenario, convention, record(scenario, convention, tmp_path, reverse_listings=True))
+    steps = recorder.record(scenario, convention, tmp_path, reverse_listings=True)
+    now = _join(scenario, convention, steps)
     _compare(scenario, convention, now, " with folders listed in reverse order")

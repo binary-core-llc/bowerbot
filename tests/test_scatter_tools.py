@@ -10,13 +10,16 @@ import tempfile
 from pathlib import Path
 
 import numpy as np
-from pxr import Gf, Usd, UsdGeom, Vt
+from pxr import Gf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import Vt
 
-from bowerbot.config import UpAxis
-from bowerbot.project import Project
-from bowerbot.state import SceneState
-from bowerbot.utils import surface_utils
-from tests._helpers import exec_tool
+from bowerbot import config
+from bowerbot import project_folder
+from bowerbot import scene_state
+from bowerbot import utils
+from tests import _helpers
 
 
 def _new_asset(path: Path, *, up: str = "Y", mpu: float = 1.0) -> Usd.Stage:
@@ -69,7 +72,7 @@ def _stone_asset(path: Path, size: tuple[float, float, float]) -> None:
     stage.Save()
 
 
-def _instance_shapes(project: Project, prim_path: str) -> list[np.ndarray]:
+def _instance_shapes(project: project_folder.Project, prim_path: str) -> list[np.ndarray]:
     """World-space vertices of every instance of a scatter."""
     stage = Usd.Stage.Open(str(project.scene_path))
     instancer = UsdGeom.PointInstancer(stage.GetPrimAtPath(prim_path))
@@ -79,7 +82,7 @@ def _instance_shapes(project: Project, prim_path: str) -> list[np.ndarray]:
     )
     shapes = []
     for target in instancer.GetPrototypesRel().GetTargets():
-        tris = surface_utils.collect_triangles(stage, [str(target)], up=1)
+        tris = utils.surface.collect_triangles(stage, [str(target)], up=1)
         shapes.append(np.concatenate([tris.v0, tris.v1, tris.v2]))
     out = []
     for proto, m in zip(instancer.GetProtoIndicesAttr().Get(), matrices, strict=True):
@@ -120,21 +123,23 @@ def _grid_mesh(
     stage.Save()
 
 
-def _setup(tmp, *, up: UpAxis = UpAxis.Y, mpu: float = 1.0):
+def _setup(tmp, *, up: config.UpAxis = config.UpAxis.Y, mpu: float = 1.0):
     tmp_path = Path(tmp)
     lib = tmp_path / "lib"
     lib.mkdir()
-    project = Project.create(tmp_path / "projects", "test", up_axis=up, meters_per_unit=mpu)
-    state = SceneState(up_axis=up, meters_per_unit=mpu, library_dir=lib)
+    project = project_folder.Project.create(
+        tmp_path / "projects", "test", up_axis=up, meters_per_unit=mpu,
+    )
+    state = scene_state.SceneState(up_axis=up, meters_per_unit=mpu, library_dir=lib)
     state.project = project
     state.stage_path = project.scene_path
-    asyncio.run(exec_tool(state, "create_stage", {"filename": "scene.usda"}))
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "scene.usda"}))
     return state, project, lib
 
 
-def _place(state: SceneState, asset: str, name: str, group: str = "Architecture",
+def _place(state: scene_state.SceneState, asset: str, name: str, group: str = "Architecture",
            at=(0.0, 0.0, 0.0)) -> str:
-    result = asyncio.run(exec_tool(state, "place_asset", {
+    result = asyncio.run(_helpers.exec_tool(state, "place_asset", {
         "asset_file_path": asset, "asset_name": name, "group": group,
         "translate_x": at[0], "translate_y": at[1], "translate_z": at[2],
     }))
@@ -142,7 +147,7 @@ def _place(state: SceneState, asset: str, name: str, group: str = "Architecture"
     return result.data["prim_path"]
 
 
-def _instance_matrices(project: Project, prim_path: str) -> list[Gf.Matrix4d]:
+def _instance_matrices(project: project_folder.Project, prim_path: str) -> list[Gf.Matrix4d]:
     stage = Usd.Stage.Open(str(project.scene_path))
     instancer = UsdGeom.PointInstancer(stage.GetPrimAtPath(prim_path))
     assert instancer, f"{prim_path} is not a PointInstancer"
@@ -150,7 +155,7 @@ def _instance_matrices(project: Project, prim_path: str) -> list[Gf.Matrix4d]:
     return list(instancer.ComputeInstanceTransformsAtTime(time, time))
 
 
-def _instance_boxes(project: Project, prim_path: str) -> list[Gf.Range3d]:
+def _instance_boxes(project: project_folder.Project, prim_path: str) -> list[Gf.Range3d]:
     stage = Usd.Stage.Open(str(project.scene_path))
     instancer = UsdGeom.PointInstancer(stage.GetPrimAtPath(prim_path))
     cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [UsdGeom.Tokens.default_])
@@ -158,11 +163,13 @@ def _instance_boxes(project: Project, prim_path: str) -> list[Gf.Range3d]:
     return [b.ComputeAlignedRange() for b in cache.ComputePointInstanceWorldBounds(instancer, ids)]
 
 
-def _ground_heights(project: Project, prim_path: str, points: np.ndarray, up: int) -> np.ndarray:
+def _ground_heights(
+    project: project_folder.Project, prim_path: str, points: np.ndarray, up: int,
+) -> np.ndarray:
     stage = Usd.Stage.Open(str(project.scene_path))
-    triangles = surface_utils.collect_triangles(stage, [prim_path], up=up)
-    index = surface_utils.build_vertical_index(triangles, up)
-    _, heights, _ = surface_utils.surface_under(index, points, mode="top")
+    triangles = utils.surface.collect_triangles(stage, [prim_path], up=up)
+    index = utils.surface.build_vertical_index(triangles, up)
+    _, heights, _ = utils.surface.surface_under(index, points, mode="top")
     return heights
 
 
@@ -175,7 +182,7 @@ def _ridges(x, z):
     return 0.15 * np.sin(x * 4.0) + 0.0 * z
 
 
-def _log_end_gaps(project: Project, prim_path: str, ground: str) -> np.ndarray:
+def _log_end_gaps(project: project_folder.Project, prim_path: str, ground: str) -> np.ndarray:
     """Height above the ground of each 2.5 x 0.25 m log's four bottom corners (n, 4)."""
     corners = [(dx, 0.0, dz) for dx in (-1.25, 1.25) for dz in (-0.125, 0.125)]
     pts = np.array([
@@ -185,7 +192,7 @@ def _log_end_gaps(project: Project, prim_path: str, ground: str) -> np.ndarray:
     return (pts[:, 1] - _ground_heights(project, ground, pts, 1)).reshape(-1, 4)
 
 
-def _pivot_depths(project: Project, prim_path: str, ground: str) -> np.ndarray:
+def _pivot_depths(project: project_folder.Project, prim_path: str, ground: str) -> np.ndarray:
     """Ground height minus pivot height per instance (positive = buried)."""
     pts = np.array([list(m.ExtractTranslation()) for m in _instance_matrices(project, prim_path)])
     return _ground_heights(project, ground, pts, 1) - pts[:, 1]
@@ -202,7 +209,7 @@ def test_pieces_rest_on_uneven_ground_aligned_to_the_surface():
         _box_asset(lib / "stone.usda", (0.2, 0.2, 0.2))
         ground = _place(state, "terrain.usda", "Terrain")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Stones", "group": "Nature", "assets": [{"asset": "stone.usda"}],
             "surfaces": [ground], "count": 400, "align": "surface", "seed": 3,
         }))
@@ -218,9 +225,9 @@ def test_pieces_rest_on_uneven_ground_aligned_to_the_surface():
         assert (heights - base[:, 1]).max() < 0.01
 
         stage = Usd.Stage.Open(str(project.scene_path))
-        triangles = surface_utils.collect_triangles(stage, [ground], up=1)
-        index = surface_utils.build_vertical_index(triangles, 1)
-        _, _, tris = surface_utils.surface_under(index, base, mode="top")
+        triangles = utils.surface.collect_triangles(stage, [ground], up=1)
+        index = utils.surface.build_vertical_index(triangles, 1)
+        _, _, tris = utils.surface.surface_under(index, base, mode="top")
         assert np.einsum("ij,ij->i", ups, triangles.normals[tris]).min() > 0.99
 
 
@@ -232,7 +239,7 @@ def test_upright_pieces_on_a_slope_never_float():
         _box_asset(lib / "post.usda", (0.3, 1.0, 0.3))
         ground = _place(state, "slope.usda", "Slope")
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Posts", "assets": [{"asset": "post.usda"}], "surfaces": [ground],
             "count": 60, "align": "up", "seed": 1,
         })).success
@@ -255,11 +262,11 @@ def test_wide_crowned_trees_stand_on_their_trunks_on_ridged_ground():
         _tree_asset(lib / "tree.usda")
         ground = _place(state, "field.usda", "Field")
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Orchard", "assets": [{"asset": "tree.usda"}], "surfaces": [ground],
             "count": 40, "align": "up", "seed": 3,
         })).success
-        assert asyncio.run(exec_tool(state, "scatter_along_path", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Row", "assets": [{"asset": "tree.usda"}], "surfaces": [ground],
             "points": [[-8, 0, 2], [8, 0, 2]], "spacing": 3.0, "output": "instancer",
         })).success
@@ -277,7 +284,7 @@ def test_long_branches_lie_along_tilled_ridges():
         _box_asset(lib / "log.usda", (2.5, 0.25, 0.25))
         ground = _place(state, "field.usda", "Field")
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Logs", "assets": [{"asset": "log.usda"}], "surfaces": [ground],
             "count": 60, "align": "surface", "seed": 4,
             "region": {"polygon": [[-8, 0, -8], [8, 0, -8], [8, 0, 8], [-8, 0, 8]]},
@@ -295,7 +302,7 @@ def test_a_lopsided_crown_keeps_its_trunk_on_the_ground():
         _tree_asset(lib / "tree.usda", lean=3.0)
         ground = _place(state, "field.usda", "Field")
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Leaning", "assets": [{"asset": "tree.usda"}], "surfaces": [ground],
             "count": 80, "align": "up", "seed": 2,
         })).success
@@ -312,14 +319,14 @@ def test_density_is_per_square_meter_and_count_is_exact():
         _box_asset(lib / "leaf.usda", (0.05, 0.01, 0.05))
         ground = _place(state, "flat.usda", "Flat")
 
-        dense = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        dense = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Leaves", "assets": [{"asset": "leaf.usda"}], "surfaces": [ground],
             "density": 20,
         }))
         assert dense.success, dense.error
         assert abs(dense.data["instances"] - 2000) < 150
 
-        exact = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        exact = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Few", "assets": [{"asset": "leaf.usda"}], "surfaces": [ground], "count": 37,
         }))
         assert exact.data["instances"] == 37
@@ -336,19 +343,19 @@ def test_same_seed_gives_the_same_scatter_and_replace_regenerates():
             "name": "Stones", "assets": [{"asset": "stone.usda"}], "surfaces": [ground],
             "density": 3, "variation": 0.8, "scale_range": [0.5, 1.5], "seed": 11,
         }
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", params)).success
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", params)).success
         first = _instance_matrices(project, "/Scene/Scatter/Stones")
 
-        refused = asyncio.run(exec_tool(state, "scatter_on_surface", params))
+        refused = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", params))
         assert not refused.success and "replace=true" in refused.error
 
-        replaced = asyncio.run(exec_tool(
+        replaced = asyncio.run(_helpers.exec_tool(
             state, "scatter_on_surface", {**params, "replace": True},
         ))
         assert replaced.success
         assert _instance_matrices(project, "/Scene/Scatter/Stones") == first
 
-        reseeded = asyncio.run(exec_tool(
+        reseeded = asyncio.run(_helpers.exec_tool(
             state, "scatter_on_surface", {**params, "replace": True, "seed": 12},
         ))
         assert reseeded.success
@@ -363,7 +370,7 @@ def test_min_spacing_keeps_every_pair_apart():
         _box_asset(lib / "tree.usda", (0.5, 3.0, 0.5))
         ground = _place(state, "park.usda", "Park")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Trees", "assets": [{"asset": "tree.usda"}], "surfaces": [ground],
             "count": 120, "min_spacing": 1.2, "align": "surface",
         }))
@@ -385,7 +392,7 @@ def test_avoid_keeps_the_path_footprint_clear():
         lawn = _place(state, "lawn.usda", "Lawn")
         path = _place(state, "path.usda", "Path", at=(1.0, 0.0, 0.0))
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Grass", "assets": [{"asset": "grass.usda"}], "surfaces": [lawn],
             "density": 30, "avoid": [path], "avoid_margin": 0.25, "align": "up",
         })).success
@@ -403,7 +410,7 @@ def test_avoid_keeps_a_scattered_crop_block_clear():
         _box_asset(lib / "corn.usda", (0.2, 1.5, 0.2))
         _box_asset(lib / "pebble.usda", (0.05, 0.05, 0.05))
         field = _place(state, "field.usda", "Field")
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Block_A", "group": "Crops", "assets": [{"asset": "corn.usda"}],
             "surfaces": [field], "arrangement": "rows", "spacing": 0.3, "row_spacing": 0.8,
             "align": "up",
@@ -418,13 +425,13 @@ def test_avoid_keeps_a_scattered_crop_block_clear():
             "density": 20, "avoid": ["/Scene/Crops/Block_A"], "avoid_margin": 0.35,
             "align": "up",
         }
-        estimate = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        estimate = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             **params, "validate_only": True,
         }))
         assert estimate.success, estimate.error
         assert estimate.data["estimated_instances"] < 0.8 * 400 * 20
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", params))
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", params))
         assert result.success, result.error
         pts = np.array([list(m.ExtractTranslation()) for m in
                         _instance_matrices(project, "/Scene/Scatter/Pebbles")])
@@ -434,7 +441,7 @@ def test_avoid_keeps_a_scattered_crop_block_clear():
         )
         assert not inside.any(), "pebbles landed inside the crop block"
 
-        as_surface = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        as_surface = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "OnCrops", "assets": [{"asset": "pebble.usda"}],
             "surfaces": ["/Scene/Crops/Block_A"], "count": 10,
         }))
@@ -451,7 +458,7 @@ def test_min_spacing_fills_a_thin_region_of_a_large_surface():
         _box_asset(lib / "shrub.usda", (1.0, 1.0, 1.0))
         field = _place(state, "field.usda", "Field")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Shrubs", "assets": [{"asset": "shrub.usda"}], "surfaces": [field],
             "count": 40, "min_spacing": 1.5, "align": "up",
             "region": {"polygon": [[-50, 0, 46], [50, 0, 46], [50, 0, 48], [-50, 0, 48]]},
@@ -473,7 +480,7 @@ def test_variation_makes_some_places_thicker_than_others():
         ground = _place(state, "ground.usda", "Ground")
 
         def cell_counts(name: str, variation: float) -> np.ndarray:
-            assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+            assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
                 "name": name, "assets": [{"asset": "stone.usda"}], "surfaces": [ground],
                 "count": 4000, "variation": variation, "variation_scale": 4.0, "seed": 5,
             })).success
@@ -497,7 +504,7 @@ def test_region_with_falloff_is_denser_at_the_centre():
         ground = _place(state, "ground.usda", "Ground")
         tree = _place(state, "tree.usda", "Tree", group="Props", at=(3.0, 0.0, -2.0))
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Leaves", "assets": [{"asset": "leaf.usda"}], "surfaces": [ground],
             "count": 3000,
             "region": {"center_prim": tree, "radius": 4.0, "falloff": "smooth"},
@@ -519,7 +526,7 @@ def test_rows_drape_over_the_hillside():
         _box_asset(lib / "vine.usda", (0.2, 1.0, 0.2))
         hill = _place(state, "hill.usda", "Hill")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Vines", "assets": [{"asset": "vine.usda"}], "surfaces": [hill],
             "arrangement": "rows", "spacing": 1.0, "row_spacing": 2.5,
             "row_direction_degrees": 0, "align": "up", "random_yaw": False,
@@ -545,7 +552,7 @@ def test_a_pile_is_a_cone_at_its_angle_of_repose():
         _stone_asset(lib / "rock_b.usda", (0.3, 0.25, 0.3))
         ground = _place(state, "ground.usda", "Ground")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Heap", "surfaces": [ground], "arrangement": "pile", "count": 120,
             "repose_degrees": 30, "scale_range": [0.8, 1.2], "seed": 7,
             "assets": [{"asset": "field_stone.usda", "weight": 3},
@@ -578,7 +585,7 @@ def test_a_small_pile_spreads_over_its_base_and_rests_on_the_ground():
         _stone_asset(lib / "field_stone.usda", (0.23, 0.13, 0.16))
         ground = _place(state, "ground.usda", "Ground")
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Few", "assets": [{"asset": "field_stone.usda"}], "surfaces": [ground],
             "arrangement": "pile", "count": 10, "seed": 1,
             "region": {"center": [0.0, 0.0, 0.0], "radius": 3.0},
@@ -599,7 +606,7 @@ def test_a_pile_too_big_for_its_radius_spreads_and_warns():
         _box_asset(lib / "rock.usda", (0.25, 0.2, 0.3))
         ground = _place(state, "ground.usda", "Ground")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Heap", "assets": [{"asset": "rock.usda"}], "surfaces": [ground],
             "arrangement": "pile", "count": 400,
             "region": {"center": [2.0, 0.0, 1.0], "radius": 1.0},
@@ -627,7 +634,7 @@ def test_moss_covers_every_face_of_a_curved_rock():
         _box_asset(lib / "moss.usda", (0.05, 0.02, 0.05))
         rock = _place(state, "rock.usda", "Rock", group="Props", at=(0.0, 2.0, 0.0))
 
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Moss", "assets": [{"asset": "moss.usda"}], "surfaces": [rock],
             "density": 60, "max_slope_degrees": 180, "align": "surface",
         })).success
@@ -648,7 +655,7 @@ def test_flipped_normals_are_diagnosed():
         _grid_mesh(lib / "flipped.usda", lambda x, z: 0.0 * x, flip=True)
         _box_asset(lib / "stone.usda", (0.1, 0.1, 0.1))
         ground = _place(state, "flipped.usda", "Flipped")
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Stones", "assets": [{"asset": "stone.usda"}], "surfaces": [ground],
             "count": 10,
         }))
@@ -663,7 +670,7 @@ def test_validate_only_estimates_and_writes_nothing():
         _grid_mesh(lib / "flat.usda", lambda x, z: 0.0 * x, size=10.0)
         _box_asset(lib / "grass.usda", (0.05, 0.2, 0.05))
         ground = _place(state, "flat.usda", "Flat")
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Grass", "assets": [{"asset": "grass.usda"}], "surfaces": [ground],
             "density": 1000, "validate_only": True,
         }))
@@ -681,7 +688,7 @@ def test_validate_only_measures_an_l_shaped_region():
         _box_asset(lib / "grass.usda", (0.05, 0.2, 0.05))
         ground = _place(state, "flat.usda", "Flat")
         l_shape = [[-10, 0, -10], [10, 0, -10], [10, 0, -6], [-6, 0, -6], [-6, 0, 10], [-10, 0, 10]]
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Grass", "assets": [{"asset": "grass.usda"}], "surfaces": [ground],
             "density": 5, "region": {"polygon": l_shape}, "validate_only": True,
         }))
@@ -699,7 +706,7 @@ def test_placements_output_is_individually_editable():
         _box_asset(lib / "barrel.usda", (0.4, 0.8, 0.4))
         floor = _place(state, "floor.usda", "Floor")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Debris", "group": "Warehouse", "surfaces": [floor], "count": 20,
             "assets": [{"asset": "crate.usda", "weight": 3}, {"asset": "barrel.usda"}],
             "align": "up", "output": "placements",
@@ -709,7 +716,7 @@ def test_placements_output_is_individually_editable():
         stage = Usd.Stage.Open(str(project.scene_path))
         wrappers = stage.GetPrimAtPath("/Scene/Warehouse/Debris").GetChildren()
         assert len(wrappers) == 20
-        moved = asyncio.run(exec_tool(state, "move_asset", {
+        moved = asyncio.run(_helpers.exec_tool(state, "move_asset", {
             "prim_path": str(wrappers[0].GetPath()), "translate_x": 5.0,
         }))
         assert moved.success, moved.error
@@ -718,13 +725,13 @@ def test_placements_output_is_individually_editable():
 def test_z_up_centimeter_scene_with_y_up_meter_assets():
     """Y-up meter assets scattered into a Z-up centimeter scene are conformed and rest on it."""
     with tempfile.TemporaryDirectory() as tmp:
-        state, project, lib = _setup(tmp, up=UpAxis.Z, mpu=0.01)
+        state, project, lib = _setup(tmp, up=config.UpAxis.Z, mpu=0.01)
         _grid_mesh(lib / "terrain.usda", lambda a, b: 30.0 * np.sin(a / 200.0),
                    size=2000.0, up="Z", mpu=0.01)
         _box_asset(lib / "stone.usda", (0.2, 0.2, 0.2))
         ground = _place(state, "terrain.usda", "Terrain")
 
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Stones", "assets": [{"asset": "stone.usda"}], "surfaces": [ground],
             "density": 2, "align": "up", "random_yaw": False,
         }))
@@ -745,34 +752,35 @@ def test_list_scene_remove_and_validate_treat_a_scatter_as_one_object():
         _grid_mesh(lib / "terrain.usda", _bumps)
         _box_asset(lib / "stone.usda", (0.2, 0.2, 0.2))
         ground = _place(state, "terrain.usda", "Terrain")
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Stones", "assets": [{"asset": "stone.usda"}], "surfaces": [ground],
             "count": 500,
         })).success
 
-        objects = asyncio.run(exec_tool(state, "list_scene")).data["objects"]
+        objects = asyncio.run(_helpers.exec_tool(state, "list_scene")).data["objects"]
         scatters = [o for o in objects if o["kind"] == "scatter"]
         found = [(o["prim_path"], o["instances"]) for o in scatters]
         assert found == [("/Scene/Scatter/Stones", 500)]
         assert not any("Prototypes" in o["prim_path"] for o in objects)
 
-        report = asyncio.run(exec_tool(state, "validate_scene")).data
+        report = asyncio.run(_helpers.exec_tool(state, "validate_scene")).data
         assert [i for i in report["issues"] if i["severity"] == "error"] == []
 
-        listed = asyncio.run(exec_tool(state, "list_project_assets")).data["assets"]
+        listed = asyncio.run(_helpers.exec_tool(state, "list_project_assets")).data["assets"]
         in_scene = {a["name"]: a["in_scene"] for a in listed}
         assert in_scene["stone"] is True
-        refused = asyncio.run(exec_tool(state, "delete_project_asset", {"name": "stone"}))
+        refused = asyncio.run(_helpers.exec_tool(state, "delete_project_asset", {"name": "stone"}))
         assert not refused.success and "still referenced" in refused.error
 
-        removed = asyncio.run(exec_tool(
+        removed = asyncio.run(_helpers.exec_tool(
             state, "remove_prim", {"prim_path": "/Scene/Scatter/Stones"},
         ))
         assert removed.success
-        listed = asyncio.run(exec_tool(state, "list_project_assets")).data["assets"]
+        listed = asyncio.run(_helpers.exec_tool(state, "list_project_assets")).data["assets"]
         in_scene = {a["name"]: a["in_scene"] for a in listed}
         assert in_scene["stone"] is False
-        assert asyncio.run(exec_tool(state, "delete_project_asset", {"name": "stone"})).success
+        deleted = asyncio.run(_helpers.exec_tool(state, "delete_project_asset", {"name": "stone"}))
+        assert deleted.success
 
 
 def test_scatter_is_authored_in_the_scene_like_placements():
@@ -784,7 +792,7 @@ def test_scatter_is_authored_in_the_scene_like_placements():
         _box_asset(lib / "crate.usda", (0.5, 0.5, 0.5))
         ground = _place(state, "terrain.usda", "Terrain")
         crate = _place(state, "crate.usda", "Crate", group="Props", at=(3.0, 2.0, 3.0))
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Stones", "group": "Nature", "assets": [{"asset": "stone.usda"}],
             "surfaces": [ground], "count": 50,
         })).success
@@ -800,7 +808,7 @@ def test_scatter_is_authored_in_the_scene_like_placements():
         refs = proto_asset.GetMetadata("references").prependedItems
         assert [r.assetPath for r in refs] == ["assets/stone/stone.usda"]
 
-        moved = asyncio.run(exec_tool(
+        moved = asyncio.run(_helpers.exec_tool(
             state, "move_asset", {"prim_path": "/Scene/Nature/Stones", "translate_x": 1.0},
         ))
         assert moved.success, moved.error
@@ -809,7 +817,7 @@ def test_scatter_is_authored_in_the_scene_like_placements():
         moved_to = world.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
         assert moved_to.ExtractTranslation()[0] == 1.0
 
-        dropped = asyncio.run(exec_tool(
+        dropped = asyncio.run(_helpers.exec_tool(
             state, "drop_to_surface", {"prim_paths": ["/Scene/Props", "/Scene/Nature"]},
         ))
         assert dropped.success, dropped.error
@@ -825,7 +833,7 @@ def test_a_large_scatter_stays_fast():
         _grid_mesh(lib / "terrain.usda", _bumps, n=101, size=100.0)
         _box_asset(lib / "blade.usda", (0.02, 0.1, 0.02))
         ground = _place(state, "terrain.usda", "Terrain")
-        result = asyncio.run(exec_tool(state, "scatter_on_surface", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Grass", "assets": [{"asset": "blade.usda"}], "surfaces": [ground],
             "count": 250_000, "variation": 0.5, "align": "up",
         }))
@@ -847,7 +855,7 @@ def test_chairs_round_a_table_face_the_centre():
         _place(state, "floor.usda", "Floor")
         table = _place(state, "table.usda", "Table", group="Furniture", at=(2.0, 0.0, 3.0))
 
-        result = asyncio.run(exec_tool(state, "scatter_along_path", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Chairs", "group": "Furniture", "assets": [{"asset": "chair.usda"}],
             "circle": {"center_prim": table, "radius": 1.1}, "count": 6, "facing": "center",
         }))
@@ -869,7 +877,7 @@ def test_chairs_round_a_table_face_the_centre():
 
         # move_asset edits only the Y angle; a pure-yaw chair keeps facing the table.
         first = str(chairs[0].GetPath())
-        nudged = asyncio.run(exec_tool(
+        nudged = asyncio.run(_helpers.exec_tool(
             state, "move_asset", {"prim_path": first, "translate_y": 0.0},
         ))
         assert nudged.success
@@ -890,7 +898,7 @@ def test_streetlights_on_both_sides_face_the_road():
         _box_asset(lib / "lamp.usda", (0.2, 4.0, 0.2))
         ground = _place(state, "ground.usda", "Ground")
 
-        result = asyncio.run(exec_tool(state, "scatter_along_path", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Lights", "assets": [{"asset": "lamp.usda"}],
             "points": [[-8, 0, 0], [8, 0, 0]], "spacing": 4.0,
             "sides": "both", "offset": 3.0, "facing": "path", "surfaces": [ground],
@@ -915,7 +923,7 @@ def test_fence_sections_butt_end_to_end_and_follow_the_slope():
         _box_asset(lib / "section.usda", (2.0, 1.0, 0.1))
         slope = _place(state, "slope.usda", "Slope")
 
-        result = asyncio.run(exec_tool(state, "scatter_along_path", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Fence", "assets": [{"asset": "section.usda"}],
             "points": [[-5, 0, 2], [5, 0, 2]], "facing": "tangent",
             "follow_slope": True, "surfaces": [slope], "start_offset": 1.0,
@@ -944,7 +952,7 @@ def test_products_along_a_shelf_rest_on_the_shelf_not_the_floor():
         _place(state, "floor.usda", "Floor")
         shelf = _place(state, "shelf.usda", "Shelf", group="Furniture", at=(0.0, 0.0, -4.0))
 
-        result = asyncio.run(exec_tool(state, "scatter_along_path", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Cans", "assets": [{"asset": "can.usda"}],
             "points": [[-1.4, 1.0, -4.0], [1.4, 1.0, -4.0]], "gap": 0.02,
             "facing": "fixed", "direction_degrees": 90,
@@ -966,7 +974,7 @@ def test_fence_around_a_closed_boundary_uses_even_sections():
         _box_asset(lib / "section.usda", (2.0, 1.0, 0.1))
         _place(state, "ground.usda", "Ground")
 
-        result = asyncio.run(exec_tool(state, "scatter_along_path", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Paddock", "assets": [{"asset": "section.usda"}], "closed": True,
             "points": [[-4, 0, -4], [4, 0, -4], [4, 0, 4], [-4, 0, 4]],
             "start_offset": 1.0,
@@ -998,7 +1006,7 @@ def test_posts_follow_a_winding_curve_prim():
         road.CreateTypeAttr(UsdGeom.Tokens.linear)
         stage.Save()
 
-        result = asyncio.run(exec_tool(state, "scatter_along_path", {
+        result = asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Posts", "assets": [{"asset": "post.usda"}], "curve_prim": "/Scene/Roads/Road",
             "spacing": 2.0, "surfaces": [ground],
         }))
@@ -1026,7 +1034,9 @@ def test_drop_to_surface_lifts_sunken_and_lowers_floating_objects():
         floating = _place(state, "crate.usda", "Floating", group="Props", at=(2.0, 5.0, 1.0))
         sunken = _place(state, "crate.usda", "Sunken", group="Props", at=(-3.0, -2.0, 4.0))
 
-        result = asyncio.run(exec_tool(state, "drop_to_surface", {"prim_paths": ["/Scene/Props"]}))
+        result = asyncio.run(
+            _helpers.exec_tool(state, "drop_to_surface", {"prim_paths": ["/Scene/Props"]}),
+        )
         assert result.success, result.error
         assert {r["prim_path"] for r in result.data["moved"]} == {floating, sunken}
 
@@ -1053,7 +1063,7 @@ def test_drop_to_surface_can_tilt_onto_the_slope():
         _place(state, "slope.usda", "Slope")
         crate = _place(state, "crate.usda", "Crate", group="Props", at=(1.0, 4.0, 2.0))
 
-        tilted = asyncio.run(exec_tool(
+        tilted = asyncio.run(_helpers.exec_tool(
             state, "drop_to_surface", {"prim_paths": [crate], "align": "surface"},
         ))
         assert tilted.success
@@ -1076,7 +1086,7 @@ def test_drop_to_surface_reseats_a_sunken_scatter_in_place():
         _tree_asset(lib / "tree.usda")
         ground = _place(state, "field.usda", "Field")
         scatter = "/Scene/Vegetation/Trees"
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Trees", "group": "Vegetation", "assets": [{"asset": "tree.usda"}],
             "surfaces": [ground], "count": 30, "align": "up",
         })).success
@@ -1095,7 +1105,7 @@ def test_drop_to_surface_reseats_a_sunken_scatter_in_place():
         state.stage.Save()
         assert np.nanmin(_pivot_depths(project, scatter, ground)) > 2.5
 
-        result = asyncio.run(exec_tool(
+        result = asyncio.run(_helpers.exec_tool(
             state, "drop_to_surface", {"prim_paths": ["/Scene/Vegetation"]},
         ))
         assert result.success, result.error
@@ -1123,7 +1133,7 @@ def test_drop_to_surface_retilts_a_scatter_onto_the_ground_keeping_headings():
         _box_asset(lib / "log.usda", (2.5, 0.25, 0.25))
         ground = _place(state, "field.usda", "Field")
         scatter = "/Scene/Scatter/Logs"
-        assert asyncio.run(exec_tool(state, "scatter_on_surface", {
+        assert asyncio.run(_helpers.exec_tool(state, "scatter_on_surface", {
             "name": "Logs", "assets": [{"asset": "log.usda"}], "surfaces": [ground],
             "count": 30, "align": "surface", "random_yaw": False,
             "region": {"polygon": [[-8, 0, -8], [8, 0, -8], [8, 0, 8], [-8, 0, 8]]},
@@ -1136,7 +1146,7 @@ def test_drop_to_surface_retilts_a_scatter_onto_the_ground_keeping_headings():
         state.stage.Save()
         assert np.abs(_log_end_gaps(project, scatter, ground)).max() > 0.4
 
-        result = asyncio.run(exec_tool(
+        result = asyncio.run(_helpers.exec_tool(
             state, "drop_to_surface", {"prim_paths": [scatter], "align": "surface"},
         ))
         assert result.success, result.error
@@ -1161,19 +1171,19 @@ def test_parameter_rules_are_reported_clearly():
         ground = _place(state, "ground.usda", "Ground")
         base = {"name": "Rocks", "assets": [{"asset": "rock.usda"}], "surfaces": [ground]}
 
-        both = asyncio.run(exec_tool(
+        both = asyncio.run(_helpers.exec_tool(
             state, "scatter_on_surface", {**base, "count": 5, "density": 1},
         ))
         assert "exactly one of 'count' or 'density'" in both.error
-        pile = asyncio.run(exec_tool(
+        pile = asyncio.run(_helpers.exec_tool(
             state, "scatter_on_surface", {**base, "arrangement": "pile", "count": 5},
         ))
         assert "circular 'region'" in pile.error
-        missing = asyncio.run(exec_tool(
+        missing = asyncio.run(_helpers.exec_tool(
             state, "scatter_on_surface", {**base, "surfaces": ["/Scene/Nope"], "count": 5},
         ))
         assert "not found" in missing.error
-        path = asyncio.run(exec_tool(state, "scatter_along_path", {
+        path = asyncio.run(_helpers.exec_tool(state, "scatter_along_path", {
             "name": "Posts", "assets": [{"asset": "rock.usda"}],
             "points": [[0, 0, 0], [1, 0, 0]], "circle": {"center": [0, 0, 0], "radius": 1},
         }))

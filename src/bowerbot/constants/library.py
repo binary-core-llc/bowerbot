@@ -3,14 +3,14 @@
 
 """Asset library values."""
 
-from bowerbot.schemas import AssetCategory, AssetFormat
+from bowerbot import schemas
 
 
 class LibraryRules:
     """What the library scan lists, and the category filters it accepts."""
 
     # File extensions the library scan lists as assets.
-    USD_EXTENSIONS: frozenset[str] = frozenset(f.value for f in AssetFormat)
+    USD_EXTENSIONS: frozenset[str] = frozenset(f.value for f in schemas.AssetFormat)
     # Top-level library folders that never hold a package.
     NON_ASSET_DIRS: frozenset[str] = frozenset({"cache", "maps", "materials"})
     # The category filter that lists every category.
@@ -18,10 +18,10 @@ class LibraryRules:
     # The only categories scan_library assigns: package roots, loose materials,
     # loose geometry. Source of truth for the listable-category filter; 'lgt' is
     # an ASWF layer kind, never a library result.
-    CATEGORIES: tuple[AssetCategory, ...] = (
-        AssetCategory.PACKAGE,
-        AssetCategory.MTL,
-        AssetCategory.GEO,
+    CATEGORIES: tuple[schemas.AssetCategory, ...] = (
+        schemas.AssetCategory.PACKAGE,
+        schemas.AssetCategory.MTL,
+        schemas.AssetCategory.GEO,
     )
 
 

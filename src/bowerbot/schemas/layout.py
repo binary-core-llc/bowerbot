@@ -7,9 +7,15 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel
+from pydantic import ConfigDict
+from pydantic import Field
+from pydantic import field_validator
+from pydantic import model_validator
 
-from bowerbot.schemas.transforms import LayoutPattern, Vec3
+# Imported under another name: LayoutEntry has a field named ``transforms`` (the
+# place_layout input key), which would hide the module inside that class.
+from bowerbot.schemas import transforms as transform_schemas
 
 
 class GridPattern(BaseModel):
@@ -17,8 +23,8 @@ class GridPattern(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    type: Literal[LayoutPattern.GRID]
-    origin: Vec3
+    type: Literal[transform_schemas.LayoutPattern.GRID]
+    origin: transform_schemas.Vec3
     count: tuple[int, int] | tuple[int, int, int]
     spacing: tuple[float, float] | tuple[float, float, float]
 
@@ -43,8 +49,8 @@ class LinearPattern(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    type: Literal[LayoutPattern.LINEAR]
-    origin: Vec3
+    type: Literal[transform_schemas.LayoutPattern.LINEAR]
+    origin: transform_schemas.Vec3
     count: int = Field(ge=1)
     spacing: tuple[float, float] | tuple[float, float, float]
 
@@ -54,9 +60,9 @@ class LayoutTransform(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    translate: Vec3
-    rotate: Vec3 | None = None
-    scale: float | Vec3 | None = None
+    translate: transform_schemas.Vec3
+    rotate: transform_schemas.Vec3 | None = None
+    scale: float | transform_schemas.Vec3 | None = None
 
 
 class LayoutEntry(BaseModel):
@@ -67,8 +73,8 @@ class LayoutEntry(BaseModel):
     asset: str = Field(min_length=1)
     group: str = Field(min_length=1)
     name: str | None = None
-    rotate: Vec3 | None = None
-    scale: float | Vec3 | None = None
+    rotate: transform_schemas.Vec3 | None = None
+    scale: float | transform_schemas.Vec3 | None = None
     fix_root_prim: bool = False
     fix_root_transforms: bool = False
     transforms: list[LayoutTransform] | None = Field(default=None, min_length=1)

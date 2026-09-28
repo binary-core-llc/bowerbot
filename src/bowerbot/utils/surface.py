@@ -8,11 +8,13 @@ from __future__ import annotations
 import math
 
 import numpy as np
-from pxr import Gf, Sdf, Usd, UsdGeom
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
 
-from bowerbot.constants import SurfaceTuning
-from bowerbot.schemas import SurfaceIndex, SurfaceTriangles
-from bowerbot.schemas.surface import BoolArray, FloatArray, IntArray
+from bowerbot import constants
+from bowerbot import schemas
 
 
 def axis_index(up_axis: str) -> int:
@@ -25,7 +27,7 @@ def horizontal_axes(up: int) -> tuple[int, int]:
     return (0, 2) if up == 1 else (0, 1)
 
 
-def up_vector(up: int) -> FloatArray:
+def up_vector(up: int) -> schemas.FloatArray:
     """Unit vector along the world up axis."""
     vec = np.zeros(3)
     vec[up] = 1.0
@@ -39,7 +41,7 @@ def collect_triangles(
     up: int,
     exclude: list[str] | tuple[str, ...] = (),
     instancer_footprints: bool = False,
-) -> SurfaceTriangles:
+) -> schemas.SurfaceTriangles:
     """World-space triangles of the gprims under *prim_paths*."""
     missing = [p for p in prim_paths if not stage.GetPrimAtPath(p).IsValid()]
     if missing:
@@ -49,7 +51,7 @@ def collect_triangles(
     excluded = [Sdf.Path(p) for p in exclude]
     xform_cache = UsdGeom.XformCache(Usd.TimeCode.Default())
     seen: set[str] = set()
-    parts: list[tuple[FloatArray, FloatArray, FloatArray, bool]] = []
+    parts: list[tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray, bool]] = []
 
     for root_path in prim_paths:
         prim_range = Usd.PrimRange(
@@ -94,8 +96,8 @@ def collect_triangles(
 
 
 def build_vertical_index(
-    triangles: SurfaceTriangles, up: int, *, pad: float = 0.0, up_facing_only: bool = False,
-) -> SurfaceIndex:
+    triangles: schemas.SurfaceTriangles, up: int, *, pad: float = 0.0, up_facing_only: bool = False,
+) -> schemas.SurfaceIndex:
     """Bin triangles on the ground plane for local vertical-line queries."""
     axes = horizontal_axes(up)
     keep = np.arange(triangles.count)
@@ -114,9 +116,13 @@ def build_vertical_index(
     bmax = tri_b.max(axis=1) + pad
 
     origin = np.array([amin.min(), bmin.min()])
-    extent = max(amax.max() - origin[0], bmax.max() - origin[1], SurfaceTuning.EPSILON)
+    extent = max(amax.max() - origin[0], bmax.max() - origin[1], constants.SurfaceTuning.EPSILON)
     typical = float(np.median(np.maximum(amax - amin, bmax - bmin)))
-    cell = max(typical, extent / math.sqrt(SurfaceTuning.MAX_GRID_CELLS), SurfaceTuning.EPSILON)
+    cell = max(
+        typical,
+        extent / math.sqrt(constants.SurfaceTuning.MAX_GRID_CELLS),
+        constants.SurfaceTuning.EPSILON,
+    )
     dims = (
         int((amax.max() - origin[0]) / cell) + 1,
         int((bmax.max() - origin[1]) / cell) + 1,
@@ -140,19 +146,19 @@ def build_vertical_index(
     cell_tris = keep[tri_rep[order]]
     counts = np.bincount(cell_ids, minlength=dims[0] * dims[1])
     cell_start = np.concatenate([[0], np.cumsum(counts)])
-    return SurfaceIndex(
+    return schemas.SurfaceIndex(
         triangles=triangles, up=up, axes=axes, origin=origin, cell=cell, dims=dims,
         cell_start=cell_start, cell_tris=cell_tris,
     )
 
 
 def vertical_hits(
-    index: SurfaceIndex, qa: FloatArray, qb: FloatArray,
-) -> tuple[IntArray, IntArray, FloatArray]:
+    index: schemas.SurfaceIndex, qa: schemas.FloatArray, qb: schemas.FloatArray,
+) -> tuple[schemas.IntArray, schemas.IntArray, schemas.FloatArray]:
     """Every (query, triangle, height) where a vertical line meets a triangle."""
     out_q, out_t, out_h = [], [], []
-    for start in range(0, qa.shape[0], SurfaceTuning.QUERY_CHUNK):
-        sl = slice(start, start + SurfaceTuning.QUERY_CHUNK)
+    for start in range(0, qa.shape[0], constants.SurfaceTuning.QUERY_CHUNK):
+        sl = slice(start, start + constants.SurfaceTuning.QUERY_CHUNK)
         q, t = _candidate_pairs(index, qa[sl], qb[sl])
         if q.size == 0:
             continue
@@ -160,9 +166,9 @@ def vertical_hits(
         l0, l1, l2, valid = _barycentric_2d(index, t, pa, pb)
         inside = (
             valid
-            & (l0 >= -SurfaceTuning.BARY_EPSILON)
-            & (l1 >= -SurfaceTuning.BARY_EPSILON)
-            & (l2 >= -SurfaceTuning.BARY_EPSILON)
+            & (l0 >= -constants.SurfaceTuning.BARY_EPSILON)
+            & (l1 >= -constants.SurfaceTuning.BARY_EPSILON)
+            & (l2 >= -constants.SurfaceTuning.BARY_EPSILON)
         )
         q, t = q[inside], t[inside]
         up = index.up
@@ -182,12 +188,12 @@ def vertical_hits(
 
 
 def surface_under(
-    index: SurfaceIndex,
-    points: FloatArray,
+    index: schemas.SurfaceIndex,
+    points: schemas.FloatArray,
     *,
     mode: str,
-    reference: FloatArray | None = None,
-) -> tuple[BoolArray, FloatArray, IntArray]:
+    reference: schemas.FloatArray | None = None,
+) -> tuple[schemas.BoolArray, schemas.FloatArray, schemas.IntArray]:
     """One surface hit per point along its vertical line: top, nearest or below."""
     n = points.shape[0]
     axes = index.axes
@@ -224,12 +230,12 @@ def surface_under(
 
 
 def plan_coverage(
-    index: SurfaceIndex, qa: FloatArray, qb: FloatArray, margin: float,
-) -> BoolArray:
+    index: schemas.SurfaceIndex, qa: schemas.FloatArray, qb: schemas.FloatArray, margin: float,
+) -> schemas.BoolArray:
     """Whether each plan-view point lies on (or within *margin* of) any triangle."""
     covered = np.zeros(qa.shape[0], dtype=bool)
-    for start in range(0, qa.shape[0], SurfaceTuning.QUERY_CHUNK):
-        sl = slice(start, start + SurfaceTuning.QUERY_CHUNK)
+    for start in range(0, qa.shape[0], constants.SurfaceTuning.QUERY_CHUNK):
+        sl = slice(start, start + constants.SurfaceTuning.QUERY_CHUNK)
         q, t = _candidate_pairs(index, qa[sl], qb[sl])
         if q.size == 0:
             continue
@@ -237,9 +243,9 @@ def plan_coverage(
         l0, l1, l2, valid = _barycentric_2d(index, t, pa, pb)
         inside = (
             valid
-            & (l0 >= -SurfaceTuning.BARY_EPSILON)
-            & (l1 >= -SurfaceTuning.BARY_EPSILON)
-            & (l2 >= -SurfaceTuning.BARY_EPSILON)
+            & (l0 >= -constants.SurfaceTuning.BARY_EPSILON)
+            & (l1 >= -constants.SurfaceTuning.BARY_EPSILON)
+            & (l2 >= -constants.SurfaceTuning.BARY_EPSILON)
         )
         if margin > 0:
             near = _distance_to_triangle_2d(index, t, pa, pb) <= margin
@@ -250,8 +256,11 @@ def plan_coverage(
 
 
 def sample_on_triangles(
-    rng: np.random.Generator, triangles: SurfaceTriangles, weights: FloatArray, n: int,
-) -> tuple[FloatArray, IntArray]:
+    rng: np.random.Generator,
+    triangles: schemas.SurfaceTriangles,
+    weights: schemas.FloatArray,
+    n: int,
+) -> tuple[schemas.FloatArray, schemas.IntArray]:
     """Draw *n* points uniformly by area (times *weights*) over the triangles."""
     total = float(weights.sum())
     if n <= 0 or total <= 0:
@@ -266,14 +275,18 @@ def sample_on_triangles(
     return points, tri
 
 
-def slope_mask(triangles: SurfaceTriangles, up: int, max_slope_degrees: float) -> BoolArray:
+def slope_mask(
+    triangles: schemas.SurfaceTriangles, up: int, max_slope_degrees: float,
+) -> schemas.BoolArray:
     """Triangles whose normal is within *max_slope_degrees* of the up axis."""
     if max_slope_degrees >= 180.0:
         return np.ones(triangles.count, dtype=bool)
     return triangles.normals[:, up] >= math.cos(math.radians(max_slope_degrees)) - 1e-9
 
 
-def plan_bounds(triangles: SurfaceTriangles, up: int) -> tuple[FloatArray, FloatArray]:
+def plan_bounds(
+    triangles: schemas.SurfaceTriangles, up: int,
+) -> tuple[schemas.FloatArray, schemas.FloatArray]:
     """Plan-view ``(min, max)`` of the triangles on the ground axes."""
     axes = list(horizontal_axes(up))
     pts = np.concatenate([triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]])
@@ -282,7 +295,7 @@ def plan_bounds(triangles: SurfaceTriangles, up: int) -> tuple[FloatArray, Float
 
 def prim_world_box(
     stage: Usd.Stage, prim_path: str,
-) -> tuple[FloatArray, FloatArray]:
+) -> tuple[schemas.FloatArray, schemas.FloatArray]:
     """World-aligned bounding box ``(min, max)`` of a prim; raises if empty."""
     prim = stage.GetPrimAtPath(prim_path)
     if not prim.IsValid():
@@ -298,7 +311,7 @@ def prim_world_box(
     return np.array(rng.GetMin()), np.array(rng.GetMax())
 
 
-def gf_matrix_to_numpy(matrix: Gf.Matrix4d) -> FloatArray:
+def gf_matrix_to_numpy(matrix: Gf.Matrix4d) -> schemas.FloatArray:
     """A Gf.Matrix4d as a (4, 4) float64 array (row-vector convention)."""
     return np.array(matrix, dtype=np.float64)
 
@@ -324,7 +337,7 @@ def _is_double_sided(prim: Usd.Prim) -> bool:
 
 def _local_triangles(
     prim: Usd.Prim,
-) -> tuple[FloatArray, FloatArray, FloatArray] | None:
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray] | None:
     """Triangles of a supported gprim in its own local space."""
     if prim.IsA(UsdGeom.Mesh):
         return _mesh_triangles(UsdGeom.Mesh(prim))
@@ -339,7 +352,7 @@ def _local_triangles(
 
 def _mesh_triangles(
     mesh: UsdGeom.Mesh,
-) -> tuple[FloatArray, FloatArray, FloatArray] | None:
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray] | None:
     points = mesh.GetPointsAttr().Get()
     counts = mesh.GetFaceVertexCountsAttr().Get()
     indices = mesh.GetFaceVertexIndicesAttr().Get()
@@ -368,7 +381,9 @@ def _mesh_triangles(
     return pts[i0[valid]], pts[i1[valid]], pts[i2[valid]]
 
 
-def _cube_triangles(cube: UsdGeom.Cube) -> tuple[FloatArray, FloatArray, FloatArray]:
+def _cube_triangles(
+    cube: UsdGeom.Cube,
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray]:
     half = (cube.GetSizeAttr().Get() or 2.0) / 2.0
     corners = np.array([
         [x, y, z] for x in (-half, half) for y in (-half, half) for z in (-half, half)
@@ -386,9 +401,9 @@ def _cube_triangles(cube: UsdGeom.Cube) -> tuple[FloatArray, FloatArray, FloatAr
 
 def _sphere_triangles(
     sphere: UsdGeom.Sphere,
-) -> tuple[FloatArray, FloatArray, FloatArray]:
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray]:
     radius = sphere.GetRadiusAttr().Get() or 1.0
-    n_lon, n_lat = SurfaceTuning.SPHERE_SEGMENTS
+    n_lon, n_lat = constants.SurfaceTuning.SPHERE_SEGMENTS
     theta = np.linspace(0.0, math.pi, n_lat + 1)
     phi = np.linspace(0.0, 2.0 * math.pi, n_lon + 1)
     tt, pp = np.meshgrid(theta, phi, indexing="ij")
@@ -405,7 +420,9 @@ def _sphere_triangles(
     return np.concatenate([a, a]), np.concatenate([c, d]), np.concatenate([b, c])
 
 
-def _plane_triangles(plane: UsdGeom.Plane) -> tuple[FloatArray, FloatArray, FloatArray]:
+def _plane_triangles(
+    plane: UsdGeom.Plane,
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray]:
     width = plane.GetWidthAttr().Get() or 2.0
     length = plane.GetLengthAttr().Get() or 2.0
     axis = plane.GetAxisAttr().Get() or UsdGeom.Tokens.z
@@ -422,8 +439,8 @@ def _plane_triangles(plane: UsdGeom.Plane) -> tuple[FloatArray, FloatArray, Floa
 
 
 def _instancer_footprints(
-    instancer: UsdGeom.PointInstancer, world: FloatArray, up: int,
-) -> tuple[FloatArray, FloatArray, FloatArray] | None:
+    instancer: UsdGeom.PointInstancer, world: schemas.FloatArray, up: int,
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray] | None:
     """Two footprint triangles per visible instance, from its prototype's box."""
     time = Usd.TimeCode.Default()
     proto_idx = instancer.GetProtoIndicesAttr().Get()
@@ -464,7 +481,7 @@ def _instancer_footprints(
         "ni,nij->nj", (lo[proto_idx] + hi[proto_idx]) / 2.0, rotation,
     ) + matrices[:, 3, :3]
     lengths = np.linalg.norm(rotation, axis=2)
-    upness = np.abs(rotation[:, :, up]) / np.maximum(lengths, SurfaceTuning.EPSILON)
+    upness = np.abs(rotation[:, :, up]) / np.maximum(lengths, constants.SurfaceTuning.EPSILON)
     normal_axis = np.argmax(upness, axis=1)
     rows = np.arange(proto_idx.size)
     edge_a = half[rows, (normal_axis + 1) % 3, None] * rotation[rows, (normal_axis + 1) % 3]
@@ -476,32 +493,36 @@ def _instancer_footprints(
     return np.concatenate([c0, c0]), np.concatenate([c1, c2]), np.concatenate([c2, c3])
 
 
-def _to_world(points: FloatArray, matrix: FloatArray) -> FloatArray:
+def _to_world(points: schemas.FloatArray, matrix: schemas.FloatArray) -> schemas.FloatArray:
     return points @ matrix[:3, :3] + matrix[3, :3]
 
 
 def _build_triangles(
-    parts: list[tuple[FloatArray, FloatArray, FloatArray, bool]], up: int,
-) -> SurfaceTriangles:
+    parts: list[tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray, bool]], up: int,
+) -> schemas.SurfaceTriangles:
     if not parts:
         empty = np.zeros((0, 3))
-        return SurfaceTriangles(v0=empty, v1=empty, v2=empty, normals=empty, areas=np.zeros(0))
+        return schemas.SurfaceTriangles(
+            v0=empty, v1=empty, v2=empty, normals=empty, areas=np.zeros(0),
+        )
     v0 = np.concatenate([p[0] for p in parts])
     v1 = np.concatenate([p[1] for p in parts])
     v2 = np.concatenate([p[2] for p in parts])
     double = np.concatenate([np.full(p[0].shape[0], p[3]) for p in parts])
     cross = np.cross(v1 - v0, v2 - v0)
     length = np.linalg.norm(cross, axis=1)
-    keep = length > SurfaceTuning.EPSILON
+    keep = length > constants.SurfaceTuning.EPSILON
     normals = cross[keep] / length[keep][:, None]
-    return SurfaceTriangles(
+    return schemas.SurfaceTriangles(
         v0=v0[keep], v1=v1[keep], v2=v2[keep],
         normals=_orient_double_sided(normals, double[keep], up),
         areas=0.5 * length[keep],
     )
 
 
-def _orient_double_sided(normals: FloatArray, double: BoolArray, up: int) -> FloatArray:
+def _orient_double_sided(
+    normals: schemas.FloatArray, double: schemas.BoolArray, up: int,
+) -> schemas.FloatArray:
     """Double-sided faces have no back: point their normal to the upper hemisphere."""
     if not double.any():
         return normals
@@ -511,16 +532,18 @@ def _orient_double_sided(normals: FloatArray, double: BoolArray, up: int) -> Flo
     return out
 
 
-def _empty_index(triangles: SurfaceTriangles, up: int, axes: tuple[int, int]) -> SurfaceIndex:
-    return SurfaceIndex(
+def _empty_index(
+    triangles: schemas.SurfaceTriangles, up: int, axes: tuple[int, int],
+) -> schemas.SurfaceIndex:
+    return schemas.SurfaceIndex(
         triangles=triangles, up=up, axes=axes, origin=np.zeros(2), cell=1.0, dims=(1, 1),
         cell_start=np.zeros(2, dtype=np.int64), cell_tris=np.zeros(0, dtype=np.int64),
     )
 
 
 def _candidate_pairs(
-    index: SurfaceIndex, qa: FloatArray, qb: FloatArray,
-) -> tuple[IntArray, IntArray]:
+    index: schemas.SurfaceIndex, qa: schemas.FloatArray, qb: schemas.FloatArray,
+) -> tuple[schemas.IntArray, schemas.IntArray]:
     """Expand each query into the triangles registered in its grid cell."""
     ia = np.floor((qa - index.origin[0]) / index.cell).astype(np.int64)
     ib = np.floor((qb - index.origin[1]) / index.cell).astype(np.int64)
@@ -539,15 +562,18 @@ def _candidate_pairs(
 
 
 def _barycentric_2d(
-    index: SurfaceIndex, t: IntArray, pa: FloatArray, pb: FloatArray,
-) -> tuple[FloatArray, FloatArray, FloatArray, BoolArray]:
+    index: schemas.SurfaceIndex,
+    t: schemas.IntArray,
+    pa: schemas.FloatArray,
+    pb: schemas.FloatArray,
+) -> tuple[schemas.FloatArray, schemas.FloatArray, schemas.FloatArray, schemas.BoolArray]:
     a_ax, b_ax = index.axes
     triangles = index.triangles
     a0, b0 = triangles.v0[t, a_ax], triangles.v0[t, b_ax]
     a1, b1 = triangles.v1[t, a_ax], triangles.v1[t, b_ax]
     a2, b2 = triangles.v2[t, a_ax], triangles.v2[t, b_ax]
     det = (b1 - b2) * (a0 - a2) + (a2 - a1) * (b0 - b2)
-    valid = np.abs(det) > SurfaceTuning.EPSILON
+    valid = np.abs(det) > constants.SurfaceTuning.EPSILON
     safe = np.where(valid, det, 1.0)
     l0 = ((b1 - b2) * (pa - a2) + (a2 - a1) * (pb - b2)) / safe
     l1 = ((b2 - b0) * (pa - a2) + (a0 - a2) * (pb - b2)) / safe
@@ -555,8 +581,11 @@ def _barycentric_2d(
 
 
 def _distance_to_triangle_2d(
-    index: SurfaceIndex, t: IntArray, pa: FloatArray, pb: FloatArray,
-) -> FloatArray:
+    index: schemas.SurfaceIndex,
+    t: schemas.IntArray,
+    pa: schemas.FloatArray,
+    pb: schemas.FloatArray,
+) -> schemas.FloatArray:
     """Plan-view distance from each point to its paired triangle's edges."""
     a_ax, b_ax = index.axes
     triangles = index.triangles
@@ -569,7 +598,7 @@ def _distance_to_triangle_2d(
     for (sa, sb), (ea, eb) in zip(verts, verts[1:] + verts[:1], strict=True):
         da, db = ea - sa, eb - sb
         length2 = da * da + db * db
-        safe_length2 = np.where(length2 > SurfaceTuning.EPSILON, length2, 1.0)
+        safe_length2 = np.where(length2 > constants.SurfaceTuning.EPSILON, length2, 1.0)
         s = np.clip(((pa - sa) * da + (pb - sb) * db) / safe_length2, 0.0, 1.0)
         dist = np.hypot(pa - (sa + s * da), pb - (sb + s * db))
         best = np.minimum(best, dist)

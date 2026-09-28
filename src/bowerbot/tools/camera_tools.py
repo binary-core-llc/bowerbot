@@ -7,54 +7,54 @@ from __future__ import annotations
 
 from typing import Any
 
+from bowerbot import scene_state
+from bowerbot import skills
 from bowerbot.services import camera_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_stage
+from bowerbot.tools import _helpers
 
 
 def list_camera_properties(
-    state: SceneState, params: dict[str, Any],
-) -> ToolResult:
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
     """Return every attribute the Camera prim schema declares."""
     try:
         data = camera_service.list_camera_properties(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def create_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Create a scene-level camera."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = camera_service.create_camera(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def update_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Reposition or re-aim an existing scene camera."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = camera_service.update_camera(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def remove_camera(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Remove a scene camera."""
-    if (err := require_stage(state)):
+    if (err := _helpers.require_stage(state)):
         return err
     try:
         data = camera_service.remove_camera(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
 _LOOK_AT = {
@@ -70,8 +70,8 @@ _LOOK_AT = {
 }
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="list_camera_properties",
         description=(
             "Live UsdGeom schema view of every attribute the Camera prim "
@@ -84,7 +84,7 @@ TOOLS: list[Tool] = [
         ),
         parameters={"type": "object", "properties": {}},
     ),
-    Tool(
+    skills.Tool(
         name="create_camera",
         description=(
             "Create a USD camera in /Scene/Cameras. Aim it with EXACTLY "
@@ -155,7 +155,7 @@ TOOLS: list[Tool] = [
             "required": ["camera_name"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="update_camera",
         description=(
             "Reposition or re-aim an existing scene camera. Pass new "
@@ -205,7 +205,7 @@ TOOLS: list[Tool] = [
             "required": ["prim_path"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="remove_camera",
         description=(
             "Remove a camera from the scene. Reports variant sets that "

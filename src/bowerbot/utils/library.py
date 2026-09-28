@@ -8,11 +8,12 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from pxr import Usd, UsdShade
+from pxr import Usd
+from pxr import UsdShade
 
-from bowerbot.constants import LibraryRules
-from bowerbot.schemas import AssetCategory, DetectionOutcome
-from bowerbot.utils.asset_folder_utils import detect_folder_root
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ def scan_library(
     library_dir: Path,
     *,
     query: str | None = None,
-    category: str = LibraryRules.ANY_CATEGORY,
+    category: str = constants.LibraryRules.ANY_CATEGORY,
 ) -> list[dict[str, str]]:
     """Return matching assets in *library_dir*.
 
@@ -61,15 +62,15 @@ def scan_library(
             "name": name,
             "path": str(root_file),
             "format": root_file.suffix,
-            "category": AssetCategory.PACKAGE.value,
+            "category": schemas.AssetCategory.PACKAGE.value,
         }
-        if category == LibraryRules.ANY_CATEGORY or category == entry["category"]:
+        if category == constants.LibraryRules.ANY_CATEGORY or category == entry["category"]:
             results.append(entry)
 
     for f in sorted(library_dir.rglob("*")):
         if not f.is_file():
             continue
-        if f.suffix.lower() not in LibraryRules.USD_EXTENSIONS:
+        if f.suffix.lower() not in constants.LibraryRules.USD_EXTENSIONS:
             continue
         if _is_inside_package(f, package_dirs):
             continue
@@ -81,7 +82,7 @@ def scan_library(
             "format": f.suffix,
             "category": _classify_loose(f),
         }
-        if category == LibraryRules.ANY_CATEGORY or category == entry["category"]:
+        if category == constants.LibraryRules.ANY_CATEGORY or category == entry["category"]:
             results.append(entry)
 
     return results
@@ -96,10 +97,10 @@ def _find_top_level_packages(library_dir: Path) -> dict[Path, Path]:
     """Return ``{folder_path: root_file}`` for every package at the top level."""
     packages: dict[Path, Path] = {}
     for entry in sorted(library_dir.iterdir()):
-        if not entry.is_dir() or entry.name in LibraryRules.NON_ASSET_DIRS:
+        if not entry.is_dir() or entry.name in constants.LibraryRules.NON_ASSET_DIRS:
             continue
-        detection = detect_folder_root(entry)
-        if detection.outcome is DetectionOutcome.UNAMBIGUOUS and detection.root:
+        detection = utils.asset_folder.detect_folder_root(entry)
+        if detection.outcome is schemas.DetectionOutcome.UNAMBIGUOUS and detection.root:
             packages[entry] = Path(detection.root)
     return packages
 
@@ -123,8 +124,8 @@ def find_package_for(file_path: Path, library_dir: Path) -> Path | None:
         return None
 
     candidate = library / relative.parts[0]
-    detection = detect_folder_root(candidate)
-    if detection.outcome is DetectionOutcome.UNAMBIGUOUS:
+    detection = utils.asset_folder.detect_folder_root(candidate)
+    if detection.outcome is schemas.DetectionOutcome.UNAMBIGUOUS:
         return candidate
     return None
 
@@ -144,10 +145,10 @@ def _classify_loose(file_path: Path) -> str:
         if stage is not None:
             for prim in stage.Traverse():
                 if prim.IsA(UsdShade.Material):
-                    return AssetCategory.MTL.value
+                    return schemas.AssetCategory.MTL.value
     except Exception:
         logger.debug(
             "Could not classify %s, defaulting to geo",
             file_path, exc_info=True,
         )
-    return AssetCategory.GEO.value
+    return schemas.AssetCategory.GEO.value

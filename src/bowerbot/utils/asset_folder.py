@@ -15,15 +15,13 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from pxr import Sdf, Usd, UsdGeom
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
 
-from bowerbot.constants import AssetFolderRules, ASWFLayerNames, IntakeRules
-from bowerbot.schemas import DetectionOutcome, FolderDetection
-from bowerbot.utils.dependency_utils import resolve as resolve_dependencies
-from bowerbot.utils.stage_utils import (
-    count_scene_refs_to_asset_dir,
-    get_prim_ref_paths,
-)
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +63,12 @@ def resolve_asset_dir_for_prim(
     stage_dir = Path(stage.GetRootLayer().realPath).parent
 
     def _check(prim: Usd.Prim) -> tuple[Path | None, str | None]:
-        for ref_path in get_prim_ref_paths(prim):
+        for ref_path in utils.stage.get_prim_ref_paths(prim):
             resolved = (stage_dir / ref_path).resolve()
             if not resolved.exists() or not resolved.parent.is_dir():
                 continue
             folder = resolved.parent
-            for ext in AssetFolderRules.USD_LAYER_EXTENSIONS:
+            for ext in constants.AssetFolderRules.USD_LAYER_EXTENSIONS:
                 if resolved.name == f"{folder.name}{ext}":
                     return folder, str(prim.GetPath())
         return None, None
@@ -167,18 +165,20 @@ def list_alternate_geo_files(asset_dir: Path) -> list[str]:
     if not asset_dir.is_dir():
         return []
     canonical = {
-        ASWFLayerNames.GEO,
-        ASWFLayerNames.MTL,
-        ASWFLayerNames.LGT,
-        ASWFLayerNames.PHY,
-        ASWFLayerNames.CONTENTS,
-        ASWFLayerNames.VARIANTS,
+        constants.ASWFLayerNames.GEO,
+        constants.ASWFLayerNames.MTL,
+        constants.ASWFLayerNames.LGT,
+        constants.ASWFLayerNames.PHY,
+        constants.ASWFLayerNames.CONTENTS,
+        constants.ASWFLayerNames.VARIANTS,
     }
-    canonical |= {f"{asset_dir.name}{ext}" for ext in AssetFolderRules.USD_LAYER_EXTENSIONS}
+    canonical |= {
+        f"{asset_dir.name}{ext}" for ext in constants.AssetFolderRules.USD_LAYER_EXTENSIONS
+    }
     return sorted(
         p.name for p in asset_dir.iterdir()
         if p.is_file()
-        and p.suffix.lower() in AssetFolderRules.USD_LAYER_EXTENSIONS
+        and p.suffix.lower() in constants.AssetFolderRules.USD_LAYER_EXTENSIONS
         and p.name not in canonical
     )
 
@@ -231,13 +231,13 @@ def check_shared_modification(
     stage: Usd.Stage, asset_dir: Path, params: dict, *, op_label: str,
 ) -> None:
     """Refuse if *asset_dir* is referenced by 2+ scene instances and not confirmed."""
-    instance_count = count_scene_refs_to_asset_dir(stage, asset_dir)
+    instance_count = utils.stage.count_scene_refs_to_asset_dir(stage, asset_dir)
     confirmed = bool(params.get("confirm_shared_modification", False))
     if instance_count >= 2 and not confirmed:
         msg = (
             f"Asset folder '{asset_dir.name}/' is referenced by "
             f"{instance_count} scene instances. {op_label} writes to the "
-            f"shared {ASWFLayerNames.MTL}, so the binding would apply to "
+            f"shared {constants.ASWFLayerNames.MTL}, so the binding would apply to "
             f"all {instance_count} instances. Two ways forward: "
             f"(1) For per-instance materials (different material per "
             f"instance), use place_asset to make each instance independent, "
@@ -298,7 +298,7 @@ def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
         return
 
     ref_path = f"./{layer_file}"
-    if ref_path in get_prim_ref_paths(root_prim):
+    if ref_path in utils.stage.get_prim_ref_paths(root_prim):
         return
 
     del stage
@@ -339,11 +339,11 @@ def rebuild_root_references(asset_dir: Path) -> None:
     root_prim.GetReferences().ClearReferences()
     root_prim.GetPayloads().ClearPayloads()
 
-    geo_path = asset_dir / ASWFLayerNames.GEO
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if geo_path.exists():
-        root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
+        root_prim.GetPayloads().AddPayload(f"./{constants.ASWFLayerNames.GEO}")
 
-    for layer_file in AssetFolderRules.CANONICAL_REFERENCE_ORDER:
+    for layer_file in constants.AssetFolderRules.CANONICAL_REFERENCE_ORDER:
         if (asset_dir / layer_file).exists():
             root_prim.GetReferences().AddReference(f"./{layer_file}")
 
@@ -367,7 +367,7 @@ def read_stage_metadata(file_path: Path) -> tuple[float, str]:
 
 def read_stage_metadata_from_dir(asset_dir: Path) -> tuple[float, str]:
     """Return ``(metersPerUnit, upAxis)`` from an asset's ``geo.usda``."""
-    geo_path = asset_dir / ASWFLayerNames.GEO
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if geo_path.exists():
         return read_stage_metadata(geo_path)
     return 1.0, "Y"
@@ -382,7 +382,7 @@ def read_asset_mpu_from_file(asset_file: Path) -> float:
 # ── Root detection ──
 
 
-def detect_folder_root(folder: Path) -> FolderDetection:
+def detect_folder_root(folder: Path) -> schemas.FolderDetection:
     """Classify *folder* and identify its root USD file when possible.
 
     USD composition is the source of truth: the file no sibling depends
@@ -391,26 +391,26 @@ def detect_folder_root(folder: Path) -> FolderDetection:
     """
     folder = folder.resolve()
     if not folder.is_dir():
-        return FolderDetection(
-            outcome=DetectionOutcome.EMPTY,
+        return schemas.FolderDetection(
+            outcome=schemas.DetectionOutcome.EMPTY,
             folder=str(folder),
             reason="not a directory",
         )
 
     usd_files = sorted(
         p for p in folder.iterdir()
-        if p.is_file() and p.suffix.lower() in AssetFolderRules.USD_LAYER_EXTENSIONS
+        if p.is_file() and p.suffix.lower() in constants.AssetFolderRules.USD_LAYER_EXTENSIONS
     )
     if not usd_files:
-        return FolderDetection(
-            outcome=DetectionOutcome.EMPTY,
+        return schemas.FolderDetection(
+            outcome=schemas.DetectionOutcome.EMPTY,
             folder=str(folder),
             reason="no USD files at the top level",
         )
 
     if len(usd_files) == 1:
-        return FolderDetection(
-            outcome=DetectionOutcome.UNAMBIGUOUS,
+        return schemas.FolderDetection(
+            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
             folder=str(folder),
             root=str(usd_files[0]),
             reason="only USD file in the folder",
@@ -419,16 +419,16 @@ def detect_folder_root(folder: Path) -> FolderDetection:
     candidates = _candidate_roots_by_dep_graph(usd_files)
 
     if len(candidates) == 1:
-        return FolderDetection(
-            outcome=DetectionOutcome.UNAMBIGUOUS,
+        return schemas.FolderDetection(
+            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
             folder=str(folder),
             root=str(candidates[0]),
             reason="only USD file in the folder not referenced by a sibling",
         )
 
     if not candidates:
-        return FolderDetection(
-            outcome=DetectionOutcome.AMBIGUOUS,
+        return schemas.FolderDetection(
+            outcome=schemas.DetectionOutcome.AMBIGUOUS,
             folder=str(folder),
             candidates=[str(p) for p in usd_files],
             reason="circular references between siblings",
@@ -436,15 +436,15 @@ def detect_folder_root(folder: Path) -> FolderDetection:
 
     tiebreak = _name_tiebreak(candidates, folder.name)
     if tiebreak is not None:
-        return FolderDetection(
-            outcome=DetectionOutcome.UNAMBIGUOUS,
+        return schemas.FolderDetection(
+            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
             folder=str(folder),
             root=str(tiebreak),
             reason=f"multiple candidates; picked by naming convention '{tiebreak.stem}'",
         )
 
-    return FolderDetection(
-        outcome=DetectionOutcome.AMBIGUOUS,
+    return schemas.FolderDetection(
+        outcome=schemas.DetectionOutcome.AMBIGUOUS,
         folder=str(folder),
         candidates=[str(p) for p in candidates],
         reason="multiple independent USD files with no cross-references",
@@ -456,7 +456,7 @@ def detect_folder_root(folder: Path) -> FolderDetection:
 
 def _get_default_prim_name(asset_dir: Path) -> str | None:
     """Return the ``defaultPrim`` recorded in ``geo.usda``, if any."""
-    geo_path = asset_dir / ASWFLayerNames.GEO
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if geo_path.exists():
         layer = Sdf.Layer.FindOrOpen(str(geo_path))
         if layer and layer.defaultPrim:
@@ -469,7 +469,7 @@ def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:
     usd_set = {p.resolve() for p in usd_files}
     referenced: set[Path] = set()
     for candidate in usd_files:
-        found, _missing = resolve_dependencies(candidate)
+        found, _missing = utils.dependencies.resolve(candidate)
         for dep in found:
             dep_resolved = dep.resolve()
             if dep_resolved == candidate.resolve():
@@ -481,7 +481,7 @@ def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:
 
 def _name_tiebreak(candidates: list[Path], folder_name: str) -> Path | None:
     """Pick the preferred candidate by filename convention, or ``None``."""
-    for stem in (folder_name, *IntakeRules.ROOT_NAME_HINTS):
+    for stem in (folder_name, *constants.IntakeRules.ROOT_NAME_HINTS):
         matches = [p for p in candidates if p.stem == stem]
         if len(matches) == 1:
             return matches[0]

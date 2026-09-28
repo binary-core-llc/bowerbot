@@ -9,7 +9,8 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
 FloatArray = NDArray[np.float64]
 IntArray = NDArray[np.signedinteger[Any]]

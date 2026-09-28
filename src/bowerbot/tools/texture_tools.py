@@ -7,39 +7,39 @@ from __future__ import annotations
 
 from typing import Any
 
-from bowerbot.schemas import TextureCategory
+from bowerbot import scene_state
+from bowerbot import schemas
+from bowerbot import skills
 from bowerbot.services import texture_service
-from bowerbot.skills.base import Tool, ToolResult
-from bowerbot.state import SceneState
-from bowerbot.tools._helpers import require_library_dir
+from bowerbot.tools import _helpers
 
-_CATEGORY_VALUES: list[str] = [c.value for c in TextureCategory]
+_CATEGORY_VALUES: list[str] = [c.value for c in schemas.TextureCategory]
 
 
-def search_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def search_textures(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """Search the user's asset library for textures matching a query."""
-    if (err := require_library_dir(state)):
+    if (err := _helpers.require_library_dir(state)):
         return err
     try:
         data = texture_service.search_textures(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-def list_textures(state: SceneState, params: dict[str, Any]) -> ToolResult:
+def list_textures(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
     """List every texture in the user's asset library, optionally filtered."""
-    if (err := require_library_dir(state)):
+    if (err := _helpers.require_library_dir(state)):
         return err
     try:
         data = texture_service.list_textures(state, params)
     except (ValueError, RuntimeError) as e:
-        return ToolResult(success=False, error=str(e))
-    return ToolResult(success=True, data=data)
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
 
 
-TOOLS: list[Tool] = [
-    Tool(
+TOOLS: list[skills.Tool] = [
+    skills.Tool(
         name="search_textures",
         description=(
             "Search the asset library for texture files by keyword. "
@@ -74,7 +74,7 @@ TOOLS: list[Tool] = [
             "required": ["query"],
         },
     ),
-    Tool(
+    skills.Tool(
         name="list_textures",
         description=(
             "List every texture in the asset library. Use this to see "

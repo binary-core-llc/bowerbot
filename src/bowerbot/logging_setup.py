@@ -31,7 +31,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from bowerbot.config import BOWERBOT_HOME, Settings
+from bowerbot import config
 
 _LOGGER_ROOT = "bowerbot"
 _SESSION_ID = uuid.uuid4().hex[:12]
@@ -47,7 +47,7 @@ def session_id() -> str:
     return _SESSION_ID
 
 
-def configure_logging(settings: Settings) -> Path | None:
+def configure_logging(settings: config.Settings) -> Path | None:
     """Wire BowerBot logging per *settings*; return the log file path or None.
 
     Returns ``None`` when logging is disabled in settings.
@@ -66,7 +66,7 @@ def configure_logging(settings: Settings) -> Path | None:
 
     root.setLevel(logging.DEBUG)
 
-    log_dir = BOWERBOT_HOME / "logs"
+    log_dir = config.BOWERBOT_HOME / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "bowerbot.log"
 

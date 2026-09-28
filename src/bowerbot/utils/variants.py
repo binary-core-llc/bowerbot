@@ -13,36 +13,20 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf, Usd, UsdLux
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdLux
 
-from bowerbot.constants import ASWFLayerNames, MaterialRules, NamingRules, SceneNamespace
-from bowerbot.schemas import (
-    SceneVariantsSummary,
-    VariantCarrier,
-    VariantSetSummary,
-    VariantsSummary,
-)
-from bowerbot.schemas.opinions import OpinionKind
-from bowerbot.utils.asset_folder_utils import (
-    asset_has_root_payload,
-    clear_root_payload,
-    find_root_file,
-    rebuild_root_references,
-    resolve_default_prim_name,
-)
-from bowerbot.utils.stage_utils import (
-    find_asset_placements,
-    get_prim_ref_paths,
-    prune_empty_overrides,
-)
-from bowerbot.utils.texture_utils import stage_asset_value
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 # ── Layer lifecycle ──
 
 
 def _variants_layer_path(asset_dir: Path) -> Path:
     """Return the canonical ``variants.usda`` path."""
-    return asset_dir / ASWFLayerNames.VARIANTS
+    return asset_dir / constants.ASWFLayerNames.VARIANTS
 
 
 def ensure_variants_layer(asset_dir: Path) -> Path:
@@ -51,7 +35,7 @@ def ensure_variants_layer(asset_dir: Path) -> Path:
     if path.exists():
         return path
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     layer = Sdf.Layer.CreateNew(str(path))
     layer.defaultPrim = default_prim_name
     Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
@@ -62,7 +46,7 @@ def ensure_variants_layer(asset_dir: Path) -> Path:
 
 def ensure_variants_referenced(asset_dir: Path) -> None:
     """Ensure the asset root references ``variants.usda``."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return
 
@@ -73,28 +57,28 @@ def ensure_variants_referenced(asset_dir: Path) -> None:
     if root_prim is None:
         return
 
-    if f"./{ASWFLayerNames.VARIANTS}" in get_prim_ref_paths(root_prim):
+    if f"./{constants.ASWFLayerNames.VARIANTS}" in utils.stage.get_prim_ref_paths(root_prim):
         return
 
     del stage
-    rebuild_root_references(asset_dir)
+    utils.asset_folder.rebuild_root_references(asset_dir)
 
 
 def _remove_variants_reference(asset_dir: Path) -> None:
     """Remove the ``variants.usda`` reference from the asset root."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return
 
     layer = Sdf.Layer.FindOrOpen(str(root_file))
     if layer is None:
         return
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return
 
-    target = f"./{ASWFLayerNames.VARIANTS}"
+    target = f"./{constants.ASWFLayerNames.VARIANTS}"
     ref_list = prim_spec.referenceList
     for items in (
         ref_list.prependedItems,
@@ -172,7 +156,7 @@ def setup_geometry_variant_set(
     ensure_variants_layer(asset_dir)
     ensure_variants_referenced(asset_dir)
     stage = open_variants_stage(asset_dir)
-    root_prim_path = f"/{resolve_default_prim_name(asset_dir)}"
+    root_prim_path = f"/{utils.asset_folder.resolve_default_prim_name(asset_dir)}"
 
     for variant_name, payload_ref in variants.items():
         author_in_variant(
@@ -180,7 +164,7 @@ def setup_geometry_variant_set(
             _payload_setter(payload_ref),
         )
 
-    clear_root_payload(asset_dir)
+    utils.asset_folder.clear_root_payload(asset_dir)
     set_default_variant(asset_dir, variant_set, default_variant)
 
 
@@ -205,7 +189,7 @@ def apply_variant(
     ensure_variants_referenced(asset_dir)
     stage = open_variants_stage(asset_dir)
     author_in_variant(
-        stage, f"/{resolve_default_prim_name(asset_dir)}",
+        stage, f"/{utils.asset_folder.resolve_default_prim_name(asset_dir)}",
         variant_set, variant_name, author_fn,
     )
 
@@ -225,7 +209,7 @@ def set_default_variant(
     asset_dir: Path, set_name: str, variant_name: str,
 ) -> None:
     """Author the default variant selection on the asset root prim."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         raise ValueError(f"No root file in {asset_dir}")
     stage = Usd.Stage.Open(str(root_file))
@@ -244,13 +228,13 @@ def set_default_variant(
 
 def clear_default_variant(asset_dir: Path, set_name: str) -> None:
     """Clear the default variant selection on the asset root prim."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return
     layer = Sdf.Layer.FindOrOpen(str(root_file))
     if layer is None:
         return
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return
@@ -261,13 +245,13 @@ def clear_default_variant(asset_dir: Path, set_name: str) -> None:
 
 def _clear_all_default_variants(asset_dir: Path) -> None:
     """Clear every variant selection on the asset root prim."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return
     layer = Sdf.Layer.FindOrOpen(str(root_file))
     if layer is None:
         return
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return
@@ -283,20 +267,20 @@ def find_variant_carriers(
     stage: Usd.Stage,
     scene_prim_path: str,
     variant_set: str | None = None,
-) -> list[VariantCarrier]:
+) -> list[schemas.VariantCarrier]:
     """Composed prims under ``scene_prim_path`` that expose variant sets."""
     root = stage.GetPrimAtPath(scene_prim_path)
     if not root or not root.IsValid():
         raise ValueError(f"Prim not found in scene: {scene_prim_path}")
 
-    carriers: list[VariantCarrier] = []
+    carriers: list[schemas.VariantCarrier] = []
     for prim in Usd.PrimRange(root):
         names = list(prim.GetVariantSets().GetNames())
         if not names:
             continue
         if variant_set is not None and variant_set not in names:
             continue
-        carriers.append(VariantCarrier(
+        carriers.append(schemas.VariantCarrier(
             prim_path=str(prim.GetPath()),
             variant_sets=[
                 _read_variant_set(prim, name)
@@ -309,18 +293,18 @@ def find_variant_carriers(
 
 def get_scene_variants_summary(
     stage: Usd.Stage, scene_prim_path: str,
-) -> SceneVariantsSummary:
+) -> schemas.SceneVariantsSummary:
     """Scene-composition view of every variant set visible under a placement."""
-    return SceneVariantsSummary(
+    return schemas.SceneVariantsSummary(
         prim_path=scene_prim_path,
         carriers=find_variant_carriers(stage, scene_prim_path),
     )
 
 
-def _read_variant_set(prim: Usd.Prim, name: str) -> VariantSetSummary:
+def _read_variant_set(prim: Usd.Prim, name: str) -> schemas.VariantSetSummary:
     """Read a single variant set's variants and current selection."""
     vset = prim.GetVariantSets().GetVariantSet(name)
-    return VariantSetSummary(
+    return schemas.VariantSetSummary(
         name=name,
         variants=list(vset.GetVariantNames()),
         selection=vset.GetVariantSelection() or None,
@@ -330,24 +314,24 @@ def _read_variant_set(prim: Usd.Prim, name: str) -> VariantSetSummary:
 # ── Asset folder inspection ──
 
 
-def get_variant_summary(asset_dir: Path) -> VariantsSummary:
+def get_variant_summary(asset_dir: Path) -> schemas.VariantsSummary:
     """Return all variant sets, variants, and selections."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     has_layer = _variants_layer_path(asset_dir).exists()
 
     if root_file is None:
-        return VariantsSummary(
+        return schemas.VariantsSummary(
             asset_path=str(asset_dir), has_variants_layer=has_layer,
         )
 
     stage = Usd.Stage.Open(str(root_file))
     if stage is None:
-        return VariantsSummary(
+        return schemas.VariantsSummary(
             asset_path=str(asset_dir), has_variants_layer=has_layer,
         )
     root_prim = stage.GetDefaultPrim()
     if root_prim is None:
-        return VariantsSummary(
+        return schemas.VariantsSummary(
             asset_path=str(asset_dir), has_variants_layer=has_layer,
         )
 
@@ -355,7 +339,7 @@ def get_variant_summary(asset_dir: Path) -> VariantsSummary:
         _read_variant_set(root_prim, name)
         for name in root_prim.GetVariantSets().GetNames()
     ]
-    return VariantsSummary(
+    return schemas.VariantsSummary(
         asset_path=str(asset_dir),
         has_variants_layer=has_layer,
         variant_sets=sets,
@@ -375,7 +359,7 @@ def remove_variant(
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
     if layer is None:
         return False
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return False
@@ -423,7 +407,7 @@ def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
     if layer is None:
         return False
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return False
@@ -445,7 +429,7 @@ def _has_variant_sets(asset_dir: Path) -> bool:
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
     if layer is None:
         return False
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return False
@@ -487,14 +471,14 @@ def _variants_have_any_payload(asset_dir: Path) -> bool:
 
 def restore_canonical_geo_if_needed(asset_dir: Path) -> bool:
     """Restore ``./geo.usda`` on the asset root when no other geometry source remains."""
-    if asset_has_root_payload(asset_dir):
+    if utils.asset_folder.asset_has_root_payload(asset_dir):
         return False
     if _variants_have_any_payload(asset_dir):
         return False
-    if not (asset_dir / ASWFLayerNames.GEO).exists():
+    if not (asset_dir / constants.ASWFLayerNames.GEO).exists():
         return False
 
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return False
     stage = Usd.Stage.Open(str(root_file))
@@ -503,7 +487,7 @@ def restore_canonical_geo_if_needed(asset_dir: Path) -> bool:
     root_prim = stage.GetDefaultPrim()
     if root_prim is None:
         return False
-    root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
+    root_prim.GetPayloads().AddPayload(f"./{constants.ASWFLayerNames.GEO}")
     stage.Save()
     return True
 
@@ -531,7 +515,7 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
 
 def is_valid_variant_set_name(name: str) -> bool:
     """Reject empty names or names with whitespace / path separators."""
-    return bool(name) and not any(c in NamingRules.FORBIDDEN_CHARS for c in name)
+    return bool(name) and not any(c in constants.NamingRules.FORBIDDEN_CHARS for c in name)
 
 
 def validate_variant_name(name: str, label: str = "variant") -> None:
@@ -602,7 +586,7 @@ def _collect_geometry_prim_paths(payload_path: Path) -> set[str]:
         spec = layer.GetObjectAtPath(path)
         if not isinstance(spec, Sdf.PrimSpec):
             return
-        if str(spec.typeName) in MaterialRules.SHADING_PRIM_TYPES:
+        if str(spec.typeName) in constants.MaterialRules.SHADING_PRIM_TYPES:
             return
         rel = str(path)[len(root_prefix):]
         paths.add(rel)
@@ -664,7 +648,7 @@ def find_masking_scene_opinions(
     asset_dir: Path,
     default_prim: str,
     target_map: dict[str, Iterable[str]],
-    kind: OpinionKind,
+    kind: schemas.OpinionKind,
 ) -> list[tuple[str, str]]:
     """Return (scene_prim_path, key) pairs in scene.usda that would mask a variant body opinion.
 
@@ -674,7 +658,7 @@ def find_masking_scene_opinions(
     relationship name, typically ``"material:binding"``), or ``"active"``
     (key is always ``"active"`` — the prim's active metadata).
     """
-    placements = find_asset_placements(stage, asset_dir)
+    placements = utils.stage.find_asset_placements(stage, asset_dir)
     if not placements:
         return []
     layer = stage.GetRootLayer()
@@ -702,7 +686,7 @@ def enforce_no_masking_overrides(
     asset_dir: Path,
     default_prim: str,
     target_map: dict[str, Iterable[str]],
-    kind: OpinionKind,
+    kind: schemas.OpinionKind,
     variant_kind: str,
     *,
     clear: bool,
@@ -725,7 +709,7 @@ def enforce_no_masking_overrides(
 def clear_masking_scene_opinions(
     stage: Usd.Stage,
     opinions: list[tuple[str, str]],
-    kind: OpinionKind,
+    kind: schemas.OpinionKind,
 ) -> None:
     """Remove the listed masking opinions from the stage's root layer."""
     layer = stage.GetRootLayer()
@@ -746,7 +730,7 @@ def clear_masking_scene_opinions(
             spec.ClearInfo("active")
         touched_paths.add(prim_path)
     for prim_path in touched_paths:
-        prune_empty_overrides(layer, prim_path)
+        utils.stage.prune_empty_overrides(layer, prim_path)
     layer.Save()
 
 
@@ -771,7 +755,7 @@ def format_masking_override_error(
 
 
 def _has_authored_opinion(
-    spec: Sdf.PrimSpec, key: str, kind: OpinionKind,
+    spec: Sdf.PrimSpec, key: str, kind: schemas.OpinionKind,
 ) -> bool:
     """Whether *spec* has an authored opinion at *key* for the given *kind*."""
     if kind == "attribute":
@@ -845,7 +829,7 @@ def set_scene_variant_default(
 def find_masking_scene_opinions_direct(
     stage: Usd.Stage,
     target_map: dict[str, Iterable[str]],
-    kind: OpinionKind,
+    kind: schemas.OpinionKind,
 ) -> list[tuple[str, str]]:
     """Return direct scene opinions that would mask a scene-level variant body."""
     layer = stage.GetRootLayer()
@@ -863,7 +847,7 @@ def find_masking_scene_opinions_direct(
 def enforce_no_scene_masking_overrides(
     stage: Usd.Stage,
     target_map: dict[str, Iterable[str]],
-    kind: OpinionKind,
+    kind: schemas.OpinionKind,
     variant_kind: str,
     *,
     clear: bool,
@@ -905,7 +889,7 @@ def remove_scene_variant(
         if set_name in prim_spec.variantSelections:
             del prim_spec.variantSelections[set_name]
         layer.Save()
-        prune_empty_overrides(layer, carrier_prim_path)
+        utils.stage.prune_empty_overrides(layer, carrier_prim_path)
         return True
 
     surviving = [v for v in existing if v != variant_name]
@@ -947,7 +931,7 @@ def remove_scene_variant_set(
     if set_name in prim_spec.variantSelections:
         del prim_spec.variantSelections[set_name]
     layer.Save()
-    prune_empty_overrides(layer, carrier_prim_path)
+    utils.stage.prune_empty_overrides(layer, carrier_prim_path)
     return True
 
 
@@ -967,7 +951,7 @@ def stage_asset_typed_overrides(
         staged: dict[str, object] = {}
         for attr_name, value in attrs.items():
             if types.get(attr_name) == asset_type and isinstance(value, str):
-                staged[attr_name] = stage_asset_value(
+                staged[attr_name] = utils.textures.stage_asset_value(
                     value, project_dir, library_dir,
                 )
             else:
@@ -1000,7 +984,7 @@ def require_scene_lighting_carrier(stage: Usd.Stage) -> str:
     """Return the lighting carrier path or raise if it does not exist yet."""
     if stage is None:
         raise ValueError("No scene stage is open.")
-    carrier = SceneNamespace.LIGHTING
+    carrier = constants.SceneNamespace.LIGHTING
     prim = stage.GetPrimAtPath(carrier)
     if not prim or not prim.IsValid():
         raise ValueError(
@@ -1226,13 +1210,13 @@ def suspect_variant_sets_in_asset(
     asset_dir: Path, base_prim_path: str | None = None,
 ) -> list[dict]:
     """Return suspect asset-level variant sets walking ancestors of *base_prim_path*."""
-    variants_path = asset_dir / ASWFLayerNames.VARIANTS
+    variants_path = asset_dir / constants.ASWFLayerNames.VARIANTS
     if not variants_path.exists():
         return []
     variants_layer = Sdf.Layer.FindOrOpen(str(variants_path))
     if variants_layer is None:
         return []
-    default_prim = resolve_default_prim_name(asset_dir)
+    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
     base = base_prim_path or f"/{default_prim}"
     pairs = find_suspect_variant_sets(variants_layer, base)
     return [
@@ -1259,7 +1243,7 @@ def clear_scene_variant_selections(
     matches it. Prunes empty over ancestors left behind on each touched
     placement. Returns the number of placements scrubbed.
     """
-    placements = find_asset_placements(stage, asset_dir)
+    placements = utils.stage.find_asset_placements(stage, asset_dir)
     if not placements:
         return 0
     layer = stage.GetRootLayer()
@@ -1275,7 +1259,7 @@ def clear_scene_variant_selections(
             continue
         del sels[set_name]
         scrubbed += 1
-        prune_empty_overrides(layer, placement)
+        utils.stage.prune_empty_overrides(layer, placement)
     if scrubbed:
         layer.Save()
     return scrubbed
@@ -1287,7 +1271,7 @@ def resolve_attribute_types_for_overrides(
 ) -> dict[str, dict[str, Sdf.ValueTypeName | None]]:
     """Look up each override attribute's declared type from the asset's composed stage."""
     out: dict[str, dict[str, Sdf.ValueTypeName | None]] = {}
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
     for asset_path, attrs in overrides.items():
         resolved: dict[str, Sdf.ValueTypeName | None] = {}
@@ -1308,7 +1292,7 @@ def refuse_unknown_asset_attributes(
     resolved_types: dict[str, dict[str, Sdf.ValueTypeName | None]],
 ) -> None:
     """Refuse override attributes that do not exist on the asset's composed prims."""
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
     refuse_unknown_attributes(stage, resolved_types)
 
@@ -1321,7 +1305,7 @@ def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
     if layer is None:
         return {}
-    default = resolve_default_prim_name(asset_dir)
+    default = utils.asset_folder.resolve_default_prim_name(asset_dir)
     prim_spec = layer.GetPrimAtPath(f"/{default}")
     if prim_spec is None:
         return {}

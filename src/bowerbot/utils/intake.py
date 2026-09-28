@@ -17,23 +17,15 @@ import tempfile
 from collections.abc import Iterable
 from pathlib import Path
 
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdUtils
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdUtils
 
-from bowerbot.constants import ASWFLayerNames
-from bowerbot.schemas import DetectionOutcome, IntakeReport, TransformParams
-from bowerbot.utils.asset_folder_utils import (
-    detect_folder_root,
-    ensure_layer_scope,
-    ensure_root_reference,
-    read_asset_mpu_from_file,
-    read_stage_metadata,
-    rebuild_root_references,
-    remove_empty_layer,
-    resolve_default_prim_name,
-)
-from bowerbot.utils.geometry_utils import get_mpu
-from bowerbot.utils.library_utils import find_package_for
-from bowerbot.utils.validation_utils import run_usd_compliance_checker
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +37,13 @@ def prepare_asset(
     library_dir: Path | None,
     fix_root_prim: bool = False,
     fix_root_transforms: bool = False,
-) -> IntakeReport:
+) -> schemas.IntakeReport:
     """Route an input file to USDZ / library-package / loose-file intake."""
     if asset_path.suffix.lower() == ".usdz":
         return intake_usdz(asset_path, assets_dir)
 
     if library_dir is not None:
-        package_dir = find_package_for(asset_path, library_dir)
+        package_dir = utils.library.find_package_for(asset_path, library_dir)
         if package_dir is not None:
             report = intake_folder(package_dir, assets_dir)
             _validate_intake(
@@ -67,7 +59,7 @@ def prepare_asset(
         asset_name=folder_name,
         geometry_file=asset_path,
     )
-    report = IntakeReport(
+    report = schemas.IntakeReport(
         scene_ref_path=f"assets/{folder_name}/{root_file.name}",
         asset_folder_name=folder_name,
         root_original_name=asset_path.name,
@@ -88,14 +80,14 @@ def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
     if asset_path.suffix.lower() == ".usdz":
         return asset_path.name
     if library_dir is not None:
-        package_dir = find_package_for(asset_path, library_dir)
+        package_dir = utils.library.find_package_for(asset_path, library_dir)
         if package_dir is not None:
             return package_dir.name
     return asset_path.stem
 
 
 def _validate_intake(
-    report: IntakeReport,
+    report: schemas.IntakeReport,
     assets_dir: Path,
     *,
     fix_root_prim: bool,
@@ -103,7 +95,7 @@ def _validate_intake(
 ) -> None:
     """Validate the intaken asset's geo.usda; rollback target on failure."""
     target_folder = assets_dir / report.asset_folder_name
-    geo_path = target_folder / ASWFLayerNames.GEO
+    geo_path = target_folder / constants.ASWFLayerNames.GEO
     if not geo_path.exists():
         return
     try:
@@ -119,7 +111,7 @@ def _validate_intake(
 
     canonical_root = target_folder / report.root_canonical_name
     if canonical_root.exists():
-        compliance_issues = run_usd_compliance_checker(canonical_root)
+        compliance_issues = utils.validation.run_usd_compliance_checker(canonical_root)
         for issue in compliance_issues:
             report.warnings.append(issue.message)
             logger.info(
@@ -131,18 +123,18 @@ def _validate_intake(
 # ── Folder intake ──
 
 
-def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport:
+def intake_folder(source_folder: Path, project_assets_dir: Path) -> schemas.IntakeReport:
     """Copy *source_folder* into *project_assets_dir* as a self-contained asset.
 
     Every transitive dependency (including shader texture paths) is
     localized so the output folder is portable. The root is canonicalized
     to ``<folder>.usda`` and sibling references are rewritten.
     """
-    detection = detect_folder_root(source_folder)
-    if detection.outcome is DetectionOutcome.EMPTY:
+    detection = utils.asset_folder.detect_folder_root(source_folder)
+    if detection.outcome is schemas.DetectionOutcome.EMPTY:
         msg = f"No USD files found in {source_folder}"
         raise ValueError(msg)
-    if detection.outcome is DetectionOutcome.AMBIGUOUS:
+    if detection.outcome is schemas.DetectionOutcome.AMBIGUOUS:
         names = ", ".join(Path(c).name for c in detection.candidates)
         msg = (
             f"Folder {source_folder.name} has multiple independent USD files "
@@ -197,7 +189,7 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
         )
 
         _normalize_root_metadata(canonical_root, target_folder.name)
-        rebuild_root_references(target_folder)
+        utils.asset_folder.rebuild_root_references(target_folder)
         warnings = _validate_self_contained(canonical_root, target_folder)
     except Exception:
         shutil.rmtree(target_folder, ignore_errors=True)
@@ -208,7 +200,7 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
         source_folder.name, target_folder.name,
         files_copied, len(localized_layer_sources) + len(localized_asset_sources),
     )
-    return IntakeReport(
+    return schemas.IntakeReport(
         scene_ref_path=f"assets/{target_folder.name}/{canonical_root.name}",
         asset_folder_name=target_folder.name,
         root_original_name=source_root.name,
@@ -221,14 +213,14 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> IntakeReport
     )
 
 
-def intake_usdz(asset_path: Path, assets_dir: Path) -> IntakeReport:
+def intake_usdz(asset_path: Path, assets_dir: Path) -> schemas.IntakeReport:
     """Copy a USDZ into *assets_dir* as-is."""
     local_copy = assets_dir / asset_path.name
     copied = 0
     if not local_copy.exists():
         shutil.copy2(asset_path, local_copy)
         copied = 1
-    return IntakeReport(
+    return schemas.IntakeReport(
         scene_ref_path=f"assets/{asset_path.name}",
         asset_folder_name=asset_path.stem,
         root_original_name=asset_path.name,
@@ -250,9 +242,9 @@ def create_asset_folder(
     asset_dir = output_dir / asset_name
     asset_dir.mkdir(parents=True, exist_ok=True)
 
-    mpu, up = read_stage_metadata(geometry_file)
+    mpu, up = utils.asset_folder.read_stage_metadata(geometry_file)
 
-    geo_path = asset_dir / ASWFLayerNames.GEO
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if not geo_path.exists():
         _create_geo_layer(geo_path, geometry_file)
 
@@ -354,16 +346,16 @@ def freeze_one_asset(assets_dir: Path, name: str) -> dict:
         msg = f"Asset folder not found: {name}"
         raise ValueError(msg)
 
-    geo_path = asset_dir / ASWFLayerNames.GEO
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if not geo_path.exists():
-        msg = f"No {ASWFLayerNames.GEO} in asset folder '{name}'"
+        msg = f"No {constants.ASWFLayerNames.GEO} in asset folder '{name}'"
         raise ValueError(msg)
 
     baked = bake_root_transforms(geo_path)
     return {"name": name, "baked": baked}
 
 
-def intake_summary(report: IntakeReport) -> dict:
+def intake_summary(report: schemas.IntakeReport) -> dict:
     """Condense an intake report into the fields surfaced to the LLM."""
     return {
         "asset_folder": report.asset_folder_name,
@@ -380,7 +372,7 @@ def intake_summary(report: IntakeReport) -> dict:
 
 
 def placement_message(
-    asset_name: str, prim_path: str, report: IntakeReport,
+    asset_name: str, prim_path: str, report: schemas.IntakeReport,
 ) -> str:
     """Format a placement message that narrates intake normalization."""
     parts = [f"Placed {asset_name} at {prim_path}."]
@@ -497,11 +489,11 @@ def add_nested_asset_reference(
     group: str,
     prim_name: str,
     ref_asset_path: str,
-    transform: TransformParams,
+    transform: schemas.TransformParams,
 ) -> str:
     """Author a nested asset reference inside a container's ``contents.usda``."""
-    contents_path = container_dir / ASWFLayerNames.CONTENTS
-    default_prim_name = resolve_default_prim_name(container_dir)
+    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
 
     if contents_path.exists():
         contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
@@ -509,7 +501,7 @@ def add_nested_asset_reference(
         contents_layer = Sdf.Layer.CreateNew(str(contents_path))
         contents_layer.defaultPrim = default_prim_name
 
-    ensure_layer_scope(contents_layer, default_prim_name, "contents", "Xform")
+    utils.asset_folder.ensure_layer_scope(contents_layer, default_prim_name, "contents", "Xform")
     _ensure_group_scope(contents_layer, default_prim_name, group)
     contents_layer.Save()
 
@@ -521,12 +513,12 @@ def add_nested_asset_reference(
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
-    container_mpu = get_mpu(container_dir)
+    container_mpu = utils.geometry.get_mpu(container_dir)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
     nested_mpu = (
-        read_asset_mpu_from_file(ref_full_path)
+        utils.asset_folder.read_asset_mpu_from_file(ref_full_path)
         if ref_full_path.exists() else container_mpu
     )
     unit_scale = (
@@ -552,11 +544,11 @@ def add_nested_asset_reference(
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()
-    ensure_root_reference(container_dir, ASWFLayerNames.CONTENTS)
+    utils.asset_folder.ensure_root_reference(container_dir, constants.ASWFLayerNames.CONTENTS)
 
     logger.info(
         "Added nested asset %s -> %s in %s/%s",
-        prim_name, ref_asset_path, container_dir.name, ASWFLayerNames.CONTENTS,
+        prim_name, ref_asset_path, container_dir.name, constants.ASWFLayerNames.CONTENTS,
     )
     return wrapper_path
 
@@ -569,11 +561,11 @@ def update_nested_asset_transform(
     rotate: tuple[float, float, float],
 ) -> bool:
     """Update translate/rotate on a nested-asset wrapper in ``contents.usda``."""
-    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return False
 
-    default_prim_name = resolve_default_prim_name(container_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
 
     stage = Usd.Stage.Open(str(contents_path))
@@ -583,7 +575,7 @@ def update_nested_asset_transform(
     if not wrapper or not wrapper.IsValid():
         return False
 
-    container_mpu = get_mpu(container_dir)
+    container_mpu = utils.geometry.get_mpu(container_dir)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
 
     xformable = UsdGeom.Xformable(wrapper)
@@ -607,7 +599,7 @@ def update_nested_asset_transform(
     stage.Save()
     logger.info(
         "Updated nested transform %s in %s/%s",
-        prim_name, container_dir.name, ASWFLayerNames.CONTENTS,
+        prim_name, container_dir.name, constants.ASWFLayerNames.CONTENTS,
     )
     return True
 
@@ -624,7 +616,7 @@ def remove_nested_asset_reference(
     Empty group scopes and an empty contents layer are cleaned up
     automatically via :func:`cleanup_unused_contents_in_folder`.
     """
-    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return True
 
@@ -632,7 +624,7 @@ def remove_nested_asset_reference(
     if layer is None:
         return False
 
-    default_prim_name = resolve_default_prim_name(container_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
     parent_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
     parent_spec = layer.GetPrimAtPath(parent_path)
     if parent_spec is not None and prim_name in parent_spec.nameChildren:
@@ -640,7 +632,7 @@ def remove_nested_asset_reference(
         layer.Save()
         logger.info(
             "Removed nested asset %s from %s/%s",
-            prim_name, container_dir.name, ASWFLayerNames.CONTENTS,
+            prim_name, container_dir.name, constants.ASWFLayerNames.CONTENTS,
         )
 
     cleanup_unused_contents_in_folder(container_dir)
@@ -657,7 +649,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
     reference arc; empty group scopes (``Props``, ``Furniture``, etc.)
     are the unused entries.
     """
-    contents_path = container_dir / ASWFLayerNames.CONTENTS
+    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return []
 
@@ -665,7 +657,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
     if layer is None:
         return []
 
-    default_prim_name = resolve_default_prim_name(container_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(container_dir)
     contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
     contents_spec = layer.GetPrimAtPath(contents_scope_path)
 
@@ -681,14 +673,14 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
         if removed:
             layer.Save()
 
-    remove_empty_layer(
+    utils.asset_folder.remove_empty_layer(
         contents_path, container_dir, lambda p: p.HasAuthoredReferences(),
     )
 
     if removed:
         logger.info(
             "Cleaned %d empty group(s) from %s/%s",
-            len(removed), container_dir.name, ASWFLayerNames.CONTENTS,
+            len(removed), container_dir.name, constants.ASWFLayerNames.CONTENTS,
         )
     return removed
 
@@ -696,7 +688,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
 # ── Internal: intake helpers ──
 
 
-def _reuse_existing_target(target_folder: Path, source_root: Path) -> IntakeReport:
+def _reuse_existing_target(target_folder: Path, source_root: Path) -> schemas.IntakeReport:
     """Build an IntakeReport for a target folder that already exists."""
     canonical = target_folder / f"{target_folder.name}.usda"
     if not canonical.exists():
@@ -706,7 +698,7 @@ def _reuse_existing_target(target_folder: Path, source_root: Path) -> IntakeRepo
         )
         raise RuntimeError(msg)
     _normalize_root_metadata(canonical, target_folder.name)
-    return IntakeReport(
+    return schemas.IntakeReport(
         scene_ref_path=f"assets/{target_folder.name}/{canonical.name}",
         asset_folder_name=target_folder.name,
         root_original_name=source_root.name,
@@ -745,7 +737,7 @@ def _plan_copies(
         if _is_inside(src, source_folder):
             dst = target_folder / src.relative_to(source_folder)
         else:
-            dst = target_folder / ASWFLayerNames.TEXTURES / src.name
+            dst = target_folder / constants.ASWFLayerNames.TEXTURES / src.name
             localized_asset_sources.append(str(src))
         resolved = _dedupe(dst, used_targets)
         used_targets.add(resolved)
@@ -928,7 +920,7 @@ def _create_root_file(
     up_axis: str,
 ) -> None:
     """Write the root .usd that references ``geo.usda``."""
-    geo_path = root_path.parent / ASWFLayerNames.GEO
+    geo_path = root_path.parent / constants.ASWFLayerNames.GEO
     default_prim_name = root_path.parent.name
     if geo_path.exists():
         geo_layer = Sdf.Layer.FindOrOpen(str(geo_path))
@@ -943,7 +935,7 @@ def _create_root_file(
 
     root_prim = stage.DefinePrim(f"/{default_prim_name}", "Xform")
     stage.SetDefaultPrim(root_prim)
-    root_prim.GetPayloads().AddPayload(f"./{ASWFLayerNames.GEO}")
+    root_prim.GetPayloads().AddPayload(f"./{constants.ASWFLayerNames.GEO}")
 
     apply_aswf_root_metadata(
         root_prim,

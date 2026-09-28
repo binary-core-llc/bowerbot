@@ -8,20 +8,14 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from pxr import Gf, Sdf, Usd, UsdShade
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdShade
 
-from bowerbot.constants import ASWFLayerNames, MaterialXShaders, PreviewSurfaceShader
-from bowerbot.schemas import ProceduralMaterialParams
-from bowerbot.utils.asset_folder_utils import (
-    ensure_layer_scope,
-    ensure_root_reference,
-    find_root_file,
-    remove_empty_layer,
-    resolve_default_prim_name,
-    to_layer_local_path,
-)
-from bowerbot.utils.stage_utils import clear_orphan_variant_overs
-from bowerbot.utils.variant_utils import cleanup_if_empty
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +27,7 @@ def add_material_to_folder(
     material_prim_path: str | None = None,
 ) -> str:
     """Copy a material into ``mtl.usda`` and bind it to *prim_path*."""
-    mtl_path = asset_dir / ASWFLayerNames.MTL
+    mtl_path = asset_dir / constants.ASWFLayerNames.MTL
 
     if not material_prim_path:
         material_prim_path = find_first_material(material_file)
@@ -52,8 +46,8 @@ def add_material_to_folder(
         msg = f"Cannot open material file: {material_file}"
         raise RuntimeError(msg)
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    utils.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
 
     mat_name = Sdf.Path(material_prim_path).name
     dest_mat_path = Sdf.Path(f"/{default_prim_name}/mtl/{mat_name}")
@@ -65,7 +59,7 @@ def add_material_to_folder(
     mtl_layer.defaultPrim = default_prim_name
     mtl_layer.Save()
 
-    local_prim_path = to_layer_local_path(prim_path, default_prim_name)
+    local_prim_path = utils.asset_folder.to_layer_local_path(prim_path, default_prim_name)
     composed_mat_path = f"/{default_prim_name}/mtl/{mat_name}"
 
     stage = Usd.Stage.Open(str(mtl_path))
@@ -77,7 +71,7 @@ def add_material_to_folder(
             UsdShade.MaterialBindingAPI.Apply(prim).Bind(material)
         stage.Save()
 
-    ensure_root_reference(asset_dir, ASWFLayerNames.MTL)
+    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.MTL)
 
     logger.info(
         "Added material %s -> %s in %s",
@@ -89,11 +83,11 @@ def add_material_to_folder(
 def create_procedural_material_in_folder(
     asset_dir: Path,
     prim_path: str,
-    params: ProceduralMaterialParams,
+    params: schemas.ProceduralMaterialParams,
 ) -> str:
     """Author a MaterialX ``standard_surface`` material and bind it."""
-    mtl_path = asset_dir / ASWFLayerNames.MTL
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    mtl_path = asset_dir / constants.ASWFLayerNames.MTL
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
 
     mtl_layer = (
         Sdf.Layer.FindOrOpen(str(mtl_path))
@@ -101,7 +95,7 @@ def create_procedural_material_in_folder(
         else Sdf.Layer.CreateNew(str(mtl_path))
     )
 
-    ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
+    utils.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
     mtl_layer.defaultPrim = default_prim_name
     mtl_layer.Save()
 
@@ -116,12 +110,12 @@ def create_procedural_material_in_folder(
     _author_materialx_standard_surface(stage, mat_prim_path, material, params)
     _author_usd_preview_surface(stage, mat_prim_path, material, params)
 
-    local_prim_path = to_layer_local_path(prim_path, default_prim_name)
+    local_prim_path = utils.asset_folder.to_layer_local_path(prim_path, default_prim_name)
     target_prim = stage.OverridePrim(local_prim_path)
     UsdShade.MaterialBindingAPI.Apply(target_prim).Bind(material)
 
     stage.Save()
-    ensure_root_reference(asset_dir, ASWFLayerNames.MTL)
+    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.MTL)
 
     logger.info(
         "Created procedural material %s -> %s in %s",
@@ -134,12 +128,12 @@ def _author_materialx_standard_surface(
     stage: Usd.Stage,
     mat_prim_path: str,
     material: UsdShade.Material,
-    params: ProceduralMaterialParams,
+    params: schemas.ProceduralMaterialParams,
 ) -> None:
     """Author the MaterialX ``standard_surface`` branch on *material*."""
-    shader_path = f"{mat_prim_path}/{MaterialXShaders.STANDARD_SURFACE_PRIM}"
+    shader_path = f"{mat_prim_path}/{constants.MaterialXShaders.STANDARD_SURFACE_PRIM}"
     shader = UsdShade.Shader.Define(stage, shader_path)
-    shader.CreateIdAttr(MaterialXShaders.STANDARD_SURFACE)
+    shader.CreateIdAttr(constants.MaterialXShaders.STANDARD_SURFACE)
     shader.CreateInput(
         "base_color", Sdf.ValueTypeNames.Color3f,
     ).Set(Gf.Vec3f(*params.base_color))
@@ -156,7 +150,7 @@ def _author_materialx_standard_surface(
 
     out = shader.CreateOutput("out", Sdf.ValueTypeNames.Token)
     material.CreateSurfaceOutput(
-        MaterialXShaders.OUTPUT_QUALIFIER,
+        constants.MaterialXShaders.OUTPUT_QUALIFIER,
     ).ConnectToSource(out)
 
 
@@ -164,12 +158,12 @@ def _author_usd_preview_surface(
     stage: Usd.Stage,
     mat_prim_path: str,
     material: UsdShade.Material,
-    params: ProceduralMaterialParams,
+    params: schemas.ProceduralMaterialParams,
 ) -> None:
     """Author the UsdPreviewSurface branch on *material* for cross-DCC compat."""
-    shader_path = f"{mat_prim_path}/{PreviewSurfaceShader.SURFACE_PRIM}"
+    shader_path = f"{mat_prim_path}/{constants.PreviewSurfaceShader.SURFACE_PRIM}"
     shader = UsdShade.Shader.Define(stage, shader_path)
-    shader.CreateIdAttr(PreviewSurfaceShader.SURFACE_ID)
+    shader.CreateIdAttr(constants.PreviewSurfaceShader.SURFACE_ID)
     shader.CreateInput(
         "diffuseColor", Sdf.ValueTypeNames.Color3f,
     ).Set(Gf.Vec3f(*params.base_color))
@@ -190,12 +184,12 @@ def _author_usd_preview_surface(
 
 def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None:
     """Clear a binding and garbage-collect unused materials + the layer."""
-    mtl_path = asset_dir / ASWFLayerNames.MTL
+    mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     if not mtl_path.exists():
         return
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
-    local_path = to_layer_local_path(prim_path, default_prim_name)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    local_path = utils.asset_folder.to_layer_local_path(prim_path, default_prim_name)
 
     stage = Usd.Stage.Open(str(mtl_path))
     if stage is None:
@@ -211,11 +205,11 @@ def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None
 
 def list_materials_in_folder(asset_dir: Path) -> list[dict]:
     """List all materials and their bindings in *asset_dir*."""
-    mtl_path = asset_dir / ASWFLayerNames.MTL
+    mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     if not mtl_path.exists():
         return []
 
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return []
 
@@ -252,11 +246,11 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
     authored on ``over`` prims count. When ``mtl.usda`` becomes empty,
     it is removed and the root references are rebuilt.
     """
-    mtl_path = asset_dir / ASWFLayerNames.MTL
+    mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     if not mtl_path.exists():
         return []
 
-    root_file = find_root_file(asset_dir)
+    root_file = utils.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         return []
 
@@ -275,7 +269,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
     if mtl_layer is None:
         return []
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     mtl_scope_path = Sdf.Path(f"/{default_prim_name}/mtl")
     mtl_scope = mtl_layer.GetPrimAtPath(mtl_scope_path)
     removed: list[str] = []
@@ -284,7 +278,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
             child.path for child in mtl_scope.nameChildren
             if str(child.path) not in bound_materials
         ]
-        variants_path = asset_dir / ASWFLayerNames.VARIANTS
+        variants_path = asset_dir / constants.ASWFLayerNames.VARIANTS
         variants_layer = (
             Sdf.Layer.FindOrOpen(str(variants_path))
             if variants_path.exists() else None
@@ -295,13 +289,13 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
             edit.Add(path, Sdf.Path.emptyPath)
             mtl_layer.Apply(edit)
             if variants_layer is not None:
-                clear_orphan_variant_overs(variants_layer, str(path))
+                utils.stage.clear_orphan_variant_overs(variants_layer, str(path))
 
     mtl_layer.Save()
     if removed and variants_layer is not None:
-        cleanup_if_empty(asset_dir)
+        utils.variants.cleanup_if_empty(asset_dir)
 
-    remove_empty_layer(
+    utils.asset_folder.remove_empty_layer(
         mtl_path, asset_dir, lambda p: p.IsA(UsdShade.Material),
     )
 
@@ -315,7 +309,7 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
 
 def _collect_variant_binding_targets(asset_dir: Path) -> set[str]:
     """Every ``material:binding`` target authored under any variant."""
-    variants_path = asset_dir / ASWFLayerNames.VARIANTS
+    variants_path = asset_dir / constants.ASWFLayerNames.VARIANTS
     if not variants_path.exists():
         return set()
     layer = Sdf.Layer.FindOrOpen(str(variants_path))

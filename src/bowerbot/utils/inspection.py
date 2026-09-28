@@ -7,22 +7,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from pxr import Sdf, Usd, UsdGeom, UsdLux
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdLux
 
-from bowerbot.utils import physics_typing_utils
-from bowerbot.utils.camera_utils import format_camera_prim
-from bowerbot.utils.light_utils import format_light_prim
-from bowerbot.utils.physics_utils import (
-    format_collision_group_prim,
-    format_joint_prim,
-    format_physics_scene_prim,
-)
-from bowerbot.utils.scatter_utils import format_scatter_prim
-from bowerbot.utils.stage_utils import (
-    extract_position,
-    get_prim_ref_paths,
-    world_bounds,
-)
+from bowerbot import utils
 
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
@@ -39,7 +29,7 @@ def list_prims(stage: Usd.Stage) -> list[dict]:
         if prim.IsA(UsdGeom.PointInstancer):
             # Prototypes live under the instancer; they are not scene objects.
             iterator.PruneChildren()
-            entry = format_scatter_prim(prim, bbox_cache)
+            entry = utils.scatter.format_scatter_prim(prim, bbox_cache)
         else:
             entry = _classify(prim, bbox_cache)
         if entry is None:
@@ -55,14 +45,14 @@ def _classify(
     prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
 ) -> dict | None:
     """Return the formatted ``list_prims`` entry for *prim*, or None."""
-    if physics_typing_utils.is_physics_scene(prim):
-        return format_physics_scene_prim(prim)
-    if physics_typing_utils.is_joint(prim):
-        return format_joint_prim(prim)
-    if physics_typing_utils.is_collision_group(prim):
-        return format_collision_group_prim(prim)
+    if utils.physics_typing.is_physics_scene(prim):
+        return utils.physics.format_physics_scene_prim(prim)
+    if utils.physics_typing.is_joint(prim):
+        return utils.physics.format_joint_prim(prim)
+    if utils.physics_typing.is_collision_group(prim):
+        return utils.physics.format_collision_group_prim(prim)
     if prim.IsA(UsdGeom.Camera):
-        return format_camera_prim(prim)
+        return utils.cameras.format_camera_prim(prim)
 
     is_light = prim.HasAPI(UsdLux.LightAPI)
     has_refs = prim.GetMetadata("references") is not None
@@ -77,9 +67,9 @@ def _classify(
         if scene_gprim and not has_refs and not is_light
         else prim
     )
-    position = extract_position(target)
+    position = utils.stage.extract_position(target)
     if is_light:
-        return format_light_prim(target, position)
+        return utils.lights.format_light_prim(target, position)
     return _format_geometry_prim(target, position, bbox_cache)
 
 
@@ -117,12 +107,12 @@ def _format_geometry_prim(
     bbox_cache: UsdGeom.BBoxCache,
 ) -> dict:
     """Format a referenced-asset or scene-authored Gprim for ``list_prims``."""
-    ref_paths = get_prim_ref_paths(prim)
+    ref_paths = utils.stage.get_prim_ref_paths(prim)
     return {
         "prim_path": str(prim.GetPath()),
         "kind": "asset" if ref_paths else "geometry",
         "type": str(prim.GetTypeName()) or None,
         "asset": ref_paths[0] if ref_paths else None,
         "position": position,
-        "bounds": world_bounds(prim, bbox_cache),
+        "bounds": utils.stage.world_bounds(prim, bbox_cache),
     }

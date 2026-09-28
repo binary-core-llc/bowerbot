@@ -10,31 +10,20 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdLux
+from pxr import Gf
+from pxr import Sdf
+from pxr import Usd
+from pxr import UsdGeom
+from pxr import UsdLux
 
-from bowerbot.constants import ASWFLayerNames, LightRules, LightUsd
-from bowerbot.schemas import LightParams, LightPropertySpec, LightType, LightTypeSchemaInfo
-from bowerbot.utils.asset_folder_utils import (
-    ensure_layer_scope,
-    ensure_root_reference,
-    remove_empty_layer,
-    resolve_default_prim_name,
-)
-from bowerbot.utils.geometry_utils import unit_factor
-from bowerbot.utils.stage_utils import (
-    clear_orphan_variant_overs,
-    coerce_number,
-    set_prim_attribute,
-    update_rotate_op,
-    update_translate_op,
-)
-from bowerbot.utils.usd_schema_utils import property_doc, to_jsonable
-from bowerbot.utils.variant_utils import cleanup_if_empty
+from bowerbot import constants
+from bowerbot import schemas
+from bowerbot import utils
 
 logger = logging.getLogger(__name__)
 
 
-def list_light_type_properties(light_type: LightType) -> LightTypeSchemaInfo:
+def list_light_type_properties(light_type: schemas.LightType) -> schemas.LightTypeSchemaInfo:
     """Live schema-registry view of every input the light type declares."""
     prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)
     if prim_def is None:
@@ -43,25 +32,25 @@ def list_light_type_properties(light_type: LightType) -> LightTypeSchemaInfo:
             "USD build is missing UsdLux.",
         )
 
-    properties: list[LightPropertySpec] = []
+    properties: list[schemas.LightPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
         if not prop_name.startswith("inputs:"):
             continue
         attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
         if attr_spec is None:
             continue
-        properties.append(LightPropertySpec(
+        properties.append(schemas.LightPropertySpec(
             name=prop_name,
             kind="attribute",
             type_name=str(attr_spec.typeName),
-            default=to_jsonable(attr_spec.default),
+            default=utils.usd_schema.to_jsonable(attr_spec.default),
             allowed_tokens=[
                 str(t) for t in (attr_spec.allowedTokens or [])
             ],
-            documentation=property_doc(prim_def, prop_name, attr_spec),
+            documentation=utils.usd_schema.property_doc(prim_def, prop_name, attr_spec),
         ))
 
-    return LightTypeSchemaInfo(
+    return schemas.LightTypeSchemaInfo(
         light_type=light_type.value,
         properties=properties,
     )
@@ -75,16 +64,16 @@ def scale_spatial_attributes(
         return dict(attributes)
     return {
         name: (
-            coerce_number(value, f"spatial light input '{name}'") * factor
-            if name in LightRules.SPATIAL_INPUTS else value
+            utils.stage.coerce_number(value, f"spatial light input '{name}'") * factor
+            if name in constants.LightRules.SPATIAL_INPUTS else value
         )
         for name, value in attributes.items()
     }
 
 
-def create_light(stage: Usd.Stage, prim_path: str, light: LightParams) -> None:
+def create_light(stage: Usd.Stage, prim_path: str, light: schemas.LightParams) -> None:
     """Create a USD light prim in *stage* at *prim_path*."""
-    light_cls = LightUsd.CLASSES[light.light_type.value]
+    light_cls = constants.LightUsd.CLASSES[light.light_type.value]
     light_prim = light_cls.Define(stage, prim_path).GetPrim()
 
     write_light_attributes(stage, prim_path, light.attributes)
@@ -125,9 +114,9 @@ def update_light(
             tex_attr.Set(Sdf.AssetPath(texture))
 
     if translate is not None:
-        update_translate_op(prim, Gf.Vec3d(*translate))
+        utils.stage.update_translate_op(prim, Gf.Vec3d(*translate))
     if rotate is not None:
-        update_rotate_op(prim, Gf.Vec3f(*rotate))
+        utils.stage.update_rotate_op(prim, Gf.Vec3f(*rotate))
 
 
 def write_light_attributes(
@@ -141,7 +130,7 @@ def write_light_attributes(
         attr = prim.GetAttribute(name)
         if not attr:
             continue
-        set_prim_attribute(
+        utils.stage.set_prim_attribute(
             stage, prim_path, name, value, expected_type=attr.GetTypeName(),
         )
 
@@ -195,11 +184,11 @@ def format_light_prim(
 def add_light_to_folder(
     asset_dir: Path,
     light_name: str,
-    light: LightParams,
+    light: schemas.LightParams,
 ) -> str:
     """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path."""
-    lgt_path = asset_dir / ASWFLayerNames.LGT
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    lgt_path = asset_dir / constants.ASWFLayerNames.LGT
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
 
     if lgt_path.exists():
         lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
@@ -208,7 +197,7 @@ def add_light_to_folder(
         lgt_layer.defaultPrim = default_prim_name
 
     lgt_scope_path = Sdf.Path(f"/{default_prim_name}/lgt")
-    ensure_layer_scope(lgt_layer, default_prim_name, "lgt", "Xform")
+    utils.asset_folder.ensure_layer_scope(lgt_layer, default_prim_name, "lgt", "Xform")
     lgt_layer.Save()
 
     _apply_inverse_transform(asset_dir, lgt_path, lgt_scope_path)
@@ -219,13 +208,13 @@ def add_light_to_folder(
         raise RuntimeError(msg)
 
     light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
-    light_cls = LightUsd.CLASSES.get(light.light_type.value)
+    light_cls = constants.LightUsd.CLASSES.get(light.light_type.value)
     if light_cls is None:
         msg = f"Unknown light type: {light.light_type.value}"
         raise ValueError(msg)
 
     light_prim = light_cls.Define(stage, light_prim_path).GetPrim()
-    factor = unit_factor(asset_dir)
+    factor = utils.geometry.unit_factor(asset_dir)
 
     write_light_attributes(
         stage, light_prim_path,
@@ -249,7 +238,7 @@ def add_light_to_folder(
         xformable.AddRotateXYZOp().Set(Gf.Vec3f(*light.rotate))
 
     stage.Save()
-    ensure_root_reference(asset_dir, ASWFLayerNames.LGT)
+    utils.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.LGT)
 
     logger.info(
         "Added light %s (%s) to %s",
@@ -267,12 +256,12 @@ def update_light_in_folder(
     texture: str | None = None,
 ) -> None:
     """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``."""
-    lgt_path = asset_dir / ASWFLayerNames.LGT
+    lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     if not lgt_path.exists():
-        msg = f"No lights authored in {asset_dir.name}/{ASWFLayerNames.LGT}"
+        msg = f"No lights authored in {asset_dir.name}/{constants.ASWFLayerNames.LGT}"
         raise ValueError(msg)
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
 
     stage = Usd.Stage.Open(str(lgt_path))
@@ -284,7 +273,7 @@ def update_light_in_folder(
     if not prim.IsValid():
         msg = (
             f"Light '{light_name}' not found in "
-            f"{asset_dir.name}/{ASWFLayerNames.LGT}"
+            f"{asset_dir.name}/{constants.ASWFLayerNames.LGT}"
         )
         raise ValueError(msg)
 
@@ -293,9 +282,9 @@ def update_light_in_folder(
         if tex_attr:
             tex_attr.Set(Sdf.AssetPath(texture))
 
-    factor = unit_factor(asset_dir)
+    factor = utils.geometry.unit_factor(asset_dir)
     if translate is not None:
-        update_translate_op(
+        utils.stage.update_translate_op(
             prim,
             Gf.Vec3d(
                 translate[0] * factor,
@@ -304,12 +293,12 @@ def update_light_in_folder(
             ),
         )
     if rotate is not None:
-        update_rotate_op(prim, Gf.Vec3f(*rotate))
+        utils.stage.update_rotate_op(prim, Gf.Vec3f(*rotate))
 
     stage.Save()
     logger.info(
         "Updated light %s in %s/%s",
-        light_name, asset_dir.name, ASWFLayerNames.LGT,
+        light_name, asset_dir.name, constants.ASWFLayerNames.LGT,
     )
 
 
@@ -318,11 +307,11 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
 
     Deletes the layer entirely when no lights remain.
     """
-    lgt_path = asset_dir / ASWFLayerNames.LGT
+    lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     if not lgt_path.exists():
         return
 
-    default_prim_name = resolve_default_prim_name(asset_dir)
+    default_prim_name = utils.asset_folder.resolve_default_prim_name(asset_dir)
     light_prim_path = Sdf.Path(f"/{default_prim_name}/lgt/{light_name}")
 
     lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
@@ -335,14 +324,14 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
         lgt_layer.Apply(edit)
         lgt_layer.Save()
 
-    variants_path = asset_dir / ASWFLayerNames.VARIANTS
+    variants_path = asset_dir / constants.ASWFLayerNames.VARIANTS
     if variants_path.exists():
         variants_layer = Sdf.Layer.FindOrOpen(str(variants_path))
         if variants_layer is not None:
-            clear_orphan_variant_overs(variants_layer, str(light_prim_path))
-        cleanup_if_empty(asset_dir)
+            utils.stage.clear_orphan_variant_overs(variants_layer, str(light_prim_path))
+        utils.variants.cleanup_if_empty(asset_dir)
 
-    remove_empty_layer(
+    utils.asset_folder.remove_empty_layer(
         lgt_path, asset_dir, lambda p: p.HasAPI(UsdLux.LightAPI),
     )
 
@@ -352,14 +341,14 @@ def stage_asset_texture(asset_dir: Path, texture: str | None) -> str | None:
     if not texture:
         return texture
 
-    maps_dir = asset_dir / ASWFLayerNames.MAPS
+    maps_dir = asset_dir / constants.ASWFLayerNames.MAPS
     maps_dir.mkdir(exist_ok=True)
     tex_path = Path(texture)
     if tex_path.exists():
         dest = maps_dir / tex_path.name
         if not dest.exists():
             shutil.copy2(tex_path, dest)
-        return f"./{ASWFLayerNames.MAPS}/{tex_path.name}"
+        return f"./{constants.ASWFLayerNames.MAPS}/{tex_path.name}"
     return texture
 
 
@@ -372,7 +361,7 @@ def _apply_inverse_transform(
     lgt_scope_path: Sdf.Path,
 ) -> None:
     """Cancel the geometry root transform on the lgt scope."""
-    geo_path = asset_dir / ASWFLayerNames.GEO
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if not geo_path.exists():
         return
 

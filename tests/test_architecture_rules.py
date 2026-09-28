@@ -8,6 +8,11 @@
 - ``constants/`` holds fixed values, grouped in classes.
 - ``schemas/`` holds data shapes (pydantic models, enums, dataclasses) and
   type aliases, never values, and never imports ``pxr``.
+
+And everywhere, in the package and its tests, BowerBot code is imported as
+modules: ``from bowerbot import schemas`` then ``schemas.LightParams``, and
+``from bowerbot import utils`` then ``utils.lights.create_light``. Only the
+package ``__init__`` files that re-export names import them directly.
 """
 
 from __future__ import annotations
@@ -24,7 +29,12 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
-PACKAGE = Path(__file__).resolve().parent.parent / "src" / "bowerbot"
+ROOT = Path(__file__).resolve().parent.parent
+PACKAGE = ROOT / "src" / "bowerbot"
+_REEXPORTS = {
+    PACKAGE / name / "__init__.py" for name in ("constants", "schemas", "skills", "utils")
+}
+_OWN_CODE = ("bowerbot", "tests")
 _VALUE_NAME = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 _FUNCTION_LAYER_NODES = (ast.Import, ast.ImportFrom, ast.FunctionDef, ast.AsyncFunctionDef)
 
@@ -118,3 +128,79 @@ def test_schemas_hold_data_shapes_and_types_only(path: Path) -> None:
                 "a class that only holds values belongs in constants/",
             )
     assert not problems, f"{path.name}:\n" + "\n".join(problems)
+
+
+def _submodule(package: str, name: str) -> object | None:
+    """``package.name`` when it is a module, else None (it is a function, class or value)."""
+    try:
+        return importlib.import_module(f"{package}.{name}")
+    except ModuleNotFoundError:
+        return None
+
+
+def _own_code_files() -> list[Path]:
+    files = [*PACKAGE.rglob("*.py"), *(ROOT / "tests").rglob("*.py")]
+    return sorted(path for path in files if "__pycache__" not in path.parts)
+
+
+def _imported_modules(tree: ast.Module) -> dict[str, object]:
+    """Names this file binds to BowerBot or test modules, with the module each one is."""
+    modules = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and (node.module or "").startswith(_OWN_CODE):
+            for alias in node.names:
+                value = _submodule(node.module, alias.name)
+                if value is not None:
+                    modules[alias.asname or alias.name] = value
+    return modules
+
+
+@pytest.mark.parametrize(
+    "path", _own_code_files(), ids=lambda p: p.relative_to(ROOT).as_posix(),
+)
+def test_code_imports_modules_not_names(path: Path) -> None:
+    if path in _REEXPORTS:
+        return
+    problems = []
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if not isinstance(node, ast.ImportFrom) or not (node.module or "").startswith(_OWN_CODE):
+            continue
+        for alias in node.names:
+            if alias.name.startswith("__"):
+                continue
+            if _submodule(node.module, alias.name) is None:
+                problems.append(
+                    f"line {node.lineno}: imports {alias.name} from {node.module}; import the "
+                    f"module and write <module>.{alias.name}",
+                )
+    assert not problems, f"{path.relative_to(ROOT)}:\n" + "\n".join(problems)
+
+
+@pytest.mark.parametrize(
+    "path", _own_code_files(), ids=lambda p: p.relative_to(ROOT).as_posix(),
+)
+def test_every_module_reference_exists(path: Path) -> None:
+    """``utils.lights.create_light`` and the like must name something that exists.
+
+    A misspelled reference would otherwise only fail when that line runs.
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    modules = _imported_modules(tree)
+    problems = set()
+    for node in ast.walk(tree):
+        chain: list[str] = []
+        current: ast.expr = node
+        while isinstance(current, ast.Attribute):
+            chain.insert(0, current.attr)
+            current = current.value
+        if not chain or not isinstance(current, ast.Name) or current.id not in modules:
+            continue
+        value = modules[current.id]
+        for name in chain:
+            if not (inspect.ismodule(value) or inspect.isclass(value)):
+                break
+            if not hasattr(value, name):
+                problems.add(f"line {node.lineno}: {current.id}.{'.'.join(chain)} does not exist")
+                break
+            value = getattr(value, name)
+    assert not problems, f"{path.relative_to(ROOT)}:\n" + "\n".join(sorted(problems))

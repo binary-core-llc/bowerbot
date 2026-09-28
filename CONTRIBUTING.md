@@ -83,12 +83,14 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 - **`utils/`**: pure-function primitives: functions only, no values. The only place `pxr` is imported, besides the `pxr` classes kept in `constants/`.
 - **`services/`**: orchestrators with signature `(state, params)`. One per tool. Call utils and other services, mutate state, raise on errors.
 - **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
-- **`state.py`**: `SceneState`, threaded through every tool handler.
+- **`scene_state.py`**: `SceneState`, threaded through every tool handler.
 - **`dispatcher.py`**: tool registry and router.
 - **`skills/`**: the skill SDK (the `Skill` contract and the `SkillRegistry`). Skills themselves ship as separate pip packages and are discovered at runtime via entry points; they do not live in this directory.
 - **`prompts/`**: LLM instructions as `.md` files.
 
-`tests/test_architecture_rules.py` checks that `utils/` and `services/` hold only functions, `constants/` only classes of values, and `schemas/` only data shapes and type aliases.
+Code imports modules, never names, one import per line: `from bowerbot import schemas` and `from bowerbot import utils`, then `schemas.LightParams` and `utils.lights.create_light(...)`. ruff enforces one import per line (`force-single-line`, with `typing` and `collections.abc` excepted, as in the Google Python Style Guide). The same goes for the tests (`from tests import _helpers`, then `_helpers.exec_tool(...)`). Only the package `__init__` files that re-export names import them directly.
+
+`tests/test_architecture_rules.py` checks that `utils/` and `services/` hold only functions, `constants/` only classes of values, and `schemas/` only data shapes and type aliases; that code imports modules, not names; and that every `module.name` it reaches exists.
 
 ## Writing a Skill
 
@@ -151,7 +153,7 @@ Skills that need stage access call `Usd.Stage.Open(ctx.scene_path)` themselves. 
 
 ### Key rules
 
-- **Skills are hyper-isolated**: a skill depends only on `bowerbot.skills` (the public contract), the standard library, and external packages it ships with. It does **not** import from `bowerbot.utils`, `bowerbot.services`, `bowerbot.state`, or any other core module. If a skill needs a primitive, it carries its own copy in its `utils/`.
+- **Skills are hyper-isolated**: a skill depends only on `bowerbot.skills` (the public contract), the standard library, and external packages it ships with. It does **not** import from `bowerbot.utils`, `bowerbot.services`, `bowerbot.scene_state`, or any other core module. If a skill needs a primitive, it carries its own copy in its `utils/`.
 - **Entry-point name must match `Skill.name`**: the registry compares them and skips with an error if they differ. Pick one identifier and use it both in `pyproject.toml` and on the class.
 - **One SKILL.md per skill**: injected into the system prompt when the skill is active.
 - **Return ToolResult**: always return `ToolResult(success=True/False, ...)` from `execute()`.

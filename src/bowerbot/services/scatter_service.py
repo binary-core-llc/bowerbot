@@ -12,6 +12,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
         msg = "No scene is open."
         raise ValueError(msg)
     stage = state.stage
-    up = utils.surface.axis_index(state.up_axis.value)
+    up = usd.metrics.axis_index(state.up_axis.value)
     arrangement = schemas.ScatterArrangement(
         params.get("arrangement", schemas.ScatterArrangement.RANDOM),
     )
@@ -178,7 +179,7 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
         msg = "No scene is open."
         raise ValueError(msg)
     stage = state.stage
-    up = utils.surface.axis_index(state.up_axis.value)
+    up = usd.metrics.axis_index(state.up_axis.value)
     given = [key for key in ("points", "circle", "curve_prim") if params.get(key) is not None]
     if len(given) != 1:
         msg = (
@@ -311,7 +312,7 @@ def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> di
         msg = "No scene is open."
         raise ValueError(msg)
     stage = state.stage
-    up = utils.surface.axis_index(state.up_axis.value)
+    up = usd.metrics.axis_index(state.up_axis.value)
     align = schemas.ScatterDropAlign(params.get("align", schemas.ScatterDropAlign.KEEP))
     wrappers, scatters = utils.scatter.drop_targets(stage, params["prim_paths"])
     index = utils.surface.build_vertical_index(

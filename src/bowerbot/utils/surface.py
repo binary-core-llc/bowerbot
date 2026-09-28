@@ -15,23 +15,7 @@ from pxr import UsdGeom
 
 from bowerbot import constants
 from bowerbot import schemas
-
-
-def axis_index(up_axis: str) -> int:
-    """World axis index of an up-axis name: ``"Y"`` -> 1, ``"Z"`` -> 2."""
-    return 2 if up_axis == "Z" else 1
-
-
-def horizontal_axes(up: int) -> tuple[int, int]:
-    """The two world axes spanning the ground plane for up axis *up*."""
-    return (0, 2) if up == 1 else (0, 1)
-
-
-def up_vector(up: int) -> schemas.FloatArray:
-    """Unit vector along the world up axis."""
-    vec = np.zeros(3)
-    vec[up] = 1.0
-    return vec
+from bowerbot.utils import usd
 
 
 def collect_triangles(
@@ -99,7 +83,7 @@ def build_vertical_index(
     triangles: schemas.SurfaceTriangles, up: int, *, pad: float = 0.0, up_facing_only: bool = False,
 ) -> schemas.SurfaceIndex:
     """Bin triangles on the ground plane for local vertical-line queries."""
-    axes = horizontal_axes(up)
+    axes = usd.metrics.horizontal_axes(up)
     keep = np.arange(triangles.count)
     if up_facing_only:
         keep = keep[triangles.normals[:, up] > 1e-3]
@@ -288,7 +272,7 @@ def plan_bounds(
     triangles: schemas.SurfaceTriangles, up: int,
 ) -> tuple[schemas.FloatArray, schemas.FloatArray]:
     """Plan-view ``(min, max)`` of the triangles on the ground axes."""
-    axes = list(horizontal_axes(up))
+    axes = list(usd.metrics.horizontal_axes(up))
     pts = np.concatenate([triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]])
     return pts.min(axis=0), pts.max(axis=0)
 

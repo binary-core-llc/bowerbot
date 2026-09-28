@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from pxr import Gf
@@ -438,7 +437,7 @@ def add_references(stage: Usd.Stage, scene_objects: list[schemas.SceneObject]) -
             scene_object.asset.file_path or scene_object.asset.source_id
         )
         if asset_path not in conform:
-            conform[asset_path] = asset_conform(stage, asset_path)
+            conform[asset_path] = usd.metrics.asset_conform(stage, asset_path)
         unit_scale, up_axis_correction = conform[asset_path]
 
         wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
@@ -852,30 +851,6 @@ def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
         if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
             op.Set(value)
             return
-
-
-def asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | None]:
-    """Return (unit scale, up-axis X-rotation or None) conforming an asset to the stage."""
-    if not os.path.isabs(asset_path):
-        stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
-        asset_path = os.path.join(stage_dir, asset_path)
-
-    asset_stage = Usd.Stage.Open(asset_path, Usd.Stage.LoadNone)
-    if asset_stage is None:
-        return 1.0, None
-
-    asset_mpu = UsdGeom.GetStageMetersPerUnit(asset_stage)
-    scene_mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    unit_scale = 1.0 if scene_mpu == 0 else asset_mpu / scene_mpu
-
-    asset_up = UsdGeom.GetStageUpAxis(asset_stage)
-    scene_up = UsdGeom.GetStageUpAxis(stage)
-    correction = None
-    if asset_up == UsdGeom.Tokens.y and scene_up == UsdGeom.Tokens.z:
-        correction = 90.0
-    elif asset_up == UsdGeom.Tokens.z and scene_up == UsdGeom.Tokens.y:
-        correction = -90.0
-    return unit_scale, correction
 
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:

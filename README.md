@@ -914,6 +914,8 @@ src/bowerbot/
                       # e.g. usd.naming.safe_prim_name(); modules not grouped yet
                       # are called as utils.<module>.<function>
     usd/                       # USD building blocks: generic OpenUSD operations
+      metrics.py               #   metersPerUnit and upAxis: read them, conform an
+                               #   asset to the scene, world axes
       naming.py                #   Valid and safe USD names: prims, variants, joints,
                                #   collision groups
       values.py                #   JSON <-> USD values: numbers and vectors from tool

@@ -13,7 +13,7 @@ from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot.utils import authoring
-from bowerbot.utils import features
+from bowerbot.utils import materials
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def create_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
         )
         raise ValueError(msg)
 
-    features.materials.check_shared_modification(
+    materials.bind.refuse_shared_modification(
         state.stage, asset_dir, params, op_label="create_material",
     )
 
@@ -51,7 +51,7 @@ def create_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
         opacity=float(params.get("opacity", 1.0)),
     )
 
-    material_prim_path = features.materials.create_procedural_material_in_folder(
+    material_prim_path = materials.procedural.create(
         asset_dir=asset_dir,
         prim_path=asset_local_path,
         params=material_params,
@@ -94,12 +94,12 @@ def bind_material(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         )
         raise ValueError(msg)
 
-    features.materials.check_shared_modification(
+    materials.bind.refuse_shared_modification(
         state.stage, asset_dir, params, op_label="bind_material",
     )
 
     asset_local_path = authoring.placement.to_asset_local(prim_path, ref_prim_path)
-    material_prim_path = features.materials.add_material_to_folder(
+    material_prim_path = materials.bind.bind_from_file(
         asset_dir=asset_dir,
         material_file=material_file,
         prim_path=asset_local_path,
@@ -133,7 +133,7 @@ def remove_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
         raise ValueError(msg)
 
     asset_local_path = authoring.placement.to_asset_local(prim_path, ref_prim_path)
-    features.materials.remove_material_binding_from_folder(asset_dir, asset_local_path)
+    materials.bind.unbind(asset_dir, asset_local_path)
     state.stage = authoring.stage.open_stage(state.stage_path)
 
     logger.info("Removed material from %s", prim_path)
@@ -155,10 +155,10 @@ def list_materials(state: scene_state.SceneState, params: dict[str, Any]) -> dic
             continue
         if not (entry / constants.ASWFLayerNames.MTL).exists():
             continue
-        materials = features.materials.list_materials_in_folder(entry)
-        for mat in materials:
+        folder_materials = materials.layer.list_with_bindings(entry)
+        for mat in folder_materials:
             mat["asset_folder"] = entry.name
-        all_materials.extend(materials)
+        all_materials.extend(folder_materials)
 
     return {
         "material_count": len(all_materials),
@@ -182,7 +182,7 @@ def cleanup_unused_materials(
             )
             raise ValueError(msg)
 
-        removed = features.materials.cleanup_unused_in_folder(asset_dir)
+        removed = materials.layer.remove_unused(asset_dir)
         state.stage = authoring.stage.open_stage(state.stage_path)
         logger.info(
             "Cleaned %d unused material(s) from %s", len(removed), asset_dir.name,
@@ -204,7 +204,7 @@ def cleanup_unused_materials(
             continue
         if not (entry / constants.ASWFLayerNames.MTL).exists():
             continue
-        removed = features.materials.cleanup_unused_in_folder(entry)
+        removed = materials.layer.remove_unused(entry)
         if removed:
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)

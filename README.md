@@ -909,7 +909,8 @@ src/bowerbot/
 
   utils/              # Pure-function primitives, one job per module, grouped by layer:
                       # usd/ (USD building blocks), authoring/ (BowerBot's authoring
-                      # model), features/ (tool logic). Code imports the group
+                      # model), and one folder per tool family (physics/, lights/...),
+                      # split by category. Code imports the group
                       # (`from bowerbot.utils import usd`) and calls through it,
                       # e.g. usd.naming.safe_prim_name(); modules not grouped yet
                       # are called as utils.<module>.<function>
@@ -969,6 +970,10 @@ src/bowerbot/
       scene.py                 #   Scene-level lights
       asset.py                 #   Lights in an asset's lgt.usda (its lifecycle)
       schema.py                #   Each light type's schema inputs
+    materials/                 # The material tools
+      bind.py                  #   Bind a material from a file, unbind, shared check
+      procedural.py            #   Procedural MaterialX + UsdPreviewSurface materials
+      layer.py                 #   What mtl.usda holds: list, remove unused
     physics/                   # The physics tools
       apis.py                  #   Apply/remove UsdPhysics APIs (asset or scene)
       layer.py                 #   The asset's phy.usda: path, create, drop, remove
@@ -978,9 +983,6 @@ src/bowerbot/
       joints.py                #   Joints, in the scene or in an asset
       masking.py               #   Refuse-or-acknowledge masking scene opinions
       summary.py               #   Physics summaries of an asset or a scene prim
-    features/                  # The logic behind each tool family
-      materials.py             #   The material tools: bind materials in an asset's
-                               #   mtl.usda, list them, remove unused ones
     scatter.py                 #   Distributions (random/rows/pile/path), resting,
                                #   orientation, PointInstancer + placement authoring
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants

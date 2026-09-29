@@ -35,17 +35,26 @@ def prepare_asset(
     assets_dir: Path,
     *,
     library_dir: Path | None,
+    project_mpu: float,
+    project_up_axis: str,
     fix_root_prim: bool = False,
     fix_root_transforms: bool = False,
 ) -> schemas.IntakeReport:
-    """Route an input file to USDZ / library-package / loose-file intake."""
+    """Route an input file to USDZ / library-package / loose-file intake.
+
+    An asset that declares no units or up axis takes the project's; a USDZ is
+    left as it is.
+    """
     if asset_path.suffix.lower() == ".usdz":
         return intake_usdz(asset_path, assets_dir)
 
     if library_dir is not None:
         package_dir = authoring.library.find_package_for(asset_path, library_dir)
         if package_dir is not None:
-            report = intake_folder(package_dir, assets_dir)
+            report = intake_folder(
+                package_dir, assets_dir,
+                project_mpu=project_mpu, project_up_axis=project_up_axis,
+            )
             _validate_intake(
                 report, assets_dir,
                 fix_root_prim=fix_root_prim,
@@ -58,6 +67,8 @@ def prepare_asset(
         output_dir=assets_dir,
         asset_name=folder_name,
         geometry_file=asset_path,
+        project_mpu=project_mpu,
+        project_up_axis=project_up_axis,
     )
     report = schemas.IntakeReport(
         scene_ref_path=f"assets/{folder_name}/{root_file.name}",
@@ -86,7 +97,13 @@ def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
     return asset_path.stem
 
 
-def intake_folder(source_folder: Path, project_assets_dir: Path) -> schemas.IntakeReport:
+def intake_folder(
+    source_folder: Path,
+    project_assets_dir: Path,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
+) -> schemas.IntakeReport:
     """Copy *source_folder* into *project_assets_dir* as a self-contained asset.
 
     Every transitive dependency (including shader texture paths) is
@@ -152,6 +169,9 @@ def intake_folder(source_folder: Path, project_assets_dir: Path) -> schemas.Inta
         )
 
         authoring.asset_folder.normalize_root_metadata(canonical_root, target_folder.name)
+        authoring.asset_folder.declare_missing_metrics(
+            canonical_root, project_mpu=project_mpu, project_up_axis=project_up_axis,
+        )
         authoring.asset_folder.rebuild_root_references(target_folder)
         warnings = _validate_self_contained(canonical_root, target_folder)
     except Exception:

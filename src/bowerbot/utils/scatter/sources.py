@@ -59,6 +59,8 @@ def stage_prototypes(
     assets_dir: Path,
     library_dir: Path | None,
     project_dir: Path,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> list[schemas.ScatterPrototype]:
     """Intake every source into the project and measure its conformed bounds."""
     fix_prim: dict[Path, bool] = {}
@@ -73,6 +75,7 @@ def stage_prototypes(
         try:
             reports[path] = authoring.intake.prepare_asset(
                 path, assets_dir, library_dir=library_dir,
+                project_mpu=project_mpu, project_up_axis=project_up_axis,
                 fix_root_prim=fix_prim[path], fix_root_transforms=fix_xform[path],
             )
         except (ValueError, RuntimeError) as e:

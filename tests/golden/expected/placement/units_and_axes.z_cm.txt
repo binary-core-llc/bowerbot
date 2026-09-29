@@ -184,9 +184,7 @@ SUMMARY
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Props/Bare_01/asset [Xform]
-          attr xformOp:rotateX: 90
-          attr xformOpOrder: ('xformOp:rotateX')
-          bounds: (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
+          bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
           kind: component
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Props/Bare_01/asset/Body [Cube]
@@ -194,10 +192,10 @@ SUMMARY
           attr xformOp:scale: (0.5, 0.5, 0.5)
           attr xformOp:translate: (0, 0.25, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
+          bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
           material shown: (none)
-          world position: (0.0000, 0.0000, 0.2500)
-    ~ /Scene  bounds: (none) → (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
+          world position: (0.0000, 0.2500, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -245,7 +243,7 @@ file changes:
       (
           defaultPrim = "bare"
           metersPerUnit = 0.01
-          upAxis = "Y"
+          upAxis = "Z"
       )
 
       def Xform "bare" (
@@ -285,7 +283,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -10,4 +10,22 @@
+      @@ -10,4 +10,20 @@
        )
        {
       +    def "Props"
@@ -301,8 +299,6 @@ file changes:
       +                prepend references = @assets/bare/bare.usda@
       +            )
       +            {
-      +                float xformOp:rotateX = 90
-      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
       +            }
       +        }
       +    }
@@ -312,7 +308,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -12,4 +12,35 @@
+  @@ -12,4 +12,32 @@
    )
    {
   +    def "Props"
@@ -333,9 +329,6 @@ composed scene changes:
   +                kind = "component"
   +            )
   +            {
-  +                float xformOp:rotateX = 90
-  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
-  +
   +                def Cube "Body"
   +                {
   +                    double size = 1
@@ -350,10 +343,10 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
 
 validation:
   valid, no issues
@@ -378,9 +371,7 @@ SUMMARY
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (200.0000, 0.0000, 0.0000)
     + prim /Scene/Props/BareKit_02/asset [Xform]
-          attr xformOp:rotateX: 90
-          attr xformOpOrder: ('xformOp:rotateX')
-          bounds: (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
+          bounds: (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
           kind: component
           world position: (200.0000, 0.0000, 0.0000)
     + prim /Scene/Props/BareKit_02/asset/Body [Cube]
@@ -388,10 +379,10 @@ SUMMARY
           attr xformOp:scale: (0.5, 0.5, 0.5)
           attr xformOp:translate: (0, 0.25, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
+          bounds: (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
           material shown: (none)
-          world position: (200.0000, 0.0000, 0.2500)
-    ~ /Scene  bounds: (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000) → (-0.2500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
+          world position: (200.0000, 0.2500, 0.0000)
+    ~ /Scene  bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500) → (-0.2500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -414,10 +405,7 @@ full answer:
       "localized_layers": [],
       "root_canonical_name": "bare_kit.usda",
       "root_original_name": null,
-      "warnings": [
-        "MissingMetersPerUnitMetadata: Stage with root layer <<PROJECT>/assets/bare_kit/bare_kit.usda> does not specify its linear scale in metersPerUnit.",
-        "MissingUpAxisMetadata: Stage with root layer <<PROJECT>/assets/bare_kit/bare_kit.usda> does not specify an upAxis."
-      ],
+      "warnings": [],
       "was_renamed": false
     },
     "message": "Placed BareKit at /Scene/Props/BareKit_02.",
@@ -443,6 +431,8 @@ file changes:
       #usda 1.0
       (
           defaultPrim = "bare_kit"
+          metersPerUnit = 0.01
+          upAxis = "Z"
       )
 
       def Xform "bare_kit" (
@@ -482,7 +472,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -27,4 +27,20 @@
+      @@ -25,4 +25,18 @@
                    }
                }
       +
@@ -497,8 +487,6 @@ file changes:
       +                prepend references = @assets/bare_kit/bare_kit.usda@
       +            )
       +            {
-      +                float xformOp:rotateX = 90
-      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
       +            }
       +        }
            }
@@ -507,7 +495,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -42,4 +42,33 @@
+  @@ -39,4 +39,30 @@
                }
            }
   +
@@ -527,9 +515,6 @@ composed scene changes:
   +                kind = "component"
   +            )
   +            {
-  +                float xformOp:rotateX = 90
-  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
-  +
   +                def Cube "Body"
   +                {
   +                    double size = 1
@@ -543,13 +528,13 @@ composed scene changes:
    }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
 
 validation:
   valid, no issues
@@ -588,7 +573,7 @@ SUMMARY
           bounds: (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)
           material shown: (none)
           world position: (400.0000, 0.0000, 45.0000)
-    ~ /Scene  bounds: (-0.2500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000) → (-0.2500, -22.5000, 0.0000)..(422.5000, 22.5000, 47.5000)
+    ~ /Scene  bounds: (-0.2500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500) → (-0.2500, -22.5000, -0.2500)..(422.5000, 22.5000, 47.5000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -680,7 +665,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -44,4 +44,23 @@
+      @@ -40,4 +40,23 @@
                }
            }
       +
@@ -708,7 +693,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -72,4 +72,36 @@
+  @@ -66,4 +66,36 @@
            }
        }
   +
@@ -747,13 +732,13 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -22.5000, 0.0000)..(422.5000, 22.5000, 47.5000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -22.5000, -0.2500)..(422.5000, 22.5000, 47.5000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -797,7 +782,7 @@ SUMMARY
           bounds: (375.0000, -75.0000, 0.0000)..(425.0000, -25.0000, 50.0000)
           material shown: (none)
           world position: (400.0000, -50.0000, 25.0000)
-    ~ /Scene  bounds: (-0.2500, -22.5000, 0.0000)..(422.5000, 22.5000, 47.5000) → (-0.2500, -75.0000, 0.0000)..(425.0000, 22.5000, 50.0000)
+    ~ /Scene  bounds: (-0.2500, -22.5000, -0.2500)..(422.5000, 22.5000, 47.5000) → (-0.2500, -75.0000, -0.2500)..(425.0000, 22.5000, 50.0000)
     ~ validity: valid → INVALID
     + issue [error] /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset: Unresolved reference: ../crate/crate.usda
 
@@ -935,7 +920,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -101,4 +101,36 @@
+  @@ -95,4 +95,36 @@
                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
                    }
   +
@@ -974,13 +959,13 @@ composed scene changes:
            }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -75.0000, 0.0000)..(425.0000, 22.5000, 50.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -75.0000, -0.2500)..(425.0000, 22.5000, 50.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -75.0000, 0.0000)..(425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -75.0000, 0.0000)..(425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -1005,7 +990,7 @@ SUMMARY
 
   what changed:
     ~ file assets/chair_cm/contents.usda
-    ~ /Scene  bounds: (-0.2500, -75.0000, 0.0000)..(425.0000, 22.5000, 50.0000) → (-0.2500, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
+    ~ /Scene  bounds: (-0.2500, -75.0000, -0.2500)..(425.0000, 22.5000, 50.0000) → (-0.2500, -5025.0000, -0.2500)..(2425.0000, 22.5000, 50.0000)
     ~ /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04  attr xformOp:translate: (0, 0, 50) → (2000, 0, 5000)
 
   project state after the step:
@@ -1059,7 +1044,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -110,5 +110,5 @@
+  @@ -104,5 +104,5 @@
                                float3 xformOp:rotateXYZ = (0, 0, 0)
                                float3 xformOp:scale = (100, 100, 100)
   -                            double3 xformOp:translate = (0, 0, 50)
@@ -1068,13 +1053,13 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, -0.2500)..(2425.0000, 22.5000, 50.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -1120,7 +1105,7 @@ SUMMARY
           bounds: (595.0000, -5.0000, 0.0000)..(605.0000, 5.0000, 200.0000)
           material shown: (none)
           world position: (600.0000, 0.0000, 100.0000)
-    ~ /Scene  bounds: (-0.2500, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000) → (-0.2500, -5025.0000, 0.0000)..(2425.0000, 22.5000, 200.0000)
+    ~ /Scene  bounds: (-0.2500, -5025.0000, -0.2500)..(2425.0000, 22.5000, 50.0000) → (-0.2500, -5025.0000, -0.2500)..(2425.0000, 22.5000, 200.0000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -1217,7 +1202,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -63,4 +63,21 @@
+      @@ -59,4 +59,21 @@
                }
            }
       +
@@ -1243,7 +1228,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -136,4 +136,33 @@
+  @@ -130,4 +130,33 @@
            }
        }
   +
@@ -1279,13 +1264,13 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, 0.0000)..(2425.0000, 22.5000, 200.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, -0.2500)..(2425.0000, 22.5000, 200.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -1320,12 +1305,12 @@ SUMMARY
           world position: (600.0000, 0.0000, 0.0000)
     + prim /Scene/Architecture/Post_05/asset/contents/Props/Crate_06 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:scale: (1, 1, 1)
           attr xformOp:translate: (0, 0, 1)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (600.0000, 0.0000, 100.0000)
     + prim /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset [Xform]
-          bounds: (-1900.0000, 0.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
+          bounds: (575.0000, 0.0000, 75.0000)..(625.0000, 50.0000, 125.0000)
           kind: component
           world position: (600.0000, 0.0000, 100.0000)
     + prim /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box [Cube]
@@ -1333,10 +1318,10 @@ SUMMARY
           attr xformOp:scale: (0.5, 0.5, 0.5)
           attr xformOp:translate: (0, 0.25, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-1900.0000, 0.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
+          bounds: (575.0000, 0.0000, 75.0000)..(625.0000, 50.0000, 125.0000)
           material shown: (none)
-          world position: (600.0000, 2500.0000, 100.0000)
-    ~ /Scene  bounds: (-0.2500, -5025.0000, 0.0000)..(2425.0000, 22.5000, 200.0000) → (-1900.0000, -5025.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
+          world position: (600.0000, 25.0000, 100.0000)
+    ~ /Scene  bounds: (-0.2500, -5025.0000, -0.2500)..(2425.0000, 22.5000, 200.0000) → (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 200.0000)
     + issue [error] /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
@@ -1344,7 +1329,7 @@ SUMMARY
 
   checks:
     ⚠ this step added 1 validation error(s)
-    ⚠ the answer says /Scene/Architecture/Post_05/asset/contents/Props/Crate_06 is at (0.0000, 0.0000, 0.0100), but it is at (600.0000, 0.0000, 100.0000)
+    ⚠ the answer says /Scene/Architecture/Post_05/asset/contents/Props/Crate_06 is at (0.0000, 0.0000, 1.0000), but it is at (600.0000, 0.0000, 100.0000)
 
 EVIDENCE
 
@@ -1369,7 +1354,7 @@ full answer:
     "position": {
       "x": 0.0,
       "y": 0.0,
-      "z": 0.01
+      "z": 1.0
     },
     "prim_path": "/Scene/Architecture/Post_05/asset/contents/Props/Crate_06",
     "rotation_y": 0.0
@@ -1407,7 +1392,7 @@ file changes:
                   def Xform "Crate_06"
                   {
                       float3 xformOp:rotateXYZ = (0, 0, 0)
-                      float3 xformOp:scale = (100, 100, 100)
+                      float3 xformOp:scale = (1, 1, 1)
                       double3 xformOp:translate = (0, 0, 1)
                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
@@ -1434,7 +1419,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -162,4 +162,36 @@
+  @@ -156,4 +156,36 @@
                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
                    }
   +
@@ -1445,7 +1430,7 @@ composed scene changes:
   +                        def Xform "Crate_06"
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +                            float3 xformOp:scale = (100, 100, 100)
+  +                            float3 xformOp:scale = (1, 1, 1)
   +                            double3 xformOp:translate = (0, 0, 1)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
@@ -1473,13 +1458,13 @@ composed scene changes:
            }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5025.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 200.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -1488,14 +1473,14 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset/Box  [Cube]  at (2400.0000, -5000.0000, 25.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)  material (none)
-  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
-  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
+  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 200.0000)
+  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 200.0000)
   /Scene/Architecture/Post_05/asset/Pole  [Cube]  at (600.0000, 0.0000, 100.0000)  bounds (595.0000, -5.0000, 0.0000)..(605.0000, 5.0000, 200.0000)  material (none)
-  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 100.0000)  bounds (-1900.0000, 0.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 100.0000)  bounds (-1900.0000, 0.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 2500.0000, 100.0000)  bounds (-1900.0000, 0.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000)  material (none)
+  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 75.0000)..(625.0000, 50.0000, 125.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 75.0000)..(625.0000, 50.0000, 125.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 100.0000)  bounds (575.0000, 0.0000, 75.0000)..(625.0000, 50.0000, 125.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 100.0000)  bounds (575.0000, 0.0000, 75.0000)..(625.0000, 50.0000, 125.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 25.0000, 100.0000)  bounds (575.0000, 0.0000, 75.0000)..(625.0000, 50.0000, 125.0000)  material (none)
 
 validation:
   INVALID, 2 issue(s):
@@ -1513,14 +1498,14 @@ SUMMARY
 
   what changed:
     ~ file assets/post_z/contents.usda
-    ~ /Scene  bounds: (-1900.0000, -5025.0000, -2400.0000)..(3100.0000, 5000.0000, 2600.0000) → (-1900.0000, -5025.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000)
-    ~ /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  attr xformOp:translate: (0, 0, 1) → (0, 0, 150)
+    ~ /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  attr xformOp:translate: (0, 0, 1) → (0, 0, 1.5)
+    ~ /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  world position: (600.0000, 0.0000, 100.0000) → (600.0000, 0.0000, 150.0000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the answer says /Scene/Architecture/Post_05/asset/contents/Props/Crate_06 is at (600.0000, 0.0000, 150.0000), but it is at (600.0000, 0.0000, 15000.0000)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1561,31 +1546,31 @@ file changes:
       +++ assets/post_z/contents.usda (after)
       @@ -14,5 +14,5 @@
                        float3 xformOp:rotateXYZ = (0, 0, 0)
-                       float3 xformOp:scale = (100, 100, 100)
+                       float3 xformOp:scale = (1, 1, 1)
       -                double3 xformOp:translate = (0, 0, 1)
-      +                double3 xformOp:translate = (0, 0, 150)
+      +                double3 xformOp:translate = (0, 0, 1.5)
                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
        
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -171,5 +171,5 @@
+  @@ -165,5 +165,5 @@
                                float3 xformOp:rotateXYZ = (0, 0, 0)
-                               float3 xformOp:scale = (100, 100, 100)
+                               float3 xformOp:scale = (1, 1, 1)
   -                            double3 xformOp:translate = (0, 0, 1)
-  +                            double3 xformOp:translate = (0, 0, 150)
+  +                            double3 xformOp:translate = (0, 0, 1.5)
                                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5025.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 200.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -1594,14 +1579,14 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset/Box  [Cube]  at (2400.0000, -5000.0000, 25.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)  material (none)
-  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000)
+  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 200.0000)
+  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 200.0000)
   /Scene/Architecture/Post_05/asset/Pole  [Cube]  at (600.0000, 0.0000, 100.0000)  bounds (595.0000, -5.0000, 0.0000)..(605.0000, 5.0000, 200.0000)  material (none)
-  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 2500.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)  material (none)
+  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 25.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)  material (none)
 
 validation:
   INVALID, 2 issue(s):
@@ -1709,7 +1694,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -100,4 +100,14 @@
+  @@ -94,4 +94,14 @@
                        double3 xformOp:translate = (0, 45, 0)
                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
   +                }
@@ -1726,13 +1711,13 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5025.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 200.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 52.5000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 52.5000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -1743,14 +1728,14 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset/Box  [Cube]  at (2400.0000, -5000.0000, 25.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)  material (none)
-  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000)
+  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 200.0000)
+  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 200.0000)
   /Scene/Architecture/Post_05/asset/Pole  [Cube]  at (600.0000, 0.0000, 100.0000)  bounds (595.0000, -5.0000, 0.0000)..(605.0000, 5.0000, 200.0000)  material (none)
-  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 2500.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)  material (none)
+  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 25.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)  material (none)
 
 validation:
   INVALID, 2 issue(s):
@@ -1773,18 +1758,18 @@ SUMMARY
           world position: (600.0000, 0.0000, 0.0000)
     + prim /Scene/Architecture/Post_05/asset/lgt/Beacon [SphereLight]
           applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          attr inputs:radius: 5
-          attr xformOp:translate: (0, 0.05, 5001)
+          attr inputs:radius: 0.05
+          attr xformOp:translate: (0, 0.05, 51)
           attr xformOpOrder: ('xformOp:translate')
-          bounds: (100.0000, -495.0000, 499600.0000)..(1100.0000, 505.0000, 500600.0000)
-          world position: (600.0000, 5.0000, 500100.0000)
-    ~ /Scene  bounds: (-1900.0000, -5025.0000, 0.0000)..(3100.0000, 5000.0000, 17500.0000) → (-1900.0000, -5025.0000, 0.0000)..(3100.0000, 5000.0000, 500600.0000)
+          bounds: (595.0000, 0.0000, 5095.0000)..(605.0000, 10.0000, 5105.0000)
+          world position: (600.0000, 5.0000, 5100.0000)
+    ~ /Scene  bounds: (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 200.0000) → (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 5105.0000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the answer says /Scene/Architecture/Post_05/asset/lgt/Beacon is at (0.0000, 0.0005, 50.0100), but it is at (600.0000, 5.0000, 500100.0000)
+    ⚠ the answer says /Scene/Architecture/Post_05/asset/lgt/Beacon is at (0.0000, 0.0500, 51.0000), but it is at (600.0000, 5.0000, 5100.0000)
 
 EVIDENCE
 
@@ -1798,8 +1783,8 @@ full answer:
     "message": "Created SphereLight in post_z/lgt.usda. To update this light, use prim_path: /Scene/Architecture/Post_05/asset/lgt/Beacon",
     "position": {
       "x": 0.0,
-      "y": 0.0005,
-      "z": 50.01
+      "y": 0.050000001,
+      "z": 51.0
     },
     "prim_path": "/Scene/Architecture/Post_05/asset/lgt/Beacon"
   }
@@ -1835,8 +1820,8 @@ file changes:
           {
               def SphereLight "Beacon"
               {
-                  float inputs:radius = 5
-                  double3 xformOp:translate = (0, 0.050000001, 5001)
+                  float inputs:radius = 0.05
+                  double3 xformOp:translate = (0, 0.050000001, 51)
                   uniform token[] xformOpOrder = ["xformOp:translate"]
               }
           }
@@ -1859,15 +1844,15 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -173,4 +173,14 @@
+  @@ -167,4 +167,14 @@
                    }
    
   +                def Xform "lgt"
   +                {
   +                    def SphereLight "Beacon"
   +                    {
-  +                        float inputs:radius = 5
-  +                        double3 xformOp:translate = (0, 0.050000001, 5001)
+  +                        float inputs:radius = 0.05
+  +                        double3 xformOp:translate = (0, 0.050000001, 51)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +                }
@@ -1876,13 +1861,13 @@ composed scene changes:
                    {
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5025.0000, 0.0000)..(3100.0000, 5000.0000, 500600.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 5105.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 52.5000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 52.5000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -1893,16 +1878,16 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset/Box  [Cube]  at (2400.0000, -5000.0000, 25.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)  material (none)
-  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -495.0000, 0.0000)..(3100.0000, 5000.0000, 500600.0000)
-  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -495.0000, 0.0000)..(3100.0000, 5000.0000, 500600.0000)
+  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 5105.0000)
+  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 5105.0000)
   /Scene/Architecture/Post_05/asset/Pole  [Cube]  at (600.0000, 0.0000, 100.0000)  bounds (595.0000, -5.0000, 0.0000)..(605.0000, 5.0000, 200.0000)  material (none)
-  /Scene/Architecture/Post_05/asset/lgt  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -495.0000, 499600.0000)..(1100.0000, 505.0000, 500600.0000)
-  /Scene/Architecture/Post_05/asset/lgt/Beacon  [SphereLight]  at (600.0000, 5.0000, 500100.0000)  bounds (100.0000, -495.0000, 499600.0000)..(1100.0000, 505.0000, 500600.0000)
-  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 2500.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)  material (none)
+  /Scene/Architecture/Post_05/asset/lgt  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (595.0000, 0.0000, 5095.0000)..(605.0000, 10.0000, 5105.0000)
+  /Scene/Architecture/Post_05/asset/lgt/Beacon  [SphereLight]  at (600.0000, 5.0000, 5100.0000)  bounds (595.0000, 0.0000, 5095.0000)..(605.0000, 10.0000, 5105.0000)
+  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 25.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)  material (none)
 
 validation:
   INVALID, 2 issue(s):
@@ -1942,13 +1927,13 @@ full answer:
         "bounds": {
           "max": {
             "x": 0.25,
-            "y": 0.25,
-            "z": 0.5
+            "y": 0.5,
+            "z": 0.25
           },
           "min": {
             "x": -0.25,
-            "y": -0.25,
-            "z": -0.0
+            "y": 0.0,
+            "z": -0.25
           }
         },
         "kind": "asset",
@@ -1965,13 +1950,13 @@ full answer:
         "bounds": {
           "max": {
             "x": 200.25,
-            "y": 0.25,
-            "z": 0.5
+            "y": 0.5,
+            "z": 0.25
           },
           "min": {
             "x": 199.75,
-            "y": -0.25,
-            "z": -0.0
+            "y": 0.0,
+            "z": -0.25
           }
         },
         "kind": "asset",
@@ -2050,13 +2035,13 @@ full answer:
         "asset": "assets/post_z/post_z.usda",
         "bounds": {
           "max": {
-            "x": 3100.0,
-            "y": 5000.0,
-            "z": 500600.0
+            "x": 625.0,
+            "y": 50.0,
+            "z": 5105.0
           },
           "min": {
-            "x": -1900.0,
-            "y": -495.0,
+            "x": 575.0,
+            "y": -5.0,
             "z": 0.0
           }
         },
@@ -2082,7 +2067,7 @@ full answer:
         "position": {
           "x": 0.0,
           "y": 0.05,
-          "z": 5001.0
+          "z": 51.0
         },
         "prim_path": "/Scene/Architecture/Post_05/asset/lgt/Beacon"
       },
@@ -2090,14 +2075,14 @@ full answer:
         "asset": "../crate/crate.usda",
         "bounds": {
           "max": {
-            "x": 3100.0,
-            "y": 5000.0,
-            "z": 17500.0
+            "x": 625.0,
+            "y": 50.0,
+            "z": 175.0
           },
           "min": {
-            "x": -1900.0,
+            "x": 575.0,
             "y": 0.0,
-            "z": 12500.0
+            "z": 125.0
           }
         },
         "kind": "asset",
@@ -2137,13 +2122,13 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1900.0000, -5025.0000, 0.0000)..(3100.0000, 5000.0000, 500600.0000)
-  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)
-  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.0000, 0.2500)  bounds (-0.2500, -0.2500, 0.0000)..(0.2500, 0.2500, 0.5000)  material (none)
-  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)
-  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.0000, 0.2500)  bounds (199.7500, -0.2500, 0.0000)..(200.2500, 0.2500, 0.5000)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -5025.0000, -0.2500)..(2425.0000, 50.0000, 5105.0000)
+  /Scene/Props/Bare_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Bare_01/asset/Body  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/BareKit_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)
+  /Scene/Props/BareKit_02/asset/Body  [Cube]  at (200.0000, 0.2500, 0.0000)  bounds (199.7500, 0.0000, -0.2500)..(200.2500, 0.5000, 0.2500)  material (none)
   /Scene/Furniture/ChairCm_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 52.5000)
   /Scene/Furniture/ChairCm_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -5025.0000, 0.0000)..(2425.0000, 22.5000, 52.5000)
   /Scene/Furniture/ChairCm_03/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
@@ -2154,16 +2139,16 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset  [Xform]  at (2400.0000, -5000.0000, 0.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)
   /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset/Box  [Cube]  at (2400.0000, -5000.0000, 25.0000)  bounds (2375.0000, -5025.0000, 0.0000)..(2425.0000, -4975.0000, 50.0000)  material (none)
-  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -495.0000, 0.0000)..(3100.0000, 5000.0000, 500600.0000)
-  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, -495.0000, 0.0000)..(3100.0000, 5000.0000, 500600.0000)
+  /Scene/Architecture/Post_05  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 5105.0000)
+  /Scene/Architecture/Post_05/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, -5.0000, 0.0000)..(625.0000, 50.0000, 5105.0000)
   /Scene/Architecture/Post_05/asset/Pole  [Cube]  at (600.0000, 0.0000, 100.0000)  bounds (595.0000, -5.0000, 0.0000)..(605.0000, 5.0000, 200.0000)  material (none)
-  /Scene/Architecture/Post_05/asset/lgt  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -495.0000, 499600.0000)..(1100.0000, 505.0000, 500600.0000)
-  /Scene/Architecture/Post_05/asset/lgt/Beacon  [SphereLight]  at (600.0000, 5.0000, 500100.0000)  bounds (100.0000, -495.0000, 499600.0000)..(1100.0000, 505.0000, 500600.0000)
-  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)
-  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 2500.0000, 15000.0000)  bounds (-1900.0000, 0.0000, 12500.0000)..(3100.0000, 5000.0000, 17500.0000)  material (none)
+  /Scene/Architecture/Post_05/asset/lgt  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (595.0000, 0.0000, 5095.0000)..(605.0000, 10.0000, 5105.0000)
+  /Scene/Architecture/Post_05/asset/lgt/Beacon  [SphereLight]  at (600.0000, 5.0000, 5100.0000)  bounds (595.0000, 0.0000, 5095.0000)..(605.0000, 10.0000, 5105.0000)
+  /Scene/Architecture/Post_05/asset/contents  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset  [Xform]  at (600.0000, 0.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)
+  /Scene/Architecture/Post_05/asset/contents/Props/Crate_06/asset/Box  [Cube]  at (600.0000, 25.0000, 150.0000)  bounds (575.0000, 0.0000, 125.0000)..(625.0000, 50.0000, 175.0000)  material (none)
 
 validation:
   INVALID, 2 issue(s):

@@ -17,46 +17,45 @@ from bowerbot import schemas
 # ── Reading a file's metrics ──
 
 
-def read_stage_metadata(file_path: Path) -> tuple[float, str]:
-    """Return ``(metersPerUnit, upAxis)`` for *file_path*."""
-    stage = Usd.Stage.Open(str(file_path))
+def file_metrics(
+    file_path: Path | str, *, default_mpu: float, default_up_axis: str,
+) -> tuple[float, str]:
+    """``(metersPerUnit, upAxis)`` *file_path* declares; the defaults fill in what it leaves out."""
+    stage = Usd.Stage.Open(str(file_path), Usd.Stage.LoadNone)
     if stage is None:
-        return 1.0, "Y"
-
-    mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    up = UsdGeom.GetStageUpAxis(stage)
-    up_str = "Y" if up == UsdGeom.Tokens.y else "Z"
-    return mpu, up_str
-
-
-def read_asset_mpu_from_file(asset_file: Path) -> float:
-    """Return ``metersPerUnit`` from any USD file. Defaults to 1.0."""
-    mpu, _ = read_stage_metadata(asset_file)
-    return mpu if mpu > 0 else 1.0
+        return default_mpu, default_up_axis
+    mpu = (
+        UsdGeom.GetStageMetersPerUnit(stage)
+        if UsdGeom.StageHasAuthoredMetersPerUnit(stage) else default_mpu
+    )
+    up_axis = default_up_axis
+    if stage.HasAuthoredMetadata(UsdGeom.Tokens.upAxis):
+        up_axis = "Y" if UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.y else "Z"
+    return mpu, up_axis
 
 # ── Conforming an asset to the scene ──
 
 
 def asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | None]:
-    """Return (unit scale, up-axis X-rotation or None) conforming an asset to the stage."""
+    """Return (unit scale, up-axis X-rotation or None) conforming an asset to the stage.
+
+    What the asset leaves undeclared is taken to be the scene's, so it needs no conversion.
+    """
     if not os.path.isabs(asset_path):
         stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
         asset_path = os.path.join(stage_dir, asset_path)
 
-    asset_stage = Usd.Stage.Open(asset_path, Usd.Stage.LoadNone)
-    if asset_stage is None:
-        return 1.0, None
-
-    asset_mpu = UsdGeom.GetStageMetersPerUnit(asset_stage)
     scene_mpu = UsdGeom.GetStageMetersPerUnit(stage)
+    scene_up = "Y" if UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.y else "Z"
+    asset_mpu, asset_up = file_metrics(
+        asset_path, default_mpu=scene_mpu, default_up_axis=scene_up,
+    )
     unit_scale = 1.0 if scene_mpu == 0 else asset_mpu / scene_mpu
 
-    asset_up = UsdGeom.GetStageUpAxis(asset_stage)
-    scene_up = UsdGeom.GetStageUpAxis(stage)
     correction = None
-    if asset_up == UsdGeom.Tokens.y and scene_up == UsdGeom.Tokens.z:
+    if asset_up == "Y" and scene_up == "Z":
         correction = 90.0
-    elif asset_up == UsdGeom.Tokens.z and scene_up == UsdGeom.Tokens.y:
+    elif asset_up == "Z" and scene_up == "Y":
         correction = -90.0
     return unit_scale, correction
 

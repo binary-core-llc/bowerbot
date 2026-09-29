@@ -166,6 +166,7 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             container_dir, group, prim_name,
             translate=local,
             rotate=(0.0, ry, 0.0),
+            project_mpu=state.meters_per_unit,
         )
         if not success:
             msg = f"Failed to update nested transform for {prim_path}"

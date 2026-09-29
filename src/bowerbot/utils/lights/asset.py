@@ -28,6 +28,8 @@ def add(
     asset_dir: Path,
     light_name: str,
     light: schemas.LightParams,
+    *,
+    project_mpu: float,
 ) -> str:
     """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path."""
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
@@ -57,7 +59,7 @@ def add(
         raise ValueError(msg)
 
     light_prim = light_cls.Define(stage, light_prim_path).GetPrim()
-    factor = authoring.asset_folder.unit_factor(asset_dir)
+    factor = authoring.asset_folder.unit_factor(asset_dir, project_mpu=project_mpu)
 
     lights.prim.write_attributes(
         stage, light_prim_path,
@@ -97,6 +99,7 @@ def update(
     translate: tuple[float, float, float] | None = None,
     rotate: tuple[float, float, float] | None = None,
     texture: str | None = None,
+    project_mpu: float,
 ) -> None:
     """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``."""
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
@@ -125,7 +128,7 @@ def update(
         if tex_attr:
             tex_attr.Set(Sdf.AssetPath(texture))
 
-    factor = authoring.asset_folder.unit_factor(asset_dir)
+    factor = authoring.asset_folder.unit_factor(asset_dir, project_mpu=project_mpu)
     if translate is not None:
         usd.transforms.update_translate_op(
             prim,

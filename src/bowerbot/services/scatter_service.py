@@ -131,6 +131,7 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
     prototypes = scatter.sources.stage_prototypes(
         stage, sources, assets_dir=state.resolve_assets_dir(),
         library_dir=state.library_dir, project_dir=project_dir,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
     instances, warnings = scatter.surface.generate(
         surface, pose, triangles=triangles, avoid=avoid, prototypes=prototypes,
@@ -268,6 +269,7 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
     prototypes = scatter.sources.stage_prototypes(
         stage, sources, assets_dir=state.resolve_assets_dir(),
         library_dir=state.library_dir, project_dir=project_dir,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
     instances, warnings = scatter.path.generate(
         stage, path, pose, prototypes=prototypes, index=index, up=up, seed=seed,

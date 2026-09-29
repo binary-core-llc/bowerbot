@@ -68,13 +68,17 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         )
         tx, ty, tz = authoring.placement.resolve_asset_position(
             mode,
-            authoring.asset_folder.get_geometry_bounds(asset_dir),
+            authoring.asset_folder.get_geometry_bounds(
+                asset_dir, project_mpu=state.meters_per_unit,
+            ),
             tx, ty, tz,
             has_explicit_y=params.get("translate_y") is not None,
             world_to_local_mat=authoring.placement.get_container_world_inverse(
                 state.stage, asset_prim_path,
             ),
-            asset_mpu=authoring.asset_folder.get_mpu(asset_dir),
+            asset_mpu=authoring.asset_folder.get_mpu(
+                asset_dir, project_mpu=state.meters_per_unit,
+            ),
         )
 
         light = schemas.LightParams(
@@ -89,6 +93,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         )
         composed_path = lights.asset.add(
             asset_dir=asset_dir, light_name=safe_name, light=light,
+            project_mpu=state.meters_per_unit,
         )
 
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -157,13 +162,17 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             )
             translate = authoring.placement.resolve_asset_position(
                 mode,
-                authoring.asset_folder.get_geometry_bounds(asset_dir),
+                authoring.asset_folder.get_geometry_bounds(
+                    asset_dir, project_mpu=state.meters_per_unit,
+                ),
                 *translate,
                 has_explicit_y=params.get("translate_y") is not None,
                 world_to_local_mat=authoring.placement.get_container_world_inverse(
                     state.stage, prim_path,
                 ),
-                asset_mpu=authoring.asset_folder.get_mpu(asset_dir),
+                asset_mpu=authoring.asset_folder.get_mpu(
+                    asset_dir, project_mpu=state.meters_per_unit,
+                ),
             )
         light_name = prim_path.rstrip("/").split("/")[-1]
         lights.asset.update(
@@ -172,6 +181,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             translate=translate,
             rotate=rotate,
             texture=authoring.textures.stage_asset_texture(asset_dir, texture),
+            project_mpu=state.meters_per_unit,
         )
         state.stage = authoring.stage.open_stage(state.stage_path)
     else:

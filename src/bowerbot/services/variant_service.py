@@ -472,6 +472,8 @@ def add_scene_model_selection_variant(
     report = authoring.intake.prepare_asset(
         resolved_path, state.resolve_assets_dir(),
         library_dir=state.library_dir,
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
         fix_root_prim=bool(params.get("fix_root_prim", False)),
         fix_root_transforms=bool(params.get("fix_root_transforms", False)),
     )

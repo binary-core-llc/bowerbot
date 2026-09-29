@@ -325,28 +325,52 @@ def remove_empty_layer(
 # ── Units and bounds of the geometry ──
 
 
-def read_stage_metadata_from_dir(asset_dir: Path) -> tuple[float, str]:
-    """Return ``(metersPerUnit, upAxis)`` from an asset's ``geo.usda``."""
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if geo_path.exists():
-        return usd.metrics.read_stage_metadata(geo_path)
-    return 1.0, "Y"
+def asset_metrics(
+    asset_dir: Path, *, project_mpu: float, project_up_axis: str,
+) -> tuple[float, str]:
+    """``(metersPerUnit, upAxis)`` the asset's root file declares; the project's for the rest."""
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return project_mpu, project_up_axis
+    return usd.metrics.file_metrics(
+        root_file, default_mpu=project_mpu, default_up_axis=project_up_axis,
+    )
 
 
-def get_mpu(asset_dir: Path) -> float:
-    """Return the asset's ``metersPerUnit``, defaulting to 1.0."""
-    mpu, _ = read_stage_metadata_from_dir(asset_dir)
+def declare_missing_metrics(
+    root_file: Path, *, project_mpu: float, project_up_axis: str,
+) -> None:
+    """Write the project's metersPerUnit and upAxis into *root_file* where it declares none."""
+    stage = Usd.Stage.Open(str(root_file), Usd.Stage.LoadNone)
+    if stage is None:
+        return
+    changed = False
+    if not UsdGeom.StageHasAuthoredMetersPerUnit(stage):
+        UsdGeom.SetStageMetersPerUnit(stage, project_mpu)
+        changed = True
+    if not stage.HasAuthoredMetadata(UsdGeom.Tokens.upAxis):
+        UsdGeom.SetStageUpAxis(
+            stage, UsdGeom.Tokens.y if project_up_axis == "Y" else UsdGeom.Tokens.z,
+        )
+        changed = True
+    if changed:
+        stage.GetRootLayer().Save()
+
+
+def get_mpu(asset_dir: Path, *, project_mpu: float) -> float:
+    """Return the asset's ``metersPerUnit`` (see :func:`asset_metrics`), 1.0 if not positive."""
+    mpu, _ = asset_metrics(asset_dir, project_mpu=project_mpu, project_up_axis="Y")
     return mpu if mpu > 0 else 1.0
 
 
-def unit_factor(asset_dir: Path) -> float:
+def unit_factor(asset_dir: Path, *, project_mpu: float) -> float:
     """Return the factor that converts meters into asset units."""
-    mpu = get_mpu(asset_dir)
+    mpu = get_mpu(asset_dir, project_mpu=project_mpu)
     return 1.0 / mpu if mpu > 0 else 1.0
 
 
 def get_geometry_bounds(
-    asset_dir: Path,
+    asset_dir: Path, *, project_mpu: float,
 ) -> dict[str, dict[str, float]] | None:
     """Return the asset's geometry bounds in meters, or ``None``."""
     geo_path = asset_dir / constants.ASWFLayerNames.GEO
@@ -368,7 +392,7 @@ def get_geometry_bounds(
     if rng.IsEmpty():
         return None
 
-    mpu, _ = read_stage_metadata_from_dir(asset_dir)
+    mpu = get_mpu(asset_dir, project_mpu=project_mpu)
     mn = rng.GetMin()
     mx = rng.GetMax()
 
@@ -395,12 +419,21 @@ def create_asset_folder(
     output_dir: Path,
     asset_name: str,
     geometry_file: Path,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> Path:
-    """Create an ASWF asset folder with root + ``geo.usda``."""
+    """Create an ASWF asset folder with root + ``geo.usda``.
+
+    The root declares the units and up axis the source file declares, or the
+    project's where the source declares none.
+    """
     asset_dir = output_dir / asset_name
     asset_dir.mkdir(parents=True, exist_ok=True)
 
-    mpu, up = usd.metrics.read_stage_metadata(geometry_file)
+    mpu, up = usd.metrics.file_metrics(
+        geometry_file, default_mpu=project_mpu, default_up_axis=project_up_axis,
+    )
 
     geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if not geo_path.exists():

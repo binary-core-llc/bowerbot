@@ -264,6 +264,8 @@ def add_nested_asset_reference(
     prim_name: str,
     ref_asset_path: str,
     transform: schemas.TransformParams,
+    *,
+    project_mpu: float,
 ) -> str:
     """Author a nested asset reference inside a container's ``contents.usda``."""
     contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
@@ -289,14 +291,16 @@ def add_nested_asset_reference(
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
-    container_mpu = authoring.asset_folder.get_mpu(container_dir)
+    container_mpu = authoring.asset_folder.get_mpu(container_dir, project_mpu=project_mpu)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
-    nested_mpu = (
-        usd.metrics.read_asset_mpu_from_file(ref_full_path)
-        if ref_full_path.exists() else container_mpu
-    )
+    nested_mpu = container_mpu
+    if ref_full_path.exists():
+        nested_mpu, _ = usd.metrics.file_metrics(
+            ref_full_path, default_mpu=project_mpu, default_up_axis="Y",
+        )
+        nested_mpu = nested_mpu if nested_mpu > 0 else 1.0
     unit_scale = (
         nested_mpu / container_mpu if container_mpu > 0 else 1.0
     )
@@ -335,6 +339,8 @@ def update_nested_asset_transform(
     prim_name: str,
     translate: tuple[float, float, float],
     rotate: tuple[float, float, float],
+    *,
+    project_mpu: float,
 ) -> bool:
     """Update translate/rotate on a nested-asset wrapper in ``contents.usda``."""
     contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
@@ -351,7 +357,7 @@ def update_nested_asset_transform(
     if not wrapper or not wrapper.IsValid():
         return False
 
-    container_mpu = authoring.asset_folder.get_mpu(container_dir)
+    container_mpu = authoring.asset_folder.get_mpu(container_dir, project_mpu=project_mpu)
     factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
 
     xformable = UsdGeom.Xformable(wrapper)

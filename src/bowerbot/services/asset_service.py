@@ -46,6 +46,8 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         report = authoring.intake.prepare_asset(
             asset_path, assets_dir,
             library_dir=state.library_dir,
+            project_mpu=state.meters_per_unit,
+            project_up_axis=state.up_axis.value,
             fix_root_prim=params.get("fix_root_prim", False),
             fix_root_transforms=params.get("fix_root_transforms", False),
         )
@@ -182,6 +184,8 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             reports[path] = authoring.intake.prepare_asset(
                 path, assets_dir,
                 library_dir=state.library_dir,
+                project_mpu=state.meters_per_unit,
+                project_up_axis=state.up_axis.value,
                 fix_root_prim=fix_prim[path],
                 fix_root_transforms=fix_transforms[path],
             )
@@ -288,6 +292,8 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     report = authoring.intake.prepare_asset(
         asset_path, assets_dir,
         library_dir=state.library_dir,
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
         fix_root_prim=params.get("fix_root_prim", False),
         fix_root_transforms=params.get("fix_root_transforms", False),
     )
@@ -297,13 +303,17 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
     tx, ty, tz = authoring.placement.resolve_asset_position(
         mode,
-        authoring.asset_folder.get_geometry_bounds(container_dir),
+        authoring.asset_folder.get_geometry_bounds(
+            container_dir, project_mpu=state.meters_per_unit,
+        ),
         tx, ty, tz,
         has_explicit_y=params.get("translate_y") is not None,
         world_to_local_mat=authoring.placement.get_container_world_inverse(
             state.stage, container_prim_path,
         ),
-        asset_mpu=authoring.asset_folder.get_mpu(container_dir),
+        asset_mpu=authoring.asset_folder.get_mpu(
+            container_dir, project_mpu=state.meters_per_unit,
+        ),
     )
 
     ref_asset_path = authoring.placement.compute_ref_asset_path(
@@ -324,6 +334,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
                 translate=(tx, ty, tz),
                 rotate=(0.0, ry, 0.0),
             ),
+            project_mpu=state.meters_per_unit,
         )
     except (ValueError, RuntimeError):
         state.object_count -= 1

@@ -20,7 +20,7 @@ from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 
-from bowerbot import utils
+from bowerbot.utils import authoring
 from tests import _helpers
 
 
@@ -137,7 +137,7 @@ def test_same_named_textures_copy_the_same_file(tmp_path, monkeypatch):
     def copied() -> bytes:
         project = tmp_path / f"project_{next(projects)}"
         project.mkdir()
-        rel = utils.textures.stage_asset_value("wood.png", project, library)
+        rel = authoring.textures.stage_asset_value("wood.png", project, library)
         return (project / rel).read_bytes()
 
     disk_order, reversed_order = _both_orders(monkeypatch, copied)
@@ -156,10 +156,10 @@ def test_reference_scans(tmp_path, monkeypatch):
         stage.Save()
 
     def asset_refs() -> list[str]:
-        return utils.stage.find_asset_references(tmp_path, "crate")
+        return authoring.asset_folder.find_asset_references(tmp_path, "crate")
 
     def texture_refs() -> list[str]:
-        return utils.textures.find_texture_references(tmp_path, "sky.hdr")
+        return authoring.textures.find_texture_references(tmp_path, "sky.hdr")
 
     for call in (asset_refs, texture_refs):
         disk_order, reversed_order = _both_orders(monkeypatch, call)

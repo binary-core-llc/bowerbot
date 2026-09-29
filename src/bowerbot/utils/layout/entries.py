@@ -1,0 +1,105 @@
+# Copyright 2026 Binary Core LLC
+# SPDX-License-Identifier: Apache-2.0
+
+"""place_layout entries: validate them, count and expand their patterns into transforms."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from pydantic import ValidationError
+
+from bowerbot import schemas
+
+
+def validate(
+    raw_entries: list[Any],
+) -> tuple[list[tuple[int, schemas.LayoutEntry]], list[str]]:
+    """Validate raw entries into LayoutEntry models, collecting per-entry problems."""
+    valid: list[tuple[int, schemas.LayoutEntry]] = []
+    problems: list[str] = []
+    for idx, raw in enumerate(raw_entries):
+        try:
+            valid.append((idx, schemas.LayoutEntry.model_validate(raw)))
+        except ValidationError as e:
+            problems.extend(_render_entry_error(idx, e))
+    return valid, problems
+
+
+def count(entry: schemas.LayoutEntry) -> int:
+    """Return how many placements an entry expands to, without materializing them."""
+    if entry.transforms is not None:
+        return len(entry.transforms)
+    pattern = entry.pattern
+    if pattern.type == schemas.LayoutPattern.GRID:
+        nx, ny, nz = _pad3(pattern.count, 1)
+        return nx * ny * nz
+    return pattern.count
+
+
+def expand(entry: schemas.LayoutEntry) -> list[schemas.TransformParams]:
+    """Expand one validated entry into per-instance transforms."""
+    if entry.transforms is not None:
+        return [
+            _transform(
+                item.translate,
+                item.rotate if item.rotate is not None else entry.rotate,
+                item.scale if item.scale is not None else entry.scale,
+            )
+            for item in entry.transforms
+        ]
+    return [
+        _transform(translate, entry.rotate, entry.scale)
+        for translate in _expand_pattern(entry.pattern)
+    ]
+
+
+# ── Helpers ──
+
+
+def _render_entry_error(idx: int, error: ValidationError) -> list[str]:
+    """Render one entry's ValidationError as indexed problem lines."""
+    lines: list[str] = []
+    for err in error.errors():
+        loc = ".".join(str(part) for part in err["loc"])
+        msg = err["msg"].removeprefix("Value error, ")
+        prefix = f"placements[{idx}]" + (f".{loc}" if loc else "")
+        lines.append(f"{prefix}: {msg}")
+    return lines
+
+
+def _transform(
+    translate: schemas.Vec3, rotate: schemas.Vec3 | None, scale: float | schemas.Vec3 | None,
+) -> schemas.TransformParams:
+    """Build a TransformParams, letting the schema supply identity rotate/scale."""
+    fields: dict[str, schemas.Vec3] = {"translate": translate}
+    if rotate is not None:
+        fields["rotate"] = rotate
+    if scale is not None:
+        fields["scale"] = (
+            (scale, scale, scale) if isinstance(scale, (int, float)) else scale
+        )
+    return schemas.TransformParams(**fields)
+
+
+def _expand_pattern(pattern: schemas.GridPattern | schemas.LinearPattern) -> list[schemas.Vec3]:
+    """Generate translate tuples for a grid or linear pattern."""
+    ox, oy, oz = pattern.origin
+    sx, sy, sz = _pad3(pattern.spacing, 0.0)
+    if pattern.type == schemas.LayoutPattern.GRID:
+        nx, ny, nz = _pad3(pattern.count, 1)
+        return [
+            (ox + i * sx, oy + j * sy, oz + k * sz)
+            for k in range(nz)
+            for j in range(ny)
+            for i in range(nx)
+        ]
+    return [
+        (ox + i * sx, oy + i * sy, oz + i * sz)
+        for i in range(pattern.count)
+    ]
+
+
+def _pad3(values: tuple, fill: float | int) -> tuple:
+    """Pad a 2-tuple to 3 with the identity value for the missing axis."""
+    return (*values, fill) if len(values) == 2 else tuple(values)

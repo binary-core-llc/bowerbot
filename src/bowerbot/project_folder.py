@@ -25,7 +25,6 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from bowerbot import config
-from bowerbot import utils
 from bowerbot.utils import authoring
 
 logger = logging.getLogger(__name__)
@@ -107,7 +106,7 @@ class Project:
         project.save()
 
         # Create empty scene file with the project's up-axis and units
-        utils.stage.create_empty_scene(
+        authoring.stage.create_empty_scene(
             project.scene_path,
             up_axis=meta.up_axis,
             meters_per_unit=meta.meters_per_unit,
@@ -138,7 +137,7 @@ class Project:
 
         # Ensure project invariants
         project.assets_dir.mkdir(parents=True, exist_ok=True)
-        utils.stage.create_empty_scene(
+        authoring.stage.create_empty_scene(
             project.scene_path,
             up_axis=meta.up_axis,
             meters_per_unit=meta.meters_per_unit,

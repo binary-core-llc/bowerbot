@@ -40,7 +40,8 @@ from bowerbot import config
 from bowerbot import project_folder
 from bowerbot import scene_state
 from bowerbot import skills
-from bowerbot import utils
+from bowerbot.utils import authoring
+from bowerbot.utils import inspection
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +193,7 @@ class ScenarioRunner:
             ))
 
         if state.project is not None and state.project.scene_path.exists():
-            state.stage = utils.stage.open_stage(state.project.scene_path)
+            state.stage = authoring.stage.open_stage(state.project.scene_path)
 
         ctx = ScenarioContext(
             scenario_name=scenario.name,
@@ -230,8 +231,8 @@ class ScenarioRunner:
         state.project = project
         state.stage_path = project.scene_path
         if project.scene_path.exists():
-            state.stage = utils.stage.open_stage(project.scene_path)
-            state.object_count = len(utils.inspection.list_prims(state.stage))
+            state.stage = authoring.stage.open_stage(project.scene_path)
+            state.object_count = len(inspection.scene.list_prims(state.stage))
             state.mark_saved()
         return state
 

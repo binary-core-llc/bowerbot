@@ -23,7 +23,8 @@ from typing import Any
 
 from bowerbot import scene_state
 from bowerbot import schemas
-from bowerbot import utils
+from bowerbot.utils import authoring
+from bowerbot.utils import physics
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ def list_physics_api_properties(
 ) -> dict[str, Any]:
     """Return every property the given UsdPhysics API declares."""
     api_name = schemas.PhysicsApiName(params["api_name"])
-    return utils.physics.list_api_properties(
+    return physics.apis.list_properties(
         api_name, instance_name=params.get("instance_name"),
     ).model_dump()
 
@@ -48,12 +49,12 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
     instance_name = params.get("instance_name")
     explicit_scope = params.get("scope")
     scope = (
-        utils.physics.validate_scope(explicit_scope) if explicit_scope
-        else utils.physics.autodetect_scope(state.stage, prim_path)
+        physics.scope.validate(explicit_scope) if explicit_scope
+        else physics.scope.autodetect(state.stage, prim_path)
     )
 
     if scope == "scene":
-        result = utils.physics.apply_api_scene(
+        result = physics.apis.apply_in_scene(
             state.stage, prim_path, api_name, attributes, relationships,
             instance_name=instance_name,
         )
@@ -64,7 +65,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         return result
 
     try:
-        asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+        asset_dir, ref_prim_path = authoring.placement.require_asset_context(
             state.stage, prim_path,
         )
     except ValueError as exc:
@@ -73,22 +74,22 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
             "an asset placement. Retry the call with scope='scene' to "
             "author physics on this prim directly in scene.usda.",
         ) from None
-    asset_local_path = utils.asset_folder.normalize_asset_prim_path(
-        prim_path, ref_prim_path, utils.asset_folder.resolve_default_prim_name(asset_dir),
+    asset_local_path = authoring.placement.normalize_asset_prim_path(
+        prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
     )
 
-    cleared = utils.physics.enforce_masking_policy(
+    cleared = physics.masking.enforce(
         state.stage, asset_dir, asset_local_path,
         api_name, attributes, relationships,
         clear=bool(params.get("clear_masking_overrides", False)),
         confirm=bool(params.get("confirm_masked", False)),
     )
 
-    result = utils.physics.apply_api(
+    result = physics.apis.apply_in_asset(
         asset_dir, asset_local_path, api_name, attributes, relationships,
         instance_name=instance_name,
     )
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
     logger.info(
@@ -115,12 +116,12 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
     instance_name = params.get("instance_name")
     explicit_scope = params.get("scope")
     scope = (
-        utils.physics.validate_scope(explicit_scope) if explicit_scope
-        else utils.physics.autodetect_scope(state.stage, prim_path)
+        physics.scope.validate(explicit_scope) if explicit_scope
+        else physics.scope.autodetect(state.stage, prim_path)
     )
 
     if scope == "scene":
-        changed = utils.physics.remove_api_scene(
+        changed = physics.apis.remove_from_scene(
             state.stage, prim_path, api_name,
             instance_name=instance_name,
         )
@@ -144,7 +145,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
         }
 
     try:
-        asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(
+        asset_dir, ref_prim_path = authoring.placement.require_asset_context(
             state.stage, prim_path,
         )
     except ValueError as exc:
@@ -153,30 +154,30 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
             "an asset placement. Retry the call with scope='scene' to "
             "remove physics from this prim directly in scene.usda.",
         ) from None
-    asset_local_path = utils.asset_folder.normalize_asset_prim_path(
-        prim_path, ref_prim_path, utils.asset_folder.resolve_default_prim_name(asset_dir),
+    asset_local_path = authoring.placement.normalize_asset_prim_path(
+        prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
     )
 
-    api_props = utils.physics.list_api_properties(
+    api_props = physics.apis.list_properties(
         api_name, instance_name=instance_name,
     ).properties
     attr_names = {p.name: None for p in api_props if p.kind == "attribute"}
     rel_names = {p.name: [] for p in api_props if p.kind == "relationship"}
 
-    cleared = utils.physics.enforce_masking_policy(
+    cleared = physics.masking.enforce(
         state.stage, asset_dir, asset_local_path,
         api_name, attr_names, rel_names,
         clear=bool(params.get("clear_masking_overrides", False)),
         confirm=bool(params.get("confirm_masked", False)),
     )
 
-    changed = utils.physics.remove_api(
+    changed = physics.apis.remove_from_asset(
         asset_dir, asset_local_path, api_name,
         instance_name=instance_name,
     )
     if changed:
-        utils.physics.cleanup_if_empty(asset_dir)
-    state.stage = utils.stage.open_stage(state.stage_path)
+        physics.layer.cleanup_if_empty(asset_dir)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
     api_label = (
@@ -212,13 +213,13 @@ def setup_physics_scene(
         params.get("gravity_direction"), "gravity_direction",
     )
 
-    scene_path = utils.physics.ensure_physics_scene(
+    scene_path = physics.scenes.ensure(
         state.stage,
         name=name,
         gravity_magnitude=gravity_magnitude,
         gravity_direction=gravity_direction,
     )
-    resolved_magnitude, resolved_direction = utils.physics.resolve_gravity(
+    resolved_magnitude, resolved_direction = physics.scenes.resolve_gravity(
         state.stage, gravity_magnitude, gravity_direction,
     )
     state.touch_project()
@@ -234,7 +235,7 @@ def list_physics_scenes(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Return every UsdPhysics.Scene prim under /Scene/Physics."""
-    scenes = utils.physics.list_physics_scenes(state.stage)
+    scenes = physics.scenes.list_all(state.stage)
     return {"scenes": scenes, "count": len(scenes)}
 
 
@@ -243,7 +244,7 @@ def remove_physics_scene(
 ) -> dict[str, Any]:
     """Remove a UsdPhysics.Scene prim by name."""
     name = params["name"]
-    removed = utils.physics.remove_physics_scene(state.stage, name)
+    removed = physics.scenes.remove(state.stage, name)
     if removed:
         state.touch_project()
     return {
@@ -262,13 +263,13 @@ def get_physics_summary(
 ) -> dict[str, Any]:
     """Return asset-side + scene-side physics opinions for a prim path."""
     prim_path = params["prim_path"]
-    asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, prim_path)
+    asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
 
     asset_summary = (
-        utils.physics.get_physics_summary(asset_dir)
+        physics.summary.summarize_asset(asset_dir)
         if asset_dir is not None else None
     )
-    scene_summary = utils.physics.get_scene_physics_summary(
+    scene_summary = physics.summary.summarize_scene_prim(
         state.stage, prim_path,
     )
     return {
@@ -285,7 +286,7 @@ def list_joint_properties(
 ) -> dict[str, Any]:
     """Return every property the given joint typed prim declares."""
     joint_type = schemas.PhysicsJointType(params["joint_type"])
-    return utils.physics.list_joint_properties(joint_type).model_dump()
+    return physics.joints.list_properties(joint_type).model_dump()
 
 
 def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
@@ -295,10 +296,10 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     body0 = params.get("body0")
     body1 = params.get("body1")
     attributes = params.get("attributes") or {}
-    scope = utils.physics.validate_scope(params.get("scope", "scene"))
+    scope = physics.scope.validate(params.get("scope", "scene"))
 
     if scope == "scene":
-        result = utils.physics.create_joint_scene(
+        result = physics.joints.create_in_scene(
             state.stage, joint_type, name, body0, body1, attributes,
         )
         state.touch_project()
@@ -313,12 +314,12 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             "scope='asset' requires body0, body1, or "
             "asset_anchor_prim_path so BowerBot can find the asset folder.",
         )
-    asset_dir, ref_prim_path = utils.asset_folder.require_asset_context(state.stage, asset_anchor)
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(state.stage, asset_anchor)
 
     for label, body in (("body0", body0), ("body1", body1)):
         if not body:
             continue
-        body_asset_dir, _ = utils.asset_folder.resolve_asset_dir_for_prim(state.stage, body)
+        body_asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, body)
         if body_asset_dir is None:
             raise ValueError(
                 f"scope='asset' but {label}={body!r} is not inside "
@@ -333,21 +334,21 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 "Use scope='scene' for cross-asset joints.",
             )
 
-    default_prim = utils.asset_folder.resolve_default_prim_name(asset_dir)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     asset_body0 = (
-        utils.asset_folder.normalize_asset_prim_path(body0, ref_prim_path, default_prim)
+        authoring.placement.normalize_asset_prim_path(body0, ref_prim_path, default_prim)
         if body0 else None
     )
     asset_body1 = (
-        utils.asset_folder.normalize_asset_prim_path(body1, ref_prim_path, default_prim)
+        authoring.placement.normalize_asset_prim_path(body1, ref_prim_path, default_prim)
         if body1 else None
     )
 
-    result = utils.physics.create_joint_asset(
+    result = physics.joints.create_in_asset(
         asset_dir, joint_type, name,
         asset_body0, asset_body1, attributes,
     )
-    state.stage = utils.stage.open_stage(state.stage_path)
+    state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
     logger.info(
         "Service created %s asset-level (%s in %s)",
@@ -362,11 +363,11 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
 def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove a joint prim. Routes by ``scope``."""
-    scope = utils.physics.validate_scope(params.get("scope", "scene"))
+    scope = physics.scope.validate(params.get("scope", "scene"))
 
     if scope == "scene":
         prim_path = params["prim_path"]
-        removed = utils.physics.remove_joint_scene(state.stage, prim_path)
+        removed = physics.joints.remove_from_scene(state.stage, prim_path)
         if removed:
             state.touch_project()
         return {"scope": "scene", "prim_path": prim_path, "removed": removed}
@@ -380,12 +381,12 @@ def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             "scope='asset' requires asset_anchor_prim_path (a scene "
             "placement of the asset) to locate the asset folder.",
         )
-    asset_dir, _ = utils.asset_folder.require_asset_context(state.stage, asset_anchor)
+    asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_anchor)
     name = params["name"]
-    removed = utils.physics.remove_joint_asset(asset_dir, name)
+    removed = physics.joints.remove_from_asset(asset_dir, name)
     if removed:
-        utils.physics.cleanup_if_empty(asset_dir)
-        state.stage = utils.stage.open_stage(state.stage_path)
+        physics.layer.cleanup_if_empty(asset_dir)
+        state.stage = authoring.stage.open_stage(state.stage_path)
         state.touch_project()
     return {
         "scope": "asset",
@@ -397,11 +398,11 @@ def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
 def list_joints(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """List joints scene-wide, scoped under a prim, or inside an asset folder."""
-    scope = utils.physics.validate_scope(params.get("scope", "scene"))
+    scope = physics.scope.validate(params.get("scope", "scene"))
 
     if scope == "scene":
         under = params.get("under_prim_path")
-        return utils.physics.list_joints_scene(state.stage, under).model_dump()
+        return physics.joints.list_on_stage(state.stage, under).model_dump()
 
     asset_anchor = params.get("asset_anchor_prim_path")
     if not asset_anchor:
@@ -409,15 +410,15 @@ def list_joints(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
             "scope='asset' requires asset_anchor_prim_path (a scene "
             "placement of the asset) to locate the asset folder.",
         )
-    asset_dir, _ = utils.asset_folder.require_asset_context(state.stage, asset_anchor)
-    return utils.physics.list_joints_asset(asset_dir).model_dump()
+    asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_anchor)
+    return physics.joints.list_in_asset(asset_dir).model_dump()
 
 
 def create_or_update_collision_group(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Create or update a ``UsdPhysicsCollisionGroup`` under /Scene/Physics/Groups."""
-    result = utils.physics.create_or_update_collision_group(
+    result = physics.collision_groups.create_or_update(
         state.stage,
         params["name"],
         includes=params.get("includes"),
@@ -436,11 +437,11 @@ def remove_collision_group(
     """Remove a collision group; relies on scene_integrity to scrub dangling rels."""
     name = params["name"]
     force = bool(params.get("force", False))
-    removed = utils.physics.remove_collision_group(
+    removed = physics.collision_groups.remove(
         state.stage, name, force=force,
     )
     scrubbed = (
-        utils.integrity.scrub_dangling_refs(state.stage) if removed else {}
+        usd.namespace.scrub_dangling_refs(state.stage) if removed else {}
     )
     if removed:
         state.touch_project()
@@ -455,5 +456,5 @@ def list_collision_groups(
     _state: scene_state.SceneState, params: dict[str, Any],
 ) -> dict[str, Any]:
     """Return every collision group with its membership, filters, and merge token."""
-    summary = utils.physics.list_collision_groups(_state.stage)
+    summary = physics.collision_groups.list_all(_state.stage)
     return summary.model_dump()

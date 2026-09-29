@@ -18,7 +18,7 @@ from pxr import Vt
 from bowerbot import config
 from bowerbot import project_folder
 from bowerbot import scene_state
-from bowerbot import utils
+from bowerbot.utils import usd
 from tests import _helpers
 
 
@@ -82,7 +82,7 @@ def _instance_shapes(project: project_folder.Project, prim_path: str) -> list[np
     )
     shapes = []
     for target in instancer.GetPrototypesRel().GetTargets():
-        tris = utils.surface.collect_triangles(stage, [str(target)], up=1)
+        tris = usd.surface.collect_triangles(stage, [str(target)], up=1)
         shapes.append(np.concatenate([tris.v0, tris.v1, tris.v2]))
     out = []
     for proto, m in zip(instancer.GetProtoIndicesAttr().Get(), matrices, strict=True):
@@ -167,9 +167,9 @@ def _ground_heights(
     project: project_folder.Project, prim_path: str, points: np.ndarray, up: int,
 ) -> np.ndarray:
     stage = Usd.Stage.Open(str(project.scene_path))
-    triangles = utils.surface.collect_triangles(stage, [prim_path], up=up)
-    index = utils.surface.build_vertical_index(triangles, up)
-    _, heights, _ = utils.surface.surface_under(index, points, mode="top")
+    triangles = usd.surface.collect_triangles(stage, [prim_path], up=up)
+    index = usd.surface.build_vertical_index(triangles, up)
+    _, heights, _ = usd.surface.surface_under(index, points, mode="top")
     return heights
 
 
@@ -225,9 +225,9 @@ def test_pieces_rest_on_uneven_ground_aligned_to_the_surface():
         assert (heights - base[:, 1]).max() < 0.01
 
         stage = Usd.Stage.Open(str(project.scene_path))
-        triangles = utils.surface.collect_triangles(stage, [ground], up=1)
-        index = utils.surface.build_vertical_index(triangles, 1)
-        _, _, tris = utils.surface.surface_under(index, base, mode="top")
+        triangles = usd.surface.collect_triangles(stage, [ground], up=1)
+        index = usd.surface.build_vertical_index(triangles, 1)
+        _, _, tris = usd.surface.surface_under(index, base, mode="top")
         assert np.einsum("ij,ij->i", ups, triangles.normals[tris]).min() > 0.99
 
 

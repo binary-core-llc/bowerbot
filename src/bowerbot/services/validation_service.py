@@ -8,13 +8,13 @@ from __future__ import annotations
 from typing import Any
 
 from bowerbot import scene_state
-from bowerbot import utils
+from bowerbot.utils import validation
 
 
 def validate_scene(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Run the validator against the active stage file."""
     del params
-    result = utils.validation.validate_stage(
+    result = validation.stage.validate(
         state.stage_path,
         expected_meters_per_unit=state.meters_per_unit,
         expected_up_axis=state.up_axis,
@@ -41,7 +41,7 @@ def package_scene(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     apple_issues: list[dict[str, Any]] = []
     apple_errors: list[dict[str, Any]] = []
     if for_apple:
-        apple_result = utils.validation.validate_for_ar_quick_look(state.stage_path)
+        apple_result = validation.usdz.validate_for_ar_quick_look(state.stage_path)
         apple_issues = [
             {"severity": i.severity.value, "message": i.message, "prim": i.prim_path}
             for i in apple_result.issues
@@ -63,7 +63,7 @@ def package_scene(state: scene_state.SceneState, params: dict[str, Any]) -> dict
             }
 
     output_path = state.stage_path.with_suffix(".usdz")
-    result_path = utils.validation.package_to_usdz(state.stage_path, output_path)
+    result_path = validation.usdz.package(state.stage_path, output_path)
     return {
         "usdz_path": str(result_path),
         "for_apple_ar_quick_look": for_apple,

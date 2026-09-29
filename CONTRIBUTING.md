@@ -83,9 +83,9 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 - **`utils/`**: pure-function primitives: functions only, no values, one job per module, each opening with a docstring that says what it owns. The only place `pxr` is imported, besides the `pxr` classes kept in `constants/`. Modules are grouped into folders by layer:
   - `usd/`: USD building blocks, generic OpenUSD operations. A module here uses only other `usd/` modules.
   - `authoring/`: BowerBot's authoring model (asset folders, `/Scene` placements, the library). Uses `usd/` and other `authoring/` modules.
-  - `features/`: the logic behind each tool family. Uses `usd/` and `authoring/`, never another feature; when a job needs two features, the service calls both.
+  - One folder per tool family (`physics/`, `lights/`, `scatter/`...), split into modules by category (`physics/joints.py`, `lights/asset.py`). A family uses `usd/`, `authoring/` and its own modules, never another family; when a job needs two families, the service calls both.
 
-  Code imports the group it needs and calls a module through it: `from bowerbot.utils import usd`, then `usd.naming.safe_prim_name(...)`. Import the group, never a module inside it. Modules are moving into these groups one PR at a time; the ones not moved yet are called as `utils.<module>.<function>`.
+  Code imports the group it needs and calls a module through it: `from bowerbot.utils import usd`, then `usd.naming.safe_prim_name(...)`. Import the group, never a module inside it.
 - **`services/`**: orchestrators with signature `(state, params)`. One per tool. Call utils and other services, mutate state, raise on errors.
 - **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
 - **`scene_state.py`**: `SceneState`, threaded through every tool handler.
@@ -93,7 +93,7 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
 - **`skills/`**: the skill SDK (the `Skill` contract and the `SkillRegistry`). Skills themselves ship as separate pip packages and are discovered at runtime via entry points; they do not live in this directory.
 - **`prompts/`**: LLM instructions as `.md` files.
 
-Code imports modules, never names, one import per line: `from bowerbot import schemas` and `from bowerbot import utils`, then `schemas.LightParams` and `utils.lights.create_light(...)`. ruff enforces one import per line (`force-single-line`, with `typing` and `collections.abc` excepted, as in the Google Python Style Guide). The same goes for the tests (`from tests import _helpers`, then `_helpers.exec_tool(...)`). Only the package `__init__` files that re-export names import them directly.
+Code imports modules, never names, one import per line: `from bowerbot import schemas` and `from bowerbot.utils import lights`, then `schemas.LightParams` and `lights.scene.create(...)`. ruff enforces one import per line (`force-single-line`, with `typing` and `collections.abc` excepted, as in the Google Python Style Guide). The same goes for the tests (`from tests import _helpers`, then `_helpers.exec_tool(...)`). Only the package `__init__` files that re-export names import them directly.
 
 `tests/test_architecture_rules.py` checks that `utils/` and `services/` hold only functions, `constants/` only classes of values, and `schemas/` only data shapes and type aliases; that code imports modules, not names; and that every `module.name` it reaches exists.
 

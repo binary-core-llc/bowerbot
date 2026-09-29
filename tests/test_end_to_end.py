@@ -26,7 +26,7 @@ async def test_full_scene_build():
     from bowerbot import project_folder
     from bowerbot import scene_state
     from bowerbot import skills
-    from bowerbot import utils
+    from bowerbot.utils import authoring
 
     tmp = tempfile.mkdtemp()
     tmp_path = Path(tmp)
@@ -65,7 +65,7 @@ async def test_full_scene_build():
     state.project = project
     state.stage_path = project.scene_path
     if project.scene_path.exists():
-        state.stage = utils.stage.open_stage(project.scene_path)
+        state.stage = authoring.stage.open_stage(project.scene_path)
 
     registry = skills.SkillRegistry()
     registry.load_from_settings(settings)

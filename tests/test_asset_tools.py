@@ -361,7 +361,7 @@ def test_place_layout_rolls_back_on_failure(monkeypatch):
             raise RuntimeError("disk full")
 
         monkeypatch.setattr(
-            "bowerbot.utils.stage.save_stage", boom,
+            "bowerbot.utils.authoring.stage.save_stage", boom,
         )
         r = asyncio.run(_helpers.exec_tool(state, "place_layout", {
             "placements": [{

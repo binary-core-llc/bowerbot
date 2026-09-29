@@ -10,14 +10,17 @@
   only through ``usd``, never a module outside the group.
 - ``utils/authoring/`` holds BowerBot's authoring model: a module there uses
   ``usd`` and ``authoring``, never ``features``.
+- Every other folder in ``utils/`` is a domain (``physics/``, ``scatter/``...)
+  holding one tool family's logic: a module there uses ``usd``, ``authoring``
+  and its own domain, never another domain.
 - ``constants/`` holds fixed values, grouped in classes.
 - ``schemas/`` holds data shapes (pydantic models, enums, dataclasses) and
   type aliases, never values, and never imports ``pxr``.
 
 And everywhere, in the package and its tests, BowerBot code is imported as
 modules: ``from bowerbot import schemas`` then ``schemas.LightParams``, and
-``from bowerbot import utils`` then ``utils.lights.create_light``. Only the
-package ``__init__`` files that re-export names import them directly.
+``from bowerbot.utils import lights`` then ``lights.scene.create``.
+Only the package ``__init__`` files that re-export names import them directly.
 """
 
 from __future__ import annotations
@@ -201,7 +204,7 @@ def test_code_imports_modules_not_names(path: Path) -> None:
     "path", _own_code_files(), ids=lambda p: p.relative_to(ROOT).as_posix(),
 )
 def test_every_module_reference_exists(path: Path) -> None:
-    """``utils.lights.create_light`` and the like must name something that exists.
+    """``lights.scene.create`` and the like must name something that exists.
 
     A misspelled reference would otherwise only fail when that line runs.
     """
@@ -237,7 +240,8 @@ def test_utils_modules_and_groups_say_what_they_own(path: Path) -> None:
     assert docstring, f"utils/{_utils_id(path)} needs a docstring saying what it owns"
 
 
-_UTILS_GROUPS = {"usd", "authoring", "features"}
+_UTILS_GROUPS = {p.parent.name for p in (PACKAGE / "utils").glob("*/__init__.py")}
+_SHARED_GROUPS = {"usd", "authoring"}
 
 
 @pytest.mark.parametrize(
@@ -299,4 +303,30 @@ def test_authoring_never_uses_features(path: Path) -> None:
         for alias in node.names
         if alias.name not in {"usd", "authoring"}
     ]
+    assert not problems, f"utils/{_utils_id(path)}:\n" + "\n".join(problems)
+
+
+@pytest.mark.parametrize(
+    "path",
+    sorted(p for p in (PACKAGE / "utils").glob("*/*.py") if p.parent.name not in _SHARED_GROUPS),
+    ids=_utils_id,
+)
+def test_domains_never_use_other_domains(path: Path) -> None:
+    """A domain folder uses ``usd``, ``authoring`` and its own domain, never another domain."""
+    allowed = _SHARED_GROUPS | {path.parent.name}
+    problems = []
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        names = [alias.name for alias in node.names]
+        if node.module == "bowerbot" and "utils" in names:
+            problems.append(
+                f"line {node.lineno}: imports all of utils; "
+                "import usd, authoring or its own domain",
+            )
+        if node.module == "bowerbot.utils" and set(names) - allowed:
+            problems.append(
+                f"line {node.lineno}: imports {sorted(set(names) - allowed)} from utils; "
+                f"only {sorted(allowed)} are allowed",
+            )
     assert not problems, f"utils/{_utils_id(path)}:\n" + "\n".join(problems)

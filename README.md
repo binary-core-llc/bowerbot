@@ -909,60 +909,111 @@ src/bowerbot/
 
   utils/              # Pure-function primitives, one job per module, grouped by layer:
                       # usd/ (USD building blocks), authoring/ (BowerBot's authoring
-                      # model), features/ (tool logic). Code imports the group
+                      # model), and one folder per tool family (physics/, lights/...),
+                      # split by category. Code imports the group
                       # (`from bowerbot.utils import usd`) and calls through it,
-                      # e.g. usd.naming.safe_prim_name(); modules not grouped yet
-                      # are called as utils.<module>.<function>
+                      # e.g. usd.naming.safe_prim_name()
     usd/                       # USD building blocks: generic OpenUSD operations
       metrics.py               #   metersPerUnit and upAxis: read them, conform an
                                #   asset to the scene, world axes
+      attributes.py            #   Attributes: read and author them, their declared
+                               #   types, schema documentation
+      bounds.py                #   World-space bounding boxes of prims
+      namespace.py             #   Renaming, moving and removing prims, and what must
+                               #   follow (variant overs, relationship targets, empty overs)
+      transforms.py            #   xformOps: read and write translate and rotate, bake
+                               #   transforms into geometry, rotation math
+      references.py            #   References and payloads: read and clear them, find
+                               #   what a layer references, walk dependencies
+      surface.py               #   World-space triangles of geometry, vertical ray
+                               #   queries, plan-view sampling (numpy)
+      variant_sets.py          #   USD variant sets: author inside a variant, read,
+                               #   select and remove variant sets
       naming.py                #   Valid and safe USD names: prims, variants, joints,
                                #   collision groups
+      compliance.py            #   Running USD's own validators on a file and reporting
+                               #   what they find
       values.py                #   JSON <-> USD values: numbers and vectors from tool
                                #   input, USD value types
     authoring/                 # BowerBot's authoring model: asset folders, /Scene,
                                # the library, project textures
       naming.py                #   Names of BowerBot's files and folders: projects,
                                #   the scene and its snapshots
-    stage.py                   #   USD-stage primitives: open/save, references,
-                               #   xform-op edits, namespace edits, set/list_prim_attribute
-    inspection.py              #   Cross-domain list_prims dispatcher (lights, cameras,
-                               #   physics, placements, geometry)
-    intake.py                  #   intake_folder, intake_usdz, create_asset_folder, ASWF
-    asset_folder.py            #   ASWF folder primitives (detect root, layer scopes,
-                               #   resolve_asset_dir_for_prim)
-    library.py                 #   scan_library, find_package_for
-    lights.py                  #   All light authoring: create/update/remove,
-                               #   list_light_type_properties, lgt.usda lifecycle,
-                               #   HDRI staging
-    cameras.py                 #   Camera authoring: create/update/remove, look_at
-                               #   aiming, list_camera_properties
-    materials.py               #   material_in_folder primitives, find_first_material
-    textures.py                #   find_textures, copy_texture_to_project,
-                               #   find_texture_references
-    physics.py                 #   All physics authoring: APIs, joints, collision groups,
-                               #   phy.usda lifecycle, masking-policy enforcement
-    physics_typing.py          #   is_joint / is_physics_scene / is_collision_group / ...
-    scatter.py                 #   Distributions (random/rows/pile/path), resting,
-                               #   orientation, PointInstancer + placement authoring
-    surface.py                 #   World-space triangles from gprims, vertical ray
-                               #   queries, plan coverage, area sampling (numpy)
-    integrity.py               #   Generic dangling-rel/target scrubbers
-    validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
-    variants.py                #   variants.usda lifecycle, author_in_variant keystone,
-                               #   apply_variant, set/clear_default, removal + cleanup
-    geometry.py                #   Bounds, unit conversion, layout math
-    layout.py                  #   place_layout expansion: grid/linear patterns,
-                               #   asset resolution
-    dependencies.py            #   USD dependency tree walker
-    usd_schema.py              #   Shared UsdSchemaRegistry introspection helpers
-                               #   (used by both physics and lights)
+      stage.py                 #   The project's scene.usda: create, open, save, named
+                               #   snapshots
+      textures.py              #   Copying textures into the project and asset folders,
+                               #   staging file-path values, finding who uses a texture
+      asset_folder.py          #   The ASWF asset folder: root file and defaultPrim, its
+                               #   layers (geo, mtl, lgt, phy, variants, contents),
+                               #   units and bounds, building one
+      asset_variants.py        #   An asset's variants.usda: the layer, its variant sets
+                               #   and payloads, default selections, removal
+      placement.py             #   How the scene refers to asset folders: /Scene
+                               #   placements, nested assets, container frames
+      library.py               #   The asset library: searching it for assets and
+                               #   textures, its asset folders, resolving a path
+      intake.py                #   Bringing a file or folder into the project: copy,
+                               #   localize, check and repair (ASWF compliance)
+      opinions.py              #   Scene.usda opinions that would mask a write into an
+                               #   asset layer or a variant
+    cameras/                   # The camera tools
+      scene.py                 #   Create and update scene cameras
+      aim.py                   #   Aim a camera at a target
+      schema.py                #   The Camera schema's attributes
+    inspection/                # Describing what is in the scene
+      scene.py                 #   list_scene: every prim, classified by kind
+      entries.py               #   The list_scene entry for each kind of prim
+      parts.py                 #   A prim's bindable parts
+    layout/                    # The layout tools
+      entries.py               #   place_layout entries: validate, count, expand
+      grid.py                  #   Suggested grid positions
+    lights/                    # The light tools
+      prim.py                  #   Any light prim: attributes, light link, texture
+      scene.py                 #   Scene-level lights
+      asset.py                 #   Lights in an asset's lgt.usda (its lifecycle)
+      schema.py                #   Each light type's schema inputs
+    materials/                 # The material tools
+      bind.py                  #   Bind a material from a file, unbind, shared check
+      procedural.py            #   Procedural MaterialX + UsdPreviewSurface materials
+      layer.py                 #   What mtl.usda holds: list, remove unused
+    physics/                   # The physics tools
+      apis.py                  #   Apply/remove UsdPhysics APIs (asset or scene)
+      layer.py                 #   The asset's phy.usda: path, create, drop, remove
+      scope.py                 #   Where a physics write goes: asset or scene
+      scenes.py                #   Physics scenes and gravity
+      collision_groups.py      #   Collision groups
+      joints.py                #   Joints, in the scene or in an asset
+      masking.py               #   Refuse-or-acknowledge masking scene opinions
+      summary.py               #   Physics summaries of an asset or a scene prim
+    scatter/                   # The scatter tools
+      params.py                #   Validate inputs: target path, seed, region, circle
+      sources.py               #   The asset mix as measured prototypes
+      region.py                #   Plan-view regions: mask, falloff, bounds
+      noise.py                 #   Seeded density noise
+      surface.py               #   scatter_on_surface: sampling, rows, estimates
+      pile.py                  #   Heaping pieces into a pile
+      path.py                  #   scatter_along_path: path, stations, facing
+      instances.py             #   Per-instance prototype, scale, heading, resting
+      output.py                #   Write a PointInstancer or placements
+      drop.py                  #   drop_to_surface: placements and scatters
+    validation/                # The validate and package tools
+      stage.py                 #   validate_scene's checks on a stage
+      variants.py              #   Structural checks of an asset's variants
+      usdz.py                  #   Package a .usdz; AR Quick Look checks
+    variants/                  # The variant tools (variant-set operations are in
+                               # usd/variant_sets, an asset's variants.usda in
+                               # authoring/asset_variants)
+      asset.py                 #   Add a variant to an asset; check its overrides
+      geometry.py              #   Geometry (LOD) variant sets and their payloads
+      scene.py                 #   Scene-level variants on a carrier prim
+      masking.py               #   Refuse-or-acknowledge masking scene opinions
+      suspect_sets.py          #   Sets that lost their purpose, and their repair
 ```
 
 **Design principles**
 
 - **Tool ↔ service ↔ prompt 1:1:1**: every public tool function has a same-named public service function and is described in some `prompts/*.md` file. A test in `tests/test_tool_service_prompt_invariant.py` fails the build if this ever drifts.
-- **Modules, not names, one per line**: BowerBot code imports modules, each on its own line (`from bowerbot import schemas`, `from bowerbot import utils`), and reaches everything through them: `schemas.LightParams`, `utils.lights.create_light(...)`. Only the package `__init__` files that re-export names import them directly. ruff enforces one import per line (`typing` and `collections.abc` excepted).
+- **Modules, not names, one per line**: BowerBot code imports modules, each on its own line (`from bowerbot import schemas`, `from bowerbot.utils import lights`), and reaches everything through them: `schemas.LightParams`, `lights.scene.create(...)`. Only the package `__init__` files that re-export names import them directly. ruff enforces one import per line (`typing` and `collections.abc` excepted).
 - **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums), `constants/` (fixed values) and a small set of state objects (`SceneState`, `Project`).
 - **Tools are thin**: guard preconditions, call ONE service, wrap in `ToolResult`. No business logic, no util calls, no cross-service routing.
 - **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
@@ -1001,7 +1052,7 @@ Two layers of authority. The naming convention makes routing explicit.
 - **Asset-level** variants live in `<asset>/variants.usda`, referenced (not sublayered) into the asset root. Four orchestrators: material bindings, geometry/LOD payloads, configuration activations, and attribute overrides. The asset's "ship default" lives on the root prim in `<asset>.usda`, never inside `variants.usda`.
 - **Scene-level** variants live inline in `scene.usda` on a carrier prim. Three orchestrators: lighting attribute swaps and lighting selection on `/Scene/Lighting`, plus model selection on the placement wrapper. Lighting selection swaps which UsdLux is active across pre-placed siblings (DiskLight vs RectLight). Model selection swaps which asset reference loads at a placement (chair vs stool).
 - Tool names carry an explicit `asset_` or `scene_` prefix so the LLM never has to guess which layer of authority a call writes to.
-- Foundation: `utils.variants.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
+- Foundation: `usd.variant_sets.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
 - Per-instance overrides: any placement can author `variants = { "set" = "value" }` inline in `scene.usda` to pick a different variant from the asset's default.
 - Validation runs on `validate_scene` before packaging (referenced not sublayered, default selection present, no orphan reference, naming).
 
@@ -1025,7 +1076,7 @@ Two layers of authority. The naming convention makes routing explicit.
 
 What's next for BowerBot. Contributions welcome:
 
-- [ ] **More scene-level variant categories**: layout variants (atomic furniture arrangement swap on a group prim) and camera variants (active camera + render settings) on the `/Scene/Cameras` group. Infrastructure is in place via `apply_scene_variant`; the orchestrators are pure additions when use cases land
+- [ ] **More scene-level variant categories**: layout variants (atomic furniture arrangement swap on a group prim) and camera variants (active camera + render settings) on the `/Scene/Cameras` group. Infrastructure is in place via `variants.scene.add`; the orchestrators are pure additions when use cases land
 - [ ] **Animation variants (asset-level)**: each variant body references a different animation clip (idle, walk, etc.), production-canonical for articulated state cycling
 - [ ] **More asset providers**: Fab, PolyHaven, Objaverse, CGTrader skills
 - [ ] **Web UI**: chat panel + live 3D viewport

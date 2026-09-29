@@ -956,6 +956,15 @@ src/bowerbot/
                                #   localize, check and repair (ASWF compliance)
       opinions.py              #   Scene.usda opinions that would mask a write into an
                                #   asset layer or a variant
+    physics/                   # The physics tools
+      apis.py                  #   Apply/remove UsdPhysics APIs (asset or scene)
+      layer.py                 #   The asset's phy.usda: path, create, drop, remove
+      scope.py                 #   Where a physics write goes: asset or scene
+      scenes.py                #   Physics scenes and gravity
+      collision_groups.py      #   Collision groups
+      joints.py                #   Joints, in the scene or in an asset
+      masking.py               #   Refuse-or-acknowledge masking scene opinions
+      summary.py               #   Physics summaries of an asset or a scene prim
     features/                  # The logic behind each tool family
       inspection.py            #   Describing the scene: list_scene entries for every
                                #   kind of prim, a prim's parts
@@ -965,8 +974,6 @@ src/bowerbot/
                                #   lgt.usda (its lifecycle), light-type schemas
       materials.py             #   The material tools: bind materials in an asset's
                                #   mtl.usda, list them, remove unused ones
-    physics.py                 #   All physics authoring: APIs, joints, collision groups,
-                               #   phy.usda lifecycle, masking-policy enforcement
     scatter.py                 #   Distributions (random/rows/pile/path), resting,
                                #   orientation, PointInstancer + placement authoring
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants

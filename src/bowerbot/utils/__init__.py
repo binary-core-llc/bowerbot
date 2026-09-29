@@ -3,11 +3,13 @@
 
 """BowerBot's USD primitives: pure functions, one module per job.
 
-The modules are being grouped into three folders, one per layer:
+The modules are grouped into folders:
 
 - ``usd/``: USD building blocks, generic OpenUSD operations;
 - ``authoring/``: BowerBot's authoring model (asset folders, ``/Scene`` placements);
-- ``features/``: the logic behind each tool family.
+- one folder per tool family (``physics/``, ...), split by category. A tool
+  family uses ``usd`` and ``authoring``, never another family.
+  (``features/`` still holds the families not moved into their own folder yet.)
 
 Code imports the group it needs and calls a module through it::
 

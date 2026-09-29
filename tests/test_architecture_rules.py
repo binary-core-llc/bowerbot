@@ -10,8 +10,9 @@
   only through ``usd``, never a module outside the group.
 - ``utils/authoring/`` holds BowerBot's authoring model: a module there uses
   ``usd`` and ``authoring``, never ``features``.
-- ``utils/features/`` holds the logic behind each tool family: a module there
-  uses ``usd`` and ``authoring``, never another feature.
+- Every other folder in ``utils/`` is a domain (``physics/``, ``scatter/``...)
+  holding one tool family's logic: a module there uses ``usd``, ``authoring``
+  and its own domain, never another domain.
 - ``constants/`` holds fixed values, grouped in classes.
 - ``schemas/`` holds data shapes (pydantic models, enums, dataclasses) and
   type aliases, never values, and never imports ``pxr``.
@@ -239,7 +240,8 @@ def test_utils_modules_and_groups_say_what_they_own(path: Path) -> None:
     assert docstring, f"utils/{_utils_id(path)} needs a docstring saying what it owns"
 
 
-_UTILS_GROUPS = {"usd", "authoring", "features"}
+_UTILS_GROUPS = {p.parent.name for p in (PACKAGE / "utils").glob("*/__init__.py")}
+_SHARED_GROUPS = {"usd", "authoring"}
 
 
 @pytest.mark.parametrize(
@@ -305,10 +307,13 @@ def test_authoring_never_uses_features(path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "path", sorted((PACKAGE / "utils" / "features").glob("*.py")), ids=_utils_id,
+    "path",
+    sorted(p for p in (PACKAGE / "utils").glob("*/*.py") if p.parent.name not in _SHARED_GROUPS),
+    ids=_utils_id,
 )
-def test_features_never_use_other_features(path: Path) -> None:
-    """A ``features/`` module uses ``usd`` and ``authoring``, never another feature."""
+def test_domains_never_use_other_domains(path: Path) -> None:
+    """A domain folder uses ``usd``, ``authoring`` and its own domain, never another domain."""
+    allowed = _SHARED_GROUPS | {path.parent.name}
     problems = []
     for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
         if not isinstance(node, ast.ImportFrom):
@@ -316,11 +321,12 @@ def test_features_never_use_other_features(path: Path) -> None:
         names = [alias.name for alias in node.names]
         if node.module == "bowerbot" and "utils" in names:
             problems.append(
-                f"line {node.lineno}: imports all of utils; import usd and authoring instead",
+                f"line {node.lineno}: imports all of utils; "
+                "import usd, authoring or its own domain",
             )
-        if node.module == "bowerbot.utils" and set(names) - {"usd", "authoring"}:
+        if node.module == "bowerbot.utils" and set(names) - allowed:
             problems.append(
-                f"line {node.lineno}: imports {names} from utils; "
-                "only usd and authoring are allowed",
+                f"line {node.lineno}: imports {sorted(set(names) - allowed)} from utils; "
+                f"only {sorted(allowed)} are allowed",
             )
     assert not problems, f"utils/{_utils_id(path)}:\n" + "\n".join(problems)

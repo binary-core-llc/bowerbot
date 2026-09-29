@@ -13,8 +13,8 @@ from typing import Any
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
+from bowerbot.utils import layout
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     project_dir = state.project.path if state.project else None
 
-    valid, problems = utils.layout.validate_layout_entries(raw_entries)
+    valid, problems = layout.entries.validate(raw_entries)
 
     items: list[dict[str, Any]] = []
     folder_sources: dict[str, Path] = {}
@@ -130,7 +130,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             "group_path": group_path,
             "base_name": base_name,
             "target": target,
-            "count": utils.layout.count_entry(entry),
+            "count": layout.entries.count(entry),
         })
 
     placed = sum(item["count"] for item in items)
@@ -196,7 +196,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         objects: list[schemas.SceneObject] = []
         for item in items:
             report = reports[item["asset_path"]]
-            for transform in utils.layout.expand_entry(item["entry"]):
+            for transform in layout.entries.expand(item["entry"]):
                 state.object_count += 1
                 prim_path = (
                     f"{item['group_path']}/"

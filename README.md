@@ -912,8 +912,7 @@ src/bowerbot/
                       # model), and one folder per tool family (physics/, lights/...),
                       # split by category. Code imports the group
                       # (`from bowerbot.utils import usd`) and calls through it,
-                      # e.g. usd.naming.safe_prim_name(); modules not grouped yet
-                      # are called as utils.<module>.<function>
+                      # e.g. usd.naming.safe_prim_name()
     usd/                       # USD building blocks: generic OpenUSD operations
       metrics.py               #   metersPerUnit and upAxis: read them, conform an
                                #   asset to the scene, world axes
@@ -965,6 +964,9 @@ src/bowerbot/
       scene.py                 #   list_scene: every prim, classified by kind
       entries.py               #   The list_scene entry for each kind of prim
       parts.py                 #   A prim's bindable parts
+    layout/                    # The layout tools
+      entries.py               #   place_layout entries: validate, count, expand
+      grid.py                  #   Suggested grid positions
     lights/                    # The light tools
       prim.py                  #   Any light prim: attributes, light link, texture
       scene.py                 #   Scene-level lights
@@ -994,6 +996,10 @@ src/bowerbot/
       instances.py             #   Per-instance prototype, scale, heading, resting
       output.py                #   Write a PointInstancer or placements
       drop.py                  #   drop_to_surface: placements and scatters
+    validation/                # The validate and package tools
+      stage.py                 #   validate_scene's checks on a stage
+      variants.py              #   Structural checks of an asset's variants
+      usdz.py                  #   Package a .usdz; AR Quick Look checks
     variants/                  # The variant tools (variant-set operations are in
                                # usd/variant_sets, an asset's variants.usda in
                                # authoring/asset_variants)
@@ -1002,13 +1008,6 @@ src/bowerbot/
       scene.py                 #   Scene-level variants on a carrier prim
       masking.py               #   Refuse-or-acknowledge masking scene opinions
       suspect_sets.py          #   Sets that lost their purpose, and their repair
-    validation/                # The validate and package tools
-      stage.py                 #   validate_scene's checks on a stage
-      variants.py              #   Structural checks of an asset's variants
-      usdz.py                  #   Package a .usdz; AR Quick Look checks
-    geometry.py                #   suggest_grid_layout
-    layout.py                  #   place_layout expansion: entry validation, grid/linear
-                               #   patterns
 ```
 
 **Design principles**

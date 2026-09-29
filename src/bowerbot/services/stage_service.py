@@ -9,9 +9,9 @@ import logging
 from typing import Any
 
 from bowerbot import scene_state
-from bowerbot import utils
 from bowerbot.utils import authoring
 from bowerbot.utils import inspection
+from bowerbot.utils import layout
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -312,7 +312,7 @@ def compute_grid_layout(state: scene_state.SceneState, params: dict[str, Any]) -
     count = int(params["count"])
     spacing = float(params.get("spacing", 2.0))
 
-    placements = utils.geometry.suggest_grid_layout(
+    placements = layout.grid.suggest(
         count,
         spacing=spacing,
     )

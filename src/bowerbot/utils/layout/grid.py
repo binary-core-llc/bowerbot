@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 
 
-def suggest_grid_layout(
+def suggest(
     count: int,
     *,
     spacing: float = 2.0,

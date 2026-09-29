@@ -1,10 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Layout utils — validate and expand batch-placement entries.
-
-Resolving an entry's asset path is in ``authoring.library``.
-"""
+"""place_layout entries: validate them, count and expand their patterns into transforms."""
 
 from __future__ import annotations
 
@@ -15,7 +12,7 @@ from pydantic import ValidationError
 from bowerbot import schemas
 
 
-def validate_layout_entries(
+def validate(
     raw_entries: list[Any],
 ) -> tuple[list[tuple[int, schemas.LayoutEntry]], list[str]]:
     """Validate raw entries into LayoutEntry models, collecting per-entry problems."""
@@ -29,7 +26,7 @@ def validate_layout_entries(
     return valid, problems
 
 
-def count_entry(entry: schemas.LayoutEntry) -> int:
+def count(entry: schemas.LayoutEntry) -> int:
     """Return how many placements an entry expands to, without materializing them."""
     if entry.transforms is not None:
         return len(entry.transforms)
@@ -40,7 +37,7 @@ def count_entry(entry: schemas.LayoutEntry) -> int:
     return pattern.count
 
 
-def expand_entry(entry: schemas.LayoutEntry) -> list[schemas.TransformParams]:
+def expand(entry: schemas.LayoutEntry) -> list[schemas.TransformParams]:
     """Expand one validated entry into per-instance transforms."""
     if entry.transforms is not None:
         return [
@@ -55,6 +52,9 @@ def expand_entry(entry: schemas.LayoutEntry) -> list[schemas.TransformParams]:
         _transform(translate, entry.rotate, entry.scale)
         for translate in _expand_pattern(entry.pattern)
     ]
+
+
+# ── Helpers ──
 
 
 def _render_entry_error(idx: int, error: ValidationError) -> list[str]:

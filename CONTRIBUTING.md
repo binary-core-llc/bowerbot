@@ -85,7 +85,7 @@ BowerBot is organized FastAPI-style. Adding a feature is a three-file change (sc
   - `authoring/`: BowerBot's authoring model (asset folders, `/Scene` placements, the library). Uses `usd/` and other `authoring/` modules.
   - One folder per tool family (`physics/`, `lights/`, `scatter/`...), split into modules by category (`physics/joints.py`, `lights/asset.py`). A family uses `usd/`, `authoring/` and its own modules, never another family; when a job needs two families, the service calls both.
 
-  Code imports the group it needs and calls a module through it: `from bowerbot.utils import usd`, then `usd.naming.safe_prim_name(...)`. Import the group, never a module inside it. Modules are moving into these groups one PR at a time; the ones not moved yet are called as `utils.<module>.<function>`.
+  Code imports the group it needs and calls a module through it: `from bowerbot.utils import usd`, then `usd.naming.safe_prim_name(...)`. Import the group, never a module inside it.
 - **`services/`**: orchestrators with signature `(state, params)`. One per tool. Call utils and other services, mutate state, raise on errors.
 - **`tools/`**: thin adapters. Guard preconditions, call ONE service, wrap in `ToolResult`.
 - **`scene_state.py`**: `SceneState`, threaded through every tool handler.

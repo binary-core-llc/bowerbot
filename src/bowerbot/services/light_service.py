@@ -13,10 +13,10 @@ from pxr import Sdf
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
 from bowerbot.utils import lights
 from bowerbot.utils import usd
+from bowerbot.utils import variants
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         return {
             "prim_path": prim_path,
             "asset_folder": asset_dir.name,
-            "suspect_variant_sets": utils.variants.suspect_variant_sets_in_asset(
+            "suspect_variant_sets": variants.suspect_sets.find_in_asset(
                 asset_dir,
             ),
             "message": f"Removed asset light {light_name} from {asset_dir.name}",
@@ -226,7 +226,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     logger.info("Removed scene light at %s", prim_path)
     data: dict[str, Any] = {
         "prim_path": prim_path,
-        "suspect_variant_sets": utils.variants.suspect_variant_sets_on_scene_carrier(
+        "suspect_variant_sets": variants.suspect_sets.find_on_scene_carrier(
             state.stage, carrier_path,
         ),
         "message": f"Removed light at {prim_path}",

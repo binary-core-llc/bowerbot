@@ -994,11 +994,15 @@ src/bowerbot/
       instances.py             #   Per-instance prototype, scale, heading, resting
       output.py                #   Write a PointInstancer or placements
       drop.py                  #   drop_to_surface: placements and scatters
+    variants/                  # The variant tools (variant-set operations are in
+                               # usd/variant_sets, an asset's variants.usda in
+                               # authoring/asset_variants)
+      asset.py                 #   Add a variant to an asset; check its overrides
+      geometry.py              #   Geometry (LOD) variant sets and their payloads
+      scene.py                 #   Scene-level variants on a carrier prim
+      masking.py               #   Refuse-or-acknowledge masking scene opinions
+      suspect_sets.py          #   Sets that lost their purpose, and their repair
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
-    variants.py                #   apply_variant, scene variants, masking checks,
-                               #   suspect sets (variant-set operations are in
-                               #   usd/variant_sets, an asset's variants.usda in
-                               #   authoring/asset_variants)
     geometry.py                #   suggest_grid_layout
     layout.py                  #   place_layout expansion: entry validation, grid/linear
                                #   patterns

@@ -21,6 +21,7 @@ Modules not moved into a group yet are called as ``utils.<module>.<function>``.
 """
 
 from bowerbot.utils import authoring
+from bowerbot.utils import cameras
 from bowerbot.utils import features
 from bowerbot.utils import geometry
 from bowerbot.utils import inspection
@@ -33,6 +34,7 @@ from bowerbot.utils import variants
 
 __all__ = [
     "authoring",
+    "cameras",
     "features",
     "geometry",
     "inspection",

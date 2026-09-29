@@ -195,6 +195,83 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "placement/units_and_axes",
+        "Assets in other units and axes, or declaring none, placed, nested, moved and lit; "
+        "the grid layout in the project's axes.",
+        (
+            model.Step("compute_grid_layout", {"count": 4}, note="a grid for four objects"),
+            _place(
+                "bare.usda", "Bare", "Props", 0.0, note="a loose file declaring no units or axis"
+            ),
+            _place(
+                "bare_kit/bare_kit.usda",
+                "BareKit",
+                "Props",
+                2.0,
+                note="a folder declaring no units or axis",
+            ),
+            _place("chair_cm.usda", "ChairCm", "Furniture", 4.0, save="chair_cm"),
+            model.Step(
+                "place_asset_inside",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "container_prim_path": "$chair_cm",
+                    "group": "Props",
+                    **model.at(4.0, 0.5, 0.0),
+                },
+                save="crate_in_cm",
+                note="a meters crate inside a centimeters chair, at an absolute position",
+            ),
+            model.Step(
+                "move_asset",
+                {"prim_path": "$crate_in_cm", **model.at(4.2, 0.5, 0.0)},
+                note="move the nested crate 0.2 m along x",
+            ),
+            _place("post_z.usda", "Post", "Architecture", 6.0, save="post"),
+            model.Step(
+                "place_asset_inside",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "container_prim_path": "$post",
+                    "group": "Props",
+                    **model.at(6.0, 1.0, 0.0),
+                },
+                save="crate_on_post",
+                note="a Y-up crate inside a Z-up post, at an absolute position",
+            ),
+            model.Step(
+                "move_asset",
+                {"prim_path": "$crate_on_post", **model.at(6.0, 1.5, 0.0)},
+                note="move the nested crate 0.5 m up",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "SphereLight",
+                    "light_name": "Bulb",
+                    "asset_prim_path": "$chair_cm",
+                    **model.at(0.0, 0.5, 0.0),
+                    "attributes": {"inputs:radius": 0.05},
+                },
+                note="a bulb 0.5 m above the centimeters chair (bounds offset)",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "SphereLight",
+                    "light_name": "Beacon",
+                    "asset_prim_path": "$post",
+                    **model.at(0.0, 0.5, 0.0),
+                    "attributes": {"inputs:radius": 0.05},
+                },
+                note="a beacon 0.5 m above the Z-up post (bounds offset)",
+            ),
+            model.Step("list_scene", note="where everything stands and how big it is"),
+        ),
+    ),
+    model.Scenario(
         "placement/layout",
         "place_layout: patterns, enumerated transforms, validation first.",
         (

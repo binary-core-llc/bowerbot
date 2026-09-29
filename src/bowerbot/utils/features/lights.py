@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Asset-folder light primitives — author lights into ``lgt.usda``."""
+"""The light tools: scene lights, lights in an asset folder's ``lgt.usda``, light-type schemas."""
 
 from __future__ import annotations
 
@@ -22,53 +22,7 @@ from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
-
-def list_light_type_properties(light_type: schemas.LightType) -> schemas.LightTypeSchemaInfo:
-    """Live schema-registry view of every input the light type declares."""
-    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)
-    if prim_def is None:
-        raise ValueError(
-            f"USD schema registry does not know {light_type.value}. "
-            "USD build is missing UsdLux.",
-        )
-
-    properties: list[schemas.LightPropertySpec] = []
-    for prop_name in prim_def.GetPropertyNames():
-        if not prop_name.startswith("inputs:"):
-            continue
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is None:
-            continue
-        properties.append(schemas.LightPropertySpec(
-            name=prop_name,
-            kind="attribute",
-            type_name=str(attr_spec.typeName),
-            default=usd.values.to_jsonable(attr_spec.default),
-            allowed_tokens=[
-                str(t) for t in (attr_spec.allowedTokens or [])
-            ],
-            documentation=usd.attributes.property_doc(prim_def, prop_name, attr_spec),
-        ))
-
-    return schemas.LightTypeSchemaInfo(
-        light_type=light_type.value,
-        properties=properties,
-    )
-
-
-def scale_spatial_attributes(
-    attributes: dict[str, Any], factor: float,
-) -> dict[str, Any]:
-    """Return *attributes* with spatial UsdLux inputs scaled by *factor*."""
-    if factor == 1.0:
-        return dict(attributes)
-    return {
-        name: (
-            usd.values.coerce_number(value, f"spatial light input '{name}'") * factor
-            if name in constants.LightRules.SPATIAL_INPUTS else value
-        )
-        for name, value in attributes.items()
-    }
+# ── Scene lights ──
 
 
 def create_light(stage: Usd.Stage, prim_path: str, light: schemas.LightParams) -> None:
@@ -154,6 +108,9 @@ def get_light_texture(stage: Usd.Stage, prim_path: str) -> str | None:
         return None
     tex_val = tex_attr.Get()
     return tex_val.path if hasattr(tex_val, "path") else str(tex_val)
+
+
+# ── Lights in an asset folder's lgt.usda ──
 
 
 def add_light_to_folder(
@@ -311,7 +268,58 @@ def remove_light_from_folder(asset_dir: Path, light_name: str) -> None:
     )
 
 
-# ── Internal helpers ──
+def scale_spatial_attributes(
+    attributes: dict[str, Any], factor: float,
+) -> dict[str, Any]:
+    """Return *attributes* with spatial UsdLux inputs scaled by *factor*."""
+    if factor == 1.0:
+        return dict(attributes)
+    return {
+        name: (
+            usd.values.coerce_number(value, f"spatial light input '{name}'") * factor
+            if name in constants.LightRules.SPATIAL_INPUTS else value
+        )
+        for name, value in attributes.items()
+    }
+
+
+# ── Light schemas ──
+
+
+def list_light_type_properties(light_type: schemas.LightType) -> schemas.LightTypeSchemaInfo:
+    """Live schema-registry view of every input the light type declares."""
+    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)
+    if prim_def is None:
+        raise ValueError(
+            f"USD schema registry does not know {light_type.value}. "
+            "USD build is missing UsdLux.",
+        )
+
+    properties: list[schemas.LightPropertySpec] = []
+    for prop_name in prim_def.GetPropertyNames():
+        if not prop_name.startswith("inputs:"):
+            continue
+        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
+        if attr_spec is None:
+            continue
+        properties.append(schemas.LightPropertySpec(
+            name=prop_name,
+            kind="attribute",
+            type_name=str(attr_spec.typeName),
+            default=usd.values.to_jsonable(attr_spec.default),
+            allowed_tokens=[
+                str(t) for t in (attr_spec.allowedTokens or [])
+            ],
+            documentation=usd.attributes.property_doc(prim_def, prop_name, attr_spec),
+        ))
+
+    return schemas.LightTypeSchemaInfo(
+        light_type=light_type.value,
+        properties=properties,
+    )
+
+
+# ── Helpers ──
 
 
 def _apply_inverse_transform(

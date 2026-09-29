@@ -15,6 +15,7 @@ from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot import utils
 from bowerbot.utils import authoring
+from bowerbot.utils import features
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ def list_light_type_properties(
 ) -> dict[str, Any]:
     """Return every UsdLux input the given light type declares."""
     light_type = schemas.LightType(params["light_type"])
-    return utils.lights.list_light_type_properties(light_type).model_dump()
+    return features.lights.list_light_type_properties(light_type).model_dump()
 
 
 def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
@@ -86,7 +87,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             light_link_includes=light_link_includes,
             attributes=attributes,
         )
-        composed_path = utils.lights.add_light_to_folder(
+        composed_path = features.lights.add_light_to_folder(
             asset_dir=asset_dir, light_name=safe_name, light=light,
         )
 
@@ -123,7 +124,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         light_link_includes=light_link_includes,
         attributes=attributes,
     )
-    utils.lights.create_light(state.stage, prim_path, light)
+    features.lights.create_light(state.stage, prim_path, light)
     authoring.stage.save_stage(state.stage)
     state.touch_project()
 
@@ -165,7 +166,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 asset_mpu=authoring.asset_folder.get_mpu(asset_dir),
             )
         light_name = prim_path.rstrip("/").split("/")[-1]
-        utils.lights.update_light_in_folder(
+        features.lights.update_light_in_folder(
             asset_dir,
             light_name,
             translate=translate,
@@ -174,7 +175,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         )
         state.stage = authoring.stage.open_stage(state.stage_path)
     else:
-        utils.lights.update_light(
+        features.lights.update_light(
             state.stage,
             prim_path,
             translate=translate,
@@ -200,7 +201,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
-        utils.lights.remove_light_from_folder(asset_dir, light_name)
+        features.lights.remove_light_from_folder(asset_dir, light_name)
         state.stage = authoring.stage.open_stage(state.stage_path)
         logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
         return {
@@ -212,7 +213,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             "message": f"Removed asset light {light_name} from {asset_dir.name}",
         }
 
-    texture_file = utils.lights.get_light_texture(state.stage, prim_path)
+    texture_file = features.lights.get_light_texture(state.stage, prim_path)
     carrier_path = str(Sdf.Path(prim_path).GetParentPath())
     success = usd.namespace.remove_prim(state.stage, prim_path)
     if not success:

@@ -18,8 +18,8 @@
 
 And everywhere, in the package and its tests, BowerBot code is imported as
 modules: ``from bowerbot import schemas`` then ``schemas.LightParams``, and
-``from bowerbot import utils`` then ``utils.lights.create_light``. Only the
-package ``__init__`` files that re-export names import them directly.
+``from bowerbot.utils import features`` then ``features.lights.create_light``.
+Only the package ``__init__`` files that re-export names import them directly.
 """
 
 from __future__ import annotations
@@ -203,7 +203,7 @@ def test_code_imports_modules_not_names(path: Path) -> None:
     "path", _own_code_files(), ids=lambda p: p.relative_to(ROOT).as_posix(),
 )
 def test_every_module_reference_exists(path: Path) -> None:
-    """``utils.lights.create_light`` and the like must name something that exists.
+    """``features.lights.create_light`` and the like must name something that exists.
 
     A misspelled reference would otherwise only fail when that line runs.
     """

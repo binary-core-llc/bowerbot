@@ -11,8 +11,10 @@ then ``features.inspection.list_prims(...)``.
 
 from bowerbot.utils.features import cameras
 from bowerbot.utils.features import inspection
+from bowerbot.utils.features import lights
 
 __all__ = [
     "cameras",
     "inspection",
+    "lights",
 ]

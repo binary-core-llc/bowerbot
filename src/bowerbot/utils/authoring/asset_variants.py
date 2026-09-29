@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""An asset folder's variants.usda: its variant sets and payloads, default selections, removal."""
+"""An asset's variants.usda: the layer, its variant sets and payloads, defaults, removal."""
 
 from __future__ import annotations
 
@@ -10,16 +10,68 @@ from pathlib import Path
 from pxr import Sdf
 from pxr import Usd
 
+from bowerbot import constants
 from bowerbot import schemas
 from bowerbot.utils import authoring
 from bowerbot.utils import usd
+
+# ── The variants.usda layer ──
+
+
+def variants_layer_path(asset_dir: Path) -> Path:
+    """Return the canonical ``variants.usda`` path."""
+    return asset_dir / constants.ASWFLayerNames.VARIANTS
+
+
+def ensure_variants_layer(asset_dir: Path) -> Path:
+    """Create ``variants.usda`` if missing."""
+    path = variants_layer_path(asset_dir)
+    if path.exists():
+        return path
+
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    layer = Sdf.Layer.CreateNew(str(path))
+    layer.defaultPrim = default_prim_name
+    Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
+    layer.GetPrimAtPath(f"/{default_prim_name}").specifier = Sdf.SpecifierOver
+    layer.Save()
+    return path
+
+
+def remove_variants_reference(asset_dir: Path) -> None:
+    """Remove the ``variants.usda`` reference from the asset root."""
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
+    if root_file is None:
+        return
+
+    layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if layer is None:
+        return
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
+    if prim_spec is None:
+        return
+
+    target = f"./{constants.ASWFLayerNames.VARIANTS}"
+    ref_list = prim_spec.referenceList
+    for items in (
+        ref_list.prependedItems,
+        ref_list.appendedItems,
+        ref_list.addedItems,
+        ref_list.explicitItems,
+        ref_list.orderedItems,
+    ):
+        for r in [x for x in items if x.assetPath == target]:
+            items.remove(r)
+    layer.Save()
+
 
 # ── Opening variants.usda ──
 
 
 def open_variants_stage(asset_dir: Path) -> Usd.Stage:
     """Open ``variants.usda`` as a stage."""
-    path = authoring.asset_folder.ensure_variants_layer(asset_dir)
+    path = ensure_variants_layer(asset_dir)
     stage = Usd.Stage.Open(str(path))
     if stage is None:
         raise RuntimeError(f"Failed to open variants layer: {path}")
@@ -32,7 +84,7 @@ def open_variants_stage(asset_dir: Path) -> Usd.Stage:
 def get_variant_summary(asset_dir: Path) -> schemas.VariantsSummary:
     """Return all variant sets, variants, and selections."""
     root_file = authoring.asset_folder.find_root_file(asset_dir)
-    has_layer = authoring.asset_folder.variants_layer_path(asset_dir).exists()
+    has_layer = variants_layer_path(asset_dir).exists()
 
     if root_file is None:
         return schemas.VariantsSummary(
@@ -63,7 +115,7 @@ def get_variant_summary(asset_dir: Path) -> schemas.VariantsSummary:
 
 def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:
     """Read each variant's authored payload asset path from variants.usda."""
-    variants_path = authoring.asset_folder.variants_layer_path(asset_dir)
+    variants_path = variants_layer_path(asset_dir)
     if not variants_path.exists():
         return {}
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -92,7 +144,7 @@ def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:
 
 def variants_have_any_payload(asset_dir: Path) -> bool:
     """Whether any variant body in ``variants.usda`` authors a payload."""
-    variants_path = authoring.asset_folder.variants_layer_path(asset_dir)
+    variants_path = variants_layer_path(asset_dir)
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -169,7 +221,7 @@ def remove_variant(
     asset_dir: Path, set_name: str, variant_name: str,
 ) -> bool:
     """Remove one variant from a variant set."""
-    variants_path = authoring.asset_folder.variants_layer_path(asset_dir)
+    variants_path = variants_layer_path(asset_dir)
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -217,7 +269,7 @@ def remove_variant(
 
 def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
     """Remove an entire variant set."""
-    variants_path = authoring.asset_folder.variants_layer_path(asset_dir)
+    variants_path = variants_layer_path(asset_dir)
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))
@@ -242,10 +294,10 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     if _has_variant_sets(asset_dir):
         return False
 
-    authoring.asset_folder.remove_variants_reference(asset_dir)
+    remove_variants_reference(asset_dir)
     _clear_all_default_variants(asset_dir)
 
-    variants_path = authoring.asset_folder.variants_layer_path(asset_dir)
+    variants_path = variants_layer_path(asset_dir)
     if variants_path.exists():
         layer = Sdf.Layer.FindOrOpen(str(variants_path))
         if layer is not None:
@@ -277,7 +329,7 @@ def _clear_all_default_variants(asset_dir: Path) -> None:
 
 def _has_variant_sets(asset_dir: Path) -> bool:
     """Return whether ``variants.usda`` declares any variant sets."""
-    variants_path = authoring.asset_folder.variants_layer_path(asset_dir)
+    variants_path = variants_layer_path(asset_dir)
     if not variants_path.exists():
         return False
     layer = Sdf.Layer.FindOrOpen(str(variants_path))

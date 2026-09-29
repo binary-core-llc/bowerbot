@@ -947,8 +947,8 @@ src/bowerbot/
       asset_folder.py          #   The ASWF asset folder: root file and defaultPrim, its
                                #   layers (geo, mtl, lgt, phy, variants, contents),
                                #   units and bounds, building one
-      asset_variants.py        #   An asset's variants.usda: variant sets and payloads,
-                               #   default selections, removal
+      asset_variants.py        #   An asset's variants.usda: the layer, its variant sets
+                               #   and payloads, default selections, removal
       placement.py             #   How the scene refers to asset folders: /Scene
                                #   placements, nested assets, container frames
       library.py               #   The asset library: searching it for assets and

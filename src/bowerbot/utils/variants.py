@@ -47,8 +47,8 @@ def setup_geometry_variant_set(
         validate_payload_path(asset_dir, payload_ref)
     validate_lod_namespace_stability(asset_dir, variants)
 
-    authoring.asset_folder.ensure_variants_layer(asset_dir)
-    authoring.asset_folder.ensure_variants_referenced(asset_dir)
+    authoring.asset_variants.ensure_variants_layer(asset_dir)
+    authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.VARIANTS)
     stage = authoring.asset_variants.open_variants_stage(asset_dir)
     root_prim_path = f"/{authoring.asset_folder.resolve_default_prim_name(asset_dir)}"
 
@@ -79,8 +79,8 @@ def apply_variant(
     set_as_default: bool = False,
 ) -> None:
     """End-to-end variant authoring: layer, reference, opinions, default selection."""
-    authoring.asset_folder.ensure_variants_layer(asset_dir)
-    authoring.asset_folder.ensure_variants_referenced(asset_dir)
+    authoring.asset_variants.ensure_variants_layer(asset_dir)
+    authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.VARIANTS)
     stage = authoring.asset_variants.open_variants_stage(asset_dir)
     usd.variant_sets.author_in_variant(
         stage, f"/{authoring.asset_folder.resolve_default_prim_name(asset_dir)}",

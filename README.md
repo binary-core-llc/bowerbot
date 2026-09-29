@@ -983,8 +983,17 @@ src/bowerbot/
       joints.py                #   Joints, in the scene or in an asset
       masking.py               #   Refuse-or-acknowledge masking scene opinions
       summary.py               #   Physics summaries of an asset or a scene prim
-    scatter.py                 #   Distributions (random/rows/pile/path), resting,
-                               #   orientation, PointInstancer + placement authoring
+    scatter/                   # The scatter tools
+      params.py                #   Validate inputs: target path, seed, region, circle
+      sources.py               #   The asset mix as measured prototypes
+      region.py                #   Plan-view regions: mask, falloff, bounds
+      noise.py                 #   Seeded density noise
+      surface.py               #   scatter_on_surface: sampling, rows, estimates
+      pile.py                  #   Heaping pieces into a pile
+      path.py                  #   scatter_along_path: path, stations, facing
+      instances.py             #   Per-instance prototype, scale, heading, resting
+      output.py                #   Write a PointInstancer or placements
+      drop.py                  #   drop_to_surface: placements and scatters
     validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
     variants.py                #   apply_variant, scene variants, masking checks,
                                #   suspect sets (variant-set operations are in

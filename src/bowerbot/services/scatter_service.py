@@ -11,8 +11,8 @@ from typing import Any
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
-from bowerbot import utils
 from bowerbot.utils import authoring
+from bowerbot.utils import scatter
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
     ):
         msg = "'min_spacing' only applies to arrangement 'random'."
         raise ValueError(msg)
-    region = utils.scatter.parse_region(stage, params.get("region"), up)
+    region = scatter.params.parse_region(stage, params.get("region"), up)
     if arrangement is schemas.ScatterArrangement.PILE and (region is None or region.radius is None):
         msg = (
             "arrangement 'pile' needs a circular 'region' "
@@ -83,17 +83,17 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
         align=schemas.ScatterAlign(params.get("align", schemas.ScatterAlign.SURFACE)),
         random_yaw=params.get("random_yaw", True),
         tilt_jitter_degrees=params.get("tilt_jitter_degrees", 0.0),
-        scale_range=utils.scatter.parse_scale_range(params.get("scale_range")),
+        scale_range=scatter.params.parse_scale_range(params.get("scale_range")),
         embed=params.get("embed", 0.0),
     )
     output = schemas.ScatterOutput(params.get("output", schemas.ScatterOutput.INSTANCER))
 
-    prim_path = utils.scatter.scatter_prim_path(
+    prim_path = scatter.params.target_path(
         params.get("group", constants.ScatterNamespace.DEFAULT_GROUP), params["name"],
     )
-    utils.scatter.check_target(stage, prim_path, replace=params.get("replace", False))
+    scatter.params.check_target(stage, prim_path, replace=params.get("replace", False))
     project_dir = state.project.path
-    sources = utils.scatter.resolve_asset_sources(
+    sources = scatter.sources.resolve_asset_sources(
         [schemas.ScatterAsset(**asset) for asset in params["assets"]],
         project_dir=project_dir, library_dir=state.library_dir,
     )
@@ -109,10 +109,10 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
             ),
             up, pad=surface.avoid_margin,
         )
-    seed = utils.scatter.derive_seed(prim_path, params.get("seed"))
+    seed = scatter.params.derive_seed(prim_path, params.get("seed"))
 
     if params.get("validate_only", False):
-        estimate, area_m2 = utils.scatter.estimate_surface_scatter(
+        estimate, area_m2 = scatter.surface.estimate(
             surface, triangles=triangles, avoid=avoid, up=up,
             mpu=state.meters_per_unit, seed=seed,
         )
@@ -128,11 +128,11 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
             ),
         }
 
-    prototypes = utils.scatter.stage_prototypes(
+    prototypes = scatter.sources.stage_prototypes(
         stage, sources, assets_dir=state.resolve_assets_dir(),
         library_dir=state.library_dir, project_dir=project_dir,
     )
-    instances, warnings = utils.scatter.generate_surface_scatter(
+    instances, warnings = scatter.surface.generate(
         surface, pose, triangles=triangles, avoid=avoid, prototypes=prototypes,
         up=up, mpu=state.meters_per_unit, seed=seed,
     )
@@ -142,7 +142,7 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
 
     object_count_snapshot = state.object_count
     try:
-        written = utils.scatter.write_scatter(
+        written = scatter.output.write(
             stage, prim_path=prim_path, output=output,
             prototypes=prototypes, instances=instances,
             first_index=state.object_count + 1,
@@ -164,7 +164,7 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
         "prim_path": prim_path,
         "output": output.value,
         "instances": instances.count,
-        "by_asset": utils.scatter.count_by_prototype(prototypes, instances),
+        "by_asset": scatter.output.count_by_prototype(prototypes, instances),
         "seed": seed,
         "warnings": warnings,
         "message": (
@@ -204,7 +204,7 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
     path = schemas.ScatterPathParams(
         points=params.get("points"),
         closed=params.get("closed", False),
-        circle=utils.scatter.parse_path_circle(stage, params.get("circle"), up),
+        circle=scatter.params.parse_path_circle(stage, params.get("circle"), up),
         curve_prim=params.get("curve_prim"),
         count=params.get("count"),
         spacing=params.get("spacing"),
@@ -222,24 +222,24 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
     pose = schemas.ScatterPoseParams(
         align=schemas.ScatterAlign(params.get("align", schemas.ScatterAlign.UP)),
-        scale_range=utils.scatter.parse_scale_range(params.get("scale_range")),
+        scale_range=scatter.params.parse_scale_range(params.get("scale_range")),
         embed=params.get("embed", 0.0),
     )
     output = schemas.ScatterOutput(params.get("output", schemas.ScatterOutput.PLACEMENTS))
 
-    prim_path = utils.scatter.scatter_prim_path(
+    prim_path = scatter.params.target_path(
         params.get("group", constants.ScatterNamespace.DEFAULT_GROUP), params["name"],
     )
-    utils.scatter.check_target(stage, prim_path, replace=params.get("replace", False))
+    scatter.params.check_target(stage, prim_path, replace=params.get("replace", False))
     project_dir = state.project.path
-    sources = utils.scatter.resolve_asset_sources(
+    sources = scatter.sources.resolve_asset_sources(
         [schemas.ScatterAsset(**asset) for asset in params["assets"]],
         project_dir=project_dir, library_dir=state.library_dir,
     )
-    seed = utils.scatter.derive_seed(prim_path, params.get("seed"))
+    seed = scatter.params.derive_seed(prim_path, params.get("seed"))
 
     if params.get("validate_only", False):
-        estimate, length = utils.scatter.estimate_path_scatter(stage, path, up)
+        estimate, length = scatter.path.estimate(stage, path, up)
         count_text = (
             f"{estimate:,} instance(s)" if estimate is not None
             else "a count set by the assets' length (automatic spacing)"
@@ -265,17 +265,17 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
             ),
             up, up_facing_only=True,
         )
-    prototypes = utils.scatter.stage_prototypes(
+    prototypes = scatter.sources.stage_prototypes(
         stage, sources, assets_dir=state.resolve_assets_dir(),
         library_dir=state.library_dir, project_dir=project_dir,
     )
-    instances, warnings = utils.scatter.generate_path_scatter(
+    instances, warnings = scatter.path.generate(
         stage, path, pose, prototypes=prototypes, index=index, up=up, seed=seed,
     )
 
     object_count_snapshot = state.object_count
     try:
-        written = utils.scatter.write_scatter(
+        written = scatter.output.write(
             stage, prim_path=prim_path, output=output,
             prototypes=prototypes, instances=instances,
             first_index=state.object_count + 1,
@@ -297,7 +297,7 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
         "prim_path": prim_path,
         "output": output.value,
         "instances": instances.count,
-        "by_asset": utils.scatter.count_by_prototype(prototypes, instances),
+        "by_asset": scatter.output.count_by_prototype(prototypes, instances),
         "seed": seed,
         "warnings": warnings,
         "message": (
@@ -315,7 +315,7 @@ def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> di
     stage = state.stage
     up = usd.metrics.axis_index(state.up_axis.value)
     align = schemas.ScatterDropAlign(params.get("align", schemas.ScatterDropAlign.KEEP))
-    wrappers, scatters = utils.scatter.drop_targets(stage, params["prim_paths"])
+    wrappers, scatters = scatter.drop.drop_targets(stage, params["prim_paths"])
     index = usd.surface.build_vertical_index(
         usd.surface.collect_triangles(
             stage, params.get("surfaces") or [constants.SceneNamespace.ROOT],
@@ -326,11 +326,11 @@ def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> di
 
     try:
         results = [
-            utils.scatter.drop_prim(stage, path, index, align=align)
+            scatter.drop.drop_placement(stage, path, index, align=align)
             for path in wrappers
         ]
         scatter_results = [
-            utils.scatter.drop_scatter(stage, path, index, align=align) for path in scatters
+            scatter.drop.drop_scatter(stage, path, index, align=align) for path in scatters
         ]
         authoring.stage.save_stage(stage)
     except Exception:

@@ -18,12 +18,10 @@ Code imports the group it needs and calls a module through it::
 Modules not moved into a group yet are called as ``utils.<module>.<function>``.
 """
 
-from bowerbot.utils import asset_folder
 from bowerbot.utils import authoring
 from bowerbot.utils import features
 from bowerbot.utils import geometry
 from bowerbot.utils import layout
-from bowerbot.utils import materials
 from bowerbot.utils import physics
 from bowerbot.utils import scatter
 from bowerbot.utils import usd
@@ -31,12 +29,10 @@ from bowerbot.utils import validation
 from bowerbot.utils import variants
 
 __all__ = [
-    "asset_folder",
     "authoring",
     "features",
     "geometry",
     "layout",
-    "materials",
     "physics",
     "scatter",
     "usd",

@@ -418,7 +418,7 @@ def remove_nested_asset_reference(
 def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
     """Drop empty group scopes in *container_dir*'s ``contents.usda``.
 
-    Mirrors :func:`bowerbot.utils.material_utils.cleanup_unused_in_folder`:
+    Mirrors :func:`bowerbot.utils.features.materials.cleanup_unused_in_folder`:
     removes per-prim entries that no longer carry meaningful data, then
     deletes the layer file when it has nothing left and rebuilds the
     root references without it. For contents, "meaningful" means a

@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Asset-folder material primitives — author + manage ``mtl.usda``."""
+"""The material tools: bind materials in an asset's ``mtl.usda``, list them, remove unused ones."""
 
 from __future__ import annotations
 
@@ -19,6 +19,8 @@ from bowerbot.utils import authoring
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
+
+# ── Binding materials ──
 
 
 def add_material_to_folder(
@@ -125,64 +127,6 @@ def create_procedural_material_in_folder(
     return mat_prim_path
 
 
-def _author_materialx_standard_surface(
-    stage: Usd.Stage,
-    mat_prim_path: str,
-    material: UsdShade.Material,
-    params: schemas.ProceduralMaterialParams,
-) -> None:
-    """Author the MaterialX ``standard_surface`` branch on *material*."""
-    shader_path = f"{mat_prim_path}/{constants.MaterialXShaders.STANDARD_SURFACE_PRIM}"
-    shader = UsdShade.Shader.Define(stage, shader_path)
-    shader.CreateIdAttr(constants.MaterialXShaders.STANDARD_SURFACE)
-    shader.CreateInput(
-        "base_color", Sdf.ValueTypeNames.Color3f,
-    ).Set(Gf.Vec3f(*params.base_color))
-    shader.CreateInput(
-        "metalness", Sdf.ValueTypeNames.Float,
-    ).Set(params.metalness)
-    shader.CreateInput(
-        "specular_roughness", Sdf.ValueTypeNames.Float,
-    ).Set(params.roughness)
-    if params.opacity < 1.0:
-        shader.CreateInput(
-            "opacity", Sdf.ValueTypeNames.Float,
-        ).Set(params.opacity)
-
-    out = shader.CreateOutput("out", Sdf.ValueTypeNames.Token)
-    material.CreateSurfaceOutput(
-        constants.MaterialXShaders.OUTPUT_QUALIFIER,
-    ).ConnectToSource(out)
-
-
-def _author_usd_preview_surface(
-    stage: Usd.Stage,
-    mat_prim_path: str,
-    material: UsdShade.Material,
-    params: schemas.ProceduralMaterialParams,
-) -> None:
-    """Author the UsdPreviewSurface branch on *material* for cross-DCC compat."""
-    shader_path = f"{mat_prim_path}/{constants.PreviewSurfaceShader.SURFACE_PRIM}"
-    shader = UsdShade.Shader.Define(stage, shader_path)
-    shader.CreateIdAttr(constants.PreviewSurfaceShader.SURFACE_ID)
-    shader.CreateInput(
-        "diffuseColor", Sdf.ValueTypeNames.Color3f,
-    ).Set(Gf.Vec3f(*params.base_color))
-    shader.CreateInput(
-        "metallic", Sdf.ValueTypeNames.Float,
-    ).Set(params.metalness)
-    shader.CreateInput(
-        "roughness", Sdf.ValueTypeNames.Float,
-    ).Set(params.roughness)
-    if params.opacity < 1.0:
-        shader.CreateInput(
-            "opacity", Sdf.ValueTypeNames.Float,
-        ).Set(params.opacity)
-
-    out = shader.CreateOutput("surface", Sdf.ValueTypeNames.Token)
-    material.CreateSurfaceOutput().ConnectToSource(out)
-
-
 def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None:
     """Clear a binding and garbage-collect unused materials + the layer."""
     mtl_path = asset_dir / constants.ASWFLayerNames.MTL
@@ -202,6 +146,31 @@ def remove_material_binding_from_folder(asset_dir: Path, prim_path: str) -> None
 
     stage.Save()
     cleanup_unused_in_folder(asset_dir)
+
+
+def check_shared_modification(
+    stage: Usd.Stage, asset_dir: Path, params: dict, *, op_label: str,
+) -> None:
+    """Refuse if *asset_dir* is referenced by 2+ scene instances and not confirmed."""
+    instance_count = authoring.placement.count_scene_refs_to_asset_dir(stage, asset_dir)
+    confirmed = bool(params.get("confirm_shared_modification", False))
+    if instance_count >= 2 and not confirmed:
+        msg = (
+            f"Asset folder '{asset_dir.name}/' is referenced by "
+            f"{instance_count} scene instances. {op_label} writes to the "
+            f"shared {constants.ASWFLayerNames.MTL}, so the binding would apply to "
+            f"all {instance_count} instances. Two ways forward: "
+            f"(1) For per-instance materials (different material per "
+            f"instance), use place_asset to make each instance independent, "
+            f"then bind a material on each. "
+            f"(2) For deliberate shared modification (every instance "
+            f"should get this material), retry with "
+            f"confirm_shared_modification=true."
+        )
+        raise ValueError(msg)
+
+
+# ── Listing and cleaning up materials ──
 
 
 def list_materials_in_folder(asset_dir: Path) -> list[dict]:
@@ -308,6 +277,78 @@ def cleanup_unused_in_folder(asset_dir: Path) -> list[str]:
     return sorted(removed)
 
 
+def find_first_material(file_path: Path) -> str | None:
+    """Return the prim path of the first Material in *file_path*, or ``None``."""
+    stage = Usd.Stage.Open(str(file_path))
+    if stage is None:
+        return None
+    for prim in stage.Traverse():
+        if prim.IsA(UsdShade.Material):
+            return str(prim.GetPath())
+    return None
+
+
+# ── Helpers ──
+
+
+def _author_materialx_standard_surface(
+    stage: Usd.Stage,
+    mat_prim_path: str,
+    material: UsdShade.Material,
+    params: schemas.ProceduralMaterialParams,
+) -> None:
+    """Author the MaterialX ``standard_surface`` branch on *material*."""
+    shader_path = f"{mat_prim_path}/{constants.MaterialXShaders.STANDARD_SURFACE_PRIM}"
+    shader = UsdShade.Shader.Define(stage, shader_path)
+    shader.CreateIdAttr(constants.MaterialXShaders.STANDARD_SURFACE)
+    shader.CreateInput(
+        "base_color", Sdf.ValueTypeNames.Color3f,
+    ).Set(Gf.Vec3f(*params.base_color))
+    shader.CreateInput(
+        "metalness", Sdf.ValueTypeNames.Float,
+    ).Set(params.metalness)
+    shader.CreateInput(
+        "specular_roughness", Sdf.ValueTypeNames.Float,
+    ).Set(params.roughness)
+    if params.opacity < 1.0:
+        shader.CreateInput(
+            "opacity", Sdf.ValueTypeNames.Float,
+        ).Set(params.opacity)
+
+    out = shader.CreateOutput("out", Sdf.ValueTypeNames.Token)
+    material.CreateSurfaceOutput(
+        constants.MaterialXShaders.OUTPUT_QUALIFIER,
+    ).ConnectToSource(out)
+
+
+def _author_usd_preview_surface(
+    stage: Usd.Stage,
+    mat_prim_path: str,
+    material: UsdShade.Material,
+    params: schemas.ProceduralMaterialParams,
+) -> None:
+    """Author the UsdPreviewSurface branch on *material* for cross-DCC compat."""
+    shader_path = f"{mat_prim_path}/{constants.PreviewSurfaceShader.SURFACE_PRIM}"
+    shader = UsdShade.Shader.Define(stage, shader_path)
+    shader.CreateIdAttr(constants.PreviewSurfaceShader.SURFACE_ID)
+    shader.CreateInput(
+        "diffuseColor", Sdf.ValueTypeNames.Color3f,
+    ).Set(Gf.Vec3f(*params.base_color))
+    shader.CreateInput(
+        "metallic", Sdf.ValueTypeNames.Float,
+    ).Set(params.metalness)
+    shader.CreateInput(
+        "roughness", Sdf.ValueTypeNames.Float,
+    ).Set(params.roughness)
+    if params.opacity < 1.0:
+        shader.CreateInput(
+            "opacity", Sdf.ValueTypeNames.Float,
+        ).Set(params.opacity)
+
+    out = shader.CreateOutput("surface", Sdf.ValueTypeNames.Token)
+    material.CreateSurfaceOutput().ConnectToSource(out)
+
+
 def _collect_variant_binding_targets(asset_dir: Path) -> set[str]:
     """Every ``material:binding`` target authored under any variant."""
     variants_path = asset_dir / constants.ASWFLayerNames.VARIANTS
@@ -332,14 +373,3 @@ def _collect_variant_binding_targets(asset_dir: Path) -> set[str]:
 
     layer.Traverse(Sdf.Path.absoluteRootPath, visit)
     return targets
-
-
-def find_first_material(file_path: Path) -> str | None:
-    """Return the prim path of the first Material in *file_path*, or ``None``."""
-    stage = Usd.Stage.Open(str(file_path))
-    if stage is None:
-        return None
-    for prim in stage.Traverse():
-        if prim.IsA(UsdShade.Material):
-            return str(prim.GetPath())
-    return None

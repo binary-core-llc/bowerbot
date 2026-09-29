@@ -963,9 +963,8 @@ src/bowerbot/
                                #   list the Camera schema
       lights.py                #   The light tools: scene lights, lights in an asset's
                                #   lgt.usda (its lifecycle), light-type schemas
-    asset_folder.py            #   check_shared_modification (moving to
-                               #   features/materials)
-    materials.py               #   material_in_folder primitives, find_first_material
+      materials.py             #   The material tools: bind materials in an asset's
+                               #   mtl.usda, list them, remove unused ones
     physics.py                 #   All physics authoring: APIs, joints, collision groups,
                                #   phy.usda lifecycle, masking-policy enforcement
     scatter.py                 #   Distributions (random/rows/pile/path), resting,

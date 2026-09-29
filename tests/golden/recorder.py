@@ -67,7 +67,7 @@ from pxr import Vt
 from bowerbot import dispatcher
 from bowerbot import scene_state
 from bowerbot import skills
-from bowerbot import utils
+from bowerbot.utils import validation
 from tests.golden import checks
 from tests.golden import library
 from tests.golden import model
@@ -349,7 +349,7 @@ def _capture(
     capture.dangling = _dangling(capture.facts)
     capture.unbound_materials = _unbound_materials(capture.facts, capture.files)
     capture.unused = _unused(copy)
-    result = utils.validation.validate_stage(
+    result = validation.stage.validate(
         scene,
         expected_meters_per_unit=convention.meters_per_unit,
         expected_up_axis=convention.up_axis,

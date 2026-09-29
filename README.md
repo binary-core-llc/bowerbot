@@ -1002,7 +1002,10 @@ src/bowerbot/
       scene.py                 #   Scene-level variants on a carrier prim
       masking.py               #   Refuse-or-acknowledge masking scene opinions
       suspect_sets.py          #   Sets that lost their purpose, and their repair
-    validation.py              #   validate_stage, package_to_usdz, validate_asset_variants
+    validation/                # The validate and package tools
+      stage.py                 #   validate_scene's checks on a stage
+      variants.py              #   Structural checks of an asset's variants
+      usdz.py                  #   Package a .usdz; AR Quick Look checks
     geometry.py                #   suggest_grid_layout
     layout.py                  #   place_layout expansion: entry validation, grid/linear
                                #   patterns

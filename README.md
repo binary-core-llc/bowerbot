@@ -1013,7 +1013,7 @@ src/bowerbot/
 **Design principles**
 
 - **Tool ↔ service ↔ prompt 1:1:1**: every public tool function has a same-named public service function and is described in some `prompts/*.md` file. A test in `tests/test_tool_service_prompt_invariant.py` fails the build if this ever drifts.
-- **Modules, not names, one per line**: BowerBot code imports modules, each on its own line (`from bowerbot import schemas`, `from bowerbot import utils`), and reaches everything through them: `schemas.LightParams`, `utils.lights.create_light(...)`. Only the package `__init__` files that re-export names import them directly. ruff enforces one import per line (`typing` and `collections.abc` excepted).
+- **Modules, not names, one per line**: BowerBot code imports modules, each on its own line (`from bowerbot import schemas`, `from bowerbot.utils import lights`), and reaches everything through them: `schemas.LightParams`, `lights.scene.create(...)`. Only the package `__init__` files that re-export names import them directly. ruff enforces one import per line (`typing` and `collections.abc` excepted).
 - **Functions only in tools / services / utils**: classes live in `schemas/` (pydantic models, enums), `constants/` (fixed values) and a small set of state objects (`SceneState`, `Project`).
 - **Tools are thin**: guard preconditions, call ONE service, wrap in `ToolResult`. No business logic, no util calls, no cross-service routing.
 - **Services own orchestration**: take `(state, params)`, do the cross-service and multi-util work, mutate state, raise on errors.
@@ -1052,7 +1052,7 @@ Two layers of authority. The naming convention makes routing explicit.
 - **Asset-level** variants live in `<asset>/variants.usda`, referenced (not sublayered) into the asset root. Four orchestrators: material bindings, geometry/LOD payloads, configuration activations, and attribute overrides. The asset's "ship default" lives on the root prim in `<asset>.usda`, never inside `variants.usda`.
 - **Scene-level** variants live inline in `scene.usda` on a carrier prim. Three orchestrators: lighting attribute swaps and lighting selection on `/Scene/Lighting`, plus model selection on the placement wrapper. Lighting selection swaps which UsdLux is active across pre-placed siblings (DiskLight vs RectLight). Model selection swaps which asset reference loads at a placement (chair vs stool).
 - Tool names carry an explicit `asset_` or `scene_` prefix so the LLM never has to guess which layer of authority a call writes to.
-- Foundation: `utils.variants.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
+- Foundation: `usd.variant_sets.author_in_variant(stage, prim_path, set, name, author_fn)` runs any caller function inside the variant's edit context. Asset and scene orchestrators are thin wrappers. Adding a new variant category is a pure addition, never a util change.
 - Per-instance overrides: any placement can author `variants = { "set" = "value" }` inline in `scene.usda` to pick a different variant from the asset's default.
 - Validation runs on `validate_scene` before packaging (referenced not sublayered, default selection present, no orphan reference, naming).
 
@@ -1076,7 +1076,7 @@ Two layers of authority. The naming convention makes routing explicit.
 
 What's next for BowerBot. Contributions welcome:
 
-- [ ] **More scene-level variant categories**: layout variants (atomic furniture arrangement swap on a group prim) and camera variants (active camera + render settings) on the `/Scene/Cameras` group. Infrastructure is in place via `apply_scene_variant`; the orchestrators are pure additions when use cases land
+- [ ] **More scene-level variant categories**: layout variants (atomic furniture arrangement swap on a group prim) and camera variants (active camera + render settings) on the `/Scene/Cameras` group. Infrastructure is in place via `variants.scene.add`; the orchestrators are pure additions when use cases land
 - [ ] **Animation variants (asset-level)**: each variant body references a different animation clip (idle, walk, etc.), production-canonical for articulated state cycling
 - [ ] **More asset providers**: Fab, PolyHaven, Objaverse, CGTrader skills
 - [ ] **Web UI**: chat panel + live 3D viewport

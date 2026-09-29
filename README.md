@@ -956,6 +956,10 @@ src/bowerbot/
                                #   localize, check and repair (ASWF compliance)
       opinions.py              #   Scene.usda opinions that would mask a write into an
                                #   asset layer or a variant
+    inspection/                # Describing what is in the scene
+      scene.py                 #   list_scene: every prim, classified by kind
+      entries.py               #   The list_scene entry for each kind of prim
+      parts.py                 #   A prim's bindable parts
     physics/                   # The physics tools
       apis.py                  #   Apply/remove UsdPhysics APIs (asset or scene)
       layer.py                 #   The asset's phy.usda: path, create, drop, remove
@@ -966,8 +970,6 @@ src/bowerbot/
       masking.py               #   Refuse-or-acknowledge masking scene opinions
       summary.py               #   Physics summaries of an asset or a scene prim
     features/                  # The logic behind each tool family
-      inspection.py            #   Describing the scene: list_scene entries for every
-                               #   kind of prim, a prim's parts
       cameras.py               #   The camera tools: create, update and aim cameras,
                                #   list the Camera schema
       lights.py                #   The light tools: scene lights, lights in an asset's

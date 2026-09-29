@@ -15,7 +15,7 @@ from pxr import Usd
 
 from bowerbot import config
 from bowerbot.utils import authoring
-from bowerbot.utils import features
+from bowerbot.utils import inspection
 
 if TYPE_CHECKING:
     from bowerbot import project_folder
@@ -71,7 +71,7 @@ class SceneState:
         self.meters_per_unit = project.meta.meters_per_unit
         self.stage_path = project.scene_path
         self.stage = authoring.stage.open_stage(project.scene_path)
-        self.object_count = len(features.inspection.list_prims(self.stage))
+        self.object_count = len(inspection.scene.list_prims(self.stage))
         self.mark_saved()
 
     def touch_project(self) -> None:

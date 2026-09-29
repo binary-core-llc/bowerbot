@@ -23,6 +23,7 @@ Modules not moved into a group yet are called as ``utils.<module>.<function>``.
 from bowerbot.utils import authoring
 from bowerbot.utils import features
 from bowerbot.utils import geometry
+from bowerbot.utils import inspection
 from bowerbot.utils import layout
 from bowerbot.utils import physics
 from bowerbot.utils import scatter
@@ -34,6 +35,7 @@ __all__ = [
     "authoring",
     "features",
     "geometry",
+    "inspection",
     "layout",
     "physics",
     "scatter",

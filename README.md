@@ -964,6 +964,11 @@ src/bowerbot/
       scene.py                 #   list_scene: every prim, classified by kind
       entries.py               #   The list_scene entry for each kind of prim
       parts.py                 #   A prim's bindable parts
+    lights/                    # The light tools
+      prim.py                  #   Any light prim: attributes, light link, texture
+      scene.py                 #   Scene-level lights
+      asset.py                 #   Lights in an asset's lgt.usda (its lifecycle)
+      schema.py                #   Each light type's schema inputs
     physics/                   # The physics tools
       apis.py                  #   Apply/remove UsdPhysics APIs (asset or scene)
       layer.py                 #   The asset's phy.usda: path, create, drop, remove
@@ -974,8 +979,6 @@ src/bowerbot/
       masking.py               #   Refuse-or-acknowledge masking scene opinions
       summary.py               #   Physics summaries of an asset or a scene prim
     features/                  # The logic behind each tool family
-      lights.py                #   The light tools: scene lights, lights in an asset's
-                               #   lgt.usda (its lifecycle), light-type schemas
       materials.py             #   The material tools: bind materials in an asset's
                                #   mtl.usda, list them, remove unused ones
     scatter.py                 #   Distributions (random/rows/pile/path), resting,

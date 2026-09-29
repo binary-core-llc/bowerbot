@@ -26,6 +26,7 @@ from bowerbot.utils import features
 from bowerbot.utils import geometry
 from bowerbot.utils import inspection
 from bowerbot.utils import layout
+from bowerbot.utils import lights
 from bowerbot.utils import physics
 from bowerbot.utils import scatter
 from bowerbot.utils import usd
@@ -39,6 +40,7 @@ __all__ = [
     "geometry",
     "inspection",
     "layout",
+    "lights",
     "physics",
     "scatter",
     "usd",

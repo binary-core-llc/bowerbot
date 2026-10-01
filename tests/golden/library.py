@@ -22,6 +22,12 @@ PNG_1PX = bytes.fromhex(
     "1f15c4890000000d4944415478da63f8cfc0f01f0005000201a5e0e4ec"
     "0000000049454e44ae426082",
 )
+# A second 1x1 PNG with other content: two files of one name that are not the same file.
+PNG_1PX_DARK = bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000d4944415478da63d09013f90f000226015abed181b5"
+    "0000000049454e44ae426082",
+)
 HDR_BYTES = b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y 1 +X 1\n\x80\x80\x80\x80"
 
 
@@ -93,6 +99,8 @@ def build_library(root: Path) -> Path:
     - ``materials/oak.usda``, ``materials/steel.usda``: material library files.
     - ``hdri/studio.hdr``, ``textures/wood_diffuse.png``: an HDRI and a texture.
     - ``hdri/big_studio.hdr``: a second HDRI, whose name contains ``studio.hdr``.
+    - ``textures/panel.png``, and ``other/wood_diffuse.png`` and ``other/panel.png``:
+      files in ``other/`` share a name with one in ``textures/`` but hold other content.
     - ``gem.usdz``: a packaged asset.
     - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
     - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
@@ -239,6 +247,10 @@ def build_library(root: Path) -> Path:
     (root / "hdri" / "big_studio.hdr").write_bytes(HDR_BYTES)
     (root / "textures").mkdir(exist_ok=True)
     (root / "textures" / "wood_diffuse.png").write_bytes(PNG_1PX)
+    (root / "textures" / "panel.png").write_bytes(PNG_1PX)
+    (root / "other").mkdir(exist_ok=True)
+    (root / "other" / "wood_diffuse.png").write_bytes(PNG_1PX_DARK)
+    (root / "other" / "panel.png").write_bytes(PNG_1PX_DARK)
 
     gem_src = root / "_build" / "gem.usda"
     gem = _stage(gem_src)

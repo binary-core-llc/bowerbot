@@ -204,6 +204,73 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "lights/files_named_by_path",
+        "A texture or material named by its path inside the library, and two library files "
+        "that share a name: is the file that was named the one that gets used?",
+        (
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "table.usda",
+                    "asset_name": "Table",
+                    "group": "Furniture",
+                    **model.at(0.0),
+                },
+                save="table",
+                note="an asset named by its path inside the library",
+            ),
+            model.Step(
+                "bind_material",
+                {"prim_path": "$table/asset/Top", "material_file": "materials/oak.usda"},
+                note="a material file named the same way",
+            ),
+            model.Step(
+                "create_light",
+                {"light_type": "DomeLight", "light_name": "Sky", "texture": "hdri/studio.hdr"},
+                save="sky",
+                note="a texture named the same way",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "DomeLight",
+                    "light_name": "Wood",
+                    "texture": "$lib/textures/wood_diffuse.png",
+                },
+                note="textures/wood_diffuse.png",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "DomeLight",
+                    "light_name": "Wood2",
+                    "texture": "$lib/other/wood_diffuse.png",
+                },
+                note="other/wood_diffuse.png: the same name, other content",
+            ),
+            model.Step(
+                "create_light",
+                {"light_type": "DomeLight", "light_name": "Plain"},
+                save="plain",
+                note="a dome with no texture yet",
+            ),
+            model.Step(
+                "add_scene_lighting_attribute_variant",
+                {
+                    "variant_set": "look",
+                    "variant_name": "panel",
+                    "overrides": {"$plain": {"inputs:texture:file": "textures/panel.png"}},
+                },
+                note="textures/panel.png, while other/panel.png also exists",
+            ),
+            model.Step(
+                "create_light",
+                {"light_type": "DomeLight", "light_name": "Lost", "texture": "hdri/nope.hdr"},
+                note="a texture that is nowhere",
+            ),
+        ),
+    ),
+    model.Scenario(
         "lights/refusals_and_properties",
         "Light property listings, and light calls that cannot work.",
         tuple(

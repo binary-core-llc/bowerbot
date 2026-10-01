@@ -15,6 +15,7 @@ from bowerbot.utils.usd import compliance
 from bowerbot.utils.usd import metrics
 from bowerbot.utils.usd import namespace
 from bowerbot.utils.usd import naming
+from bowerbot.utils.usd import prim_types
 from bowerbot.utils.usd import references
 from bowerbot.utils.usd import surface
 from bowerbot.utils.usd import transforms
@@ -28,6 +29,7 @@ __all__ = [
     "metrics",
     "namespace",
     "naming",
+    "prim_types",
     "references",
     "surface",
     "transforms",

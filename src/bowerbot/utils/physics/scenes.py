@@ -14,6 +14,7 @@ from pxr import Usd
 from pxr import UsdPhysics
 
 from bowerbot import constants
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def list_all(stage: Usd.Stage) -> list[dict[str, Any]]:
             ),
         }
         for p in Usd.PrimRange(scope)
-        if p.IsA(UsdPhysics.Scene)
+        if usd.prim_types.is_physics_scene(p)
     ]
 
 
@@ -51,7 +52,7 @@ def remove(stage: Usd.Stage, name: str) -> bool:
     """Remove a ``UsdPhysics.Scene`` prim by name; return True if removed."""
     path = f"{constants.SceneNamespace.PHYSICS}/{name}"
     prim = stage.GetPrimAtPath(path)
-    if not prim or not prim.IsValid() or not prim.IsA(UsdPhysics.Scene):
+    if not prim or not prim.IsValid() or not usd.prim_types.is_physics_scene(prim):
         return False
     stage.RemovePrim(Sdf.Path(path))
     stage.Save()

@@ -115,7 +115,7 @@ def list_all(stage: Usd.Stage) -> schemas.CollisionGroupsSummary:
     summaries = [
         _summarize_group(child)
         for child in scope.GetChildren()
-        if child.IsA(UsdPhysics.CollisionGroup)
+        if usd.prim_types.is_collision_group(child)
     ]
     return schemas.CollisionGroupsSummary(groups=summaries)
 
@@ -170,7 +170,7 @@ def _find_dependent_groups(stage: Usd.Stage, group_prim_path: str) -> list[str]:
     target = Sdf.Path(group_prim_path)
     dependents: list[str] = []
     for child in scope.GetChildren():
-        if not child.IsA(UsdPhysics.CollisionGroup):
+        if not usd.prim_types.is_collision_group(child):
             continue
         if str(child.GetPath()) == group_prim_path:
             continue

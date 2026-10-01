@@ -201,7 +201,7 @@ def list_on_stage(
         return schemas.JointsSummary()
     joints: list[schemas.JointSummary] = []
     for prim in Usd.PrimRange(root):
-        if _is_supported_joint_prim(prim):
+        if usd.prim_types.is_joint(prim):
             joints.append(_summarize_joint(prim))
     return schemas.JointsSummary(joints=joints)
 
@@ -313,11 +313,6 @@ def _ancestor_has_api(prim: Usd.Prim, api_name: str) -> bool:
     return False
 
 
-def _is_supported_joint_prim(prim: Usd.Prim) -> bool:
-    """Whether *prim* is one of the five supported joint typed prims."""
-    return any(prim.IsA(cls) for cls in constants.PhysicsUsd.JOINTS.values())
-
-
 def _is_supported_joint_spec(spec: Sdf.PrimSpec) -> bool:
     """Spec-side check (no stage) for joint typeName in our whitelist."""
     type_name = str(spec.typeName) if spec.typeName else ""
@@ -327,10 +322,7 @@ def _is_supported_joint_spec(spec: Sdf.PrimSpec) -> bool:
 def _summarize_joint(prim: Usd.Prim) -> schemas.JointSummary:
     """Read a joint prim into a summary."""
     type_name = prim.GetTypeName()
-    body0_rel = prim.GetRelationship("physics:body0")
-    body1_rel = prim.GetRelationship("physics:body1")
-    body0_targets = list(body0_rel.GetTargets()) if body0_rel else []
-    body1_targets = list(body1_rel.GetTargets()) if body1_rel else []
+    body0, body1 = usd.prim_types.joint_bodies(prim)
 
     attrs: dict[str, Any] = {}
     for a in prim.GetAttributes():
@@ -346,8 +338,8 @@ def _summarize_joint(prim: Usd.Prim) -> schemas.JointSummary:
     return schemas.JointSummary(
         prim_path=str(prim.GetPath()),
         joint_type=str(type_name),
-        body0=str(body0_targets[0]) if body0_targets else None,
-        body1=str(body1_targets[0]) if body1_targets else None,
+        body0=body0,
+        body1=body1,
         attributes=attrs,
         applied_apis=list(prim.GetAppliedSchemas()),
     )

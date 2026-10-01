@@ -264,10 +264,10 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    container_dir, _ = authoring.placement.resolve_asset_dir_for_prim(
+    container_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
         state.stage, container_prim_path,
     )
-    if container_dir is None:
+    if container_dir is None or ref_prim_path is None:
         msg = (
             f"Cannot find ASWF asset folder for {container_prim_path}. "
             "Nested placement only works when the container is an "
@@ -315,7 +315,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         tx, ty, tz,
         has_explicit_y=params.get("translate_y") is not None,
         world_to_local_mat=authoring.placement.get_container_world_inverse(
-            state.stage, container_prim_path,
+            state.stage, ref_prim_path,
         ),
         asset_mpu=authoring.asset_folder.get_mpu(
             container_dir, project_mpu=state.meters_per_unit,
@@ -341,6 +341,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
                 rotate=(0.0, ry, 0.0),
             ),
             project_mpu=state.meters_per_unit,
+            project_up_axis=state.up_axis.value,
         )
     except (ValueError, RuntimeError):
         state.object_count -= 1
@@ -349,8 +350,10 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
-    composed_path = (
-        f"{container_prim_path}/asset/contents/{group}/{prim_name}"
+    composed_path = f"{ref_prim_path}/contents/{group}/{prim_name}"
+    wx, wy, wz = (
+        round(v, 4) + 0.0
+        for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(composed_path))
     )
     logger.info(
         "Placed %s inside %s at %s",
@@ -360,7 +363,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         "prim_path": composed_path,
         "asset": asset_name,
         "container": container_dir.name,
-        "position": {"x": tx, "y": ty, "z": tz},
+        "position": {"x": wx, "y": wy, "z": wz},
         "rotation_y": ry,
         "intake": authoring.intake.intake_summary(report),
         "message": (

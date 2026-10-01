@@ -283,8 +283,13 @@ def add_nested_asset_reference(
     transform: schemas.TransformParams,
     *,
     project_mpu: float,
+    project_up_axis: str,
 ) -> str:
-    """Author a nested asset reference inside a container's ``contents.usda``."""
+    """Author a nested asset reference inside a container's ``contents.usda``.
+
+    Like a scene placement, the nested asset is scaled and turned into its
+    container's units and up axis.
+    """
     contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
 
@@ -308,18 +313,21 @@ def add_nested_asset_reference(
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
-    container_mpu = authoring.asset_folder.get_mpu(container_dir, project_mpu=project_mpu)
-    factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
+    container_mpu, container_up = authoring.asset_folder.asset_metrics(
+        container_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
+    container_mpu = container_mpu if container_mpu > 0 else 1.0
+    factor = 1.0 / container_mpu
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
-    nested_mpu = container_mpu
+    nested_mpu, nested_up = container_mpu, container_up
     if ref_full_path.exists():
-        nested_mpu, _ = usd.metrics.file_metrics(
-            ref_full_path, default_mpu=project_mpu, default_up_axis="Y",
+        nested_mpu, nested_up = usd.metrics.file_metrics(
+            ref_full_path, default_mpu=project_mpu, default_up_axis=project_up_axis,
         )
         nested_mpu = nested_mpu if nested_mpu > 0 else 1.0
-    unit_scale = (
-        nested_mpu / container_mpu if container_mpu > 0 else 1.0
+    unit_scale, up_axis_correction = usd.metrics.conform(
+        nested_mpu, nested_up, parent_mpu=container_mpu, parent_up_axis=container_up,
     )
 
     sx, sy, sz = transform.scale
@@ -338,6 +346,8 @@ def add_nested_asset_reference(
     xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
 
     asset_inner = stage.DefinePrim(f"{wrapper_path}/asset", "Xform")
+    if up_axis_correction is not None:
+        UsdGeom.Xformable(asset_inner).AddRotateXOp().Set(up_axis_correction)
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()
@@ -520,34 +530,20 @@ def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
 
 
 def get_container_world_inverse(
-    stage: Usd.Stage, container_prim_path: str,
+    stage: Usd.Stage, frame_prim_path: str,
 ) -> Gf.Matrix4d | None:
-    """Return the inverse world transform of a container's wrapper Xform."""
-    prim = stage.GetPrimAtPath(container_prim_path)
+    """Return the inverse world transform of *frame_prim_path*.
+
+    For positions inside an asset folder, pass the prim that references the
+    folder (see :func:`resolve_asset_dir_for_prim`): its frame includes the
+    folder's unit scale and up-axis turn.
+    """
+    prim = stage.GetPrimAtPath(frame_prim_path)
     if not prim or not prim.IsValid():
         return None
 
-    wrapper = prim
-    if prim.GetName() == "asset":
-        parent = prim.GetParent()
-        if parent and parent.IsValid():
-            wrapper = parent
-
     xform_cache = UsdGeom.XformCache()
-    return xform_cache.GetLocalToWorldTransform(wrapper).GetInverse()
-
-
-def world_to_local_point(
-    stage: Usd.Stage,
-    container_prim_path: str,
-    x: float, y: float, z: float,
-) -> tuple[float, float, float] | None:
-    """Convert a world-space point into a container's local frame."""
-    inv = get_container_world_inverse(stage, container_prim_path)
-    if inv is None:
-        return None
-    local = inv.Transform(Gf.Vec3d(x, y, z))
-    return float(local[0]), float(local[1]), float(local[2])
+    return xform_cache.GetLocalToWorldTransform(prim).GetInverse()
 
 
 def resolve_asset_position(

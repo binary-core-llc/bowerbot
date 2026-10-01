@@ -50,12 +50,21 @@ def asset_conform(
     asset_mpu, asset_up = file_metrics(
         asset_path, default_mpu=project_mpu, default_up_axis=project_up_axis,
     )
-    unit_scale = 1.0 if project_mpu == 0 else asset_mpu / project_mpu
+    return conform(
+        asset_mpu, asset_up, parent_mpu=project_mpu, parent_up_axis=project_up_axis,
+    )
+
+
+def conform(
+    asset_mpu: float, asset_up_axis: str, *, parent_mpu: float, parent_up_axis: str,
+) -> tuple[float, float | None]:
+    """Return (unit scale, up-axis X-rotation or None) taking an asset into its parent's frame."""
+    unit_scale = 1.0 if parent_mpu == 0 else asset_mpu / parent_mpu
 
     correction = None
-    if asset_up == "Y" and project_up_axis == "Z":
+    if asset_up_axis == "Y" and parent_up_axis == "Z":
         correction = 90.0
-    elif asset_up == "Z" and project_up_axis == "Y":
+    elif asset_up_axis == "Z" and parent_up_axis == "Y":
         correction = -90.0
     return unit_scale, correction
 

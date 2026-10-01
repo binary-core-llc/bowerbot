@@ -377,7 +377,7 @@ TOOLS: list[skills.Tool] = [
             "bounds, or 'bounds_offset' where X/Z are offsets from the container's "
             "bounding-box CENTER and Y is an offset from its TOP surface (or BOTTOM "
             "for negative Y; default 0.5 m above the top if Y is omitted). Returns "
-            "the composed prim_path, the resolved container-local position, and an "
+            "the composed prim_path, the asset's world position, and an "
             "intake summary (asset_folder, renamed root, files_copied, localized "
             "dependencies, compliance warnings)."
         ),

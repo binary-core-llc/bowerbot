@@ -617,7 +617,6 @@ SUMMARY
 
   checks:
     ⚠ this step made the scene invalid
-    ⚠ the answer says /Scene/Furniture/Table_02/asset/contents/Architecture/A_03 is at (0.0000, 0.7750, 0.0000), but it is at (300.0000, 0.0000, 77.5000)
 
 EVIDENCE
 
@@ -640,9 +639,9 @@ full answer:
     },
     "message": "Placed A inside table at /Scene/Furniture/Table_02/asset/contents/Architecture/A_03",
     "position": {
-      "x": 0.0,
-      "y": 0.775,
-      "z": 0.0
+      "x": 300.0,
+      "y": 0.0,
+      "z": 77.5
     },
     "prim_path": "/Scene/Furniture/Table_02/asset/contents/Architecture/A_03",
     "rotation_y": 30.0
@@ -843,7 +842,6 @@ SUMMARY
 
   checks:
     ⚠ this step added 1 validation error(s)
-    ⚠ the answer says /Scene/Furniture/Table_02/asset/contents/Furniture/B_04 is at (-2.8000, 0.0000, 0.0000), but it is at (20.0000, 0.0000, 0.0000)
 
 EVIDENCE
 
@@ -866,7 +864,7 @@ full answer:
     },
     "message": "Placed B inside table at /Scene/Furniture/Table_02/asset/contents/Furniture/B_04",
     "position": {
-      "x": -2.8,
+      "x": 20.0,
       "y": 0.0,
       "z": 0.0
     },
@@ -1057,7 +1055,6 @@ SUMMARY
 
   checks:
     ⚠ this step added 1 validation error(s)
-    ⚠ the answer says /Scene/Furniture/Table_02/asset/contents/Lighting/C_05 is at (-3.2000, 0.0000, 0.0000), but it is at (-20.0000, 0.0000, 0.0000)
 
 EVIDENCE
 
@@ -1080,7 +1077,7 @@ full answer:
     },
     "message": "Placed C inside table at /Scene/Furniture/Table_02/asset/contents/Lighting/C_05",
     "position": {
-      "x": -3.2,
+      "x": -20.0,
       "y": 0.0,
       "z": 0.0
     },
@@ -1272,7 +1269,6 @@ SUMMARY
 
   checks:
     ⚠ this step added 1 validation error(s)
-    ⚠ the answer says /Scene/Furniture/Table_02/asset/contents/Products/D_06 is at (-3.0000, 0.0000, 0.0000), but it is at (0.0000, 0.0000, 0.0000)
 
 EVIDENCE
 
@@ -1295,7 +1291,7 @@ full answer:
     },
     "message": "Placed D inside table at /Scene/Furniture/Table_02/asset/contents/Products/D_06",
     "position": {
-      "x": -3.0,
+      "x": 0.0,
       "y": 0.0,
       "z": 0.0
     },

@@ -1,0 +1,1116 @@
+##### scenario: placement/packages_with_their_own_files
+##### convention: Z-up, 0.01 meters per unit
+##### Library packages whose root points to files of their own: do they keep their geometry and materials when imported, and when BowerBot later adds or removes a layer?
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: a root that payloads its own model file and references its own look file
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/cabinet/cabinet.usda", asset_name="Cabinet", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Cabinet at /Scene/Furniture/Cabinet_01.
+
+  what changed:
+    + file assets/cabinet/cabinet.usda
+    + file assets/cabinet/cabinet_model.usda
+    + file assets/cabinet/look.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Cabinet_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Cabinet_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+
+  checks:
+    ⚠ left behind a file nothing in the scene uses: assets/cabinet/cabinet_model.usda
+    ⚠ left behind a file nothing in the scene uses: assets/cabinet/look.usda
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Cabinet",
+    "intake": {
+      "asset_folder": "cabinet",
+      "files_copied": 3,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "cabinet.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Cabinet at /Scene/Furniture/Cabinet_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Cabinet_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/cabinet/cabinet.usda
+  + assets/cabinet/cabinet_model.usda
+  + assets/cabinet/look.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/cabinet/cabinet.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "cabinet"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "cabinet" (
+          assetInfo = {
+              asset identifier = @./cabinet.usda@
+              string name = "cabinet"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_cabinet>
+          kind = "component"
+      )
+      {
+      }
+
+      class Xform "_class_cabinet"
+      {
+      }
+
+  + assets/cabinet/cabinet_model.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "cabinet"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "cabinet"
+      {
+          def Cube "Body"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.8, 1, 0.4)
+              double3 xformOp:translate = (0, 0.5, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/cabinet/look.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "cabinet"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def "cabinet"
+      {
+          def Scope "mtl"
+          {
+              def Material "walnut"
+              {
+                  token outputs:surface.connect = </cabinet/mtl/walnut/PreviewSurface.outputs:surface>
+
+                  def Shader "PreviewSurface"
+                  {
+                      uniform token info:id = "UsdPreviewSurface"
+                      color3f inputs:diffuseColor = (0.35, 0.2, 0.1)
+                      token outputs:surface
+                  }
+              }
+          }
+
+          over "Body" (
+              prepend apiSchemas = ["MaterialBindingAPI"]
+          )
+          {
+              rel material:binding = </cabinet/mtl/walnut>
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Cabinet_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/cabinet/cabinet.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,27 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Cabinet_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/cabinet/cabinet.usda@
+  +                    string name = "cabinet"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: list_prim_children
+
+SUMMARY
+  call: list_prim_children(prim_path="/Scene/Furniture/Cabinet_01")
+  current project: golden
+  said: ok: No geometry parts found under /Scene/Furniture/Cabinet_01.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "No geometry parts found under /Scene/Furniture/Cabinet_01.",
+    "part_count": 0,
+    "parts": [],
+    "prim_path": "/Scene/Furniture/Cabinet_01"
+  }
+
+files:
+    assets/cabinet/cabinet.usda
+    assets/cabinet/cabinet_model.usda
+    assets/cabinet/look.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: geo.usda plus a part referenced from a sub-folder
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/workbench/workbench.usda", asset_name="Workbench", group="Furniture", translate_x=300.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Workbench at /Scene/Furniture/Workbench_02.
+
+  what changed:
+    + file assets/workbench/geo.usda
+    + file assets/workbench/parts/vise.usda
+    + file assets/workbench/workbench.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture/Workbench_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (300, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (300.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Workbench_02/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+          kind: component
+          world position: (300.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Workbench_02/asset/Top [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.5, 0.1, 0.6)
+          attr xformOp:translate: (0, 0.9, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+          material shown: (none)
+          world position: (300.0000, 0.0000, 90.0000)
+    ~ /Scene  bounds: (none) → (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+    not used by the scene: assets/workbench/parts/vise.usda
+
+  checks:
+    ⚠ left behind a file nothing in the scene uses: assets/workbench/parts/vise.usda
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Workbench",
+    "intake": {
+      "asset_folder": "workbench",
+      "files_copied": 3,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "workbench.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Workbench at /Scene/Furniture/Workbench_02.",
+    "position": {
+      "x": 300.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Workbench_02",
+    "rotation_y": 0.0
+  }
+
+files:
+    assets/cabinet/cabinet.usda
+    assets/cabinet/cabinet_model.usda
+    assets/cabinet/look.usda
+  + assets/workbench/geo.usda
+  + assets/workbench/parts/vise.usda
+  + assets/workbench/workbench.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/workbench/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "workbench"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "workbench"
+      {
+          def Cube "Top"
+          {
+              double size = 1
+              float3 xformOp:scale = (1.5, 0.1, 0.6)
+              double3 xformOp:translate = (0, 0.9, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/workbench/parts/vise.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Vise"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Vise"
+      {
+          def Cube "Jaw"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.2, 0.1, 0.2)
+              double3 xformOp:translate = (0.6, 1, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/workbench/workbench.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "workbench"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "workbench" (
+          assetInfo = {
+              asset identifier = @./workbench.usda@
+              string name = "workbench"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_workbench>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_workbench"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -27,4 +27,20 @@
+                   }
+               }
+      +
+      +        def Xform "Workbench_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (300, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/workbench/workbench.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -34,4 +34,33 @@
+               }
+           }
+  +
+  +        def Xform "Workbench_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (300, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/workbench/workbench.usda@
+  +                    string name = "workbench"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Top"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (1.5, 0.1, 0.6)
+  +                    double3 xformOp:translate = (0, 0.9, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: list_prim_children
+
+SUMMARY
+  call: list_prim_children(prim_path="/Scene/Furniture/Workbench_02")
+  current project: golden
+  said: ok: Found 1 geometry part(s) under /Scene/Furniture/Workbench_02. Use the prim_path of a specific part with bind_material.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+    not used by the scene: assets/workbench/parts/vise.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Found 1 geometry part(s) under /Scene/Furniture/Workbench_02. Use the prim_path of a specific part with bind_material.",
+    "part_count": 1,
+    "parts": [
+      {
+        "bounds": {
+          "max": {
+            "x": 375.0,
+            "y": 30.0,
+            "z": 95.0
+          },
+          "min": {
+            "x": 225.0,
+            "y": -30.0,
+            "z": 85.0
+          }
+        },
+        "current_material": null,
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Top",
+        "prim_path": "/Scene/Furniture/Workbench_02/asset/Top",
+        "type": "Cube"
+      }
+    ],
+    "prim_path": "/Scene/Furniture/Workbench_02"
+  }
+
+files:
+    assets/cabinet/cabinet.usda
+    assets/cabinet/cabinet_model.usda
+    assets/cabinet/look.usda
+    assets/workbench/geo.usda
+    assets/workbench/parts/vise.usda
+    assets/workbench/workbench.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: create_light
+intent: adding a light writes lgt.usda and rebuilds the cabinet's root arcs
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Glow", asset_prim_path="/Scene/Furniture/Cabinet_01")
+  current project: golden
+  said: ok: Created SphereLight in cabinet/lgt.usda. To update this light, use prim_path: /Scene/Furniture/Cabinet_01/asset/lgt/Glow
+
+  what changed:
+    ~ file assets/cabinet/cabinet.usda
+    + file assets/cabinet/lgt.usda
+    + prim /Scene/Furniture/Cabinet_01/asset/lgt [Xform]
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Cabinet_01/asset/lgt/Glow [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ /Scene  bounds: (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000) → (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000)
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+    not used by the scene: assets/workbench/parts/vise.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "cabinet",
+    "light_type": "SphereLight",
+    "message": "Created SphereLight in cabinet/lgt.usda. To update this light, use prim_path: /Scene/Furniture/Cabinet_01/asset/lgt/Glow",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Cabinet_01/asset/lgt/Glow"
+  }
+
+files:
+  ~ assets/cabinet/cabinet.usda
+    assets/cabinet/cabinet_model.usda
+  + assets/cabinet/lgt.usda
+    assets/cabinet/look.usda
+    assets/workbench/geo.usda
+    assets/workbench/parts/vise.usda
+    assets/workbench/workbench.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/cabinet/cabinet.usda:
+      --- assets/cabinet/cabinet.usda (before)
+      +++ assets/cabinet/cabinet.usda (after)
+      @@ -14,4 +14,5 @@
+           prepend inherits = </_class_cabinet>
+           kind = "component"
+      +    prepend references = @./lgt.usda@
+       )
+       {
+  + assets/cabinet/lgt.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "cabinet"
+      )
+
+      def "cabinet"
+      {
+          def Xform "lgt"
+          {
+              def SphereLight "Glow"
+              {
+                  double3 xformOp:translate = (0, 0, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate"]
+              }
+          }
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -32,4 +32,13 @@
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Xform "lgt"
+  +                {
+  +                    def SphereLight "Glow"
+  +                    {
+  +                        double3 xformOp:translate = (0, 0, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate"]
+  +                    }
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Cabinet_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Cabinet_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: bind_material
+intent: binding a material writes mtl.usda and rebuilds the workbench's root arcs
+
+SUMMARY
+  call: bind_material(prim_path="/Scene/Furniture/Workbench_02/asset/Top", material_file="<LIBRARY>/materials/oak.usda")
+  current project: golden
+  said: ok: Bound /workbench/mtl/oak to /Scene/Furniture/Workbench_02/asset/Top in workbench/mtl.usda
+
+  what changed:
+    + file assets/workbench/mtl.usda
+    ~ file assets/workbench/workbench.usda
+    + prim /Scene/Furniture/Workbench_02/asset/mtl [Scope]
+    + prim /Scene/Furniture/Workbench_02/asset/mtl/oak [Material] (+1 prims inside)
+          attr outputs:surface: (no value)
+          connect outputs:surface: /Scene/Furniture/Workbench_02/asset/mtl/oak/PreviewSurface.outputs:surface
+    ~ /Scene/Furniture/Workbench_02/asset/Top  applied APIs: (none) → MaterialBindingAPI
+    ~ /Scene/Furniture/Workbench_02/asset/Top  material shown: (none) → /Scene/Furniture/Workbench_02/asset/mtl/oak
+    ~ /Scene/Furniture/Workbench_02/asset/Top  rel material:binding: (none) → /Scene/Furniture/Workbench_02/asset/mtl/oak
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+    not used by the scene: assets/workbench/parts/vise.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "workbench",
+    "material": "/workbench/mtl/oak",
+    "message": "Bound /workbench/mtl/oak to /Scene/Furniture/Workbench_02/asset/Top in workbench/mtl.usda",
+    "prim_path": "/Scene/Furniture/Workbench_02/asset/Top"
+  }
+
+files:
+    assets/cabinet/cabinet.usda
+    assets/cabinet/cabinet_model.usda
+    assets/cabinet/lgt.usda
+    assets/cabinet/look.usda
+    assets/workbench/geo.usda
+  + assets/workbench/mtl.usda
+    assets/workbench/parts/vise.usda
+  ~ assets/workbench/workbench.usda
+    project.json
+    scene.usda
+
+file changes:
+  + assets/workbench/mtl.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "workbench"
+      )
+
+      over "workbench"
+      {
+          def Scope "mtl"
+          {
+              def Material "oak"
+              {
+                  token outputs:surface.connect = </workbench/mtl/oak/PreviewSurface.outputs:surface>
+
+                  def Shader "PreviewSurface"
+                  {
+                      uniform token info:id = "UsdPreviewSurface"
+                      color3f inputs:diffuseColor = (0.55, 0.35, 0.2)
+                      token outputs:surface
+                  }
+              }
+          }
+
+          over "Top" (
+              prepend apiSchemas = ["MaterialBindingAPI"]
+          )
+          {
+              rel material:binding = </workbench/mtl/oak>
+          }
+      }
+
+  ~ assets/workbench/workbench.usda:
+      --- assets/workbench/workbench.usda (before)
+      +++ assets/workbench/workbench.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./mtl.usda@
+       )
+       {
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -63,10 +63,28 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Top"
+  +                def Cube "Top" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+                   {
+  +                    rel material:binding = </Scene/Furniture/Workbench_02/asset/mtl/oak>
+                       double size = 1
+                       float3 xformOp:scale = (1.5, 0.1, 0.6)
+                       double3 xformOp:translate = (0, 0.9, 0)
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Scope "mtl"
+  +                {
+  +                    def Material "oak"
+  +                    {
+  +                        token outputs:surface.connect = </Scene/Furniture/Workbench_02/asset/mtl/oak/PreviewSurface.outputs:surface>
+  +
+  +                        def Shader "PreviewSurface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.55, 0.35, 0.2)
+  +                            token outputs:surface
+  +                        }
+  +                    }
+                   }
+               }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Cabinet_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Cabinet_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material /Scene/Furniture/Workbench_02/asset/mtl/oak
+  /Scene/Furniture/Workbench_02/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 07: remove_light
+intent: removing the only light deletes lgt.usda and rebuilds the root arcs again
+
+SUMMARY
+  call: remove_light(prim_path="/Scene/Furniture/Cabinet_01/asset/lgt/Glow")
+  current project: golden
+  said: ok: Removed asset light Glow from cabinet
+
+  what changed:
+    ~ file assets/cabinet/cabinet.usda
+    - file assets/cabinet/lgt.usda
+    - prim /Scene/Furniture/Cabinet_01/asset/lgt [Xform]
+    - prim /Scene/Furniture/Cabinet_01/asset/lgt/Glow [SphereLight]
+    ~ /Scene  bounds: (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000) → (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+    not used by the scene: assets/workbench/parts/vise.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "cabinet",
+    "message": "Removed asset light Glow from cabinet",
+    "prim_path": "/Scene/Furniture/Cabinet_01/asset/lgt/Glow",
+    "suspect_variant_sets": []
+  }
+
+files:
+  ~ assets/cabinet/cabinet.usda
+    assets/cabinet/cabinet_model.usda
+  - assets/cabinet/lgt.usda
+    assets/cabinet/look.usda
+    assets/workbench/geo.usda
+    assets/workbench/mtl.usda
+    assets/workbench/parts/vise.usda
+    assets/workbench/workbench.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/cabinet/cabinet.usda:
+      --- assets/cabinet/cabinet.usda (before)
+      +++ assets/cabinet/cabinet.usda (after)
+      @@ -14,5 +14,4 @@
+           prepend inherits = </_class_cabinet>
+           kind = "component"
+      -    prepend references = @./lgt.usda@
+       )
+       {
+  - assets/cabinet/lgt.usda (removed)
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -32,13 +32,4 @@
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  -
+  -                def Xform "lgt"
+  -                {
+  -                    def SphereLight "Glow"
+  -                    {
+  -                        double3 xformOp:translate = (0, 0, 0)
+  -                        uniform token[] xformOpOrder = ["xformOp:translate"]
+  -                    }
+  -                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material /Scene/Furniture/Workbench_02/asset/mtl/oak
+  /Scene/Furniture/Workbench_02/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 08: list_scene
+intent: what each package shows now
+
+SUMMARY
+  call: list_scene()
+  current project: golden
+  said: ok: Scene has 2 object(s).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: assets/cabinet/cabinet_model.usda
+    not used by the scene: assets/cabinet/look.usda
+    not used by the scene: assets/workbench/parts/vise.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Scene has 2 object(s).",
+    "object_count": 2,
+    "objects": [
+      {
+        "asset": "assets/cabinet/cabinet.usda",
+        "bounds": null,
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Furniture/Cabinet_01/asset",
+        "type": "Xform"
+      },
+      {
+        "asset": "assets/workbench/workbench.usda",
+        "bounds": {
+          "max": {
+            "x": 375.0,
+            "y": 30.0,
+            "z": 95.0
+          },
+          "min": {
+            "x": 225.0,
+            "y": -30.0,
+            "z": 85.0
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Furniture/Workbench_02/asset",
+        "type": "Xform"
+      }
+    ]
+  }
+
+files:
+    assets/cabinet/cabinet.usda
+    assets/cabinet/cabinet_model.usda
+    assets/cabinet/look.usda
+    assets/workbench/geo.usda
+    assets/workbench/mtl.usda
+    assets/workbench/parts/vise.usda
+    assets/workbench/workbench.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material /Scene/Furniture/Workbench_02/asset/mtl/oak
+  /Scene/Furniture/Workbench_02/asset/mtl  [Scope]
+
+validation:
+  valid, no issues

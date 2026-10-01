@@ -88,6 +88,10 @@ def build_library(root: Path) -> Path:
     - ``gem.usdz``: a packaged asset.
     - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
     - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
+    - ``cabinet/``: a package whose root payloads its own ``cabinet_model.usda`` and
+      references its own ``look.usda`` (a bound material); no ``geo.usda``.
+    - ``workbench/``: a package whose root payloads ``geo.usda`` and also references
+      a prim of ``parts/vise.usda``.
     """
     root.mkdir(parents=True, exist_ok=True)
 
@@ -232,5 +236,39 @@ def build_library(root: Path) -> Path:
     bare_kit.SetDefaultPrim(bare_kit_root)
     bare_kit_root.GetPayloads().AddPayload("./geo.usda")
     bare_kit.Save()
+
+    cabinet_dir = root / "cabinet"
+    cabinet_model = _stage(cabinet_dir / "cabinet_model.usda")
+    _root(cabinet_model, "cabinet")
+    _box(cabinet_model, "/cabinet/Body", (0.0, 0.5, 0.0), (0.8, 1.0, 0.4))
+    cabinet_model.Save()
+    look = _stage(cabinet_dir / "look.usda")
+    look.SetDefaultPrim(look.OverridePrim("/cabinet"))
+    UsdGeom.Scope.Define(look, "/cabinet/mtl")
+    walnut = _material(look, "/cabinet/mtl/walnut", (0.35, 0.2, 0.1))
+    UsdShade.MaterialBindingAPI.Apply(look.OverridePrim("/cabinet/Body")).Bind(walnut)
+    look.Save()
+    cabinet = _stage(cabinet_dir / "cabinet.usda")
+    cabinet_root = UsdGeom.Xform.Define(cabinet, "/cabinet").GetPrim()
+    cabinet.SetDefaultPrim(cabinet_root)
+    cabinet_root.GetReferences().AddReference("./look.usda")
+    cabinet_root.GetPayloads().AddPayload("./cabinet_model.usda")
+    cabinet.Save()
+
+    workbench_dir = root / "workbench"
+    workbench_geo = _stage(workbench_dir / "geo.usda")
+    _root(workbench_geo, "workbench")
+    _box(workbench_geo, "/workbench/Top", (0.0, 0.9, 0.0), (1.5, 0.1, 0.6))
+    workbench_geo.Save()
+    vise = _stage(workbench_dir / "parts" / "vise.usda")
+    _root(vise, "Vise")
+    _box(vise, "/Vise/Jaw", (0.6, 1.0, 0.0), (0.2, 0.1, 0.2))
+    vise.Save()
+    workbench = _stage(workbench_dir / "workbench.usda")
+    workbench_root = UsdGeom.Xform.Define(workbench, "/workbench").GetPrim()
+    workbench.SetDefaultPrim(workbench_root)
+    workbench_root.GetReferences().AddReference("./parts/vise.usda", "/Vise")
+    workbench_root.GetPayloads().AddPayload("./geo.usda")
+    workbench.Save()
 
     return root

@@ -272,6 +272,48 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "placement/packages_with_their_own_files",
+        "Library packages whose root points to files of their own: do they keep their geometry "
+        "and materials when imported, and when BowerBot later adds or removes a layer?",
+        (
+            _place(
+                "cabinet/cabinet.usda",
+                "Cabinet",
+                "Furniture",
+                0.0,
+                save="cabinet",
+                note="a root that payloads its own model file and references its own look file",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$cabinet"}),
+            _place(
+                "workbench/workbench.usda",
+                "Workbench",
+                "Furniture",
+                3.0,
+                save="workbench",
+                note="geo.usda plus a part referenced from a sub-folder",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$workbench"}),
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "Glow", "asset_prim_path": "$cabinet"},
+                save="glow",
+                note="adding a light writes lgt.usda and rebuilds the cabinet's root arcs",
+            ),
+            model.Step(
+                "bind_material",
+                {"prim_path": "$workbench/asset/Top", "material_file": "$lib/materials/oak.usda"},
+                note="binding a material writes mtl.usda and rebuilds the workbench's root arcs",
+            ),
+            model.Step(
+                "remove_light",
+                {"prim_path": "$glow"},
+                note="removing the only light deletes lgt.usda and rebuilds the root arcs again",
+            ),
+            model.Step("list_scene", note="what each package shows now"),
+        ),
+    ),
+    model.Scenario(
         "placement/layout",
         "place_layout: patterns, enumerated transforms, validation first.",
         (

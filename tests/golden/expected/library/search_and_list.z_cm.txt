@@ -297,11 +297,11 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp",
-        "path": "<LIBRARY>/lamp/lamp.usda"
+        "name": "cabinet",
+        "path": "<LIBRARY>/cabinet/cabinet.usda"
       }
     ],
-    "total_matches": 10,
+    "total_matches": 11,
     "truncated": true
   }
 
@@ -355,6 +355,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "cabinet",
+        "path": "<LIBRARY>/cabinet/cabinet.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -363,6 +369,12 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "workbench",
+        "path": "<LIBRARY>/workbench/workbench.usda"
       },
       {
         "category": "geo",
@@ -443,7 +455,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 16,
+    "total_matches": 18,
     "truncated": false
   }
 
@@ -497,6 +509,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "cabinet",
+        "path": "<LIBRARY>/cabinet/cabinet.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -505,9 +523,15 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "workbench",
+        "path": "<LIBRARY>/workbench/workbench.usda"
       }
     ],
-    "total_matches": 3,
+    "total_matches": 5,
     "truncated": false
   }
 

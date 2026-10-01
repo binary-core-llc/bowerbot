@@ -133,17 +133,17 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp",
-        "path": "<LIBRARY>/lamp/lamp.usda"
+        "name": "cabinet",
+        "path": "<LIBRARY>/cabinet/cabinet.usda"
       },
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
       }
     ],
-    "total_matches": 16,
+    "total_matches": 18,
     "truncated": true
   }
 

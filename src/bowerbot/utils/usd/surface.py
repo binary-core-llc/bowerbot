@@ -95,14 +95,11 @@ def build_vertical_index(
     if keep.size == 0:
         return _empty_index(triangles, up, axes)
 
-    tri_a = np.stack([triangles.v0[keep][:, axes[0]], triangles.v1[keep][:, axes[0]],
-                      triangles.v2[keep][:, axes[0]]], axis=1)
-    tri_b = np.stack([triangles.v0[keep][:, axes[1]], triangles.v1[keep][:, axes[1]],
-                      triangles.v2[keep][:, axes[1]]], axis=1)
-    amin = tri_a.min(axis=1) - pad
-    amax = tri_a.max(axis=1) + pad
-    bmin = tri_b.min(axis=1) - pad
-    bmax = tri_b.max(axis=1) + pad
+    lo, hi = triangle_plan_boxes(triangles, up)
+    amin = lo[keep, 0] - pad
+    amax = hi[keep, 0] + pad
+    bmin = lo[keep, 1] - pad
+    bmax = hi[keep, 1] + pad
 
     origin = np.array([amin.min(), bmin.min()])
     extent = max(amax.max() - origin[0], bmax.max() - origin[1], constants.SurfaceTuning.EPSILON)
@@ -275,13 +272,23 @@ def slope_mask(
     return triangles.normals[:, up] >= math.cos(math.radians(max_slope_degrees)) - 1e-9
 
 
+def triangle_plan_boxes(
+    triangles: schemas.SurfaceTriangles, up: int,
+) -> tuple[schemas.FloatArray, schemas.FloatArray]:
+    """Each triangle's plan-view ``(min, max)`` on the ground axes, both of shape (n, 2)."""
+    axes = list(usd.metrics.horizontal_axes(up))
+    corners = np.stack(
+        [triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]], axis=1,
+    )
+    return corners.min(axis=1), corners.max(axis=1)
+
+
 def plan_bounds(
     triangles: schemas.SurfaceTriangles, up: int,
 ) -> tuple[schemas.FloatArray, schemas.FloatArray]:
     """Plan-view ``(min, max)`` of the triangles on the ground axes."""
-    axes = list(usd.metrics.horizontal_axes(up))
-    pts = np.concatenate([triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]])
-    return pts.min(axis=0), pts.max(axis=0)
+    lo, hi = triangle_plan_boxes(triangles, up)
+    return lo.min(axis=0), hi.max(axis=0)
 
 # ── Helpers ──
 

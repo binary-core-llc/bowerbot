@@ -172,11 +172,7 @@ def eligible_triangles(
     mask = usd.surface.slope_mask(triangles, up, max_slope_degrees)
     bounds = scatter.region.plan_bounds(region, up)
     if bounds is not None and triangles.count:
-        axes = list(usd.metrics.horizontal_axes(up))
-        tri = np.stack(
-            [triangles.v0[:, axes], triangles.v1[:, axes], triangles.v2[:, axes]], axis=1,
-        )
-        lo, hi = tri.min(axis=1), tri.max(axis=1)
+        lo, hi = usd.surface.triangle_plan_boxes(triangles, up)
         overlap = np.all(hi >= bounds[0], axis=1) & np.all(lo <= bounds[1], axis=1)
         mask &= overlap
     return mask

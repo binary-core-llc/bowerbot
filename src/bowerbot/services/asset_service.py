@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bring an asset into the project and add it to the scene."""
-    asset_path = authoring.library.resolve_asset_file_path(
+    asset_path = authoring.library.resolve_source_file(
         params["asset_file_path"],
-        state.project_dir,
-        state.library_dir,
+        project_dir=state.project_dir,
+        library_dir=state.library_dir,
     )
     asset_name = params["asset_name"]
     group = params["group"]
@@ -102,7 +102,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     folder_sources: dict[str, Path] = {}
     for idx, entry in valid:
         try:
-            asset_path = authoring.library.resolve_layout_asset(
+            asset_path = authoring.library.resolve_source_file(
                 entry.asset,
                 project_dir=project_dir,
                 library_dir=state.library_dir,
@@ -251,10 +251,10 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
 def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Add an asset to another asset: a reference in the parent's ``contents.usda``."""
-    asset_path = authoring.library.resolve_asset_file_path(
+    asset_path = authoring.library.resolve_source_file(
         params["asset_file_path"],
-        state.project_dir,
-        state.library_dir,
+        project_dir=state.project_dir,
+        library_dir=state.library_dir,
     )
     asset_name = params["asset_name"]
     parent_prim_path = params["parent_prim_path"]

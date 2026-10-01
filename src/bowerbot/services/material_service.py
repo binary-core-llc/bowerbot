@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 from bowerbot import constants
@@ -69,12 +68,13 @@ def create_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
 def bind_material(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Copy a material from a file into the asset and bind it to a prim."""
     prim_path = params["prim_path"]
-    material_file = Path(params["material_file"])
+    material_file = authoring.library.resolve_source_file(
+        params["material_file"],
+        project_dir=state.project_dir,
+        library_dir=state.library_dir,
+        what="material file",
+    )
     material_prim_path = params.get("material_prim_path")
-
-    if not material_file.exists():
-        msg = f"Material file not found: {material_file}"
-        raise ValueError(msg)
 
     asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, prim_path,

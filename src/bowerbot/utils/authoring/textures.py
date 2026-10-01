@@ -9,60 +9,90 @@ Texture files are copied into the project's ``textures/`` or an asset folder's
 
 from __future__ import annotations
 
+import filecmp
 import shutil
 from pathlib import Path
 
 from pxr import Sdf
 
 from bowerbot import constants
+from bowerbot.utils import authoring
 
-# ── Copying texture files ──
+# ── Finding and copying texture files ──
 
 
-def copy_texture_to_project(source: Path, project_dir: Path) -> str:
-    """Copy *source* into the project's ``textures/`` dir; return the rel path.
+def resolve_texture(raw: str, *, project_dir: Path | None, library_dir: Path | None) -> Path:
+    """The texture file *raw* names.
 
-    Skips the copy if the destination already exists.
+    A path is read as ``authoring.library.resolve_source_file`` reads it. A bare
+    file name is also looked up in the project's ``textures/`` and across the
+    library; when several library files have that name the call is refused, so
+    the wrong one is never picked.
     """
-    tex_dir = project_dir / constants.ASWFLayerNames.TEXTURES
-    tex_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        return authoring.library.resolve_source_file(
+            raw, project_dir=project_dir, library_dir=library_dir, what="texture",
+        )
+    except ValueError:
+        if Path(raw).name != raw:
+            raise
+        if project_dir is not None:
+            staged = project_dir / constants.ASWFLayerNames.TEXTURES / raw
+            if staged.is_file():
+                return staged.resolve()
+        if library_dir is None or not library_dir.exists():
+            raise
+        matches = sorted(p for p in library_dir.rglob(raw) if p.is_file())
+        if len(matches) == 1:
+            return matches[0].resolve()
+        if not matches:
+            raise
+        names = ", ".join(str(m.relative_to(library_dir)) for m in matches)
+        msg = f"texture '{raw}' names {len(matches)} files in the library ({names}); give its path."
+        raise ValueError(msg) from None
 
-    dest = tex_dir / source.name
-    if not dest.exists():
-        shutil.copy2(source, dest)
 
-    return f"./{constants.ASWFLayerNames.TEXTURES}/{source.name}"
+def copy_into(source: Path, folder: Path) -> str:
+    """Copy *source* into *folder* and return the name of the copy.
+
+    A file already there with the same content is reused; one with the same
+    name and other content is left alone, and the copy gets a numbered name.
+    """
+    folder.mkdir(parents=True, exist_ok=True)
+    if source.resolve().parent == folder.resolve():
+        return source.name
+    counter = 1
+    dest = folder / source.name
+    while dest.exists():
+        if filecmp.cmp(source, dest, shallow=False):
+            return dest.name
+        counter += 1
+        dest = folder / f"{source.stem}_{counter}{source.suffix}"
+    shutil.copy2(source, dest)
+    return dest.name
 
 
 def stage_scene_texture(
-    project_dir: Path | None, texture: str | None,
+    texture: str | None, *, project_dir: Path | None, library_dir: Path | None,
 ) -> str | None:
-    """Copy a scene-level texture into ``<project>/textures/`` if it exists on disk."""
+    """Copy a scene-level texture into ``<project>/textures/``; return the path to author."""
     if texture is None:
         return None
-    source = Path(texture)
-    if not source.exists():
-        return texture
     if project_dir is None:
         msg = "No project set; cannot copy scene-level texture."
         raise RuntimeError(msg)
-    return copy_texture_to_project(source, project_dir)
+    return stage_asset_value(texture, project_dir, library_dir)
 
 
-def stage_asset_texture(asset_dir: Path, texture: str | None) -> str | None:
-    """Copy an HDRI into the asset's ``maps/`` dir; return the ref path."""
+def stage_asset_texture(
+    asset_dir: Path, texture: str | None, *, project_dir: Path | None, library_dir: Path | None,
+) -> str | None:
+    """Copy a texture into the asset's ``maps/`` dir; return the path to author."""
     if not texture:
         return texture
-
+    source = resolve_texture(texture, project_dir=project_dir, library_dir=library_dir)
     maps_dir = asset_dir / constants.ASWFLayerNames.MAPS
-    maps_dir.mkdir(exist_ok=True)
-    tex_path = Path(texture)
-    if tex_path.exists():
-        dest = maps_dir / tex_path.name
-        if not dest.exists():
-            shutil.copy2(tex_path, dest)
-        return f"./{constants.ASWFLayerNames.MAPS}/{tex_path.name}"
-    return texture
+    return f"./{constants.ASWFLayerNames.MAPS}/{copy_into(source, maps_dir)}"
 
 
 # ── File-path attribute values ──
@@ -73,32 +103,12 @@ def stage_asset_value(
     project_dir: Path,
     library_dir: Path | None = None,
 ) -> str:
-    """Resolve and stage an Asset-attr value into the project; raise if unresolvable."""
-    if not value:
+    """Find the file an Asset-attr value names and stage it in the project's ``textures/``."""
+    if not value or not Path(value).name:
         return value
-    src = Path(value)
-    filename = src.name
-    if not filename:
-        return value
-
-    project_rel = f"./{constants.ASWFLayerNames.TEXTURES}/{filename}"
-    if (project_dir / constants.ASWFLayerNames.TEXTURES / filename).exists():
-        return project_rel
-
-    candidates: list[Path] = []
-    if src.is_absolute() and src.exists():
-        candidates.append(src)
-    if library_dir is not None and library_dir.exists():
-        candidates.extend(sorted(library_dir.rglob(filename)))
-    for candidate in candidates:
-        if candidate.is_file():
-            return copy_texture_to_project(candidate, project_dir)
-
-    raise ValueError(
-        f"Cannot stage texture {value!r}: file not found in project's textures/, "
-        "in the library, or as an absolute path. Provide an absolute path to the "
-        "source file, or copy it into the library first.",
-    )
+    source = resolve_texture(value, project_dir=project_dir, library_dir=library_dir)
+    textures_dir = project_dir / constants.ASWFLayerNames.TEXTURES
+    return f"./{constants.ASWFLayerNames.TEXTURES}/{copy_into(source, textures_dir)}"
 
 
 def stage_asset_typed_overrides(

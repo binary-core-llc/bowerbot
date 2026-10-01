@@ -75,6 +75,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             rotate=rotate,
             texture=authoring.textures.stage_asset_texture(
                 asset_dir, params.get("texture"),
+                project_dir=state.project_dir, library_dir=state.library_dir,
             ),
             light_link_includes=light_link_includes,
             attributes=attributes,
@@ -117,8 +118,8 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         translate=(tx, ty, tz),
         rotate=rotate,
         texture=authoring.textures.stage_scene_texture(
-            state.project_dir,
             params.get("texture"),
+            project_dir=state.project_dir, library_dir=state.library_dir,
         ),
         light_link_includes=light_link_includes,
         attributes=attributes,
@@ -172,7 +173,10 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             light_name,
             translate=translate,
             rotate=rotate,
-            texture=authoring.textures.stage_asset_texture(asset_dir, texture),
+            texture=authoring.textures.stage_asset_texture(
+                asset_dir, texture,
+                project_dir=state.project_dir, library_dir=state.library_dir,
+            ),
         )
         state.stage = authoring.stage.open_stage(state.stage_path)
     else:
@@ -182,7 +186,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             translate=translate,
             rotate=rotate,
             texture=authoring.textures.stage_scene_texture(
-                state.project_dir, texture,
+                texture, project_dir=state.project_dir, library_dir=state.library_dir,
             ),
         )
         authoring.stage.save_stage(state.stage)

@@ -40,16 +40,18 @@ def prepare_asset(
     fix_root_prim: bool = False,
     fix_root_transforms: bool = False,
 ) -> schemas.IntakeReport:
-    """Route an input file to USDZ / library-package / loose-file intake.
+    """Bring a library asset into the project: a .usdz, an asset folder or a geometry file.
 
-    An asset that declares no units or up axis takes the project's; a USDZ is
-    left as it is.
+    An asset in any other shape is refused before anything is copied (see
+    ``authoring.accepted_shapes``). An asset that declares no units or up axis
+    takes the project's; a .usdz is left as it is.
     """
+    authoring.accepted_shapes.require(asset_path, library_dir)
     if asset_path.suffix.lower() == ".usdz":
         return intake_usdz(asset_path, assets_dir)
 
     if library_dir is not None:
-        package_dir = authoring.library.find_package_for(asset_path, library_dir)
+        package_dir = authoring.accepted_shapes.asset_folder_for(asset_path, library_dir)
         if package_dir is not None:
             report = intake_folder(
                 package_dir, assets_dir,
@@ -106,7 +108,7 @@ def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
     if asset_path.suffix.lower() == ".usdz":
         return asset_path.name
     if library_dir is not None:
-        package_dir = authoring.library.find_package_for(asset_path, library_dir)
+        package_dir = authoring.accepted_shapes.asset_folder_for(asset_path, library_dir)
         if package_dir is not None:
             return package_dir.name
     return asset_path.stem

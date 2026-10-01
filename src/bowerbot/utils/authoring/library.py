@@ -98,44 +98,22 @@ def find_textures(
 
 
 def truncate_with_total(
-    matches: list[dict[str, str]], limit: int,
+    matches: list[dict[str, str]], limit: int, library_dir: Path | None,
 ) -> dict[str, object]:
-    """Cap *matches* at *limit*; return ``{results, total_matches, truncated}``."""
+    """Cap *matches* at *limit*; return ``{results, total_matches, truncated}``.
+
+    The results that BowerBot would refuse to place say why (``cannot_be_used``).
+    """
     limit = max(1, int(limit))
     total = len(matches)
+    shown = matches[:limit]
+    if library_dir is not None:
+        authoring.accepted_shapes.mark_refused(shown, library_dir)
     return {
-        "results": matches[:limit],
+        "results": shown,
         "total_matches": total,
         "truncated": total > limit,
     }
-
-
-# ── Asset folders in the library ──
-
-
-def find_package_for(file_path: Path, library_dir: Path) -> Path | None:
-    """Return the package folder containing *file_path*, or ``None`` if loose.
-
-    Treats only the immediate child of *library_dir* as a package
-    candidate, so files at the library root never trigger a folder
-    intake.
-    """
-    file_path = file_path.resolve()
-    library = library_dir.resolve()
-
-    try:
-        relative = file_path.relative_to(library)
-    except ValueError:
-        return None
-
-    if len(relative.parts) < 2:
-        return None
-
-    candidate = library / relative.parts[0]
-    detection = authoring.asset_folder.detect_folder_root(candidate)
-    if detection.outcome is schemas.DetectionOutcome.UNAMBIGUOUS:
-        return candidate
-    return None
 
 
 # ── Resolving an asset path ──
@@ -203,9 +181,9 @@ def _find_top_level_packages(library_dir: Path) -> dict[Path, Path]:
     for entry in sorted(library_dir.iterdir()):
         if not entry.is_dir() or entry.name in constants.LibraryRules.NON_ASSET_DIRS:
             continue
-        detection = authoring.asset_folder.detect_folder_root(entry)
-        if detection.outcome is schemas.DetectionOutcome.UNAMBIGUOUS and detection.root:
-            packages[entry] = Path(detection.root)
+        root_file = authoring.accepted_shapes.folder_root_file(entry)
+        if root_file is not None:
+            packages[entry] = root_file
     return packages
 
 

@@ -39,6 +39,13 @@ class AssetFolderRules:
 
     # File extensions of a USD layer inside an asset folder.
     USD_LAYER_EXTENSIONS: frozenset[str] = frozenset({".usd", ".usda", ".usdc"})
+    # Side layers a library asset folder may ship, besides its root and geometry files.
+    LIBRARY_SIDE_LAYERS: frozenset[str] = frozenset({
+        ASWFLayerNames.MTL,
+        ASWFLayerNames.LGT,
+        ASWFLayerNames.PHY,
+        ASWFLayerNames.VARIANTS,
+    })
     # Order the asset root references its side layers in (strongest first).
     CANONICAL_REFERENCE_ORDER: tuple[str, ...] = (
         ASWFLayerNames.VARIANTS,

@@ -10,6 +10,7 @@ group (plus ``constants`` and ``schemas``), never a feature. Callers write
 ``authoring.naming.safe_project_name(...)``.
 """
 
+from bowerbot.utils.authoring import accepted_shapes
 from bowerbot.utils.authoring import asset_folder
 from bowerbot.utils.authoring import asset_variants
 from bowerbot.utils.authoring import intake
@@ -21,6 +22,7 @@ from bowerbot.utils.authoring import stage
 from bowerbot.utils.authoring import textures
 
 __all__ = [
+    "accepted_shapes",
     "asset_folder",
     "asset_variants",
     "intake",

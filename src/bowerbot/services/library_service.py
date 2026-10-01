@@ -18,7 +18,7 @@ def list_assets(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         state.library_dir, category=params.get("category", "all"),
     )
     return authoring.library.truncate_with_total(
-        matches, params.get("limit", constants.LibraryDefaults.SEARCH_LIMIT),
+        matches, params.get("limit", constants.LibraryDefaults.SEARCH_LIMIT), state.library_dir,
     )
 
 
@@ -28,5 +28,5 @@ def search_assets(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         state.library_dir, query=params.get("query", ""), category="all",
     )
     return authoring.library.truncate_with_total(
-        matches, params.get("limit", constants.LibraryDefaults.SEARCH_LIMIT),
+        matches, params.get("limit", constants.LibraryDefaults.SEARCH_LIMIT), state.library_dir,
     )

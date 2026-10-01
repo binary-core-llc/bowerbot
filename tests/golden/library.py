@@ -96,16 +96,22 @@ def build_library(root: Path) -> Path:
     - ``gem.usdz``: a packaged asset.
     - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
     - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
-    - ``cabinet/``: a package whose root payloads its own ``cabinet_model.usda`` and
+
+    Shapes BowerBot refuses (see ``authoring.accepted_shapes``):
+
+    - ``cabinet/``: a folder whose root payloads its own ``cabinet_model.usda`` and
       references its own ``look.usda`` (a bound material); no ``geo.usda``.
-    - ``workbench/``: a package whose root payloads ``geo.usda`` and also references
-      a prim of ``parts/vise.usda``.
-    - ``plank.usda``: a loose file whose material reads ``./textures/wood_diffuse.png``.
-    - ``bin.usda``: a loose file whose root references the loose ``bin_model.usda``.
-    - ``stand/``: a package whose material reads ``../textures/wood_diffuse.png``, a
-      texture outside its own folder.
-    - ``kit/``: a package whose root prim (``/Cupboard``) is not named like its folder;
-      the root payloads its own ``kit_model.usda``.
+    - ``workbench/``: a folder whose root payloads ``geo.usda`` and also references
+      a prim of ``parts/vise.usda``, a USD file in a sub-folder.
+    - ``plank.usda``: a file with a material that reads ``./textures/wood_diffuse.png``.
+    - ``bin.usda``: a file whose root references ``bin_model.usda``.
+    - ``stand/``: a folder whose ``geo.usda`` holds a material that reads
+      ``../textures/wood_diffuse.png``, a texture outside the folder.
+
+    And two more accepted ones:
+
+    - ``kit/``: an asset folder (root + ``geo.usda``) whose root prim (``/Cupboard``) is
+      not named like the folder.
     - ``shelf/``: an ASWF folder that ships ``mtl.usda`` (two materials, one bound) and
       ``lgt.usda`` (two lights), each written with an ``over`` root prim.
     """
@@ -331,15 +337,15 @@ def build_library(root: Path) -> Path:
     stand.Save()
 
     kit_dir = root / "kit"
-    kit_model = _stage(kit_dir / "kit_model.usda")
-    _root(kit_model, "Cupboard")
-    _box(kit_model, "/Cupboard/Body", (0.0, 0.5, 0.0), (0.8, 1.0, 0.4))
-    _box(kit_model, "/Cupboard/Door", (0.0, 0.5, 0.225), (0.7, 0.9, 0.05))
-    kit_model.Save()
+    kit_geo = _stage(kit_dir / "geo.usda")
+    _root(kit_geo, "Cupboard")
+    _box(kit_geo, "/Cupboard/Body", (0.0, 0.5, 0.0), (0.8, 1.0, 0.4))
+    _box(kit_geo, "/Cupboard/Door", (0.0, 0.5, 0.225), (0.7, 0.9, 0.05))
+    kit_geo.Save()
     kit = _stage(kit_dir / "kit.usda")
     kit_root = UsdGeom.Xform.Define(kit, "/Cupboard").GetPrim()
     kit.SetDefaultPrim(kit_root)
-    kit_root.GetPayloads().AddPayload("./kit_model.usda")
+    kit_root.GetPayloads().AddPayload("./geo.usda")
     kit.Save()
 
     shelf_dir = root / "shelf"

@@ -116,10 +116,16 @@ TOOLS: list[skills.Tool] = [
             "Place a 3D asset into the current scene. The asset is added as a "
             "USD reference at the specified prim path with the given transform. "
             "Use the standard hierarchy: Architecture, Furniture, Products, "
-            "Lighting, Props. Returns the prim_path, position, and an intake "
-            "summary (asset_folder, whether the root was renamed to the ASWF "
-            "canonical name, files_copied, localized dependencies, compliance "
-            "warnings)."
+            "Lighting, Props. The asset must be a geometry file (one root "
+            "prim, nothing but geometry), an asset folder (<name>/<name>.usda, "
+            "geo.usda and its side layers, textures inside the folder) or a "
+            ".usdz; any other shape is refused with the rule it breaks and "
+            "nothing is copied. A .usdz is placed as it is: its units and up "
+            "axis are read and the placement is fitted to the project; if it "
+            "declares none it is taken to match the project. Returns the "
+            "prim_path, position, and an intake summary (asset_folder, whether "
+            "the root was renamed to the ASWF canonical name, files_copied, "
+            "localized dependencies, compliance warnings)."
         ),
         parameters={
             "type": "object",

@@ -301,6 +301,7 @@ full answer:
         "path": "<LIBRARY>/bare_kit/bare_kit.usda"
       },
       {
+        "cannot_be_used": "it has no geo.usda; cabinet.usda points to ./cabinet_model.usda, ./look.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant); look.usda holds materials (/cabinet/mtl/walnut); look.usda binds materials (/cabinet/Body)",
         "category": "package",
         "format": ".usda",
         "name": "cabinet",
@@ -359,6 +360,7 @@ full answer:
         "path": "<LIBRARY>/bare_kit/bare_kit.usda"
       },
       {
+        "cannot_be_used": "it has no geo.usda; cabinet.usda points to ./cabinet_model.usda, ./look.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant); look.usda holds materials (/cabinet/mtl/walnut); look.usda binds materials (/cabinet/Body)",
         "category": "package",
         "format": ".usda",
         "name": "cabinet",
@@ -389,12 +391,14 @@ full answer:
         "path": "<LIBRARY>/shelf/shelf.usda"
       },
       {
+        "cannot_be_used": "geo.usda holds materials (/stand/mtl/wood); geo.usda binds materials (/stand/Top); geo.usda has file paths such as textures (../textures/wood_diffuse.png); geo.usda points outside the folder (../textures/wood_diffuse.png)",
         "category": "package",
         "format": ".usda",
         "name": "stand",
         "path": "<LIBRARY>/stand/stand.usda"
       },
       {
+        "cannot_be_used": "it has USD files in sub-folders (parts/vise.usda); workbench.usda points to ./parts/vise.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant)",
         "category": "package",
         "format": ".usda",
         "name": "workbench",
@@ -413,6 +417,7 @@ full answer:
         "path": "<LIBRARY>/bare.usda"
       },
       {
+        "cannot_be_used": "it points to other files (./bin_model.usda)",
         "category": "geo",
         "format": ".usda",
         "name": "bin",
@@ -555,6 +560,7 @@ full answer:
         "path": "<LIBRARY>/bare_kit/bare_kit.usda"
       },
       {
+        "cannot_be_used": "it has no geo.usda; cabinet.usda points to ./cabinet_model.usda, ./look.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant); look.usda holds materials (/cabinet/mtl/walnut); look.usda binds materials (/cabinet/Body)",
         "category": "package",
         "format": ".usda",
         "name": "cabinet",
@@ -585,12 +591,14 @@ full answer:
         "path": "<LIBRARY>/shelf/shelf.usda"
       },
       {
+        "cannot_be_used": "geo.usda holds materials (/stand/mtl/wood); geo.usda binds materials (/stand/Top); geo.usda has file paths such as textures (../textures/wood_diffuse.png); geo.usda points outside the folder (../textures/wood_diffuse.png)",
         "category": "package",
         "format": ".usda",
         "name": "stand",
         "path": "<LIBRARY>/stand/stand.usda"
       },
       {
+        "cannot_be_used": "it has USD files in sub-folders (parts/vise.usda); workbench.usda points to ./parts/vise.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant)",
         "category": "package",
         "format": ".usda",
         "name": "workbench",
@@ -719,6 +727,7 @@ full answer:
         "path": "<LIBRARY>/bare.usda"
       },
       {
+        "cannot_be_used": "it points to other files (./bin_model.usda)",
         "category": "geo",
         "format": ".usda",
         "name": "bin",

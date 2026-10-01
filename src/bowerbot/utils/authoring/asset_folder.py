@@ -37,9 +37,19 @@ def find_root_file(asset_dir: Path) -> Path | None:
 
 
 def resolve_default_prim_name(asset_dir: Path) -> str:
-    """Return the asset's ``defaultPrim`` name, falling back to folder name."""
-    name = _get_default_prim_name(asset_dir)
-    return name if name else asset_dir.name
+    """The name of the asset's root prim: the ``defaultPrim`` of its root file.
+
+    While the folder is being built and has no root file yet, ``geo.usda``'s
+    ``defaultPrim`` stands in; the folder name when neither file says.
+    """
+    for layer_path in (find_root_file(asset_dir), asset_dir / constants.ASWFLayerNames.GEO):
+        if layer_path is None or not layer_path.exists():
+            continue
+        layer = Sdf.Layer.FindOrOpen(str(layer_path))
+        if layer and layer.defaultPrim:
+            name: str = layer.defaultPrim
+            return name
+    return asset_dir.name
 
 
 def detect_folder_root(folder: Path) -> schemas.FolderDetection:
@@ -561,16 +571,6 @@ def find_asset_references(
 
 
 # ── Helpers ──
-
-
-def _get_default_prim_name(asset_dir: Path) -> str | None:
-    """Return the ``defaultPrim`` recorded in ``geo.usda``, if any."""
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if geo_path.exists():
-        layer = Sdf.Layer.FindOrOpen(str(geo_path))
-        if layer and layer.defaultPrim:
-            return layer.defaultPrim
-    return None
 
 
 def _sibling_file(asset_path: str) -> str | None:

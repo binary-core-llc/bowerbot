@@ -524,8 +524,7 @@ def world_to_frame_matrix(
     if not prim or not prim.IsValid():
         return None
 
-    xform_cache = UsdGeom.XformCache()
-    return xform_cache.GetLocalToWorldTransform(prim).GetInverse()
+    return usd.transforms.world_matrix(prim).GetInverse()
 
 
 def resolve_asset_position(

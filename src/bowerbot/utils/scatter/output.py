@@ -151,14 +151,13 @@ def to_local(
     parent = stage.GetPrimAtPath(parent_path)
     if not parent.IsValid():
         return instances
-    world = UsdGeom.Xformable(parent).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+    world = usd.transforms.world_matrix(parent)
     if world == Gf.Matrix4d(1.0):
         return instances
     inverse = world.GetInverse()
     matrix = usd.transforms.gf_matrix_to_numpy(inverse)
-    positions = instances.positions @ matrix[:3, :3] + matrix[3, :3]
-    rot = inverse.RemoveScaleShear().ExtractRotationQuat()
-    parent_q = np.array([[rot.GetReal(), *rot.GetImaginary()]])
+    positions = usd.transforms.transform_points(instances.positions, matrix)
+    parent_q = usd.transforms.matrix_rotation_quat(inverse)[None, :]
     orientations = usd.transforms.quat_mul(np.repeat(parent_q, instances.count, axis=0),
                             instances.orientations)
     return schemas.ScatterInstanceSet(

@@ -80,7 +80,7 @@ def drop_scatter(
     raw_s = instancer.GetScalesAttr().Get()
     scales = np.asarray(raw_s, dtype=np.float64) if raw_s else np.ones((n, 3))
 
-    world_gf = UsdGeom.XformCache(time).GetLocalToWorldTransform(instancer.GetPrim())
+    world_gf = usd.transforms.world_matrix(instancer.GetPrim())
     world = usd.transforms.gf_matrix_to_numpy(world_gf)
     to_local = np.linalg.inv(world)
     targets = instancer.GetPrototypesRel().GetTargets()
@@ -88,19 +88,18 @@ def drop_scatter(
     proto_max = np.zeros((len(targets), 3))
     for i, target in enumerate(targets):
         points = _prototype_points(stage, str(target), up)
-        local = points @ to_local[:3, :3] + to_local[3, :3]
+        local = usd.transforms.transform_points(points, to_local)
         proto_min[i], proto_max[i] = scatter.sources.base_footprint(local, up)
     base_min, base_max = proto_min[proto_idx], proto_max[proto_idx]
 
     retilted = 0
     if align is schemas.ScatterDropAlign.SURFACE:
-        rotation = world_gf.RemoveScaleShear().ExtractRotationQuat()
-        to_world_q = np.tile([rotation.GetReal(), *rotation.GetImaginary()], (n, 1))
+        to_world_q = np.tile(usd.transforms.matrix_rotation_quat(world_gf), (n, 1))
         world_scale = float(np.cbrt(abs(np.linalg.det(world[:3, :3]))))
         up_vec = usd.metrics.up_vector(up)
         base = (base_min + base_max) / 2.0
         centers_local = positions + usd.transforms.quat_rotate(orientations, base * scales)
-        centers = centers_local @ world[:3, :3] + world[3, :3]
+        centers = usd.transforms.transform_points(centers_local, world)
         headings = usd.transforms.quat_heading(
             usd.transforms.quat_mul(to_world_q, orientations), up,
         )
@@ -125,7 +124,7 @@ def drop_scatter(
     samples = scatter.instances.base_samples(
         positions, orientations, scales, base_min, base_max, up,
     )
-    world_samples = samples.reshape(-1, 3) @ world[:3, :3] + world[3, :3]
+    world_samples = usd.transforms.transform_points(samples.reshape(-1, 3), world)
     shift, supported = scatter.instances.settle_shift(
         index, world_samples.reshape(samples.shape), up,
     )
@@ -197,9 +196,10 @@ def drop_placement(
     if translate_op is None:
         msg = f"{prim_path} has no translate op; only BowerBot placements can be dropped."
         raise ValueError(msg)
-    parent_world = UsdGeom.Xformable(prim.GetParent()).ComputeLocalToWorldTransform(
-        Usd.TimeCode.Default(),
-    ) if prim.GetParent().IsA(UsdGeom.Xformable) else Gf.Matrix4d(1.0)
+    parent_world = (
+        usd.transforms.world_matrix(prim.GetParent())
+        if prim.GetParent().IsA(UsdGeom.Xformable) else Gf.Matrix4d(1.0)
+    )
     to_parent = parent_world.GetInverse()
     old_local = np.array(translate_op.Get() or Gf.Vec3d(0.0, 0.0, 0.0), dtype=np.float64)
     up_vec = usd.metrics.up_vector(up)
@@ -226,8 +226,7 @@ def drop_placement(
         rotate_value = Gf.Vec3f(rx, ry, rz)
 
         pivot = np.asarray(
-            UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
-            .ExtractTranslation(), dtype=np.float64,
+            usd.transforms.world_matrix(prim).ExtractTranslation(), dtype=np.float64,
         )
         base = (bmin + bmax) / 2.0
         base[up] = bmin[up]

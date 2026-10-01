@@ -73,7 +73,9 @@ def collect_triangles(
             if np.linalg.det(matrix[:3, :3]) < 0:
                 b, c = c, b
             parts.append((
-                _to_world(a, matrix), _to_world(b, matrix), _to_world(c, matrix),
+                usd.transforms.transform_points(a, matrix),
+                usd.transforms.transform_points(b, matrix),
+                usd.transforms.transform_points(c, matrix),
                 _is_double_sided(prim),
             ))
 
@@ -457,9 +459,6 @@ def _instancer_footprints(
     c3 = center + edge_a - edge_b
     return np.concatenate([c0, c0]), np.concatenate([c1, c2]), np.concatenate([c2, c3])
 
-
-def _to_world(points: schemas.FloatArray, matrix: schemas.FloatArray) -> schemas.FloatArray:
-    return points @ matrix[:3, :3] + matrix[3, :3]
 
 
 def _build_triangles(

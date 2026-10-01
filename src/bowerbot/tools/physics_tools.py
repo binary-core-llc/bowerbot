@@ -432,8 +432,8 @@ TOOLS: list[skills.Tool] = [
             "to a PhysicsScene; without one, the simulator picks an "
             "engine default. Call once per scene before authoring "
             "physics, unless you only need static colliders (no rigid "
-            "bodies). Gravity magnitude defaults to 9.81 / "
-            "metersPerUnit (Earth gravity in stage units); direction "
+            "bodies). Gravity magnitude defaults to 9.81 / the "
+            "project's meters_per_unit (Earth gravity in project units); direction "
             "defaults to (0, -1, 0) (negative Y). Returns prim_path and "
             "the resolved gravity_magnitude and gravity_direction actually "
             "authored (the defaults when you omit them, never null)."
@@ -453,9 +453,9 @@ TOOLS: list[skills.Tool] = [
                 "gravity_magnitude": {
                     "type": "number",
                     "description": (
-                        "Gravity strength in stage units per second "
-                        "squared. Leave unset to derive 9.81 / "
-                        "metersPerUnit from the stage."
+                        "Gravity strength in project units per second "
+                        "squared. Leave unset to derive 9.81 / the "
+                        "project's meters_per_unit."
                     ),
                 },
                 "gravity_direction": {

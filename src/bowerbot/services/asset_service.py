@@ -67,7 +67,10 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         rotate=(0.0, ry, 0.0),
     )
 
-    authoring.placement.add_reference(state.stage, scene_object)
+    authoring.placement.add_reference(
+        state.stage, scene_object,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
     authoring.stage.save_stage(state.stage)
     state.touch_project()
 
@@ -218,7 +221,10 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                     rotate=transform.rotate,
                     scale=transform.scale,
                 ))
-        authoring.placement.add_references(state.stage, objects)
+        authoring.placement.add_references(
+            state.stage, objects,
+            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+        )
         authoring.stage.save_stage(state.stage)
     except Exception:
         state.object_count = object_count_snapshot

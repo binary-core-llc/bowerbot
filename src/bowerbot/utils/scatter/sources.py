@@ -84,12 +84,15 @@ def stage_prototypes(
         summary = f"asset intake failed ({len(problems)} asset(s)):"
         raise ValueError("\n".join([summary, *problems]))
 
-    up = usd.metrics.axis_index(UsdGeom.GetStageUpAxis(stage))
+    up = usd.metrics.axis_index(project_up_axis)
     prototypes: list[schemas.ScatterPrototype] = []
     used: set[str] = set()
     for entry, path in sources:
         report = reports[path]
-        unit_scale, correction = usd.metrics.asset_conform(stage, report.scene_ref_path)
+        unit_scale, correction = usd.metrics.asset_conform(
+            stage, report.scene_ref_path,
+            project_mpu=project_mpu, project_up_axis=project_up_axis,
+        )
         bmin, bmax, base_min, base_max, points = _conformed_extents(
             project_dir / report.scene_ref_path, unit_scale, correction, up,
         )

@@ -36,26 +36,26 @@ def file_metrics(
 # ── Conforming an asset to the scene ──
 
 
-def asset_conform(stage: Usd.Stage, asset_path: str) -> tuple[float, float | None]:
-    """Return (unit scale, up-axis X-rotation or None) conforming an asset to the stage.
+def asset_conform(
+    stage: Usd.Stage, asset_path: str, *, project_mpu: float, project_up_axis: str,
+) -> tuple[float, float | None]:
+    """Return (unit scale, up-axis X-rotation or None) conforming an asset to the project.
 
-    What the asset leaves undeclared is taken to be the scene's, so it needs no conversion.
+    What the asset leaves undeclared is taken to be the project's, so it needs no conversion.
     """
     if not os.path.isabs(asset_path):
         stage_dir = os.path.dirname(stage.GetRootLayer().realPath)
         asset_path = os.path.join(stage_dir, asset_path)
 
-    scene_mpu = UsdGeom.GetStageMetersPerUnit(stage)
-    scene_up = "Y" if UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.y else "Z"
     asset_mpu, asset_up = file_metrics(
-        asset_path, default_mpu=scene_mpu, default_up_axis=scene_up,
+        asset_path, default_mpu=project_mpu, default_up_axis=project_up_axis,
     )
-    unit_scale = 1.0 if scene_mpu == 0 else asset_mpu / scene_mpu
+    unit_scale = 1.0 if project_mpu == 0 else asset_mpu / project_mpu
 
     correction = None
-    if asset_up == "Y" and scene_up == "Z":
+    if asset_up == "Y" and project_up_axis == "Z":
         correction = 90.0
-    elif asset_up == "Z" and scene_up == "Y":
+    elif asset_up == "Z" and project_up_axis == "Y":
         correction = -90.0
     return unit_scale, correction
 

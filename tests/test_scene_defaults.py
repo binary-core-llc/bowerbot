@@ -118,15 +118,16 @@ def test_up_axis_correction_signs():
         d = Path(tmp)
         y_asset = _make_asset(d, "y_asset", "Y")
         z_asset = _make_asset(d, "z_asset", "Z")
-        z_scene = Usd.Stage.CreateNew(str(d / "z_scene.usda"))
-        UsdGeom.SetStageUpAxis(z_scene, UsdGeom.Tokens.z)
-        z_scene.Save()
-        y_scene = Usd.Stage.CreateNew(str(d / "y_scene.usda"))
-        UsdGeom.SetStageUpAxis(y_scene, UsdGeom.Tokens.y)
-        y_scene.Save()
-        assert usd.metrics.asset_conform(z_scene, str(y_asset))[1] == 90.0
-        assert usd.metrics.asset_conform(y_scene, str(z_asset))[1] == -90.0
-        assert usd.metrics.asset_conform(y_scene, str(y_asset))[1] is None
+        scene = Usd.Stage.CreateNew(str(d / "scene.usda"))
+
+        def correction(asset: Path, project_up_axis: str) -> float | None:
+            return usd.metrics.asset_conform(
+                scene, str(asset), project_mpu=1.0, project_up_axis=project_up_axis,
+            )[1]
+
+        assert correction(y_asset, "Z") == 90.0
+        assert correction(z_asset, "Y") == -90.0
+        assert correction(y_asset, "Y") is None
 
 
 def test_y_asset_stands_up_in_z_scene():

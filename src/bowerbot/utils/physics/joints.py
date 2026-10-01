@@ -68,6 +68,8 @@ def create_in_scene(
     body0: str | None,
     body1: str | None,
     attributes: dict[str, Any] | None = None,
+    *,
+    project_mpu: float,
 ) -> dict[str, Any]:
     """Create a typed joint at ``/Scene/Physics/<name>``; auto-ensures a ``UsdPhysics.Scene``."""
     usd.naming.validate_joint_name(name)
@@ -75,7 +77,7 @@ def create_in_scene(
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
 
-    physics.scenes.ensure(stage)
+    physics.scenes.ensure(stage, project_mpu=project_mpu)
     prim_path = f"{constants.SceneNamespace.PHYSICS}/{name}"
     joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 

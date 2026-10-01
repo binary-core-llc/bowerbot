@@ -28,12 +28,26 @@ logger = logging.getLogger(__name__)
 # ── Placing assets in the scene ──
 
 
-def add_reference(stage: Usd.Stage, scene_object: schemas.SceneObject) -> None:
-    """Reference an asset under a wrapper Xform, conformed to the scene's units and up-axis."""
-    add_references(stage, [scene_object])
+def add_reference(
+    stage: Usd.Stage,
+    scene_object: schemas.SceneObject,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
+) -> None:
+    """Reference an asset under a wrapper Xform, conformed to the project's units and up-axis."""
+    add_references(
+        stage, [scene_object], project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
 
 
-def add_references(stage: Usd.Stage, scene_objects: list[schemas.SceneObject]) -> None:
+def add_references(
+    stage: Usd.Stage,
+    scene_objects: list[schemas.SceneObject],
+    *,
+    project_mpu: float,
+    project_up_axis: str,
+) -> None:
     """Author a batch of asset references, computing conform once per unique asset."""
     conform: dict[str, tuple[float, float | None]] = {}
     for scene_object in scene_objects:
@@ -41,7 +55,10 @@ def add_references(stage: Usd.Stage, scene_objects: list[schemas.SceneObject]) -
             scene_object.asset.file_path or scene_object.asset.source_id
         )
         if asset_path not in conform:
-            conform[asset_path] = usd.metrics.asset_conform(stage, asset_path)
+            conform[asset_path] = usd.metrics.asset_conform(
+                stage, asset_path,
+                project_mpu=project_mpu, project_up_axis=project_up_axis,
+            )
         unit_scale, up_axis_correction = conform[asset_path]
 
         wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")

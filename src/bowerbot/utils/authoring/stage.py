@@ -21,8 +21,8 @@ from bowerbot.utils import authoring
 def create_empty_scene(
     path: str | Path,
     *,
-    up_axis: str = "Y",
-    meters_per_unit: float = 1.0,
+    up_axis: str,
+    meters_per_unit: float,
 ) -> None:
     """Create a single ``scene.usda`` at *path* if it does not exist."""
     path = Path(path)
@@ -41,9 +41,11 @@ def create_empty_scene(
     stage.Save()
 
 
-def create_stage(path: str | Path) -> Usd.Stage:
+def create_stage(
+    path: str | Path, *, up_axis: str, meters_per_unit: float,
+) -> Usd.Stage:
     """Create the scene at *path* (if missing) and return the open stage."""
-    create_empty_scene(path)
+    create_empty_scene(path, up_axis=up_axis, meters_per_unit=meters_per_unit)
     return open_stage(path)
 
 

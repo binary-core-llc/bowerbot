@@ -56,7 +56,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
     if scope == "scene":
         result = physics.apis.apply_in_scene(
             state.stage, prim_path, api_name, attributes, relationships,
-            instance_name=instance_name,
+            instance_name=instance_name, project_mpu=state.meters_per_unit,
         )
         state.touch_project()
         logger.info(
@@ -218,9 +218,10 @@ def setup_physics_scene(
         name=name,
         gravity_magnitude=gravity_magnitude,
         gravity_direction=gravity_direction,
+        project_mpu=state.meters_per_unit,
     )
     resolved_magnitude, resolved_direction = physics.scenes.resolve_gravity(
-        state.stage, gravity_magnitude, gravity_direction,
+        gravity_magnitude, gravity_direction, project_mpu=state.meters_per_unit,
     )
     state.touch_project()
     logger.info("setup_physics_scene -> %s", scene_path)
@@ -301,6 +302,7 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if scope == "scene":
         result = physics.joints.create_in_scene(
             state.stage, joint_type, name, body0, body1, attributes,
+            project_mpu=state.meters_per_unit,
         )
         state.touch_project()
         logger.info(
@@ -426,6 +428,7 @@ def create_or_update_collision_group(
         filtered_groups=params.get("filtered_groups"),
         invert_filter=params.get("invert_filter"),
         merge_group=params.get("merge_group"),
+        project_mpu=state.meters_per_unit,
     )
     state.touch_project()
     return result

@@ -147,6 +147,7 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
             stage, prim_path=prim_path, output=output,
             prototypes=prototypes, instances=instances,
             first_index=state.object_count + 1,
+            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
         )
         state.object_count += written["placements"] or 1
         authoring.stage.save_stage(stage)
@@ -281,6 +282,7 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
             stage, prim_path=prim_path, output=output,
             prototypes=prototypes, instances=instances,
             first_index=state.object_count + 1,
+            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
         )
         state.object_count += written["placements"] or 1
         authoring.stage.save_stage(stage)

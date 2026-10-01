@@ -256,6 +256,21 @@ def ensure_layer_scope(
         scope.typeName = scope_type
 
 
+def ensure_over_layer(asset_dir: Path, layer_file: str) -> Path:
+    """Create the side layer *layer_file* with an ``over`` root prim if missing; return its path."""
+    path = asset_dir / layer_file
+    if path.exists():
+        return path
+
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    layer = Sdf.Layer.CreateNew(str(path))
+    layer.defaultPrim = default_prim_name
+    over = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
+    over.specifier = Sdf.SpecifierOver
+    layer.Save()
+    return path
+
+
 def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
     """Ensure the asset's root file references *layer_file*."""
     root_file = find_root_file(asset_dir)

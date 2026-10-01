@@ -161,7 +161,7 @@ def apply_in_asset(
             refuse_nested_articulation_root(composed, target_path)
     del composed
 
-    physics.layer.ensure(asset_dir)
+    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
     stage = Usd.Stage.Open(str(physics.layer.file_path(asset_dir)))
     prim = stage.OverridePrim(Sdf.Path(target_path))
 

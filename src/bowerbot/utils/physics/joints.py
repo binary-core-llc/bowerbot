@@ -121,7 +121,7 @@ def create_in_asset(
     _validate_joint_bodies(composed, body0, body1)
     del composed
 
-    physics.layer.ensure(asset_dir)
+    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
     stage = Usd.Stage.Open(str(physics.layer.file_path(asset_dir)))
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     joints_scope_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}"

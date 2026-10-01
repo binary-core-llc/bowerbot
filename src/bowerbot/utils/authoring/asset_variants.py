@@ -23,27 +23,14 @@ def variants_layer_path(asset_dir: Path) -> Path:
     return asset_dir / constants.ASWFLayerNames.VARIANTS
 
 
-def ensure_variants_layer(asset_dir: Path) -> Path:
-    """Create ``variants.usda`` if missing."""
-    path = variants_layer_path(asset_dir)
-    if path.exists():
-        return path
-
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    layer = Sdf.Layer.CreateNew(str(path))
-    layer.defaultPrim = default_prim_name
-    Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
-    layer.GetPrimAtPath(f"/{default_prim_name}").specifier = Sdf.SpecifierOver
-    layer.Save()
-    return path
-
-
 # ── Opening variants.usda ──
 
 
 def open_variants_stage(asset_dir: Path) -> Usd.Stage:
     """Open ``variants.usda`` as a stage."""
-    path = ensure_variants_layer(asset_dir)
+    path = authoring.asset_folder.ensure_over_layer(
+        asset_dir, constants.ASWFLayerNames.VARIANTS,
+    )
     stage = Usd.Stage.Open(str(path))
     if stage is None:
         raise RuntimeError(f"Failed to open variants layer: {path}")

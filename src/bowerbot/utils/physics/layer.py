@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""The asset's ``phy.usda``: its path, creating it, removing it once empty."""
+"""The asset's ``phy.usda``: its path, and removing it once empty."""
 
 from __future__ import annotations
 
@@ -17,21 +17,6 @@ from bowerbot.utils import physics
 def file_path(asset_dir: Path) -> Path:
     """Path to the asset's ``phy.usda``."""
     return asset_dir / constants.ASWFLayerNames.PHY
-
-
-def ensure(asset_dir: Path) -> Path:
-    """Create ``phy.usda`` if missing."""
-    path = file_path(asset_dir)
-    if path.exists():
-        return path
-
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    layer = Sdf.Layer.CreateNew(str(path))
-    layer.defaultPrim = default_prim_name
-    over = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
-    over.specifier = Sdf.SpecifierOver
-    layer.Save()
-    return path
 
 
 def cleanup_if_empty(asset_dir: Path) -> bool:

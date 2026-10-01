@@ -24,7 +24,7 @@ def add(
     set_as_default: bool = False,
 ) -> None:
     """End-to-end variant authoring: layer, reference, opinions, default selection."""
-    authoring.asset_variants.ensure_variants_layer(asset_dir)
+    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.VARIANTS)
     authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.VARIANTS)
     stage = authoring.asset_variants.open_variants_stage(asset_dir)
     usd.variant_sets.author_in_variant(

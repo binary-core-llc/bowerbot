@@ -431,7 +431,7 @@ def _instancer_footprints(
     keep = np.asarray(mask, dtype=bool) if mask else np.ones(proto_idx.size, dtype=bool)
 
     stage = instancer.GetPrim().GetStage()
-    cache = UsdGeom.BBoxCache(time, [UsdGeom.Tokens.default_, UsdGeom.Tokens.render])
+    cache = usd.bounds.bounds_cache(include_render=True)
     targets = instancer.GetPrototypesRel().GetTargets()
     lo = np.full((len(targets), 3), np.nan)
     hi = np.full((len(targets), 3), np.nan)

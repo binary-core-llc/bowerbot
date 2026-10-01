@@ -11,7 +11,6 @@ from typing import Any
 import numpy as np
 from pxr import Gf
 from pxr import Usd
-from pxr import UsdGeom
 
 from bowerbot import constants
 from bowerbot import schemas
@@ -150,14 +149,11 @@ def _conformed_extents(
     if root is None or not root.IsValid():
         msg = f"{root_file.name} has no default prim to measure."
         raise ValueError(msg)
-    cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render],
-    )
-    rng = cache.ComputeWorldBound(root).ComputeAlignedRange()
-    if rng.IsEmpty():
+    rng = usd.bounds.world_range(root, usd.bounds.bounds_cache(include_render=True))
+    if rng is None:
         msg = f"{root_file.name} has no geometry bounds, so it cannot rest on a surface."
         raise ValueError(msg)
-    corners = np.array([list(rng.GetCorner(i)) for i in range(8)])
+    corners = usd.bounds.range_corners(rng)
     triangles = usd.surface.collect_triangles(
         stage, [str(root.GetPath())], up=asset_up,
     )

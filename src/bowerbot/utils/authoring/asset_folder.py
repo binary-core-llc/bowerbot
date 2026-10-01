@@ -467,11 +467,8 @@ def get_geometry_bounds(asset_dir: Path) -> dict[str, dict[str, float]] | None:
         if child:
             child.SetActive(False)
 
-    bbox = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
-    rng = bbox.ComputeWorldBound(root).ComputeAlignedRange()
-    if rng.IsEmpty():
+    rng = usd.bounds.world_range(root, usd.bounds.bounds_cache())
+    if rng is None:
         return None
 
     mn = rng.GetMin()

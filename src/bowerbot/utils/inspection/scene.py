@@ -18,9 +18,7 @@ from bowerbot.utils import usd
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
     """List every meaningful prim in the scene, classified by kind."""
-    bbox_cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
+    bbox_cache = usd.bounds.bounds_cache()
 
     results: list[dict] = []
     seen: set[str] = set()

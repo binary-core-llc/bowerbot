@@ -18,9 +18,7 @@ def list_bindable_parts(stage: Usd.Stage, prim_path: str) -> list[dict]:
     if not root_prim.IsValid():
         return []
 
-    bbox_cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
+    bbox_cache = usd.bounds.bounds_cache()
 
     results: list[dict] = []
     for prim in Usd.PrimRange(root_prim):

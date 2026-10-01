@@ -256,11 +256,10 @@ def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.Floa
     triangles = usd.surface.collect_triangles(stage, [prim_path], up=up)
     if triangles.count:
         return np.concatenate([triangles.v0, triangles.v1, triangles.v2])
-    cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render],
+    rng = usd.bounds.world_range(
+        stage.GetPrimAtPath(prim_path), usd.bounds.bounds_cache(include_render=True),
     )
-    rng = cache.ComputeWorldBound(stage.GetPrimAtPath(prim_path)).ComputeAlignedRange()
-    if rng.IsEmpty():
+    if rng is None:
         msg = f"Prototype {prim_path} has no geometry, so it cannot rest on a surface."
         raise ValueError(msg)
-    return np.array([list(rng.GetCorner(i)) for i in range(8)])
+    return usd.bounds.range_corners(rng)

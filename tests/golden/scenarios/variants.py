@@ -396,6 +396,61 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "variants/selection_refusals",
+        "Selecting a variant that cannot be selected: no such set, no such variant, two carriers.",
+        (
+            _place("table.usda", "Table", "Furniture", save="table"),
+            _place("table.usda", "Table", "Furniture", x=3.0, save="table2"),
+            _light("Key", -2.0, "key"),
+            model.Step(
+                "add_asset_configuration_variant",
+                {
+                    "prim_path": "$table",
+                    "variant_set": "legs",
+                    "variant_name": "three",
+                    "activations": {"$table/asset/Leg_L": False},
+                },
+                note="the table gets a set named legs",
+            ),
+            model.Step(
+                "add_scene_lighting_selection_variant",
+                {"variant_set": "rig", "variant_name": "key_only", "activations": {"$key": True}},
+                note="the lighting gets a set named rig",
+            ),
+            model.Step(
+                "select_scene_variant",
+                {"prim_path": "/Scene/Lighting", "variant_set": "nope", "variant_name": "x"},
+                note="a set the lighting does not have",
+            ),
+            model.Step(
+                "select_scene_variant",
+                {"prim_path": "/Scene/Lighting", "variant_set": "rig", "variant_name": "nope"},
+                note="a variant the set does not have",
+            ),
+            model.Step(
+                "select_asset_variant_for_instance",
+                {"prim_path": "$table", "variant_set": "nope", "variant_name": "x"},
+                note="a set the table does not have",
+            ),
+            model.Step(
+                "select_asset_variant_for_instance",
+                {"prim_path": "$table", "variant_set": "legs", "variant_name": "nope"},
+                note="a variant the set does not have",
+            ),
+            model.Step(
+                "select_asset_variant_for_instance",
+                {"prim_path": "/Scene/Furniture", "variant_set": "legs", "variant_name": "three"},
+                note="a prim with two tables under it",
+            ),
+            model.Step(
+                "select_asset_variant_for_instance",
+                {"prim_path": "$table2", "variant_set": "legs", "variant_name": "three"},
+                note="one table only: this one works",
+            ),
+            model.Step("list_variants", {"prim_path": "$table2"}),
+        ),
+    ),
+    model.Scenario(
         "variants/geometry_lod_shipped",
         "LODs from an asset that ships both geometry files: listing, setup, extending, default.",
         (

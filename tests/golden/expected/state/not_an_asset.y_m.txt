@@ -1,0 +1,674 @@
+##### scenario: state/not_an_asset
+##### convention: Y-up, 1.0 meters per unit
+##### Tools that work on an asset, called on a scene prim that is not one.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: create_light
+intent: a scene light: a prim that belongs to no asset
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Key", translate_x=0.0, translate_y=3.0, translate_z=0.0)
+  current project: golden
+  said: ok: Created SphereLight at /Scene/Lighting/Key
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Key [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 3, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+          world position: (0.0000, 3.0000, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "SphereLight",
+    "message": "Created SphereLight at /Scene/Lighting/Key",
+    "position": {
+      "x": 0.0,
+      "y": 3.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Key"
+  }
+
+files:
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,12 @@
+       )
+       {
+      +    def "Lighting"
+      +    {
+      +        def SphereLight "Key"
+      +        {
+      +            double3 xformOp:translate = (0, 3, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,12 @@
+   )
+   {
+  +    def "Lighting"
+  +    {
+  +        def SphereLight "Key"
+  +        {
+  +            double3 xformOp:translate = (0, 3, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: add_asset_to_asset
+
+SUMMARY
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Lighting/Key", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. An asset can only be added to an ASWF folder asset (not a USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. An asset can only be added to an ASWF folder asset (not a USDZ)."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: cleanup_unused_contents
+
+SUMMARY
+  call: cleanup_unused_contents(asset_prim_path="/Scene/Lighting/Key")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: cleanup_unused_materials
+
+SUMMARY
+  call: cleanup_unused_materials(asset_prim_path="/Scene/Lighting/Key")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: create_material
+
+SUMMARY
+  call: create_material(prim_path="/Scene/Lighting/Key", material_name="oak")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Procedural materials only work on assets placed as ASWF folders (not USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Procedural materials only work on assets placed as ASWF folders (not USDZ)."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: bind_material
+
+SUMMARY
+  call: bind_material(prim_path="/Scene/Lighting/Key", material_file="<LIBRARY>/materials/oak.usda")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Material binding only works on assets placed as ASWF folders (not USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Material binding only works on assets placed as ASWF folders (not USDZ)."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: remove_material
+
+SUMMARY
+  call: remove_material(prim_path="/Scene/Lighting/Key")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: create_light
+intent: a light that should belong to an asset
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Bulb", asset_prim_path="/Scene/Lighting/Key")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Asset-level lights only work on ASWF folder assets.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Asset-level lights only work on ASWF folder assets."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 09: apply_physics_api
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Lighting/Key", api_name="PhysicsRigidBodyAPI", scope="asset")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ). This prim is authored directly in scene.usda, not as an asset placement. Retry the call with scope='scene' to author physics on this prim directly in scene.usda.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ). This prim is authored directly in scene.usda, not as an asset placement. Retry the call with scope='scene' to author physics on this prim directly in scene.usda."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 10: remove_physics_api
+
+SUMMARY
+  call: remove_physics_api(prim_path="/Scene/Lighting/Key", api_name="PhysicsRigidBodyAPI", scope="asset")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ). This prim is authored directly in scene.usda, not as an asset placement. Retry the call with scope='scene' to remove physics from this prim directly in scene.usda.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ). This prim is authored directly in scene.usda, not as an asset placement. Retry the call with scope='scene' to remove physics from this prim directly in scene.usda."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 11: add_asset_configuration_variant
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Lighting/Key", variant_set="s", variant_name="v", activations={"/Scene/Lighting/Key": false})
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues
+
+
+=== step 12: list_asset_geo_files
+
+SUMMARY
+  call: list_asset_geo_files(prim_path="/Scene/Lighting/Key")
+  current project: golden
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.5000, 2.5000, -0.5000)..(0.5000, 3.5000, 0.5000)
+
+validation:
+  valid, no issues

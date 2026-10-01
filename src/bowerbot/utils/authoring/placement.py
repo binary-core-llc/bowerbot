@@ -117,9 +117,33 @@ def find_asset_placements(stage: Usd.Stage, asset_dir: Path) -> list[str]:
     return placements
 
 
-def count_scene_refs_to_asset_dir(stage: Usd.Stage, asset_dir: Path) -> int:
-    """Count how many prims in the scene reference *asset_dir*."""
-    return len(find_asset_placements(stage, asset_dir))
+def refuse_shared_modification(
+    stage: Usd.Stage,
+    asset_dir: Path,
+    *,
+    confirmed: bool,
+    op_label: str,
+    per_instance: str,
+    shared: str,
+) -> None:
+    """Refuse a write to an asset folder that two or more placements share, unless confirmed.
+
+    The refusal names the tool (*op_label*), says how to get a result for one
+    instance only (*per_instance*, a sentence) and what every instance gets
+    once confirmed (*shared*, e.g. ``"this material"``).
+    """
+    instance_count = len(find_asset_placements(stage, asset_dir))
+    if instance_count < 2 or confirmed:
+        return
+    raise ValueError(
+        f"Asset folder '{asset_dir.name}/' is referenced by "
+        f"{instance_count} scene instances. {op_label} writes to the "
+        f"shared asset folder, so all {instance_count} instances would "
+        f"change. Two ways forward: (1) {per_instance} "
+        f"(2) For deliberate shared modification (every instance "
+        f"should get {shared}), retry with "
+        f"confirm_shared_modification=true.",
+    )
 
 
 def clear_scene_variant_selections(

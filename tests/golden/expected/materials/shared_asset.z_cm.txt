@@ -536,7 +536,7 @@ intent: create the material oak on the table's Top
 SUMMARY
   call: create_material(prim_path="/Scene/Furniture/Table_01/asset/Top", material_name="oak", base_color_r=0.55, base_color_g=0.35, base_color_b=0.2)
   current project: golden
-  said: REFUSED: Asset folder 'table/' is referenced by 2 scene instances. create_material writes to the shared mtl.usda, so the binding would apply to all 2 instances. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true.
+  said: REFUSED: Asset folder 'table/' is referenced by 2 scene instances. create_material writes to the shared asset folder, so all 2 instances would change. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true.
 
   what changed:
     nothing
@@ -554,7 +554,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Asset folder 'table/' is referenced by 2 scene instances. create_material writes to the shared mtl.usda, so the binding would apply to all 2 instances. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true."
+    "error": "Asset folder 'table/' is referenced by 2 scene instances. create_material writes to the shared asset folder, so all 2 instances would change. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true."
   }
 
 files:
@@ -816,7 +816,7 @@ intent: bind_material on the second table asks too
 SUMMARY
   call: bind_material(prim_path="/Scene/Furniture/Table_02/asset/Leg_L", material_file="<LIBRARY>/materials/steel.usda")
   current project: golden
-  said: REFUSED: Asset folder 'table/' is referenced by 2 scene instances. bind_material writes to the shared mtl.usda, so the binding would apply to all 2 instances. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true.
+  said: REFUSED: Asset folder 'table/' is referenced by 2 scene instances. bind_material writes to the shared asset folder, so all 2 instances would change. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true.
 
   what changed:
     nothing
@@ -834,7 +834,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Asset folder 'table/' is referenced by 2 scene instances. bind_material writes to the shared mtl.usda, so the binding would apply to all 2 instances. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true."
+    "error": "Asset folder 'table/' is referenced by 2 scene instances. bind_material writes to the shared asset folder, so all 2 instances would change. Two ways forward: (1) For per-instance materials (different material per instance), use place_asset to make each instance independent, then bind a material on each. (2) For deliberate shared modification (every instance should get this material), retry with confirm_shared_modification=true."
   }
 
 files:

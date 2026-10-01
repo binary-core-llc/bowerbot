@@ -1191,7 +1191,7 @@ intent: adding to a shared folder asks first
 SUMMARY
   call: add_asset_to_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Asset folder 'table/' is referenced by 2 scene instances. add_asset_to_asset modifies the shared asset folder, which would affect all 2 instances. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the added asset), retry with confirm_shared_modification=true.
+  said: REFUSED: Asset folder 'table/' is referenced by 2 scene instances. add_asset_to_asset writes to the shared asset folder, so all 2 instances would change. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the added asset), retry with confirm_shared_modification=true.
 
   what changed:
     nothing
@@ -1209,7 +1209,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Asset folder 'table/' is referenced by 2 scene instances. add_asset_to_asset modifies the shared asset folder, which would affect all 2 instances. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the added asset), retry with confirm_shared_modification=true."
+    "error": "Asset folder 'table/' is referenced by 2 scene instances. add_asset_to_asset writes to the shared asset folder, so all 2 instances would change. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the added asset), retry with confirm_shared_modification=true."
   }
 
 files:

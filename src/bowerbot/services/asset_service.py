@@ -268,24 +268,17 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
         state.stage, parent_prim_path,
     )
 
-    instance_count = authoring.placement.count_scene_refs_to_asset_dir(
+    authoring.placement.refuse_shared_modification(
         state.stage, parent_asset_dir,
+        confirmed=bool(params.get("confirm_shared_modification", False)),
+        op_label="add_asset_to_asset",
+        per_instance=(
+            "For per-instance placement (different positions per "
+            "instance), use 'place_asset' instead; it places the asset "
+            "as an independent scene-level prim."
+        ),
+        shared="the added asset",
     )
-    confirmed = bool(params.get("confirm_shared_modification", False))
-    if instance_count >= 2 and not confirmed:
-        msg = (
-            f"Asset folder '{parent_asset_dir.name}/' is referenced by "
-            f"{instance_count} scene instances. add_asset_to_asset modifies "
-            f"the shared asset folder, which would affect all "
-            f"{instance_count} instances. Two ways forward: "
-            f"(1) For per-instance placement (different positions per "
-            f"instance), use 'place_asset' instead; it places the asset "
-            f"as an independent scene-level prim. "
-            f"(2) For deliberate shared modification (every instance "
-            f"should get the added asset), retry with "
-            f"confirm_shared_modification=true."
-        )
-        raise ValueError(msg)
 
     assets_dir = state.resolve_assets_dir()
     report = authoring.intake.prepare_asset(

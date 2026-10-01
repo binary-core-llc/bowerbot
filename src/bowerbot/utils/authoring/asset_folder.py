@@ -37,9 +37,19 @@ def find_root_file(asset_dir: Path) -> Path | None:
 
 
 def resolve_default_prim_name(asset_dir: Path) -> str:
-    """Return the asset's ``defaultPrim`` name, falling back to folder name."""
-    name = _get_default_prim_name(asset_dir)
-    return name if name else asset_dir.name
+    """The name of the asset's root prim: the ``defaultPrim`` of its root file.
+
+    While the folder is being built and has no root file yet, ``geo.usda``'s
+    ``defaultPrim`` stands in; the folder name when neither file says.
+    """
+    for layer_path in (find_root_file(asset_dir), asset_dir / constants.ASWFLayerNames.GEO):
+        if layer_path is None or not layer_path.exists():
+            continue
+        layer = Sdf.Layer.FindOrOpen(str(layer_path))
+        if layer and layer.defaultPrim:
+            name: str = layer.defaultPrim
+            return name
+    return asset_dir.name
 
 
 def detect_folder_root(folder: Path) -> schemas.FolderDetection:
@@ -123,13 +133,7 @@ def asset_has_root_payload(asset_dir: Path) -> bool:
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return False
-    plist = prim_spec.payloadList
-    return bool(
-        plist.prependedItems
-        or plist.appendedItems
-        or plist.addedItems
-        or plist.explicitItems,
-    )
+    return bool(prim_spec.payloadList.GetAppliedItems())
 
 
 def clear_root_payload(asset_dir: Path) -> None:
@@ -243,25 +247,36 @@ def to_layer_local_path(prim_path: str, default_prim_name: str) -> str:
     return f"{prefix}{prim_path}"
 
 
-def ensure_layer_scope(
-    layer: Sdf.Layer,
-    default_prim_name: str,
-    scope_name: str,
-    scope_type: str,
-) -> None:
-    """Ensure ``/{default_prim_name}/{scope_name}`` exists in *layer*."""
+def open_scope_layer(
+    asset_dir: Path, layer_file: str, scope_name: str, scope_type: str,
+) -> Sdf.Layer:
+    """Open a side layer that keeps its prims under one scope, creating what is missing.
+
+    ``lgt.usda``, ``mtl.usda`` and ``contents.usda`` are such layers. The file,
+    its ``defaultPrim``, the ``over`` for the asset's root prim and the scope
+    ``/<root>/<scope_name>`` are created when they are not there. The layer
+    is returned unsaved.
+    """
+    layer_path = asset_dir / layer_file
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    layer = (
+        Sdf.Layer.FindOrOpen(str(layer_path))
+        if layer_path.exists()
+        else Sdf.Layer.CreateNew(str(layer_path))
+    )
+    if not layer.defaultPrim:
+        layer.defaultPrim = default_prim_name
+
     root_prim_path = Sdf.Path(f"/{default_prim_name}")
-    scope_path = Sdf.Path(f"/{default_prim_name}/{scope_name}")
-
     if not layer.GetPrimAtPath(root_prim_path):
-        Sdf.CreatePrimInLayer(layer, root_prim_path)
-        layer.GetPrimAtPath(root_prim_path).specifier = Sdf.SpecifierOver
+        Sdf.CreatePrimInLayer(layer, root_prim_path).specifier = Sdf.SpecifierOver
 
+    scope_path = root_prim_path.AppendChild(scope_name)
     if not layer.GetPrimAtPath(scope_path):
-        Sdf.CreatePrimInLayer(layer, scope_path)
-        scope = layer.GetPrimAtPath(scope_path)
+        scope = Sdf.CreatePrimInLayer(layer, scope_path)
         scope.specifier = Sdf.SpecifierDef
         scope.typeName = scope_type
+    return layer
 
 
 def ensure_over_layer(asset_dir: Path, layer_file: str) -> Path:
@@ -379,16 +394,29 @@ def remove_empty_layer(
     asset_dir: Path,
     has_content: Callable[[Usd.Prim], bool],
 ) -> None:
-    """Remove *layer_path* when no prim in it satisfies *has_content*."""
-    stage = Usd.Stage.Open(str(layer_path))
-    if stage:
-        for prim in stage.Traverse():
-            if has_content(prim):
-                return
+    """Delete the side layer *layer_path* when no prim in it satisfies *has_content*.
 
-    layer_path.unlink()
-    rebuild_root_references(asset_dir)
+    Every prim in the layer is looked at, also those under an ``over`` root.
+    """
+    stage = Usd.Stage.Open(str(layer_path))
+    if stage and any(has_content(prim) for prim in stage.TraverseAll()):
+        return
+    del stage
+
+    delete_side_layer(asset_dir, layer_path.name)
     logger.info("Removed empty %s from %s", layer_path.name, asset_dir.name)
+
+
+def delete_side_layer(asset_dir: Path, layer_file: str) -> None:
+    """Take the side layer *layer_file* off the asset root and delete its file."""
+    drop_root_reference(asset_dir, layer_file)
+    layer_path = asset_dir / layer_file
+    if not layer_path.exists():
+        return
+    layer = Sdf.Layer.FindOrOpen(str(layer_path))
+    if layer is not None:
+        layer.Clear()
+    layer_path.unlink()
 
 
 # ── Units and bounds of the geometry ──
@@ -533,44 +561,35 @@ def create_asset_folder(
     return root_path
 
 
-# ── Which files reference an asset folder ──
+# ── Which project files use a file or folder ──
 
 
-def find_asset_references(
-    project_dir: Path,
-    folder_name: str,
-    skip_dir: Path | None = None,
-) -> list[str]:
-    """Scan *project_dir* for USD files referencing *folder_name* in any variant body or payload."""
-    referencing: list[str] = []
+def find_files_using(project_dir: Path, target: Path) -> list[str]:
+    """Project USD files that point at *target*: a file, or anything inside a folder.
+
+    A reference, a payload or an asset-valued attribute counts, also inside
+    variant bodies. The match is on the whole path, never on part of a name.
+    Files inside *target* itself are not looked at.
+    """
+    target = target.resolve()
+    using: list[str] = []
     for usd_file in sorted(project_dir.rglob("*")):
-        if usd_file.suffix not in (".usd", ".usda", ".usdc"):
+        if usd_file.suffix not in constants.AssetFolderRules.USD_LAYER_EXTENSIONS:
             continue
-        if skip_dir is not None:
-            try:
-                usd_file.relative_to(skip_dir)
-                continue
-            except ValueError:
-                pass
+        if target in usd_file.resolve().parents:
+            continue
         layer = Sdf.Layer.FindOrOpen(str(usd_file))
         if layer is None:
             continue
-        if usd.references.layer_references_folder(layer, folder_name):
-            referencing.append(str(usd_file.relative_to(project_dir)))
-    return referencing
+        if any(
+            pointed == target or target in pointed.parents
+            for pointed in usd.references.layer_file_targets(layer)
+        ):
+            using.append(str(usd_file.relative_to(project_dir)))
+    return using
 
 
 # ── Helpers ──
-
-
-def _get_default_prim_name(asset_dir: Path) -> str | None:
-    """Return the ``defaultPrim`` recorded in ``geo.usda``, if any."""
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if geo_path.exists():
-        layer = Sdf.Layer.FindOrOpen(str(geo_path))
-        if layer and layer.defaultPrim:
-            return layer.defaultPrim
-    return None
 
 
 def _sibling_file(asset_path: str) -> str | None:

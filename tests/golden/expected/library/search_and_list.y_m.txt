@@ -127,6 +127,12 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
+        "name": "armchair",
+        "path": "<LIBRARY>/armchair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
         "name": "chair",
         "path": "<LIBRARY>/chair.usda"
       },
@@ -137,7 +143,7 @@ full answer:
         "path": "<LIBRARY>/chair_cm.usda"
       }
     ],
-    "total_matches": 2,
+    "total_matches": 3,
     "truncated": false
   }
 
@@ -301,7 +307,7 @@ full answer:
         "path": "<LIBRARY>/cabinet/cabinet.usda"
       }
     ],
-    "total_matches": 13,
+    "total_matches": 14,
     "truncated": true
   }
 
@@ -361,6 +367,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "kit",
+        "path": "<LIBRARY>/kit/kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -373,6 +385,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "shelf",
+        "path": "<LIBRARY>/shelf/shelf.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "stand",
         "path": "<LIBRARY>/stand/stand.usda"
       },
@@ -381,6 +399,12 @@ full answer:
         "format": ".usda",
         "name": "workbench",
         "path": "<LIBRARY>/workbench/workbench.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "armchair",
+        "path": "<LIBRARY>/armchair.usda"
       },
       {
         "category": "geo",
@@ -479,7 +503,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 22,
+    "total_matches": 25,
     "truncated": false
   }
 
@@ -539,6 +563,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "kit",
+        "path": "<LIBRARY>/kit/kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -547,6 +577,12 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "shelf",
+        "path": "<LIBRARY>/shelf/shelf.usda"
       },
       {
         "category": "package",
@@ -561,7 +597,7 @@ full answer:
         "path": "<LIBRARY>/workbench/workbench.usda"
       }
     ],
-    "total_matches": 6,
+    "total_matches": 8,
     "truncated": false
   }
 
@@ -673,6 +709,12 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
+        "name": "armchair",
+        "path": "<LIBRARY>/armchair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
         "name": "bare",
         "path": "<LIBRARY>/bare.usda"
       },
@@ -749,7 +791,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 13,
+    "total_matches": 14,
     "truncated": false
   }
 

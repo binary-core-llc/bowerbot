@@ -12,6 +12,7 @@ from pxr import Usd
 
 from bowerbot import constants
 from bowerbot.utils import authoring
+from bowerbot.utils import usd
 
 
 def find(
@@ -100,15 +101,7 @@ def restore_direct_reference(
     if not child_spec.HasInfo("references"):
         return None
 
-    refs: list[str] = []
-    for items in (
-        child_spec.referenceList.prependedItems,
-        child_spec.referenceList.appendedItems,
-        child_spec.referenceList.explicitItems,
-    ):
-        for r in items:
-            if r.assetPath:
-                refs.append(r.assetPath)
+    refs = usd.references.reference_paths(child_spec)
     if not refs:
         return None
 

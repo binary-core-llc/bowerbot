@@ -29,15 +29,10 @@ def create(
     mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
 
-    mtl_layer = (
-        Sdf.Layer.FindOrOpen(str(mtl_path))
-        if mtl_path.exists()
-        else Sdf.Layer.CreateNew(str(mtl_path))
-    )
-
-    authoring.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
-    mtl_layer.defaultPrim = default_prim_name
-    mtl_layer.Save()
+    authoring.asset_folder.open_scope_layer(
+        asset_dir, constants.ASWFLayerNames.MTL,
+        constants.AssetFolderNamespace.MATERIALS_SCOPE, "Scope",
+    ).Save()
 
     stage = Usd.Stage.Open(str(mtl_path))
     if stage is None:

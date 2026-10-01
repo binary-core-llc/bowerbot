@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pxr import Sdf
-
 from bowerbot import constants
 from bowerbot.utils import authoring
 from bowerbot.utils import physics
@@ -27,9 +25,5 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     if physics.summary.summarize_asset(asset_dir).prims:
         return False
 
-    authoring.asset_folder.drop_root_reference(asset_dir, constants.ASWFLayerNames.PHY)
-    layer = Sdf.Layer.FindOrOpen(str(phy_path))
-    if layer is not None:
-        layer.Clear()
-    phy_path.unlink()
+    authoring.asset_folder.delete_side_layer(asset_dir, constants.ASWFLayerNames.PHY)
     return True

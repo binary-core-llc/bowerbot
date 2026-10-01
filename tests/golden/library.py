@@ -11,6 +11,7 @@ from pxr import Gf
 from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
+from pxr import UsdLux
 from pxr import UsdShade
 from pxr import UsdUtils
 
@@ -52,6 +53,11 @@ def _root(stage: Usd.Stage, name: str) -> None:
     stage.SetDefaultPrim(UsdGeom.Xform.Define(stage, f"/{name}").GetPrim())
 
 
+def _over_root(stage: Usd.Stage, name: str) -> None:
+    """Make the root prim an ``over``, the way many exporters write a side layer."""
+    stage.GetRootLayer().GetPrimAtPath(f"/{name}").specifier = Sdf.SpecifierOver
+
+
 def _material(stage: Usd.Stage, path: str, color: tuple[float, float, float],
               texture: str | None = None) -> UsdShade.Material:
     material = UsdShade.Material.Define(stage, path)
@@ -71,6 +77,7 @@ def build_library(root: Path) -> Path:
 
     - ``table.usda``: a table with a Top and two Legs (Y-up, meters).
     - ``chair.usda``: a chair with a Seat and a Back (Y-up, meters).
+    - ``armchair.usda``: a second chair, whose name contains ``chair``.
     - ``chair_cm.usda``: the same chair authored in centimeters.
     - ``post_z.usda``: a post authored Z-up.
     - ``unfrozen.usda``: a box whose root carries a translate and scale (an
@@ -85,6 +92,7 @@ def build_library(root: Path) -> Path:
       (``shipped_lod``: high = ``geo.usda``, low = ``geo_low.usda``).
     - ``materials/oak.usda``, ``materials/steel.usda``: material library files.
     - ``hdri/studio.hdr``, ``textures/wood_diffuse.png``: an HDRI and a texture.
+    - ``hdri/big_studio.hdr``: a second HDRI, whose name contains ``studio.hdr``.
     - ``gem.usdz``: a packaged asset.
     - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
     - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
@@ -96,6 +104,10 @@ def build_library(root: Path) -> Path:
     - ``bin.usda``: a loose file whose root references the loose ``bin_model.usda``.
     - ``stand/``: a package whose material reads ``../textures/wood_diffuse.png``, a
       texture outside its own folder.
+    - ``kit/``: a package whose root prim (``/Cupboard``) is not named like its folder;
+      the root payloads its own ``kit_model.usda``.
+    - ``shelf/``: an ASWF folder that ships ``mtl.usda`` (two materials, one bound) and
+      ``lgt.usda`` (two lights), each written with an ``over`` root prim.
     """
     root.mkdir(parents=True, exist_ok=True)
 
@@ -111,6 +123,12 @@ def build_library(root: Path) -> Path:
     _box(chair, "/chair/Seat", (0.0, 0.45, 0.0), (0.45, 0.05, 0.45))
     _box(chair, "/chair/Back", (0.0, 0.7, -0.2), (0.45, 0.5, 0.05))
     chair.Save()
+
+    armchair = _stage(root / "armchair.usda")
+    _root(armchair, "armchair")
+    _box(armchair, "/armchair/Seat", (0.0, 0.4, 0.0), (0.6, 0.1, 0.6))
+    _box(armchair, "/armchair/Arm", (0.35, 0.6, 0.0), (0.1, 0.3, 0.6))
+    armchair.Save()
 
     chair_cm = _stage(root / "chair_cm.usda", mpu=0.01)
     _root(chair_cm, "chair_cm")
@@ -212,6 +230,7 @@ def build_library(root: Path) -> Path:
 
     (root / "hdri").mkdir(exist_ok=True)
     (root / "hdri" / "studio.hdr").write_bytes(HDR_BYTES)
+    (root / "hdri" / "big_studio.hdr").write_bytes(HDR_BYTES)
     (root / "textures").mkdir(exist_ok=True)
     (root / "textures" / "wood_diffuse.png").write_bytes(PNG_1PX)
 
@@ -310,5 +329,48 @@ def build_library(root: Path) -> Path:
     stand.SetDefaultPrim(stand_root)
     stand_root.GetPayloads().AddPayload("./geo.usda")
     stand.Save()
+
+    kit_dir = root / "kit"
+    kit_model = _stage(kit_dir / "kit_model.usda")
+    _root(kit_model, "Cupboard")
+    _box(kit_model, "/Cupboard/Body", (0.0, 0.5, 0.0), (0.8, 1.0, 0.4))
+    _box(kit_model, "/Cupboard/Door", (0.0, 0.5, 0.225), (0.7, 0.9, 0.05))
+    kit_model.Save()
+    kit = _stage(kit_dir / "kit.usda")
+    kit_root = UsdGeom.Xform.Define(kit, "/Cupboard").GetPrim()
+    kit.SetDefaultPrim(kit_root)
+    kit_root.GetPayloads().AddPayload("./kit_model.usda")
+    kit.Save()
+
+    shelf_dir = root / "shelf"
+    shelf_geo = _stage(shelf_dir / "geo.usda")
+    _root(shelf_geo, "shelf")
+    _box(shelf_geo, "/shelf/Board", (0.0, 1.0, 0.0), (1.0, 0.05, 0.3))
+    _box(shelf_geo, "/shelf/Bracket", (0.0, 0.9, 0.0), (0.05, 0.2, 0.25))
+    shelf_geo.Save()
+    shelf_mtl = _stage(shelf_dir / "mtl.usda")
+    shelf_mtl.SetDefaultPrim(shelf_mtl.OverridePrim("/shelf"))
+    UsdGeom.Scope.Define(shelf_mtl, "/shelf/mtl")
+    pine = _material(shelf_mtl, "/shelf/mtl/pine", (0.8, 0.7, 0.5))
+    _material(shelf_mtl, "/shelf/mtl/spare", (0.2, 0.2, 0.2))
+    UsdShade.MaterialBindingAPI.Apply(shelf_mtl.OverridePrim("/shelf/Board")).Bind(pine)
+    _over_root(shelf_mtl, "shelf")
+    shelf_mtl.Save()
+    shelf_lgt = _stage(shelf_dir / "lgt.usda")
+    shelf_lgt.SetDefaultPrim(shelf_lgt.OverridePrim("/shelf"))
+    UsdGeom.Xform.Define(shelf_lgt, "/shelf/lgt")
+    for light_name, x in (("Lamp_A", -0.3), ("Lamp_B", 0.3)):
+        lamp_light = UsdLux.SphereLight.Define(shelf_lgt, f"/shelf/lgt/{light_name}")
+        lamp_light.CreateRadiusAttr(0.02)
+        UsdGeom.Xformable(lamp_light).AddTranslateOp().Set(Gf.Vec3d(x, 0.95, 0.0))
+    _over_root(shelf_lgt, "shelf")
+    shelf_lgt.Save()
+    shelf = _stage(shelf_dir / "shelf.usda")
+    shelf_root = UsdGeom.Xform.Define(shelf, "/shelf").GetPrim()
+    shelf.SetDefaultPrim(shelf_root)
+    shelf_root.GetReferences().AddReference("./mtl.usda")
+    shelf_root.GetReferences().AddReference("./lgt.usda")
+    shelf_root.GetPayloads().AddPayload("./geo.usda")
+    shelf.Save()
 
     return root

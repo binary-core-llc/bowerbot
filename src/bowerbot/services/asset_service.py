@@ -363,9 +363,6 @@ def list_project_assets(state: scene_state.SceneState, params: dict[str, Any]) -
     if not assets_dir.exists():
         return {"assets": [], "message": "No assets directory found."}
 
-    referenced = (
-        usd.references.get_all_ref_paths(state.stage) if state.stage else set()
-    )
     query = (params.get("query") or "").lower()
 
     results: list[dict[str, Any]] = []
@@ -375,7 +372,7 @@ def list_project_assets(state: scene_state.SceneState, params: dict[str, Any]) -
         results.append({
             "name": entry.name,
             "type": "folder" if entry.is_dir() else "file",
-            "in_scene": any(entry.name in r for r in referenced),
+            "in_scene": bool(authoring.asset_folder.find_files_using(assets_dir.parent, entry)),
         })
 
     unused = [a for a in results if not a["in_scene"]]
@@ -490,10 +487,7 @@ def delete_project_asset(state: scene_state.SceneState, params: dict[str, Any]) 
         msg = f"Asset not found: {name}"
         raise ValueError(msg)
 
-    skip_dir = asset_path if asset_path.is_dir() else None
-    referencing = authoring.asset_folder.find_asset_references(
-        state.project.path, name, skip_dir=skip_dir,
-    )
+    referencing = authoring.asset_folder.find_files_using(state.project.path, asset_path)
     if referencing:
         files_list = ", ".join(referencing)
         msg = (
@@ -528,7 +522,7 @@ def delete_project_texture(state: scene_state.SceneState, params: dict[str, Any]
         msg = f"Texture file not found: {constants.ASWFLayerNames.TEXTURES}/{file_name}"
         raise ValueError(msg)
 
-    referencing = authoring.textures.find_texture_references(project_dir, file_name)
+    referencing = authoring.asset_folder.find_files_using(project_dir, tex_file)
     if referencing:
         files_list = ", ".join(referencing)
         msg = (

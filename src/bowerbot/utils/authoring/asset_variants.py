@@ -93,11 +93,9 @@ def get_variant_payload_refs(asset_dir: Path, set_name: str) -> dict[str, str]:
         inner = variant_spec.primSpec
         if inner is None:
             continue
-        plist = inner.payloadList
-        for op in (plist.prependedItems, plist.appendedItems, plist.explicitItems):
-            if op:
-                refs[variant_name] = op[0].assetPath
-                break
+        payloads = inner.payloadList.GetAppliedItems()
+        if payloads:
+            refs[variant_name] = payloads[0].assetPath
     return refs
 
 
@@ -119,13 +117,7 @@ def variants_have_any_payload(asset_dir: Path) -> bool:
         spec = layer.GetPrimAtPath(path)
         if spec is None:
             return
-        plist = spec.payloadList
-        if (
-            plist.prependedItems
-            or plist.appendedItems
-            or plist.addedItems
-            or plist.explicitItems
-        ):
+        if spec.payloadList.GetAppliedItems():
             found = True
 
     layer.Traverse(Sdf.Path.absoluteRootPath, visit)
@@ -225,18 +217,8 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     if _has_variant_sets(asset_dir):
         return False
 
-    authoring.asset_folder.drop_root_reference(
-        asset_dir, constants.ASWFLayerNames.VARIANTS,
-    )
     _clear_all_default_variants(asset_dir)
-
-    variants_path = variants_layer_path(asset_dir)
-    if variants_path.exists():
-        layer = Sdf.Layer.FindOrOpen(str(variants_path))
-        if layer is not None:
-            layer.Clear()
-        variants_path.unlink()
-
+    authoring.asset_folder.delete_side_layer(asset_dir, constants.ASWFLayerNames.VARIANTS)
     return True
 
 

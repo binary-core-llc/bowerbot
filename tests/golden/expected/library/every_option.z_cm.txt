@@ -139,11 +139,11 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp",
-        "path": "<LIBRARY>/lamp/lamp.usda"
+        "name": "kit",
+        "path": "<LIBRARY>/kit/kit.usda"
       }
     ],
-    "total_matches": 22,
+    "total_matches": 25,
     "truncated": true
   }
 

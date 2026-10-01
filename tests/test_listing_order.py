@@ -156,10 +156,12 @@ def test_reference_scans(tmp_path, monkeypatch):
         stage.Save()
 
     def asset_refs() -> list[str]:
-        return authoring.asset_folder.find_asset_references(tmp_path, "crate")
+        return authoring.asset_folder.find_files_using(tmp_path, tmp_path / "assets" / "crate")
 
     def texture_refs() -> list[str]:
-        return authoring.textures.find_texture_references(tmp_path, "sky.hdr")
+        return authoring.asset_folder.find_files_using(
+            tmp_path, tmp_path / "textures" / "sky.hdr",
+        )
 
     for call in (asset_refs, texture_refs):
         disk_order, reversed_order = _both_orders(monkeypatch, call)

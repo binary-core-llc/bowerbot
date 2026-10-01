@@ -757,7 +757,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsMassAPI, PhysicsRigidBodyAPI → (none)
+    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsMassAPI, PhysicsRigidBodyAPI → PhysicsRigidBodyAPI
     ~ /Scene/Props/Crate_02/asset  attr physics:mass: 50 → (none)
 
   project state after the step:
@@ -792,11 +792,10 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -36,9 +36,8 @@
+      @@ -36,9 +36,7 @@
        
                    def Xform "asset" (
       -                prepend apiSchemas = ["PhysicsMassAPI"]
-      +                apiSchemas = None
                        prepend references = @assets/crate/crate.usda@
                    )
                    {
@@ -811,7 +810,7 @@ composed scene changes:
    
                def Xform "asset" (
   -                apiSchemas = ["PhysicsMassAPI", "PhysicsRigidBodyAPI"]
-  +                apiSchemas = None
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
   @@ -61,5 +61,4 @@

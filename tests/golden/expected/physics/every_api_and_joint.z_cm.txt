@@ -2125,7 +2125,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Physics/Door  applied APIs: PhysicsDriveAPI:angular, PhysicsLimitAPI:angular → (none)
+    ~ /Scene/Physics/Door  applied APIs: PhysicsDriveAPI:angular, PhysicsLimitAPI:angular → PhysicsLimitAPI:angular
     ~ /Scene/Physics/Door  attr drive:angular:physics:stiffness: 100 → (none)
 
   project state after the step:
@@ -2167,7 +2167,7 @@ file changes:
        
                def PhysicsRevoluteJoint "Door" (
       -            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsLimitAPI:angular"]
-      +            apiSchemas = None
+      +            prepend apiSchemas = ["PhysicsLimitAPI:angular"]
                )
                {
       -            float drive:angular:physics:stiffness = 100
@@ -2181,7 +2181,7 @@ composed scene changes:
    
            def PhysicsRevoluteJoint "Door" (
   -            apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsLimitAPI:angular"]
-  +            apiSchemas = None
+  +            apiSchemas = ["PhysicsLimitAPI:angular"]
            )
            {
   -            float drive:angular:physics:stiffness = 100
@@ -2218,16 +2218,17 @@ validation:
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Physics/Door", api_name="PhysicsLimitAPI", instance_name="angular")
   current project: golden
-  said: ok: PhysicsLimitAPI:angular was not present on /Scene/Physics/Door
+  said: ok: Removed PhysicsLimitAPI:angular from /Scene/Physics/Door
 
   what changed:
-    nothing
+    ~ file scene.usda
+    ~ /Scene/Physics/Door  applied APIs: PhysicsLimitAPI:angular → (none)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ reported success, but no file changed
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -2238,9 +2239,9 @@ full answer:
   {
     "api_name": "PhysicsLimitAPI",
     "instance_name": "angular",
-    "message": "PhysicsLimitAPI:angular was not present on /Scene/Physics/Door",
+    "message": "Removed PhysicsLimitAPI:angular from /Scene/Physics/Door",
     "prim_path": "/Scene/Physics/Door",
-    "removed": false,
+    "removed": true,
     "scope": "scene"
   }
 
@@ -2252,13 +2253,34 @@ files:
     assets/ground/ground.usda
     assets/ground/phy.usda
     project.json
-    scene.usda
+  ~ scene.usda
 
 file changes:
-  (none)
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -98,7 +98,5 @@
+               }
+       
+      -        def PhysicsRevoluteJoint "Door" (
+      -            prepend apiSchemas = ["PhysicsLimitAPI:angular"]
+      -        )
+      +        def PhysicsRevoluteJoint "Door"
+               {
+                   rel physics:body0 = </Scene/Props/Crate_02/asset>
 
 composed scene changes:
-  (none)
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -163,7 +163,5 @@
+           }
+   
+  -        def PhysicsRevoluteJoint "Door" (
+  -            apiSchemas = ["PhysicsLimitAPI:angular"]
+  -        )
+  +        def PhysicsRevoluteJoint "Door"
+           {
+               rel physics:body0 = </Scene/Props/Crate_02/asset>
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)
@@ -2294,21 +2316,14 @@ SUMMARY
 
   what changed:
     ~ file assets/crate/phy.usda
-    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsArticulationRootAPI → (none)
-    ~ /Scene/Props/Crate_03/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsArticulationRootAPI → (none)
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Physics/Ball: JointNoEnabledRigidBody: Joint (/Scene/Physics/Ball) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-    + issue [error] /Scene/Physics/Door: JointNoEnabledRigidBody: Joint (/Scene/Physics/Door) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-    + issue [error] /Scene/Physics/Rope: JointNoEnabledRigidBody: Joint (/Scene/Physics/Rope) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-    + issue [error] /Scene/Physics/Slide: JointNoEnabledRigidBody: Joint (/Scene/Physics/Slide) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-    + issue [error] /Scene/Props/Crate_02/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_02/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-    + issue [error] /Scene/Props/Crate_03/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_03/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsArticulationRootAPI → PhysicsRigidBodyAPI
+    ~ /Scene/Props/Crate_03/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsArticulationRootAPI → PhysicsRigidBodyAPI
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -2345,7 +2360,7 @@ file changes:
        
        def "crate" (
       -    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsArticulationRootAPI"]
-      +    apiSchemas = None
+      +    prepend apiSchemas = ["PhysicsRigidBodyAPI"]
        )
        {
 
@@ -2356,14 +2371,14 @@ composed scene changes:
    
                def Xform "asset" (
   -                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsArticulationRootAPI"]
-  +                apiSchemas = None
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
   @@ -97,5 +97,5 @@
    
                def Xform "asset" (
   -                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsArticulationRootAPI"]
-  +                apiSchemas = None
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
 
@@ -2389,13 +2404,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Door  [PhysicsRevoluteJoint]
 
 validation:
-  INVALID, 6 issue(s):
-  - [error] /Scene/Physics/Ball: JointNoEnabledRigidBody: Joint (/Scene/Physics/Ball) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Door: JointNoEnabledRigidBody: Joint (/Scene/Physics/Door) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Rope: JointNoEnabledRigidBody: Joint (/Scene/Physics/Rope) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Slide: JointNoEnabledRigidBody: Joint (/Scene/Physics/Slide) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Crate_02/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_02/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Crate_03/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_03/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 21: remove_physics_api
@@ -2407,7 +2416,7 @@ SUMMARY
 
   what changed:
     ~ file assets/ground/phy.usda
-    ~ /Scene/Architecture/Ground_01/asset/Plane  applied APIs: PhysicsCollisionAPI, PhysicsMeshCollisionAPI → (none)
+    ~ /Scene/Architecture/Ground_01/asset/Plane  applied APIs: PhysicsCollisionAPI, PhysicsMeshCollisionAPI → PhysicsCollisionAPI
     ~ /Scene/Architecture/Ground_01/asset/Plane  attr physics:approximation: 'none' → (none)
 
   project state after the step:
@@ -2451,7 +2460,7 @@ file changes:
        {
            over "Plane" (
       -        prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
-      +        apiSchemas = None
+      +        prepend apiSchemas = ["PhysicsCollisionAPI"]
            )
            {
       -        uniform token physics:approximation = "none"
@@ -2465,7 +2474,7 @@ composed scene changes:
    
                    def Mesh "Plane" (
   -                    apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
-  +                    apiSchemas = None
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
                    )
                    {
   @@ -40,5 +40,4 @@
@@ -2497,13 +2506,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Door  [PhysicsRevoluteJoint]
 
 validation:
-  INVALID, 6 issue(s):
-  - [error] /Scene/Physics/Ball: JointNoEnabledRigidBody: Joint (/Scene/Physics/Ball) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Door: JointNoEnabledRigidBody: Joint (/Scene/Physics/Door) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Rope: JointNoEnabledRigidBody: Joint (/Scene/Physics/Rope) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Slide: JointNoEnabledRigidBody: Joint (/Scene/Physics/Slide) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Crate_02/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_02/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Crate_03/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_03/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 22: setup_physics_scene
@@ -2595,10 +2598,4 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Door  [PhysicsRevoluteJoint]
 
 validation:
-  INVALID, 6 issue(s):
-  - [error] /Scene/Physics/Ball: JointNoEnabledRigidBody: Joint (/Scene/Physics/Ball) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Door: JointNoEnabledRigidBody: Joint (/Scene/Physics/Door) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Rope: JointNoEnabledRigidBody: Joint (/Scene/Physics/Rope) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/Slide: JointNoEnabledRigidBody: Joint (/Scene/Physics/Slide) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Crate_02/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_02/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Crate_03/asset/joints/Glue: JointNoEnabledRigidBody: Joint (/Scene/Props/Crate_03/asset/joints/Glue) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues

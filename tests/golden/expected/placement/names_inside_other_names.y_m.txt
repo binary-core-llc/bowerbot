@@ -1,0 +1,1210 @@
+##### scenario: placement/names_inside_other_names
+##### convention: Y-up, 1.0 meters per unit
+##### An asset or texture whose name is part of another one's name (chair and armchair, studio.hdr and big_studio.hdr): is the unused one seen as unused, and can it be deleted?
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place chair.usda as Chair in Furniture
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Chair at /Scene/Furniture/Chair_01.
+
+  what changed:
+    + file assets/chair/chair.usda
+    + file assets/chair/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Chair_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_01/asset [Xform]
+          bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_01/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)
+          material shown: (none)
+          world position: (0.0000, 0.7000, -0.2000)
+    + prim /Scene/Furniture/Chair_01/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)
+          material shown: (none)
+          world position: (0.0000, 0.4500, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Chair",
+    "intake": {
+      "asset_folder": "chair",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "chair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Chair at /Scene/Furniture/Chair_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Chair_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/chair/chair.usda
+  + assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/chair/chair.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "chair" (
+          assetInfo = {
+              asset identifier = @./chair.usda@
+              string name = "chair"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_chair>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_chair"
+      {
+      }
+
+  + assets/chair/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+      )
+
+      def Xform "chair"
+      {
+          def Cube "Seat"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.05, 0.45)
+              double3 xformOp:translate = (0, 0.45, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Back"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.5, 0.05)
+              double3 xformOp:translate = (0, 0.7, -0.2)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Chair_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/chair/chair.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,40 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Chair_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                    string name = "chair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                    double3 xformOp:translate = (0, 0.45, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Back"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: place_asset
+intent: place armchair.usda as Armchair in Furniture
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/armchair.usda", asset_name="Armchair", group="Furniture", translate_x=2.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Armchair at /Scene/Furniture/Armchair_02.
+
+  what changed:
+    + file assets/armchair/armchair.usda
+    + file assets/armchair/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture/Armchair_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (2, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (2.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Armchair_02/asset [Xform]
+          bounds: (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+          kind: component
+          world position: (2.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Armchair_02/asset/Arm [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.1, 0.3, 0.6)
+          attr xformOp:translate: (0.35, 0.6, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)
+          material shown: (none)
+          world position: (2.3500, 0.6000, 0.0000)
+    + prim /Scene/Furniture/Armchair_02/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.6, 0.1, 0.6)
+          attr xformOp:translate: (0, 0.4, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)
+          material shown: (none)
+          world position: (2.0000, 0.4000, 0.0000)
+    ~ /Scene  bounds: (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250) → (-0.2250, 0.3500, -0.3000)..(2.4000, 0.9500, 0.3000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Armchair",
+    "intake": {
+      "asset_folder": "armchair",
+      "files_copied": 1,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "armchair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Armchair at /Scene/Furniture/Armchair_02.",
+    "position": {
+      "x": 2.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Armchair_02",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/armchair/armchair.usda
+  + assets/armchair/geo.usda
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/armchair/armchair.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "armchair"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "armchair" (
+          assetInfo = {
+              asset identifier = @./armchair.usda@
+              string name = "armchair"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_armchair>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_armchair"
+      {
+      }
+
+  + assets/armchair/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "armchair"
+      )
+
+      def Xform "armchair"
+      {
+          def Cube "Seat"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.6, 0.1, 0.6)
+              double3 xformOp:translate = (0, 0.4, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Arm"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.1, 0.3, 0.6)
+              double3 xformOp:translate = (0.35, 0.6, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -25,4 +25,18 @@
+                   }
+               }
+      +
+      +        def Xform "Armchair_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (2, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/armchair/armchair.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -47,4 +47,38 @@
+               }
+           }
+  +
+  +        def Xform "Armchair_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (2, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/armchair/armchair.usda@
+  +                    string name = "armchair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.6, 0.1, 0.6)
+  +                    double3 xformOp:translate = (0, 0.4, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Arm"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.1, 0.3, 0.6)
+  +                    double3 xformOp:translate = (0.35, 0.6, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.3500, -0.3000)..(2.4000, 0.9500, 0.3000)
+  /Scene/Furniture/Chair_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.9500, 0.2250)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (0.0000, 0.4500, 0.0000)  bounds (-0.2250, 0.4250, -0.2250)..(0.2250, 0.4750, 0.2250)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (0.0000, 0.7000, -0.2000)  bounds (-0.2250, 0.4500, -0.2250)..(0.2250, 0.9500, -0.1750)  material (none)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: remove_prim
+intent: only the armchair stays
+
+SUMMARY
+  call: remove_prim(prim_path="/Scene/Furniture/Chair_01")
+  current project: golden
+  said: ok: Removed /Scene/Furniture/Chair_01
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Furniture/Chair_01 [Xform]
+    - prim /Scene/Furniture/Chair_01/asset [Xform]
+    - prim /Scene/Furniture/Chair_01/asset/Back [Cube]
+    - prim /Scene/Furniture/Chair_01/asset/Seat [Cube]
+    ~ /Scene  bounds: (-0.2250, 0.3500, -0.3000)..(2.4000, 0.9500, 0.3000) → (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+
+  project state after the step:
+    not used by the scene: assets/chair/chair.usda
+    not used by the scene: assets/chair/geo.usda
+
+  checks:
+    ⚠ left behind a file nothing in the scene uses: assets/chair/chair.usda
+    ⚠ left behind a file nothing in the scene uses: assets/chair/geo.usda
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed /Scene/Furniture/Chair_01",
+    "prim_path": "/Scene/Furniture/Chair_01",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    }
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -12,18 +12,4 @@
+           def "Furniture"
+           {
+      -        def Xform "Chair_01"
+      -        {
+      -            float3 xformOp:rotateXYZ = (0, 0, 0)
+      -            float3 xformOp:scale = (1, 1, 1)
+      -            double3 xformOp:translate = (0, 0, 0)
+      -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      -
+      -            def Xform "asset" (
+      -                prepend references = @assets/chair/chair.usda@
+      -            )
+      -            {
+      -            }
+      -        }
+      -
+               def Xform "Armchair_02"
+               {
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -14,38 +14,4 @@
+       def "Furniture"
+       {
+  -        def Xform "Chair_01"
+  -        {
+  -            float3 xformOp:rotateXYZ = (0, 0, 0)
+  -            float3 xformOp:scale = (1, 1, 1)
+  -            double3 xformOp:translate = (0, 0, 0)
+  -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  -
+  -            def Xform "asset" (
+  -                assetInfo = {
+  -                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  -                    string name = "chair"
+  -                    string version = "1.0"
+  -                }
+  -                kind = "component"
+  -            )
+  -            {
+  -                def Cube "Seat"
+  -                {
+  -                    double size = 1
+  -                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  -                    double3 xformOp:translate = (0, 0.45, 0)
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                }
+  -
+  -                def Cube "Back"
+  -                {
+  -                    double size = 1
+  -                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  -                    double3 xformOp:translate = (0, 0.7, -0.2)
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                }
+  -            }
+  -        }
+  -
+           def Xform "Armchair_02"
+           {
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: list_project_assets
+intent: is the chair listed as unused?
+
+SUMMARY
+  call: list_project_assets()
+  current project: golden
+  said: ok: Project has 2 asset(s), 1 unused.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: assets/chair/chair.usda
+    not used by the scene: assets/chair/geo.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "assets": [
+      {
+        "in_scene": true,
+        "name": "armchair",
+        "type": "folder"
+      },
+      {
+        "in_scene": false,
+        "name": "chair",
+        "type": "folder"
+      }
+    ],
+    "message": "Project has 2 asset(s), 1 unused.",
+    "total": 2,
+    "unused_count": 1
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: delete_project_asset
+
+SUMMARY
+  call: delete_project_asset(name="chair")
+  current project: golden
+  said: ok: Deleted asset 'chair' from project assets.
+
+  what changed:
+    - file assets/chair/chair.usda
+    - file assets/chair/geo.usda
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Deleted asset 'chair' from project assets.",
+    "name": "chair"
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+  - assets/chair/chair.usda
+  - assets/chair/geo.usda
+    project.json
+    scene.usda
+
+file changes:
+  - assets/chair/chair.usda (removed)
+  - assets/chair/geo.usda (removed)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: create_light
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Sky", texture="<LIBRARY>/hdri/studio.hdr")
+  current project: golden
+  said: ok: Created DomeLight at /Scene/Lighting/Sky
+
+  what changed:
+    ~ file scene.usda
+    + file textures/studio.hdr
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Sky [DomeLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr inputs:texture:file: @./textures/studio.hdr@
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "message": "Created DomeLight at /Scene/Lighting/Sky",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Sky"
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    project.json
+  ~ scene.usda
+  + textures/studio.hdr
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -26,4 +26,14 @@
+               }
+           }
+      +
+      +    def "Lighting"
+      +    {
+      +        def DomeLight "Sky"
+      +        {
+      +            asset inputs:texture:file = @./textures/studio.hdr@
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +    }
+       }
+       
+  + textures/studio.hdr (new):
+      <binary: 49 bytes, sha256:a6047f6d65ac4310>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -48,4 +48,14 @@
+           }
+       }
+  +
+  +    def "Lighting"
+  +    {
+  +        def DomeLight "Sky"
+  +        {
+  +            asset inputs:texture:file = @<PROJECT>/textures/studio.hdr@
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: create_light
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Sky2", texture="<LIBRARY>/hdri/big_studio.hdr")
+  current project: golden
+  said: ok: Created DomeLight at /Scene/Lighting/Sky2
+
+  what changed:
+    ~ file scene.usda
+    + file textures/big_studio.hdr
+    + prim /Scene/Lighting/Sky2 [DomeLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr inputs:texture:file: @./textures/big_studio.hdr@
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "message": "Created DomeLight at /Scene/Lighting/Sky2",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Sky2"
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    project.json
+  ~ scene.usda
+  + textures/big_studio.hdr
+    textures/studio.hdr
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -35,4 +35,11 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +
+      +        def DomeLight "Sky2"
+      +        {
+      +            asset inputs:texture:file = @./textures/big_studio.hdr@
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+           }
+       }
+  + textures/big_studio.hdr (new):
+      <binary: 49 bytes, sha256:a6047f6d65ac4310>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -57,4 +57,11 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+  +
+  +        def DomeLight "Sky2"
+  +        {
+  +            asset inputs:texture:file = @<PROJECT>/textures/big_studio.hdr@
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Sky2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: remove_light
+intent: only big_studio.hdr is used now
+
+SUMMARY
+  call: remove_light(prim_path="/Scene/Lighting/Sky")
+  current project: golden
+  said: ok: Removed light at /Scene/Lighting/Sky
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Lighting/Sky [DomeLight]
+
+  project state after the step:
+    not used by the scene: textures/studio.hdr
+
+  checks:
+    ⚠ left behind a file nothing in the scene uses: textures/studio.hdr
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed light at /Scene/Lighting/Sky",
+    "prim_path": "/Scene/Lighting/Sky",
+    "suspect_variant_sets": [],
+    "texture_file": "./textures/studio.hdr"
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    project.json
+  ~ scene.usda
+    textures/big_studio.hdr
+    textures/studio.hdr
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -29,11 +29,4 @@
+           def "Lighting"
+           {
+      -        def DomeLight "Sky"
+      -        {
+      -            asset inputs:texture:file = @./textures/studio.hdr@
+      -            double3 xformOp:translate = (0, 0, 0)
+      -            uniform token[] xformOpOrder = ["xformOp:translate"]
+      -        }
+      -
+               def DomeLight "Sky2"
+               {
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -51,11 +51,4 @@
+       def "Lighting"
+       {
+  -        def DomeLight "Sky"
+  -        {
+  -            asset inputs:texture:file = @<PROJECT>/textures/studio.hdr@
+  -            double3 xformOp:translate = (0, 0, 0)
+  -            uniform token[] xformOpOrder = ["xformOp:translate"]
+  -        }
+  -
+           def DomeLight "Sky2"
+           {
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+  /Scene/Lighting/Sky2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 09: delete_project_texture
+
+SUMMARY
+  call: delete_project_texture(file_name="studio.hdr")
+  current project: golden
+  said: ok: Deleted texture 'studio.hdr' from project textures.
+
+  what changed:
+    - file textures/studio.hdr
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "file": "studio.hdr",
+    "message": "Deleted texture 'studio.hdr' from project textures."
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    project.json
+    scene.usda
+    textures/big_studio.hdr
+  - textures/studio.hdr
+
+file changes:
+  - textures/studio.hdr (removed)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+  /Scene/Lighting/Sky2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 10: delete_project_texture
+intent: in use
+
+SUMMARY
+  call: delete_project_texture(file_name="big_studio.hdr")
+  current project: golden
+  said: REFUSED: Texture 'big_studio.hdr' is still referenced by: scene.usda. Remove those references first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Texture 'big_studio.hdr' is still referenced by: scene.usda. Remove those references first."
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    project.json
+    scene.usda
+    textures/big_studio.hdr
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+  /Scene/Lighting/Sky2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 11: delete_project_asset
+intent: in use
+
+SUMMARY
+  call: delete_project_asset(name="armchair")
+  current project: golden
+  said: REFUSED: Asset 'armchair' is still referenced by: scene.usda. Remove those references first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Asset 'armchair' is still referenced by: scene.usda. Remove those references first."
+  }
+
+files:
+    assets/armchair/armchair.usda
+    assets/armchair/geo.usda
+    project.json
+    scene.usda
+    textures/big_studio.hdr
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.4000, 0.7500, 0.3000)
+  /Scene/Furniture/Armchair_02/asset/Seat  [Cube]  at (2.0000, 0.4000, 0.0000)  bounds (1.7000, 0.3500, -0.3000)..(2.3000, 0.4500, 0.3000)  material (none)
+  /Scene/Furniture/Armchair_02/asset/Arm  [Cube]  at (2.3500, 0.6000, 0.0000)  bounds (2.3000, 0.4500, -0.3000)..(2.4000, 0.7500, 0.3000)  material (none)
+  /Scene/Lighting/Sky2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues

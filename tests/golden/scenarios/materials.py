@@ -266,6 +266,42 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "materials/remove_a_shipped_binding",
+        "remove_material on a part whose material and binding ship inside the asset's geometry "
+        "file: is the part left without a material?",
+        (
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/stand/stand.usda",
+                    "asset_name": "Stand",
+                    "group": "Furniture",
+                    **model.at(0.0),
+                },
+                save="stand",
+                note="the stand's wood is bound to its Top inside geo.usda",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$stand"}),
+            model.Step("remove_material", {"prim_path": "$stand/asset/Top"}),
+            model.Step(
+                "list_prim_children",
+                {"prim_path": "$stand"},
+                note="does the Top still show wood?",
+            ),
+            model.Step(
+                "create_material",
+                {"prim_path": "$stand/asset/Top", "material_name": "paint", "base_color_r": 1.0},
+                note="a new material over the shipped one",
+            ),
+            model.Step("remove_material", {"prim_path": "$stand/asset/Top"}),
+            model.Step(
+                "list_prim_children",
+                {"prim_path": "$stand"},
+                note="does the Top show nothing, or wood again?",
+            ),
+        ),
+    ),
+    model.Scenario(
         "materials/read_only_calls",
         "list_materials and cleanup_unused_materials on an empty project.",
         (

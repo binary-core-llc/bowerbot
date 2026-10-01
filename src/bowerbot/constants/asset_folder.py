@@ -30,6 +30,8 @@ class AssetFolderNamespace:
     CONTENTS_SCOPE = "contents"
     # Scope that holds the asset's lights (authored in lgt.usda).
     LIGHTS_SCOPE = "lgt"
+    # Scope that holds the asset's materials (authored in mtl.usda).
+    MATERIALS_SCOPE = "mtl"
 
 
 class AssetFolderRules:

@@ -85,6 +85,41 @@ def set_prim_attribute(
         )
         raise ValueError(msg) from None
 
+# ── Applied API schemas ──
+
+
+def drop_api_schema(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
+    """Take *api_name* out of a prim spec's ``apiSchemas``; True if it was there.
+
+    When nothing is left the opinion is cleared, so the spec does not end up
+    with an empty list that would hide the APIs weaker layers apply.
+    """
+    if not prim_spec.HasInfo("apiSchemas"):
+        return False
+    list_op = prim_spec.GetInfo("apiSchemas")
+    if list_op.isExplicit:
+        explicit = list(list_op.explicitItems)
+        if api_name not in explicit:
+            return False
+        explicit.remove(api_name)
+        prim_spec.SetInfo("apiSchemas", Sdf.TokenListOp.CreateExplicit(explicit))
+        return True
+
+    prepended = list(list_op.prependedItems)
+    appended = list(list_op.appendedItems)
+    if api_name not in prepended and api_name not in appended:
+        return False
+    prepended = [name for name in prepended if name != api_name]
+    appended = [name for name in appended if name != api_name]
+    deleted = list(list_op.deletedItems)
+    if prepended or appended or deleted:
+        prim_spec.SetInfo(
+            "apiSchemas", Sdf.TokenListOp.Create(prepended, appended, deleted),
+        )
+    else:
+        prim_spec.ClearInfo("apiSchemas")
+    return True
+
 # ── Declared types and unknown names ──
 
 

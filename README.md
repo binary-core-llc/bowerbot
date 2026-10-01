@@ -839,14 +839,15 @@ src/bowerbot/
 
   schemas/            # Pydantic models, enums and type aliases, grouped by domain
     assets.py         #   Asset formats, categories, metadata
-    cameras.py        #   CameraParams, CameraPropertySpec, CameraSchemaInfo
+    attributes.py     #   SchemaPropertySpec (one property a USD schema declares)
+    cameras.py        #   CameraParams, CameraSchemaInfo
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
-    lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
+    lights.py         #   LightType, LightParams, LightTypeSchemaInfo
     materials.py      #   ProceduralMaterialParams
     opinions.py       #   OpinionKind (what a masking scene opinion sets)
-    physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
-                      #   PhysicsApiSchemaInfo, joint/collision-group summaries
+    physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsApiSchemaInfo,
+                      #   joint/collision-group summaries
     scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
                       #   ScatterAsset/Region, ScatterPrototype, ScatterInstanceSet
     surface.py        #   SurfaceTriangles, SurfaceIndex

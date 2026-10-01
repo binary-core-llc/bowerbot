@@ -1,9 +1,11 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Attributes: read and author them, their declared types, schema documentation."""
+"""Attributes: read and author them, their declared types, what a schema declares."""
 
 from __future__ import annotations
+
+from collections.abc import Iterable
 
 from pxr import Sdf
 from pxr import Sdr
@@ -11,6 +13,7 @@ from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
 
+from bowerbot import schemas
 from bowerbot.utils import usd
 
 # ── Reading and writing attributes ──
@@ -136,7 +139,53 @@ def refuse_unknown_attributes(
         lines.append(f"  '{attr_name}' on {prim_path}.{hint}")
     raise ValueError("\n".join(lines))
 
-# ── Schema documentation ──
+# ── What a schema declares ──
+
+
+def schema_attribute_row(
+    prim_def: Usd.PrimDefinition, prop_name: str, *, name: str | None = None,
+) -> schemas.SchemaPropertySpec | None:
+    """The listing row of a schema attribute, shown as *name*; None when it is not an attribute."""
+    attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
+    if attr_spec is None:
+        return None
+    return schemas.SchemaPropertySpec(
+        name=name or prop_name,
+        kind="attribute",
+        type_name=str(attr_spec.typeName),
+        default=usd.values.to_jsonable(attr_spec.default),
+        allowed_tokens=[str(t) for t in (attr_spec.allowedTokens or [])],
+        documentation=property_doc(prim_def, prop_name, attr_spec),
+    )
+
+
+def schema_property_row(
+    prim_def: Usd.PrimDefinition, prop_name: str, *, name: str | None = None,
+) -> schemas.SchemaPropertySpec | None:
+    """The listing row of a schema attribute or relationship; None when it is neither."""
+    row = schema_attribute_row(prim_def, prop_name, name=name)
+    if row is not None:
+        return row
+    rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
+    if rel_spec is None:
+        return None
+    return schemas.SchemaPropertySpec(
+        name=name or prop_name,
+        kind="relationship",
+        documentation=property_doc(prim_def, prop_name, rel_spec),
+    )
+
+
+def refuse_undeclared(
+    schema_name: str, provided: Iterable[str], valid: set[str], kind: str,
+) -> None:
+    """Refuse the *provided* names that are not among the *valid* ones a schema declares."""
+    unknown = sorted(n for n in provided if n not in valid)
+    if unknown:
+        raise ValueError(
+            f"{schema_name} does not declare {kind}(s) {unknown}. "
+            f"Allowed: {sorted(valid)}",
+        )
 
 
 def property_doc(

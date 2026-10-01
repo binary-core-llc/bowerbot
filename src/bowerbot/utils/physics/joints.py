@@ -31,28 +31,11 @@ def list_properties(joint_type: schemas.PhysicsJointType) -> schemas.PhysicsApiS
             "USD build is missing UsdPhysics.",
         )
 
-    properties: list[schemas.PhysicsPropertySpec] = []
+    properties: list[schemas.SchemaPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is not None:
-            properties.append(schemas.PhysicsPropertySpec(
-                name=prop_name,
-                kind="attribute",
-                type_name=str(attr_spec.typeName),
-                default=usd.values.to_jsonable(attr_spec.default),
-                allowed_tokens=[
-                    str(t) for t in (attr_spec.allowedTokens or [])
-                ],
-                documentation=usd.attributes.property_doc(prim_def, prop_name, attr_spec),
-            ))
-            continue
-        rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
-        if rel_spec is not None:
-            properties.append(schemas.PhysicsPropertySpec(
-                name=prop_name,
-                kind="relationship",
-                documentation=usd.attributes.property_doc(prim_def, prop_name, rel_spec),
-            ))
+        row = usd.attributes.schema_property_row(prim_def, prop_name)
+        if row is not None:
+            properties.append(row)
 
     return schemas.PhysicsApiSchemaInfo(
         api_name=joint_type.value,
@@ -265,12 +248,7 @@ def _refuse_unknown_joint_properties(
             ("physics:body0", "physics:body1"),
         )
     }
-    unknown = sorted(n for n in attributes if n not in valid)
-    if unknown:
-        raise ValueError(
-            f"{joint_type.value} does not declare attribute(s) {unknown}. "
-            f"Allowed: {sorted(valid)}",
-        )
+    usd.attributes.refuse_undeclared(joint_type.value, attributes, valid, "attribute")
 
 
 def _set_body_rel(joint, rel_name: str, target_path: str | None) -> None:

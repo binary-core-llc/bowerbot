@@ -11,8 +11,8 @@ schema lives in.
 from bowerbot.schemas.assets import AssetCategory
 from bowerbot.schemas.assets import AssetFormat
 from bowerbot.schemas.assets import AssetMetadata
+from bowerbot.schemas.attributes import SchemaPropertySpec
 from bowerbot.schemas.cameras import CameraParams
-from bowerbot.schemas.cameras import CameraPropertySpec
 from bowerbot.schemas.cameras import CameraSchemaInfo
 from bowerbot.schemas.intake import DetectionOutcome
 from bowerbot.schemas.intake import FolderDetection
@@ -22,7 +22,6 @@ from bowerbot.schemas.layout import LayoutEntry
 from bowerbot.schemas.layout import LayoutTransform
 from bowerbot.schemas.layout import LinearPattern
 from bowerbot.schemas.lights import LightParams
-from bowerbot.schemas.lights import LightPropertySpec
 from bowerbot.schemas.lights import LightType
 from bowerbot.schemas.lights import LightTypeSchemaInfo
 from bowerbot.schemas.materials import ProceduralMaterialParams
@@ -36,7 +35,6 @@ from bowerbot.schemas.physics import PhysicsApiName
 from bowerbot.schemas.physics import PhysicsApiSchemaInfo
 from bowerbot.schemas.physics import PhysicsJointType
 from bowerbot.schemas.physics import PhysicsPrimSummary
-from bowerbot.schemas.physics import PhysicsPropertySpec
 from bowerbot.schemas.physics import PhysicsSummary
 from bowerbot.schemas.physics import ScenePhysicsSummary
 from bowerbot.schemas.scatter import ScatterAcceptance
@@ -84,7 +82,6 @@ __all__ = [
     "AssetPhysicsSummary",
     "BoolArray",
     "CameraParams",
-    "CameraPropertySpec",
     "CameraSchemaInfo",
     "CollisionGroupsSummary",
     "CollisionGroupSummary",
@@ -101,7 +98,6 @@ __all__ = [
     "LayoutPattern",
     "LayoutTransform",
     "LightParams",
-    "LightPropertySpec",
     "LightType",
     "LightTypeSchemaInfo",
     "LinearPattern",
@@ -110,7 +106,6 @@ __all__ = [
     "PhysicsApiSchemaInfo",
     "PhysicsJointType",
     "PhysicsPrimSummary",
-    "PhysicsPropertySpec",
     "PhysicsSummary",
     "PositionMode",
     "ProceduralMaterialParams",
@@ -134,6 +129,7 @@ __all__ = [
     "SceneObject",
     "ScenePhysicsSummary",
     "SceneVariantsSummary",
+    "SchemaPropertySpec",
     "Severity",
     "SurfaceIndex",
     "SurfaceTriangles",

@@ -51,10 +51,12 @@ def add_asset_material_variant(
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    if variants.masking.enforce_in_asset(
+    masking = authoring.opinions.find_variant_masking_opinions(
         state.stage, asset_dir, default_prim,
-        {path: ["material:binding"] for path in bindings},
-        "relationship", "material",
+        {path: ["material:binding"] for path in bindings}, "relationship",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "relationship", "material",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -207,10 +209,12 @@ def add_asset_attribute_variant(
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    if variants.masking.enforce_in_asset(
+    masking = authoring.opinions.find_variant_masking_opinions(
         state.stage, asset_dir, default_prim,
-        {path: list(attrs) for path, attrs in overrides.items()},
-        "attribute", "attribute",
+        {path: list(attrs) for path, attrs in overrides.items()}, "attribute",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "attribute", "attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -279,10 +283,12 @@ def add_asset_configuration_variant(
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    if variants.masking.enforce_in_asset(
+    masking = authoring.opinions.find_variant_masking_opinions(
         state.stage, asset_dir, default_prim,
-        {path: ["active"] for path in activations},
-        "active", "configuration",
+        {path: ["active"] for path in activations}, "active",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "active", "configuration",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -335,10 +341,11 @@ def add_scene_lighting_attribute_variant(
         state.stage, carrier, overrides.keys(),
     )
 
-    if variants.masking.enforce_in_scene(
-        state.stage,
-        {p: list(a) for p, a in overrides.items()},
-        "attribute", "lighting attribute",
+    masking = authoring.opinions.find_masking_scene_opinions_direct(
+        state.stage, {p: list(a) for p, a in overrides.items()}, "attribute",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "attribute", "lighting attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -408,10 +415,11 @@ def add_scene_lighting_selection_variant(
         state.stage, carrier, activations.keys(),
     )
 
-    if variants.masking.enforce_in_scene(
-        state.stage,
-        {p: ["active"] for p in activations},
-        "active", "lighting selection",
+    masking = authoring.opinions.find_masking_scene_opinions_direct(
+        state.stage, {p: ["active"] for p in activations}, "active",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "active", "lighting selection",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)

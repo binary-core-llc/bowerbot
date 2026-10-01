@@ -27,7 +27,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     """Bring an asset into the project and add it to the scene."""
     asset_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     asset_name = params["asset_name"]
@@ -94,7 +94,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if not raw_entries:
         raise ValueError("place_layout needs a non-empty 'placements' list.")
 
-    project_dir = state.project.path if state.project else None
+    project_dir = state.project_dir
 
     valid, problems = layout.entries.validate(raw_entries)
 
@@ -253,7 +253,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     """Add an asset to another asset: a reference in the parent's ``contents.usda``."""
     asset_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     asset_name = params["asset_name"]

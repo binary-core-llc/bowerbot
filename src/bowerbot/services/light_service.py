@@ -125,7 +125,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         translate=(tx, ty, tz),
         rotate=rotate,
         texture=authoring.textures.stage_scene_texture(
-            state.project.path if state.project else None,
+            state.project_dir,
             params.get("texture"),
         ),
         light_link_includes=light_link_includes,
@@ -190,7 +190,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             translate=translate,
             rotate=rotate,
             texture=authoring.textures.stage_scene_texture(
-                state.project.path if state.project else None, texture,
+                state.project_dir, texture,
             ),
         )
         authoring.stage.save_stage(state.stage)

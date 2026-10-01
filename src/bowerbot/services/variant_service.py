@@ -221,7 +221,7 @@ def add_asset_attribute_variant(
     variants.asset.refuse_unknown_attributes(asset_dir, resolved_types)
     overrides = authoring.textures.stage_asset_typed_overrides(
         overrides, resolved_types,
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
 
@@ -349,7 +349,7 @@ def add_scene_lighting_attribute_variant(
     usd.attributes.refuse_unknown_attributes(state.stage, resolved_types)
     overrides = authoring.textures.stage_asset_typed_overrides(
         overrides, resolved_types,
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
 
@@ -466,7 +466,7 @@ def add_scene_model_selection_variant(
 
     resolved_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     report = authoring.intake.prepare_asset(

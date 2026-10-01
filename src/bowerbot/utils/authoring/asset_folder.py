@@ -389,16 +389,29 @@ def remove_empty_layer(
     asset_dir: Path,
     has_content: Callable[[Usd.Prim], bool],
 ) -> None:
-    """Remove *layer_path* when no prim in it satisfies *has_content*."""
-    stage = Usd.Stage.Open(str(layer_path))
-    if stage:
-        for prim in stage.Traverse():
-            if has_content(prim):
-                return
+    """Delete the side layer *layer_path* when no prim in it satisfies *has_content*.
 
-    layer_path.unlink()
-    rebuild_root_references(asset_dir)
+    Every prim in the layer is looked at, also those under an ``over`` root.
+    """
+    stage = Usd.Stage.Open(str(layer_path))
+    if stage and any(has_content(prim) for prim in stage.TraverseAll()):
+        return
+    del stage
+
+    delete_side_layer(asset_dir, layer_path.name)
     logger.info("Removed empty %s from %s", layer_path.name, asset_dir.name)
+
+
+def delete_side_layer(asset_dir: Path, layer_file: str) -> None:
+    """Take the side layer *layer_file* off the asset root and delete its file."""
+    drop_root_reference(asset_dir, layer_file)
+    layer_path = asset_dir / layer_file
+    if not layer_path.exists():
+        return
+    layer = Sdf.Layer.FindOrOpen(str(layer_path))
+    if layer is not None:
+        layer.Clear()
+    layer_path.unlink()
 
 
 # ── Units and bounds of the geometry ──

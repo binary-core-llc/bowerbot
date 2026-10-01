@@ -761,26 +761,17 @@ SUMMARY
   said: ok: Removed material binding from /Scene/Furniture/Table_01/asset/Top
 
   what changed:
-    - file assets/table/mtl.usda
-    ~ file assets/table/table.usda
-    - prim /Scene/Furniture/Table_01/asset/mtl [Scope]
-    - prim /Scene/Furniture/Table_01/asset/mtl/oak [Material] (and 1 prims inside)
-    - prim /Scene/Furniture/Table_01/asset/mtl/steel [Material] (and 1 prims inside)
-    ~ /Scene/Furniture/Table_01/asset/Leg_L  applied APIs: MaterialBindingAPI → (none)
-    ~ /Scene/Furniture/Table_01/asset/Leg_L  material shown: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
-    ~ /Scene/Furniture/Table_01/asset/Leg_L  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
-    ~ /Scene/Furniture/Table_01/asset/Leg_R  applied APIs: MaterialBindingAPI → (none)
-    ~ /Scene/Furniture/Table_01/asset/Leg_R  material shown: /Scene/Furniture/Table_01/asset/mtl/steel → (none)
-    ~ /Scene/Furniture/Table_01/asset/Leg_R  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/steel → (none)
-    ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: MaterialBindingAPI → (none)
+    ~ file assets/table/mtl.usda
     ~ /Scene/Furniture/Table_01/asset/Top  material shown: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
-    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
+    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak → (no targets)
+    ~ validity: valid → INVALID
+    + issue [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Top.material:binding>
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    no problems spotted by the automatic checks
+    ⚠ this step made the scene invalid
 
 EVIDENCE
 
@@ -796,98 +787,43 @@ full answer:
 
 files:
     assets/table/geo.usda
-  - assets/table/mtl.usda
-  ~ assets/table/table.usda
+  ~ assets/table/mtl.usda
+    assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  - assets/table/mtl.usda (removed)
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -15,5 +15,4 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      -    prepend references = @./mtl.usda@
-       )
-       {
+  ~ assets/table/mtl.usda:
+      --- assets/table/mtl.usda (before)
+      +++ assets/table/mtl.usda (after)
+      @@ -37,5 +37,5 @@
+           )
+           {
+      -        rel material:binding = </table/mtl/oak>
+      +        rel material:binding = None
+           }
+       
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -30,9 +30,6 @@
-               )
-               {
-  -                def Cube "Top" (
-  -                    apiSchemas = ["MaterialBindingAPI"]
-  -                )
-  +                def Cube "Top"
+  @@ -34,5 +34,5 @@
+                   )
                    {
   -                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/oak>
+  +                    rel material:binding
                        double size = 1
                        float3 xformOp:scale = (1.2, 0.05, 0.8)
-  @@ -41,9 +38,6 @@
-                   }
-   
-  -                def Cube "Leg_L" (
-  -                    apiSchemas = ["MaterialBindingAPI"]
-  -                )
-  +                def Cube "Leg_L"
-                   {
-  -                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/oak>
-                       double size = 1
-                       float3 xformOp:scale = (0.05, 0.75, 0.05)
-  @@ -52,40 +46,10 @@
-                   }
-   
-  -                def Cube "Leg_R" (
-  -                    apiSchemas = ["MaterialBindingAPI"]
-  -                )
-  +                def Cube "Leg_R"
-                   {
-  -                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/steel>
-                       double size = 1
-                       float3 xformOp:scale = (0.05, 0.75, 0.05)
-                       double3 xformOp:translate = (0.55, 0.375, 0)
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -
-  -                def Scope "mtl"
-  -                {
-  -                    def Material "oak"
-  -                    {
-  -                        token outputs:surface.connect = </Scene/Furniture/Table_01/asset/mtl/oak/PreviewSurface.outputs:surface>
-  -
-  -                        def Shader "PreviewSurface"
-  -                        {
-  -                            uniform token info:id = "UsdPreviewSurface"
-  -                            color3f inputs:diffuseColor = (0.55, 0.35, 0.2)
-  -                            token outputs:surface
-  -                        }
-  -                    }
-  -
-  -                    def Material "steel"
-  -                    {
-  -                        token outputs:surface.connect = </Scene/Furniture/Table_01/asset/mtl/steel/PreviewSurface.outputs:surface>
-  -
-  -                        def Shader "PreviewSurface"
-  -                        {
-  -                            uniform token info:id = "UsdPreviewSurface"
-  -                            color3f inputs:diffuseColor = (0.6, 0.6, 0.65)
-  -                            token outputs:surface
-  -                        }
-  -                    }
-                   }
-               }
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material /Scene/Furniture/Table_01/asset/mtl/steel
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  valid, no issues
+  INVALID, 1 issue(s):
+  - [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Top.material:binding>

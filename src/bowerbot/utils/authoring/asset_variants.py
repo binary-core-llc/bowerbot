@@ -225,18 +225,8 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     if _has_variant_sets(asset_dir):
         return False
 
-    authoring.asset_folder.drop_root_reference(
-        asset_dir, constants.ASWFLayerNames.VARIANTS,
-    )
     _clear_all_default_variants(asset_dir)
-
-    variants_path = variants_layer_path(asset_dir)
-    if variants_path.exists():
-        layer = Sdf.Layer.FindOrOpen(str(variants_path))
-        if layer is not None:
-            layer.Clear()
-        variants_path.unlink()
-
+    authoring.asset_folder.delete_side_layer(asset_dir, constants.ASWFLayerNames.VARIANTS)
     return True
 
 

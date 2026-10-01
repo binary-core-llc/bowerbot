@@ -553,14 +553,8 @@ SUMMARY
   said: ok: Removed 1 unused material(s) from shelf.
 
   what changed:
-    - file assets/shelf/mtl.usda
-    ~ file assets/shelf/shelf.usda
-    - prim /Scene/Furniture/Shelf_01/asset/mtl [Scope]
-    - prim /Scene/Furniture/Shelf_01/asset/mtl/pine [Material] (and 1 prims inside)
+    ~ file assets/shelf/mtl.usda
     - prim /Scene/Furniture/Shelf_01/asset/mtl/spare [Material] (and 1 prims inside)
-    ~ /Scene/Furniture/Shelf_01/asset/Board  applied APIs: MaterialBindingAPI → (none)
-    ~ /Scene/Furniture/Shelf_01/asset/Board  material shown: /Scene/Furniture/Shelf_01/asset/mtl/pine → (none)
-    ~ /Scene/Furniture/Shelf_01/asset/Board  rel material:binding: /Scene/Furniture/Shelf_01/asset/mtl/pine → (none)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -586,59 +580,39 @@ full answer:
 files:
     assets/shelf/geo.usda
     assets/shelf/lgt.usda
-  - assets/shelf/mtl.usda
-  ~ assets/shelf/shelf.usda
+  ~ assets/shelf/mtl.usda
+    assets/shelf/shelf.usda
     project.json
     scene.usda
 
 file changes:
-  - assets/shelf/mtl.usda (removed)
-  ~ assets/shelf/shelf.usda:
-      --- assets/shelf/shelf.usda (before)
-      +++ assets/shelf/shelf.usda (after)
-      @@ -15,8 +15,5 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      -    prepend references = [
-      -        @./lgt.usda@,
-      -        @./mtl.usda@
-      -    ]
-      +    prepend references = @./lgt.usda@
-       )
-       {
+  ~ assets/shelf/mtl.usda:
+      --- assets/shelf/mtl.usda (before)
+      +++ assets/shelf/mtl.usda (after)
+      @@ -21,16 +21,4 @@
+                   }
+               }
+      -
+      -        def Material "spare"
+      -        {
+      -            token outputs:surface.connect = </shelf/mtl/spare/PreviewSurface.outputs:surface>
+      -
+      -            def Shader "PreviewSurface"
+      -            {
+      -                uniform token info:id = "UsdPreviewSurface"
+      -                color3f inputs:diffuseColor = (0.2, 0.2, 0.2)
+      -                token outputs:surface
+      -            }
+      -        }
+           }
+       
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -30,9 +30,6 @@
-               )
-               {
-  -                def Cube "Board" (
-  -                    apiSchemas = ["MaterialBindingAPI"]
-  -                )
-  +                def Cube "Board"
-                   {
-  -                    rel material:binding = </Scene/Furniture/Shelf_01/asset/mtl/pine>
-                       double size = 1
-                       float3 xformOp:scale = (1, 0.05, 0.3)
-  @@ -47,31 +44,4 @@
-                       double3 xformOp:translate = (0, 0.9, 0)
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -
-  -                def Scope "mtl"
-  -                {
-  -                    def Material "pine"
-  -                    {
-  -                        token outputs:surface.connect = </Scene/Furniture/Shelf_01/asset/mtl/pine/PreviewSurface.outputs:surface>
-  -
-  -                        def Shader "PreviewSurface"
-  -                        {
-  -                            uniform token info:id = "UsdPreviewSurface"
-  -                            color3f inputs:diffuseColor = (0.8, 0.7, 0.5)
-  -                            token outputs:surface
-  -                        }
-  -                    }
+  @@ -62,16 +62,4 @@
+                           }
+                       }
   -
   -                    def Material "spare"
   -                    {
@@ -658,8 +632,9 @@ world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
-  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material (none)
+  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material /Scene/Furniture/Shelf_01/asset/mtl/pine
   /Scene/Furniture/Shelf_01/asset/Bracket  [Cube]  at (0.0000, 0.9000, 0.0000)  bounds (-0.0250, 0.8000, -0.1250)..(0.0250, 1.0000, 0.1250)  material (none)
+  /Scene/Furniture/Shelf_01/asset/mtl  [Scope]
   /Scene/Furniture/Shelf_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.3200, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
   /Scene/Furniture/Shelf_01/asset/lgt/Lamp_A  [SphereLight]  at (-0.3000, 0.9500, 0.0000)  bounds (-0.3200, 0.9300, -0.0200)..(-0.2800, 0.9700, 0.0200)
   /Scene/Furniture/Shelf_01/asset/lgt/Lamp_B  [SphereLight]  at (0.3000, 0.9500, 0.0000)  bounds (0.2800, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
@@ -674,7 +649,7 @@ intent: pine is bound to the Board: is it still there?
 SUMMARY
   call: list_materials()
   current project: golden
-  said: ok: Scene has 0 material(s).
+  said: ok: Scene has 1 material(s).
 
   what changed:
     nothing
@@ -692,14 +667,24 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "material_count": 0,
-    "materials": [],
-    "message": "Scene has 0 material(s)."
+    "material_count": 1,
+    "materials": [
+      {
+        "asset_folder": "shelf",
+        "bound_prims": [
+          "/shelf/Board"
+        ],
+        "material_name": "pine",
+        "material_path": "/shelf/mtl/pine"
+      }
+    ],
+    "message": "Scene has 1 material(s)."
   }
 
 files:
     assets/shelf/geo.usda
     assets/shelf/lgt.usda
+    assets/shelf/mtl.usda
     assets/shelf/shelf.usda
     project.json
     scene.usda
@@ -714,8 +699,9 @@ world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
-  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material (none)
+  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material /Scene/Furniture/Shelf_01/asset/mtl/pine
   /Scene/Furniture/Shelf_01/asset/Bracket  [Cube]  at (0.0000, 0.9000, 0.0000)  bounds (-0.0250, 0.8000, -0.1250)..(0.0250, 1.0000, 0.1250)  material (none)
+  /Scene/Furniture/Shelf_01/asset/mtl  [Scope]
   /Scene/Furniture/Shelf_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.3200, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
   /Scene/Furniture/Shelf_01/asset/lgt/Lamp_A  [SphereLight]  at (-0.3000, 0.9500, 0.0000)  bounds (-0.3200, 0.9300, -0.0200)..(-0.2800, 0.9700, 0.0200)
   /Scene/Furniture/Shelf_01/asset/lgt/Lamp_B  [SphereLight]  at (0.3000, 0.9500, 0.0000)  bounds (0.2800, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
@@ -814,6 +800,7 @@ full answer:
 files:
     assets/shelf/geo.usda
     assets/shelf/lgt.usda
+    assets/shelf/mtl.usda
     assets/shelf/shelf.usda
     project.json
     scene.usda
@@ -828,8 +815,9 @@ world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
-  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material (none)
+  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material /Scene/Furniture/Shelf_01/asset/mtl/pine
   /Scene/Furniture/Shelf_01/asset/Bracket  [Cube]  at (0.0000, 0.9000, 0.0000)  bounds (-0.0250, 0.8000, -0.1250)..(0.0250, 1.0000, 0.1250)  material (none)
+  /Scene/Furniture/Shelf_01/asset/mtl  [Scope]
   /Scene/Furniture/Shelf_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.3200, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
   /Scene/Furniture/Shelf_01/asset/lgt/Lamp_A  [SphereLight]  at (-0.3000, 0.9500, 0.0000)  bounds (-0.3200, 0.9300, -0.0200)..(-0.2800, 0.9700, 0.0200)
   /Scene/Furniture/Shelf_01/asset/lgt/Lamp_B  [SphereLight]  at (0.3000, 0.9500, 0.0000)  bounds (0.2800, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
@@ -847,11 +835,8 @@ SUMMARY
   said: ok: Removed asset light Lamp_A from shelf
 
   what changed:
-    - file assets/shelf/lgt.usda
-    ~ file assets/shelf/shelf.usda
-    - prim /Scene/Furniture/Shelf_01/asset/lgt [Xform]
+    ~ file assets/shelf/lgt.usda
     - prim /Scene/Furniture/Shelf_01/asset/lgt/Lamp_A [SphereLight]
-    - prim /Scene/Furniture/Shelf_01/asset/lgt/Lamp_B [SphereLight]
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -874,32 +859,35 @@ full answer:
 
 files:
     assets/shelf/geo.usda
-  - assets/shelf/lgt.usda
-  ~ assets/shelf/shelf.usda
+  ~ assets/shelf/lgt.usda
+    assets/shelf/mtl.usda
+    assets/shelf/shelf.usda
     project.json
     scene.usda
 
 file changes:
-  - assets/shelf/lgt.usda (removed)
-  ~ assets/shelf/shelf.usda:
-      --- assets/shelf/shelf.usda (before)
-      +++ assets/shelf/shelf.usda (after)
-      @@ -15,5 +15,4 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      -    prepend references = @./lgt.usda@
-       )
-       {
+  ~ assets/shelf/lgt.usda:
+      --- assets/shelf/lgt.usda (before)
+      +++ assets/shelf/lgt.usda (after)
+      @@ -10,11 +10,4 @@
+           def Xform "lgt"
+           {
+      -        def SphereLight "Lamp_A"
+      -        {
+      -            float inputs:radius = 0.02
+      -            double3 xformOp:translate = (-0.3, 0.95, 0)
+      -            uniform token[] xformOpOrder = ["xformOp:translate"]
+      -        }
+      -
+               def SphereLight "Lamp_B"
+               {
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -45,21 +45,4 @@
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-                   }
-  -
-  -                def Xform "lgt"
-  -                {
+  @@ -66,11 +66,4 @@
+                   def Xform "lgt"
+                   {
   -                    def SphereLight "Lamp_A"
   -                    {
   -                        float inputs:radius = 0.02
@@ -907,22 +895,18 @@ composed scene changes:
   -                        uniform token[] xformOpOrder = ["xformOp:translate"]
   -                    }
   -
-  -                    def SphereLight "Lamp_B"
-  -                    {
-  -                        float inputs:radius = 0.02
-  -                        double3 xformOp:translate = (0.3, 0.95, 0)
-  -                        uniform token[] xformOpOrder = ["xformOp:translate"]
-  -                    }
-  -                }
-               }
-           }
+                       def SphereLight "Lamp_B"
+                       {
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
-  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material (none)
+  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material /Scene/Furniture/Shelf_01/asset/mtl/pine
   /Scene/Furniture/Shelf_01/asset/Bracket  [Cube]  at (0.0000, 0.9000, 0.0000)  bounds (-0.0250, 0.8000, -0.1250)..(0.0250, 1.0000, 0.1250)  material (none)
+  /Scene/Furniture/Shelf_01/asset/mtl  [Scope]
+  /Scene/Furniture/Shelf_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (0.2800, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
+  /Scene/Furniture/Shelf_01/asset/lgt/Lamp_B  [SphereLight]  at (0.3000, 0.9500, 0.0000)  bounds (0.2800, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
 
 validation:
   valid, no issues
@@ -934,7 +918,7 @@ intent: is Lamp_B still there?
 SUMMARY
   call: list_scene()
   current project: golden
-  said: ok: Scene has 1 object(s).
+  said: ok: Scene has 2 object(s).
 
   what changed:
     nothing
@@ -952,8 +936,8 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "Scene has 1 object(s).",
-    "object_count": 1,
+    "message": "Scene has 2 object(s).",
+    "object_count": 2,
     "objects": [
       {
         "asset": "assets/shelf/shelf.usda",
@@ -977,12 +961,31 @@ full answer:
         },
         "prim_path": "/Scene/Furniture/Shelf_01/asset",
         "type": "Xform"
+      },
+      {
+        "color": {
+          "b": 1.0,
+          "g": 1.0,
+          "r": 1.0
+        },
+        "exposure": 0.0,
+        "intensity": 1.0,
+        "kind": "light",
+        "light_type": "SphereLight",
+        "position": {
+          "x": 0.3,
+          "y": 0.95,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Furniture/Shelf_01/asset/lgt/Lamp_B"
       }
     ]
   }
 
 files:
     assets/shelf/geo.usda
+    assets/shelf/lgt.usda
+    assets/shelf/mtl.usda
     assets/shelf/shelf.usda
     project.json
     scene.usda
@@ -997,8 +1000,11 @@ world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
   /Scene/Furniture/Shelf_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.8000, -0.1500)..(0.5000, 1.0250, 0.1500)
-  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material (none)
+  /Scene/Furniture/Shelf_01/asset/Board  [Cube]  at (0.0000, 1.0000, 0.0000)  bounds (-0.5000, 0.9750, -0.1500)..(0.5000, 1.0250, 0.1500)  material /Scene/Furniture/Shelf_01/asset/mtl/pine
   /Scene/Furniture/Shelf_01/asset/Bracket  [Cube]  at (0.0000, 0.9000, 0.0000)  bounds (-0.0250, 0.8000, -0.1250)..(0.0250, 1.0000, 0.1250)  material (none)
+  /Scene/Furniture/Shelf_01/asset/mtl  [Scope]
+  /Scene/Furniture/Shelf_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (0.2800, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
+  /Scene/Furniture/Shelf_01/asset/lgt/Lamp_B  [SphereLight]  at (0.3000, 0.9500, 0.0000)  bounds (0.2800, 0.9300, -0.0200)..(0.3200, 0.9700, 0.0200)
 
 validation:
   valid, no issues

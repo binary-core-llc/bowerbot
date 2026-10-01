@@ -14,8 +14,6 @@ from bowerbot.schemas.assets import AssetMetadata
 from bowerbot.schemas.attributes import SchemaPropertySpec
 from bowerbot.schemas.cameras import CameraParams
 from bowerbot.schemas.cameras import CameraSchemaInfo
-from bowerbot.schemas.intake import DetectionOutcome
-from bowerbot.schemas.intake import FolderDetection
 from bowerbot.schemas.intake import IntakeReport
 from bowerbot.schemas.layout import GridPattern
 from bowerbot.schemas.layout import LayoutEntry
@@ -85,9 +83,7 @@ __all__ = [
     "CameraSchemaInfo",
     "CollisionGroupsSummary",
     "CollisionGroupSummary",
-    "DetectionOutcome",
     "FloatArray",
-    "FolderDetection",
     "GridPattern",
     "HDRIFormat",
     "IntakeReport",

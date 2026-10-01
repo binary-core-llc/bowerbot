@@ -3,28 +3,8 @@
 
 """Asset-folder intake schemas."""
 
-from enum import StrEnum
-
 from pydantic import BaseModel
 from pydantic import Field
-
-
-class DetectionOutcome(StrEnum):
-    """Classification for ``detect_folder_root``."""
-
-    UNAMBIGUOUS = "unambiguous"  # a single root file was identified
-    AMBIGUOUS = "ambiguous"      # multiple independent USD files, no clear root
-    EMPTY = "empty"              # folder has no USD files
-
-
-class FolderDetection(BaseModel):
-    """Outcome of inspecting a source folder for a canonical root."""
-
-    outcome: DetectionOutcome
-    folder: str
-    root: str | None = None
-    candidates: list[str] = Field(default_factory=list)
-    reason: str = ""
 
 
 class IntakeReport(BaseModel):
@@ -38,7 +18,5 @@ class IntakeReport(BaseModel):
     was_renamed: bool
 
     files_copied: int
-    localized_layers: list[str] = Field(default_factory=list)
-    localized_assets: list[str] = Field(default_factory=list)
 
     warnings: list[str] = Field(default_factory=list)

@@ -13,6 +13,8 @@ class LibraryRules:
     USD_EXTENSIONS: frozenset[str] = frozenset(f.value for f in schemas.AssetFormat)
     # Top-level library folders that never hold a package.
     NON_ASSET_DIRS: frozenset[str] = frozenset({"cache", "maps", "materials"})
+    # How many examples a refusal names for each rule a library asset breaks.
+    PROBLEM_EXAMPLES: int = 3
     # The category filter that lists every category.
     ANY_CATEGORY: str = "all"
     # The only categories scan_library assigns: package roots, loose materials,

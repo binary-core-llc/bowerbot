@@ -194,8 +194,6 @@ full answer:
     "intake": {
       "asset_folder": "unfrozen",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "unfrozen.usda",
       "root_original_name": null,
       "warnings": [],
@@ -427,8 +425,6 @@ full answer:
     "intake": {
       "asset_folder": "rooted_mesh",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "rooted_mesh.usda",
       "root_original_name": null,
       "warnings": [],

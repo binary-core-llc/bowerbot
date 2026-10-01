@@ -1,6 +1,6 @@
-##### scenario: variants/refusals
+##### scenario: placement/shapes_that_are_refused
 ##### convention: Y-up, 1.0 meters per unit
-##### Variant calls that cannot work.
+##### Library assets that are not a geometry file, an asset folder or a .usdz are refused before anything is copied, and the answer says which rule each one breaks.
 
 
 === step 00: create_project
@@ -101,7 +101,271 @@ validation:
 
 
 === step 01: place_asset
-intent: place table.usda as Table
+intent: a file with a material and a texture path
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/plank.usda", asset_name="Plank", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: plank.usda cannot be used as it is: it holds materials (/plank/mtl/wood); it binds materials (/plank/Board); it has file paths such as textures (./textures/wood_diffuse.png). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "plank.usda cannot be used as it is: it holds materials (/plank/mtl/wood); it binds materials (/plank/Board); it has file paths such as textures (./textures/wood_diffuse.png). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: place_asset
+intent: a file that points to another file
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/bin.usda", asset_name="Bin", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: bin.usda cannot be used as it is: it points to other files (./bin_model.usda). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "bin.usda cannot be used as it is: it points to other files (./bin_model.usda). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: a folder with no geo.usda
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/cabinet/cabinet.usda", asset_name="Cabinet", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: cabinet/ cannot be used as it is: it has no geo.usda; cabinet.usda points to ./cabinet_model.usda, ./look.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant); look.usda holds materials (/cabinet/mtl/walnut); look.usda binds materials (/cabinet/Body). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "cabinet/ cannot be used as it is: it has no geo.usda; cabinet.usda points to ./cabinet_model.usda, ./look.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant); look.usda holds materials (/cabinet/mtl/walnut); look.usda binds materials (/cabinet/Body). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: place_asset
+intent: a USD file in a sub-folder
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/workbench/workbench.usda", asset_name="Workbench", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: workbench/ cannot be used as it is: it has USD files in sub-folders (parts/vise.usda); workbench.usda points to ./parts/vise.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "workbench/ cannot be used as it is: it has USD files in sub-folders (parts/vise.usda); workbench.usda points to ./parts/vise.usda: the root prim may only point to geo.usda and the side layers (other geometry files belong in a variant). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: place_asset
+intent: materials inside geo.usda
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/stand/stand.usda", asset_name="Stand", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: stand/ cannot be used as it is: geo.usda holds materials (/stand/mtl/wood); geo.usda binds materials (/stand/Top); geo.usda has file paths such as textures (../textures/wood_diffuse.png); geo.usda points outside the folder (../textures/wood_diffuse.png). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "stand/ cannot be used as it is: geo.usda holds materials (/stand/mtl/wood); geo.usda binds materials (/stand/Top); geo.usda has file paths such as textures (../textures/wood_diffuse.png); geo.usda points outside the folder (../textures/wood_diffuse.png). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: place_asset
+intent: not a USD file
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/hdri/studio.hdr", asset_name="Sky", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: studio.hdr cannot be used as it is: it is not a USD file. BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "studio.hdr cannot be used as it is: it is not a USD file. BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: place_asset
+intent: an accepted file
 
 SUMMARY
   call: place_asset(asset_file_path="<LIBRARY>/table.usda", asset_name="Table", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
@@ -336,13 +600,13 @@ validation:
   valid, no issues
 
 
-=== step 02: add_asset_configuration_variant
-intent: a set name with a space
+=== step 08: add_asset_to_asset
+intent: the same rule when adding to another asset
 
 SUMMARY
-  call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="bad name", variant_name="x", activations={"/Scene/Furniture/Table_01/asset/Leg_L": false})
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/plank.usda", asset_name="Plank", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Invalid variant set name: 'bad name'
+  said: REFUSED: plank.usda cannot be used as it is: it holds materials (/plank/mtl/wood); it binds materials (/plank/Board); it has file paths such as textures (./textures/wood_diffuse.png). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
 
   what changed:
     nothing
@@ -360,7 +624,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Invalid variant set name: 'bad name'"
+    "error": "plank.usda cannot be used as it is: it holds materials (/plank/mtl/wood); it binds materials (/plank/Board); it has file paths such as textures (./textures/wood_diffuse.png). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
   }
 
 files:
@@ -387,21 +651,16 @@ validation:
   valid, no issues
 
 
-=== step 03: add_asset_configuration_variant
-intent: a part that does not exist
+=== step 09: place_layout
+intent: and in a layout
 
 SUMMARY
-  call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="legs", variant_name="x", activations={"/Scene/Furniture/Table_01/asset/Nope": false})
+  call: place_layout(placements=[{"asset": "<LIBRARY>/bin.usda", "group": "Props", "transforms": [{"translate": [2.0, 0.0, 0.0]}]}])
   current project: golden
-  said: ok: Added configuration variant 'x' to 'legs' in table
+  said: REFUSED: asset intake failed (1 asset(s)): bin.usda: bin.usda cannot be used as it is: it points to other files (./bin_model.usda). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
 
   what changed:
-    ~ file assets/table/table.usda
-    + file assets/table/variants.usda
-    + prim /Scene/Furniture/Table_01/asset/Nope [typeless]
-          active: false
-          specifier: over
-    ~ /Scene/Furniture/Table_01/asset  variant set legs: (none) → x of x
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -416,59 +675,77 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "activations": {
-      "/table/Nope": false
-    },
-    "asset_path": "<PROJECT>/assets/table",
-    "category": "configuration",
-    "default_selected": false,
-    "message": "Added configuration variant 'x' to 'legs' in table",
-    "variant_name": "x",
-    "variant_set": "legs"
+    "error": "asset intake failed (1 asset(s)):\nbin.usda: bin.usda cannot be used as it is: it points to other files (./bin_model.usda). BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
   }
 
 files:
     assets/table/geo.usda
-  ~ assets/table/table.usda
-  + assets/table/variants.usda
+    assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -15,4 +15,8 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      +    prepend references = @./variants.usda@
-      +    variants = {
-      +        string legs = "x"
-      +    }
-       )
-       {
-  + assets/table/variants.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "table"
-      )
+  (none)
 
-      over "table" (
-          prepend variantSets = "legs"
-      )
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 10: list_project_assets
+intent: only the table was copied
+
+SUMMARY
+  call: list_project_assets()
+  current project: golden
+  said: ok: Project has 1 asset(s), 0 unused.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "assets": [
       {
-          variantSet "legs" = {
-              "x" {
-                  over "Nope" (
-                      active = false
-                  )
-                  {
-                  }
-
-              }
-          }
+        "in_scene": true,
+        "name": "table",
+        "type": "folder"
       }
+    ],
+    "message": "Project has 1 asset(s), 0 unused.",
+    "total": 1,
+    "unused_count": 0
+  }
 
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
 
 composed scene changes:
   (none)
@@ -485,199 +762,19 @@ validation:
   valid, no issues
 
 
-=== step 04: add_asset_material_variant
-intent: a material that does not exist
+=== step 11: search_assets
+intent: the listing says why
 
 SUMMARY
-  call: add_asset_material_variant(prim_path="/Scene/Furniture/Table_01", variant_set="finish", variant_name="x", bindings={"/Scene/Furniture/Table_01/asset/Top": "/Scene/Furniture/Table_01/asset/mtl/nope"})
+  call: search_assets(query="plank")
   current project: golden
-  said: ok: Added material variant 'x' to 'finish' in table
-
-  what changed:
-    ~ file assets/table/table.usda
-    ~ file assets/table/variants.usda
-    ~ /Scene/Furniture/Table_01/asset  variant set finish: (none) → x of x
-    ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
-    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/nope
-    ~ validity: valid → INVALID
-    + issue [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-    + issue [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
-
-  project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
-
-  checks:
-    ⚠ this step made the scene invalid
-    ⚠ left behind a dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "asset_path": "<PROJECT>/assets/table",
-    "bindings": {
-      "/table/Top": "/table/mtl/nope"
-    },
-    "category": "material",
-    "default_selected": false,
-    "message": "Added material variant 'x' to 'finish' in table",
-    "variant_name": "x",
-    "variant_set": "finish"
-  }
-
-files:
-    assets/table/geo.usda
-  ~ assets/table/table.usda
-  ~ assets/table/variants.usda
-    project.json
-    scene.usda
-
-file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -17,4 +17,5 @@
-           prepend references = @./variants.usda@
-           variants = {
-      +        string finish = "x"
-               string legs = "x"
-           }
-  ~ assets/table/variants.usda:
-      --- assets/table/variants.usda (before)
-      +++ assets/table/variants.usda (after)
-      @@ -5,5 +5,5 @@
-       
-       over "table" (
-      -    prepend variantSets = "legs"
-      +    prepend variantSets = ["legs", "finish"]
-       )
-       {
-      @@ -18,4 +18,15 @@
-               }
-           }
-      +    variantSet "finish" = {
-      +        "x" {
-      +            over "Top" (
-      +                prepend apiSchemas = ["MaterialBindingAPI"]
-      +            )
-      +            {
-      +                custom rel material:binding = </table/mtl/nope>
-      +            }
-      +
-      +        }
-      +    }
-       }
-       
-
-composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -30,6 +30,9 @@
-               )
-               {
-  -                def Cube "Top"
-  +                def Cube "Top" (
-  +                    apiSchemas = ["MaterialBindingAPI"]
-  +                )
-                   {
-  +                    custom rel material:binding = </Scene/Furniture/Table_01/asset/mtl/nope>
-                       double size = 1
-                       float3 xformOp:scale = (1.2, 0.05, 0.8)
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-
-validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
-
-
-=== step 05: select_asset_variant
-intent: a set that does not exist
-
-SUMMARY
-  call: select_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="nope", variant_name="x")
-  current project: golden
-  said: ok: Selected 'x' for 'nope' in table
-
-  what changed:
-    ~ file assets/table/table.usda
-
-  project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
-
-  checks:
-    ⚠ no prim at or under /Scene/Furniture/Table_01 has a variant set named 'nope'
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "asset_path": "<PROJECT>/assets/table",
-    "message": "Selected 'x' for 'nope' in table",
-    "variant_name": "x",
-    "variant_set": "nope"
-  }
-
-files:
-    assets/table/geo.usda
-  ~ assets/table/table.usda
-    assets/table/variants.usda
-    project.json
-    scene.usda
-
-file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -19,4 +19,5 @@
-               string finish = "x"
-               string legs = "x"
-      +        string nope = "x"
-           }
-       )
-
-composed scene changes:
-  (none)
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-
-validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
-
-
-=== step 06: remove_asset_variant
-
-SUMMARY
-  call: remove_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="nope", variant_name="x")
-  current project: golden
-  said: ok: Variant 'x' not found in 'nope'
+  said: ok
 
   what changed:
     nothing
 
   project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -689,17 +786,21 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_path": "<PROJECT>/assets/table",
-    "message": "Variant 'x' not found in 'nope'",
-    "removed": false,
-    "variant_name": "x",
-    "variant_set": "nope"
+    "results": [
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "plank",
+        "path": "<LIBRARY>/plank.usda"
+      }
+    ],
+    "total_matches": 1,
+    "truncated": false
   }
 
 files:
     assets/table/geo.usda
     assets/table/table.usda
-    assets/table/variants.usda
     project.json
     scene.usda
 
@@ -718,113 +819,4 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
-
-
-=== step 07: list_variants
-
-SUMMARY
-  call: list_variants(prim_path="/Scene/Nope")
-  current project: golden
-  said: REFUSED: Prim not found in scene: /Scene/Nope
-
-  what changed:
-    nothing
-
-  project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
-
-  checks:
-    no problems spotted by the automatic checks
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "error": "Prim not found in scene: /Scene/Nope"
-  }
-
-files:
-    assets/table/geo.usda
-    assets/table/table.usda
-    assets/table/variants.usda
-    project.json
-    scene.usda
-
-file changes:
-  (none)
-
-composed scene changes:
-  (none)
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-
-validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
-
-
-=== step 08: add_asset_configuration_variant
-intent: no activations
-
-SUMMARY
-  call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="legs", variant_name="x", activations={})
-  current project: golden
-  said: REFUSED: 'activations' is required and must be a non-empty object. Each entry maps a prim path to a boolean active flag (e.g. {'/Geo/Door': false}).
-
-  what changed:
-    nothing
-
-  project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
-
-  checks:
-    no problems spotted by the automatic checks
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "error": "'activations' is required and must be a non-empty object. Each entry maps a prim path to a boolean active flag (e.g. {'/Geo/Door': false})."
-  }
-
-files:
-    assets/table/geo.usda
-    assets/table/table.usda
-    assets/table/variants.usda
-    project.json
-    scene.usda
-
-file changes:
-  (none)
-
-composed scene changes:
-  (none)
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-
-validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+  valid, no issues

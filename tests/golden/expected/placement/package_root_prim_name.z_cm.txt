@@ -109,8 +109,8 @@ SUMMARY
   said: ok: Placed Kit at /Scene/Furniture/Kit_01.
 
   what changed:
+    + file assets/kit/geo.usda
     + file assets/kit/kit.usda
-    + file assets/kit/kit_model.usda
     ~ file scene.usda
     + prim /Scene/Furniture [typeless]
     + prim /Scene/Furniture/Kit_01 [Xform]
@@ -160,8 +160,6 @@ full answer:
     "intake": {
       "asset_folder": "kit",
       "files_copied": 2,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "kit.usda",
       "root_original_name": null,
       "warnings": [],
@@ -178,38 +176,13 @@ full answer:
   }
 
 files:
+  + assets/kit/geo.usda
   + assets/kit/kit.usda
-  + assets/kit/kit_model.usda
     project.json
   ~ scene.usda
 
 file changes:
-  + assets/kit/kit.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "Cupboard"
-          metersPerUnit = 1
-          upAxis = "Y"
-      )
-
-      def Xform "Cupboard" (
-          assetInfo = {
-              asset identifier = @./kit.usda@
-              string name = "kit"
-              string version = "1.0"
-          }
-          prepend inherits = </_class_Cupboard>
-          kind = "component"
-          prepend payload = @./kit_model.usda@
-      )
-      {
-      }
-
-      class Xform "_class_Cupboard"
-      {
-      }
-
-  + assets/kit/kit_model.usda (new):
+  + assets/kit/geo.usda (new):
       #usda 1.0
       (
           defaultPrim = "Cupboard"
@@ -234,6 +207,31 @@ file changes:
               double3 xformOp:translate = (0, 0.5, 0.225)
               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
           }
+      }
+
+  + assets/kit/kit.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Cupboard"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Cupboard" (
+          assetInfo = {
+              asset identifier = @./kit.usda@
+              string name = "kit"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_Cupboard>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_Cupboard"
+      {
       }
 
   ~ scene.usda:
@@ -393,8 +391,8 @@ full answer:
   }
 
 files:
+    assets/kit/geo.usda
     assets/kit/kit.usda
-    assets/kit/kit_model.usda
     project.json
     scene.usda
 
@@ -455,8 +453,8 @@ full answer:
   }
 
 files:
+    assets/kit/geo.usda
   ~ assets/kit/kit.usda
-    assets/kit/kit_model.usda
   + assets/kit/variants.usda
     project.json
     scene.usda
@@ -467,7 +465,7 @@ file changes:
       +++ assets/kit/kit.usda (after)
       @@ -15,4 +15,8 @@
            kind = "component"
-           prepend payload = @./kit_model.usda@
+           prepend payload = @./geo.usda@
       +    prepend references = @./variants.usda@
       +    variants = {
       +        string door = "open"
@@ -566,8 +564,8 @@ full answer:
   }
 
 files:
+    assets/kit/geo.usda
     assets/kit/kit.usda
-    assets/kit/kit_model.usda
     assets/kit/variants.usda
     project.json
     scene.usda
@@ -640,8 +638,8 @@ full answer:
   }
 
 files:
+    assets/kit/geo.usda
     assets/kit/kit.usda
-    assets/kit/kit_model.usda
     assets/kit/variants.usda
     project.json
     scene.usda
@@ -696,8 +694,8 @@ full answer:
   }
 
 files:
+    assets/kit/geo.usda
   ~ assets/kit/kit.usda
-    assets/kit/kit_model.usda
   - assets/kit/variants.usda
     project.json
     scene.usda
@@ -708,7 +706,7 @@ file changes:
       +++ assets/kit/kit.usda (after)
       @@ -15,8 +15,4 @@
            kind = "component"
-           prepend payload = @./kit_model.usda@
+           prepend payload = @./geo.usda@
       -    prepend references = @./variants.usda@
       -    variants = {
       -        string door = "open"
@@ -774,8 +772,8 @@ full answer:
   }
 
 files:
+    assets/kit/geo.usda
     assets/kit/kit.usda
-    assets/kit/kit_model.usda
     project.json
     scene.usda
 
@@ -868,8 +866,8 @@ full answer:
   }
 
 files:
+    assets/kit/geo.usda
     assets/kit/kit.usda
-    assets/kit/kit_model.usda
     project.json
     scene.usda
 

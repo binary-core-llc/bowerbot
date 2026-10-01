@@ -166,8 +166,6 @@ full answer:
     "intake": {
       "asset_folder": "table",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "table.usda",
       "root_original_name": null,
       "warnings": [],

@@ -214,8 +214,6 @@ full answer:
     "intake": {
       "asset_folder": "bare",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "bare.usda",
       "root_original_name": null,
       "warnings": [],
@@ -401,8 +399,6 @@ full answer:
     "intake": {
       "asset_folder": "bare_kit",
       "files_copied": 2,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "bare_kit.usda",
       "root_original_name": null,
       "warnings": [],
@@ -590,8 +586,6 @@ full answer:
     "intake": {
       "asset_folder": "chair_cm",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "chair_cm.usda",
       "root_original_name": null,
       "warnings": [],
@@ -796,8 +790,6 @@ full answer:
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "crate.usda",
       "root_original_name": null,
       "warnings": [],
@@ -1118,8 +1110,6 @@ full answer:
     "intake": {
       "asset_folder": "post_z",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "post_z.usda",
       "root_original_name": null,
       "warnings": [],
@@ -1342,8 +1332,6 @@ full answer:
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "crate.usda",
       "root_original_name": null,
       "warnings": [],

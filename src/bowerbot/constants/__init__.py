@@ -16,7 +16,6 @@ from bowerbot.constants.asset_folder import AssetFolderRules
 from bowerbot.constants.asset_folder import ASWFLayerNames
 from bowerbot.constants.cameras import CameraDefaults
 from bowerbot.constants.cameras import CameraTuning
-from bowerbot.constants.intake import IntakeRules
 from bowerbot.constants.library import LibraryDefaults
 from bowerbot.constants.library import LibraryRules
 from bowerbot.constants.lights import LightRules
@@ -47,7 +46,6 @@ __all__ = [
     "AssetFolderRules",
     "CameraDefaults",
     "CameraTuning",
-    "IntakeRules",
     "LibraryDefaults",
     "LibraryRules",
     "LightRules",

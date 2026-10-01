@@ -21,7 +21,8 @@ USD-family files: `.usd`, `.usda`, `.usdc`, `.usdz`
 
 ## Asset Categories
 
-Every result is `{name, path, format, category}`. Use `category` to pick
+Every result is `{name, path, format, category}`, plus `cannot_be_used`
+(the reason) when BowerBot would refuse to place it. Use `category` to pick
 the next tool, and forward the result's `path` verbatim as that tool's
 file argument: `path` -> `place_asset`'s `asset_file_path` for
 `package`/`geo`, or `path` -> `bind_material`'s `material_file` for `mtl`.
@@ -32,34 +33,38 @@ file argument: `path` -> `place_asset`'s `asset_file_path` for
 | `geo` | Geometry (3D meshes, models) | `place_asset` |
 | `mtl` | Material definitions (under `/mtl/`) | `bind_material` |
 
-### ASWF Asset Folders
-A typical asset folder follows the ASWF USD Working Group standard:
-```
-single_table/
-  single_table.usda   <- root file
-  geo.usda            <- geometry
-  mtl.usda            <- materials + bindings
-  maps/               <- textures
-```
+### The shapes BowerBot accepts
 
-Detection is composition-aware: a folder still counts as a `package`
-when the root filename does not match the folder name (e.g.
-`wall/root.usd` next to `wall/geo.usd`). Internal layer files (geo,
-mtl, lgt, contents) are NOT listed separately. When placing a package,
-`place_asset` copies the entire folder and makes it self-contained
-inside the project.
+An asset can be placed only when it has one of these shapes:
 
-Loose files at the library root (e.g. `library/table.usda`) are
-classified individually and wrapped into a fresh ASWF folder when
-placed.
+- **Geometry file** (`geo`): a single `.usd`/`.usda`/`.usdc` with one root
+  prim and nothing but geometry: no materials, no lights, no links to other
+  files, no texture paths. It is wrapped into a fresh asset folder when placed.
+- **Asset folder** (`package`): a folder with a root file named like the
+  folder, `geo.usda` (geometry only), and optionally `mtl.usda`, `lgt.usda`,
+  `phy.usda`, `variants.usda` and extra geometry files for LODs:
+  ```
+  single_table/
+    single_table.usda   <- root file, named like the folder
+    geo.usda            <- geometry
+    mtl.usda            <- materials + bindings
+    maps/               <- textures, inside the folder
+  ```
+  Nothing in it points outside the folder. Its layer files are not listed
+  separately; `place_asset` copies the whole folder.
+- **`.usdz`**: placed as it is. BowerBot reads its units and up axis and fits the placement to the project. If the `.usdz` does not declare them, it is taken to match the project; if it doesn't, export it again with the right values.
+
+Anything else is refused, and nothing is copied. A result that would be
+refused carries `cannot_be_used` with the reason: do not pass it to
+`place_asset`; tell the user what the asset needs instead.
 
 - `search_assets("table")` searches everywhere by name; filter the returned list by the result's `category` field if needed
 - `list_assets(category="package")` browses every asset folder in the library
 
 ## Behavior
-- Detects ASWF asset folders at the top level of the library, then
-  scans loose files recursively
+- An asset folder is a top-level folder with a root file named like it;
+  every other USD file is listed as a single file, found recursively
 - Search matches both the folder name and the root file stem
-- Classifies each loose file by inspecting its USD contents
+- Classifies each single file by inspecting its USD contents
 - Includes assets downloaded by any cloud provider (Sketchfab, etc.)
 - Use the `category` field to pick the right tool — never guess

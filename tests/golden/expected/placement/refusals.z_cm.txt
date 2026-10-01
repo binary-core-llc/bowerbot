@@ -106,7 +106,7 @@ intent: a file that does not exist
 SUMMARY
   call: place_asset(asset_file_path="<LIBRARY>/nope.usda", asset_name="Nope", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/nope.usda@'
+  said: REFUSED: Asset file not found: <LIBRARY>/nope.usda
 
   what changed:
     nothing
@@ -124,7 +124,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/nope.usda@'"
+    "error": "Asset file not found: <LIBRARY>/nope.usda"
   }
 
 files:
@@ -150,7 +150,7 @@ intent: not a USD file
 SUMMARY
   call: place_asset(asset_file_path="<LIBRARY>/hdri/studio.hdr", asset_name="Hdr", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::SdfLayer::_OpenLayerAndUnlockRegistry' at line 3517 in file /opt/USD/pxr/usd/sdf/layer.cpp : 'Cannot determine file format for @<LIBRARY>/hdri/studio.hdr:SDF_FORMAT_ARGS:target=usd@' Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/hdri/studio.hdr@'
+  said: REFUSED: studio.hdr cannot be used as it is: it is not a USD file. BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz.
 
   what changed:
     nothing
@@ -168,7 +168,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfLayer::_OpenLayerAndUnlockRegistry' at line 3517 in file /opt/USD/pxr/usd/sdf/layer.cpp : 'Cannot determine file format for @<LIBRARY>/hdri/studio.hdr:SDF_FORMAT_ARGS:target=usd@'\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/hdri/studio.hdr@'"
+    "error": "studio.hdr cannot be used as it is: it is not a USD file. BowerBot accepts a geometry file (one root prim, nothing but geometry), an asset folder (<name>/<name>.usda, geo.usda, and optionally mtl.usda, lgt.usda, phy.usda, variants.usda and extra geometry files, with its textures inside the folder), or a .usdz."
   }
 
 files:
@@ -344,8 +344,6 @@ full answer:
     "intake": {
       "asset_folder": "table",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "table.usda",
       "root_original_name": null,
       "warnings": [],

@@ -13,7 +13,6 @@ from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
-from pxr import UsdUtils
 
 from tests import _helpers
 
@@ -844,36 +843,32 @@ def _packages(lib: Path) -> dict[str, Path]:
     }
 
 
-def test_a_package_keeps_the_files_its_root_points_to():
-    """Importing a package, then adding and removing a layer, keeps its geometry and materials."""
+def _refused(state, project, source: Path, folder_name: str) -> str:
+    """Place *source*, expect a refusal that copied nothing, and return its message."""
+    placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+        "asset_file_path": str(source), "asset_name": folder_name, "group": "Props",
+        "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+    }))
+    assert not placed.success, f"{folder_name} was placed"
+    assert "cannot be used as it is" in placed.error
+    assert not (project.assets_dir / folder_name).exists(), f"{folder_name} was copied"
+    return placed.error
+
+
+def test_a_folder_in_another_layout_is_refused():
+    """A folder whose root points to files of its own is refused, and nothing is copied."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         lib = tmp_path / "lib"
         state.library_dir = lib
+        expected = {
+            "shelf": "it has no geo.usda",
+            "desk": "desk.usda points to ./drawers.usda",
+            "lamp": "it has USD files in sub-folders (parts/body.usda)",
+            "stool": "it has no geo.usda",
+        }
         for name, source in _packages(lib).items():
-            expected = _geometry(source)
-            assert expected, f"{name}: the source package has no geometry"
-
-            placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
-                "asset_file_path": str(source), "asset_name": name, "group": "Props",
-                "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-            }))
-            assert placed.success, placed.error
-            copy = project.assets_dir / name / f"{name}.usda"
-            assert _geometry(copy) == expected, f"{name}: changed on import"
-
-            light = asyncio.run(_helpers.exec_tool(state, "create_light", {
-                "asset_prim_path": placed.data["prim_path"],
-                "light_type": "SphereLight", "light_name": "Bulb",
-            }))
-            assert light.success, light.error
-            assert _geometry(copy) == expected, f"{name}: changed when a light was added"
-
-            removed = asyncio.run(_helpers.exec_tool(state, "remove_light", {
-                "prim_path": light.data["prim_path"],
-            }))
-            assert removed.success, removed.error
-            assert _geometry(copy) == expected, f"{name}: changed when the light was removed"
+            assert expected[name] in _refused(state, project, source, name)
 
 
 # ── the asset's box: its real geometry ──
@@ -883,30 +878,6 @@ def _exec(state, tool: str, params: dict):
     result = asyncio.run(_helpers.exec_tool(state, tool, params))
     assert result.success, result.error
     return result.data
-
-
-def test_the_asset_box_counts_every_file_the_root_composes():
-    """'Above' and 'on top' measure a package's own model file, not only geo.usda."""
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, project = _setup(tmp)
-        state.library_dir = tmp_path / "lib"
-        shelf = _packages(state.library_dir)["shelf"]  # a 1 m box in shelf_model.usda
-        parent = _exec(state, "place_asset", {
-            "asset_file_path": str(shelf), "asset_name": "Shelf", "group": "Props",
-            "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
-        })["prim_path"]
-
-        light = _exec(state, "create_light", {
-            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
-        })
-        assert _world_position(project, light["prim_path"]) == (3.0, 1.5, 4.0)
-
-        book = _exec(state, "add_asset_to_asset", {
-            "asset_file_path": str(_asset(tmp_path, "book")), "asset_name": "Book",
-            "parent_prim_path": parent, "group": "Props", "position_mode": "bounds_offset",
-            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-        })
-        assert _world_position(project, book["prim_path"]) == (3.0, 1.0, 4.0)
 
 
 def test_the_asset_box_ignores_its_lights_and_added_assets():
@@ -983,29 +954,12 @@ def _add_texture(file: Path, prim_path: str, texture: str) -> None:
     reader = UsdShade.Shader.Define(stage, material.GetPath().AppendChild("Diffuse"))
     reader.CreateIdAttr("UsdUVTexture")
     reader.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(texture)
-    UsdShade.MaterialBindingAPI.Apply(stage.GetPrimAtPath(prim_path)).Bind(material)
+    UsdShade.MaterialBindingAPI.Apply(stage.OverridePrim(prim_path)).Bind(material)
     stage.Save()
 
 
-def _everything_is_in(asset_dir: Path) -> None:
-    """Every file the asset depends on is found, and is inside its own folder."""
-    root_file = asset_dir / f"{asset_dir.name}.usda"
-    layers, assets, unresolved = UsdUtils.ComputeAllDependencies(str(root_file))
-    assert [str(u) for u in unresolved] == [], f"{asset_dir.name}: broken links"
-    for found in [*(lyr.realPath for lyr in layers), *(str(a) for a in assets)]:
-        assert asset_dir.resolve() in Path(found).resolve().parents, f"{found} is outside"
-
-
-def _place_loose(state, source: Path) -> None:
-    placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
-        "asset_file_path": str(source), "asset_name": source.stem, "group": "Props",
-        "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-    }))
-    assert placed.success, placed.error
-
-
-def test_a_loose_file_brings_what_it_depends_on():
-    """A texture, a model file, a part file and a sublayer all arrive with the loose file."""
+def test_a_file_that_needs_other_files_is_refused():
+    """A single file with a material, a texture, a reference or a sublayer is refused."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         lib = tmp_path / "lib"
@@ -1020,96 +974,78 @@ def test_a_loose_file_brings_what_it_depends_on():
         _model_file(lib / "bin_model.usda", "bin", "Body", *box)
         _package_root(lib / "bin.usda", "bin", references=["./bin_model.usda"])
 
-        _model_file(lib / "leg.usda", "leg", "Leg", (0.0, 0.35, 0.0), (0.05, 0.7, 0.05))
-        _model_file(lib / "stand.usda", "stand", "Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
-        stand = Usd.Stage.Open(str(lib / "stand.usda"))
-        stand.DefinePrim("/stand/LegA", "Xform").GetReferences().AddReference("./leg.usda")
-        stand.Save()
-
         _model_file(lib / "deck_geo.usda", "deck", "Board", *box)
         deck = Usd.Stage.CreateNew(str(lib / "deck.usda"))
-        UsdGeom.SetStageMetersPerUnit(deck, 1.0)
-        UsdGeom.SetStageUpAxis(deck, UsdGeom.Tokens.y)
-        deck.SetDefaultPrim(deck.OverridePrim("/deck"))
+        deck.SetDefaultPrim(deck.DefinePrim("/deck", "Xform"))
         deck.GetRootLayer().subLayerPaths.append("./deck_geo.usda")
         deck.Save()
 
-        for name in ("plank", "bin", "stand", "deck"):
-            source = lib / f"{name}.usda"
-            expected = _geometry(source)
-            assert expected, f"{name}: the source has no geometry"
-            _place_loose(state, source)
-            asset_dir = project.assets_dir / name
-            assert _geometry(asset_dir / f"{name}.usda") == expected, f"{name}: changed"
-            _everything_is_in(asset_dir)
+        lit = Usd.Stage.Open(str(_asset(lib, "lit")))
+        lit.DefinePrim(lit.GetDefaultPrim().GetPath().AppendChild("Bulb"), "SphereLight")
+        lit.Save()
 
-        assert (project.assets_dir / "plank" / "textures" / "wood.png").is_file()
-        assert (project.assets_dir / "bin" / "bin_model.usda").is_file()
-
-
-def test_a_needed_file_never_takes_one_of_bowerbots_names():
-    """A needed file named like BowerBot's own layers is copied under another name."""
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, project = _setup(tmp)
-        lib = tmp_path / "lib"
-        state.library_dir = lib
-        _model_file(lib / "shared" / "geo.usda", "tray", "Body", (0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
-        _model_file(lib / "shared" / "mtl.usda", "tray", "Lid", (0.0, 1.1, 0.0), (1.0, 0.2, 1.0))
-        source = _package_root(
-            lib / "tray.usda", "tray",
-            references=["./shared/geo.usda", "./shared/mtl.usda"],
+        expected = {
+            "plank": "it holds materials",
+            "bin": "it points to other files (./bin_model.usda)",
+            "deck": "it uses sublayers",
+            "lit": "it holds lights",
+        }
+        for name, reason in expected.items():
+            assert reason in _refused(state, project, lib / f"{name}.usda", name)
+        assert "it has file paths such as textures" in _refused(
+            state, project, lib / "plank.usda", "plank",
         )
-        expected = _geometry(source)
-
-        _place_loose(state, source)
-        asset_dir = project.assets_dir / "tray"
-        assert _geometry(asset_dir / "tray.usda") == expected
-        _everything_is_in(asset_dir)
-        assert sorted(f.name for f in asset_dir.iterdir()) == [
-            "geo.usda", "geo_2.usda", "mtl_2.usda", "tray.usda",
-        ]
 
 
-def test_placing_a_loose_file_again_copies_nothing_more():
-    """The second placement reuses the asset folder as it is."""
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path, state, project = _setup(tmp)
-        lib = tmp_path / "lib"
-        state.library_dir = lib
-        (lib / "textures").mkdir(parents=True)
-        (lib / "textures" / "wood.png").write_bytes(_PNG)
-        _model_file(lib / "plank.usda", "plank", "Board", (0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
-        _add_texture(lib / "plank.usda", "/plank/Board", "./textures/wood.png")
-
-        _place_loose(state, lib / "plank.usda")
-        asset_dir = project.assets_dir / "plank"
-        first = sorted(str(f.relative_to(asset_dir)) for f in asset_dir.rglob("*") if f.is_file())
-        _place_loose(state, lib / "plank.usda")
-        again = sorted(str(f.relative_to(asset_dir)) for f in asset_dir.rglob("*") if f.is_file())
-        assert again == first == ["geo.usda", "plank.usda", "textures/wood.png"]
-
-
-def test_a_package_brings_files_outside_its_folder_by_relative_path():
-    """A package that reads ``../shared/...`` arrives with those files, re-linked."""
+def test_a_folder_that_points_outside_itself_is_refused():
+    """A folder that reads ``../shared/...`` is refused: everything it needs must be inside."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         lib = tmp_path / "lib"
         state.library_dir = lib
         (lib / "shared").mkdir(parents=True)
         (lib / "shared" / "wood.png").write_bytes(_PNG)
-        _model_file(lib / "shared" / "leg.usda", "leg", "Leg", (0.0, 0.35, 0.0), (0.05, 0.7, 0.05))
         _model_file(lib / "table" / "geo.usda", "table", "Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
-        _add_texture(lib / "table" / "geo.usda", "/table/Top", "../shared/wood.png")
-        geo = Usd.Stage.Open(str(lib / "table" / "geo.usda"))
-        geo.DefinePrim("/table/LegA", "Xform").GetReferences().AddReference("../shared/leg.usda")
-        geo.Save()
-        source = _package_root(lib / "table" / "table.usda", "table", payloads=["./geo.usda"])
-        expected = _geometry(source)
+        mtl = Usd.Stage.CreateNew(str(lib / "table" / "mtl.usda"))
+        mtl.SetDefaultPrim(mtl.OverridePrim("/table"))
+        mtl.Save()
+        _add_texture(lib / "table" / "mtl.usda", "/table/Top", "../shared/wood.png")
+        source = _package_root(
+            lib / "table" / "table.usda", "table",
+            payloads=["./geo.usda"], references=["./mtl.usda"],
+        )
+        message = _refused(state, project, source, "table")
+        assert "mtl.usda points outside the folder (../shared/wood.png)" in message
 
-        _place_loose(state, source)
+
+def test_an_accepted_folder_is_placed_with_its_own_materials():
+    """A root, geo.usda and mtl.usda with a texture inside the folder: placed as it is."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        _model_file(lib / "table" / "geo.usda", "table", "Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
+        (lib / "table" / "textures").mkdir()
+        (lib / "table" / "textures" / "wood.png").write_bytes(_PNG)
+        mtl = Usd.Stage.CreateNew(str(lib / "table" / "mtl.usda"))
+        mtl.SetDefaultPrim(mtl.OverridePrim("/table"))
+        mtl.Save()
+        _add_texture(lib / "table" / "mtl.usda", "/table/Top", "./textures/wood.png")
+        source = _package_root(
+            lib / "table" / "table.usda", "table",
+            payloads=["./geo.usda"], references=["./mtl.usda"],
+        )
+        expected = _geometry(source)
+        assert expected["Top"][2] == "wood"
+
+        placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+            "asset_file_path": str(source), "asset_name": "Table", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        }))
+        assert placed.success, placed.error
         asset_dir = project.assets_dir / "table"
         assert _geometry(asset_dir / "table.usda") == expected
-        _everything_is_in(asset_dir)
+        assert (asset_dir / "textures" / "wood.png").is_file()
 
 
 # ── freeze_asset: with non-identity root xform ──

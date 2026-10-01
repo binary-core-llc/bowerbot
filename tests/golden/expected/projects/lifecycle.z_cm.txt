@@ -249,8 +249,6 @@ full answer:
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "crate.usda",
       "root_original_name": null,
       "warnings": [],
@@ -630,8 +628,6 @@ full answer:
     "intake": {
       "asset_folder": "chair",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "chair.usda",
       "root_original_name": null,
       "warnings": [],

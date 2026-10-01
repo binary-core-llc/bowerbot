@@ -59,7 +59,7 @@ Think of it as:
 
 ### Pipeline Quality Built In
 
-BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. Fixable mismatches (non-canonical folder names, external dependencies) are auto-normalized on intake so the project copy is always self-contained. Production-required invariants are validated at intake too: assets with non-identity root transforms (Maya pivot dance, unfrozen DCC exports) are refused with a clear message and the option to bake transforms into vertex data on the project copy without touching the source. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
+BowerBot enforces [ASWF USD standards](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md) at every step, not just placing assets. A library asset enters a project only as a geometry file, an asset folder or a `.usdz` (see Scene Assembly); any other shape is refused with the rule it breaks, so the project copy is always self-contained and laid out the same way. Production-required invariants are validated at intake too: assets with non-identity root transforms (Maya pivot dance, unfrozen DCC exports) are refused with a clear message and the option to bake transforms into vertex data on the project copy without touching the source. Unfixable violations (wrong root prim type, missing `defaultPrim`, incorrect `metersPerUnit`, circular references, missing dependencies) are caught **at assembly time** with a clear message about what's wrong and how to fix it.
 
 > **"The cheapest bug to fix is the one you catch before it enters the pipeline."**
 
@@ -80,7 +80,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 📦 **OpenUSD native**: references, `defaultPrim`, `metersPerUnit`, `upAxis`, all correct out of the box. BowerBot authors a single `scene.usda` as the live working layer; `save_scene_snapshot(name)` writes a flattened, DCC-stripped `<name>.usda` alongside whenever you want to publish a frozen version
 - 🎭 **USD variant sets**: asset-level (material, geometry/LOD, configuration, attribute) live in the asset's `variants.usda`; scene-level (lighting moods, light-type swap, model selection at a placement) live inline in `scene.usda`. Architectural invariants protect every mutation: auto-promote existing references into a model-selection variant on first add, auto-demote back to a direct ref when the set is removed, cascading orphan-opinion cleanup on prim delete/rename, automatic texture-asset staging for Asset-typed attribute values, and suspect-set detection that flags variants that collapse to a single choice
 - 🏗️ **ASWF-compliant asset folders**: geometry, materials, and lighting split into a root + layer files, per the [USD Working Group guidelines](https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md). Heavy `geo.usda` composes via a **payload arc** for lazy-load (city-scale digital twins, robot fleets, large layouts open instantly); `mtl.usda` / `lgt.usda` / `contents.usda` use references
-- 🧳 **Self-contained intake**: non-canonical source folders are detected via USD composition, canonicalized (`root.usd` → `<folder>.usda`), and external dependencies (textures, sublayers) are localized into the asset folder so the project copy is always portable
+- 🧳 **One shape in the project**: a library asset is accepted as a geometry file, an asset folder or a `.usdz`; anything else is refused with the rule it breaks and nothing is copied, so every asset in a project has the same layout
 - 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts; procedural materials author hybrid MaterialX + UsdPreviewSurface outputs so they render across studio renderers (Renderman, Arnold), Hydra Storm, Apple RealityKit / AR Quick Look, and Isaac Sim
 - 💡 **Native USD lighting**: sun, dome, point, area, disk, and tube lights at scene or asset level, with optional UsdLux `light:link` collections so a rim light, kicker, or product-shot key only illuminates the prims you target
 - 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
@@ -321,13 +321,13 @@ BowerBot searches for assets across all connected sources, prioritizing what's a
 
 ### Scene Assembly
 
-When you ask BowerBot to place an asset, it routes by what the source looks like and always produces a self-contained ASWF folder in the project:
+BowerBot takes an asset from your library in one of three shapes, and refuses anything else with a message that says which rule it breaks. Nothing is copied when an asset is refused.
 
-- **Folder with a detectable root** (canonical `wall/wall.usda`, or non-canonical `wall/root.usd` + `wall/geo.usd` + `wall/mtl.usd`): the root is identified via USD composition (the file no sibling depends on), the folder is copied into the project, the root is canonicalized to `<folder>.usda`, sibling references are rewritten, and any externally-referenced textures or layers are localized into the folder so the output is portable.
-- **Loose USD geometry** (`.usd`, `.usda`, `.usdc` from your DCC exports): wrapped in a fresh ASWF folder named after the file stem, producing `<stem>/<stem>.usda` + `geo.usda`.
-- **USDZ files** (from Sketchfab, DAMs, etc.): placed as-is since they're already self-contained.
+- **A geometry file** (`.usd`, `.usda`, `.usdc`): one root prim and nothing but geometry. No materials, no lights, no links to other files, no texture paths. It is wrapped in a fresh asset folder named after the file: `<name>/<name>.usda` + `geo.usda`. Materials come from your material files through `bind_material`.
+- **An asset folder** `<name>/`: a root file named like the folder (`<name>.usda`), `geo.usda` (geometry only), and optionally `mtl.usda`, `lgt.usda`, `phy.usda`, `variants.usda` and extra geometry files for LODs. Its textures are inside the folder and nothing in it points outside. The root prim points only to `geo.usda` and those side layers. The folder is copied into the project as it is.
+- **A `.usdz` file**: placed as it is. BowerBot reads its units and up axis and fits the placement to the project. If the `.usdz` does not declare them, it is taken to match the project; if it doesn't, export it again with the right values.
 
-When an asset can't be safely intaken (missing external dependencies, or a folder with multiple independent USDs and no clear root), BowerBot refuses with a message naming the conflict instead of guessing.
+`search_assets` and `list_assets` mark the entries that would be refused with `cannot_be_used` and the reason, so neither you nor the agent has to try them first.
 
 ### Material Workflow
 
@@ -823,7 +823,6 @@ src/bowerbot/
   constants/          # Fixed values in classes by role, grouped by domain
     asset_folder.py   #   ASWFLayerNames, AssetFolderRules (layer extensions, reference order)
     cameras.py        #   CameraDefaults, CameraTuning
-    intake.py         #   IntakeRules (root-file name hints)
     library.py        #   LibraryRules, LibraryDefaults
     lights.py         #   LightUsd (UsdLux classes), LightRules, LightDefaults
     materials.py      #   MaterialXShaders, PreviewSurfaceShader, MaterialRules
@@ -841,7 +840,7 @@ src/bowerbot/
     assets.py         #   Asset formats, categories, metadata
     attributes.py     #   SchemaPropertySpec (one property a USD schema declares)
     cameras.py        #   CameraParams, CameraSchemaInfo
-    intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
+    intake.py         #   IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
     lights.py         #   LightType, LightParams, LightTypeSchemaInfo
     materials.py      #   ProceduralMaterialParams
@@ -951,9 +950,11 @@ src/bowerbot/
       placement.py             #   How the scene refers to asset folders: /Scene
                                #   placements, assets added to an asset, frames
       library.py               #   The asset library: searching it for assets and
-                               #   textures, its asset folders, resolving a path
-      intake.py                #   Bringing a file or folder into the project: copy,
-                               #   localize, check and repair (ASWF compliance)
+                               #   textures, resolving a path
+      accepted_shapes.py       #   The shapes a library asset may have (geometry file,
+                               #   asset folder, .usdz) and why another one is refused
+      intake.py                #   Bringing a library asset into the project: copy,
+                               #   check and repair (ASWF compliance)
       opinions.py              #   Scene.usda opinions that would mask a write into an
                                #   asset layer or a variant
     cameras/                   # The camera tools

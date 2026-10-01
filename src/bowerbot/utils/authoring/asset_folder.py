@@ -19,7 +19,6 @@ from pxr import Usd
 from pxr import UsdGeom
 
 from bowerbot import constants
-from bowerbot import schemas
 from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
@@ -50,75 +49,6 @@ def resolve_default_prim_name(asset_dir: Path) -> str:
             name: str = layer.defaultPrim
             return name
     return asset_dir.name
-
-
-def detect_folder_root(folder: Path) -> schemas.FolderDetection:
-    """Classify *folder* and identify its root USD file when possible.
-
-    USD composition is the source of truth: the file no sibling depends
-    on is the root. With multiple candidates, naming heuristics
-    (``<folder>``, ``root``, ``main``, ``asset``) break the tie.
-    """
-    folder = folder.resolve()
-    if not folder.is_dir():
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.EMPTY,
-            folder=str(folder),
-            reason="not a directory",
-        )
-
-    usd_files = sorted(
-        p for p in folder.iterdir()
-        if p.is_file() and p.suffix.lower() in constants.AssetFolderRules.USD_LAYER_EXTENSIONS
-    )
-    if not usd_files:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.EMPTY,
-            folder=str(folder),
-            reason="no USD files at the top level",
-        )
-
-    if len(usd_files) == 1:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
-            folder=str(folder),
-            root=str(usd_files[0]),
-            reason="only USD file in the folder",
-        )
-
-    candidates = _candidate_roots_by_dep_graph(usd_files)
-
-    if len(candidates) == 1:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
-            folder=str(folder),
-            root=str(candidates[0]),
-            reason="only USD file in the folder not referenced by a sibling",
-        )
-
-    if not candidates:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.AMBIGUOUS,
-            folder=str(folder),
-            candidates=[str(p) for p in usd_files],
-            reason="circular references between siblings",
-        )
-
-    tiebreak = _name_tiebreak(candidates, folder.name)
-    if tiebreak is not None:
-        return schemas.FolderDetection(
-            outcome=schemas.DetectionOutcome.UNAMBIGUOUS,
-            folder=str(folder),
-            root=str(tiebreak),
-            reason=f"multiple candidates; picked by naming convention '{tiebreak.stem}'",
-        )
-
-    return schemas.FolderDetection(
-        outcome=schemas.DetectionOutcome.AMBIGUOUS,
-        folder=str(folder),
-        candidates=[str(p) for p in candidates],
-        reason="multiple independent USD files with no cross-references",
-    )
 
 
 def asset_has_root_payload(asset_dir: Path) -> bool:
@@ -598,30 +528,6 @@ def _sibling_file(asset_path: str) -> str | None:
         return None
     path = Path(asset_path)
     return path.name if path.parent == Path() else None
-
-
-def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:
-    """Return files no sibling depends on (so they can't be sub-layers)."""
-    usd_set = {p.resolve() for p in usd_files}
-    referenced: set[Path] = set()
-    for candidate in usd_files:
-        found, _missing = usd.references.resolve_dependencies(candidate)
-        for dep in found:
-            dep_resolved = dep.resolve()
-            if dep_resolved == candidate.resolve():
-                continue
-            if dep_resolved in usd_set:
-                referenced.add(dep_resolved)
-    return [p for p in usd_files if p.resolve() not in referenced]
-
-
-def _name_tiebreak(candidates: list[Path], folder_name: str) -> Path | None:
-    """Pick the preferred candidate by filename convention, or ``None``."""
-    for stem in (folder_name, *constants.IntakeRules.ROOT_NAME_HINTS):
-        matches = [p for p in candidates if p.stem == stem]
-        if len(matches) == 1:
-            return matches[0]
-    return None
 
 
 def _create_geo_layer(geo_dest: Path, geometry_source: Path) -> None:

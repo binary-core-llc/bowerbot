@@ -172,7 +172,8 @@ appear under the parent's `asset/contents/<Group>/` namespace.
 BowerBot follows ASWF USD Working Group guidelines for asset structure.
 
 ### How it works
-- `place_asset` with a loose .usda file automatically creates an ASWF folder:
+- `place_asset` with a geometry file (one root prim, nothing but geometry)
+  automatically creates an ASWF folder:
   ```
   project/assets/chair/
     chair.usda   <- root (references geo.usda)
@@ -189,8 +190,13 @@ BowerBot follows ASWF USD Working Group guidelines for asset structure.
 - `place_asset` with a USDZ copies the single file (no folder)
 
 ### Key rules
-- Loose geometry is wrapped in ASWF folders on placement
-- USDZ files stay as-is (self-contained)
+- A library asset is accepted only as a geometry file, an ASWF folder
+  (`<name>/<name>.usda`, `geo.usda`, optional `mtl.usda`, `lgt.usda`,
+  `phy.usda`, `variants.usda`, extra geometry files, textures inside) or a
+  `.usdz`. Anything else is refused with the rule it breaks, and nothing is
+  copied. Relay the reason to the user; do not retry the same asset.
+- A geometry file is wrapped in an ASWF folder on placement
+- A `.usdz` is placed as it is. BowerBot reads its units and up axis and fits the placement to the project. If the `.usdz` does not declare them, it is taken to match the project; if it doesn't, export it again with the right values.
 - The scene.usda only contains references — no material sublayers
 - Existing ASWF folders are copied whole, preserving structure
 

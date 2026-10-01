@@ -50,8 +50,10 @@ TOOLS: list[skills.Tool] = [
             "local file path to load — pass it as asset_file_path to "
             "place_asset for 'geo'/'package' results, or as material_file to "
             "bind_material for 'mtl' results; 'format' is the file suffix "
-            "(e.g. '.usda', '.usdz'). If truncated is true, refine the query "
-            "— do not ask the user to pick from a partial list."
+            "(e.g. '.usda', '.usdz'). A result BowerBot would refuse to place "
+            "also has 'cannot_be_used' with the reason: do not place it. If "
+            "truncated is true, refine the query — do not ask the user to "
+            "pick from a partial list."
         ),
         parameters={
             "type": "object",
@@ -81,8 +83,10 @@ TOOLS: list[skills.Tool] = [
             "category}: 'path' is the local file path you pass straight to "
             "place_asset (asset_file_path) for 'geo'/'package' results or to "
             "bind_material (material_file) for 'mtl' results; 'format' is the "
-            "USD suffix (e.g. '.usda'). If truncated is true, narrow the "
-            "category filter or use search_assets with a query instead."
+            "USD suffix (e.g. '.usda'). A result BowerBot would refuse to place "
+            "also has 'cannot_be_used' with the reason: do not place it. If "
+            "truncated is true, narrow the category filter or use "
+            "search_assets with a query instead."
         ),
         parameters={
             "type": "object",

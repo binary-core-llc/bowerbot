@@ -332,8 +332,6 @@ full answer:
     "intake": {
       "asset_folder": "chair",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "chair.usda",
       "root_original_name": null,
       "warnings": [],
@@ -1406,7 +1404,7 @@ intent: an alternative that does not exist
 SUMMARY
   call: add_scene_model_selection_variant(prim_path="/Scene/Furniture/Seat_01", variant_set="model", variant_name="nope", asset_file_path="<LIBRARY>/nope.usda")
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/nope.usda@'
+  said: REFUSED: Asset file not found: <LIBRARY>/nope.usda
 
   what changed:
     nothing
@@ -1424,7 +1422,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::Open' at line 1276 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Failed to open layer @<LIBRARY>/nope.usda@'"
+    "error": "Asset file not found: <LIBRARY>/nope.usda"
   }
 
 files:

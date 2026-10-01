@@ -1,11 +1,12 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Bringing a file or folder into the project: copy it, localize its dependencies, check it.
+"""Bringing a library asset into the project: copy it, then check its geometry.
 
-A library package is copied as a self-contained asset folder, a loose file is
-wrapped in a new one (``authoring.asset_folder``), and a USDZ is copied as-is.
-The geometry is then checked for ASWF compliance and, when asked, repaired.
+An asset folder is copied as it is, a geometry file is wrapped in a new asset
+folder (``authoring.asset_folder``), and a USDZ is copied as-is. Assets in any
+other shape are refused first (``authoring.accepted_shapes``). The geometry is
+then checked for ASWF compliance and, when asked, repaired.
 """
 
 from __future__ import annotations
@@ -14,7 +15,6 @@ import logging
 import os
 import shutil
 import tempfile
-from collections.abc import Iterable
 from pathlib import Path
 
 from pxr import Sdf
@@ -40,16 +40,18 @@ def prepare_asset(
     fix_root_prim: bool = False,
     fix_root_transforms: bool = False,
 ) -> schemas.IntakeReport:
-    """Route an input file to USDZ / library-package / loose-file intake.
+    """Bring a library asset into the project: a .usdz, an asset folder or a geometry file.
 
-    An asset that declares no units or up axis takes the project's; a USDZ is
-    left as it is.
+    An asset in any other shape is refused before anything is copied (see
+    ``authoring.accepted_shapes``). An asset that declares no units or up axis
+    takes the project's; a .usdz is left as it is.
     """
+    authoring.accepted_shapes.require(asset_path, library_dir)
     if asset_path.suffix.lower() == ".usdz":
         return intake_usdz(asset_path, assets_dir)
 
     if library_dir is not None:
-        package_dir = authoring.library.find_package_for(asset_path, library_dir)
+        package_dir = authoring.accepted_shapes.asset_folder_for(asset_path, library_dir)
         if package_dir is not None:
             report = intake_folder(
                 package_dir, assets_dir,
@@ -63,8 +65,6 @@ def prepare_asset(
             return report
 
     folder_name = asset_path.stem
-    asset_dir = assets_dir / folder_name
-    is_new = not asset_dir.exists()
     root_file = authoring.asset_folder.create_asset_folder(
         output_dir=assets_dir,
         asset_name=folder_name,
@@ -72,26 +72,13 @@ def prepare_asset(
         project_mpu=project_mpu,
         project_up_axis=project_up_axis,
     )
-    copied: int = 0
-    localized_layers: list[str] = []
-    localized_assets: list[str] = []
-    if is_new:
-        try:
-            copied, localized_layers, localized_assets = _bring_dependencies(
-                asset_path, asset_dir,
-            )
-        except Exception:
-            shutil.rmtree(asset_dir, ignore_errors=True)
-            raise
     report = schemas.IntakeReport(
         scene_ref_path=f"assets/{folder_name}/{root_file.name}",
         asset_folder_name=folder_name,
         root_original_name=asset_path.name,
         root_canonical_name=root_file.name,
         was_renamed=asset_path.name != root_file.name,
-        files_copied=1 + copied,
-        localized_layers=localized_layers,
-        localized_assets=localized_assets,
+        files_copied=1,
     )
     _validate_intake(
         report, assets_dir,
@@ -106,7 +93,7 @@ def intake_target_name(asset_path: Path, library_dir: Path | None) -> str:
     if asset_path.suffix.lower() == ".usdz":
         return asset_path.name
     if library_dir is not None:
-        package_dir = authoring.library.find_package_for(asset_path, library_dir)
+        package_dir = authoring.accepted_shapes.asset_folder_for(asset_path, library_dir)
         if package_dir is not None:
             return package_dir.name
     return asset_path.stem
@@ -119,29 +106,18 @@ def intake_folder(
     project_mpu: float,
     project_up_axis: str,
 ) -> schemas.IntakeReport:
-    """Copy *source_folder* into *project_assets_dir* as a self-contained asset.
+    """Copy the asset folder *source_folder* into *project_assets_dir*.
 
-    Every transitive dependency (including shader texture paths) is
-    localized so the output folder is portable. The root is canonicalized
-    to ``<folder>.usda`` and sibling references are rewritten.
+    Every file the root depends on (its layers and their textures) is copied
+    to the same place under the project's folder. The root is renamed to
+    ``<folder>.usda`` when it has another extension.
     """
-    detection = authoring.asset_folder.detect_folder_root(source_folder)
-    if detection.outcome is schemas.DetectionOutcome.EMPTY:
-        msg = f"No USD files found in {source_folder}"
-        raise ValueError(msg)
-    if detection.outcome is schemas.DetectionOutcome.AMBIGUOUS:
-        names = ", ".join(Path(c).name for c in detection.candidates)
-        msg = (
-            f"Folder {source_folder.name} has multiple independent USD files "
-            f"with no cross-references ({names}). ASWF expects a single root. "
-            f"Rename one to '{source_folder.name}.usda' or place the files "
-            f"individually."
-        )
-        raise ValueError(msg)
-
     source_folder = source_folder.resolve()
     project_assets_dir = project_assets_dir.resolve()
-    source_root = Path(detection.root)  # type: ignore[arg-type]
+    source_root = authoring.accepted_shapes.folder_root_file(source_folder)
+    if source_root is None:
+        msg = f"{source_folder.name}/ has no root file named like the folder."
+        raise ValueError(msg)
     target_folder = project_assets_dir / source_folder.name
 
     if target_folder.exists():
@@ -156,14 +132,12 @@ def intake_folder(
         )
         raise ValueError(msg)
 
-    path_map, layer_targets, localized_layer_sources, localized_asset_sources = (
-        _plan_copies(
-            source_folder=source_folder,
-            target_folder=target_folder,
-            layer_sources=[Path(lyr.realPath).resolve() for lyr in layers],
-            asset_sources=[Path(a).resolve() for a in assets],
-        )
-    )
+    layer_sources = [Path(lyr.realPath).resolve() for lyr in layers]
+    path_map = {
+        src: target_folder / src.relative_to(source_folder)
+        for src in (*layer_sources, *(Path(a).resolve() for a in assets))
+    }
+    layer_targets = [path_map[src] for src in layer_sources]
 
     target_folder.mkdir(parents=True, exist_ok=False)
     files_copied = 0
@@ -194,9 +168,8 @@ def intake_folder(
         raise
 
     logger.info(
-        "Intaked %s -> %s (%d file(s), %d localized)",
-        source_folder.name, target_folder.name,
-        files_copied, len(localized_layer_sources) + len(localized_asset_sources),
+        "Intaked %s -> %s (%d file(s))",
+        source_folder.name, target_folder.name, files_copied,
     )
     return schemas.IntakeReport(
         scene_ref_path=f"assets/{target_folder.name}/{canonical_root.name}",
@@ -205,8 +178,6 @@ def intake_folder(
         root_canonical_name=canonical_root.name,
         was_renamed=was_renamed,
         files_copied=files_copied,
-        localized_layers=localized_layer_sources,
-        localized_assets=localized_asset_sources,
         warnings=warnings,
     )
 
@@ -343,8 +314,6 @@ def intake_summary(report: schemas.IntakeReport) -> dict:
             report.root_original_name if report.was_renamed else None
         ),
         "files_copied": report.files_copied,
-        "localized_layers": report.localized_layers,
-        "localized_assets": report.localized_assets,
         "warnings": report.warnings,
     }
 
@@ -358,11 +327,6 @@ def placement_message(
         parts.append(
             f"Normalized on intake: {report.root_original_name} -> "
             f"{report.root_canonical_name} (ASWF convention).",
-        )
-    localized = len(report.localized_layers) + len(report.localized_assets)
-    if localized:
-        parts.append(
-            f"Localized {localized} external dependency/ies into the asset folder.",
         )
     return " ".join(parts)
 
@@ -404,44 +368,6 @@ def _validate_intake(
             )
 
 
-def _bring_dependencies(source_file: Path, asset_dir: Path) -> tuple[int, list[str], list[str]]:
-    """Copy what a loose file depends on into *asset_dir* and point ``geo.usda`` at the copies.
-
-    Returns ``(files copied, layers brought in, textures and other files brought in)``.
-    A dependency that does not resolve on disk is left as it is.
-    """
-    layers, assets, _unresolved = UsdUtils.ComputeAllDependencies(str(source_file))
-    source = source_file.resolve()
-    layer_sources = [
-        path for path in (Path(lyr.realPath).resolve() for lyr in layers) if path != source
-    ]
-    asset_sources = [Path(a).resolve() for a in assets]
-    if not layer_sources and not asset_sources:
-        return 0, [], []
-
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    own_files = [
-        geo_path,
-        asset_dir / f"{asset_dir.name}.usda",
-        *(asset_dir / name for name in constants.AssetFolderRules.CANONICAL_REFERENCE_ORDER),
-    ]
-    path_map, layer_targets, localized_layers, localized_assets = _plan_copies(
-        source_folder=None,
-        target_folder=asset_dir,
-        layer_sources=layer_sources,
-        asset_sources=asset_sources,
-        taken=own_files,
-    )
-    for src, dst in path_map.items():
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dst)
-
-    copied = len(path_map)
-    path_map[source] = geo_path
-    _rewrite_asset_paths([geo_path, *layer_targets], path_map)
-    return copied, localized_layers, localized_assets
-
-
 def _reuse_existing_target(target_folder: Path, source_root: Path) -> schemas.IntakeReport:
     """Build an IntakeReport for a target folder that already exists."""
     canonical = target_folder / f"{target_folder.name}.usda"
@@ -463,49 +389,6 @@ def _reuse_existing_target(target_folder: Path, source_root: Path) -> schemas.In
     )
 
 
-def _plan_copies(
-    source_folder: Path | None,
-    target_folder: Path,
-    layer_sources: Iterable[Path],
-    asset_sources: Iterable[Path],
-    taken: Iterable[Path] = (),
-) -> tuple[dict[Path, Path], list[Path], list[str], list[str]]:
-    """Return ``(path_map, layer_targets, localized_layers, localized_assets)``.
-
-    A file inside *source_folder* keeps its place under *target_folder*; any
-    other file (every file, when there is no source folder) lands beside the
-    root, textures under ``textures/``. No copy takes a name in *taken*.
-    """
-    path_map: dict[Path, Path] = {}
-    layer_targets: list[Path] = []
-    localized_layer_sources: list[str] = []
-    localized_asset_sources: list[str] = []
-    used_targets: set[Path] = set(taken)
-
-    for src in layer_sources:
-        if source_folder is not None and _is_inside(src, source_folder):
-            dst = target_folder / src.relative_to(source_folder)
-        else:
-            dst = target_folder / src.name
-            localized_layer_sources.append(str(src))
-        resolved = _dedupe(dst, used_targets)
-        used_targets.add(resolved)
-        path_map[src] = resolved
-        layer_targets.append(resolved)
-
-    for src in asset_sources:
-        if source_folder is not None and _is_inside(src, source_folder):
-            dst = target_folder / src.relative_to(source_folder)
-        else:
-            dst = target_folder / constants.ASWFLayerNames.TEXTURES / src.name
-            localized_asset_sources.append(str(src))
-        resolved = _dedupe(dst, used_targets)
-        used_targets.add(resolved)
-        path_map[src] = resolved
-
-    return path_map, layer_targets, localized_layer_sources, localized_asset_sources
-
-
 def _is_inside(path: Path, folder: Path) -> bool:
     """Return True if *path* is a descendant of *folder*."""
     try:
@@ -513,18 +396,6 @@ def _is_inside(path: Path, folder: Path) -> bool:
     except ValueError:
         return False
     return True
-
-
-def _dedupe(candidate: Path, used: set[Path]) -> Path:
-    """Return *candidate*, or a ``stem_N.ext`` variant if already used."""
-    if candidate not in used:
-        return candidate
-    counter = 2
-    while True:
-        alt = candidate.with_name(f"{candidate.stem}_{counter}{candidate.suffix}")
-        if alt not in used:
-            return alt
-        counter += 1
 
 
 def _rewrite_asset_paths(
@@ -615,7 +486,7 @@ def _validate_self_contained(
     if unresolved:
         msg = (
             f"Intake validation failed: {len(unresolved)} dependency "
-            f"path(s) became unresolved after localization."
+            f"path(s) became unresolved after the copy."
         )
         raise RuntimeError(msg)
 
@@ -628,7 +499,7 @@ def _validate_self_contained(
     if leaks:
         msg = (
             f"Intake validation failed: {len(leaks)} dependency path(s) "
-            f"still point outside the asset folder after localization."
+            f"still point outside the asset folder after the copy."
         )
         raise RuntimeError(msg)
 

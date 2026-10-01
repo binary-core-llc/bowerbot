@@ -440,14 +440,16 @@ SUMMARY
   said: ok: Removed material binding from /Scene/Furniture/Stand_01/asset/Top
 
   what changed:
-    nothing
+    ~ file assets/stand/geo.usda
+    ~ /Scene/Furniture/Stand_01/asset/Top  applied APIs: MaterialBindingAPI → (none)
+    ~ /Scene/Furniture/Stand_01/asset/Top  material shown: /Scene/Furniture/Stand_01/asset/mtl/wood → (none)
+    ~ /Scene/Furniture/Stand_01/asset/Top  rel material:binding: /Scene/Furniture/Stand_01/asset/mtl/wood → (none)
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    material nothing binds: /Scene/Furniture/Stand_01/asset/mtl/wood
 
   checks:
-    ⚠ reported success, but no file changed
-    ⚠ still showing the same material after the removal: /Scene/Furniture/Stand_01/asset/Top
+    ⚠ left behind a material nothing binds: /Scene/Furniture/Stand_01/asset/mtl/wood
 
 EVIDENCE
 
@@ -462,23 +464,48 @@ full answer:
   }
 
 files:
-    assets/stand/geo.usda
+  ~ assets/stand/geo.usda
     assets/stand/stand.usda
     assets/stand/textures/wood_diffuse.png
     project.json
     scene.usda
 
 file changes:
-  (none)
+  ~ assets/stand/geo.usda:
+      --- assets/stand/geo.usda (before)
+      +++ assets/stand/geo.usda (after)
+      @@ -8,9 +8,6 @@
+       def Xform "stand"
+       {
+      -    def Cube "Top" (
+      -        prepend apiSchemas = ["MaterialBindingAPI"]
+      -    )
+      +    def Cube "Top"
+           {
+      -        rel material:binding = </stand/mtl/wood>
+               double size = 1
+               float3 xformOp:scale = (0.6, 0.1, 0.6)
 
 composed scene changes:
-  (none)
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -33,9 +33,6 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Top" (
+  -                    apiSchemas = ["MaterialBindingAPI"]
+  -                )
+  +                def Cube "Top"
+                   {
+  -                    rel material:binding = </Scene/Furniture/Stand_01/asset/mtl/wood>
+                       double size = 1
+                       float3 xformOp:scale = (0.6, 0.1, 0.6)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
-  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material /Scene/Furniture/Stand_01/asset/mtl/wood
+  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material (none)
   /Scene/Furniture/Stand_01/asset/mtl  [Scope]
 
 validation:
@@ -497,7 +524,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    material nothing binds: /Scene/Furniture/Stand_01/asset/mtl/wood
 
   checks:
     no problems spotted by the automatic checks
@@ -525,7 +552,7 @@ full answer:
             "z": 70.0
           }
         },
-        "current_material": "/Scene/Furniture/Stand_01/asset/mtl/wood",
+        "current_material": null,
         "is_bindable": true,
         "is_mesh": false,
         "name": "Top",
@@ -553,7 +580,7 @@ world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
-  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material /Scene/Furniture/Stand_01/asset/mtl/wood
+  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material (none)
   /Scene/Furniture/Stand_01/asset/mtl  [Scope]
 
 validation:
@@ -576,13 +603,14 @@ SUMMARY
           attr outputs:surface: (no value)
           connect outputs:mtlx:surface: /Scene/Furniture/Stand_01/asset/mtl/paint/standard_surface.outputs:out
           connect outputs:surface: /Scene/Furniture/Stand_01/asset/mtl/paint/preview_surface.outputs:surface
-    ~ /Scene/Furniture/Stand_01/asset/Top  material shown: /Scene/Furniture/Stand_01/asset/mtl/wood → /Scene/Furniture/Stand_01/asset/mtl/paint
-    ~ /Scene/Furniture/Stand_01/asset/Top  rel material:binding: /Scene/Furniture/Stand_01/asset/mtl/wood → /Scene/Furniture/Stand_01/asset/mtl/paint
+    ~ /Scene/Furniture/Stand_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
+    ~ /Scene/Furniture/Stand_01/asset/Top  material shown: (none) → /Scene/Furniture/Stand_01/asset/mtl/paint
+    ~ /Scene/Furniture/Stand_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Stand_01/asset/mtl/paint
     ~ validity: valid → INVALID
     + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Stand_01/asset/mtl/paint/standard_surface> not found in sdrRegistry.
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    material nothing binds: /Scene/Furniture/Stand_01/asset/mtl/wood
 
   checks:
     ⚠ this step made the scene invalid
@@ -665,14 +693,18 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -37,5 +37,5 @@
-                   )
+  @@ -33,6 +33,9 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Top"
+  +                def Cube "Top" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
                    {
-  -                    rel material:binding = </Scene/Furniture/Stand_01/asset/mtl/wood>
   +                    rel material:binding = </Scene/Furniture/Stand_01/asset/mtl/paint>
                        double size = 1
                        float3 xformOp:scale = (0.6, 0.1, 0.6)
-  @@ -63,4 +63,28 @@
+  @@ -60,4 +63,28 @@
                            }
                        }
   +
@@ -725,13 +757,14 @@ SUMMARY
     - file assets/stand/mtl.usda
     ~ file assets/stand/stand.usda
     - prim /Scene/Furniture/Stand_01/asset/mtl/paint [Material] (and 2 prims inside)
-    ~ /Scene/Furniture/Stand_01/asset/Top  material shown: /Scene/Furniture/Stand_01/asset/mtl/paint → /Scene/Furniture/Stand_01/asset/mtl/wood
-    ~ /Scene/Furniture/Stand_01/asset/Top  rel material:binding: /Scene/Furniture/Stand_01/asset/mtl/paint → /Scene/Furniture/Stand_01/asset/mtl/wood
+    ~ /Scene/Furniture/Stand_01/asset/Top  applied APIs: MaterialBindingAPI → (none)
+    ~ /Scene/Furniture/Stand_01/asset/Top  material shown: /Scene/Furniture/Stand_01/asset/mtl/paint → (none)
+    ~ /Scene/Furniture/Stand_01/asset/Top  rel material:binding: /Scene/Furniture/Stand_01/asset/mtl/paint → (none)
     ~ validity: INVALID → valid
     - issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Stand_01/asset/mtl/paint/standard_surface> not found in sdrRegistry.
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    material nothing binds: /Scene/Furniture/Stand_01/asset/mtl/wood
 
   checks:
     no problems spotted by the automatic checks
@@ -771,14 +804,18 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -37,5 +37,5 @@
-                   )
+  @@ -33,9 +33,6 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Top" (
+  -                    apiSchemas = ["MaterialBindingAPI"]
+  -                )
+  +                def Cube "Top"
                    {
   -                    rel material:binding = </Scene/Furniture/Stand_01/asset/mtl/paint>
-  +                    rel material:binding = </Scene/Furniture/Stand_01/asset/mtl/wood>
                        double size = 1
                        float3 xformOp:scale = (0.6, 0.1, 0.6)
-  @@ -63,28 +63,4 @@
+  @@ -63,28 +60,4 @@
                            }
                        }
   -
@@ -812,7 +849,7 @@ world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
-  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material /Scene/Furniture/Stand_01/asset/mtl/wood
+  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material (none)
   /Scene/Furniture/Stand_01/asset/mtl  [Scope]
 
 validation:
@@ -831,7 +868,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    material nothing binds: /Scene/Furniture/Stand_01/asset/mtl/wood
 
   checks:
     no problems spotted by the automatic checks
@@ -859,7 +896,7 @@ full answer:
             "z": 70.0
           }
         },
-        "current_material": "/Scene/Furniture/Stand_01/asset/mtl/wood",
+        "current_material": null,
         "is_bindable": true,
         "is_mesh": false,
         "name": "Top",
@@ -887,7 +924,7 @@ world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
   /Scene/Furniture/Stand_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)
-  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material /Scene/Furniture/Stand_01/asset/mtl/wood
+  /Scene/Furniture/Stand_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-30.0000, -30.0000, 70.0000)..(30.0000, 30.0000, 80.0000)  material (none)
   /Scene/Furniture/Stand_01/asset/mtl  [Scope]
 
 validation:

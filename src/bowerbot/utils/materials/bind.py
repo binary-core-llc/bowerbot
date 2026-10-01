@@ -81,34 +81,48 @@ def bind_from_file(
 
 
 def unbind(asset_dir: Path, prim_path: str) -> None:
-    """Take a prim's binding out of ``mtl.usda``, then drop the materials nothing uses.
+    """Take a prim's material binding out of the asset, then drop the materials nothing uses.
 
-    The binding relationships and the binding API go; nothing empty is left behind.
+    The binding is removed from every file of the asset folder that authors
+    it: ``mtl.usda``, or a file the asset shipped with (the project's copy,
+    never the library's). Nothing empty is left behind.
     """
-    mtl_path = asset_dir / constants.ASWFLayerNames.MTL
-    if not mtl_path.exists():
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
+    stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
+    if stage is None:
         return
 
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     local_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
-
-    layer = Sdf.Layer.FindOrOpen(str(mtl_path))
-    if layer is None:
-        return
-
-    spec = layer.GetPrimAtPath(local_path)
-    if spec is not None:
-        bindings = [
-            rel for rel in spec.relationships
-            if rel.name.startswith(UsdShade.Tokens.materialBinding)
+    prim = stage.GetPrimAtPath(local_path)
+    if prim.IsValid():
+        folder = asset_dir.resolve()
+        binding_specs = [
+            (spec.layer, spec.owner.path, spec.name)
+            for rel in prim.GetAuthoredRelationships()
+            if rel.GetName().startswith(UsdShade.Tokens.materialBinding)
+            for spec in rel.GetPropertyStack(Usd.TimeCode.Default())
         ]
-        for rel in bindings:
-            spec.RemoveProperty(rel)
-        usd.attributes.drop_api_schema(
-            spec, Usd.SchemaRegistry().GetAPISchemaTypeName(UsdShade.MaterialBindingAPI),
-        )
-        usd.namespace.prune_empty_overrides(layer, local_path)
-        layer.Save()
+        prim_specs = [(spec.layer, spec.path) for spec in prim.GetPrimStack()]
+        del prim, stage
+
+        api_name = Usd.SchemaRegistry().GetAPISchemaTypeName(UsdShade.MaterialBindingAPI)
+        edited: dict[str, Sdf.Layer] = {}
+        for layer, owner_path, name in binding_specs:
+            if folder not in Path(layer.realPath).resolve().parents:
+                continue
+            owner = layer.GetPrimAtPath(owner_path)
+            owner.RemoveProperty(owner.relationships[name])
+            edited[layer.identifier] = layer
+        for layer, spec_path in prim_specs:
+            if layer.identifier not in edited:
+                continue
+            spec = layer.GetPrimAtPath(spec_path)
+            if spec is not None:
+                usd.attributes.drop_api_schema(spec, api_name)
+                usd.namespace.prune_empty_overrides(layer, str(spec_path))
+        for layer in edited.values():
+            layer.Save()
 
     materials.layer.remove_unused(asset_dir)
 

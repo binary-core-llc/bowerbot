@@ -285,7 +285,7 @@ def ensure_aswf_compliance(
                 f"Asset '{geometry_file.name}' has non-identity transforms "
                 f"baked on its root prim (translate/rotate/scale/pivot from "
                 f"an unfrozen DCC export). Production USD assets must have "
-                f"identity root transforms or nested placement breaks. Ask "
+                f"identity root transforms, or adding one to another asset breaks. Ask "
                 f"the user if they want BowerBot to bake the transforms into "
                 f"vertex data automatically — this only modifies the project "
                 f"copy, the user's original source file is untouched. If they "

@@ -175,7 +175,50 @@ validation:
   (no scene)
 
 
-=== step 04: add_scene_lighting_attribute_variant
+=== step 04: add_asset_to_asset
+intent: no project is open
+
+SUMMARY
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Props/Thing_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: (none)
+  said: REFUSED: No stage open. Call create_stage first.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "No stage open. Call create_stage first."
+  }
+
+files:
+  (no project)
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  (no scene)
+
+validation:
+  (no scene)
+
+
+=== step 05: add_scene_lighting_attribute_variant
 intent: no project is open
 
 SUMMARY
@@ -218,7 +261,7 @@ validation:
   (no scene)
 
 
-=== step 05: add_scene_lighting_selection_variant
+=== step 06: add_scene_lighting_selection_variant
 intent: no project is open
 
 SUMMARY
@@ -261,7 +304,7 @@ validation:
   (no scene)
 
 
-=== step 06: add_scene_model_selection_variant
+=== step 07: add_scene_model_selection_variant
 intent: no project is open
 
 SUMMARY
@@ -304,7 +347,7 @@ validation:
   (no scene)
 
 
-=== step 07: apply_physics_api
+=== step 08: apply_physics_api
 intent: no project is open
 
 SUMMARY
@@ -347,7 +390,7 @@ validation:
   (no scene)
 
 
-=== step 08: bind_material
+=== step 09: bind_material
 intent: no project is open
 
 SUMMARY
@@ -390,7 +433,7 @@ validation:
   (no scene)
 
 
-=== step 09: cleanup_unused_contents
+=== step 10: cleanup_unused_contents
 intent: no project is open
 
 SUMMARY
@@ -433,7 +476,7 @@ validation:
   (no scene)
 
 
-=== step 10: cleanup_unused_materials
+=== step 11: cleanup_unused_materials
 intent: no project is open
 
 SUMMARY
@@ -476,7 +519,7 @@ validation:
   (no scene)
 
 
-=== step 11: compute_grid_layout
+=== step 12: compute_grid_layout
 intent: no project is open
 
 SUMMARY
@@ -539,7 +582,7 @@ validation:
   (no scene)
 
 
-=== step 12: create_camera
+=== step 13: create_camera
 intent: no project is open
 
 SUMMARY
@@ -582,7 +625,7 @@ validation:
   (no scene)
 
 
-=== step 13: create_joint
+=== step 14: create_joint
 intent: no project is open
 
 SUMMARY
@@ -625,7 +668,7 @@ validation:
   (no scene)
 
 
-=== step 14: create_light
+=== step 15: create_light
 intent: no project is open
 
 SUMMARY
@@ -668,7 +711,7 @@ validation:
   (no scene)
 
 
-=== step 15: create_material
+=== step 16: create_material
 intent: no project is open
 
 SUMMARY
@@ -711,7 +754,7 @@ validation:
   (no scene)
 
 
-=== step 16: create_or_update_collision_group
+=== step 17: create_or_update_collision_group
 intent: no project is open
 
 SUMMARY
@@ -754,7 +797,7 @@ validation:
   (no scene)
 
 
-=== step 17: create_stage
+=== step 18: create_stage
 intent: no project is open
 
 SUMMARY
@@ -797,7 +840,7 @@ validation:
   (no scene)
 
 
-=== step 18: delete_project_asset
+=== step 19: delete_project_asset
 intent: no project is open
 
 SUMMARY
@@ -840,7 +883,7 @@ validation:
   (no scene)
 
 
-=== step 19: delete_project_texture
+=== step 20: delete_project_texture
 intent: no project is open
 
 SUMMARY
@@ -883,7 +926,7 @@ validation:
   (no scene)
 
 
-=== step 20: delete_scene_snapshot
+=== step 21: delete_scene_snapshot
 intent: no project is open
 
 SUMMARY
@@ -926,7 +969,7 @@ validation:
   (no scene)
 
 
-=== step 21: drop_to_surface
+=== step 22: drop_to_surface
 intent: no project is open
 
 SUMMARY
@@ -969,7 +1012,7 @@ validation:
   (no scene)
 
 
-=== step 22: freeze_asset
+=== step 23: freeze_asset
 intent: no project is open
 
 SUMMARY
@@ -1012,7 +1055,7 @@ validation:
   (no scene)
 
 
-=== step 23: get_current_project
+=== step 24: get_current_project
 intent: no project is open
 
 SUMMARY
@@ -1056,7 +1099,7 @@ validation:
   (no scene)
 
 
-=== step 24: get_physics_summary
+=== step 25: get_physics_summary
 intent: no project is open
 
 SUMMARY
@@ -1099,7 +1142,7 @@ validation:
   (no scene)
 
 
-=== step 25: list_asset_geo_files
+=== step 26: list_asset_geo_files
 intent: no project is open
 
 SUMMARY
@@ -1142,7 +1185,7 @@ validation:
   (no scene)
 
 
-=== step 26: list_assets
+=== step 27: list_assets
 intent: no project is open
 
 SUMMARY
@@ -1284,7 +1327,7 @@ validation:
   (no scene)
 
 
-=== step 27: list_camera_properties
+=== step 28: list_camera_properties
 intent: no project is open
 
 SUMMARY
@@ -1479,7 +1522,7 @@ validation:
   (no scene)
 
 
-=== step 28: list_collision_groups
+=== step 29: list_collision_groups
 intent: no project is open
 
 SUMMARY
@@ -1522,7 +1565,7 @@ validation:
   (no scene)
 
 
-=== step 29: list_joint_properties
+=== step 30: list_joint_properties
 intent: no project is open
 
 SUMMARY
@@ -1565,7 +1608,7 @@ validation:
   (no scene)
 
 
-=== step 30: list_joints
+=== step 31: list_joints
 intent: no project is open
 
 SUMMARY
@@ -1608,7 +1651,7 @@ validation:
   (no scene)
 
 
-=== step 31: list_light_type_properties
+=== step 32: list_light_type_properties
 intent: no project is open
 
 SUMMARY
@@ -1725,7 +1768,7 @@ validation:
   (no scene)
 
 
-=== step 32: list_materials
+=== step 33: list_materials
 intent: no project is open
 
 SUMMARY
@@ -1768,7 +1811,7 @@ validation:
   (no scene)
 
 
-=== step 33: list_physics_api_properties
+=== step 34: list_physics_api_properties
 intent: no project is open
 
 SUMMARY
@@ -1863,7 +1906,7 @@ validation:
   (no scene)
 
 
-=== step 34: list_physics_scenes
+=== step 35: list_physics_scenes
 intent: no project is open
 
 SUMMARY
@@ -1906,7 +1949,7 @@ validation:
   (no scene)
 
 
-=== step 35: list_prim_attributes
+=== step 36: list_prim_attributes
 intent: no project is open
 
 SUMMARY
@@ -1949,7 +1992,7 @@ validation:
   (no scene)
 
 
-=== step 36: list_prim_children
+=== step 37: list_prim_children
 intent: no project is open
 
 SUMMARY
@@ -1992,7 +2035,7 @@ validation:
   (no scene)
 
 
-=== step 37: list_project_assets
+=== step 38: list_project_assets
 intent: no project is open
 
 SUMMARY
@@ -2035,7 +2078,7 @@ validation:
   (no scene)
 
 
-=== step 38: list_projects
+=== step 39: list_projects
 intent: no project is open
 
 SUMMARY
@@ -2080,7 +2123,7 @@ validation:
   (no scene)
 
 
-=== step 39: list_scene
+=== step 40: list_scene
 intent: no project is open
 
 SUMMARY
@@ -2123,7 +2166,7 @@ validation:
   (no scene)
 
 
-=== step 40: list_scene_snapshots
+=== step 41: list_scene_snapshots
 intent: no project is open
 
 SUMMARY
@@ -2166,7 +2209,7 @@ validation:
   (no scene)
 
 
-=== step 41: list_textures
+=== step 42: list_textures
 intent: no project is open
 
 SUMMARY
@@ -2207,7 +2250,7 @@ validation:
   (no scene)
 
 
-=== step 42: list_variants
+=== step 43: list_variants
 intent: no project is open
 
 SUMMARY
@@ -2250,7 +2293,7 @@ validation:
   (no scene)
 
 
-=== step 43: move_asset
+=== step 44: move_asset
 intent: no project is open
 
 SUMMARY
@@ -2293,7 +2336,7 @@ validation:
   (no scene)
 
 
-=== step 44: open_project
+=== step 45: open_project
 intent: no project is open
 
 SUMMARY
@@ -2336,7 +2379,7 @@ validation:
   (no scene)
 
 
-=== step 45: package_scene
+=== step 46: package_scene
 intent: no project is open
 
 SUMMARY
@@ -2379,54 +2422,11 @@ validation:
   (no scene)
 
 
-=== step 46: place_asset
+=== step 47: place_asset
 intent: no project is open
 
 SUMMARY
   call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
-  current project: (none)
-  said: REFUSED: No stage open. Call create_stage first.
-
-  what changed:
-    nothing
-
-  project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
-
-  checks:
-    no problems spotted by the automatic checks
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "error": "No stage open. Call create_stage first."
-  }
-
-files:
-  (no project)
-
-file changes:
-  (none)
-
-composed scene changes:
-  (none)
-
-world (position, bounds min..max, material shown):
-  (no scene)
-
-validation:
-  (no scene)
-
-
-=== step 47: place_asset_inside
-intent: no project is open
-
-SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", container_prim_path="/Scene/Props/Thing_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: (none)
   said: REFUSED: No stage open. Call create_stage first.
 

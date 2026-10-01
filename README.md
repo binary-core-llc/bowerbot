@@ -84,7 +84,7 @@ Projects are persistent. Close the session, come back later, and continue where 
 - 🎨 **Material binding**: apply MaterialX or existing `.usda` materials to specific mesh parts; procedural materials author hybrid MaterialX + UsdPreviewSurface outputs so they render across studio renderers (Renderman, Arnold), Hydra Storm, Apple RealityKit / AR Quick Look, and Isaac Sim
 - 💡 **Native USD lighting**: sun, dome, point, area, disk, and tube lights at scene or asset level, with optional UsdLux `light:link` collections so a rim light, kicker, or product-shot key only illuminates the prims you target
 - 🧩 **Automatic unit handling**: assets in cm, mm, or inches are scaled correctly at reference time
-- 📐 **Geometry-aware placement**: bounding-box resolved positions for surface, above, below, or nested placements
+- 📐 **Geometry-aware placement**: bounding-box resolved positions for surface, above, below, or assets added to another asset
 - 🪨 **Scatter**: distribute assets over real surfaces, from a handful to millions, each piece resting on the triangles it lands on (uneven, sloped, or curved). Random with density variation and spacing, crop rows, heaps, paths, loops and curves (fences, posts, shelf products, chairs round a table), plus drop-to-surface for existing objects. Deterministic per seed; assets are referenced like any placement, as editable placements or as one PointInstancer for bulk
 - 🔌 **Pluggable skills**: connect any asset source (Sketchfab, PolyHaven, company DAM, or build your own)
 - 🧠 **Multi-LLM support**: OpenAI, Anthropic, and any provider via [litellm](https://docs.litellm.ai/)
@@ -451,11 +451,11 @@ service function and is described in the LLM prompts under
 |------|-------------|
 | `place_asset` | Add an asset (auto-creates ASWF folder for loose geometry) |
 | `place_layout` | Batch placement: many assets/transforms in one call |
-| `place_asset_inside` | Nest an asset inside an ASWF container's `contents.usda` |
+| `add_asset_to_asset` | Add an asset to another asset, as a permanent piece kept in the parent's `contents.usda` |
 | `list_project_assets` | Show asset folders with scene usage status |
 | `delete_project_asset` | Remove an asset folder (scans variant bodies in every layer first) |
 | `delete_project_texture` | Remove a texture file (checks references first) |
-| `cleanup_unused_contents` | Prune nested asset wrappers whose target folder no longer exists |
+| `cleanup_unused_contents` | Prune the leftover scaffolding of assets added to another asset |
 | `freeze_asset` | Bake non-identity root transforms (Maya/Houdini unfrozen exports) into vertex data |
 
 #### Scatter
@@ -861,7 +861,7 @@ src/bowerbot/
                            #   get_current_project (focus the bound project)
     stage_service.py       #   create_stage, list_scene, rename/remove_prim, move_asset,
                            #   set/list_prim_attribute(s), snapshot lifecycle, ...
-    asset_service.py       #   place_asset, place_asset_inside, list/delete_project_*,
+    asset_service.py       #   place_asset, add_asset_to_asset, list/delete_project_*,
                            #   cleanup_unused_contents, freeze_asset
     library_service.py     #   list_assets, search_assets
     light_service.py       #   list_light_type_properties, create/update/remove_light
@@ -949,7 +949,7 @@ src/bowerbot/
       asset_variants.py        #   An asset's variants.usda: the layer, its variant sets
                                #   and payloads, default selections, removal
       placement.py             #   How the scene refers to asset folders: /Scene
-                               #   placements, nested assets, container frames
+                               #   placements, assets added to an asset, frames
       library.py               #   The asset library: searching it for assets and
                                #   textures, its asset folders, resolving a path
       intake.py                #   Bringing a file or folder into the project: copy,
@@ -1039,10 +1039,10 @@ Every scene follows [OpenUSD](https://openusd.org) best practices and the [ASWF 
 
 **Asset level**
 - References (not sublayers) per ASWF guidelines, for predictable opinion strength
-- Materials inline in `mtl.usda`, lights inline in `lgt.usda`, nested references in `contents.usda`
+- Materials inline in `mtl.usda`, lights inline in `lgt.usda`, references to added assets in `contents.usda`
 - Automatic `metersPerUnit` conversion across composition boundaries
-- Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or baked into vertex data with explicit user consent), so nested placements compose predictably
-- Nested placements mirror the scene-level wrapper convention (a wrapper `Xform` holds the per-instance transform, an inner `/asset` child holds the reference arc), and `move_asset` / `remove_prim` on a nested path route writes to `contents.usda` instead of authoring per-instance overrides at scene level
+- Identity root transforms enforced on intake: pivot dances, baked rotations, and other unfrozen DCC export ops are rejected (or baked into vertex data with explicit user consent), so assets added to another asset compose predictably
+- Assets added to another asset mirror the scene-level wrapper convention (a wrapper `Xform` holds the transform, an inner `/asset` child holds the reference arc), and `move_asset` / `remove_prim` on such a path route writes to the parent's `contents.usda` instead of authoring per-instance overrides at scene level
 - Asset roots carry the canonical ASWF identity: `kind = "component"` for terminal assets and an `assetInfo` dictionary (`identifier`, `name`, `version`) so DCC outliners, asset browsers, and pipeline asset-management systems recognise BowerBot output as production-grade
 
 **Variant sets**

@@ -60,16 +60,16 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
-        "editing/move_nested",
-        "Moving a placement nested inside another asset.",
+        "editing/move_added_asset",
+        "Moving an asset that was added to another asset.",
         (
             _place("table.usda", "Table", save="table"),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "Crate",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Props",
                     **model.at(0.0),
                 },
@@ -79,7 +79,7 @@ SCENARIOS = (
             model.Step(
                 "move_asset",
                 {"prim_path": "$crate", **model.at(0.3, 0.8, 0.0)},
-                note="move the nested crate",
+                note="move the added crate",
             ),
             model.Step(
                 "move_asset",
@@ -221,16 +221,16 @@ SCENARIOS = (
     ),
     model.Scenario(
         "editing/listings",
-        "list_scene and list_prim_children on a scene with groups, parts and nested assets.",
+        "list_scene and list_prim_children on a scene with groups, parts and added assets.",
         (
             model.Step("list_scene", note="an empty scene"),
             _place("table.usda", "Table", save="table"),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "Crate",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Props",
                     **model.at(0.0),
                 },

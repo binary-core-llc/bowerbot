@@ -891,7 +891,7 @@ intent: remove a part of an asset
 SUMMARY
   call: remove_prim(prim_path="/Scene/Furniture/Table_02/asset/Leg_L")
   current project: golden
-  said: REFUSED: Path /Scene/Furniture/Table_02/asset/Leg_L is inside a referenced top-level asset. Only the scene-level wrapper (/Scene/<Group>/<Name>) and nested wrappers (.../asset/contents/<group>/<name>) can be edited; everything else lives inside the referenced asset and editing it at scene level would create per-instance overrides.
+  said: REFUSED: Path /Scene/Furniture/Table_02/asset/Leg_L belongs to a referenced asset. Only the scene-level wrapper (/Scene/<Group>/<Name>) and the wrappers of assets added to it (.../asset/contents/<group>/<name>) can be edited; everything else belongs to the referenced asset, and editing it at scene level would create per-instance overrides.
 
   what changed:
     nothing
@@ -910,7 +910,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Path /Scene/Furniture/Table_02/asset/Leg_L is inside a referenced top-level asset. Only the scene-level wrapper (/Scene/<Group>/<Name>) and nested wrappers (.../asset/contents/<group>/<name>) can be edited; everything else lives inside the referenced asset and editing it at scene level would create per-instance overrides."
+    "error": "Path /Scene/Furniture/Table_02/asset/Leg_L belongs to a referenced asset. Only the scene-level wrapper (/Scene/<Group>/<Name>) and the wrappers of assets added to it (.../asset/contents/<group>/<name>) can be edited; everything else belongs to the referenced asset, and editing it at scene level would create per-instance overrides."
   }
 
 files:

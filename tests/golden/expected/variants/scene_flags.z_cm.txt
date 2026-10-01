@@ -1054,7 +1054,7 @@ intent: an alternative whose root is not frozen
 SUMMARY
   call: add_scene_model_selection_variant(prim_path="/Scene/Furniture/Seat_01", variant_set="model", variant_name="unfrozen", asset_file_path="<LIBRARY>/unfrozen.usda")
   current project: golden
-  said: REFUSED: Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms or nested placement breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini).
+  said: REFUSED: Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms, or adding one to another asset breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini).
 
   what changed:
     nothing
@@ -1072,7 +1072,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms or nested placement breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini)."
+    "error": "Asset 'geo.usda' has non-identity transforms baked on its root prim (translate/rotate/scale/pivot from an unfrozen DCC export). Production USD assets must have identity root transforms, or adding one to another asset breaks. Ask the user if they want BowerBot to bake the transforms into vertex data automatically — this only modifies the project copy, the user's original source file is untouched. If they confirm, call place_asset again with fix_root_transforms=true. Alternatively, advise them to re-export from their DCC with transforms frozen ('Bake Transforms' in Maya USD export, 'Pre-freeze' in Houdini)."
   }
 
 files:

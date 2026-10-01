@@ -573,13 +573,13 @@ validation:
   valid, no issues
 
 
-=== step 03: place_asset_inside
+=== step 03: add_asset_to_asset
 intent: bounds_offset mode, turned 30 degrees
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="A", container_prim_path="/Scene/Furniture/Table_02", group="Architecture", translate_x=0.0, translate_y=0.0, translate_z=0.0, rotate_y=30.0, position_mode="bounds_offset")
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="A", parent_prim_path="/Scene/Furniture/Table_02", group="Architecture", translate_x=0.0, translate_y=0.0, translate_z=0.0, rotate_y=30.0, position_mode="bounds_offset")
   current project: golden
-  said: ok: Placed A inside table at /Scene/Furniture/Table_02/asset/contents/Architecture/A_03
+  said: ok: Added A to table at /Scene/Furniture/Table_02/asset/contents/Architecture/A_03
 
   what changed:
     + file assets/crate/crate.usda
@@ -626,7 +626,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "A",
-    "container": "table",
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
@@ -637,7 +636,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed A inside table at /Scene/Furniture/Table_02/asset/contents/Architecture/A_03",
+    "message": "Added A to table at /Scene/Furniture/Table_02/asset/contents/Architecture/A_03",
+    "parent": "table",
     "position": {
       "x": 300.0,
       "y": 0.0,
@@ -803,12 +803,12 @@ validation:
   - [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
 
 
-=== step 04: place_asset_inside
+=== step 04: add_asset_to_asset
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/unfrozen.usda", asset_name="B", container_prim_path="/Scene/Furniture/Table_02", group="Furniture", translate_x=20.0, translate_y=0.0, translate_z=0.0, fix_root_transforms=true, confirm_shared_modification=true)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/unfrozen.usda", asset_name="B", parent_prim_path="/Scene/Furniture/Table_02", group="Furniture", translate_x=20.0, translate_y=0.0, translate_z=0.0, fix_root_transforms=true, confirm_shared_modification=true)
   current project: golden
-  said: ok: Placed B inside table at /Scene/Furniture/Table_02/asset/contents/Furniture/B_04
+  said: ok: Added B to table at /Scene/Furniture/Table_02/asset/contents/Furniture/B_04
 
   what changed:
     ~ file assets/table/contents.usda
@@ -851,7 +851,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "B",
-    "container": "table",
     "intake": {
       "asset_folder": "unfrozen",
       "files_copied": 1,
@@ -862,7 +861,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed B inside table at /Scene/Furniture/Table_02/asset/contents/Furniture/B_04",
+    "message": "Added B to table at /Scene/Furniture/Table_02/asset/contents/Furniture/B_04",
+    "parent": "table",
     "position": {
       "x": 20.0,
       "y": 0.0,
@@ -1019,12 +1019,12 @@ validation:
   - [error] /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset: Unresolved reference: ../unfrozen/unfrozen.usda
 
 
-=== step 05: place_asset_inside
+=== step 05: add_asset_to_asset
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/rooted_mesh.usda", asset_name="C", container_prim_path="/Scene/Furniture/Table_02", group="Lighting", translate_x=-20.0, translate_y=0.0, translate_z=0.0, fix_root_prim=true)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/rooted_mesh.usda", asset_name="C", parent_prim_path="/Scene/Furniture/Table_02", group="Lighting", translate_x=-20.0, translate_y=0.0, translate_z=0.0, fix_root_prim=true)
   current project: golden
-  said: ok: Placed C inside table at /Scene/Furniture/Table_02/asset/contents/Lighting/C_05
+  said: ok: Added C to table at /Scene/Furniture/Table_02/asset/contents/Lighting/C_05
 
   what changed:
     + file assets/rooted_mesh/geo.usda
@@ -1064,7 +1064,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "C",
-    "container": "table",
     "intake": {
       "asset_folder": "rooted_mesh",
       "files_copied": 1,
@@ -1075,7 +1074,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed C inside table at /Scene/Furniture/Table_02/asset/contents/Lighting/C_05",
+    "message": "Added C to table at /Scene/Furniture/Table_02/asset/contents/Lighting/C_05",
+    "parent": "table",
     "position": {
       "x": -20.0,
       "y": 0.0,
@@ -1233,12 +1233,12 @@ validation:
   - [error] /Scene/Furniture/Table_02/asset/contents/Lighting/C_05/asset: Unresolved reference: ../rooted_mesh/rooted_mesh.usda
 
 
-=== step 06: place_asset_inside
+=== step 06: add_asset_to_asset
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="D", container_prim_path="/Scene/Furniture/Table_02", group="Products", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="D", parent_prim_path="/Scene/Furniture/Table_02", group="Products", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: ok: Placed D inside table at /Scene/Furniture/Table_02/asset/contents/Products/D_06
+  said: ok: Added D to table at /Scene/Furniture/Table_02/asset/contents/Products/D_06
 
   what changed:
     ~ file assets/table/contents.usda
@@ -1278,7 +1278,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "D",
-    "container": "table",
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
@@ -1289,7 +1288,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed D inside table at /Scene/Furniture/Table_02/asset/contents/Products/D_06",
+    "message": "Added D to table at /Scene/Furniture/Table_02/asset/contents/Products/D_06",
+    "parent": "table",
     "position": {
       "x": 0.0,
       "y": 0.0,

@@ -947,7 +947,7 @@ intent: a dome light cannot live inside an asset
 SUMMARY
   call: create_light(light_type="DomeLight", light_name="Sky", asset_prim_path="/Scene/Props/Lamp_01")
   current project: golden
-  said: REFUSED: DomeLight is a scene-level environment light and cannot be nested in an asset. Create it without asset_prim_path.
+  said: REFUSED: DomeLight is a scene-level environment light and cannot belong to an asset. Create it without asset_prim_path.
 
   what changed:
     nothing
@@ -965,7 +965,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "DomeLight is a scene-level environment light and cannot be nested in an asset. Create it without asset_prim_path."
+    "error": "DomeLight is a scene-level environment light and cannot belong to an asset. Create it without asset_prim_path."
   }
 
 files:

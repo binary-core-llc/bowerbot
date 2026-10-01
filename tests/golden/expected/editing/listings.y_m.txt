@@ -1,6 +1,6 @@
 ##### scenario: editing/listings
 ##### convention: Y-up, 1.0 meters per unit
-##### list_scene and list_prim_children on a scene with groups, parts and nested assets.
+##### list_scene and list_prim_children on a scene with groups, parts and added assets.
 
 
 === step 00: create_project
@@ -384,12 +384,12 @@ validation:
   valid, no issues
 
 
-=== step 03: place_asset_inside
+=== step 03: add_asset_to_asset
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", container_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: ok: Placed Crate inside table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02
+  said: ok: Added Crate to table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02
 
   what changed:
     + file assets/crate/crate.usda
@@ -435,7 +435,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "Crate",
-    "container": "table",
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
@@ -446,7 +445,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed Crate inside table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02",
+    "message": "Added Crate to table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02",
+    "parent": "table",
     "position": {
       "x": 0.0,
       "y": 0.0,

@@ -523,11 +523,11 @@ SCENARIOS = (
             _place("chair.usda", "Lamp", "Lighting", save="lamp"),
             _place("table.usda", "Table", "Furniture", x=3.0, save="table"),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "A",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Architecture",
                     **model.at(0.0),
                     "rotate_y": 30.0,
@@ -536,11 +536,11 @@ SCENARIOS = (
                 note="bounds_offset mode, turned 30 degrees",
             ),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/unfrozen.usda",
                     "asset_name": "B",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Furniture",
                     **model.at(0.2),
                     "fix_root_transforms": True,
@@ -548,22 +548,22 @@ SCENARIOS = (
                 },
             ),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/rooted_mesh.usda",
                     "asset_name": "C",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Lighting",
                     **model.at(-0.2),
                     "fix_root_prim": True,
                 },
             ),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "D",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Products",
                     **model.at(0.0),
                 },

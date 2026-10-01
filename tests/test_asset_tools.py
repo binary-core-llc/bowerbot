@@ -142,21 +142,21 @@ def test_place_asset_relative_path_not_found():
         assert not r.success
 
 
-def test_place_asset_inside_relative_path():
-    """place_asset_inside resolves relative paths too."""
+def test_add_asset_to_asset_relative_path():
+    """add_asset_to_asset resolves relative paths too."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        container = _place(tmp_path, state, "shelf", "Furniture")
+        parent = _place(tmp_path, state, "shelf", "Furniture")
 
-        nested = _asset(tmp_path, "book")
+        added = _asset(tmp_path, "book")
         project_sub = project.path / "imports"
         project_sub.mkdir()
-        shutil.copy2(nested, project_sub / "book.usda")
+        shutil.copy2(added, project_sub / "book.usda")
 
-        r = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
+        r = asyncio.run(_helpers.exec_tool(state, "add_asset_to_asset", {
             "asset_file_path": "imports/book.usda",
             "asset_name": "Book",
-            "container_prim_path": container.data["prim_path"],
+            "parent_prim_path": parent.data["prim_path"],
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.3, "translate_z": 0.0,
         }))
@@ -176,27 +176,27 @@ def test_place_asset_missing_stage():
         assert not r.success
 
 
-# ── place_asset_inside ──
+# ── add_asset_to_asset ──
 
 
-def test_place_asset_inside():
-    """Nests an asset inside a container; contents.usda is created."""
+def test_add_asset_to_asset():
+    """Adds an asset to another asset; contents.usda is created."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        container = _place(tmp_path, state, "building", "Architecture")
+        parent = _place(tmp_path, state, "building", "Architecture")
 
-        nested_src = _asset(tmp_path, "counter")
-        r = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
-            "asset_file_path": str(nested_src),
+        added_src = _asset(tmp_path, "counter")
+        r = asyncio.run(_helpers.exec_tool(state, "add_asset_to_asset", {
+            "asset_file_path": str(added_src),
             "asset_name": "Counter",
-            "container_prim_path": container.data["prim_path"],
+            "parent_prim_path": parent.data["prim_path"],
             "group": "Furniture",
             "translate_x": 1.0, "translate_y": 0.0, "translate_z": 2.0,
         }))
         assert r.success, r.error
 
-        container_dir = project.assets_dir / "building"
-        assert (container_dir / "contents.usda").exists()
+        parent_asset_dir = project.assets_dir / "building"
+        assert (parent_asset_dir / "contents.usda").exists()
 
 
 # ── place_layout ──
@@ -634,20 +634,20 @@ def test_place_asset_multiple_groups():
         assert "/Lighting/" in r2.data["prim_path"]
 
 
-# ── place_asset_inside: additional scenarios ──
+# ── add_asset_to_asset: additional scenarios ──
 
 
-def test_place_asset_inside_nested_visible_in_scene():
-    """Nested asset is visible in the composed scene stage."""
+def test_add_asset_to_asset_visible_in_scene():
+    """The added asset is visible in the composed scene stage."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        container = _place(tmp_path, state, "shelf", "Furniture")
+        parent = _place(tmp_path, state, "shelf", "Furniture")
 
-        nested = _asset(tmp_path, "book")
-        r = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
-            "asset_file_path": str(nested),
+        added = _asset(tmp_path, "book")
+        r = asyncio.run(_helpers.exec_tool(state, "add_asset_to_asset", {
+            "asset_file_path": str(added),
             "asset_name": "Book",
-            "container_prim_path": container.data["prim_path"],
+            "parent_prim_path": parent.data["prim_path"],
             "group": "Props",
             "translate_x": 0.0, "translate_y": 0.3, "translate_z": 0.0,
         }))
@@ -658,7 +658,7 @@ def test_place_asset_inside_nested_visible_in_scene():
         assert prim.IsValid()
 
 
-# ── nested assets: units, up axis, moves ──
+# ── assets added to another asset: units, up axis, moves ──
 
 
 def _box_asset(directory: Path, name: str, *, mpu: float = 1.0, up: str = "Y") -> Path:
@@ -674,25 +674,25 @@ def _box_asset(directory: Path, name: str, *, mpu: float = 1.0, up: str = "Y") -
     return path
 
 
-def _nest(tmp_path, state, *, container_mpu: float = 1.0, container_up: str = "Y"):
-    """Place a container at (3, 0, 4) and nest a Y-up meter box in it at (3.2, 0.5, 4.1)."""
-    container = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+def _add_to_parent(tmp_path, state, *, parent_mpu: float = 1.0, parent_up: str = "Y"):
+    """Place a parent asset at (3, 0, 4) and add a Y-up meter box to it at (3.2, 0.5, 4.1)."""
+    parent = asyncio.run(_helpers.exec_tool(state, "place_asset", {
         "asset_file_path": str(
-            _box_asset(tmp_path, "shelf", mpu=container_mpu, up=container_up),
+            _box_asset(tmp_path, "shelf", mpu=parent_mpu, up=parent_up),
         ),
         "asset_name": "Shelf", "group": "Furniture",
         "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
     }))
-    assert container.success, container.error
-    nested = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
+    assert parent.success, parent.error
+    added = asyncio.run(_helpers.exec_tool(state, "add_asset_to_asset", {
         "asset_file_path": str(_box_asset(tmp_path, "book")),
         "asset_name": "Book",
-        "container_prim_path": container.data["prim_path"],
+        "parent_prim_path": parent.data["prim_path"],
         "group": "Props",
         "translate_x": 3.2, "translate_y": 0.5, "translate_z": 4.1,
     }))
-    assert nested.success, nested.error
-    return nested
+    assert added.success, added.error
+    return added
 
 
 def _world_position(project, prim_path: str) -> tuple[float, float, float]:
@@ -704,31 +704,31 @@ def _world_position(project, prim_path: str) -> tuple[float, float, float]:
     return (round(x, 4), round(y, 4), round(z, 4))
 
 
-def test_nested_asset_in_a_centimeter_container_lands_on_the_world_point():
-    """A meter box nested in a centimeter container is where it was asked, at its real size."""
+def test_asset_added_to_a_centimeter_asset_lands_on_the_world_point():
+    """A meter box added to a centimeter asset is where it was asked, at its real size."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        nested = _nest(tmp_path, state, container_mpu=0.01)
+        added = _add_to_parent(tmp_path, state, parent_mpu=0.01)
 
-        assert _world_position(project, nested.data["prim_path"]) == (3.2, 0.5, 4.1)
-        assert nested.data["position"] == {"x": 3.2, "y": 0.5, "z": 4.1}
+        assert _world_position(project, added.data["prim_path"]) == (3.2, 0.5, 4.1)
+        assert added.data["position"] == {"x": 3.2, "y": 0.5, "z": 4.1}
         stage = Usd.Stage.Open(str(project.scene_path))
         cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [UsdGeom.Tokens.default_])
         box = cache.ComputeWorldBound(
-            stage.GetPrimAtPath(nested.data["prim_path"]),
+            stage.GetPrimAtPath(added.data["prim_path"]),
         ).ComputeAlignedRange()
         assert all(abs(side - 1.0) < 1e-4 for side in box.GetSize())
 
 
-def test_nested_asset_in_a_z_up_container_stands_upright():
-    """A Y-up box nested in a Z-up container is turned to its container's up axis."""
+def test_asset_added_to_a_z_up_asset_stands_upright():
+    """A Y-up box added to a Z-up asset is turned to its parent's up axis."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        nested = _nest(tmp_path, state, container_up="Z")
+        added = _add_to_parent(tmp_path, state, parent_up="Z")
 
-        assert _world_position(project, nested.data["prim_path"]) == (3.2, 0.5, 4.1)
+        assert _world_position(project, added.data["prim_path"]) == (3.2, 0.5, 4.1)
         stage = Usd.Stage.Open(str(project.scene_path))
-        asset = UsdGeom.Xformable(stage.GetPrimAtPath(nested.data["prim_path"] + "/asset"))
+        asset = UsdGeom.Xformable(stage.GetPrimAtPath(added.data["prim_path"] + "/asset"))
         assert [(op.GetOpName(), op.Get()) for op in asset.GetOrderedXformOps()] == [
             ("xformOp:rotateX", 90.0),
         ]
@@ -738,11 +738,11 @@ def test_nested_asset_in_a_z_up_container_stands_upright():
         assert Gf.IsClose(up, Gf.Vec3d(0, 1, 0), 1e-6)
 
 
-def test_moving_a_nested_asset_keeps_the_axes_left_out():
-    """A nested move goes to the world point given; axes left out keep their world value."""
+def test_moving_an_added_asset_keeps_the_axes_left_out():
+    """Moving an added asset goes to the world point given; axes left out keep their value."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
-        prim_path = _nest(tmp_path, state, container_mpu=0.01).data["prim_path"]
+        prim_path = _add_to_parent(tmp_path, state, parent_mpu=0.01).data["prim_path"]
 
         moved = asyncio.run(_helpers.exec_tool(state, "move_asset", {
             "prim_path": prim_path, "translate_x": 3.4,

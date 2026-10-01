@@ -104,10 +104,10 @@ ARGS: dict[str, dict[str, object]] = {
         "translate_y": 0.0,
         "translate_z": 0.0,
     },
-    "place_asset_inside": {
+    "add_asset_to_asset": {
         "asset_file_path": "$lib/crate.usda",
         "asset_name": "Crate",
-        "container_prim_path": P,
+        "parent_prim_path": P,
         "group": "Props",
         "translate_x": 0.0,
         "translate_y": 0.0,

@@ -96,9 +96,9 @@ own scene-level override.
 FIRST creation of a material network in `mtl.usda`. Once it exists,
 all value tweaks go through `set_prim_attribute`.
 
-### Multi-instance containers: the shared-material trap
+### Assets with several instances: the shared-material trap
 
-The same trap that exists for `place_asset_inside` also applies to
+The same trap that exists for `add_asset_to_asset` also applies to
 `bind_material` and `create_material`. When the same asset is
 referenced by N>=2 scene instances, both tools write to the **shared**
 `mtl.usda`, so the material applies to every instance.

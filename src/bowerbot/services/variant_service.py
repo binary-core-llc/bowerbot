@@ -591,23 +591,16 @@ def select_asset_variant_for_instance(
         )
 
     target_path = carriers[0].prim_path
-    target = state.stage.GetPrimAtPath(target_path)
-    vset = target.GetVariantSets().GetVariantSet(set_name)
-    if variant_name not in vset.GetVariantNames():
-        raise ValueError(
-            f"Variant '{variant_name}' does not exist in set '{set_name}' "
-            f"on {target_path}. Available: {list(vset.GetVariantNames())}",
-        )
-
-    vset.SetVariantSelection(variant_name)
-    state.stage.Save()
+    effective = usd.variant_sets.select_variant(
+        state.stage, target_path, set_name, variant_name,
+    )
 
     return {
         "prim_path": target_path,
         "requested_prim_path": prim_path,
         "variant_set": set_name,
         "variant_name": variant_name,
-        "effective_selection": vset.GetVariantSelection(),
+        "effective_selection": effective,
         "message": (
             f"Set {target_path} variant '{set_name}' to '{variant_name}'"
         ),
@@ -653,23 +646,7 @@ def select_scene_variant(
 
     if state.stage is None:
         raise ValueError("No scene stage is open.")
-    prim = state.stage.GetPrimAtPath(prim_path)
-    if not prim or not prim.IsValid():
-        raise ValueError(f"Carrier prim not found: {prim_path}")
-    vset = prim.GetVariantSets().GetVariantSet(set_name)
-    if not vset.IsValid():
-        raise ValueError(
-            f"Variant set '{set_name}' not found on {prim_path}",
-        )
-    if variant_name not in vset.GetVariantNames():
-        raise ValueError(
-            f"Variant '{variant_name}' not in '{set_name}' on {prim_path}. "
-            f"Available: {list(vset.GetVariantNames())}",
-        )
-
-    usd.variant_sets.set_scene_variant_default(
-        state.stage, prim_path, set_name, variant_name,
-    )
+    usd.variant_sets.select_variant(state.stage, prim_path, set_name, variant_name)
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
     return {

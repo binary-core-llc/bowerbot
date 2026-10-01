@@ -858,7 +858,7 @@ intent: a set the lighting does not have
 SUMMARY
   call: select_scene_variant(prim_path="/Scene/Lighting", variant_set="nope", variant_name="x")
   current project: golden
-  said: REFUSED: Variant 'x' not in 'nope' on /Scene/Lighting. Available: []
+  said: REFUSED: Variant set 'nope' not found on /Scene/Lighting
 
   what changed:
     nothing
@@ -876,7 +876,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Variant 'x' not in 'nope' on /Scene/Lighting. Available: []"
+    "error": "Variant set 'nope' not found on /Scene/Lighting"
   }
 
 files:
@@ -914,7 +914,7 @@ intent: a variant the set does not have
 SUMMARY
   call: select_scene_variant(prim_path="/Scene/Lighting", variant_set="rig", variant_name="nope")
   current project: golden
-  said: REFUSED: Variant 'nope' not in 'rig' on /Scene/Lighting. Available: ['key_only']
+  said: REFUSED: Variant 'nope' does not exist in set 'rig' on /Scene/Lighting. Available: ['key_only']
 
   what changed:
     nothing
@@ -932,7 +932,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Variant 'nope' not in 'rig' on /Scene/Lighting. Available: ['key_only']"
+    "error": "Variant 'nope' does not exist in set 'rig' on /Scene/Lighting. Available: ['key_only']"
   }
 
 files:

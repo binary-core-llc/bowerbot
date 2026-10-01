@@ -109,6 +109,28 @@ def all_variant_set_names_in_metadata(prim_spec: Sdf.PrimSpec) -> set[str]:
 # ── Selecting a variant ──
 
 
+def select_variant(stage: Usd.Stage, prim_path: str, set_name: str, variant_name: str) -> str:
+    """Select an existing variant on a prim and save the stage; returns the selection in effect.
+
+    A prim, a variant set or a variant that does not exist is refused.
+    """
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim or not prim.IsValid():
+        raise ValueError(f"Carrier prim not found: {prim_path}")
+    if not prim.GetVariantSets().HasVariantSet(set_name):
+        raise ValueError(f"Variant set '{set_name}' not found on {prim_path}")
+    vset = prim.GetVariantSets().GetVariantSet(set_name)
+    if variant_name not in vset.GetVariantNames():
+        raise ValueError(
+            f"Variant '{variant_name}' does not exist in set '{set_name}' "
+            f"on {prim_path}. Available: {list(vset.GetVariantNames())}",
+        )
+    vset.SetVariantSelection(variant_name)
+    stage.Save()
+    selection: str = vset.GetVariantSelection()
+    return selection
+
+
 def set_scene_variant_default(
     stage: Usd.Stage,
     carrier_prim_path: str,

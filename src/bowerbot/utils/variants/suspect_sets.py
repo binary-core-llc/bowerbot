@@ -173,5 +173,5 @@ def _is_active_only_spec(spec: Sdf.PrimSpec) -> bool:
     """Whether *spec* authors ONLY the ``active`` metadata (no attrs, rels, or children)."""
     if len(spec.attributes) or len(spec.relationships) or len(spec.nameChildren):
         return False
-    info = set(spec.ListInfoKeys()) - {"specifier", "typeName"}
+    info = set(spec.ListInfoKeys()) - constants.NamespaceRules.INTRINSIC_PRIM_INFO_KEYS
     return info == {"active"}

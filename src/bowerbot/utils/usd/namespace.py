@@ -243,19 +243,14 @@ def _is_empty_intermediate(spec: Sdf.PrimSpec) -> bool:
     """Whether a prim spec carries no opinions and no children (safe to prune)."""
     if len(spec.nameChildren) or len(spec.attributes) or len(spec.relationships):
         return False
-    info = set(spec.ListInfoKeys()) - {"specifier", "typeName"}
+    info = set(spec.ListInfoKeys()) - constants.NamespaceRules.INTRINSIC_PRIM_INFO_KEYS
     return not info
 
 
 def _is_variant_body_empty(variant_spec: Sdf.VariantSpec) -> bool:
     """Whether a variant body has no authored opinions left."""
     inner = variant_spec.primSpec
-    if inner is None:
-        return True
-    if len(inner.nameChildren) or len(inner.attributes) or len(inner.relationships):
-        return False
-    info = set(inner.ListInfoKeys()) - {"specifier", "typeName"}
-    return not info
+    return inner is None or _is_empty_intermediate(inner)
 
 
 def _is_empty_override(spec: Sdf.PrimSpec) -> bool:

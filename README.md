@@ -827,7 +827,6 @@ src/bowerbot/
     library.py        #   LibraryRules, LibraryDefaults
     lights.py         #   LightUsd (UsdLux classes), LightRules, LightDefaults
     materials.py      #   MaterialXShaders, PreviewSurfaceShader, MaterialRules
-    metrics.py        #   MetricsUsd (up vectors)
     namespace.py      #   NamespaceRules (what makes an over empty)
     naming.py         #   NamingRules (prim-name pattern, refused characters)
     physics.py        #   PhysicsUsd (UsdPhysics classes), PhysicsRules, PhysicsNamespace

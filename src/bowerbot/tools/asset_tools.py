@@ -125,7 +125,7 @@ TOOLS: list[skills.Tool] = [
             "declares none it is taken to match the project. Returns the "
             "prim_path, position, and an intake summary (asset_folder, whether "
             "the root was renamed to the ASWF canonical name, files_copied, "
-            "localized dependencies, compliance warnings)."
+            "compliance warnings)."
         ),
         parameters={
             "type": "object",
@@ -392,8 +392,8 @@ TOOLS: list[skills.Tool] = [
             "project's up axis is an offset from its TOP surface (or BOTTOM when "
             "negative). Returns "
             "the composed prim_path, the asset's world position, and an "
-            "intake summary (asset_folder, renamed root, files_copied, localized "
-            "dependencies, compliance warnings)."
+            "intake summary (asset_folder, renamed root, files_copied, "
+            "compliance warnings)."
         ),
         parameters={
             "type": "object",

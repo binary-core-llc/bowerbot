@@ -166,8 +166,6 @@ full answer:
     "intake": {
       "asset_folder": "table",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "table.usda",
       "root_original_name": null,
       "warnings": [],
@@ -387,8 +385,6 @@ full answer:
     "intake": {
       "asset_folder": "chair_cm",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "chair_cm.usda",
       "root_original_name": null,
       "warnings": [],
@@ -580,8 +576,6 @@ full answer:
     "intake": {
       "asset_folder": "post_z",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "post_z.usda",
       "root_original_name": null,
       "warnings": [],
@@ -803,8 +797,6 @@ full answer:
     "intake": {
       "asset_folder": "lamp",
       "files_copied": 4,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "lamp.usda",
       "root_original_name": null,
       "warnings": [],
@@ -1095,8 +1087,6 @@ full answer:
     "intake": {
       "asset_folder": "gem",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "gem.usdz",
       "root_original_name": null,
       "warnings": [],
@@ -1262,8 +1252,6 @@ full answer:
     "intake": {
       "asset_folder": "ground",
       "files_copied": 1,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "ground.usda",
       "root_original_name": null,
       "warnings": [],

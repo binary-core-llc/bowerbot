@@ -823,7 +823,6 @@ src/bowerbot/
   constants/          # Fixed values in classes by role, grouped by domain
     asset_folder.py   #   ASWFLayerNames, AssetFolderRules (layer extensions, reference order)
     cameras.py        #   CameraDefaults, CameraTuning
-    intake.py         #   IntakeRules (root-file name hints)
     library.py        #   LibraryRules, LibraryDefaults
     lights.py         #   LightUsd (UsdLux classes), LightRules, LightDefaults
     materials.py      #   MaterialXShaders, PreviewSurfaceShader, MaterialRules
@@ -841,7 +840,7 @@ src/bowerbot/
     assets.py         #   Asset formats, categories, metadata
     attributes.py     #   SchemaPropertySpec (one property a USD schema declares)
     cameras.py        #   CameraParams, CameraSchemaInfo
-    intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
+    intake.py         #   IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
     lights.py         #   LightType, LightParams, LightTypeSchemaInfo
     materials.py      #   ProceduralMaterialParams
@@ -954,8 +953,8 @@ src/bowerbot/
                                #   textures, resolving a path
       accepted_shapes.py       #   The shapes a library asset may have (geometry file,
                                #   asset folder, .usdz) and why another one is refused
-      intake.py                #   Bringing a file or folder into the project: copy,
-                               #   localize, check and repair (ASWF compliance)
+      intake.py                #   Bringing a library asset into the project: copy,
+                               #   check and repair (ASWF compliance)
       opinions.py              #   Scene.usda opinions that would mask a write into an
                                #   asset layer or a variant
     cameras/                   # The camera tools

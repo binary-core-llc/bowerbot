@@ -168,8 +168,6 @@ full answer:
     "intake": {
       "asset_folder": "lamp",
       "files_copied": 4,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "lamp.usda",
       "root_original_name": null,
       "warnings": [],
@@ -462,8 +460,6 @@ full answer:
     "intake": {
       "asset_folder": "lamp",
       "files_copied": 0,
-      "localized_assets": [],
-      "localized_layers": [],
       "root_canonical_name": "lamp.usda",
       "root_original_name": null,
       "warnings": [

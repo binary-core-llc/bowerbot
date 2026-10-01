@@ -1,0 +1,894 @@
+##### scenario: placement/package_root_prim_name
+##### convention: Z-up, 0.01 meters per unit
+##### A package whose root prim is not named like its folder: do variants written to it show up, and can they be removed again?
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: the folder is kit, its root prim is /Cupboard
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/kit/kit.usda", asset_name="Kit", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Kit at /Scene/Furniture/Kit_01.
+
+  what changed:
+    + file assets/kit/kit.usda
+    + file assets/kit/kit_model.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Kit_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Kit_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Kit_01/asset/Body [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.8, 1, 0.4)
+          attr xformOp:translate: (0, 0.5, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 50.0000)
+    + prim /Scene/Furniture/Kit_01/asset/Door [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.7, 0.9, 0.05)
+          attr xformOp:translate: (0, 0.5, 0.225)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-35.0000, -25.0000, 5.0000)..(35.0000, -20.0000, 95.0000)
+          material shown: (none)
+          world position: (0.0000, -22.5000, 50.0000)
+    ~ /Scene  bounds: (none) → (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Kit",
+    "intake": {
+      "asset_folder": "kit",
+      "files_copied": 2,
+      "localized_assets": [],
+      "localized_layers": [],
+      "root_canonical_name": "kit.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Kit at /Scene/Furniture/Kit_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Kit_01",
+    "rotation_y": 0.0
+  }
+
+files:
+  + assets/kit/kit.usda
+  + assets/kit/kit_model.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/kit/kit.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Cupboard"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Cupboard" (
+          assetInfo = {
+              asset identifier = @./kit.usda@
+              string name = "kit"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_Cupboard>
+          kind = "component"
+          prepend payload = @./kit_model.usda@
+      )
+      {
+      }
+
+      class Xform "_class_Cupboard"
+      {
+      }
+
+  + assets/kit/kit_model.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Cupboard"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Cupboard"
+      {
+          def Cube "Body"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.8, 1, 0.4)
+              double3 xformOp:translate = (0, 0.5, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Door"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.7, 0.9, 0.05)
+              double3 xformOp:translate = (0, 0.5, 0.225)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Kit_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/kit/kit.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,43 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Kit_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/kit/kit.usda@
+  +                    string name = "kit"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Body"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.8, 1, 0.4)
+  +                    double3 xformOp:translate = (0, 0.5, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Door"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.7, 0.9, 0.05)
+  +                    double3 xformOp:translate = (0, 0.5, 0.225)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+  /Scene/Furniture/Kit_01/asset/Door  [Cube]  at (0.0000, -22.5000, 50.0000)  bounds (-35.0000, -25.0000, 5.0000)..(35.0000, -20.0000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: list_prim_children
+
+SUMMARY
+  call: list_prim_children(prim_path="/Scene/Furniture/Kit_01")
+  current project: golden
+  said: ok: Found 2 geometry part(s) under /Scene/Furniture/Kit_01. Use the prim_path of a specific part with bind_material.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Found 2 geometry part(s) under /Scene/Furniture/Kit_01. Use the prim_path of a specific part with bind_material.",
+    "part_count": 2,
+    "parts": [
+      {
+        "bounds": {
+          "max": {
+            "x": 40.0,
+            "y": 20.0,
+            "z": 100.0
+          },
+          "min": {
+            "x": -40.0,
+            "y": -20.0,
+            "z": -0.0
+          }
+        },
+        "current_material": null,
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Body",
+        "prim_path": "/Scene/Furniture/Kit_01/asset/Body",
+        "type": "Cube"
+      },
+      {
+        "bounds": {
+          "max": {
+            "x": 35.0,
+            "y": -20.0,
+            "z": 95.0
+          },
+          "min": {
+            "x": -35.0,
+            "y": -25.0,
+            "z": 5.0
+          }
+        },
+        "current_material": null,
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Door",
+        "prim_path": "/Scene/Furniture/Kit_01/asset/Door",
+        "type": "Cube"
+      }
+    ],
+    "prim_path": "/Scene/Furniture/Kit_01"
+  }
+
+files:
+    assets/kit/kit.usda
+    assets/kit/kit_model.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+  /Scene/Furniture/Kit_01/asset/Door  [Cube]  at (0.0000, -22.5000, 50.0000)  bounds (-35.0000, -25.0000, 5.0000)..(35.0000, -20.0000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: add_asset_configuration_variant
+intent: a variant that hides the door, selected by default
+
+SUMMARY
+  call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Kit_01", variant_set="door", variant_name="open", activations={"/Scene/Furniture/Kit_01/asset/Door": false}, set_as_default=true)
+  current project: golden
+  said: ok: Added configuration variant 'open' to 'door' in kit
+
+  what changed:
+    ~ file assets/kit/kit.usda
+    + file assets/kit/variants.usda
+    ~ /Scene  bounds: (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000) → (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+    ~ /Scene/Furniture/Kit_01/asset  variant set door: (none) → open of open
+    ~ /Scene/Furniture/Kit_01/asset/Door  active: (none) → false
+    ~ validity: valid → INVALID
+    + issue [error] -: variants.usda exists in kit but is not referenced from the asset root.
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ this step made the scene invalid
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "activations": {
+      "/kit/Door": false
+    },
+    "asset_path": "<PROJECT>/assets/kit",
+    "category": "configuration",
+    "default_selected": true,
+    "message": "Added configuration variant 'open' to 'door' in kit",
+    "variant_name": "open",
+    "variant_set": "door"
+  }
+
+files:
+  ~ assets/kit/kit.usda
+    assets/kit/kit_model.usda
+  + assets/kit/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/kit/kit.usda:
+      --- assets/kit/kit.usda (before)
+      +++ assets/kit/kit.usda (after)
+      @@ -15,4 +15,8 @@
+           kind = "component"
+           prepend payload = @./kit_model.usda@
+      +    prepend references = @./variants.usda@
+      +    variants = {
+      +        string door = "open"
+      +    }
+       )
+       {
+  + assets/kit/variants.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "kit"
+      )
+
+      over "kit" (
+          prepend variantSets = "door"
+      )
+      {
+          variantSet "door" = {
+              "open" {
+                  over "Door" (
+                      active = false
+                  )
+                  {
+                  }
+
+              }
+          }
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -40,12 +40,4 @@
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                   }
+  -
+  -                def Cube "Door"
+  -                {
+  -                    double size = 1
+  -                    float3 xformOp:scale = (0.7, 0.9, 0.05)
+  -                    double3 xformOp:translate = (0, 0.5, 0.225)
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: variants.usda exists in kit but is not referenced from the asset root.
+
+
+=== step 04: list_variants
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Furniture/Kit_01")
+  current project: golden
+  said: ok: 1 variant set(s) across 1 carrier(s) under /Scene/Furniture/Kit_01
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carriers": [
+      {
+        "prim_path": "/Scene/Furniture/Kit_01/asset",
+        "variant_sets": [
+          {
+            "name": "door",
+            "selection": "open",
+            "variants": [
+              "open"
+            ]
+          }
+        ]
+      }
+    ],
+    "message": "1 variant set(s) across 1 carrier(s) under /Scene/Furniture/Kit_01",
+    "prim_path": "/Scene/Furniture/Kit_01"
+  }
+
+files:
+    assets/kit/kit.usda
+    assets/kit/kit_model.usda
+    assets/kit/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: variants.usda exists in kit but is not referenced from the asset root.
+
+
+=== step 05: list_prim_children
+intent: is the door hidden?
+
+SUMMARY
+  call: list_prim_children(prim_path="/Scene/Furniture/Kit_01")
+  current project: golden
+  said: ok: Found 1 geometry part(s) under /Scene/Furniture/Kit_01. Use the prim_path of a specific part with bind_material.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Found 1 geometry part(s) under /Scene/Furniture/Kit_01. Use the prim_path of a specific part with bind_material.",
+    "part_count": 1,
+    "parts": [
+      {
+        "bounds": {
+          "max": {
+            "x": 40.0,
+            "y": 20.0,
+            "z": 100.0
+          },
+          "min": {
+            "x": -40.0,
+            "y": -20.0,
+            "z": -0.0
+          }
+        },
+        "current_material": null,
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Body",
+        "prim_path": "/Scene/Furniture/Kit_01/asset/Body",
+        "type": "Cube"
+      }
+    ],
+    "prim_path": "/Scene/Furniture/Kit_01"
+  }
+
+files:
+    assets/kit/kit.usda
+    assets/kit/kit_model.usda
+    assets/kit/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] -: variants.usda exists in kit but is not referenced from the asset root.
+
+
+=== step 06: remove_asset_variant_set
+
+SUMMARY
+  call: remove_asset_variant_set(prim_path="/Scene/Furniture/Kit_01", variant_set="door")
+  current project: golden
+  said: ok: Removed variant set 'door' from kit
+
+  what changed:
+    - file assets/kit/variants.usda
+    ~ /Scene  bounds: (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000) → (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+    ~ /Scene/Furniture/Kit_01/asset  variant set door: open of open → (none)
+    ~ /Scene/Furniture/Kit_01/asset/Door  active: false → (none)
+    + issue [error] -: UnresolvableDependency: Found unresolvable external dependency '<PROJECT>/assets/kit/variants.usda'.
+    + issue [error] /Scene/Furniture/Kit_01/asset: CompositionError: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.
+    - issue [error] -: variants.usda exists in kit but is not referenced from the asset root.
+
+  project state after the step:
+    composition error: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.
+
+  checks:
+    ⚠ this step added 2 validation error(s)
+    ⚠ left behind a composition error: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.
+    ⚠ USD printed 2 line(s) while the tool ran (see EVIDENCE): Warning: in _ReportErrors at line 3315 of /opt/USD/pxr/usd/usd/stage.cpp -- In </Scene/Furniture/Kit_01/asset>: Unresolved reference prim pa
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  Warning: in _ReportErrors at line 3315 of /opt/USD/pxr/usd/usd/stage.cpp -- In </Scene/Furniture/Kit_01/asset>: Unresolved reference prim path @<PROJECT>/assets/kit/variants.usda@<defaultPrim> introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard> (recomposing stage on stage @<PROJECT>/scene.usda@ <ADDRESS>)
+  Warning: in _ReportErrors at line 3315 of /opt/USD/pxr/usd/usd/stage.cpp -- In </Scene/Furniture/Kit_01/asset>: Unresolved reference prim path @<PROJECT>/assets/kit/variants.usda@<defaultPrim> introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard> (instantiating stage on stage @<PROJECT>/scene.usda@ <ADDRESS>)
+
+full answer:
+  {
+    "asset_path": "<PROJECT>/assets/kit",
+    "message": "Removed variant set 'door' from kit",
+    "removed": true,
+    "variant_set": "door"
+  }
+
+files:
+    assets/kit/kit.usda
+    assets/kit/kit_model.usda
+  - assets/kit/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  - assets/kit/variants.usda (removed)
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -40,4 +40,12 @@
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                   }
+  +
+  +                def Cube "Door"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.7, 0.9, 0.05)
+  +                    double3 xformOp:translate = (0, 0.5, 0.225)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+  /Scene/Furniture/Kit_01/asset/Door  [Cube]  at (0.0000, -22.5000, 50.0000)  bounds (-35.0000, -25.0000, 5.0000)..(35.0000, -20.0000, 95.0000)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: UnresolvableDependency: Found unresolvable external dependency '<PROJECT>/assets/kit/variants.usda'.
+  - [error] /Scene/Furniture/Kit_01/asset: CompositionError: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.
+
+
+=== step 07: list_variants
+
+SUMMARY
+  call: list_variants(prim_path="/Scene/Furniture/Kit_01")
+  current project: golden
+  said: ok: 0 variant set(s) across 0 carrier(s) under /Scene/Furniture/Kit_01
+
+  what changed:
+    nothing
+
+  project state after the step:
+    composition error: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carriers": [],
+    "message": "0 variant set(s) across 0 carrier(s) under /Scene/Furniture/Kit_01",
+    "prim_path": "/Scene/Furniture/Kit_01"
+  }
+
+files:
+    assets/kit/kit.usda
+    assets/kit/kit_model.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+  /Scene/Furniture/Kit_01/asset/Door  [Cube]  at (0.0000, -22.5000, 50.0000)  bounds (-35.0000, -25.0000, 5.0000)..(35.0000, -20.0000, 95.0000)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: UnresolvableDependency: Found unresolvable external dependency '<PROJECT>/assets/kit/variants.usda'.
+  - [error] /Scene/Furniture/Kit_01/asset: CompositionError: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.
+
+
+=== step 08: list_prim_children
+intent: is the door back?
+
+SUMMARY
+  call: list_prim_children(prim_path="/Scene/Furniture/Kit_01")
+  current project: golden
+  said: ok: Found 2 geometry part(s) under /Scene/Furniture/Kit_01. Use the prim_path of a specific part with bind_material.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    composition error: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Found 2 geometry part(s) under /Scene/Furniture/Kit_01. Use the prim_path of a specific part with bind_material.",
+    "part_count": 2,
+    "parts": [
+      {
+        "bounds": {
+          "max": {
+            "x": 40.0,
+            "y": 20.0,
+            "z": 100.0
+          },
+          "min": {
+            "x": -40.0,
+            "y": -20.0,
+            "z": -0.0
+          }
+        },
+        "current_material": null,
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Body",
+        "prim_path": "/Scene/Furniture/Kit_01/asset/Body",
+        "type": "Cube"
+      },
+      {
+        "bounds": {
+          "max": {
+            "x": 35.0,
+            "y": -20.0,
+            "z": 95.0
+          },
+          "min": {
+            "x": -35.0,
+            "y": -25.0,
+            "z": 5.0
+          }
+        },
+        "current_material": null,
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Door",
+        "prim_path": "/Scene/Furniture/Kit_01/asset/Door",
+        "type": "Cube"
+      }
+    ],
+    "prim_path": "/Scene/Furniture/Kit_01"
+  }
+
+files:
+    assets/kit/kit.usda
+    assets/kit/kit_model.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -25.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Kit_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material (none)
+  /Scene/Furniture/Kit_01/asset/Door  [Cube]  at (0.0000, -22.5000, 50.0000)  bounds (-35.0000, -25.0000, 5.0000)..(35.0000, -20.0000, 95.0000)  material (none)
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] -: UnresolvableDependency: Found unresolvable external dependency '<PROJECT>/assets/kit/variants.usda'.
+  - [error] /Scene/Furniture/Kit_01/asset: CompositionError: Could not open asset @<PROJECT>/assets/kit/variants.usda@ for reference introduced by @<PROJECT>/assets/kit/kit.usda@</Cupboard>.

@@ -337,6 +337,62 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "placement/package_root_prim_name",
+        "A package whose root prim is not named like its folder: do variants written to it "
+        "show up, and can they be removed again?",
+        (
+            _place(
+                "kit/kit.usda", "Kit", "Furniture", 0.0, save="kit",
+                note="the folder is kit, its root prim is /Cupboard",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$kit"}),
+            model.Step(
+                "add_asset_configuration_variant",
+                {
+                    "prim_path": "$kit",
+                    "variant_set": "door",
+                    "variant_name": "open",
+                    "activations": {"$kit/asset/Door": False},
+                    "set_as_default": True,
+                },
+                note="a variant that hides the door, selected by default",
+            ),
+            model.Step("list_variants", {"prim_path": "$kit"}),
+            model.Step("list_prim_children", {"prim_path": "$kit"}, note="is the door hidden?"),
+            model.Step(
+                "remove_asset_variant_set",
+                {"prim_path": "$kit", "variant_set": "door"},
+            ),
+            model.Step("list_variants", {"prim_path": "$kit"}),
+            model.Step("list_prim_children", {"prim_path": "$kit"}, note="is the door back?"),
+        ),
+    ),
+    model.Scenario(
+        "placement/package_side_files_with_over_root",
+        "A package that ships mtl.usda and lgt.usda written with an 'over' root: do its "
+        "materials and lights survive a cleanup and the removal of one light?",
+        (
+            _place(
+                "shelf/shelf.usda", "Shelf", "Furniture", 0.0, save="shelf",
+                note="two materials (one bound) and two lights ship with it",
+            ),
+            model.Step("list_materials"),
+            model.Step(
+                "cleanup_unused_materials",
+                {"asset_prim_path": "$shelf"},
+                note="only the spare material is unused",
+            ),
+            model.Step("list_materials", note="pine is bound to the Board: is it still there?"),
+            model.Step("list_scene", note="the shelf's two lights are listed"),
+            model.Step(
+                "remove_light",
+                {"prim_path": "$shelf/asset/lgt/Lamp_A"},
+                note="remove one of the two lights",
+            ),
+            model.Step("list_scene", note="is Lamp_B still there?"),
+        ),
+    ),
+    model.Scenario(
         "placement/assets_that_need_other_files",
         "Assets that depend on files outside what gets copied: does what they need arrive "
         "with them in the project?",

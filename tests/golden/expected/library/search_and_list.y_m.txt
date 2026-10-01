@@ -361,6 +361,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "kit",
+        "path": "<LIBRARY>/kit/kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -369,6 +375,12 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "shelf",
+        "path": "<LIBRARY>/shelf/shelf.usda"
       },
       {
         "category": "package",
@@ -479,7 +491,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 22,
+    "total_matches": 24,
     "truncated": false
   }
 
@@ -539,6 +551,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "kit",
+        "path": "<LIBRARY>/kit/kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -547,6 +565,12 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "shelf",
+        "path": "<LIBRARY>/shelf/shelf.usda"
       },
       {
         "category": "package",
@@ -561,7 +585,7 @@ full answer:
         "path": "<LIBRARY>/workbench/workbench.usda"
       }
     ],
-    "total_matches": 6,
+    "total_matches": 8,
     "truncated": false
   }
 

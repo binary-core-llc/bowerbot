@@ -66,7 +66,6 @@ def drop_scatter(
     """Reseat a scatter's instances on the surface in place, optionally re-tilting them."""
     up = index.up
     instancer = UsdGeom.PointInstancer(stage.GetPrimAtPath(prim_path))
-    time = Usd.TimeCode.Default()
     positions = np.asarray(instancer.GetPositionsAttr().Get() or [], dtype=np.float64)
     n = positions.shape[0]
     if n == 0:
@@ -138,9 +137,7 @@ def drop_scatter(
     instancer.GetPositionsAttr().Set(
         Vt.Vec3fArray.FromNumpy(np.ascontiguousarray(positions + delta, dtype=np.float32)),
     )
-    extent = instancer.ComputeExtentAtTime(time, time)
-    if extent:
-        instancer.CreateExtentAttr(extent)
+    scatter.output.update_extent(instancer)
     stranded = np.flatnonzero(~supported)[:constants.ScatterTuning.STRANDED_REPORT]
     stranded_at = world_samples.reshape(samples.shape)[stranded].mean(axis=1)
     return {

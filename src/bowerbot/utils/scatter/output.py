@@ -102,10 +102,7 @@ def write_instancer(
     instancer.CreateScalesAttr(
         Vt.Vec3fArray.FromNumpy(np.ascontiguousarray(local.scales, dtype=np.float32)),
     )
-    time = Usd.TimeCode.Default()
-    extent = instancer.ComputeExtentAtTime(time, time)
-    if extent:
-        instancer.CreateExtentAttr(extent)
+    update_extent(instancer)
 
 
 def placement_objects(
@@ -164,6 +161,14 @@ def to_local(
         proto_indices=instances.proto_indices, positions=positions,
         orientations=orientations, scales=instances.scales,
     )
+
+
+def update_extent(instancer: UsdGeom.PointInstancer) -> None:
+    """Author the instancer's extent from the instances it holds now."""
+    time = Usd.TimeCode.Default()
+    extent = instancer.ComputeExtentAtTime(time, time)
+    if extent:
+        instancer.CreateExtentAttr(extent)
 
 
 def count_by_prototype(

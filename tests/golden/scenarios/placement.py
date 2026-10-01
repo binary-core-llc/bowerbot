@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Placement: place_asset, place_asset_inside, place_layout, and the project's asset copies."""
+"""Placement: place_asset, add_asset_to_asset, place_layout, and the project's asset copies."""
 
 from __future__ import annotations
 
@@ -130,16 +130,16 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
-        "placement/nested",
-        "Assets placed inside another asset's folder, and what that shares.",
+        "placement/asset_to_asset",
+        "Assets added to another asset, and what that shares.",
         (
             _place("table.usda", "Table", "Furniture", save="table"),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "Crate",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Props",
                     **model.at(0.0, 0.0, 0.0),
                 },
@@ -147,11 +147,11 @@ SCENARIOS = (
                 note="a crate on the table (default position mode)",
             ),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "Crate",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Props",
                     **model.at(0.3, 0.8, 0.0),
                     "position_mode": "absolute",
@@ -168,22 +168,22 @@ SCENARIOS = (
                 note="a second table: it shares the folder, and so the crates",
             ),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/chair.usda",
                     "asset_name": "Chair",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Props",
                     **model.at(0.0),
                 },
-                note="nesting into a shared folder asks first",
+                note="adding to a shared folder asks first",
             ),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/chair.usda",
                     "asset_name": "Chair",
-                    "container_prim_path": "$table",
+                    "parent_prim_path": "$table",
                     "group": "Props",
                     **model.at(0.0),
                     "confirm_shared_modification": True,
@@ -191,13 +191,13 @@ SCENARIOS = (
                 note="confirmed",
             ),
             model.Step("remove_prim", {"prim_path": "$crate"}, note="remove the first crate"),
-            model.Step("cleanup_unused_contents", note="clean up nested contents nothing uses"),
+            model.Step("cleanup_unused_contents", note="clean up unused added-asset contents"),
         ),
     ),
     model.Scenario(
         "placement/units_and_axes",
-        "Assets in other units and axes, or declaring none, placed, nested, moved and lit; "
-        "the grid layout in the project's axes.",
+        "Assets in other units and axes, or declaring none: placed, added to another asset, "
+        "moved and lit; the grid layout in the project's axes.",
         (
             model.Step("compute_grid_layout", {"count": 4}, note="a grid for four objects"),
             _place(
@@ -212,39 +212,39 @@ SCENARIOS = (
             ),
             _place("chair_cm.usda", "ChairCm", "Furniture", 4.0, save="chair_cm"),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "Crate",
-                    "container_prim_path": "$chair_cm",
+                    "parent_prim_path": "$chair_cm",
                     "group": "Props",
                     **model.at(4.0, 0.5, 0.0),
                 },
                 save="crate_in_cm",
-                note="a meters crate inside a centimeters chair, at an absolute position",
+                note="a meters crate added to a centimeters chair, at an absolute position",
             ),
             model.Step(
                 "move_asset",
                 {"prim_path": "$crate_in_cm", **model.at(4.2, 0.5, 0.0)},
-                note="move the nested crate 0.2 m along x",
+                note="move the added crate 0.2 m along x",
             ),
             _place("post_z.usda", "Post", "Architecture", 6.0, save="post"),
             model.Step(
-                "place_asset_inside",
+                "add_asset_to_asset",
                 {
                     "asset_file_path": "$lib/crate.usda",
                     "asset_name": "Crate",
-                    "container_prim_path": "$post",
+                    "parent_prim_path": "$post",
                     "group": "Props",
                     **model.at(6.0, 1.0, 0.0),
                 },
                 save="crate_on_post",
-                note="a Y-up crate inside a Z-up post, at an absolute position",
+                note="a Y-up crate added to a Z-up post, at an absolute position",
             ),
             model.Step(
                 "move_asset",
                 {"prim_path": "$crate_on_post", **model.at(6.0, 1.5, 0.0)},
-                note="move the nested crate 0.5 m up",
+                note="move the added crate 0.5 m up",
             ),
             model.Step(
                 "create_light",

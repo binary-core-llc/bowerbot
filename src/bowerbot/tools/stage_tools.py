@@ -228,8 +228,8 @@ TOOLS: list[skills.Tool] = [
             "Remove an object from the scene by its prim path. Also scrubs "
             "any relationship targets left dangling by the removal and "
             "returns scrubbed_dangling_refs ({rels_touched: [...]}) listing "
-            "what was cleaned up. Handles top-level placements and prims "
-            "nested inside a referenced asset's contents.usda."
+            "what was cleaned up. Handles top-level placements and assets "
+            "added to another asset (kept in that asset's contents.usda)."
         ),
         parameters={
             "type": "object",
@@ -252,9 +252,9 @@ TOOLS: list[skills.Tool] = [
             "for single-axis moves pass only the axis the user asked to "
             "change. Use this instead of place_asset when repositioning "
             "an object already in the scene. translate_x/y/z are "
-            "world positions in project units; for a prim nested inside a referenced "
-            "asset's contents (path containing '/asset/contents/'), the "
-            "move is converted into the asset's local space and written "
+            "world positions in project units; for an asset added to another "
+            "asset (path containing '/asset/contents/'), the "
+            "move is converted into the parent asset's local space and written "
             "into that asset folder's contents.usda. The returned "
             "'position' is the object's world position."
         ),

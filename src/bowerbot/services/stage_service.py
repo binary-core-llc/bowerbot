@@ -75,12 +75,12 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     old_path = params["old_path"]
     new_path = params["new_path"]
 
-    if authoring.placement.parse_nested_contents_path(old_path) is not None:
+    if authoring.placement.parse_added_asset_path(old_path) is not None:
         msg = (
-            f"Cannot rename {old_path}: it lives inside a referenced "
-            "asset's contents.usda. Renaming at scene level would "
-            "create a per-instance override. Edit the asset folder "
-            "directly if you really need to rename a nested prim."
+            f"Cannot rename {old_path}: it is an asset added to another "
+            "asset, kept in that asset's contents.usda. Renaming at scene "
+            "level would create a per-instance override. Edit the asset "
+            "folder directly if you really need to rename it."
         )
         raise ValueError(msg)
 
@@ -106,18 +106,18 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     """Remove an object from the scene, scrubbing every rel that targeted it."""
     prim_path = params["prim_path"]
 
-    nested = authoring.placement.parse_nested_contents_path(prim_path)
-    if nested is not None:
-        container_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
-        if container_dir is None:
-            msg = f"Failed to resolve container for nested prim {prim_path}"
+    added = authoring.placement.parse_added_asset_path(prim_path)
+    if added is not None:
+        parent_asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
+        if parent_asset_dir is None:
+            msg = f"Failed to resolve the parent asset of {prim_path}"
             raise RuntimeError(msg)
-        group, prim_name = nested
-        success = authoring.placement.remove_nested_asset_reference(
-            container_dir, group, prim_name,
+        group, prim_name = added
+        success = authoring.placement.remove_added_asset(
+            parent_asset_dir, group, prim_name,
         )
         if not success:
-            msg = f"Failed to remove nested {prim_path}"
+            msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
         state.stage = authoring.stage.open_stage(state.stage_path)
     else:
@@ -145,10 +145,10 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
     if not prim.IsValid():
         raise ValueError(f"Prim not found: {prim_path}")
 
-    nested = authoring.placement.parse_nested_contents_path(prim_path)
+    added = authoring.placement.parse_added_asset_path(prim_path)
     cur_tx, cur_ty, cur_tz, cur_ry = usd.transforms.read_translate_and_rotate_y(prim)
-    if nested is not None:
-        # A nested wrapper's translate is in its container's frame; axes left out keep
+    if added is not None:
+        # An added asset's translate is in its parent asset's frame; axes left out keep
         # where it is in the world.
         cur_tx, cur_ty, cur_tz = usd.transforms.world_translation(prim)
     tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
@@ -156,16 +156,16 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
     tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
     ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
 
-    if nested is not None:
-        container_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+    if added is not None:
+        parent_asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
             state.stage, prim_path,
         )
-        if container_dir is None or ref_prim_path is None:
-            msg = f"Failed to resolve container for nested prim {prim_path}"
+        if parent_asset_dir is None or ref_prim_path is None:
+            msg = f"Failed to resolve the parent asset of {prim_path}"
             raise RuntimeError(msg)
-        group, prim_name = nested
+        group, prim_name = added
 
-        world_to_local_mat = authoring.placement.get_container_world_inverse(
+        world_to_local_mat = authoring.placement.world_to_frame_matrix(
             state.stage, ref_prim_path,
         )
         if world_to_local_mat is None:
@@ -173,20 +173,20 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             raise RuntimeError(msg)
         local = authoring.placement.resolve_asset_position(
             schemas.PositionMode.ABSOLUTE, (tx, ty, tz),
-            asset_dir=container_dir,
+            asset_dir=parent_asset_dir,
             world_to_local_mat=world_to_local_mat,
             up_given=True,
             project_mpu=state.meters_per_unit,
             project_up_axis=state.up_axis.value,
         )
 
-        success = authoring.placement.update_nested_asset_transform(
-            container_dir, group, prim_name,
+        success = authoring.placement.move_added_asset(
+            parent_asset_dir, group, prim_name,
             translate=local,
             rotate=(0.0, ry, 0.0),
         )
         if not success:
-            msg = f"Failed to update nested transform for {prim_path}"
+            msg = f"Failed to update the transform of {prim_path}"
             raise RuntimeError(msg)
         state.stage = authoring.stage.open_stage(state.stage_path)
         tx, ty, tz = (

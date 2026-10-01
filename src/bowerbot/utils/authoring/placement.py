@@ -1,11 +1,11 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""How the scene refers to asset folders: /Scene placements, nested assets, container frames.
+"""How the scene refers to asset folders: /Scene placements, assets added to an asset, frames.
 
 A placement is a wrapper Xform under ``/Scene`` whose ``asset`` child references
-an asset folder's root file. A nested asset is a wrapper inside a container
-asset's ``contents.usda``.
+an asset folder's root file. An asset added to another asset is a wrapper in
+its parent asset's ``contents.usda``.
 """
 
 from __future__ import annotations
@@ -164,10 +164,10 @@ def resolve_asset_dir_for_prim(
     prim_path: str,
 ) -> tuple[Path | None, str | None]:
     """Find the outer ASWF asset folder backing *prim_path* in *stage*."""
-    # Resolution is rooted at stage_dir (project root) on purpose: nested
+    # Resolution is rooted at stage_dir (project root) on purpose: the
     # refs in contents.usda are authored relative to that layer
     # (../sibling_asset/...) and resolve to a nonexistent path here, so
-    # they are skipped and the walk continues to the outer container's
+    # they are skipped and the walk continues to the parent asset's
     # scene-level reference. That is the routing target move/remove/freeze
     # need.
     stage_dir = Path(stage.GetRootLayer().realPath).parent
@@ -244,29 +244,29 @@ def normalize_asset_prim_path(
     return authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
 
 
-# ── Nested assets in contents.usda ──
+# ── Assets added to another asset (contents.usda) ──
 
 
 def compute_ref_asset_path(
     relative_asset_path: str,
     assets_dir: Path,
-    container_dir: Path,
+    parent_asset_dir: Path,
 ) -> str:
-    """Compute the reference path from the container to the nested asset."""
+    """Compute the reference path from the parent asset's folder to the added asset."""
     asset_full_path = (assets_dir.parent / relative_asset_path).resolve()
     try:
-        ref_path = asset_full_path.relative_to(container_dir.resolve())
+        ref_path = asset_full_path.relative_to(parent_asset_dir.resolve())
         return f"./{ref_path.as_posix()}"
     except ValueError:
         return (
             "../" + asset_full_path.relative_to(
-                container_dir.parent.resolve(),
+                parent_asset_dir.parent.resolve(),
             ).as_posix()
         )
 
 
-def add_nested_asset_reference(
-    container_dir: Path,
+def add_asset_to_parent(
+    parent_asset_dir: Path,
     group: str,
     prim_name: str,
     ref_asset_path: str,
@@ -275,14 +275,14 @@ def add_nested_asset_reference(
     project_mpu: float,
     project_up_axis: str,
 ) -> str:
-    """Author a nested asset reference inside a container's ``contents.usda``.
+    """Author a reference to an added asset in its parent asset's ``contents.usda``.
 
-    Like a scene placement, the nested asset is scaled and turned into its
-    container's units and up axis. *transform*'s translate is in the
-    container's own units and axes (see :func:`resolve_asset_position`).
+    Like a scene placement, the added asset is scaled and turned into its
+    parent's units and up axis. *transform*'s translate is in the
+    parent's own units and axes (see :func:`resolve_asset_position`).
     """
-    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
+    contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
 
     if contents_path.exists():
         contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
@@ -304,19 +304,19 @@ def add_nested_asset_reference(
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
-    container_mpu, container_up = authoring.asset_folder.asset_metrics(
-        container_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    parent_mpu, parent_up = authoring.asset_folder.asset_metrics(
+        parent_asset_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
 
-    ref_full_path = (container_dir / ref_asset_path).resolve()
-    nested_mpu, nested_up = container_mpu, container_up
+    ref_full_path = (parent_asset_dir / ref_asset_path).resolve()
+    added_mpu, added_up = parent_mpu, parent_up
     if ref_full_path.exists():
-        nested_mpu, nested_up = usd.metrics.file_metrics(
+        added_mpu, added_up = usd.metrics.file_metrics(
             ref_full_path, default_mpu=project_mpu, default_up_axis=project_up_axis,
         )
-        nested_mpu = usd.metrics.usable_mpu(nested_mpu)
+        added_mpu = usd.metrics.usable_mpu(added_mpu)
     unit_scale, up_axis_correction = usd.metrics.conform(
-        nested_mpu, nested_up, parent_mpu=container_mpu, parent_up_axis=container_up,
+        added_mpu, added_up, parent_mpu=parent_mpu, parent_up_axis=parent_up,
     )
 
     sx, sy, sz = transform.scale
@@ -334,31 +334,33 @@ def add_nested_asset_reference(
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()
-    authoring.asset_folder.ensure_root_reference(container_dir, constants.ASWFLayerNames.CONTENTS)
+    authoring.asset_folder.ensure_root_reference(
+        parent_asset_dir, constants.ASWFLayerNames.CONTENTS,
+    )
 
     logger.info(
-        "Added nested asset %s -> %s in %s/%s",
-        prim_name, ref_asset_path, container_dir.name, constants.ASWFLayerNames.CONTENTS,
+        "Added asset %s -> %s in %s/%s",
+        prim_name, ref_asset_path, parent_asset_dir.name, constants.ASWFLayerNames.CONTENTS,
     )
     return wrapper_path
 
 
-def update_nested_asset_transform(
-    container_dir: Path,
+def move_added_asset(
+    parent_asset_dir: Path,
     group: str,
     prim_name: str,
     translate: tuple[float, float, float],
     rotate: tuple[float, float, float],
 ) -> bool:
-    """Update translate/rotate on a nested-asset wrapper in ``contents.usda``.
+    """Update translate/rotate on an added asset's wrapper in ``contents.usda``.
 
-    *translate* is in the container's own units and axes.
+    *translate* is in the parent asset's own units and axes.
     """
-    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
+    contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return False
 
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
 
     stage = Usd.Stage.Open(str(contents_path))
@@ -386,25 +388,25 @@ def update_nested_asset_transform(
 
     stage.Save()
     logger.info(
-        "Updated nested transform %s in %s/%s",
-        prim_name, container_dir.name, constants.ASWFLayerNames.CONTENTS,
+        "Updated added asset %s in %s/%s",
+        prim_name, parent_asset_dir.name, constants.ASWFLayerNames.CONTENTS,
     )
     return True
 
 
-def remove_nested_asset_reference(
-    container_dir: Path,
+def remove_added_asset(
+    parent_asset_dir: Path,
     group: str,
     prim_name: str,
 ) -> bool:
-    """Remove a nested asset reference from a container's ``contents.usda``.
+    """Remove an added asset's reference from its parent asset's ``contents.usda``.
 
     Idempotent: returns True whether the spec was deleted or was already
     absent. Returns False only on a real error (cannot open the layer).
     Empty group scopes and an empty contents layer are cleaned up
     automatically via :func:`cleanup_unused_contents_in_folder`.
     """
-    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
+    contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return True
 
@@ -412,23 +414,23 @@ def remove_nested_asset_reference(
     if layer is None:
         return False
 
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
     parent_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
     parent_spec = layer.GetPrimAtPath(parent_path)
     if parent_spec is not None and prim_name in parent_spec.nameChildren:
         del parent_spec.nameChildren[prim_name]
         layer.Save()
         logger.info(
-            "Removed nested asset %s from %s/%s",
-            prim_name, container_dir.name, constants.ASWFLayerNames.CONTENTS,
+            "Removed added asset %s from %s/%s",
+            prim_name, parent_asset_dir.name, constants.ASWFLayerNames.CONTENTS,
         )
 
-    cleanup_unused_contents_in_folder(container_dir)
+    cleanup_unused_contents_in_folder(parent_asset_dir)
     return True
 
 
-def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
-    """Drop empty group scopes in *container_dir*'s ``contents.usda``.
+def cleanup_unused_contents_in_folder(parent_asset_dir: Path) -> list[str]:
+    """Drop empty group scopes in *parent_asset_dir*'s ``contents.usda``.
 
     Mirrors :func:`bowerbot.utils.materials.layer.remove_unused`:
     removes per-prim entries that no longer carry meaningful data, then
@@ -437,7 +439,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
     reference arc; empty group scopes (``Props``, ``Furniture``, etc.)
     are the unused entries.
     """
-    contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
+    contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return []
 
@@ -445,7 +447,7 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
     if layer is None:
         return []
 
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
     contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
     contents_spec = layer.GetPrimAtPath(contents_scope_path)
 
@@ -462,19 +464,19 @@ def cleanup_unused_contents_in_folder(container_dir: Path) -> list[str]:
             layer.Save()
 
     authoring.asset_folder.remove_empty_layer(
-        contents_path, container_dir, lambda p: p.HasAuthoredReferences(),
+        contents_path, parent_asset_dir, lambda p: p.HasAuthoredReferences(),
     )
 
     if removed:
         logger.info(
             "Cleaned %d empty group(s) from %s/%s",
-            len(removed), container_dir.name, constants.ASWFLayerNames.CONTENTS,
+            len(removed), parent_asset_dir.name, constants.ASWFLayerNames.CONTENTS,
         )
     return removed
 
 
-def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
-    """If *prim_path* is a nested-asset wrapper, return (group, prim_name)."""
+def parse_added_asset_path(prim_path: str) -> tuple[str, str] | None:
+    """If *prim_path* is the wrapper of an asset added to another asset, return (group, name)."""
     marker = "/asset/contents/"
     idx = prim_path.find(marker)
     if idx >= 0:
@@ -483,20 +485,21 @@ def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
         if len(parts) == 2:
             return parts[0], parts[1]
         msg = (
-            f"Path {prim_path} is inside a nested asset's contents but "
-            f"not at the wrapper level. Only the wrapper "
+            f"Path {prim_path} is below the wrapper of an asset added to "
+            f"another asset. Only the wrapper "
             f"(.../asset/contents/<group>/<name>) can be edited; deeper "
-            f"prims live inside the referenced nested asset and editing "
+            f"prims belong to the added asset, and editing "
             f"them at scene level would create per-instance overrides."
         )
         raise ValueError(msg)
 
     if "/asset/" in prim_path or prim_path.endswith("/asset"):
         msg = (
-            f"Path {prim_path} is inside a referenced top-level asset. "
+            f"Path {prim_path} belongs to a referenced asset. "
             f"Only the scene-level wrapper (/Scene/<Group>/<Name>) and "
-            f"nested wrappers (.../asset/contents/<group>/<name>) can be "
-            f"edited; everything else lives inside the referenced asset "
+            f"the wrappers of assets added to it "
+            f"(.../asset/contents/<group>/<name>) can be "
+            f"edited; everything else belongs to the referenced asset, "
             f"and editing it at scene level would create per-instance "
             f"overrides."
         )
@@ -505,15 +508,15 @@ def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
     return None
 
 
-# ── Positions in a container's frame ──
+# ── Positions in an asset's frame ──
 
 
-def get_container_world_inverse(
+def world_to_frame_matrix(
     stage: Usd.Stage, frame_prim_path: str,
 ) -> Gf.Matrix4d | None:
     """Return the inverse world transform of *frame_prim_path*.
 
-    For positions inside an asset folder, pass the prim that references the
+    For positions in an asset folder's frame, pass the prim that references the
     folder (see :func:`resolve_asset_dir_for_prim`): its frame includes the
     folder's unit scale and up-axis turn.
     """

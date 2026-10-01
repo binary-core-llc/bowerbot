@@ -1,6 +1,6 @@
 ##### scenario: placement/units_and_axes
 ##### convention: Z-up, 0.01 meters per unit
-##### Assets in other units and axes, or declaring none, placed, nested, moved and lit; the grid layout in the project's axes.
+##### Assets in other units and axes, or declaring none: placed, added to another asset, moved and lit; the grid layout in the project's axes.
 
 
 === step 00: create_project
@@ -747,13 +747,13 @@ validation:
   valid, no issues
 
 
-=== step 05: place_asset_inside
-intent: a meters crate inside a centimeters chair, at an absolute position
+=== step 05: add_asset_to_asset
+intent: a meters crate added to a centimeters chair, at an absolute position
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", container_prim_path="/Scene/Furniture/ChairCm_03", group="Props", translate_x=400.0, translate_y=0.0, translate_z=50.0)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Furniture/ChairCm_03", group="Props", translate_x=400.0, translate_y=0.0, translate_z=50.0)
   current project: golden
-  said: ok: Placed Crate inside chair_cm at /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04
+  said: ok: Added Crate to chair_cm at /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04
 
   what changed:
     ~ file assets/chair_cm/chair_cm.usda
@@ -800,7 +800,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "Crate",
-    "container": "chair_cm",
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
@@ -811,7 +810,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed Crate inside chair_cm at /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04",
+    "message": "Added Crate to chair_cm at /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04",
+    "parent": "chair_cm",
     "position": {
       "x": 400.0,
       "y": 0.0,
@@ -980,7 +980,7 @@ validation:
 
 
 === step 06: move_asset
-intent: move the nested crate 0.2 m along x
+intent: move the added crate 0.2 m along x
 
 SUMMARY
   call: move_asset(prim_path="/Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04", translate_x=420.0, translate_y=0.0, translate_z=50.0)
@@ -1287,13 +1287,13 @@ validation:
   - [error] /Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04/asset: Unresolved reference: ../crate/crate.usda
 
 
-=== step 08: place_asset_inside
-intent: a Y-up crate inside a Z-up post, at an absolute position
+=== step 08: add_asset_to_asset
+intent: a Y-up crate added to a Z-up post, at an absolute position
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", container_prim_path="/Scene/Architecture/Post_05", group="Props", translate_x=600.0, translate_y=0.0, translate_z=100.0)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Architecture/Post_05", group="Props", translate_x=600.0, translate_y=0.0, translate_z=100.0)
   current project: golden
-  said: ok: Placed Crate inside post_z at /Scene/Architecture/Post_05/asset/contents/Props/Crate_06
+  said: ok: Added Crate to post_z at /Scene/Architecture/Post_05/asset/contents/Props/Crate_06
 
   what changed:
     + file assets/post_z/contents.usda
@@ -1339,7 +1339,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "Crate",
-    "container": "post_z",
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
@@ -1350,7 +1349,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed Crate inside post_z at /Scene/Architecture/Post_05/asset/contents/Props/Crate_06",
+    "message": "Added Crate to post_z at /Scene/Architecture/Post_05/asset/contents/Props/Crate_06",
+    "parent": "post_z",
     "position": {
       "x": 600.0,
       "y": 0.0,
@@ -1494,7 +1494,7 @@ validation:
 
 
 === step 09: move_asset
-intent: move the nested crate 0.5 m up
+intent: move the added crate 0.5 m up
 
 SUMMARY
   call: move_asset(prim_path="/Scene/Architecture/Post_05/asset/contents/Props/Crate_06", translate_x=600.0, translate_y=0.0, translate_z=150.0)

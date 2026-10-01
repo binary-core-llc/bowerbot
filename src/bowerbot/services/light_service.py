@@ -49,7 +49,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         if light_type in constants.LightRules.SCENE_ONLY_TYPES:
             msg = (
                 f"{light_type.value} is a scene-level environment light and "
-                f"cannot be nested in an asset. Create it without "
+                f"cannot belong to an asset. Create it without "
                 f"asset_prim_path."
             )
             raise ValueError(msg)
@@ -69,7 +69,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         tx, ty, tz = authoring.placement.resolve_asset_position(
             mode, (tx, ty, tz),
             asset_dir=asset_dir,
-            world_to_local_mat=authoring.placement.get_container_world_inverse(
+            world_to_local_mat=authoring.placement.world_to_frame_matrix(
                 state.stage, ref_prim_path,
             ),
             up_given=params.get(f"translate_{state.up_axis.value.lower()}") is not None,
@@ -167,7 +167,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             translate = authoring.placement.resolve_asset_position(
                 mode, translate,
                 asset_dir=asset_dir,
-                world_to_local_mat=authoring.placement.get_container_world_inverse(
+                world_to_local_mat=authoring.placement.world_to_frame_matrix(
                     state.stage, ref_prim_path,
                 ),
                 up_given=params.get(f"translate_{state.up_axis.value.lower()}") is not None,

@@ -15,7 +15,7 @@ Vec3 = tuple[float, float, float]
 class TransformParams(BaseModel):
     """A prim transform (translate + rotate + scale).
 
-    Reusable across any operation that places a prim — nested assets,
+    Reusable across any operation that places a prim — assets added to an asset,
     cameras, or other scene/asset objects.
     """
 

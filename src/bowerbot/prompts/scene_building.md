@@ -43,7 +43,7 @@ You have tools to create and manipulate OpenUSD scenes.
      full USD, no extra restrictions.
    - **Unsure** → ask the user; do not assume.
 
-When `place_asset` or `place_asset_inside` returns an `intake` summary
+When `place_asset` or `add_asset_to_asset` returns an `intake` summary
 with non-empty `warnings`, those entries may include compliance issues
 caught by USD's validation framework (e.g. missing applied schemas,
 unresolved relationships, USDZ-incompatible texture types). Surface

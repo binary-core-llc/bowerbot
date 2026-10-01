@@ -1,6 +1,6 @@
-##### scenario: placement/nested
+##### scenario: placement/asset_to_asset
 ##### convention: Z-up, 0.01 meters per unit
-##### Assets placed inside another asset's folder, and what that shares.
+##### Assets added to another asset, and what that shares.
 
 
 === step 00: create_project
@@ -345,13 +345,13 @@ validation:
   valid, no issues
 
 
-=== step 02: place_asset_inside
+=== step 02: add_asset_to_asset
 intent: a crate on the table (default position mode)
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", container_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: ok: Placed Crate inside table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02
+  said: ok: Added Crate to table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02
 
   what changed:
     + file assets/crate/crate.usda
@@ -397,7 +397,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "Crate",
-    "container": "table",
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
@@ -408,7 +407,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed Crate inside table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02",
+    "message": "Added Crate to table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_02",
+    "parent": "table",
     "position": {
       "x": 0.0,
       "y": 0.0,
@@ -568,13 +568,13 @@ validation:
   - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
 
 
-=== step 03: place_asset_inside
+=== step 03: add_asset_to_asset
 intent: a second crate at an absolute position
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", container_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=30.0, translate_y=0.0, translate_z=80.0, position_mode="absolute")
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=30.0, translate_y=0.0, translate_z=80.0, position_mode="absolute")
   current project: golden
-  said: ok: Placed Crate inside table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_03
+  said: ok: Added Crate to table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_03
 
   what changed:
     ~ file assets/table/contents.usda
@@ -613,7 +613,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "Crate",
-    "container": "table",
     "intake": {
       "asset_folder": "crate",
       "files_copied": 1,
@@ -624,7 +623,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed Crate inside table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_03",
+    "message": "Added Crate to table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_03",
+    "parent": "table",
     "position": {
       "x": 30.0,
       "y": 0.0,
@@ -1199,13 +1199,13 @@ validation:
   - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
 
 
-=== step 06: place_asset_inside
-intent: nesting into a shared folder asks first
+=== step 06: add_asset_to_asset
+intent: adding to a shared folder asks first
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", container_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Container 'table/' is referenced by 2 scene instances. Nested placement modifies the shared asset folder, which would affect all 2 instances. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the nested asset), retry with confirm_shared_modification=true.
+  said: REFUSED: Asset folder 'table/' is referenced by 2 scene instances. add_asset_to_asset modifies the shared asset folder, which would affect all 2 instances. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the added asset), retry with confirm_shared_modification=true.
 
   what changed:
     nothing
@@ -1223,7 +1223,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Container 'table/' is referenced by 2 scene instances. Nested placement modifies the shared asset folder, which would affect all 2 instances. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the nested asset), retry with confirm_shared_modification=true."
+    "error": "Asset folder 'table/' is referenced by 2 scene instances. add_asset_to_asset modifies the shared asset folder, which would affect all 2 instances. Two ways forward: (1) For per-instance placement (different positions per instance), use 'place_asset' instead; it places the asset as an independent scene-level prim. (2) For deliberate shared modification (every instance should get the added asset), retry with confirm_shared_modification=true."
   }
 
 files:
@@ -1278,13 +1278,13 @@ validation:
   - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
 
 
-=== step 07: place_asset_inside
+=== step 07: add_asset_to_asset
 intent: confirmed
 
 SUMMARY
-  call: place_asset_inside(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", container_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0, confirm_shared_modification=true)
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0, confirm_shared_modification=true)
   current project: golden
-  said: ok: Placed Chair inside table at /Scene/Furniture/Table_01/asset/contents/Props/Chair_05
+  said: ok: Added Chair to table at /Scene/Furniture/Table_01/asset/contents/Props/Chair_05
 
   what changed:
     + file assets/chair/chair.usda
@@ -1359,7 +1359,6 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset": "Chair",
-    "container": "table",
     "intake": {
       "asset_folder": "chair",
       "files_copied": 1,
@@ -1370,7 +1369,8 @@ full answer:
       "warnings": [],
       "was_renamed": false
     },
-    "message": "Placed Chair inside table at /Scene/Furniture/Table_01/asset/contents/Props/Chair_05",
+    "message": "Added Chair to table at /Scene/Furniture/Table_01/asset/contents/Props/Chair_05",
+    "parent": "table",
     "position": {
       "x": 0.0,
       "y": 0.0,
@@ -1774,7 +1774,7 @@ validation:
 
 
 === step 09: cleanup_unused_contents
-intent: clean up nested contents nothing uses
+intent: clean up unused added-asset contents
 
 SUMMARY
   call: cleanup_unused_contents()

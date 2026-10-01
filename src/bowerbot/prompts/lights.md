@@ -30,7 +30,7 @@ Use these for general illumination and environment setup.
 
 ### Asset-level lights
 Lights that belong to a specific asset — a lamp's bulb, a candle's
-flame, recessed ceiling lights inside a building. These travel with
+flame, the recessed ceiling lights of a building. These travel with
 the asset. Set `asset_prim_path` to the asset's prim path to create
 the light in the asset's `lgt.usda` file instead of the scene.
 
@@ -73,7 +73,7 @@ BowerBot handles the conversion from world-space to the asset's
 internal coordinate frame automatically.
 
 Workflow for interior fixtures:
-1. Call `list_prim_children` on the container asset
+1. Call `list_prim_children` on the asset
 2. For each fixture prim, read its `bounds` (world space, project units)
 3. Compute the center: `((min.x + max.x)/2, ...)`
 4. Call `create_light` with `position_mode: "absolute"` and those

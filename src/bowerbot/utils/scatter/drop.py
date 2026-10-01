@@ -25,9 +25,9 @@ def drop_targets(stage: Usd.Stage, prim_paths: list[str]) -> tuple[list[str], li
     wrappers: list[str] = []
     scatters: list[str] = []
     for prim_path in prim_paths:
-        if authoring.placement.parse_nested_contents_path(prim_path) is not None:
+        if authoring.placement.parse_added_asset_path(prim_path) is not None:
             msg = (
-                f"{prim_path} is a nested placement inside an asset; "
+                f"{prim_path} is an asset added to another asset; "
                 "drop_to_surface moves scene-level placements only."
             )
             raise ValueError(msg)

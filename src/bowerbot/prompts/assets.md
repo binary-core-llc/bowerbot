@@ -1,45 +1,57 @@
 BowerBot supports two ways to place an asset relative to another.
 The choice matters — it affects ownership, portability, and whether
-the thing travels with its container.
+the thing travels with the other asset.
 
 ### Scene-level placement (`place_asset`)
 
-The asset is placed as a sibling in the scene graph. It's independent —
-moving or removing the container doesn't affect it. Use for things
-that are arbitrary or per-layout.
+The asset is placed in the scene as its own object. It is independent —
+moving or removing another asset doesn't affect it. This is the
+default, and it is what "inside", "in" and "on" mean when the user
+names a place: furniture in a building, a rug in a room, a mug on a
+table. Put the asset at the right position and leave the other asset
+untouched.
 
 Examples: dining tables you rearrange, a rug placed in a room,
-decorative plants, any asset the user is likely to move individually.
+decorative plants, chairs in a building, any asset the user is likely
+to move individually.
 
-### Nested placement (`place_asset_inside`)
+### Adding an asset to another asset (`add_asset_to_asset`)
 
-The asset becomes part of the container's asset folder. If the
-container is duplicated or reused in another scene, the nested
-asset comes with it. Use for permanent fixtures.
+The asset becomes a permanent piece of another asset (the parent
+asset): it is written into the parent's asset folder. If the parent is
+duplicated or reused in another scene, the added asset comes with it,
+and every placement of the parent shows it. Use it only for permanent
+fixtures the user wants to belong to the asset itself.
 
 Examples: a built-in counter that defines a café, recessed light
-housings inside a building (as geometry), kitchen cabinets, anything
-the user would consider "part of" the container.
+housings of a building (as geometry), kitchen cabinets, anything
+the user would consider a piece of the parent asset itself.
 
 ### Choosing between them
 
 When the user's intent is **explicit**, follow it exactly:
 
 - "Put the table on the floor **as a scene-level asset**" → `place_asset`
-- "Put the table **inside the building** on the floor" → `place_asset_inside`
-- "**Nest** the counter inside the building" → `place_asset_inside`
+- "Put the table **inside the building** on the floor" → `place_asset`
+  (the building is where it goes, not what it belongs to)
+- "**Add** the counter **to the building asset**" → `add_asset_to_asset`
+- "Make the counter **belong to** the building" → `add_asset_to_asset`
 
 When the user's intent is **ambiguous**, use context clues:
 
-- "the counter" (singular, permanent-sounding) → lean toward nested
-- "a table" (singular, indefinite) → lean toward scene-level
+- "a table" (singular, indefinite) → scene-level
 - "some tables and chairs" (plural, arrangement) → scene-level
-- "a built-in / recessed / embedded X" → nested
-- "put X inside Y" → explicit nesting
+- "put X inside / in / on Y" → scene-level: it says where X goes, not
+  that X should belong to Y
+- "a built-in / recessed / embedded X" → lean toward adding it to the
+  asset
+- "X should travel with Y" / "every Y should have X" → add it to the
+  asset
 
 If the sensible default is not obvious from context, **ASK the user**:
-"Should the counter be a fixture of the building (nested, travels
-with it) or an independent scene element?"
+"Should the counter belong to the building asset (it travels with it,
+and every copy of the building gets it) or be an independent scene
+element?"
 
 ### Batch placement (`place_layout`)
 
@@ -93,16 +105,16 @@ place_layout(placements=[
 ])
 ```
 
-### Multi-instance containers: the shared-asset trap
+### Assets with several instances: the shared-asset trap
 
-When the same container asset is referenced by N>=2 scene instances
+When the same parent asset is referenced by N>=2 scene instances
 (e.g. four sofas all referencing `assets/single_sofa/`),
-`place_asset_inside` modifies the **shared** asset folder, which means
-every instance gets the nested asset. This is almost never what the
+`add_asset_to_asset` modifies the **shared** asset folder, which means
+every instance gets the added asset. This is almost never what the
 user wants when they ask for per-instance variations.
 
 Concretely:
-- 4 sofas + `place_asset_inside(pillow)` on one sofa → all 4 sofas
+- 4 sofas + `add_asset_to_asset(pillow)` on one sofa → all 4 sofas
   show the pillow (the spec lives in the shared `contents.usda`)
 - 4 sofas + `place_asset(pillow)` at each sofa's world position → 4
   independent pillows, one per sofa, each removable individually
@@ -119,17 +131,17 @@ Examples:
   call `place_asset` ten times unless the user explicitly wants to
   update the chair asset itself
 - "All sofas in this room are the deluxe model with built-in
-  cushions" (explicit shared modification) → `place_asset_inside`
+  cushions" (explicit shared modification) → `add_asset_to_asset`
   with `confirm_shared_modification: true`
 
 How to detect the multi-instance case before calling
-`place_asset_inside`:
-1. Call `list_scene` and count prims that reference the container's
+`add_asset_to_asset`:
+1. Call `list_scene` and count prims that reference the parent's
    asset folder.
 2. If the count is >=2, use `place_asset` per instance instead.
 
-If `place_asset_inside` returns a "shared modification" error (the
-service refuses by default for shared containers), the recovery is:
+If `add_asset_to_asset` returns a "shared modification" error (the
+service refuses by default for shared asset folders), the recovery is:
 1. **Preferred**: switch to `place_asset` and place once per
    instance, near each instance's world position.
 2. **Only if the user explicitly wants shared modification**: retry
@@ -138,21 +150,22 @@ service refuses by default for shared containers), the recovery is:
 ### What BowerBot CANNOT do
 
 If the user asks to "extract" or "make scene-level" a prim that is
-**internal geometry** of a container asset (i.e. defined inside the
-asset's own `geo.usda`, not placed via `place_asset_inside`), you
+**internal geometry** of an asset (i.e. defined in the asset's own
+`geo.usda`, not added with `add_asset_to_asset`), you
 must refuse with a clear message:
 
 > "I can't move `<prim_name>` to scene level — it's internal geometry
-> of the `<container>` asset, baked into its `geo.usda`. To split it
+> of the `<asset>` asset, baked into its `geo.usda`. To split it
 > out, you would need to re-export the asset from your DCC (Maya,
 > Houdini, Blender) with that part as a separate asset, then import
 > both into BowerBot. I can only move placements BowerBot created
-> (scene or nested references), not geometry inside the source asset."
+> (scene placements or assets added to an asset), not geometry of the
+> source asset."
 
 How to tell the difference: prims that appear as children of an asset
-(e.g. `building_recessed_light_1` inside a building) are almost
-always internal geometry. Prims placed via `place_asset_inside`
-appear under the container's `asset/contents/<Group>/` namespace.
+(e.g. `building_recessed_light_1` under a building) are almost
+always internal geometry. Assets added with `add_asset_to_asset`
+appear under the parent's `asset/contents/<Group>/` namespace.
 
 ## ASWF Asset Folders
 
@@ -233,9 +246,9 @@ Production USD assets must have identity transforms on the root prim
 (no translate/rotate/scale/pivot ops). BowerBot enforces this at intake.
 DCC exports without "Bake Transforms" enabled (Maya USD export's default
 without the flag, or Houdini's pre-freeze toggle) carry a pivot dance
-on the root prim that breaks nested placement.
+on the root prim that breaks `add_asset_to_asset`.
 
-When `place_asset` or `place_asset_inside` returns an error containing
+When `place_asset` or `add_asset_to_asset` returns an error containing
 "non-identity transforms":
 
 1. Tell the user the asset is unfrozen and ask if they want BowerBot
@@ -271,9 +284,9 @@ in their project or when an asset reference has gone stale.
   the error names the referencing USD files (relative to the project)
   so the user can remove those references first.
 - `cleanup_unused_contents()` — remove empty group scopes (e.g. an empty
-  `Props` or `Furniture` scope left in a container's `contents.usda`
-  after every nested asset in that group was removed), and drop the
+  `Props` or `Furniture` scope left in a parent asset's `contents.usda`
+  after every added asset in that group was removed), and drop the
   `contents.usda` layer when no references remain. Run this after
-  removing the last nested asset from a group. It does NOT detect a
+  removing the last added asset from a group. It does NOT detect a
   wrapper whose referenced sub-asset folder is missing on disk; it only
   prunes scopes that already have zero child references.

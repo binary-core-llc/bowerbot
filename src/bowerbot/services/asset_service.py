@@ -246,50 +246,50 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     }
 
 
-# ── place_asset_inside ──
+# ── add_asset_to_asset ──
 
 
-def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Nest an asset inside an ASWF container's ``contents.usda``."""
+def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Add an asset to another asset: a reference in the parent's ``contents.usda``."""
     asset_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
         state.project.path if state.project else None,
         state.library_dir,
     )
     asset_name = params["asset_name"]
-    container_prim_path = params["container_prim_path"]
+    parent_prim_path = params["parent_prim_path"]
     group = params["group"]
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    container_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
-        state.stage, container_prim_path,
+    parent_asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+        state.stage, parent_prim_path,
     )
-    if container_dir is None or ref_prim_path is None:
+    if parent_asset_dir is None or ref_prim_path is None:
         msg = (
-            f"Cannot find ASWF asset folder for {container_prim_path}. "
-            "Nested placement only works when the container is an "
-            "ASWF folder asset (not a USDZ)."
+            f"Cannot find ASWF asset folder for {parent_prim_path}. "
+            "An asset can only be added to an ASWF folder asset "
+            "(not a USDZ)."
         )
         raise ValueError(msg)
 
     instance_count = authoring.placement.count_scene_refs_to_asset_dir(
-        state.stage, container_dir,
+        state.stage, parent_asset_dir,
     )
     confirmed = bool(params.get("confirm_shared_modification", False))
     if instance_count >= 2 and not confirmed:
         msg = (
-            f"Container '{container_dir.name}/' is referenced by "
-            f"{instance_count} scene instances. Nested placement modifies "
+            f"Asset folder '{parent_asset_dir.name}/' is referenced by "
+            f"{instance_count} scene instances. add_asset_to_asset modifies "
             f"the shared asset folder, which would affect all "
             f"{instance_count} instances. Two ways forward: "
             f"(1) For per-instance placement (different positions per "
             f"instance), use 'place_asset' instead; it places the asset "
             f"as an independent scene-level prim. "
             f"(2) For deliberate shared modification (every instance "
-            f"should get the nested asset), retry with "
+            f"should get the added asset), retry with "
             f"confirm_shared_modification=true."
         )
         raise ValueError(msg)
@@ -309,8 +309,8 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
     tx, ty, tz = authoring.placement.resolve_asset_position(
         mode, (tx, ty, tz),
-        asset_dir=container_dir,
-        world_to_local_mat=authoring.placement.get_container_world_inverse(
+        asset_dir=parent_asset_dir,
+        world_to_local_mat=authoring.placement.world_to_frame_matrix(
             state.stage, ref_prim_path,
         ),
         up_given=True,
@@ -319,7 +319,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
 
     ref_asset_path = authoring.placement.compute_ref_asset_path(
-        report.scene_ref_path, assets_dir, container_dir,
+        report.scene_ref_path, assets_dir, parent_asset_dir,
     )
 
     state.object_count += 1
@@ -327,8 +327,8 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
     try:
-        authoring.placement.add_nested_asset_reference(
-            container_dir=container_dir,
+        authoring.placement.add_asset_to_parent(
+            parent_asset_dir=parent_asset_dir,
             group=group,
             prim_name=prim_name,
             ref_asset_path=ref_asset_path,
@@ -352,18 +352,18 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(composed_path))
     )
     logger.info(
-        "Placed %s inside %s at %s",
-        asset_name, container_dir.name, composed_path,
+        "Added %s to %s at %s",
+        asset_name, parent_asset_dir.name, composed_path,
     )
     return {
         "prim_path": composed_path,
         "asset": asset_name,
-        "container": container_dir.name,
+        "parent": parent_asset_dir.name,
         "position": {"x": wx, "y": wy, "z": wz},
         "rotation_y": ry,
         "intake": authoring.intake.intake_summary(report),
         "message": (
-            f"Placed {asset_name} inside {container_dir.name} at {composed_path}"
+            f"Added {asset_name} to {parent_asset_dir.name} at {composed_path}"
         ),
     }
 

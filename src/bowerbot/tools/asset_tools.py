@@ -26,12 +26,12 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> skills
     return skills.ToolResult(success=True, data=data)
 
 
-def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
-    """Nest an asset inside an ASWF container's ``contents.usda``."""
+def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
+    """Add an asset to another asset: a reference in the parent's ``contents.usda``."""
     if (err := _helpers.require_stage(state)):
         return err
     try:
-        data = asset_service.place_asset_inside(state, params)
+        data = asset_service.add_asset_to_asset(state, params)
     except (ValueError, RuntimeError) as e:
         return skills.ToolResult(success=False, error=str(e))
     return skills.ToolResult(success=True, data=data)
@@ -365,21 +365,24 @@ TOOLS: list[skills.Tool] = [
         },
     ),
     skills.Tool(
-        name="place_asset_inside",
+        name="add_asset_to_asset",
         description=(
-            "Place a 3D asset NESTED INSIDE another asset (the container). "
-            "The asset becomes part of the container's asset folder; if the "
-            "container is referenced by multiple scene instances, ALL of them "
-            "will see the nested asset. Use this for permanent fixtures every "
-            "instance should share (e.g. a built-in counter inside a building). "
-            "For independent, per-instance items (e.g. one pillow on each of "
-            "four sofa instances), use place_asset instead. If the container "
+            "Add a 3D asset to another asset (the parent asset), making it a "
+            "permanent piece of that asset. The added asset is written into "
+            "the parent's asset folder: it travels with the parent, and if the "
+            "parent is referenced by multiple scene instances, ALL of them "
+            "show it. Use this only when the user wants the thing to belong to "
+            "the asset itself (e.g. a built-in counter that belongs to a "
+            "building). To put objects in a room or on a surface without "
+            "changing that asset (furniture in a building, a mug on a table, "
+            "one pillow on each of four sofa instances), use place_asset "
+            "instead. If the parent's asset folder "
             "is shared by 2+ scene instances, this tool will refuse the call "
             "with a clear error unless confirm_shared_modification=true is "
             "passed. Translate values are in project units: "
             "use position_mode='absolute' with world coordinates from list_prim_children "
             "bounds, or 'bounds_offset' where the two floor-plane values are offsets "
-            "from the container's bounding-box CENTER and the value along the "
+            "from the parent's bounding-box CENTER and the value along the "
             "project's up axis is an offset from its TOP surface (or BOTTOM when "
             "negative). Returns "
             "the composed prim_path, the asset's world position, and an "
@@ -397,12 +400,13 @@ TOOLS: list[skills.Tool] = [
                     "type": "string",
                     "description": "Human-readable name for this asset instance.",
                 },
-                "container_prim_path": {
+                "parent_prim_path": {
                     "type": "string",
                     "description": (
-                        "Prim path of the ASWF container asset in the scene "
-                        "(e.g. '/Scene/Architecture/Building_01'). The nested "
-                        "asset will be written into this container's contents.usda."
+                        "Prim path of the parent asset in the scene "
+                        "(e.g. '/Scene/Architecture/Building_01'). It must be "
+                        "an ASWF folder asset; the added asset is written "
+                        "into its contents.usda."
                     ),
                 },
                 "group": {
@@ -410,7 +414,7 @@ TOOLS: list[skills.Tool] = [
                     "enum": [
                         "Architecture", "Furniture", "Products", "Lighting", "Props",
                     ],
-                    "description": "Logical grouping inside the container's contents.",
+                    "description": "Logical grouping in the parent asset's contents.",
                 },
                 "translate_x": {
                     "type": "number",
@@ -445,9 +449,9 @@ TOOLS: list[skills.Tool] = [
                         "How to interpret translate values: 'absolute' = "
                         "world-space coordinates (as returned by list_scene / "
                         "list_prim_children) — BowerBot converts to the "
-                        "container's internal coordinate frame; 'bounds_offset' "
+                        "parent asset's own coordinate frame; 'bounds_offset' "
                         "= the two floor-plane values are offsets from the "
-                        "container's bounding-box CENTER, and the value along the "
+                        "parent's bounding-box CENTER, and the value along the "
                         "project's up axis (translate_y when Y is up, translate_z "
                         "when Z is up) is an offset from the TOP surface (or "
                         "BOTTOM when negative). Offsets are in project units."
@@ -473,10 +477,10 @@ TOOLS: list[skills.Tool] = [
                 "confirm_shared_modification": {
                     "type": "boolean",
                     "description": (
-                        "Must be true to place into a container whose asset "
+                        "Must be true to add to a parent whose asset "
                         "folder is referenced by 2+ scene instances. The "
-                        "placement modifies the shared asset and propagates "
-                        "to every instance. Default false: refuse with an "
+                        "change modifies the shared asset and shows on "
+                        "every instance. Default false: refuse with an "
                         "error so the LLM can choose between place_asset "
                         "(per-instance) or this flag (deliberate shared)."
                     ),
@@ -484,7 +488,7 @@ TOOLS: list[skills.Tool] = [
                 },
             },
             "required": [
-                "asset_file_path", "asset_name", "container_prim_path", "group",
+                "asset_file_path", "asset_name", "parent_prim_path", "group",
                 "translate_x", "translate_y", "translate_z",
             ],
         },
@@ -559,7 +563,7 @@ TOOLS: list[skills.Tool] = [
             "pivot) into vertex data, leaving the root prim with identity "
             "transforms. Use this to clean up assets imported from DCC "
             "exports without 'Bake Transforms' enabled — required for "
-            "nested placement to work correctly. If 'name' is provided, "
+            "add_asset_to_asset to work correctly. If 'name' is provided, "
             "freezes that one asset; if omitted, freezes every asset in "
             "the project's assets/ directory."
         ),
@@ -582,8 +586,8 @@ TOOLS: list[skills.Tool] = [
         description=(
             "Drop empty contents.usda layers from asset folders. Use this "
             "when the user asks to clean up, prune, or remove leftover / "
-            "orphaned / empty nested-asset scaffolding (e.g. an empty "
-            "Props scope left after removing all nested pillows). If "
+            "orphaned / empty scaffolding left by removed added assets "
+            "(e.g. an empty Props scope after removing every added pillow). If "
             "asset_prim_path is provided, cleans only that asset's folder; "
             "if omitted, sweeps every ASWF asset folder in the project. "
             "Returns the list of removed group-scope names per folder."
@@ -608,7 +612,7 @@ TOOLS: list[skills.Tool] = [
 
 HANDLERS = {
     "place_asset": place_asset,
-    "place_asset_inside": place_asset_inside,
+    "add_asset_to_asset": add_asset_to_asset,
     "place_layout": place_layout,
     "list_project_assets": list_project_assets,
     "delete_project_asset": delete_project_asset,

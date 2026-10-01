@@ -1004,6 +1004,7 @@ src/bowerbot/
                                # usd/variant_sets, an asset's variants.usda in
                                # authoring/asset_variants)
       asset.py                 #   Add a variant to an asset; check its overrides
+      bodies.py                #   What each kind of variant authors inside its body
       geometry.py              #   Geometry (LOD) variant sets and their payloads
       scene.py                 #   Scene-level variants on a carrier prim
       masking.py               #   Refuse-or-acknowledge masking scene opinions

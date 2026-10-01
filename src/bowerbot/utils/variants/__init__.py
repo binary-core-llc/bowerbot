@@ -9,6 +9,7 @@ asset's variants.usda (the layer, reading it, default selections, removal) in
 """
 
 from bowerbot.utils.variants import asset
+from bowerbot.utils.variants import bodies
 from bowerbot.utils.variants import geometry
 from bowerbot.utils.variants import masking
 from bowerbot.utils.variants import scene
@@ -16,6 +17,7 @@ from bowerbot.utils.variants import suspect_sets
 
 __all__ = [
     "asset",
+    "bodies",
     "geometry",
     "masking",
     "scene",

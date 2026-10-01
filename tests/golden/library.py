@@ -77,6 +77,7 @@ def build_library(root: Path) -> Path:
 
     - ``table.usda``: a table with a Top and two Legs (Y-up, meters).
     - ``chair.usda``: a chair with a Seat and a Back (Y-up, meters).
+    - ``armchair.usda``: a second chair, whose name contains ``chair``.
     - ``chair_cm.usda``: the same chair authored in centimeters.
     - ``post_z.usda``: a post authored Z-up.
     - ``unfrozen.usda``: a box whose root carries a translate and scale (an
@@ -91,6 +92,7 @@ def build_library(root: Path) -> Path:
       (``shipped_lod``: high = ``geo.usda``, low = ``geo_low.usda``).
     - ``materials/oak.usda``, ``materials/steel.usda``: material library files.
     - ``hdri/studio.hdr``, ``textures/wood_diffuse.png``: an HDRI and a texture.
+    - ``hdri/big_studio.hdr``: a second HDRI, whose name contains ``studio.hdr``.
     - ``gem.usdz``: a packaged asset.
     - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
     - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
@@ -121,6 +123,12 @@ def build_library(root: Path) -> Path:
     _box(chair, "/chair/Seat", (0.0, 0.45, 0.0), (0.45, 0.05, 0.45))
     _box(chair, "/chair/Back", (0.0, 0.7, -0.2), (0.45, 0.5, 0.05))
     chair.Save()
+
+    armchair = _stage(root / "armchair.usda")
+    _root(armchair, "armchair")
+    _box(armchair, "/armchair/Seat", (0.0, 0.4, 0.0), (0.6, 0.1, 0.6))
+    _box(armchair, "/armchair/Arm", (0.35, 0.6, 0.0), (0.1, 0.3, 0.6))
+    armchair.Save()
 
     chair_cm = _stage(root / "chair_cm.usda", mpu=0.01)
     _root(chair_cm, "chair_cm")
@@ -222,6 +230,7 @@ def build_library(root: Path) -> Path:
 
     (root / "hdri").mkdir(exist_ok=True)
     (root / "hdri" / "studio.hdr").write_bytes(HDR_BYTES)
+    (root / "hdri" / "big_studio.hdr").write_bytes(HDR_BYTES)
     (root / "textures").mkdir(exist_ok=True)
     (root / "textures" / "wood_diffuse.png").write_bytes(PNG_1PX)
 

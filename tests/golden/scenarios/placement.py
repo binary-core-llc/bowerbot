@@ -523,6 +523,38 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "placement/names_inside_other_names",
+        "An asset or texture whose name is part of another one's name (chair and armchair, "
+        "studio.hdr and big_studio.hdr): is the unused one seen as unused, and can it be deleted?",
+        (
+            _place("chair.usda", "Chair", "Furniture", 0.0, save="chair"),
+            _place("armchair.usda", "Armchair", "Furniture", 2.0, save="armchair"),
+            model.Step("remove_prim", {"prim_path": "$chair"}, note="only the armchair stays"),
+            model.Step("list_project_assets", note="is the chair listed as unused?"),
+            model.Step("delete_project_asset", {"name": "chair"}),
+            model.Step(
+                "create_light",
+                {"light_type": "DomeLight", "light_name": "Sky", "texture": "$lib/hdri/studio.hdr"},
+                save="sky",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "DomeLight",
+                    "light_name": "Sky2",
+                    "texture": "$lib/hdri/big_studio.hdr",
+                },
+                save="sky2",
+            ),
+            model.Step(
+                "remove_light", {"prim_path": "$sky"}, note="only big_studio.hdr is used now",
+            ),
+            model.Step("delete_project_texture", {"file_name": "studio.hdr"}),
+            model.Step("delete_project_texture", {"file_name": "big_studio.hdr"}, note="in use"),
+            model.Step("delete_project_asset", {"name": "armchair"}, note="in use"),
+        ),
+    ),
+    model.Scenario(
         "placement/freeze_asset",
         "freeze_asset moves a project asset's root transform onto its parts.",
         (

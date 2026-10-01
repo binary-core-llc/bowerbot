@@ -1261,6 +1261,12 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
+        "name": "armchair",
+        "path": "<LIBRARY>/armchair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
         "name": "bare",
         "path": "<LIBRARY>/bare.usda"
       },
@@ -1355,7 +1361,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 24,
+    "total_matches": 25,
     "truncated": false
   }
 
@@ -3272,6 +3278,12 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
+        "name": "armchair",
+        "path": "<LIBRARY>/armchair.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
         "name": "chair",
         "path": "<LIBRARY>/chair.usda"
       },
@@ -3282,7 +3294,7 @@ full answer:
         "path": "<LIBRARY>/chair_cm.usda"
       }
     ],
-    "total_matches": 2,
+    "total_matches": 3,
     "truncated": false
   }
 

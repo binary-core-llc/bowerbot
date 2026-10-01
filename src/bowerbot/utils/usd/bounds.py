@@ -44,3 +44,10 @@ def prim_world_box(
         msg = f"Prim {prim_path} has no geometry bounds."
         raise ValueError(msg)
     return np.array(rng.GetMin()), np.array(rng.GetMax())
+
+
+def base_center(lo: schemas.FloatArray, hi: schemas.FloatArray, up: int) -> schemas.FloatArray:
+    """The centre of a box's bottom face: one box ``(3,)`` or many ``(n, 3)``."""
+    center = (lo + hi) / 2.0
+    center[..., up] = lo[..., up]
+    return center

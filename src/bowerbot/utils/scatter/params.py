@@ -108,6 +108,4 @@ def _circle_center(
     if raw.get("center") is not None:
         return usd.values.vec3(raw["center"])
     bmin, bmax = usd.bounds.prim_world_box(stage, raw["center_prim"])
-    center = (bmin + bmax) / 2.0
-    center[up] = bmin[up]
-    return tuple(center.tolist())
+    return tuple(usd.bounds.base_center(bmin, bmax, up).tolist())

@@ -83,7 +83,7 @@ def rest_positions(
     bmin = np.stack([p.bounds_min for p in prototypes])[proto_idx]
     bmax = np.stack([p.bounds_max for p in prototypes])[proto_idx]
     base_min, base_max = prototype_bases(prototypes, proto_idx)
-    base = (base_min + base_max) / 2.0
+    base = usd.bounds.base_center(base_min, base_max, up)
     up_vec = usd.metrics.up_vector(up)
     positions = contacts - usd.transforms.quat_rotate(orientations, base * scales)
     if index is not None and settle.any():
@@ -121,7 +121,7 @@ def ground_normals(
 ) -> tuple[schemas.FloatArray, schemas.BoolArray]:
     """Normal of the ground fitted under each base footprint, else *fallback*."""
     axes = list(usd.metrics.horizontal_axes(up))
-    center = (base_min + base_max) / 2.0
+    center = usd.bounds.base_center(base_min, base_max, up)
     positions = contacts - usd.transforms.quat_rotate(headings, center * scales)
     samples = base_samples(positions, headings, scales, base_min, base_max, up)
     n, k, _ = samples.shape

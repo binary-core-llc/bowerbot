@@ -97,7 +97,7 @@ def drop_scatter(
         to_world_q = np.tile(usd.transforms.matrix_rotation_quat(world_gf), (n, 1))
         world_scale = float(np.cbrt(abs(np.linalg.det(world[:3, :3]))))
         up_vec = usd.metrics.up_vector(up)
-        base = (base_min + base_max) / 2.0
+        base = usd.bounds.base_center(base_min, base_max, up)
         centers_local = positions + usd.transforms.quat_rotate(orientations, base * scales)
         centers = usd.transforms.transform_points(centers_local, world)
         headings = usd.transforms.quat_heading(
@@ -228,8 +228,7 @@ def drop_placement(
         pivot = np.asarray(
             usd.transforms.world_matrix(prim).ExtractTranslation(), dtype=np.float64,
         )
-        base = (bmin + bmax) / 2.0
-        base[up] = bmin[up]
+        base = usd.bounds.base_center(bmin, bmax, up)
         swung = base + usd.transforms.quat_rotate(tilt[None, :], (pivot - base)[None, :])[0]
         world_shift += swung - pivot
         fitted = coef[0] * pts[:, axes[0]] + coef[1] * pts[:, axes[1]] + coef[2]

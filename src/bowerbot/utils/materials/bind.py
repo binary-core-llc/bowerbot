@@ -35,19 +35,16 @@ def bind_from_file(
             msg = f"No Material prim found in {material_file.name}"
             raise ValueError(msg)
 
-    mtl_layer = (
-        Sdf.Layer.FindOrOpen(str(mtl_path))
-        if mtl_path.exists()
-        else Sdf.Layer.CreateNew(str(mtl_path))
-    )
-
     source_layer = Sdf.Layer.FindOrOpen(str(material_file))
     if source_layer is None:
         msg = f"Cannot open material file: {material_file}"
         raise RuntimeError(msg)
 
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    authoring.asset_folder.ensure_layer_scope(mtl_layer, default_prim_name, "mtl", "Scope")
+    mtl_layer = authoring.asset_folder.open_scope_layer(
+        asset_dir, constants.ASWFLayerNames.MTL,
+        constants.AssetFolderNamespace.MATERIALS_SCOPE, "Scope",
+    )
 
     mat_name = Sdf.Path(material_prim_path).name
     dest_mat_path = Sdf.Path(f"/{default_prim_name}/mtl/{mat_name}")
@@ -56,7 +53,6 @@ def bind_from_file(
         mtl_layer, dest_mat_path,
     )
 
-    mtl_layer.defaultPrim = default_prim_name
     mtl_layer.Save()
 
     local_prim_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)

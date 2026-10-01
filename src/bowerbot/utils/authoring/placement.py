@@ -308,14 +308,8 @@ def add_asset_to_parent(
     contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
 
-    if contents_path.exists():
-        contents_layer = Sdf.Layer.FindOrOpen(str(contents_path))
-    else:
-        contents_layer = Sdf.Layer.CreateNew(str(contents_path))
-        contents_layer.defaultPrim = default_prim_name
-
-    authoring.asset_folder.ensure_layer_scope(
-        contents_layer, default_prim_name,
+    contents_layer = authoring.asset_folder.open_scope_layer(
+        parent_asset_dir, constants.ASWFLayerNames.CONTENTS,
         constants.AssetFolderNamespace.CONTENTS_SCOPE, "Xform",
     )
     _ensure_group_scope(contents_layer, default_prim_name, group)

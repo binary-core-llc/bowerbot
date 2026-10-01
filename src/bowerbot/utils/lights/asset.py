@@ -39,14 +39,11 @@ def add(
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
 
-    if lgt_path.exists():
-        lgt_layer = Sdf.Layer.FindOrOpen(str(lgt_path))
-    else:
-        lgt_layer = Sdf.Layer.CreateNew(str(lgt_path))
-        lgt_layer.defaultPrim = default_prim_name
-
+    lgt_layer = authoring.asset_folder.open_scope_layer(
+        asset_dir, constants.ASWFLayerNames.LGT,
+        constants.AssetFolderNamespace.LIGHTS_SCOPE, "Xform",
+    )
     lgt_scope_path = Sdf.Path(f"/{default_prim_name}/lgt")
-    authoring.asset_folder.ensure_layer_scope(lgt_layer, default_prim_name, "lgt", "Xform")
     lgt_layer.Save()
 
     _apply_inverse_transform(asset_dir, lgt_path, lgt_scope_path)

@@ -247,25 +247,36 @@ def to_layer_local_path(prim_path: str, default_prim_name: str) -> str:
     return f"{prefix}{prim_path}"
 
 
-def ensure_layer_scope(
-    layer: Sdf.Layer,
-    default_prim_name: str,
-    scope_name: str,
-    scope_type: str,
-) -> None:
-    """Ensure ``/{default_prim_name}/{scope_name}`` exists in *layer*."""
+def open_scope_layer(
+    asset_dir: Path, layer_file: str, scope_name: str, scope_type: str,
+) -> Sdf.Layer:
+    """Open a side layer that keeps its prims under one scope, creating what is missing.
+
+    ``lgt.usda``, ``mtl.usda`` and ``contents.usda`` are such layers. The file,
+    its ``defaultPrim``, the ``over`` for the asset's root prim and the scope
+    ``/<root>/<scope_name>`` are created when they are not there. The layer
+    is returned unsaved.
+    """
+    layer_path = asset_dir / layer_file
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    layer = (
+        Sdf.Layer.FindOrOpen(str(layer_path))
+        if layer_path.exists()
+        else Sdf.Layer.CreateNew(str(layer_path))
+    )
+    if not layer.defaultPrim:
+        layer.defaultPrim = default_prim_name
+
     root_prim_path = Sdf.Path(f"/{default_prim_name}")
-    scope_path = Sdf.Path(f"/{default_prim_name}/{scope_name}")
-
     if not layer.GetPrimAtPath(root_prim_path):
-        Sdf.CreatePrimInLayer(layer, root_prim_path)
-        layer.GetPrimAtPath(root_prim_path).specifier = Sdf.SpecifierOver
+        Sdf.CreatePrimInLayer(layer, root_prim_path).specifier = Sdf.SpecifierOver
 
+    scope_path = root_prim_path.AppendChild(scope_name)
     if not layer.GetPrimAtPath(scope_path):
-        Sdf.CreatePrimInLayer(layer, scope_path)
-        scope = layer.GetPrimAtPath(scope_path)
+        scope = Sdf.CreatePrimInLayer(layer, scope_path)
         scope.specifier = Sdf.SpecifierDef
         scope.typeName = scope_type
+    return layer
 
 
 def ensure_over_layer(asset_dir: Path, layer_file: str) -> Path:

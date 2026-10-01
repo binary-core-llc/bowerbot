@@ -337,6 +337,39 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "placement/assets_that_need_other_files",
+        "Assets that depend on files outside what gets copied: does what they need arrive "
+        "with them in the project?",
+        (
+            _place(
+                "plank.usda",
+                "Plank",
+                "Props",
+                0.0,
+                note="a loose file whose material reads a texture beside it",
+            ),
+            _place(
+                "bin.usda",
+                "Bin",
+                "Props",
+                2.0,
+                save="bin",
+                note="a loose file whose shape is in another loose file",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$bin"}),
+            _place(
+                "stand/stand.usda",
+                "Stand",
+                "Furniture",
+                4.0,
+                note="a package whose texture is outside its folder, by relative path",
+            ),
+            _place("bin.usda", "Bin", "Props", 6.0, note="the bin again: its folder is reused"),
+            model.Step("list_scene", note="what arrived"),
+            model.Step("list_project_assets", note="which files the project holds"),
+        ),
+    ),
+    model.Scenario(
         "placement/layout",
         "place_layout: patterns, enumerated transforms, validation first.",
         (

@@ -13,6 +13,7 @@ from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
+from pxr import UsdUtils
 
 from tests import _helpers
 
@@ -963,6 +964,152 @@ def test_the_asset_box_follows_the_selected_geometry_variant():
             "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
         })
         assert _world_position(project, light["prim_path"]) == (0.0, 1.5, 0.0)
+
+
+# ── assets that need other files ──
+
+_PNG = bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000d4944415478da63f8cfc0f01f0005000201a5e0e4ec"
+    "0000000049454e44ae426082",
+)
+
+
+def _add_texture(file: Path, prim_path: str, texture: str) -> None:
+    """Bind a material that reads *texture* to *prim_path* in *file*."""
+    stage = Usd.Stage.Open(str(file))
+    root = stage.GetDefaultPrim().GetPath()
+    material = UsdShade.Material.Define(stage, root.AppendPath("mtl/wood"))
+    reader = UsdShade.Shader.Define(stage, material.GetPath().AppendChild("Diffuse"))
+    reader.CreateIdAttr("UsdUVTexture")
+    reader.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(texture)
+    UsdShade.MaterialBindingAPI.Apply(stage.GetPrimAtPath(prim_path)).Bind(material)
+    stage.Save()
+
+
+def _everything_is_in(asset_dir: Path) -> None:
+    """Every file the asset depends on is found, and is inside its own folder."""
+    root_file = asset_dir / f"{asset_dir.name}.usda"
+    layers, assets, unresolved = UsdUtils.ComputeAllDependencies(str(root_file))
+    assert [str(u) for u in unresolved] == [], f"{asset_dir.name}: broken links"
+    for found in [*(lyr.realPath for lyr in layers), *(str(a) for a in assets)]:
+        assert asset_dir.resolve() in Path(found).resolve().parents, f"{found} is outside"
+
+
+def _place_loose(state, source: Path) -> None:
+    placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+        "asset_file_path": str(source), "asset_name": source.stem, "group": "Props",
+        "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+    }))
+    assert placed.success, placed.error
+
+
+def test_a_loose_file_brings_what_it_depends_on():
+    """A texture, a model file, a part file and a sublayer all arrive with the loose file."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        box = ((0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
+        (lib / "textures").mkdir(parents=True)
+        (lib / "textures" / "wood.png").write_bytes(_PNG)
+
+        _model_file(lib / "plank.usda", "plank", "Board", *box)
+        _add_texture(lib / "plank.usda", "/plank/Board", "./textures/wood.png")
+
+        _model_file(lib / "bin_model.usda", "bin", "Body", *box)
+        _package_root(lib / "bin.usda", "bin", references=["./bin_model.usda"])
+
+        _model_file(lib / "leg.usda", "leg", "Leg", (0.0, 0.35, 0.0), (0.05, 0.7, 0.05))
+        _model_file(lib / "stand.usda", "stand", "Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
+        stand = Usd.Stage.Open(str(lib / "stand.usda"))
+        stand.DefinePrim("/stand/LegA", "Xform").GetReferences().AddReference("./leg.usda")
+        stand.Save()
+
+        _model_file(lib / "deck_geo.usda", "deck", "Board", *box)
+        deck = Usd.Stage.CreateNew(str(lib / "deck.usda"))
+        UsdGeom.SetStageMetersPerUnit(deck, 1.0)
+        UsdGeom.SetStageUpAxis(deck, UsdGeom.Tokens.y)
+        deck.SetDefaultPrim(deck.OverridePrim("/deck"))
+        deck.GetRootLayer().subLayerPaths.append("./deck_geo.usda")
+        deck.Save()
+
+        for name in ("plank", "bin", "stand", "deck"):
+            source = lib / f"{name}.usda"
+            expected = _geometry(source)
+            assert expected, f"{name}: the source has no geometry"
+            _place_loose(state, source)
+            asset_dir = project.assets_dir / name
+            assert _geometry(asset_dir / f"{name}.usda") == expected, f"{name}: changed"
+            _everything_is_in(asset_dir)
+
+        assert (project.assets_dir / "plank" / "textures" / "wood.png").is_file()
+        assert (project.assets_dir / "bin" / "bin_model.usda").is_file()
+
+
+def test_a_needed_file_never_takes_one_of_bowerbots_names():
+    """A needed file named like BowerBot's own layers is copied under another name."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        _model_file(lib / "shared" / "geo.usda", "tray", "Body", (0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
+        _model_file(lib / "shared" / "mtl.usda", "tray", "Lid", (0.0, 1.1, 0.0), (1.0, 0.2, 1.0))
+        source = _package_root(
+            lib / "tray.usda", "tray",
+            references=["./shared/geo.usda", "./shared/mtl.usda"],
+        )
+        expected = _geometry(source)
+
+        _place_loose(state, source)
+        asset_dir = project.assets_dir / "tray"
+        assert _geometry(asset_dir / "tray.usda") == expected
+        _everything_is_in(asset_dir)
+        assert sorted(f.name for f in asset_dir.iterdir()) == [
+            "geo.usda", "geo_2.usda", "mtl_2.usda", "tray.usda",
+        ]
+
+
+def test_placing_a_loose_file_again_copies_nothing_more():
+    """The second placement reuses the asset folder as it is."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        (lib / "textures").mkdir(parents=True)
+        (lib / "textures" / "wood.png").write_bytes(_PNG)
+        _model_file(lib / "plank.usda", "plank", "Board", (0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
+        _add_texture(lib / "plank.usda", "/plank/Board", "./textures/wood.png")
+
+        _place_loose(state, lib / "plank.usda")
+        asset_dir = project.assets_dir / "plank"
+        first = sorted(str(f.relative_to(asset_dir)) for f in asset_dir.rglob("*") if f.is_file())
+        _place_loose(state, lib / "plank.usda")
+        again = sorted(str(f.relative_to(asset_dir)) for f in asset_dir.rglob("*") if f.is_file())
+        assert again == first == ["geo.usda", "plank.usda", "textures/wood.png"]
+
+
+def test_a_package_brings_files_outside_its_folder_by_relative_path():
+    """A package that reads ``../shared/...`` arrives with those files, re-linked."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        (lib / "shared").mkdir(parents=True)
+        (lib / "shared" / "wood.png").write_bytes(_PNG)
+        _model_file(lib / "shared" / "leg.usda", "leg", "Leg", (0.0, 0.35, 0.0), (0.05, 0.7, 0.05))
+        _model_file(lib / "table" / "geo.usda", "table", "Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
+        _add_texture(lib / "table" / "geo.usda", "/table/Top", "../shared/wood.png")
+        geo = Usd.Stage.Open(str(lib / "table" / "geo.usda"))
+        geo.DefinePrim("/table/LegA", "Xform").GetReferences().AddReference("../shared/leg.usda")
+        geo.Save()
+        source = _package_root(lib / "table" / "table.usda", "table", payloads=["./geo.usda"])
+        expected = _geometry(source)
+
+        _place_loose(state, source)
+        asset_dir = project.assets_dir / "table"
+        assert _geometry(asset_dir / "table.usda") == expected
+        _everything_is_in(asset_dir)
 
 
 # ── freeze_asset: with non-identity root xform ──

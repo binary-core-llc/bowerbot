@@ -572,6 +572,9 @@ def _create_geo_layer(geo_dest: Path, geometry_source: Path) -> None:
         Sdf.CopySpec(
             source_layer, prim_spec.path, dest_layer, prim_spec.path,
         )
+    for index, sublayer in enumerate(source_layer.subLayerPaths):
+        dest_layer.subLayerPaths.append(sublayer)
+        dest_layer.subLayerOffsets[index] = source_layer.subLayerOffsets[index]
     dest_layer.defaultPrim = source_layer.defaultPrim
     dest_layer.Save()
 
@@ -589,7 +592,8 @@ def _create_root_file(
         if geo_layer and geo_layer.defaultPrim:
             default_prim_name = geo_layer.defaultPrim
 
-    stage = Usd.Stage.CreateNew(str(root_path))
+    # The payload stays unloaded: geo.usda may still point at files that arrive next.
+    stage = Usd.Stage.CreateNew(str(root_path), Usd.Stage.LoadNone)
     UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
     UsdGeom.SetStageUpAxis(stage, usd.metrics.up_axis_token(up_axis))
 

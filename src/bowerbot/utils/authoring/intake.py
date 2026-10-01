@@ -63,6 +63,8 @@ def prepare_asset(
             return report
 
     folder_name = asset_path.stem
+    asset_dir = assets_dir / folder_name
+    is_new = not asset_dir.exists()
     root_file = authoring.asset_folder.create_asset_folder(
         output_dir=assets_dir,
         asset_name=folder_name,
@@ -70,13 +72,26 @@ def prepare_asset(
         project_mpu=project_mpu,
         project_up_axis=project_up_axis,
     )
+    copied: int = 0
+    localized_layers: list[str] = []
+    localized_assets: list[str] = []
+    if is_new:
+        try:
+            copied, localized_layers, localized_assets = _bring_dependencies(
+                asset_path, asset_dir,
+            )
+        except Exception:
+            shutil.rmtree(asset_dir, ignore_errors=True)
+            raise
     report = schemas.IntakeReport(
         scene_ref_path=f"assets/{folder_name}/{root_file.name}",
         asset_folder_name=folder_name,
         root_original_name=asset_path.name,
         root_canonical_name=root_file.name,
         was_renamed=asset_path.name != root_file.name,
-        files_copied=1,
+        files_copied=1 + copied,
+        localized_layers=localized_layers,
+        localized_assets=localized_assets,
     )
     _validate_intake(
         report, assets_dir,
@@ -389,6 +404,44 @@ def _validate_intake(
             )
 
 
+def _bring_dependencies(source_file: Path, asset_dir: Path) -> tuple[int, list[str], list[str]]:
+    """Copy what a loose file depends on into *asset_dir* and point ``geo.usda`` at the copies.
+
+    Returns ``(files copied, layers brought in, textures and other files brought in)``.
+    A dependency that does not resolve on disk is left as it is.
+    """
+    layers, assets, _unresolved = UsdUtils.ComputeAllDependencies(str(source_file))
+    source = source_file.resolve()
+    layer_sources = [
+        path for path in (Path(lyr.realPath).resolve() for lyr in layers) if path != source
+    ]
+    asset_sources = [Path(a).resolve() for a in assets]
+    if not layer_sources and not asset_sources:
+        return 0, [], []
+
+    geo_path = asset_dir / constants.ASWFLayerNames.GEO
+    own_files = [
+        geo_path,
+        asset_dir / f"{asset_dir.name}.usda",
+        *(asset_dir / name for name in constants.AssetFolderRules.CANONICAL_REFERENCE_ORDER),
+    ]
+    path_map, layer_targets, localized_layers, localized_assets = _plan_copies(
+        source_folder=None,
+        target_folder=asset_dir,
+        layer_sources=layer_sources,
+        asset_sources=asset_sources,
+        taken=own_files,
+    )
+    for src, dst in path_map.items():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+
+    copied = len(path_map)
+    path_map[source] = geo_path
+    _rewrite_asset_paths([geo_path, *layer_targets], path_map)
+    return copied, localized_layers, localized_assets
+
+
 def _reuse_existing_target(target_folder: Path, source_root: Path) -> schemas.IntakeReport:
     """Build an IntakeReport for a target folder that already exists."""
     canonical = target_folder / f"{target_folder.name}.usda"
@@ -411,20 +464,26 @@ def _reuse_existing_target(target_folder: Path, source_root: Path) -> schemas.In
 
 
 def _plan_copies(
-    source_folder: Path,
+    source_folder: Path | None,
     target_folder: Path,
     layer_sources: Iterable[Path],
     asset_sources: Iterable[Path],
+    taken: Iterable[Path] = (),
 ) -> tuple[dict[Path, Path], list[Path], list[str], list[str]]:
-    """Return ``(path_map, layer_targets, localized_layers, localized_assets)``."""
+    """Return ``(path_map, layer_targets, localized_layers, localized_assets)``.
+
+    A file inside *source_folder* keeps its place under *target_folder*; any
+    other file (every file, when there is no source folder) lands beside the
+    root, textures under ``textures/``. No copy takes a name in *taken*.
+    """
     path_map: dict[Path, Path] = {}
     layer_targets: list[Path] = []
     localized_layer_sources: list[str] = []
     localized_asset_sources: list[str] = []
-    used_targets: set[Path] = set()
+    used_targets: set[Path] = set(taken)
 
     for src in layer_sources:
-        if _is_inside(src, source_folder):
+        if source_folder is not None and _is_inside(src, source_folder):
             dst = target_folder / src.relative_to(source_folder)
         else:
             dst = target_folder / src.name
@@ -435,7 +494,7 @@ def _plan_copies(
         layer_targets.append(resolved)
 
     for src in asset_sources:
-        if _is_inside(src, source_folder):
+        if source_folder is not None and _is_inside(src, source_folder):
             dst = target_folder / src.relative_to(source_folder)
         else:
             dst = target_folder / constants.ASWFLayerNames.TEXTURES / src.name
@@ -471,8 +530,13 @@ def _dedupe(candidate: Path, used: set[Path]) -> Path:
 def _rewrite_asset_paths(
     layer_targets: list[Path], path_map: dict[Path, Path],
 ) -> None:
-    """Rewrite every asset path in *layer_targets* to point inside the target."""
+    """Point every asset path in *layer_targets* that names a copied file at its copy.
+
+    A relative path is read from where its layer was copied from, so a link
+    to a file outside the source folder (``../shared/wood.png``) is found.
+    """
     resolved_map = {src.resolve(): dst.resolve() for src, dst in path_map.items()}
+    source_of = {dst: src for src, dst in resolved_map.items()}
 
     for layer_path in layer_targets:
         layer = Sdf.Layer.FindOrOpen(str(layer_path))
@@ -481,16 +545,22 @@ def _rewrite_asset_paths(
             raise RuntimeError(msg)
 
         layer_dir = layer_path.parent.resolve()
+        source = source_of.get(layer_path.resolve())
+        source_dir = source.parent if source is not None else layer_dir
 
-        def _rewrite(asset_path: str, _layer_dir: Path = layer_dir) -> str:
+        def _rewrite(
+            asset_path: str, _layer_dir: Path = layer_dir, _source_dir: Path = source_dir,
+        ) -> str:
             if not asset_path:
                 return asset_path
             try:
-                resolved = (_layer_dir / asset_path).resolve()
+                target = resolved_map.get((_source_dir / asset_path).resolve())
+                already_there = (
+                    target is not None and (_layer_dir / asset_path).resolve() == target
+                )
             except (OSError, ValueError):
                 return asset_path
-            target = resolved_map.get(resolved)
-            if target is None:
+            if target is None or already_there:
                 return asset_path
             try:
                 relative = target.relative_to(_layer_dir)

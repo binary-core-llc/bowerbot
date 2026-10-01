@@ -762,16 +762,15 @@ SUMMARY
 
   what changed:
     ~ file assets/table/mtl.usda
+    ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: MaterialBindingAPI → (none)
     ~ /Scene/Furniture/Table_01/asset/Top  material shown: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
-    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak → (no targets)
-    ~ validity: valid → INVALID
-    + issue [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Top.material:binding>
+    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -796,22 +795,31 @@ file changes:
   ~ assets/table/mtl.usda:
       --- assets/table/mtl.usda (before)
       +++ assets/table/mtl.usda (after)
-      @@ -37,5 +37,5 @@
-           )
-           {
-      -        rel material:binding = </table/mtl/oak>
-      +        rel material:binding = None
+      @@ -33,11 +33,4 @@
            }
        
+      -    over "Top" (
+      -        prepend apiSchemas = ["MaterialBindingAPI"]
+      -    )
+      -    {
+      -        rel material:binding = </table/mtl/oak>
+      -    }
+      -
+           over "Leg_L" (
+               prepend apiSchemas = ["MaterialBindingAPI"]
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -34,5 +34,5 @@
-                   )
+  @@ -30,9 +30,6 @@
+               )
+               {
+  -                def Cube "Top" (
+  -                    apiSchemas = ["MaterialBindingAPI"]
+  -                )
+  +                def Cube "Top"
                    {
   -                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/oak>
-  +                    rel material:binding
                        double size = 1
                        float3 xformOp:scale = (1.2, 0.05, 0.8)
 
@@ -825,5 +833,4 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Top.material:binding>
+  valid, no issues

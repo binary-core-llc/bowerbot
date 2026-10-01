@@ -15,6 +15,7 @@ from pxr import UsdShade
 from bowerbot import constants
 from bowerbot.utils import authoring
 from bowerbot.utils import materials
+from bowerbot.utils import usd
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,10 @@ def bind_from_file(
 
 
 def unbind(asset_dir: Path, prim_path: str) -> None:
-    """Clear a binding and garbage-collect unused materials + the layer."""
+    """Take a prim's binding out of ``mtl.usda``, then drop the materials nothing uses.
+
+    The binding relationships and the binding API go; nothing empty is left behind.
+    """
     mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     if not mtl_path.exists():
         return
@@ -88,15 +92,24 @@ def unbind(asset_dir: Path, prim_path: str) -> None:
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     local_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
 
-    stage = Usd.Stage.Open(str(mtl_path))
-    if stage is None:
+    layer = Sdf.Layer.FindOrOpen(str(mtl_path))
+    if layer is None:
         return
 
-    prim = stage.GetPrimAtPath(local_path)
-    if prim.IsValid():
-        UsdShade.MaterialBindingAPI(prim).UnbindAllBindings()
+    spec = layer.GetPrimAtPath(local_path)
+    if spec is not None:
+        bindings = [
+            rel for rel in spec.relationships
+            if rel.name.startswith(UsdShade.Tokens.materialBinding)
+        ]
+        for rel in bindings:
+            spec.RemoveProperty(rel)
+        usd.attributes.drop_api_schema(
+            spec, Usd.SchemaRegistry().GetAPISchemaTypeName(UsdShade.MaterialBindingAPI),
+        )
+        usd.namespace.prune_empty_overrides(layer, local_path)
+        layer.Save()
 
-    stage.Save()
     materials.layer.remove_unused(asset_dir)
 
 

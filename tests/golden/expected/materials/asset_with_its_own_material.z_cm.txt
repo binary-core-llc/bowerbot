@@ -625,15 +625,14 @@ SUMMARY
   what changed:
     ~ file assets/lamp/mtl.usda
     - prim /Scene/Props/Lamp_01/asset/mtl/brass [Material] (and 2 prims inside)
+    ~ /Scene/Props/Lamp_01/asset/Shade  applied APIs: MaterialBindingAPI → (none)
     ~ /Scene/Props/Lamp_01/asset/Shade  material shown: /Scene/Props/Lamp_01/asset/mtl/brass → (none)
-    ~ /Scene/Props/Lamp_01/asset/Shade  rel material:binding: /Scene/Props/Lamp_01/asset/mtl/brass → (no targets)
-    + issue [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Props/Lamp_01/asset/Shade.material:binding>
+    ~ /Scene/Props/Lamp_01/asset/Shade  rel material:binding: /Scene/Props/Lamp_01/asset/mtl/brass → (none)
 
   project state after the step:
     not used by the scene: assets/lamp/maps/lamp_diffuse.png
 
   checks:
-    ⚠ this step added 1 validation error(s)
     ⚠ left behind a file nothing in the scene uses: assets/lamp/maps/lamp_diffuse.png
 
 EVIDENCE
@@ -683,25 +682,34 @@ file changes:
       -
                def Material "black"
                {
-      @@ -57,5 +39,5 @@
-           )
-           {
-      -        rel material:binding = </lamp/mtl/brass>
-      +        rel material:binding = None
+      @@ -53,11 +35,4 @@
            }
        
+      -    over "Shade" (
+      -        prepend apiSchemas = ["MaterialBindingAPI"]
+      -    )
+      -    {
+      -        rel material:binding = </lamp/mtl/brass>
+      -    }
+      -
+           over "Base" (
+               prepend apiSchemas = ["MaterialBindingAPI"]
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -48,5 +48,5 @@
-                   )
+  @@ -44,9 +44,6 @@
+                   }
+   
+  -                def Cube "Shade" (
+  -                    apiSchemas = ["MaterialBindingAPI"]
+  -                )
+  +                def Cube "Shade"
                    {
   -                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/brass>
-  +                    rel material:binding
                        double size = 1
                        float3 xformOp:scale = (0.4, 0.3, 0.4)
-  @@ -57,22 +57,4 @@
+  @@ -57,22 +54,4 @@
                    def Scope "mtl"
                    {
   -                    def Material "brass"
@@ -734,8 +742,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Props/Lamp_01/asset/Shade.material:binding>
+  INVALID, 1 issue(s):
   - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/black/standard_surface> not found in sdrRegistry.
 
 
@@ -755,10 +762,7 @@ SUMMARY
     ~ /Scene/Props/Lamp_01/asset/Base  applied APIs: MaterialBindingAPI → (none)
     ~ /Scene/Props/Lamp_01/asset/Base  material shown: /Scene/Props/Lamp_01/asset/mtl/black → (none)
     ~ /Scene/Props/Lamp_01/asset/Base  rel material:binding: /Scene/Props/Lamp_01/asset/mtl/black → (none)
-    ~ /Scene/Props/Lamp_01/asset/Shade  applied APIs: MaterialBindingAPI → (none)
-    ~ /Scene/Props/Lamp_01/asset/Shade  rel material:binding: (no targets) → (none)
     ~ validity: INVALID → valid
-    - issue [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Props/Lamp_01/asset/Shade.material:binding>
     - issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/black/standard_surface> not found in sdrRegistry.
 
   project state after the step:
@@ -813,20 +817,9 @@ composed scene changes:
   -                    rel material:binding = </Scene/Props/Lamp_01/asset/mtl/black>
                        double size = 1
                        float3 xformOp:scale = (0.3, 0.1, 0.3)
-  @@ -44,40 +41,10 @@
-                   }
-   
-  -                def Cube "Shade" (
-  -                    apiSchemas = ["MaterialBindingAPI"]
-  -                )
-  +                def Cube "Shade"
-                   {
-  -                    rel material:binding
-                       double size = 1
-                       float3 xformOp:scale = (0.4, 0.3, 0.4)
-                       double3 xformOp:translate = (0, 0.5, 0)
+  @@ -51,31 +48,4 @@
                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
+                   }
   -
   -                def Scope "mtl"
   -                {
@@ -853,8 +846,9 @@ composed scene changes:
   -                            token outputs:surface
   -                        }
   -                    }
-                   }
+  -                }
                }
+           }
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000)

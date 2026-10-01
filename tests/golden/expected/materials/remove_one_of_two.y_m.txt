@@ -664,16 +664,16 @@ SUMMARY
   what changed:
     ~ file assets/table/mtl.usda
     - prim /Scene/Furniture/Table_01/asset/mtl/steel [Material] (and 2 prims inside)
+    ~ /Scene/Furniture/Table_01/asset/Leg_L  applied APIs: MaterialBindingAPI → (none)
     ~ /Scene/Furniture/Table_01/asset/Leg_L  material shown: /Scene/Furniture/Table_01/asset/mtl/steel → (none)
-    ~ /Scene/Furniture/Table_01/asset/Leg_L  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/steel → (no targets)
-    + issue [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Leg_L.material:binding>
+    ~ /Scene/Furniture/Table_01/asset/Leg_L  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/steel → (none)
     - issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/steel/standard_surface> not found in sdrRegistry.
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -727,25 +727,34 @@ file changes:
       -        }
            }
        
-      @@ -68,5 +44,5 @@
-           )
-           {
-      -        rel material:binding = </table/mtl/steel>
-      +        rel material:binding = None
+      @@ -63,11 +39,4 @@
+               rel material:binding = </table/mtl/oak>
            }
+      -
+      -    over "Leg_L" (
+      -        prepend apiSchemas = ["MaterialBindingAPI"]
+      -    )
+      -    {
+      -        rel material:binding = </table/mtl/steel>
+      -    }
        }
+       
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -45,5 +45,5 @@
-                   )
+  @@ -41,9 +41,6 @@
+                   }
+   
+  -                def Cube "Leg_L" (
+  -                    apiSchemas = ["MaterialBindingAPI"]
+  -                )
+  +                def Cube "Leg_L"
                    {
   -                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/steel>
-  +                    rel material:binding
                        double size = 1
                        float3 xformOp:scale = (0.05, 0.75, 0.05)
-  @@ -85,28 +85,4 @@
+  @@ -85,28 +82,4 @@
                            }
                        }
   -
@@ -785,8 +794,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Leg_L.material:binding>
+  INVALID, 1 issue(s):
   - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
 
 
@@ -851,8 +859,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Leg_L.material:binding>
+  INVALID, 1 issue(s):
   - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
 
 
@@ -869,13 +876,10 @@ SUMMARY
     ~ file assets/table/table.usda
     - prim /Scene/Furniture/Table_01/asset/mtl [Scope]
     - prim /Scene/Furniture/Table_01/asset/mtl/oak [Material] (and 2 prims inside)
-    ~ /Scene/Furniture/Table_01/asset/Leg_L  applied APIs: MaterialBindingAPI → (none)
-    ~ /Scene/Furniture/Table_01/asset/Leg_L  rel material:binding: (no targets) → (none)
     ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: MaterialBindingAPI → (none)
     ~ /Scene/Furniture/Table_01/asset/Top  material shown: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
     ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak → (none)
     ~ validity: INVALID → valid
-    - issue [error] -: InvalidMaterialCollection: Invalid number of targets on material binding </Scene/Furniture/Table_01/asset/Leg_L.material:binding>
     - issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
 
   project state after the step:
@@ -929,18 +933,7 @@ composed scene changes:
   -                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/oak>
                        double size = 1
                        float3 xformOp:scale = (1.2, 0.05, 0.8)
-  @@ -41,9 +38,6 @@
-                   }
-   
-  -                def Cube "Leg_L" (
-  -                    apiSchemas = ["MaterialBindingAPI"]
-  -                )
-  +                def Cube "Leg_L"
-                   {
-  -                    rel material:binding
-                       double size = 1
-                       float3 xformOp:scale = (0.05, 0.75, 0.05)
-  @@ -59,31 +53,4 @@
+  @@ -56,31 +53,4 @@
                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
                    }
   -

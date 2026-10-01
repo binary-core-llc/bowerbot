@@ -470,7 +470,7 @@ intent: no asset library configured
 SUMMARY
   call: bind_material(prim_path="/Scene/Props/Thing_01", material_file="<LIBRARY>/materials/oak.usda")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Props/Thing_01. Material binding only works on assets placed as ASWF folders (not USDZ).
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Props/Thing_01. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -488,7 +488,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Props/Thing_01. Material binding only works on assets placed as ASWF folders (not USDZ)."
+    "error": "Cannot find ASWF asset folder for /Scene/Props/Thing_01. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:

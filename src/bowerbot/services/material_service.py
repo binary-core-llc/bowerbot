@@ -23,16 +23,9 @@ def create_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
     prim_path = params["prim_path"]
     material_name = params["material_name"]
 
-    asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, prim_path,
     )
-    if asset_dir is None or ref_prim_path is None:
-        msg = (
-            f"Cannot find ASWF asset folder for {prim_path}. "
-            "Procedural materials only work on assets placed as ASWF "
-            "folders (not USDZ)."
-        )
-        raise ValueError(msg)
 
     materials.bind.refuse_shared_modification(
         state.stage, asset_dir, params, op_label="create_material",
@@ -83,16 +76,9 @@ def bind_material(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         msg = f"Material file not found: {material_file}"
         raise ValueError(msg)
 
-    asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, prim_path,
     )
-    if asset_dir is None or ref_prim_path is None:
-        msg = (
-            f"Cannot find ASWF asset folder for {prim_path}. "
-            "Material binding only works on assets placed as ASWF "
-            "folders (not USDZ)."
-        )
-        raise ValueError(msg)
 
     materials.bind.refuse_shared_modification(
         state.stage, asset_dir, params, op_label="bind_material",
@@ -125,12 +111,9 @@ def bind_material(state: scene_state.SceneState, params: dict[str, Any]) -> dict
 def remove_material(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Remove the material binding on a prim inside an ASWF asset."""
     prim_path = params["prim_path"]
-    asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+    asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, prim_path,
     )
-    if asset_dir is None or ref_prim_path is None:
-        msg = f"Cannot find ASWF asset folder for {prim_path}."
-        raise ValueError(msg)
 
     asset_local_path = authoring.placement.to_asset_local(prim_path, ref_prim_path)
     materials.bind.unbind(asset_dir, asset_local_path)
@@ -172,13 +155,7 @@ def cleanup_unused_materials(
     asset_prim_path = params.get("asset_prim_path")
 
     if asset_prim_path:
-        asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, asset_prim_path)
-        if asset_dir is None:
-            msg = (
-                f"Cannot find ASWF asset folder for {asset_prim_path}. "
-                "Cleanup only works on ASWF folder assets."
-            )
-            raise ValueError(msg)
+        asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_prim_path)
 
         removed = materials.layer.remove_unused(asset_dir)
         state.stage = authoring.stage.open_stage(state.stage_path)

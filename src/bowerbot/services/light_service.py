@@ -51,15 +51,9 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 f"asset_prim_path."
             )
             raise ValueError(msg)
-        asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+        asset_dir, ref_prim_path = authoring.placement.require_asset_context(
             state.stage, asset_prim_path,
         )
-        if asset_dir is None or ref_prim_path is None:
-            msg = (
-                f"Cannot find ASWF asset folder for {asset_prim_path}. "
-                f"Asset-level lights only work on ASWF folder assets."
-            )
-            raise ValueError(msg)
 
         mode = schemas.PositionMode(
             params.get("position_mode", schemas.PositionMode.BOUNDS_OFFSET.value),

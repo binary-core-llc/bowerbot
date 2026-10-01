@@ -194,7 +194,7 @@ validation:
 SUMMARY
   call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Lighting/Key", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. An asset can only be added to an ASWF folder asset (not a USDZ).
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -212,7 +212,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. An asset can only be added to an ASWF folder asset (not a USDZ)."
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:
@@ -238,7 +238,7 @@ validation:
 SUMMARY
   call: cleanup_unused_contents(asset_prim_path="/Scene/Lighting/Key")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets.
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -256,7 +256,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets."
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:
@@ -282,7 +282,7 @@ validation:
 SUMMARY
   call: cleanup_unused_materials(asset_prim_path="/Scene/Lighting/Key")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets.
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -300,7 +300,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Cleanup only works on ASWF folder assets."
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:
@@ -326,7 +326,7 @@ validation:
 SUMMARY
   call: create_material(prim_path="/Scene/Lighting/Key", material_name="oak")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Procedural materials only work on assets placed as ASWF folders (not USDZ).
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -344,7 +344,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Procedural materials only work on assets placed as ASWF folders (not USDZ)."
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:
@@ -370,7 +370,7 @@ validation:
 SUMMARY
   call: bind_material(prim_path="/Scene/Lighting/Key", material_file="<LIBRARY>/materials/oak.usda")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Material binding only works on assets placed as ASWF folders (not USDZ).
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -388,7 +388,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Material binding only works on assets placed as ASWF folders (not USDZ)."
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:
@@ -414,7 +414,7 @@ validation:
 SUMMARY
   call: remove_material(prim_path="/Scene/Lighting/Key")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key.
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -432,7 +432,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key."
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:
@@ -459,7 +459,7 @@ intent: a light that should belong to an asset
 SUMMARY
   call: create_light(light_type="SphereLight", light_name="Bulb", asset_prim_path="/Scene/Lighting/Key")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Asset-level lights only work on ASWF folder assets.
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -477,7 +477,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Asset-level lights only work on ASWF folder assets."
+    "error": "Cannot find ASWF asset folder for /Scene/Lighting/Key. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:

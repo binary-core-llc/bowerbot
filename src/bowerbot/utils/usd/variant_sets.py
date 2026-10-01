@@ -141,21 +141,38 @@ def remove_scene_variant(
     prim_spec = layer.GetPrimAtPath(carrier_prim_path)
     if prim_spec is None:
         return False
-    vset_spec = prim_spec.variantSets.get(set_name)
-    if vset_spec is None:
-        return False
-    existing = list(vset_spec.variants.keys())
-    if variant_name not in existing:
+    surviving = remove_variant_from_spec(layer, prim_spec, set_name, variant_name)
+    if surviving is None:
         return False
 
-    if len(existing) == 1:
-        del prim_spec.variantSets[set_name]
-        scrub_variant_set_metadata(prim_spec, set_name)
+    if not surviving:
         if set_name in prim_spec.variantSelections:
             del prim_spec.variantSelections[set_name]
         layer.Save()
         usd.namespace.prune_empty_overrides(layer, carrier_prim_path)
         return True
+
+    if prim_spec.variantSelections.get(set_name) == variant_name:
+        del prim_spec.variantSelections[set_name]
+
+    layer.Save()
+    return True
+
+
+def remove_variant_from_spec(
+    layer: Sdf.Layer, prim_spec: Sdf.PrimSpec, set_name: str, variant_name: str,
+) -> list[str] | None:
+    """Take one variant out of a set on *prim_spec*; the set goes with its last variant.
+
+    Returns the names of the variants that remain, or None when the variant
+    was not there. The layer is not saved.
+    """
+    vset_spec = prim_spec.variantSets.get(set_name)
+    if vset_spec is None:
+        return None
+    existing = list(vset_spec.variants.keys())
+    if variant_name not in existing:
+        return None
 
     surviving = [v for v in existing if v != variant_name]
     temp_layer = Sdf.Layer.CreateAnonymous()
@@ -173,12 +190,7 @@ def remove_scene_variant(
         var_path = prim_spec.path.AppendVariantSelection(set_name, v)
         if temp_layer.GetObjectAtPath(var_path) is not None:
             Sdf.CopySpec(temp_layer, var_path, layer, var_path)
-
-    if prim_spec.variantSelections.get(set_name) == variant_name:
-        del prim_spec.variantSelections[set_name]
-
-    layer.Save()
-    return True
+    return surviving
 
 
 def remove_scene_variant_set(

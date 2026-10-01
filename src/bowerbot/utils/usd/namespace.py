@@ -15,6 +15,7 @@ from pxr import Sdf
 from pxr import Usd
 
 from bowerbot import constants
+from bowerbot.utils import usd
 
 # ── Renaming and moving ──
 
@@ -135,18 +136,7 @@ def clear_orphan_variant_overs(
                     touched = True
             if len(vset_spec.variants) == 0:
                 del ancestor_spec.variantSets[vset_name]
-                name_list = ancestor_spec.variantSetNameList
-                for items in (
-                    name_list.prependedItems,
-                    name_list.appendedItems,
-                    name_list.addedItems,
-                    name_list.explicitItems,
-                    name_list.orderedItems,
-                ):
-                    if vset_name in items:
-                        items.remove(vset_name)
-                if vset_name in name_list.deletedItems:
-                    name_list.deletedItems.remove(vset_name)
+                usd.variant_sets.scrub_variant_set_metadata(ancestor_spec, vset_name)
                 if vset_name in ancestor_spec.variantSelections:
                     del ancestor_spec.variantSelections[vset_name]
                 touched = True

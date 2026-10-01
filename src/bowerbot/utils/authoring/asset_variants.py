@@ -191,37 +191,11 @@ def remove_variant(
     if prim_spec is None:
         return False
 
-    vset_spec = prim_spec.variantSets.get(set_name)
-    if vset_spec is None:
+    surviving = usd.variant_sets.remove_variant_from_spec(
+        layer, prim_spec, set_name, variant_name,
+    )
+    if surviving is None:
         return False
-    existing = list(vset_spec.variants.keys())
-    if variant_name not in existing:
-        return False
-
-    if len(existing) == 1:
-        del prim_spec.variantSets[set_name]
-        usd.variant_sets.scrub_variant_set_metadata(prim_spec, set_name)
-        layer.Save()
-        return True
-
-    surviving = [v for v in existing if v != variant_name]
-
-    temp_layer = Sdf.Layer.CreateAnonymous()
-    for v in surviving:
-        Sdf.CreateVariantInLayer(temp_layer, prim_spec.path, set_name, v)
-        var_path = prim_spec.path.AppendVariantSelection(set_name, v)
-        if layer.GetObjectAtPath(var_path) is not None:
-            Sdf.CopySpec(layer, var_path, temp_layer, var_path)
-
-    del prim_spec.variantSets[set_name]
-    usd.variant_sets.scrub_variant_set_metadata(prim_spec, set_name)
-
-    for v in surviving:
-        Sdf.CreateVariantInLayer(layer, prim_spec.path, set_name, v)
-        var_path = prim_spec.path.AppendVariantSelection(set_name, v)
-        if temp_layer.GetObjectAtPath(var_path) is not None:
-            Sdf.CopySpec(temp_layer, var_path, layer, var_path)
-
     layer.Save()
     return True
 

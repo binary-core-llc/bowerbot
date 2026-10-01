@@ -53,7 +53,6 @@ def resolve_asset_sources(
 
 
 def stage_prototypes(
-    stage: Usd.Stage,
     sources: list[tuple[schemas.ScatterAsset, Path]],
     *,
     assets_dir: Path,
@@ -89,12 +88,16 @@ def stage_prototypes(
     used: set[str] = set()
     for entry, path in sources:
         report = reports[path]
-        unit_scale, correction = usd.metrics.asset_conform(
-            stage, report.scene_ref_path,
-            project_mpu=project_mpu, project_up_axis=project_up_axis,
+        root_file = project_dir / report.scene_ref_path
+        asset_mpu, asset_up_axis = usd.metrics.file_metrics(
+            root_file, default_mpu=project_mpu, default_up_axis=project_up_axis,
         )
+        conform = usd.metrics.conform_matrix(*usd.metrics.conform(
+            asset_mpu, asset_up_axis,
+            parent_mpu=project_mpu, parent_up_axis=project_up_axis,
+        ))
         bmin, bmax, base_min, base_max, points = _conformed_extents(
-            project_dir / report.scene_ref_path, unit_scale, correction, up,
+            root_file, conform, up=up, asset_up=usd.metrics.axis_index(asset_up_axis),
         )
         base = usd.naming.safe_prim_name(Path(report.asset_folder_name).stem) or "proto"
         if not usd.naming.is_valid_prim_name(base):
@@ -136,12 +139,12 @@ def base_footprint(
 
 
 def _conformed_extents(
-    root_file: Path, unit_scale: float, correction: float | None, up: int,
+    root_file: Path, conform: Gf.Matrix4d, *, up: int, asset_up: int,
 ) -> tuple[
     schemas.FloatArray, schemas.FloatArray, schemas.FloatArray, schemas.FloatArray,
     schemas.FloatArray,
 ]:
-    """Conformed bounds, base footprint and vertex sample of an asset."""
+    """Bounds, base footprint and vertex sample of an asset, after its placement *conform*."""
     stage = Usd.Stage.Open(str(root_file))
     root = stage.GetDefaultPrim() if stage else None
     if root is None or not root.IsValid():
@@ -156,8 +159,7 @@ def _conformed_extents(
         raise ValueError(msg)
     corners = np.array([list(rng.GetCorner(i)) for i in range(8)])
     triangles = usd.surface.collect_triangles(
-        stage, [str(root.GetPath())],
-        up=usd.metrics.axis_index(UsdGeom.GetStageUpAxis(stage)),
+        stage, [str(root.GetPath())], up=asset_up,
     )
     points = (
         np.concatenate([
@@ -166,14 +168,9 @@ def _conformed_extents(
         ])
         if triangles.count else corners
     )
-    if correction is not None:
-        rotate = usd.transforms.gf_matrix_to_numpy(
-            Gf.Matrix4d().SetRotate(Gf.Rotation(Gf.Vec3d.XAxis(), correction)),
-        )[:3, :3]
-        corners = corners @ rotate
-        points = points @ rotate
-    corners *= unit_scale
-    points *= unit_scale
+    matrix = usd.transforms.gf_matrix_to_numpy(conform)[:3, :3]
+    corners = corners @ matrix
+    points = points @ matrix
     base_min, base_max = base_footprint(points, up)
     shape = np.unique(points, axis=0)
     if shape.shape[0] > constants.ScatterTuning.SHAPE_POINTS:

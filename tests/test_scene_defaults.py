@@ -109,7 +109,7 @@ def test_create_project_tool_accepts_params():
         assert r.data["up_axis"] == "Z"
 
 
-# ── up-axis correction in add_reference ──
+# ── up-axis correction in add_references ──
 
 
 def test_up_axis_correction_signs():

@@ -80,10 +80,7 @@ def _check_up_axis(
 ) -> list[schemas.ValidationIssue]:
     """``upAxis`` must match the expected value."""
     actual = UsdGeom.GetStageUpAxis(stage)
-    expected_token = (
-        UsdGeom.Tokens.y if expected == "Y" else UsdGeom.Tokens.z
-    )
-    if actual != expected_token:
+    if actual != usd.metrics.up_axis_token(expected):
         return [schemas.ValidationIssue(
             severity=schemas.Severity.WARNING,
             message=f"upAxis is '{actual}', expected '{expected}'",

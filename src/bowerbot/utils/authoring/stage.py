@@ -14,6 +14,7 @@ from pxr import UsdGeom
 from pxr import UsdUtils
 
 from bowerbot.utils import authoring
+from bowerbot.utils import usd
 
 # ── Creating, opening and saving the scene ──
 
@@ -31,10 +32,7 @@ def create_empty_scene(
 
     stage = Usd.Stage.CreateNew(str(path))
     UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
-    UsdGeom.SetStageUpAxis(
-        stage,
-        UsdGeom.Tokens.z if str(up_axis).upper() == "Z" else UsdGeom.Tokens.y,
-    )
+    UsdGeom.SetStageUpAxis(stage, usd.metrics.up_axis_token(up_axis))
     root = stage.DefinePrim("/Scene", "Xform")
     stage.SetDefaultPrim(root)
     Usd.ModelAPI(root).SetKind(Kind.Tokens.assembly)

@@ -34,6 +34,19 @@ def file_metrics(
         up_axis = "Y" if UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.y else "Z"
     return mpu, up_axis
 
+# ── Unit and axis values ──
+
+
+def up_axis_token(up_axis: str) -> str:
+    """The ``UsdGeom`` token for an up-axis name: ``"Z"`` -> z, anything else -> y."""
+    token: str = UsdGeom.Tokens.z if up_axis == "Z" else UsdGeom.Tokens.y
+    return token
+
+
+def usable_mpu(mpu: float) -> float:
+    """*mpu* when it is a real unit size; 1.0 for zero or a negative value."""
+    return mpu if mpu > 0 else 1.0
+
 # ── Conforming an asset to the scene ──
 
 

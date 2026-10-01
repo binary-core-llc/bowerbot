@@ -28,19 +28,6 @@ logger = logging.getLogger(__name__)
 # ── Placing assets in the scene ──
 
 
-def add_reference(
-    stage: Usd.Stage,
-    scene_object: schemas.SceneObject,
-    *,
-    project_mpu: float,
-    project_up_axis: str,
-) -> None:
-    """Reference an asset under a wrapper Xform, conformed to the project's units and up-axis."""
-    add_references(
-        stage, [scene_object], project_mpu=project_mpu, project_up_axis=project_up_axis,
-    )
-
-
 def add_references(
     stage: Usd.Stage,
     scene_objects: list[schemas.SceneObject],
@@ -48,7 +35,10 @@ def add_references(
     project_mpu: float,
     project_up_axis: str,
 ) -> None:
-    """Author a batch of asset references, computing conform once per unique asset."""
+    """Reference each asset under a wrapper Xform, conformed to the project's units and up axis.
+
+    The conform is computed once per unique asset.
+    """
     conform: dict[str, tuple[float, float | None]] = {}
     for scene_object in scene_objects:
         asset_path = (
@@ -317,7 +307,6 @@ def add_nested_asset_reference(
     container_mpu, container_up = authoring.asset_folder.asset_metrics(
         container_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
-    container_mpu = container_mpu if container_mpu > 0 else 1.0
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
     nested_mpu, nested_up = container_mpu, container_up
@@ -325,7 +314,7 @@ def add_nested_asset_reference(
         nested_mpu, nested_up = usd.metrics.file_metrics(
             ref_full_path, default_mpu=project_mpu, default_up_axis=project_up_axis,
         )
-        nested_mpu = nested_mpu if nested_mpu > 0 else 1.0
+        nested_mpu = usd.metrics.usable_mpu(nested_mpu)
     unit_scale, up_axis_correction = usd.metrics.conform(
         nested_mpu, nested_up, parent_mpu=container_mpu, parent_up_axis=container_up,
     )
@@ -576,8 +565,7 @@ def resolve_asset_position(
         bounds, (offset[0], offset[1], offset[2]),
         up=usd.metrics.axis_index(asset_up_axis),
         up_given=up_given,
-        default_above=constants.PlacementDefaults.ABOVE_OFFSET_METERS
-        / (asset_mpu if asset_mpu > 0 else 1.0),
+        default_above=constants.PlacementDefaults.ABOVE_OFFSET_METERS / asset_mpu,
     )
 
 

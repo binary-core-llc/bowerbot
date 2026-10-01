@@ -329,13 +329,17 @@ def remove_empty_layer(
 def asset_metrics(
     asset_dir: Path, *, project_mpu: float, project_up_axis: str,
 ) -> tuple[float, str]:
-    """``(metersPerUnit, upAxis)`` the asset's root file declares; the project's for the rest."""
+    """``(metersPerUnit, upAxis)`` the asset's root file declares; the project's for the rest.
+
+    A metersPerUnit that is zero or negative counts as 1.0.
+    """
     root_file = find_root_file(asset_dir)
     if root_file is None:
-        return project_mpu, project_up_axis
-    return usd.metrics.file_metrics(
+        return usd.metrics.usable_mpu(project_mpu), project_up_axis
+    mpu, up_axis = usd.metrics.file_metrics(
         root_file, default_mpu=project_mpu, default_up_axis=project_up_axis,
     )
+    return usd.metrics.usable_mpu(mpu), up_axis
 
 
 def declare_missing_metrics(
@@ -350,23 +354,16 @@ def declare_missing_metrics(
         UsdGeom.SetStageMetersPerUnit(stage, project_mpu)
         changed = True
     if not stage.HasAuthoredMetadata(UsdGeom.Tokens.upAxis):
-        UsdGeom.SetStageUpAxis(
-            stage, UsdGeom.Tokens.y if project_up_axis == "Y" else UsdGeom.Tokens.z,
-        )
+        UsdGeom.SetStageUpAxis(stage, usd.metrics.up_axis_token(project_up_axis))
         changed = True
     if changed:
         stage.GetRootLayer().Save()
 
 
-def get_mpu(asset_dir: Path, *, project_mpu: float) -> float:
-    """Return the asset's ``metersPerUnit`` (see :func:`asset_metrics`), 1.0 if not positive."""
-    mpu, _ = asset_metrics(asset_dir, project_mpu=project_mpu, project_up_axis="Y")
-    return mpu if mpu > 0 else 1.0
-
-
 def unit_factor(asset_dir: Path, *, project_mpu: float) -> float:
     """Return the factor that converts a length in project units into the asset's units."""
-    return project_mpu / get_mpu(asset_dir, project_mpu=project_mpu)
+    mpu, _ = asset_metrics(asset_dir, project_mpu=project_mpu, project_up_axis="Y")
+    return project_mpu / mpu
 
 
 def conform_matrix(
@@ -377,8 +374,7 @@ def conform_matrix(
         asset_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
     unit_scale, correction = usd.metrics.conform(
-        mpu if mpu > 0 else 1.0, up_axis,
-        parent_mpu=project_mpu, parent_up_axis=project_up_axis,
+        mpu, up_axis, parent_mpu=project_mpu, parent_up_axis=project_up_axis,
     )
     return usd.metrics.conform_matrix(unit_scale, correction)
 
@@ -553,9 +549,7 @@ def _create_root_file(
 
     stage = Usd.Stage.CreateNew(str(root_path))
     UsdGeom.SetStageMetersPerUnit(stage, meters_per_unit)
-    UsdGeom.SetStageUpAxis(
-        stage, UsdGeom.Tokens.y if up_axis == "Y" else UsdGeom.Tokens.z,
-    )
+    UsdGeom.SetStageUpAxis(stage, usd.metrics.up_axis_token(up_axis))
 
     root_prim = stage.DefinePrim(f"/{default_prim_name}", "Xform")
     stage.SetDefaultPrim(root_prim)

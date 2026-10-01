@@ -194,6 +194,121 @@ SCENARIOS = (
         library=False,
     ),
     model.Scenario(
+        "state/names_usd_cannot_take",
+        "Names USD cannot take as they are (starting with a digit, with a hyphen or a dot, or "
+        "empty once cleaned): what does each tool answer, and does it change the project?",
+        (
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/table.usda",
+                    "asset_name": "Table",
+                    "group": "Furniture",
+                    **model.at(0.0),
+                },
+                save="table",
+            ),
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "3 crates",
+                    "group": "Props",
+                    **model.at(2.0),
+                },
+                note="an asset name that starts with a digit",
+            ),
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "--",
+                    "group": "Props",
+                    **model.at(3.0),
+                },
+                note="an asset name with nothing left once cleaned",
+            ),
+            model.Step(
+                "add_asset_to_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "2nd",
+                    "parent_prim_path": "$table",
+                    "group": "Props",
+                    **model.at(0.0),
+                },
+                note="the same for an asset added to another",
+            ),
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "9 lives", **model.at(0.0, 3.0, 0.0)},
+                note="a light name that starts with a digit",
+            ),
+            model.Step("create_camera", {"camera_name": "2nd-cam"}, note="a camera name"),
+            model.Step(
+                "apply_physics_api",
+                {"prim_path": "$table/asset", "api_name": "PhysicsRigidBodyAPI"},
+                note="a body, so the joint below is only wrong in its name",
+            ),
+            model.Step(
+                "create_joint",
+                {
+                    "joint_type": "PhysicsFixedJoint",
+                    "name": "my-joint",
+                    "body0": "$table/asset",
+                    "scope": "scene",
+                },
+                note="a joint name with a hyphen",
+            ),
+            model.Step(
+                "create_or_update_collision_group",
+                {"name": "grp.a", "includes": ["$table"]},
+                note="a collision group name with a dot",
+            ),
+            model.Step(
+                "add_asset_configuration_variant",
+                {
+                    "prim_path": "$table",
+                    "variant_set": "my-set",
+                    "variant_name": "x",
+                    "activations": {"$table/asset/Leg_L": False},
+                },
+                note="a variant set name with a hyphen",
+            ),
+            model.Step(
+                "add_asset_configuration_variant",
+                {
+                    "prim_path": "$table",
+                    "variant_set": "legs",
+                    "variant_name": "no:left",
+                    "activations": {"$table/asset/Leg_L": False},
+                },
+                note="a variant name with a colon",
+            ),
+            model.Step(
+                "add_asset_configuration_variant",
+                {
+                    "prim_path": "$table",
+                    "variant_set": "legs",
+                    "variant_name": "no.left",
+                    "activations": {"$table/asset/Leg_L": False},
+                },
+                note="a variant name with a dot in the middle",
+            ),
+            model.Step(
+                "add_asset_configuration_variant",
+                {
+                    "prim_path": "$table",
+                    "variant_set": "legs",
+                    "variant_name": "no-left",
+                    "activations": {"$table/asset/Leg_L": False},
+                },
+                note="a variant name with a hyphen, which USD allows",
+            ),
+            model.Step("list_scene", note="what ended up in the scene"),
+        ),
+    ),
+    model.Scenario(
         "state/not_an_asset",
         "Tools that work on an asset, called on a scene prim that is not one.",
         (

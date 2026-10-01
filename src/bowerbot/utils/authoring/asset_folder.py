@@ -556,31 +556,32 @@ def create_asset_folder(
     return root_path
 
 
-# ── Which files reference an asset folder ──
+# ── Which project files use a file or folder ──
 
 
-def find_asset_references(
-    project_dir: Path,
-    folder_name: str,
-    skip_dir: Path | None = None,
-) -> list[str]:
-    """Scan *project_dir* for USD files referencing *folder_name* in any variant body or payload."""
-    referencing: list[str] = []
+def find_files_using(project_dir: Path, target: Path) -> list[str]:
+    """Project USD files that point at *target*: a file, or anything inside a folder.
+
+    A reference, a payload or an asset-valued attribute counts, also inside
+    variant bodies. The match is on the whole path, never on part of a name.
+    Files inside *target* itself are not looked at.
+    """
+    target = target.resolve()
+    using: list[str] = []
     for usd_file in sorted(project_dir.rglob("*")):
-        if usd_file.suffix not in (".usd", ".usda", ".usdc"):
+        if usd_file.suffix not in constants.AssetFolderRules.USD_LAYER_EXTENSIONS:
             continue
-        if skip_dir is not None:
-            try:
-                usd_file.relative_to(skip_dir)
-                continue
-            except ValueError:
-                pass
+        if target in usd_file.resolve().parents:
+            continue
         layer = Sdf.Layer.FindOrOpen(str(usd_file))
         if layer is None:
             continue
-        if usd.references.layer_references_folder(layer, folder_name):
-            referencing.append(str(usd_file.relative_to(project_dir)))
-    return referencing
+        if any(
+            pointed == target or target in pointed.parents
+            for pointed in usd.references.layer_file_targets(layer)
+        ):
+            using.append(str(usd_file.relative_to(project_dir)))
+    return using
 
 
 # ── Helpers ──

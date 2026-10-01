@@ -13,7 +13,6 @@ import shutil
 from pathlib import Path
 
 from pxr import Sdf
-from pxr import Usd
 
 from bowerbot import constants
 
@@ -125,37 +124,3 @@ def stage_asset_typed_overrides(
                 staged[attr_name] = value
         out[prim_path] = staged
     return out
-
-
-# ── Which files use a texture ──
-
-
-def find_texture_references(
-    project_dir: Path,
-    file_name: str,
-) -> list[str]:
-    """Scan *project_dir* for USD files that reference *file_name*."""
-    referencing: list[str] = []
-    for usd_file in sorted(project_dir.rglob("*")):
-        if usd_file.suffix not in (".usd", ".usda", ".usdc"):
-            continue
-        try:
-            stage = Usd.Stage.Open(str(usd_file))
-        except Exception:
-            continue
-        if stage is None:
-            continue
-        for prim in stage.Traverse():
-            tex_attr = prim.GetAttribute("inputs:texture:file")
-            if not tex_attr or not tex_attr.Get():
-                continue
-            tex_val = tex_attr.Get()
-            tex_path = (
-                tex_val.path if hasattr(tex_val, "path") else str(tex_val)
-            )
-            if file_name in tex_path:
-                referencing.append(
-                    str(usd_file.relative_to(project_dir)),
-                )
-                break
-    return referencing

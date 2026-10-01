@@ -657,7 +657,7 @@ intent: is the chair listed as unused?
 SUMMARY
   call: list_project_assets()
   current project: golden
-  said: ok: Project has 2 asset(s), 0 unused.
+  said: ok: Project has 2 asset(s), 1 unused.
 
   what changed:
     nothing
@@ -683,14 +683,14 @@ full answer:
         "type": "folder"
       },
       {
-        "in_scene": true,
+        "in_scene": false,
         "name": "chair",
         "type": "folder"
       }
     ],
-    "message": "Project has 2 asset(s), 0 unused.",
+    "message": "Project has 2 asset(s), 1 unused.",
     "total": 2,
-    "unused_count": 0
+    "unused_count": 1
   }
 
 files:
@@ -723,14 +723,14 @@ validation:
 SUMMARY
   call: delete_project_asset(name="chair")
   current project: golden
-  said: REFUSED: Asset 'chair' is still referenced by: scene.usda. Remove those references first.
+  said: ok: Deleted asset 'chair' from project assets.
 
   what changed:
-    nothing
+    - file assets/chair/chair.usda
+    - file assets/chair/geo.usda
 
   project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -742,19 +742,21 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Asset 'chair' is still referenced by: scene.usda. Remove those references first."
+    "message": "Deleted asset 'chair' from project assets.",
+    "name": "chair"
   }
 
 files:
     assets/armchair/armchair.usda
     assets/armchair/geo.usda
-    assets/chair/chair.usda
-    assets/chair/geo.usda
+  - assets/chair/chair.usda
+  - assets/chair/geo.usda
     project.json
     scene.usda
 
 file changes:
-  (none)
+  - assets/chair/chair.usda (removed)
+  - assets/chair/geo.usda (removed)
 
 composed scene changes:
   (none)
@@ -789,8 +791,7 @@ SUMMARY
           world position: (0.0000, 0.0000, 0.0000)
 
   project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -815,8 +816,6 @@ full answer:
 files:
     assets/armchair/armchair.usda
     assets/armchair/geo.usda
-    assets/chair/chair.usda
-    assets/chair/geo.usda
     project.json
   ~ scene.usda
   + textures/studio.hdr
@@ -892,8 +891,7 @@ SUMMARY
           world position: (0.0000, 0.0000, 0.0000)
 
   project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -918,8 +916,6 @@ full answer:
 files:
     assets/armchair/armchair.usda
     assets/armchair/geo.usda
-    assets/chair/chair.usda
-    assets/chair/geo.usda
     project.json
   ~ scene.usda
   + textures/big_studio.hdr
@@ -986,8 +982,6 @@ SUMMARY
     - prim /Scene/Lighting/Sky [DomeLight]
 
   project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
     not used by the scene: textures/studio.hdr
 
   checks:
@@ -1009,8 +1003,6 @@ full answer:
 files:
     assets/armchair/armchair.usda
     assets/armchair/geo.usda
-    assets/chair/chair.usda
-    assets/chair/geo.usda
     project.json
   ~ scene.usda
     textures/big_studio.hdr
@@ -1066,15 +1058,13 @@ validation:
 SUMMARY
   call: delete_project_texture(file_name="studio.hdr")
   current project: golden
-  said: REFUSED: Texture 'studio.hdr' is still referenced by: scene.usda. Remove those references first.
+  said: ok: Deleted texture 'studio.hdr' from project textures.
 
   what changed:
-    nothing
+    - file textures/studio.hdr
 
   project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
-    not used by the scene: textures/studio.hdr
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -1086,21 +1076,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Texture 'studio.hdr' is still referenced by: scene.usda. Remove those references first."
+    "file": "studio.hdr",
+    "message": "Deleted texture 'studio.hdr' from project textures."
   }
 
 files:
     assets/armchair/armchair.usda
     assets/armchair/geo.usda
-    assets/chair/chair.usda
-    assets/chair/geo.usda
     project.json
     scene.usda
     textures/big_studio.hdr
-    textures/studio.hdr
+  - textures/studio.hdr
 
 file changes:
-  (none)
+  - textures/studio.hdr (removed)
 
 composed scene changes:
   (none)
@@ -1129,9 +1118,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
-    not used by the scene: textures/studio.hdr
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -1149,12 +1136,9 @@ full answer:
 files:
     assets/armchair/armchair.usda
     assets/armchair/geo.usda
-    assets/chair/chair.usda
-    assets/chair/geo.usda
     project.json
     scene.usda
     textures/big_studio.hdr
-    textures/studio.hdr
 
 file changes:
   (none)
@@ -1186,9 +1170,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
-    not used by the scene: textures/studio.hdr
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -1206,12 +1188,9 @@ full answer:
 files:
     assets/armchair/armchair.usda
     assets/armchair/geo.usda
-    assets/chair/chair.usda
-    assets/chair/geo.usda
     project.json
     scene.usda
     textures/big_studio.hdr
-    textures/studio.hdr
 
 file changes:
   (none)

@@ -35,14 +35,6 @@ def get_prim_ref_paths(prim: Usd.Prim) -> list[str]:
     return paths
 
 
-def get_all_ref_paths(stage: Usd.Stage) -> set[str]:
-    """Collect every reference asset path authored on the stage."""
-    refs: set[str] = set()
-    for prim in stage.Traverse():
-        refs.update(get_prim_ref_paths(prim))
-    return refs
-
-
 def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:
     """Whether *prim_path* has any directly-authored reference arc in the stage's root layer."""
     layer = stage.GetRootLayer()
@@ -52,31 +44,42 @@ def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:
     return spec.HasInfo("references")
 
 
-def layer_references_folder(layer: Sdf.Layer, folder_name: str) -> bool:
-    """Whether any prim spec in *layer* (including variant bodies) references *folder_name*."""
-    found = [False]
+def layer_file_targets(layer: Sdf.Layer) -> set[Path]:
+    """The files *layer* points to, as absolute paths.
+
+    Every reference, payload and asset-valued attribute counts, also inside
+    variant bodies. Paths are taken relative to the layer's own folder.
+    """
+    base = Path(layer.realPath).parent
+    targets: set[Path] = set()
+
+    def add(asset_path: str) -> None:
+        if asset_path:
+            targets.add((base / asset_path).resolve())
 
     def visit(path: Sdf.Path) -> None:
-        if found[0]:
-            return
         spec = layer.GetObjectAtPath(path)
-        if not isinstance(spec, Sdf.PrimSpec):
-            return
-        for proxy in (spec.referenceList, spec.payloadList):
-            for items in (
-                proxy.prependedItems,
-                proxy.appendedItems,
-                proxy.addedItems,
-                proxy.explicitItems,
-                proxy.orderedItems,
-            ):
-                for arc in items:
-                    if folder_name in arc.assetPath:
-                        found[0] = True
-                        return
+        if isinstance(spec, Sdf.PrimSpec):
+            for proxy in (spec.referenceList, spec.payloadList):
+                for items in (
+                    proxy.prependedItems,
+                    proxy.appendedItems,
+                    proxy.addedItems,
+                    proxy.explicitItems,
+                    proxy.orderedItems,
+                ):
+                    for arc in items:
+                        add(arc.assetPath)
+        elif isinstance(spec, Sdf.AttributeSpec):
+            value = spec.default
+            if isinstance(value, Sdf.AssetPath):
+                add(value.path)
+            elif isinstance(value, Sdf.AssetPathArray):
+                for item in value:
+                    add(item.path)
 
     layer.Traverse(Sdf.Path.absoluteRootPath, visit)
-    return found[0]
+    return targets
 
 # ── Editing references ──
 

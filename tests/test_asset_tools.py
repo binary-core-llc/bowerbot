@@ -13,6 +13,7 @@ from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
+from pxr import UsdUtils
 
 from tests import _helpers
 
@@ -756,6 +757,359 @@ def test_moving_an_added_asset_keeps_the_axes_left_out():
         }))
         assert turned.success, turned.error
         assert _world_position(project, prim_path) == (3.4, 0.5, 4.1)
+
+
+# ── packages whose root points to files of their own ──
+
+
+def _model_file(path: Path, root: str, name: str, center, size) -> None:
+    """A model file with one box *name* under */root*."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    stage.SetDefaultPrim(UsdGeom.Xform.Define(stage, f"/{root}").GetPrim())
+    cube = UsdGeom.Cube.Define(stage, f"/{root}/{name}")
+    cube.GetSizeAttr().Set(1.0)
+    cube.AddTranslateOp().Set(Gf.Vec3d(*center))
+    cube.AddScaleOp().Set(Gf.Vec3f(*size))
+    stage.Save()
+
+
+def _package_root(path: Path, name: str, *, payloads=(), references=()) -> Path:
+    """A package root whose prim composes *payloads* and *references* (path or (path, prim))."""
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    prim = UsdGeom.Xform.Define(stage, f"/{name}").GetPrim()
+    stage.SetDefaultPrim(prim)
+    for arc in payloads:
+        prim.GetPayloads().AddPayload(*(arc if isinstance(arc, tuple) else (arc,)))
+    for arc in references:
+        prim.GetReferences().AddReference(*(arc if isinstance(arc, tuple) else (arc,)))
+    stage.Save()
+    return path
+
+
+def _geometry(root_file: Path) -> dict[str, tuple]:
+    """Each gprim of an asset, by its path under the root, with its bounds and bound material."""
+    stage = Usd.Stage.Open(str(root_file))
+    root = stage.GetDefaultPrim()
+    cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [UsdGeom.Tokens.default_])
+    found = {}
+    for prim in Usd.PrimRange(root):
+        if not prim.IsA(UsdGeom.Gprim):
+            continue
+        box = cache.ComputeWorldBound(prim).ComputeAlignedRange()
+        material = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()[0]
+        found[str(prim.GetPath().MakeRelativePath(root.GetPath()))] = (
+            tuple(round(v, 4) for v in box.GetMin()),
+            tuple(round(v, 4) for v in box.GetMax()),
+            material.GetPrim().GetName() if material else None,
+        )
+    return found
+
+
+def _packages(lib: Path) -> dict[str, Path]:
+    """Four packages whose roots compose files BowerBot does not name itself."""
+    box = ((0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
+    small = ((0.0, 0.25, 1.0), (0.5, 0.5, 0.5))
+
+    _model_file(lib / "shelf" / "shelf_model.usda", "shelf", "Body", *box)
+    look = Usd.Stage.CreateNew(str(lib / "shelf" / "look.usda"))
+    look.SetDefaultPrim(look.OverridePrim("/shelf"))
+    red = UsdShade.Material.Define(look, "/shelf/mtl/red")
+    UsdShade.MaterialBindingAPI.Apply(look.OverridePrim("/shelf/Body")).Bind(red)
+    look.Save()
+    _model_file(lib / "desk" / "geo.usda", "desk", "Body", *box)
+    _model_file(lib / "desk" / "drawers.usda", "desk", "Drawer", *small)
+    _model_file(lib / "lamp" / "parts" / "body.usda", "lamp", "Body", *box)
+    _model_file(lib / "stool" / "stool_model.usda", "Model", "Seat", *box)
+    return {
+        "shelf": _package_root(
+            lib / "shelf" / "shelf.usda", "shelf",
+            payloads=["./shelf_model.usda"], references=["./look.usda"],
+        ),
+        "desk": _package_root(
+            lib / "desk" / "desk.usda", "desk",
+            payloads=["./geo.usda"], references=["./drawers.usda"],
+        ),
+        "lamp": _package_root(
+            lib / "lamp" / "lamp.usda", "lamp", references=["./parts/body.usda"],
+        ),
+        "stool": _package_root(
+            lib / "stool" / "stool.usda", "stool",
+            payloads=[("./stool_model.usda", "/Model")],
+        ),
+    }
+
+
+def test_a_package_keeps_the_files_its_root_points_to():
+    """Importing a package, then adding and removing a layer, keeps its geometry and materials."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        for name, source in _packages(lib).items():
+            expected = _geometry(source)
+            assert expected, f"{name}: the source package has no geometry"
+
+            placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+                "asset_file_path": str(source), "asset_name": name, "group": "Props",
+                "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+            }))
+            assert placed.success, placed.error
+            copy = project.assets_dir / name / f"{name}.usda"
+            assert _geometry(copy) == expected, f"{name}: changed on import"
+
+            light = asyncio.run(_helpers.exec_tool(state, "create_light", {
+                "asset_prim_path": placed.data["prim_path"],
+                "light_type": "SphereLight", "light_name": "Bulb",
+            }))
+            assert light.success, light.error
+            assert _geometry(copy) == expected, f"{name}: changed when a light was added"
+
+            removed = asyncio.run(_helpers.exec_tool(state, "remove_light", {
+                "prim_path": light.data["prim_path"],
+            }))
+            assert removed.success, removed.error
+            assert _geometry(copy) == expected, f"{name}: changed when the light was removed"
+
+
+# ── the asset's box: its real geometry ──
+
+
+def _exec(state, tool: str, params: dict):
+    result = asyncio.run(_helpers.exec_tool(state, tool, params))
+    assert result.success, result.error
+    return result.data
+
+
+def test_the_asset_box_counts_every_file_the_root_composes():
+    """'Above' and 'on top' measure a package's own model file, not only geo.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        state.library_dir = tmp_path / "lib"
+        shelf = _packages(state.library_dir)["shelf"]  # a 1 m box in shelf_model.usda
+        parent = _exec(state, "place_asset", {
+            "asset_file_path": str(shelf), "asset_name": "Shelf", "group": "Props",
+            "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
+        })["prim_path"]
+
+        light = _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
+        })
+        assert _world_position(project, light["prim_path"]) == (3.0, 1.5, 4.0)
+
+        book = _exec(state, "add_asset_to_asset", {
+            "asset_file_path": str(_asset(tmp_path, "book")), "asset_name": "Book",
+            "parent_prim_path": parent, "group": "Props", "position_mode": "bounds_offset",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })
+        assert _world_position(project, book["prim_path"]) == (3.0, 1.0, 4.0)
+
+
+def test_the_asset_box_ignores_its_lights_and_added_assets():
+    """A light or an added asset high above an asset does not raise that asset's 'top'."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        parent = _exec(state, "place_asset", {
+            "asset_file_path": str(_asset(tmp_path, "block")),  # a cube from -0.5 to 0.5
+            "asset_name": "Block", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })["prim_path"]
+        _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "High",
+            "translate_y": 5.0,
+        })
+        _exec(state, "add_asset_to_asset", {
+            "asset_file_path": str(_asset(tmp_path, "book")), "asset_name": "Book",
+            "parent_prim_path": parent, "group": "Props", "position_mode": "bounds_offset",
+            "translate_x": 0.0, "translate_y": 3.0, "translate_z": 0.0,
+        })
+
+        light = _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
+        })
+        assert _world_position(project, light["prim_path"]) == (0.0, 1.0, 0.0)
+
+
+def test_the_asset_box_follows_the_selected_geometry_variant():
+    """A package that selects its short model is measured as that model, not as geo.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        _model_file(lib / "post" / "geo.usda", "post", "Pole", (0.0, 1.0, 0.0), (0.2, 2.0, 0.2))
+        _model_file(lib / "post" / "geo_low.usda", "post", "Pole", (0.0, 0.5, 0.0), (0.2, 1.0, 0.2))
+        root = Usd.Stage.CreateNew(str(lib / "post" / "post.usda"))
+        UsdGeom.SetStageMetersPerUnit(root, 1.0)
+        UsdGeom.SetStageUpAxis(root, UsdGeom.Tokens.y)
+        prim = UsdGeom.Xform.Define(root, "/post").GetPrim()
+        root.SetDefaultPrim(prim)
+        lod = prim.GetVariantSets().AddVariantSet("lod")
+        for variant, file_name in (("high", "./geo.usda"), ("low", "./geo_low.usda")):
+            lod.AddVariant(variant)
+            lod.SetVariantSelection(variant)
+            with lod.GetVariantEditContext():
+                prim.GetPayloads().AddPayload(file_name)
+        lod.SetVariantSelection("low")
+        root.Save()
+
+        parent = _exec(state, "place_asset", {
+            "asset_file_path": str(lib / "post" / "post.usda"), "asset_name": "Post",
+            "group": "Props", "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })["prim_path"]
+        light = _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
+        })
+        assert _world_position(project, light["prim_path"]) == (0.0, 1.5, 0.0)
+
+
+# ── assets that need other files ──
+
+_PNG = bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000d4944415478da63f8cfc0f01f0005000201a5e0e4ec"
+    "0000000049454e44ae426082",
+)
+
+
+def _add_texture(file: Path, prim_path: str, texture: str) -> None:
+    """Bind a material that reads *texture* to *prim_path* in *file*."""
+    stage = Usd.Stage.Open(str(file))
+    root = stage.GetDefaultPrim().GetPath()
+    material = UsdShade.Material.Define(stage, root.AppendPath("mtl/wood"))
+    reader = UsdShade.Shader.Define(stage, material.GetPath().AppendChild("Diffuse"))
+    reader.CreateIdAttr("UsdUVTexture")
+    reader.CreateInput("file", Sdf.ValueTypeNames.Asset).Set(texture)
+    UsdShade.MaterialBindingAPI.Apply(stage.GetPrimAtPath(prim_path)).Bind(material)
+    stage.Save()
+
+
+def _everything_is_in(asset_dir: Path) -> None:
+    """Every file the asset depends on is found, and is inside its own folder."""
+    root_file = asset_dir / f"{asset_dir.name}.usda"
+    layers, assets, unresolved = UsdUtils.ComputeAllDependencies(str(root_file))
+    assert [str(u) for u in unresolved] == [], f"{asset_dir.name}: broken links"
+    for found in [*(lyr.realPath for lyr in layers), *(str(a) for a in assets)]:
+        assert asset_dir.resolve() in Path(found).resolve().parents, f"{found} is outside"
+
+
+def _place_loose(state, source: Path) -> None:
+    placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+        "asset_file_path": str(source), "asset_name": source.stem, "group": "Props",
+        "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+    }))
+    assert placed.success, placed.error
+
+
+def test_a_loose_file_brings_what_it_depends_on():
+    """A texture, a model file, a part file and a sublayer all arrive with the loose file."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        box = ((0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
+        (lib / "textures").mkdir(parents=True)
+        (lib / "textures" / "wood.png").write_bytes(_PNG)
+
+        _model_file(lib / "plank.usda", "plank", "Board", *box)
+        _add_texture(lib / "plank.usda", "/plank/Board", "./textures/wood.png")
+
+        _model_file(lib / "bin_model.usda", "bin", "Body", *box)
+        _package_root(lib / "bin.usda", "bin", references=["./bin_model.usda"])
+
+        _model_file(lib / "leg.usda", "leg", "Leg", (0.0, 0.35, 0.0), (0.05, 0.7, 0.05))
+        _model_file(lib / "stand.usda", "stand", "Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
+        stand = Usd.Stage.Open(str(lib / "stand.usda"))
+        stand.DefinePrim("/stand/LegA", "Xform").GetReferences().AddReference("./leg.usda")
+        stand.Save()
+
+        _model_file(lib / "deck_geo.usda", "deck", "Board", *box)
+        deck = Usd.Stage.CreateNew(str(lib / "deck.usda"))
+        UsdGeom.SetStageMetersPerUnit(deck, 1.0)
+        UsdGeom.SetStageUpAxis(deck, UsdGeom.Tokens.y)
+        deck.SetDefaultPrim(deck.OverridePrim("/deck"))
+        deck.GetRootLayer().subLayerPaths.append("./deck_geo.usda")
+        deck.Save()
+
+        for name in ("plank", "bin", "stand", "deck"):
+            source = lib / f"{name}.usda"
+            expected = _geometry(source)
+            assert expected, f"{name}: the source has no geometry"
+            _place_loose(state, source)
+            asset_dir = project.assets_dir / name
+            assert _geometry(asset_dir / f"{name}.usda") == expected, f"{name}: changed"
+            _everything_is_in(asset_dir)
+
+        assert (project.assets_dir / "plank" / "textures" / "wood.png").is_file()
+        assert (project.assets_dir / "bin" / "bin_model.usda").is_file()
+
+
+def test_a_needed_file_never_takes_one_of_bowerbots_names():
+    """A needed file named like BowerBot's own layers is copied under another name."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        _model_file(lib / "shared" / "geo.usda", "tray", "Body", (0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
+        _model_file(lib / "shared" / "mtl.usda", "tray", "Lid", (0.0, 1.1, 0.0), (1.0, 0.2, 1.0))
+        source = _package_root(
+            lib / "tray.usda", "tray",
+            references=["./shared/geo.usda", "./shared/mtl.usda"],
+        )
+        expected = _geometry(source)
+
+        _place_loose(state, source)
+        asset_dir = project.assets_dir / "tray"
+        assert _geometry(asset_dir / "tray.usda") == expected
+        _everything_is_in(asset_dir)
+        assert sorted(f.name for f in asset_dir.iterdir()) == [
+            "geo.usda", "geo_2.usda", "mtl_2.usda", "tray.usda",
+        ]
+
+
+def test_placing_a_loose_file_again_copies_nothing_more():
+    """The second placement reuses the asset folder as it is."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        (lib / "textures").mkdir(parents=True)
+        (lib / "textures" / "wood.png").write_bytes(_PNG)
+        _model_file(lib / "plank.usda", "plank", "Board", (0.0, 0.5, 0.0), (1.0, 1.0, 1.0))
+        _add_texture(lib / "plank.usda", "/plank/Board", "./textures/wood.png")
+
+        _place_loose(state, lib / "plank.usda")
+        asset_dir = project.assets_dir / "plank"
+        first = sorted(str(f.relative_to(asset_dir)) for f in asset_dir.rglob("*") if f.is_file())
+        _place_loose(state, lib / "plank.usda")
+        again = sorted(str(f.relative_to(asset_dir)) for f in asset_dir.rglob("*") if f.is_file())
+        assert again == first == ["geo.usda", "plank.usda", "textures/wood.png"]
+
+
+def test_a_package_brings_files_outside_its_folder_by_relative_path():
+    """A package that reads ``../shared/...`` arrives with those files, re-linked."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        (lib / "shared").mkdir(parents=True)
+        (lib / "shared" / "wood.png").write_bytes(_PNG)
+        _model_file(lib / "shared" / "leg.usda", "leg", "Leg", (0.0, 0.35, 0.0), (0.05, 0.7, 0.05))
+        _model_file(lib / "table" / "geo.usda", "table", "Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
+        _add_texture(lib / "table" / "geo.usda", "/table/Top", "../shared/wood.png")
+        geo = Usd.Stage.Open(str(lib / "table" / "geo.usda"))
+        geo.DefinePrim("/table/LegA", "Xform").GetReferences().AddReference("../shared/leg.usda")
+        geo.Save()
+        source = _package_root(lib / "table" / "table.usda", "table", payloads=["./geo.usda"])
+        expected = _geometry(source)
+
+        _place_loose(state, source)
+        asset_dir = project.assets_dir / "table"
+        assert _geometry(asset_dir / "table.usda") == expected
+        _everything_is_in(asset_dir)
 
 
 # ── freeze_asset: with non-identity root xform ──

@@ -1219,6 +1219,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "cabinet",
+        "path": "<LIBRARY>/cabinet/cabinet.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -1229,10 +1235,34 @@ full answer:
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
       },
       {
+        "category": "package",
+        "format": ".usda",
+        "name": "stand",
+        "path": "<LIBRARY>/stand/stand.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
+        "name": "workbench",
+        "path": "<LIBRARY>/workbench/workbench.usda"
+      },
+      {
         "category": "geo",
         "format": ".usda",
         "name": "bare",
         "path": "<LIBRARY>/bare.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bin",
+        "path": "<LIBRARY>/bin.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bin_model",
+        "path": "<LIBRARY>/bin_model.usda"
       },
       {
         "category": "geo",
@@ -1283,6 +1313,12 @@ full answer:
         "path": "<LIBRARY>/path_curve.usda"
       },
       {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "plank",
+        "path": "<LIBRARY>/plank.usda"
+      },
+      {
         "category": "geo",
         "format": ".usda",
         "name": "post_z",
@@ -1307,7 +1343,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 16,
+    "total_matches": 22,
     "truncated": false
   }
 

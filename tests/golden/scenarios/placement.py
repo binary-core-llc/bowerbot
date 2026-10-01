@@ -272,6 +272,104 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "placement/packages_with_their_own_files",
+        "Library packages whose root points to files of their own: do they keep their geometry "
+        "and materials when imported, and when BowerBot later adds or removes a layer?",
+        (
+            _place(
+                "cabinet/cabinet.usda",
+                "Cabinet",
+                "Furniture",
+                0.0,
+                save="cabinet",
+                note="a root that payloads its own model file and references its own look file",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$cabinet"}),
+            _place(
+                "workbench/workbench.usda",
+                "Workbench",
+                "Furniture",
+                3.0,
+                save="workbench",
+                note="geo.usda plus a part referenced from a sub-folder",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$workbench"}),
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "Glow", "asset_prim_path": "$cabinet"},
+                save="glow",
+                note="adding a light writes lgt.usda and rebuilds the cabinet's root arcs",
+            ),
+            model.Step(
+                "bind_material",
+                {"prim_path": "$workbench/asset/Top", "material_file": "$lib/materials/oak.usda"},
+                note="binding a material writes mtl.usda and rebuilds the workbench's root arcs",
+            ),
+            model.Step(
+                "remove_light",
+                {"prim_path": "$glow"},
+                note="removing the only light deletes lgt.usda and rebuilds the root arcs again",
+            ),
+            model.Step(
+                "add_asset_to_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "parent_prim_path": "$cabinet",
+                    "group": "Props",
+                    **model.at(0.0, 0.0, 0.0),
+                    "position_mode": "bounds_offset",
+                },
+                note="a crate on top of the cabinet, by bounds offset (its top is 1 m up)",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "SphereLight",
+                    "light_name": "Lamp",
+                    "asset_prim_path": "$workbench",
+                    **model.at(0.0, 0.2, 0.0),
+                    "attributes": {"inputs:radius": 0.05},
+                },
+                note="a light 0.2 m above the workbench (its vise tops out at 1.05 m)",
+            ),
+            model.Step("list_scene", note="what each package shows now"),
+        ),
+    ),
+    model.Scenario(
+        "placement/assets_that_need_other_files",
+        "Assets that depend on files outside what gets copied: does what they need arrive "
+        "with them in the project?",
+        (
+            _place(
+                "plank.usda",
+                "Plank",
+                "Props",
+                0.0,
+                note="a loose file whose material reads a texture beside it",
+            ),
+            _place(
+                "bin.usda",
+                "Bin",
+                "Props",
+                2.0,
+                save="bin",
+                note="a loose file whose shape is in another loose file",
+            ),
+            model.Step("list_prim_children", {"prim_path": "$bin"}),
+            _place(
+                "stand/stand.usda",
+                "Stand",
+                "Furniture",
+                4.0,
+                note="a package whose texture is outside its folder, by relative path",
+            ),
+            _place("bin.usda", "Bin", "Props", 6.0, note="the bin again: its folder is reused"),
+            model.Step("list_scene", note="what arrived"),
+            model.Step("list_project_assets", note="which files the project holds"),
+        ),
+    ),
+    model.Scenario(
         "placement/layout",
         "place_layout: patterns, enumerated transforms, validation first.",
         (

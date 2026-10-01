@@ -88,6 +88,14 @@ def build_library(root: Path) -> Path:
     - ``gem.usdz``: a packaged asset.
     - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
     - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
+    - ``cabinet/``: a package whose root payloads its own ``cabinet_model.usda`` and
+      references its own ``look.usda`` (a bound material); no ``geo.usda``.
+    - ``workbench/``: a package whose root payloads ``geo.usda`` and also references
+      a prim of ``parts/vise.usda``.
+    - ``plank.usda``: a loose file whose material reads ``./textures/wood_diffuse.png``.
+    - ``bin.usda``: a loose file whose root references the loose ``bin_model.usda``.
+    - ``stand/``: a package whose material reads ``../textures/wood_diffuse.png``, a
+      texture outside its own folder.
     """
     root.mkdir(parents=True, exist_ok=True)
 
@@ -232,5 +240,75 @@ def build_library(root: Path) -> Path:
     bare_kit.SetDefaultPrim(bare_kit_root)
     bare_kit_root.GetPayloads().AddPayload("./geo.usda")
     bare_kit.Save()
+
+    cabinet_dir = root / "cabinet"
+    cabinet_model = _stage(cabinet_dir / "cabinet_model.usda")
+    _root(cabinet_model, "cabinet")
+    _box(cabinet_model, "/cabinet/Body", (0.0, 0.5, 0.0), (0.8, 1.0, 0.4))
+    cabinet_model.Save()
+    look = _stage(cabinet_dir / "look.usda")
+    look.SetDefaultPrim(look.OverridePrim("/cabinet"))
+    UsdGeom.Scope.Define(look, "/cabinet/mtl")
+    walnut = _material(look, "/cabinet/mtl/walnut", (0.35, 0.2, 0.1))
+    UsdShade.MaterialBindingAPI.Apply(look.OverridePrim("/cabinet/Body")).Bind(walnut)
+    look.Save()
+    cabinet = _stage(cabinet_dir / "cabinet.usda")
+    cabinet_root = UsdGeom.Xform.Define(cabinet, "/cabinet").GetPrim()
+    cabinet.SetDefaultPrim(cabinet_root)
+    cabinet_root.GetReferences().AddReference("./look.usda")
+    cabinet_root.GetPayloads().AddPayload("./cabinet_model.usda")
+    cabinet.Save()
+
+    workbench_dir = root / "workbench"
+    workbench_geo = _stage(workbench_dir / "geo.usda")
+    _root(workbench_geo, "workbench")
+    _box(workbench_geo, "/workbench/Top", (0.0, 0.9, 0.0), (1.5, 0.1, 0.6))
+    workbench_geo.Save()
+    vise = _stage(workbench_dir / "parts" / "vise.usda")
+    _root(vise, "Vise")
+    _box(vise, "/Vise/Jaw", (0.6, 1.0, 0.0), (0.2, 0.1, 0.2))
+    vise.Save()
+    workbench = _stage(workbench_dir / "workbench.usda")
+    workbench_root = UsdGeom.Xform.Define(workbench, "/workbench").GetPrim()
+    workbench.SetDefaultPrim(workbench_root)
+    workbench_root.GetReferences().AddReference("./parts/vise.usda", "/Vise")
+    workbench_root.GetPayloads().AddPayload("./geo.usda")
+    workbench.Save()
+
+    plank = _stage(root / "plank.usda")
+    _root(plank, "plank")
+    _box(plank, "/plank/Board", (0.0, 0.05, 0.0), (1.0, 0.1, 0.3))
+    UsdGeom.Scope.Define(plank, "/plank/mtl")
+    plank_wood = _material(
+        plank, "/plank/mtl/wood", (0.5, 0.3, 0.1), "./textures/wood_diffuse.png",
+    )
+    UsdShade.MaterialBindingAPI.Apply(plank.GetPrimAtPath("/plank/Board")).Bind(plank_wood)
+    plank.Save()
+
+    bin_model = _stage(root / "bin_model.usda")
+    _root(bin_model, "bin")
+    _box(bin_model, "/bin/Body", (0.0, 0.25, 0.0), (0.5, 0.5, 0.5))
+    bin_model.Save()
+    bin_file = _stage(root / "bin.usda")
+    bin_root = UsdGeom.Xform.Define(bin_file, "/bin").GetPrim()
+    bin_file.SetDefaultPrim(bin_root)
+    bin_root.GetReferences().AddReference("./bin_model.usda")
+    bin_file.Save()
+
+    stand_dir = root / "stand"
+    stand_geo = _stage(stand_dir / "geo.usda")
+    _root(stand_geo, "stand")
+    _box(stand_geo, "/stand/Top", (0.0, 0.75, 0.0), (0.6, 0.1, 0.6))
+    UsdGeom.Scope.Define(stand_geo, "/stand/mtl")
+    stand_wood = _material(
+        stand_geo, "/stand/mtl/wood", (0.5, 0.3, 0.1), "../textures/wood_diffuse.png",
+    )
+    UsdShade.MaterialBindingAPI.Apply(stand_geo.GetPrimAtPath("/stand/Top")).Bind(stand_wood)
+    stand_geo.Save()
+    stand = _stage(stand_dir / "stand.usda")
+    stand_root = UsdGeom.Xform.Define(stand, "/stand").GetPrim()
+    stand.SetDefaultPrim(stand_root)
+    stand_root.GetPayloads().AddPayload("./geo.usda")
+    stand.Save()
 
     return root

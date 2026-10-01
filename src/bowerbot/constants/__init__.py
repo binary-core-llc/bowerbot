@@ -11,6 +11,7 @@ knobs), ``<Domain>Namespace`` (prim and file names BowerBot authors) and
 ``bowerbot.constants``; this package re-exports every class.
 """
 
+from bowerbot.constants.asset_folder import AssetFolderNamespace
 from bowerbot.constants.asset_folder import AssetFolderRules
 from bowerbot.constants.asset_folder import ASWFLayerNames
 from bowerbot.constants.cameras import CameraDefaults
@@ -43,6 +44,7 @@ from bowerbot.constants.validation import AppleUSDZConstraints
 __all__ = [
     "AppleUSDZConstraints",
     "ASWFLayerNames",
+    "AssetFolderNamespace",
     "AssetFolderRules",
     "CameraDefaults",
     "CameraTuning",

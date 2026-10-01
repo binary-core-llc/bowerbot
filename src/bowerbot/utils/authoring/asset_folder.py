@@ -200,6 +200,14 @@ def apply_aswf_root_metadata(
 # ── The asset's layers ──
 
 
+def folders_with_layer(assets_dir: Path, layer_file: str) -> list[Path]:
+    """The asset folders under *assets_dir* that have *layer_file*, sorted by name."""
+    return [
+        entry for entry in sorted(assets_dir.iterdir())
+        if entry.is_dir() and (entry / layer_file).exists()
+    ]
+
+
 def list_alternate_geo_files(asset_dir: Path) -> list[str]:
     """USD files in the asset folder that aren't canonical ASWF layers or root."""
     if not asset_dir.is_dir():
@@ -256,6 +264,21 @@ def ensure_layer_scope(
         scope.typeName = scope_type
 
 
+def ensure_over_layer(asset_dir: Path, layer_file: str) -> Path:
+    """Create the side layer *layer_file* with an ``over`` root prim if missing; return its path."""
+    path = asset_dir / layer_file
+    if path.exists():
+        return path
+
+    default_prim_name = resolve_default_prim_name(asset_dir)
+    layer = Sdf.Layer.CreateNew(str(path))
+    layer.defaultPrim = default_prim_name
+    over = Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
+    over.specifier = Sdf.SpecifierOver
+    layer.Save()
+    return path
+
+
 def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
     """Ensure the asset's root file references *layer_file*."""
     root_file = find_root_file(asset_dir)
@@ -276,6 +299,31 @@ def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
 
     del stage
     rebuild_root_references(asset_dir)
+
+
+def drop_root_reference(asset_dir: Path, layer_file: str) -> None:
+    """Remove the asset root's reference to *layer_file*."""
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return
+    layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if layer is None:
+        return
+    prim_spec = layer.GetPrimAtPath(f"/{resolve_default_prim_name(asset_dir)}")
+    if prim_spec is None:
+        return
+    target = f"./{layer_file}"
+    ref_list = prim_spec.referenceList
+    for items in (
+        ref_list.prependedItems,
+        ref_list.appendedItems,
+        ref_list.addedItems,
+        ref_list.explicitItems,
+        ref_list.orderedItems,
+    ):
+        for r in [x for x in items if x.assetPath == target]:
+            items.remove(r)
+    layer.Save()
 
 
 def rebuild_root_references(asset_dir: Path) -> None:
@@ -427,11 +475,8 @@ def get_geometry_bounds(asset_dir: Path) -> dict[str, dict[str, float]] | None:
         if child:
             child.SetActive(False)
 
-    bbox = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
-    rng = bbox.ComputeWorldBound(root).ComputeAlignedRange()
-    if rng.IsEmpty():
+    rng = usd.bounds.world_range(root, usd.bounds.bounds_cache())
+    if rng is None:
         return None
 
     mn = rng.GetMin()

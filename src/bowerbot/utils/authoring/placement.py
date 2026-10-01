@@ -291,7 +291,8 @@ def add_asset_to_parent(
         contents_layer.defaultPrim = default_prim_name
 
     authoring.asset_folder.ensure_layer_scope(
-        contents_layer, default_prim_name, "contents", "Xform",
+        contents_layer, default_prim_name,
+        constants.AssetFolderNamespace.CONTENTS_SCOPE, "Xform",
     )
     _ensure_group_scope(contents_layer, default_prim_name, group)
     contents_layer.Save()
@@ -301,7 +302,7 @@ def add_asset_to_parent(
         msg = f"Cannot open contents layer: {contents_path}"
         raise RuntimeError(msg)
 
-    wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
+    wrapper_path = contents_prim_path(f"/{default_prim_name}", group, prim_name)
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
     parent_mpu, parent_up = authoring.asset_folder.asset_metrics(
@@ -361,7 +362,7 @@ def move_added_asset(
         return False
 
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
-    wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
+    wrapper_path = contents_prim_path(f"/{default_prim_name}", group, prim_name)
 
     stage = Usd.Stage.Open(str(contents_path))
     if stage is None:
@@ -415,7 +416,7 @@ def remove_added_asset(
         return False
 
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
-    parent_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
+    parent_path = Sdf.Path(contents_prim_path(f"/{default_prim_name}", group))
     parent_spec = layer.GetPrimAtPath(parent_path)
     if parent_spec is not None and prim_name in parent_spec.nameChildren:
         del parent_spec.nameChildren[prim_name]
@@ -448,7 +449,7 @@ def cleanup_unused_contents_in_folder(parent_asset_dir: Path) -> list[str]:
         return []
 
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
-    contents_scope_path = Sdf.Path(f"/{default_prim_name}/contents")
+    contents_scope_path = Sdf.Path(contents_prim_path(f"/{default_prim_name}"))
     contents_spec = layer.GetPrimAtPath(contents_scope_path)
 
     removed: list[str] = []
@@ -511,6 +512,15 @@ def parse_added_asset_path(prim_path: str) -> tuple[str, str] | None:
 # ── Positions in an asset's frame ──
 
 
+def contents_prim_path(root_path: str, *parts: str) -> str:
+    """A path in an asset's ``contents`` scope: ``<root>/contents[/<group>[/<name>]]``.
+
+    *root_path* is the asset's root prim: ``/<defaultPrim>`` inside the asset,
+    or the prim that references the asset in the scene.
+    """
+    return "/".join([root_path, constants.AssetFolderNamespace.CONTENTS_SCOPE, *parts])
+
+
 def world_to_frame_matrix(
     stage: Usd.Stage, frame_prim_path: str,
 ) -> Gf.Matrix4d | None:
@@ -524,8 +534,7 @@ def world_to_frame_matrix(
     if not prim or not prim.IsValid():
         return None
 
-    xform_cache = UsdGeom.XformCache()
-    return xform_cache.GetLocalToWorldTransform(prim).GetInverse()
+    return usd.transforms.world_matrix(prim).GetInverse()
 
 
 def resolve_asset_position(
@@ -599,7 +608,7 @@ def _ensure_group_scope(
     layer: Sdf.Layer, default_prim_name: str, group: str,
 ) -> None:
     """Ensure ``/{root}/contents/{group}`` exists as an Xform."""
-    group_path = Sdf.Path(f"/{default_prim_name}/contents/{group}")
+    group_path = Sdf.Path(contents_prim_path(f"/{default_prim_name}", group))
     if layer.GetPrimAtPath(group_path):
         return
     Sdf.CreatePrimInLayer(layer, group_path)

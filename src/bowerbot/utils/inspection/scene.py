@@ -18,9 +18,7 @@ from bowerbot.utils import usd
 
 def list_prims(stage: Usd.Stage) -> list[dict]:
     """List every meaningful prim in the scene, classified by kind."""
-    bbox_cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],
-    )
+    bbox_cache = usd.bounds.bounds_cache()
 
     results: list[dict] = []
     seen: set[str] = set()
@@ -49,11 +47,11 @@ def _classify(
     prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache,
 ) -> dict | None:
     """Return the formatted ``list_prims`` entry for *prim*, or None."""
-    if inspection.entries.is_physics_scene(prim):
+    if usd.prim_types.is_physics_scene(prim):
         return inspection.entries.format_physics_scene_prim(prim)
-    if inspection.entries.is_joint(prim):
+    if usd.prim_types.is_joint(prim):
         return inspection.entries.format_joint_prim(prim)
-    if inspection.entries.is_collision_group(prim):
+    if usd.prim_types.is_collision_group(prim):
         return inspection.entries.format_collision_group_prim(prim)
     if prim.IsA(UsdGeom.Camera):
         return inspection.entries.format_camera_prim(prim)

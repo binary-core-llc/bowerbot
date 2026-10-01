@@ -66,7 +66,6 @@ def drop_scatter(
     """Reseat a scatter's instances on the surface in place, optionally re-tilting them."""
     up = index.up
     instancer = UsdGeom.PointInstancer(stage.GetPrimAtPath(prim_path))
-    time = Usd.TimeCode.Default()
     positions = np.asarray(instancer.GetPositionsAttr().Get() or [], dtype=np.float64)
     n = positions.shape[0]
     if n == 0:
@@ -80,7 +79,7 @@ def drop_scatter(
     raw_s = instancer.GetScalesAttr().Get()
     scales = np.asarray(raw_s, dtype=np.float64) if raw_s else np.ones((n, 3))
 
-    world_gf = UsdGeom.XformCache(time).GetLocalToWorldTransform(instancer.GetPrim())
+    world_gf = usd.transforms.world_matrix(instancer.GetPrim())
     world = usd.transforms.gf_matrix_to_numpy(world_gf)
     to_local = np.linalg.inv(world)
     targets = instancer.GetPrototypesRel().GetTargets()
@@ -88,19 +87,18 @@ def drop_scatter(
     proto_max = np.zeros((len(targets), 3))
     for i, target in enumerate(targets):
         points = _prototype_points(stage, str(target), up)
-        local = points @ to_local[:3, :3] + to_local[3, :3]
+        local = usd.transforms.transform_points(points, to_local)
         proto_min[i], proto_max[i] = scatter.sources.base_footprint(local, up)
     base_min, base_max = proto_min[proto_idx], proto_max[proto_idx]
 
     retilted = 0
     if align is schemas.ScatterDropAlign.SURFACE:
-        rotation = world_gf.RemoveScaleShear().ExtractRotationQuat()
-        to_world_q = np.tile([rotation.GetReal(), *rotation.GetImaginary()], (n, 1))
+        to_world_q = np.tile(usd.transforms.matrix_rotation_quat(world_gf), (n, 1))
         world_scale = float(np.cbrt(abs(np.linalg.det(world[:3, :3]))))
         up_vec = usd.metrics.up_vector(up)
-        base = (base_min + base_max) / 2.0
+        base = usd.bounds.base_center(base_min, base_max, up)
         centers_local = positions + usd.transforms.quat_rotate(orientations, base * scales)
-        centers = centers_local @ world[:3, :3] + world[3, :3]
+        centers = usd.transforms.transform_points(centers_local, world)
         headings = usd.transforms.quat_heading(
             usd.transforms.quat_mul(to_world_q, orientations), up,
         )
@@ -125,7 +123,7 @@ def drop_scatter(
     samples = scatter.instances.base_samples(
         positions, orientations, scales, base_min, base_max, up,
     )
-    world_samples = samples.reshape(-1, 3) @ world[:3, :3] + world[3, :3]
+    world_samples = usd.transforms.transform_points(samples.reshape(-1, 3), world)
     shift, supported = scatter.instances.settle_shift(
         index, world_samples.reshape(samples.shape), up,
     )
@@ -139,9 +137,7 @@ def drop_scatter(
     instancer.GetPositionsAttr().Set(
         Vt.Vec3fArray.FromNumpy(np.ascontiguousarray(positions + delta, dtype=np.float32)),
     )
-    extent = instancer.ComputeExtentAtTime(time, time)
-    if extent:
-        instancer.CreateExtentAttr(extent)
+    scatter.output.update_extent(instancer)
     stranded = np.flatnonzero(~supported)[:constants.ScatterTuning.STRANDED_REPORT]
     stranded_at = world_samples.reshape(samples.shape)[stranded].mean(axis=1)
     return {
@@ -197,9 +193,10 @@ def drop_placement(
     if translate_op is None:
         msg = f"{prim_path} has no translate op; only BowerBot placements can be dropped."
         raise ValueError(msg)
-    parent_world = UsdGeom.Xformable(prim.GetParent()).ComputeLocalToWorldTransform(
-        Usd.TimeCode.Default(),
-    ) if prim.GetParent().IsA(UsdGeom.Xformable) else Gf.Matrix4d(1.0)
+    parent_world = (
+        usd.transforms.world_matrix(prim.GetParent())
+        if prim.GetParent().IsA(UsdGeom.Xformable) else Gf.Matrix4d(1.0)
+    )
     to_parent = parent_world.GetInverse()
     old_local = np.array(translate_op.Get() or Gf.Vec3d(0.0, 0.0, 0.0), dtype=np.float64)
     up_vec = usd.metrics.up_vector(up)
@@ -225,12 +222,8 @@ def drop_placement(
         rz, ry, rx = new_rot.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
         rotate_value = Gf.Vec3f(rx, ry, rz)
 
-        pivot = np.asarray(
-            UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
-            .ExtractTranslation(), dtype=np.float64,
-        )
-        base = (bmin + bmax) / 2.0
-        base[up] = bmin[up]
+        pivot = np.asarray(usd.transforms.world_translation(prim), dtype=np.float64)
+        base = usd.bounds.base_center(bmin, bmax, up)
         swung = base + usd.transforms.quat_rotate(tilt[None, :], (pivot - base)[None, :])[0]
         world_shift += swung - pivot
         fitted = coef[0] * pts[:, axes[0]] + coef[1] * pts[:, axes[1]] + coef[2]
@@ -263,11 +256,10 @@ def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.Floa
     triangles = usd.surface.collect_triangles(stage, [prim_path], up=up)
     if triangles.count:
         return np.concatenate([triangles.v0, triangles.v1, triangles.v2])
-    cache = UsdGeom.BBoxCache(
-        Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render],
+    rng = usd.bounds.world_range(
+        stage.GetPrimAtPath(prim_path), usd.bounds.bounds_cache(include_render=True),
     )
-    rng = cache.ComputeWorldBound(stage.GetPrimAtPath(prim_path)).ComputeAlignedRange()
-    if rng.IsEmpty():
+    if rng is None:
         msg = f"Prototype {prim_path} has no geometry, so it cannot rest on a surface."
         raise ValueError(msg)
-    return np.array([list(rng.GetCorner(i)) for i in range(8)])
+    return usd.bounds.range_corners(rng)

@@ -306,10 +306,8 @@ def _curve_points(
     if points.shape[0] < 2:
         msg = f"curve_prim {prim_path} has fewer than 2 points."
         raise ValueError(msg)
-    world = usd.transforms.gf_matrix_to_numpy(
-        UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default()),
-    )
-    points = points @ world[:3, :3] + world[3, :3]
+    world = usd.transforms.gf_matrix_to_numpy(usd.transforms.world_matrix(prim))
+    points = usd.transforms.transform_points(points, world)
     closed = curves.GetWrapAttr().Get() == UsdGeom.Tokens.periodic
     return points, closed, points.mean(axis=0)
 

@@ -9,10 +9,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Sdf
-from pxr import Usd
-from pxr import UsdShade
-
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot.utils import authoring
@@ -51,22 +47,20 @@ def add_asset_material_variant(
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    if variants.masking.enforce_in_asset(
+    masking = authoring.opinions.find_variant_masking_opinions(
         state.stage, asset_dir, default_prim,
-        {path: ["material:binding"] for path in bindings},
-        "relationship", "material",
+        {path: ["material:binding"] for path in bindings}, "relationship",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "relationship", "material",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
 
-    def author_fn(stage, _prim_path: str) -> None:
-        for mesh_path, material_path in bindings.items():
-            mesh_over = stage.OverridePrim(mesh_path)
-            binding_api = UsdShade.MaterialBindingAPI.Apply(mesh_over)
-            binding_api.GetDirectBindingRel().SetTargets([Sdf.Path(material_path)])
-
     variants.asset.add(
-        asset_dir, set_name, variant_name, author_fn, set_as_default,
+        asset_dir, set_name, variant_name,
+        lambda stage, _prim_path: variants.bodies.author_bindings(stage, bindings),
+        set_as_default,
     )
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -126,14 +120,10 @@ def add_asset_geometry_variant(
         asset_dir, {**existing_refs, variant_name: new_payload_ref},
     )
 
-    def author_fn(stage, _prim_path: str) -> None:
-        for target_path, payload_asset in payloads.items():
-            target = stage.OverridePrim(target_path)
-            target.GetPayloads().ClearPayloads()
-            target.GetPayloads().AddPayload(payload_asset)
-
     variants.asset.add(
-        asset_dir, set_name, variant_name, author_fn, set_as_default,
+        asset_dir, set_name, variant_name,
+        lambda stage, _prim_path: variants.bodies.author_payloads(stage, payloads),
+        set_as_default,
     )
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -207,10 +197,12 @@ def add_asset_attribute_variant(
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    if variants.masking.enforce_in_asset(
+    masking = authoring.opinions.find_variant_masking_opinions(
         state.stage, asset_dir, default_prim,
-        {path: list(attrs) for path, attrs in overrides.items()},
-        "attribute", "attribute",
+        {path: list(attrs) for path, attrs in overrides.items()}, "attribute",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "attribute", "attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -221,22 +213,16 @@ def add_asset_attribute_variant(
     variants.asset.refuse_unknown_attributes(asset_dir, resolved_types)
     overrides = authoring.textures.stage_asset_typed_overrides(
         overrides, resolved_types,
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
 
-    def author_fn(stage, _prim_path: str) -> None:
-        for path, attrs in overrides.items():
-            stage.OverridePrim(path)
-            types = resolved_types[path]
-            for attr_name, value in attrs.items():
-                usd.attributes.set_prim_attribute(
-                    stage, path, attr_name, value,
-                    expected_type=types[attr_name],
-                )
-
     variants.asset.add(
-        asset_dir, set_name, variant_name, author_fn, set_as_default,
+        asset_dir, set_name, variant_name,
+        lambda stage, _prim_path: variants.bodies.author_overrides(
+            stage, overrides, resolved_types,
+        ),
+        set_as_default,
     )
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -279,21 +265,20 @@ def add_asset_configuration_variant(
     usd.naming.validate_variant_name(set_name, "variant set")
     usd.naming.validate_variant_name(variant_name)
 
-    if variants.masking.enforce_in_asset(
+    masking = authoring.opinions.find_variant_masking_opinions(
         state.stage, asset_dir, default_prim,
-        {path: ["active"] for path in activations},
-        "active", "configuration",
+        {path: ["active"] for path in activations}, "active",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "active", "configuration",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
 
-    def author_fn(stage, _prim_path: str) -> None:
-        for prim_path, active in activations.items():
-            target = stage.OverridePrim(prim_path)
-            target.SetActive(active)
-
     variants.asset.add(
-        asset_dir, set_name, variant_name, author_fn, set_as_default,
+        asset_dir, set_name, variant_name,
+        lambda stage, _prim_path: variants.bodies.author_activations(stage, activations),
+        set_as_default,
     )
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -335,37 +320,31 @@ def add_scene_lighting_attribute_variant(
         state.stage, carrier, overrides.keys(),
     )
 
-    if variants.masking.enforce_in_scene(
-        state.stage,
-        {p: list(a) for p, a in overrides.items()},
-        "attribute", "lighting attribute",
+    masking = authoring.opinions.find_masking_scene_opinions_direct(
+        state.stage, {p: list(a) for p, a in overrides.items()}, "attribute",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "attribute", "lighting attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
 
-    resolved_types = usd.attributes.resolve_scene_attribute_types(
+    resolved_types = usd.attributes.resolve_attribute_types(
         state.stage, overrides,
     )
     usd.attributes.refuse_unknown_attributes(state.stage, resolved_types)
     overrides = authoring.textures.stage_asset_typed_overrides(
         overrides, resolved_types,
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
 
-    def author_fn(stage, _carrier: str) -> None:
-        for path, attrs in overrides.items():
-            stage.OverridePrim(path)
-            types = resolved_types[path]
-            for attr_name, value in attrs.items():
-                usd.attributes.set_prim_attribute(
-                    stage, path, attr_name, value,
-                    expected_type=types[attr_name],
-                )
-
     variants.scene.add(
         state.stage, carrier, set_name, variant_name,
-        author_fn, set_as_default,
+        lambda stage, _carrier: variants.bodies.author_overrides(
+            stage, overrides, resolved_types,
+        ),
+        set_as_default,
     )
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -408,21 +387,19 @@ def add_scene_lighting_selection_variant(
         state.stage, carrier, activations.keys(),
     )
 
-    if variants.masking.enforce_in_scene(
-        state.stage,
-        {p: ["active"] for p in activations},
-        "active", "lighting selection",
+    masking = authoring.opinions.find_masking_scene_opinions_direct(
+        state.stage, {p: ["active"] for p in activations}, "active",
+    )
+    if variants.masking.enforce(
+        state.stage, masking, "active", "lighting selection",
         clear=clear_masking, confirm=confirm_masked,
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
 
-    def author_fn(stage, _carrier: str) -> None:
-        for path, active in activations.items():
-            stage.OverridePrim(path).SetActive(active)
-
     variants.scene.add(
         state.stage, carrier, set_name, variant_name,
-        author_fn, set_as_default,
+        lambda stage, _carrier: variants.bodies.author_activations(stage, activations),
+        set_as_default,
     )
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -466,7 +443,7 @@ def add_scene_model_selection_variant(
 
     resolved_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     report = authoring.intake.prepare_asset(
@@ -478,14 +455,6 @@ def add_scene_model_selection_variant(
         fix_root_transforms=bool(params.get("fix_root_transforms", False)),
     )
     new_ref = f"./{report.scene_ref_path}"
-
-    def author_refs(refs: list[str]):
-        def fn(stage: Usd.Stage, _carrier: str) -> None:
-            ov = stage.OverridePrim(asset_child)
-            ov.GetReferences().ClearReferences()
-            for r in refs:
-                ov.GetReferences().AddReference(r)
-        return fn
 
     promoted: str | None = None
     set_exists = set_name in wrapper.GetVariantSets().GetNames()
@@ -506,14 +475,18 @@ def add_scene_model_selection_variant(
             usd.naming.validate_variant_name(promoted)
             variants.scene.add(
                 state.stage, prim_path, set_name, promoted,
-                author_refs(list(existing)), set_as_default=True,
+                lambda stage, _carrier: variants.bodies.author_references(
+                    stage, asset_child, list(existing),
+                ),
+                set_as_default=True,
             )
             usd.references.clear_direct_references(state.stage, asset_child)
             state.stage = authoring.stage.open_stage(state.stage_path)
 
     variants.scene.add(
         state.stage, prim_path, set_name, variant_name,
-        author_refs([new_ref]), set_as_default,
+        lambda stage, _carrier: variants.bodies.author_references(stage, asset_child, [new_ref]),
+        set_as_default,
     )
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -651,23 +624,7 @@ def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
 
     removed = authoring.asset_variants.remove_variant(asset_dir, set_name, variant_name)
     if removed:
-        summary = authoring.asset_variants.get_variant_summary(asset_dir)
-        still_has_set = any(s.name == set_name for s in summary.variant_sets)
-        scrub_target = None if not still_has_set else variant_name
-        if not still_has_set:
-            authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        else:
-            current = next(
-                (s.selection for s in summary.variant_sets if s.name == set_name),
-                None,
-            )
-            if current == variant_name:
-                authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        authoring.placement.clear_scene_variant_selections(
-            state.stage, asset_dir, set_name, scrub_target,
-        )
-        variants.geometry.restore_canonical_geo_if_needed(asset_dir)
-        authoring.asset_variants.cleanup_if_empty(asset_dir)
+        variants.asset.clean_after_removal(state.stage, asset_dir, set_name, variant_name)
 
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -806,12 +763,7 @@ def remove_asset_variant_set(
 
     removed = authoring.asset_variants.remove_variant_set(asset_dir, set_name)
     if removed:
-        authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        authoring.placement.clear_scene_variant_selections(
-            state.stage, asset_dir, set_name,
-        )
-        variants.geometry.restore_canonical_geo_if_needed(asset_dir)
-        authoring.asset_variants.cleanup_if_empty(asset_dir)
+        variants.asset.clean_after_removal(state.stage, asset_dir, set_name)
 
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)

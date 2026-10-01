@@ -38,11 +38,10 @@ def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, fl
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
     """Return the translate component of a prim's local transform."""
-    xformable = UsdGeom.Xformable(prim)
-    if not xformable:
+    if not UsdGeom.Xformable(prim):
         return None
-    t = xformable.GetLocalTransformation().ExtractTranslation()
-    return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
+    x, y, z = local_translation(prim)
+    return {"x": round(x, 2), "y": round(y, 2), "z": round(z, 2)}
 
 
 def local_translation(prim: Usd.Prim) -> schemas.Vec3:
@@ -51,10 +50,14 @@ def local_translation(prim: Usd.Prim) -> schemas.Vec3:
     return (t[0], t[1], t[2])
 
 
+def world_matrix(prim: Usd.Prim) -> Gf.Matrix4d:
+    """Return a prim's local-to-world matrix."""
+    return UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+
+
 def world_translation(prim: Usd.Prim) -> schemas.Vec3:
     """Return where a prim's origin is in the world."""
-    matrix = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
-    t = matrix.ExtractTranslation()
+    t = world_matrix(prim).ExtractTranslation()
     return (t[0], t[1], t[2])
 
 # ── Writing transforms ──
@@ -272,6 +275,17 @@ def rotate_xyz_rotation(value: Any) -> Gf.Rotation:
 def gf_matrix_to_numpy(matrix: Gf.Matrix4d) -> schemas.FloatArray:
     """A Gf.Matrix4d as a (4, 4) float64 array (row-vector convention)."""
     return np.array(matrix, dtype=np.float64)
+
+
+def transform_points(points: schemas.FloatArray, matrix: schemas.FloatArray) -> schemas.FloatArray:
+    """Apply a (4, 4) row-vector matrix to an (n, 3) array of points."""
+    return points @ matrix[:3, :3] + matrix[3, :3]
+
+
+def matrix_rotation_quat(matrix: Gf.Matrix4d) -> schemas.FloatArray:
+    """The rotation of *matrix* as a ``(w, x, y, z)`` quaternion, scale and shear removed."""
+    rotation = matrix.RemoveScaleShear().ExtractRotationQuat()
+    return np.array([rotation.GetReal(), *rotation.GetImaginary()])
 
 # ── Helpers ──
 

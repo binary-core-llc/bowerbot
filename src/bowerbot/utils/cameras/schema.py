@@ -21,21 +21,10 @@ def list_properties() -> schemas.CameraSchemaInfo:
             "USD build is missing UsdGeom.",
         )
 
-    properties: list[schemas.CameraPropertySpec] = []
+    properties: list[schemas.SchemaPropertySpec] = []
     for prop_name in UsdGeom.Camera.GetSchemaAttributeNames(False):
-        name = str(prop_name)
-        attr_spec = prim_def.GetSchemaAttributeSpec(name)
-        if attr_spec is None:
-            continue
-        properties.append(schemas.CameraPropertySpec(
-            name=name,
-            kind="attribute",
-            type_name=str(attr_spec.typeName),
-            default=usd.values.to_jsonable(attr_spec.default),
-            allowed_tokens=[
-                str(t) for t in (attr_spec.allowedTokens or [])
-            ],
-            documentation=usd.attributes.property_doc(prim_def, name, attr_spec),
-        ))
+        row = usd.attributes.schema_attribute_row(prim_def, str(prop_name))
+        if row is not None:
+            properties.append(row)
 
     return schemas.CameraSchemaInfo(properties=properties)

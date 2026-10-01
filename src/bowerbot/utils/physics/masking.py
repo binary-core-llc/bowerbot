@@ -45,6 +45,11 @@ def enforce(
     raise ValueError(format_error(api_name, masking))
 
 
+def cleared_rows(cleared: list[tuple[str, str, str]]) -> list[dict[str, str]]:
+    """The cleared opinions as the rows a tool answer lists."""
+    return [{"prim_path": p, "kind": k, "key": key} for p, k, key in cleared]
+
+
 def format_error(
     api_name: schemas.PhysicsApiName, masking: list[tuple[str, str, str]],
 ) -> str:

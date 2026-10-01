@@ -15,6 +15,7 @@ from pxr import Sdf
 from pxr import Usd
 
 from bowerbot import constants
+from bowerbot.utils import usd
 
 # ── Renaming and moving ──
 
@@ -134,21 +135,8 @@ def clear_orphan_variant_overs(
                     vset_spec.RemoveVariant(variant_spec)
                     touched = True
             if len(vset_spec.variants) == 0:
-                del ancestor_spec.variantSets[vset_name]
-                name_list = ancestor_spec.variantSetNameList
-                for items in (
-                    name_list.prependedItems,
-                    name_list.appendedItems,
-                    name_list.addedItems,
-                    name_list.explicitItems,
-                    name_list.orderedItems,
-                ):
-                    if vset_name in items:
-                        items.remove(vset_name)
-                if vset_name in name_list.deletedItems:
-                    name_list.deletedItems.remove(vset_name)
-                if vset_name in ancestor_spec.variantSelections:
-                    del ancestor_spec.variantSelections[vset_name]
+                usd.variant_sets.delete_variant_set(ancestor_spec, vset_name)
+                usd.variant_sets.drop_variant_selection(ancestor_spec, vset_name)
                 touched = True
         ancestor = ancestor.GetParentPath()
 
@@ -243,19 +231,14 @@ def _is_empty_intermediate(spec: Sdf.PrimSpec) -> bool:
     """Whether a prim spec carries no opinions and no children (safe to prune)."""
     if len(spec.nameChildren) or len(spec.attributes) or len(spec.relationships):
         return False
-    info = set(spec.ListInfoKeys()) - {"specifier", "typeName"}
+    info = set(spec.ListInfoKeys()) - constants.NamespaceRules.INTRINSIC_PRIM_INFO_KEYS
     return not info
 
 
 def _is_variant_body_empty(variant_spec: Sdf.VariantSpec) -> bool:
     """Whether a variant body has no authored opinions left."""
     inner = variant_spec.primSpec
-    if inner is None:
-        return True
-    if len(inner.nameChildren) or len(inner.attributes) or len(inner.relationships):
-        return False
-    info = set(inner.ListInfoKeys()) - {"specifier", "typeName"}
-    return not info
+    return inner is None or _is_empty_intermediate(inner)
 
 
 def _is_empty_override(spec: Sdf.PrimSpec) -> bool:

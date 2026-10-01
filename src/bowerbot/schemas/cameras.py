@@ -9,22 +9,13 @@ from typing import Any
 
 from pydantic import BaseModel
 
-
-class CameraPropertySpec(BaseModel):
-    """One Camera property discovered from the schema registry."""
-
-    name: str
-    kind: str
-    type_name: str | None = None
-    default: Any = None
-    allowed_tokens: list[str] = []
-    documentation: str = ""
+from bowerbot.schemas import attributes
 
 
 class CameraSchemaInfo(BaseModel):
     """Live introspection of the UsdGeom Camera prim schema."""
 
-    properties: list[CameraPropertySpec] = []
+    properties: list[attributes.SchemaPropertySpec] = []
 
 
 class CameraParams(BaseModel):

@@ -31,28 +31,11 @@ def list_properties(joint_type: schemas.PhysicsJointType) -> schemas.PhysicsApiS
             "USD build is missing UsdPhysics.",
         )
 
-    properties: list[schemas.PhysicsPropertySpec] = []
+    properties: list[schemas.SchemaPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is not None:
-            properties.append(schemas.PhysicsPropertySpec(
-                name=prop_name,
-                kind="attribute",
-                type_name=str(attr_spec.typeName),
-                default=usd.values.to_jsonable(attr_spec.default),
-                allowed_tokens=[
-                    str(t) for t in (attr_spec.allowedTokens or [])
-                ],
-                documentation=usd.attributes.property_doc(prim_def, prop_name, attr_spec),
-            ))
-            continue
-        rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
-        if rel_spec is not None:
-            properties.append(schemas.PhysicsPropertySpec(
-                name=prop_name,
-                kind="relationship",
-                documentation=usd.attributes.property_doc(prim_def, prop_name, rel_spec),
-            ))
+        row = usd.attributes.schema_property_row(prim_def, prop_name)
+        if row is not None:
+            properties.append(row)
 
     return schemas.PhysicsApiSchemaInfo(
         api_name=joint_type.value,
@@ -121,7 +104,7 @@ def create_in_asset(
     _validate_joint_bodies(composed, body0, body1)
     del composed
 
-    physics.layer.ensure(asset_dir)
+    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
     stage = Usd.Stage.Open(str(physics.layer.file_path(asset_dir)))
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     joints_scope_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}"
@@ -201,7 +184,7 @@ def list_on_stage(
         return schemas.JointsSummary()
     joints: list[schemas.JointSummary] = []
     for prim in Usd.PrimRange(root):
-        if _is_supported_joint_prim(prim):
+        if usd.prim_types.is_joint(prim):
             joints.append(_summarize_joint(prim))
     return schemas.JointsSummary(joints=joints)
 
@@ -265,12 +248,7 @@ def _refuse_unknown_joint_properties(
             ("physics:body0", "physics:body1"),
         )
     }
-    unknown = sorted(n for n in attributes if n not in valid)
-    if unknown:
-        raise ValueError(
-            f"{joint_type.value} does not declare attribute(s) {unknown}. "
-            f"Allowed: {sorted(valid)}",
-        )
+    usd.attributes.refuse_undeclared(joint_type.value, attributes, valid, "attribute")
 
 
 def _set_body_rel(joint, rel_name: str, target_path: str | None) -> None:
@@ -313,11 +291,6 @@ def _ancestor_has_api(prim: Usd.Prim, api_name: str) -> bool:
     return False
 
 
-def _is_supported_joint_prim(prim: Usd.Prim) -> bool:
-    """Whether *prim* is one of the five supported joint typed prims."""
-    return any(prim.IsA(cls) for cls in constants.PhysicsUsd.JOINTS.values())
-
-
 def _is_supported_joint_spec(spec: Sdf.PrimSpec) -> bool:
     """Spec-side check (no stage) for joint typeName in our whitelist."""
     type_name = str(spec.typeName) if spec.typeName else ""
@@ -327,10 +300,7 @@ def _is_supported_joint_spec(spec: Sdf.PrimSpec) -> bool:
 def _summarize_joint(prim: Usd.Prim) -> schemas.JointSummary:
     """Read a joint prim into a summary."""
     type_name = prim.GetTypeName()
-    body0_rel = prim.GetRelationship("physics:body0")
-    body1_rel = prim.GetRelationship("physics:body1")
-    body0_targets = list(body0_rel.GetTargets()) if body0_rel else []
-    body1_targets = list(body1_rel.GetTargets()) if body1_rel else []
+    body0, body1 = usd.prim_types.joint_bodies(prim)
 
     attrs: dict[str, Any] = {}
     for a in prim.GetAttributes():
@@ -346,8 +316,8 @@ def _summarize_joint(prim: Usd.Prim) -> schemas.JointSummary:
     return schemas.JointSummary(
         prim_path=str(prim.GetPath()),
         joint_type=str(type_name),
-        body0=str(body0_targets[0]) if body0_targets else None,
-        body1=str(body1_targets[0]) if body1_targets else None,
+        body0=body0,
+        body1=body1,
         attributes=attrs,
         applied_apis=list(prim.GetAppliedSchemas()),
     )

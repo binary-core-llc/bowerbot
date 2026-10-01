@@ -5,51 +5,26 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from pathlib import Path
-
 from pxr import Usd
 
 from bowerbot import schemas
 from bowerbot.utils import authoring
 
 
-def enforce_in_asset(
+def enforce(
     stage: Usd.Stage,
-    asset_dir: Path,
-    default_prim: str,
-    target_map: dict[str, Iterable[str]],
+    masking: list[tuple[str, str]],
     kind: schemas.OpinionKind,
     variant_kind: str,
     *,
     clear: bool,
     confirm: bool,
 ) -> bool:
-    """Detect/clear/refuse masking scene opinions; return True if stage needs reload."""
-    masking = authoring.opinions.find_variant_masking_opinions(
-        stage, asset_dir, default_prim, target_map, kind,
-    )
-    if not masking:
-        return False
-    if clear:
-        authoring.opinions.clear_variant_masking_opinions(stage, masking, kind)
-        return True
-    if not confirm:
-        raise ValueError(format_error(variant_kind, masking))
-    return False
+    """Clear or refuse the scene opinions found to mask a variant; True if the stage needs a reload.
 
-
-def enforce_in_scene(
-    stage: Usd.Stage,
-    target_map: dict[str, Iterable[str]],
-    kind: schemas.OpinionKind,
-    variant_kind: str,
-    *,
-    clear: bool,
-    confirm: bool,
-) -> bool:
-    """Refuse / clear direct scene opinions that mask a scene-level variant body."""
-    masking = authoring.opinions.find_masking_scene_opinions_direct(stage, target_map, kind)
+    *masking* comes from ``authoring.opinions``: the finder for an asset's
+    placements, or the one for scene prims.
+    """
     if not masking:
         return False
     if clear:

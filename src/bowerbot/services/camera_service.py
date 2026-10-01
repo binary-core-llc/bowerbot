@@ -8,8 +8,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pxr import Sdf
-
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
@@ -127,7 +125,6 @@ def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     prim_path = params["prim_path"]
     cameras.scene.require(state.stage, prim_path)
 
-    carrier_path = str(Sdf.Path(prim_path).GetParentPath())
     success = usd.namespace.remove_prim(state.stage, prim_path)
     if not success:
         msg = f"Failed to remove camera {prim_path}"
@@ -139,8 +136,6 @@ def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     logger.info("Removed camera at %s", prim_path)
     return {
         "prim_path": prim_path,
-        "suspect_variant_sets": variants.suspect_sets.find_on_scene_carrier(
-            state.stage, carrier_path,
-        ),
+        "suspect_variant_sets": variants.suspect_sets.find_above(state.stage, prim_path),
         "message": f"Removed camera at {prim_path}",
     }

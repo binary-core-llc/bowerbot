@@ -47,36 +47,15 @@ def list_properties(
             "USD build is missing UsdPhysics.",
         )
 
-    properties: list[schemas.PhysicsPropertySpec] = []
+    properties: list[schemas.SchemaPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
         real_name = (
             prop_name.replace(constants.PhysicsRules.INSTANCE_NAME_PLACEHOLDER, instance_name)
             if instance_name else prop_name
         )
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is not None:
-            properties.append(schemas.PhysicsPropertySpec(
-                name=real_name,
-                kind="attribute",
-                type_name=str(attr_spec.typeName),
-                default=usd.values.to_jsonable(attr_spec.default),
-                allowed_tokens=[
-                    str(t) for t in (attr_spec.allowedTokens or [])
-                ],
-                documentation=usd.attributes.property_doc(
-                    prim_def, prop_name, attr_spec,
-                ),
-            ))
-            continue
-        rel_spec = prim_def.GetSchemaRelationshipSpec(prop_name)
-        if rel_spec is not None:
-            properties.append(schemas.PhysicsPropertySpec(
-                name=real_name,
-                kind="relationship",
-                documentation=usd.attributes.property_doc(
-                    prim_def, prop_name, rel_spec,
-                ),
-            ))
+        row = usd.attributes.schema_property_row(prim_def, prop_name, name=real_name)
+        if row is not None:
+            properties.append(row)
 
     target_req = (
         "UsdPhysics joint prim" if api_name in constants.PhysicsRules.MULTI_APPLY_APIS
@@ -161,7 +140,7 @@ def apply_in_asset(
             refuse_nested_articulation_root(composed, target_path)
     del composed
 
-    physics.layer.ensure(asset_dir)
+    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
     stage = Usd.Stage.Open(str(physics.layer.file_path(asset_dir)))
     prim = stage.OverridePrim(Sdf.Path(target_path))
 
@@ -405,13 +384,9 @@ def _refuse_unknown(
     kind: str,
 ) -> None:
     """Refuse property names the schema does not declare."""
-    valid = {p.name for p in schema_info.properties if p.kind == kind}
-    unknown = sorted(n for n in provided if n not in valid)
-    if not unknown:
-        return
-    raise ValueError(
-        f"{api_name.value} does not declare {kind}(s) {unknown}. "
-        f"Allowed: {sorted(valid)}",
+    usd.attributes.refuse_undeclared(
+        api_name.value, provided,
+        {p.name for p in schema_info.properties if p.kind == kind}, kind,
     )
 
 

@@ -27,7 +27,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     """Bring an asset into the project and add it to the scene."""
     asset_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     asset_name = params["asset_name"]
@@ -94,7 +94,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if not raw_entries:
         raise ValueError("place_layout needs a non-empty 'placements' list.")
 
-    project_dir = state.project.path if state.project else None
+    project_dir = state.project_dir
 
     valid, problems = layout.entries.validate(raw_entries)
 
@@ -253,7 +253,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     """Add an asset to another asset: a reference in the parent's ``contents.usda``."""
     asset_path = authoring.library.resolve_asset_file_path(
         params["asset_file_path"],
-        state.project.path if state.project else None,
+        state.project_dir,
         state.library_dir,
     )
     asset_name = params["asset_name"]
@@ -346,7 +346,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
-    composed_path = f"{ref_prim_path}/contents/{group}/{prim_name}"
+    composed_path = authoring.placement.contents_prim_path(ref_prim_path, group, prim_name)
     wx, wy, wz = (
         round(v, 4) + 0.0
         for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(composed_path))
@@ -438,11 +438,9 @@ def cleanup_unused_contents(
     assets_dir = state.resolve_assets_dir()
     per_folder: list[dict[str, Any]] = []
     total = 0
-    for entry in sorted(assets_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-        if not (entry / constants.ASWFLayerNames.CONTENTS).exists():
-            continue
+    for entry in authoring.asset_folder.folders_with_layer(
+        assets_dir, constants.ASWFLayerNames.CONTENTS,
+    ):
         removed = authoring.placement.cleanup_unused_contents_in_folder(entry)
         if removed:
             per_folder.append({"asset_folder": entry.name, "removed": removed})
@@ -476,8 +474,9 @@ def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     else:
         results = [
             authoring.intake.freeze_one_asset(assets_dir, entry.name)
-            for entry in sorted(assets_dir.iterdir())
-            if entry.is_dir() and (entry / constants.ASWFLayerNames.GEO).exists()
+            for entry in authoring.asset_folder.folders_with_layer(
+                assets_dir, constants.ASWFLayerNames.GEO,
+            )
         ]
 
     state.touch_project()

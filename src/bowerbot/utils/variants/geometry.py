@@ -37,7 +37,7 @@ def setup(
         validate_payload_path(asset_dir, payload_ref)
     validate_lod_namespace_stability(asset_dir, variants)
 
-    authoring.asset_variants.ensure_variants_layer(asset_dir)
+    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.VARIANTS)
     authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.VARIANTS)
     stage = authoring.asset_variants.open_variants_stage(asset_dir)
     root_prim_path = f"/{authoring.asset_folder.resolve_default_prim_name(asset_dir)}"

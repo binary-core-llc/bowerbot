@@ -827,7 +827,6 @@ src/bowerbot/
     library.py        #   LibraryRules, LibraryDefaults
     lights.py         #   LightUsd (UsdLux classes), LightRules, LightDefaults
     materials.py      #   MaterialXShaders, PreviewSurfaceShader, MaterialRules
-    metrics.py        #   MetricsUsd (up vectors)
     namespace.py      #   NamespaceRules (what makes an over empty)
     naming.py         #   NamingRules (prim-name pattern, refused characters)
     physics.py        #   PhysicsUsd (UsdPhysics classes), PhysicsRules, PhysicsNamespace
@@ -840,14 +839,15 @@ src/bowerbot/
 
   schemas/            # Pydantic models, enums and type aliases, grouped by domain
     assets.py         #   Asset formats, categories, metadata
-    cameras.py        #   CameraParams, CameraPropertySpec, CameraSchemaInfo
+    attributes.py     #   SchemaPropertySpec (one property a USD schema declares)
+    cameras.py        #   CameraParams, CameraSchemaInfo
     intake.py         #   DetectionOutcome, FolderDetection, IntakeReport
     layout.py         #   LayoutEntry, GridPattern/LinearPattern, LayoutTransform
-    lights.py         #   LightType, LightParams, LightPropertySpec, LightTypeSchemaInfo
+    lights.py         #   LightType, LightParams, LightTypeSchemaInfo
     materials.py      #   ProceduralMaterialParams
     opinions.py       #   OpinionKind (what a masking scene opinion sets)
-    physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsPropertySpec,
-                      #   PhysicsApiSchemaInfo, joint/collision-group summaries
+    physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsApiSchemaInfo,
+                      #   joint/collision-group summaries
     scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
                       #   ScatterAsset/Region, ScatterPrototype, ScatterInstanceSet
     surface.py        #   SurfaceTriangles, SurfaceIndex
@@ -1004,6 +1004,7 @@ src/bowerbot/
                                # usd/variant_sets, an asset's variants.usda in
                                # authoring/asset_variants)
       asset.py                 #   Add a variant to an asset; check its overrides
+      bodies.py                #   What each kind of variant authors inside its body
       geometry.py              #   Geometry (LOD) variant sets and their payloads
       scene.py                 #   Scene-level variants on a carrier prim
       masking.py               #   Refuse-or-acknowledge masking scene opinions

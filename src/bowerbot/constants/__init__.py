@@ -24,7 +24,6 @@ from bowerbot.constants.lights import LightUsd
 from bowerbot.constants.materials import MaterialRules
 from bowerbot.constants.materials import MaterialXShaders
 from bowerbot.constants.materials import PreviewSurfaceShader
-from bowerbot.constants.metrics import MetricsUsd
 from bowerbot.constants.namespace import NamespaceRules
 from bowerbot.constants.naming import NamingRules
 from bowerbot.constants.physics import PhysicsNamespace
@@ -55,7 +54,6 @@ __all__ = [
     "LightUsd",
     "MaterialRules",
     "MaterialXShaders",
-    "MetricsUsd",
     "NamespaceRules",
     "NamingRules",
     "PhysicsNamespace",

@@ -20,23 +20,13 @@ def list_type_properties(light_type: schemas.LightType) -> schemas.LightTypeSche
             "USD build is missing UsdLux.",
         )
 
-    properties: list[schemas.LightPropertySpec] = []
+    properties: list[schemas.SchemaPropertySpec] = []
     for prop_name in prim_def.GetPropertyNames():
         if not prop_name.startswith("inputs:"):
             continue
-        attr_spec = prim_def.GetSchemaAttributeSpec(prop_name)
-        if attr_spec is None:
-            continue
-        properties.append(schemas.LightPropertySpec(
-            name=prop_name,
-            kind="attribute",
-            type_name=str(attr_spec.typeName),
-            default=usd.values.to_jsonable(attr_spec.default),
-            allowed_tokens=[
-                str(t) for t in (attr_spec.allowedTokens or [])
-            ],
-            documentation=usd.attributes.property_doc(prim_def, prop_name, attr_spec),
-        ))
+        row = usd.attributes.schema_attribute_row(prim_def, prop_name)
+        if row is not None:
+            properties.append(row)
 
     return schemas.LightTypeSchemaInfo(
         light_type=light_type.value,

@@ -23,55 +23,14 @@ def variants_layer_path(asset_dir: Path) -> Path:
     return asset_dir / constants.ASWFLayerNames.VARIANTS
 
 
-def ensure_variants_layer(asset_dir: Path) -> Path:
-    """Create ``variants.usda`` if missing."""
-    path = variants_layer_path(asset_dir)
-    if path.exists():
-        return path
-
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    layer = Sdf.Layer.CreateNew(str(path))
-    layer.defaultPrim = default_prim_name
-    Sdf.CreatePrimInLayer(layer, Sdf.Path(f"/{default_prim_name}"))
-    layer.GetPrimAtPath(f"/{default_prim_name}").specifier = Sdf.SpecifierOver
-    layer.Save()
-    return path
-
-
-def remove_variants_reference(asset_dir: Path) -> None:
-    """Remove the ``variants.usda`` reference from the asset root."""
-    root_file = authoring.asset_folder.find_root_file(asset_dir)
-    if root_file is None:
-        return
-
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
-    if prim_spec is None:
-        return
-
-    target = f"./{constants.ASWFLayerNames.VARIANTS}"
-    ref_list = prim_spec.referenceList
-    for items in (
-        ref_list.prependedItems,
-        ref_list.appendedItems,
-        ref_list.addedItems,
-        ref_list.explicitItems,
-        ref_list.orderedItems,
-    ):
-        for r in [x for x in items if x.assetPath == target]:
-            items.remove(r)
-    layer.Save()
-
-
 # ── Opening variants.usda ──
 
 
 def open_variants_stage(asset_dir: Path) -> Usd.Stage:
     """Open ``variants.usda`` as a stage."""
-    path = ensure_variants_layer(asset_dir)
+    path = authoring.asset_folder.ensure_over_layer(
+        asset_dir, constants.ASWFLayerNames.VARIANTS,
+    )
     stage = Usd.Stage.Open(str(path))
     if stage is None:
         raise RuntimeError(f"Failed to open variants layer: {path}")
@@ -209,8 +168,7 @@ def clear_default_variant(asset_dir: Path, set_name: str) -> None:
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return
-    if set_name in prim_spec.variantSelections:
-        del prim_spec.variantSelections[set_name]
+    if usd.variant_sets.drop_variant_selection(prim_spec, set_name):
         layer.Save()
 
 
@@ -232,37 +190,11 @@ def remove_variant(
     if prim_spec is None:
         return False
 
-    vset_spec = prim_spec.variantSets.get(set_name)
-    if vset_spec is None:
+    surviving = usd.variant_sets.remove_variant_from_spec(
+        layer, prim_spec, set_name, variant_name,
+    )
+    if surviving is None:
         return False
-    existing = list(vset_spec.variants.keys())
-    if variant_name not in existing:
-        return False
-
-    if len(existing) == 1:
-        del prim_spec.variantSets[set_name]
-        usd.variant_sets.scrub_variant_set_metadata(prim_spec, set_name)
-        layer.Save()
-        return True
-
-    surviving = [v for v in existing if v != variant_name]
-
-    temp_layer = Sdf.Layer.CreateAnonymous()
-    for v in surviving:
-        Sdf.CreateVariantInLayer(temp_layer, prim_spec.path, set_name, v)
-        var_path = prim_spec.path.AppendVariantSelection(set_name, v)
-        if layer.GetObjectAtPath(var_path) is not None:
-            Sdf.CopySpec(layer, var_path, temp_layer, var_path)
-
-    del prim_spec.variantSets[set_name]
-    usd.variant_sets.scrub_variant_set_metadata(prim_spec, set_name)
-
-    for v in surviving:
-        Sdf.CreateVariantInLayer(layer, prim_spec.path, set_name, v)
-        var_path = prim_spec.path.AppendVariantSelection(set_name, v)
-        if temp_layer.GetObjectAtPath(var_path) is not None:
-            Sdf.CopySpec(temp_layer, var_path, layer, var_path)
-
     layer.Save()
     return True
 
@@ -283,8 +215,7 @@ def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
     if set_name not in prim_spec.variantSets:
         return False
 
-    del prim_spec.variantSets[set_name]
-    usd.variant_sets.scrub_variant_set_metadata(prim_spec, set_name)
+    usd.variant_sets.delete_variant_set(prim_spec, set_name)
     layer.Save()
     return True
 
@@ -294,7 +225,9 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     if _has_variant_sets(asset_dir):
         return False
 
-    remove_variants_reference(asset_dir)
+    authoring.asset_folder.drop_root_reference(
+        asset_dir, constants.ASWFLayerNames.VARIANTS,
+    )
     _clear_all_default_variants(asset_dir)
 
     variants_path = variants_layer_path(asset_dir)

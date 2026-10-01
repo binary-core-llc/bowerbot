@@ -9,9 +9,7 @@ from typing import Any
 
 from pxr import Usd
 from pxr import UsdGeom
-from pxr import UsdPhysics
 
-from bowerbot import constants
 from bowerbot.utils import usd
 
 
@@ -81,16 +79,13 @@ def format_physics_scene_prim(prim: Usd.Prim) -> dict:
 
 def format_joint_prim(prim: Usd.Prim) -> dict:
     """Format a UsdPhysics joint for ``list_prims``."""
-    body0_rel = prim.GetRelationship("physics:body0")
-    body1_rel = prim.GetRelationship("physics:body1")
-    body0 = [str(t) for t in body0_rel.GetTargets()] if body0_rel else []
-    body1 = [str(t) for t in body1_rel.GetTargets()] if body1_rel else []
+    body0, body1 = usd.prim_types.joint_bodies(prim)
     return {
         "prim_path": str(prim.GetPath()),
         "kind": "joint",
         "type": str(prim.GetTypeName()),
-        "body0": body0[0] if body0 else None,
-        "body1": body1[0] if body1 else None,
+        "body0": body0,
+        "body1": body1,
     }
 
 
@@ -125,17 +120,3 @@ def format_scatter_prim(prim: Usd.Prim, bbox_cache: UsdGeom.BBoxCache) -> dict[s
         "bounds": usd.bounds.world_bounds(prim, bbox_cache),
     }
 
-
-def is_physics_scene(prim: Usd.Prim | None) -> bool:
-    """Whether *prim* is a ``UsdPhysics.Scene``."""
-    return prim is not None and prim.IsA(UsdPhysics.Scene)
-
-
-def is_joint(prim: Usd.Prim | None) -> bool:
-    """Whether *prim* is one of the supported UsdPhysics joint typed prims."""
-    return prim is not None and any(prim.IsA(c) for c in constants.PhysicsUsd.JOINTS.values())
-
-
-def is_collision_group(prim: Usd.Prim | None) -> bool:
-    """Whether *prim* is a ``UsdPhysics.CollisionGroup``."""
-    return prim is not None and prim.IsA(UsdPhysics.CollisionGroup)

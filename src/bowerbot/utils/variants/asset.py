@@ -46,21 +46,9 @@ def resolve_attribute_types_for_overrides(
     overrides: dict[str, dict[str, object]],
 ) -> dict[str, dict[str, Sdf.ValueTypeName | None]]:
     """Look up each override attribute's declared type from the asset's composed stage."""
-    out: dict[str, dict[str, Sdf.ValueTypeName | None]] = {}
     root_file = authoring.asset_folder.find_root_file(asset_dir)
     stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
-    for asset_path, attrs in overrides.items():
-        resolved: dict[str, Sdf.ValueTypeName | None] = {}
-        prim = stage.GetPrimAtPath(asset_path) if stage is not None else None
-        for attr_name in attrs:
-            type_name: Sdf.ValueTypeName | None = None
-            if prim is not None and prim.IsValid():
-                attr = prim.GetAttribute(attr_name)
-                if attr.IsValid():
-                    type_name = attr.GetTypeName()
-            resolved[attr_name] = type_name
-        out[asset_path] = resolved
-    return out
+    return usd.attributes.resolve_attribute_types(stage, overrides)
 
 
 def refuse_unknown_attributes(

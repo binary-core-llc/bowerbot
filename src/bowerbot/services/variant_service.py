@@ -350,7 +350,7 @@ def add_scene_lighting_attribute_variant(
     ):
         state.stage = authoring.stage.open_stage(state.stage_path)
 
-    resolved_types = usd.attributes.resolve_scene_attribute_types(
+    resolved_types = usd.attributes.resolve_attribute_types(
         state.stage, overrides,
     )
     usd.attributes.refuse_unknown_attributes(state.stage, resolved_types)

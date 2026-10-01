@@ -85,15 +85,15 @@ def set_prim_attribute(
 # ── Declared types and unknown names ──
 
 
-def resolve_scene_attribute_types(
-    stage: Usd.Stage,
+def resolve_attribute_types(
+    stage: Usd.Stage | None,
     overrides: dict[str, dict[str, object]],
 ) -> dict[str, dict[str, Sdf.ValueTypeName | None]]:
-    """Look up each scene attribute's declared type from the composed scene stage."""
+    """Look up each override attribute's declared type on a composed stage; None when unknown."""
     out: dict[str, dict[str, Sdf.ValueTypeName | None]] = {}
     for prim_path, attrs in overrides.items():
         resolved: dict[str, Sdf.ValueTypeName | None] = {}
-        prim = stage.GetPrimAtPath(prim_path)
+        prim = stage.GetPrimAtPath(prim_path) if stage is not None else None
         for attr_name in attrs:
             type_name: Sdf.ValueTypeName | None = None
             if prim and prim.IsValid():

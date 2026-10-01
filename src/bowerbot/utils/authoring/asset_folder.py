@@ -279,7 +279,13 @@ def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
 
 
 def rebuild_root_references(asset_dir: Path) -> None:
-    """Rebuild root composition arcs: geo via payload, others via references."""
+    """Rebuild the root's arcs to BowerBot's layers: geo via payload, the others via references.
+
+    Arcs to any other file (a package's own model, look or part files) are
+    kept, with their prim path and layer offset. The references among them
+    come after BowerBot's layers, so an edit made through BowerBot stays the
+    stronger opinion.
+    """
     root_file = find_root_file(asset_dir)
     if root_file is None:
         return
@@ -292,16 +298,30 @@ def rebuild_root_references(asset_dir: Path) -> None:
     if root_prim is None:
         return
 
+    geo_file = constants.ASWFLayerNames.GEO
+    side_layers = constants.AssetFolderRules.CANONICAL_REFERENCE_ORDER
+    root_spec = stage.GetRootLayer().GetPrimAtPath(root_prim.GetPath())
+    payloads = list(root_spec.payloadList.GetAddedOrExplicitItems())
+    references = list(root_spec.referenceList.GetAddedOrExplicitItems())
+    own_payloads = [arc for arc in payloads if _sibling_file(arc.assetPath) != geo_file]
+    own_references = [
+        arc for arc in references
+        if _sibling_file(arc.assetPath) not in (geo_file, *side_layers)
+    ]
+
     root_prim.GetReferences().ClearReferences()
     root_prim.GetPayloads().ClearPayloads()
 
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if geo_path.exists():
-        root_prim.GetPayloads().AddPayload(f"./{constants.ASWFLayerNames.GEO}")
+    if (asset_dir / geo_file).exists():
+        root_prim.GetPayloads().AddPayload(f"./{geo_file}")
+    for payload in own_payloads:
+        root_prim.GetPayloads().AddPayload(payload)
 
-    for layer_file in constants.AssetFolderRules.CANONICAL_REFERENCE_ORDER:
+    for layer_file in side_layers:
         if (asset_dir / layer_file).exists():
             root_prim.GetReferences().AddReference(f"./{layer_file}")
+    for reference in own_references:
+        root_prim.GetReferences().AddReference(reference)
 
     stage.Save()
 
@@ -492,6 +512,14 @@ def _get_default_prim_name(asset_dir: Path) -> str | None:
         if layer and layer.defaultPrim:
             return layer.defaultPrim
     return None
+
+
+def _sibling_file(asset_path: str) -> str | None:
+    """The file name when *asset_path* names a file beside the root (``./geo.usda``), else None."""
+    if not asset_path:
+        return None
+    path = Path(asset_path)
+    return path.name if path.parent == Path() else None
 
 
 def _candidate_roots_by_dep_graph(usd_files: list[Path]) -> list[Path]:

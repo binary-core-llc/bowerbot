@@ -123,16 +123,30 @@ SUMMARY
     + prim /Scene/Furniture/Cabinet_01/asset [Xform]
           attr xformOp:rotateX: 90
           attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
           kind: component
           world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Cabinet_01/asset/Body [Cube]
+          applied APIs: MaterialBindingAPI
+          attr size: 1
+          attr xformOp:scale: (0.8, 1, 0.4)
+          attr xformOp:translate: (0, 0.5, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+          material shown: /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+          rel material:binding: /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+          world position: (0.0000, 0.0000, 50.0000)
+    + prim /Scene/Furniture/Cabinet_01/asset/mtl [Scope]
+    + prim /Scene/Furniture/Cabinet_01/asset/mtl/walnut [Material] (+1 prims inside)
+          attr outputs:surface: (no value)
+          connect outputs:surface: /Scene/Furniture/Cabinet_01/asset/mtl/walnut/PreviewSurface.outputs:surface
+    ~ /Scene  bounds: (none) → (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/cabinet/cabinet_model.usda
-    ⚠ left behind a file nothing in the scene uses: assets/cabinet/look.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -186,6 +200,8 @@ file changes:
           }
           prepend inherits = </_class_cabinet>
           kind = "component"
+          prepend payload = @./cabinet_model.usda@
+          prepend references = @./look.usda@
       )
       {
       }
@@ -276,7 +292,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -12,4 +12,27 @@
+  @@ -12,4 +12,53 @@
    )
    {
   +    def "Furniture"
@@ -299,6 +315,32 @@ composed scene changes:
   +            {
   +                float xformOp:rotateX = 90
   +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Body" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+  +                {
+  +                    rel material:binding = </Scene/Furniture/Cabinet_01/asset/mtl/walnut>
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.8, 1, 0.4)
+  +                    double3 xformOp:translate = (0, 0.5, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Scope "mtl"
+  +                {
+  +                    def Material "walnut"
+  +                    {
+  +                        token outputs:surface.connect = </Scene/Furniture/Cabinet_01/asset/mtl/walnut/PreviewSurface.outputs:surface>
+  +
+  +                        def Shader "PreviewSurface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.35, 0.2, 0.1)
+  +                            token outputs:surface
+  +                        }
+  +                    }
+  +                }
   +            }
   +        }
   +    }
@@ -306,9 +348,11 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
 
 validation:
   valid, no issues
@@ -319,14 +363,13 @@ validation:
 SUMMARY
   call: list_prim_children(prim_path="/Scene/Furniture/Cabinet_01")
   current project: golden
-  said: ok: No geometry parts found under /Scene/Furniture/Cabinet_01.
+  said: ok: Found 1 geometry part(s) under /Scene/Furniture/Cabinet_01. Use the prim_path of a specific part with bind_material.
 
   what changed:
     nothing
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -338,9 +381,30 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "No geometry parts found under /Scene/Furniture/Cabinet_01.",
-    "part_count": 0,
-    "parts": [],
+    "message": "Found 1 geometry part(s) under /Scene/Furniture/Cabinet_01. Use the prim_path of a specific part with bind_material.",
+    "part_count": 1,
+    "parts": [
+      {
+        "bounds": {
+          "max": {
+            "x": 40.0,
+            "y": 20.0,
+            "z": 100.0
+          },
+          "min": {
+            "x": -40.0,
+            "y": -20.0,
+            "z": -0.0
+          }
+        },
+        "current_material": "/Scene/Furniture/Cabinet_01/asset/mtl/walnut",
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Body",
+        "prim_path": "/Scene/Furniture/Cabinet_01/asset/Body",
+        "type": "Cube"
+      }
+    ],
     "prim_path": "/Scene/Furniture/Cabinet_01"
   }
 
@@ -358,9 +422,11 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
 
 validation:
   valid, no issues
@@ -388,9 +454,17 @@ SUMMARY
     + prim /Scene/Furniture/Workbench_02/asset [Xform]
           attr xformOp:rotateX: 90
           attr xformOpOrder: ('xformOp:rotateX')
-          bounds: (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+          bounds: (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
           kind: component
           world position: (300.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Workbench_02/asset/Jaw [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.2, 0.1, 0.2)
+          attr xformOp:translate: (0.6, 1, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (350.0000, -10.0000, 95.0000)..(370.0000, 10.0000, 105.0000)
+          material shown: (none)
+          world position: (360.0000, 0.0000, 100.0000)
     + prim /Scene/Furniture/Workbench_02/asset/Top [Cube]
           attr size: 1
           attr xformOp:scale: (1.5, 0.1, 0.6)
@@ -399,15 +473,13 @@ SUMMARY
           bounds: (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
           material shown: (none)
           world position: (300.0000, 0.0000, 90.0000)
-    ~ /Scene  bounds: (none) → (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+    ~ /Scene  bounds: (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000) → (-40.0000, -30.0000, 0.0000)..(375.0000, 30.0000, 105.0000)
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
-    not used by the scene: assets/workbench/parts/vise.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/workbench/parts/vise.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -503,6 +575,7 @@ file changes:
           prepend inherits = </_class_workbench>
           kind = "component"
           prepend payload = @./geo.usda@
+          prepend references = @./parts/vise.usda@</Vise>
       )
       {
       }
@@ -539,7 +612,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -34,4 +34,33 @@
+  @@ -60,4 +60,41 @@
                }
            }
   +
@@ -569,18 +642,29 @@ composed scene changes:
   +                    double3 xformOp:translate = (0, 0.9, 0)
   +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
   +                }
+  +
+  +                def Cube "Jaw"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.2, 0.1, 0.2)
+  +                    double3 xformOp:translate = (0.6, 1, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
   +            }
   +        }
        }
    }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -30.0000, 0.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
   /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material (none)
+  /Scene/Furniture/Workbench_02/asset/Jaw  [Cube]  at (360.0000, 0.0000, 100.0000)  bounds (350.0000, -10.0000, 95.0000)..(370.0000, 10.0000, 105.0000)  material (none)
 
 validation:
   valid, no issues
@@ -591,15 +675,13 @@ validation:
 SUMMARY
   call: list_prim_children(prim_path="/Scene/Furniture/Workbench_02")
   current project: golden
-  said: ok: Found 1 geometry part(s) under /Scene/Furniture/Workbench_02. Use the prim_path of a specific part with bind_material.
+  said: ok: Found 2 geometry part(s) under /Scene/Furniture/Workbench_02. Use the prim_path of a specific part with bind_material.
 
   what changed:
     nothing
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
-    not used by the scene: assets/workbench/parts/vise.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -611,8 +693,8 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "Found 1 geometry part(s) under /Scene/Furniture/Workbench_02. Use the prim_path of a specific part with bind_material.",
-    "part_count": 1,
+    "message": "Found 2 geometry part(s) under /Scene/Furniture/Workbench_02. Use the prim_path of a specific part with bind_material.",
+    "part_count": 2,
     "parts": [
       {
         "bounds": {
@@ -632,6 +714,26 @@ full answer:
         "is_mesh": false,
         "name": "Top",
         "prim_path": "/Scene/Furniture/Workbench_02/asset/Top",
+        "type": "Cube"
+      },
+      {
+        "bounds": {
+          "max": {
+            "x": 370.0,
+            "y": 10.0,
+            "z": 105.0
+          },
+          "min": {
+            "x": 350.0,
+            "y": -10.0,
+            "z": 95.0
+          }
+        },
+        "current_material": null,
+        "is_bindable": true,
+        "is_mesh": false,
+        "name": "Jaw",
+        "prim_path": "/Scene/Furniture/Workbench_02/asset/Jaw",
         "type": "Cube"
       }
     ],
@@ -655,12 +757,15 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -30.0000, 0.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
   /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material (none)
+  /Scene/Furniture/Workbench_02/asset/Jaw  [Cube]  at (360.0000, 0.0000, 100.0000)  bounds (350.0000, -10.0000, 95.0000)..(370.0000, 10.0000, 105.0000)  material (none)
 
 validation:
   valid, no issues
@@ -685,12 +790,10 @@ SUMMARY
           attr xformOpOrder: ('xformOp:translate')
           bounds: (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
           world position: (0.0000, 0.0000, 0.0000)
-    ~ /Scene  bounds: (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000) → (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000)
+    ~ /Scene  bounds: (-40.0000, -30.0000, 0.0000)..(375.0000, 30.0000, 105.0000) → (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 105.0000)
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
-    not used by the scene: assets/workbench/parts/vise.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -728,10 +831,14 @@ file changes:
   ~ assets/cabinet/cabinet.usda:
       --- assets/cabinet/cabinet.usda (before)
       +++ assets/cabinet/cabinet.usda (after)
-      @@ -14,4 +14,5 @@
-           prepend inherits = </_class_cabinet>
+      @@ -15,5 +15,8 @@
            kind = "component"
-      +    prepend references = @./lgt.usda@
+           prepend payload = @./cabinet_model.usda@
+      -    prepend references = @./look.usda@
+      +    prepend references = [
+      +        @./lgt.usda@,
+      +        @./look.usda@
+      +    ]
        )
        {
   + assets/cabinet/lgt.usda (new):
@@ -756,9 +863,9 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -32,4 +32,13 @@
-                   float xformOp:rotateX = 90
-                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  @@ -58,4 +58,13 @@
+                       }
+                   }
   +
   +                def Xform "lgt"
   +                {
@@ -772,14 +879,17 @@ composed scene changes:
            }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 105.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
   /Scene/Furniture/Cabinet_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
   /Scene/Furniture/Cabinet_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
-  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
   /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material (none)
+  /Scene/Furniture/Workbench_02/asset/Jaw  [Cube]  at (360.0000, 0.0000, 100.0000)  bounds (350.0000, -10.0000, 95.0000)..(370.0000, 10.0000, 105.0000)  material (none)
 
 validation:
   valid, no issues
@@ -805,9 +915,7 @@ SUMMARY
     ~ /Scene/Furniture/Workbench_02/asset/Top  rel material:binding: (none) → /Scene/Furniture/Workbench_02/asset/mtl/oak
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
-    not used by the scene: assets/workbench/parts/vise.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -872,17 +980,21 @@ file changes:
   ~ assets/workbench/workbench.usda:
       --- assets/workbench/workbench.usda (before)
       +++ assets/workbench/workbench.usda (after)
-      @@ -15,4 +15,5 @@
+      @@ -15,5 +15,8 @@
            kind = "component"
            prepend payload = @./geo.usda@
-      +    prepend references = @./mtl.usda@
+      -    prepend references = @./parts/vise.usda@</Vise>
+      +    prepend references = [
+      +        @./mtl.usda@,
+      +        @./parts/vise.usda@</Vise>
+      +    ]
        )
        {
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -63,10 +63,28 @@
+  @@ -89,6 +89,9 @@
                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
    
   -                def Cube "Top"
@@ -893,9 +1005,9 @@ composed scene changes:
   +                    rel material:binding = </Scene/Furniture/Workbench_02/asset/mtl/oak>
                        double size = 1
                        float3 xformOp:scale = (1.5, 0.1, 0.6)
-                       double3 xformOp:translate = (0, 0.9, 0)
+  @@ -104,4 +107,19 @@
                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  +                }
+                   }
   +
   +                def Scope "mtl"
   +                {
@@ -910,18 +1022,22 @@ composed scene changes:
   +                            token outputs:surface
   +                        }
   +                    }
-                   }
+  +                }
                }
+           }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 105.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
   /Scene/Furniture/Cabinet_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
   /Scene/Furniture/Cabinet_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -50.0000, -50.0000)..(50.0000, 50.0000, 50.0000)
-  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
   /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material /Scene/Furniture/Workbench_02/asset/mtl/oak
+  /Scene/Furniture/Workbench_02/asset/Jaw  [Cube]  at (360.0000, 0.0000, 100.0000)  bounds (350.0000, -10.0000, 95.0000)..(370.0000, 10.0000, 105.0000)  material (none)
   /Scene/Furniture/Workbench_02/asset/mtl  [Scope]
 
 validation:
@@ -941,12 +1057,10 @@ SUMMARY
     - file assets/cabinet/lgt.usda
     - prim /Scene/Furniture/Cabinet_01/asset/lgt [Xform]
     - prim /Scene/Furniture/Cabinet_01/asset/lgt/Glow [SphereLight]
-    ~ /Scene  bounds: (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 95.0000) → (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+    ~ /Scene  bounds: (-50.0000, -50.0000, -50.0000)..(375.0000, 50.0000, 105.0000) → (-40.0000, -30.0000, 0.0000)..(375.0000, 30.0000, 105.0000)
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
-    not used by the scene: assets/workbench/parts/vise.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -980,10 +1094,14 @@ file changes:
   ~ assets/cabinet/cabinet.usda:
       --- assets/cabinet/cabinet.usda (before)
       +++ assets/cabinet/cabinet.usda (after)
-      @@ -14,5 +14,4 @@
-           prepend inherits = </_class_cabinet>
+      @@ -15,8 +15,5 @@
            kind = "component"
-      -    prepend references = @./lgt.usda@
+           prepend payload = @./cabinet_model.usda@
+      -    prepend references = [
+      -        @./lgt.usda@,
+      -        @./look.usda@
+      -    ]
+      +    prepend references = @./look.usda@
        )
        {
   - assets/cabinet/lgt.usda (removed)
@@ -991,9 +1109,11 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -32,13 +32,4 @@
-                   float xformOp:rotateX = 90
-                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  @@ -56,13 +56,4 @@
+                               token outputs:surface
+                           }
+  -                    }
+  -                }
   -
   -                def Xform "lgt"
   -                {
@@ -1001,18 +1121,19 @@ composed scene changes:
   -                    {
   -                        double3 xformOp:translate = (0, 0, 0)
   -                        uniform token[] xformOpOrder = ["xformOp:translate"]
-  -                    }
-  -                }
-               }
-           }
+                       }
+                   }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -30.0000, 0.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
   /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material /Scene/Furniture/Workbench_02/asset/mtl/oak
+  /Scene/Furniture/Workbench_02/asset/Jaw  [Cube]  at (360.0000, 0.0000, 100.0000)  bounds (350.0000, -10.0000, 95.0000)..(370.0000, 10.0000, 105.0000)  material (none)
   /Scene/Furniture/Workbench_02/asset/mtl  [Scope]
 
 validation:
@@ -1031,9 +1152,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    not used by the scene: assets/cabinet/cabinet_model.usda
-    not used by the scene: assets/cabinet/look.usda
-    not used by the scene: assets/workbench/parts/vise.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -1050,7 +1169,18 @@ full answer:
     "objects": [
       {
         "asset": "assets/cabinet/cabinet.usda",
-        "bounds": null,
+        "bounds": {
+          "max": {
+            "x": 40.0,
+            "y": 20.0,
+            "z": 100.0
+          },
+          "min": {
+            "x": -40.0,
+            "y": -20.0,
+            "z": -0.0
+          }
+        },
         "kind": "asset",
         "position": {
           "x": 0.0,
@@ -1066,7 +1196,7 @@ full answer:
           "max": {
             "x": 375.0,
             "y": 30.0,
-            "z": 95.0
+            "z": 105.0
           },
           "min": {
             "x": 225.0,
@@ -1104,12 +1234,15 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
-  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -30.0000, 0.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Cabinet_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)
+  /Scene/Furniture/Cabinet_01/asset/Body  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-40.0000, -20.0000, 0.0000)..(40.0000, 20.0000, 100.0000)  material /Scene/Furniture/Cabinet_01/asset/mtl/walnut
+  /Scene/Furniture/Cabinet_01/asset/mtl  [Scope]
+  /Scene/Furniture/Workbench_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
+  /Scene/Furniture/Workbench_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 105.0000)
   /Scene/Furniture/Workbench_02/asset/Top  [Cube]  at (300.0000, 0.0000, 90.0000)  bounds (225.0000, -30.0000, 85.0000)..(375.0000, 30.0000, 95.0000)  material /Scene/Furniture/Workbench_02/asset/mtl/oak
+  /Scene/Furniture/Workbench_02/asset/Jaw  [Cube]  at (360.0000, 0.0000, 100.0000)  bounds (350.0000, -10.0000, 95.0000)..(370.0000, 10.0000, 105.0000)  material (none)
   /Scene/Furniture/Workbench_02/asset/mtl  [Scope]
 
 validation:

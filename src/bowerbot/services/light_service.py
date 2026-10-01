@@ -8,8 +8,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pxr import Sdf
-
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
@@ -223,7 +221,6 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         }
 
     texture_file = lights.prim.get_texture(state.stage, prim_path)
-    carrier_path = str(Sdf.Path(prim_path).GetParentPath())
     success = usd.namespace.remove_prim(state.stage, prim_path)
     if not success:
         msg = f"Failed to remove light {prim_path}"
@@ -235,9 +232,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     logger.info("Removed scene light at %s", prim_path)
     data: dict[str, Any] = {
         "prim_path": prim_path,
-        "suspect_variant_sets": variants.suspect_sets.find_on_scene_carrier(
-            state.stage, carrier_path,
-        ),
+        "suspect_variant_sets": variants.suspect_sets.find_above(state.stage, prim_path),
         "message": f"Removed light at {prim_path}",
     }
     if texture_file:

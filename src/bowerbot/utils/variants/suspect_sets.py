@@ -47,6 +47,11 @@ def find_on_scene_carrier(
     ]
 
 
+def find_above(stage: Usd.Stage, prim_path: str) -> list[dict[str, str]]:
+    """Suspect scene-level variant sets on the ancestors of *prim_path*, not the prim itself."""
+    return find_on_scene_carrier(stage, str(Sdf.Path(prim_path).GetParentPath()))
+
+
 def find_in_asset(
     asset_dir: Path, base_prim_path: str | None = None,
 ) -> list[dict]:

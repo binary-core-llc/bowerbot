@@ -346,7 +346,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
-    composed_path = f"{ref_prim_path}/contents/{group}/{prim_name}"
+    composed_path = authoring.placement.contents_prim_path(ref_prim_path, group, prim_name)
     wx, wy, wz = (
         round(v, 4) + 0.0
         for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(composed_path))

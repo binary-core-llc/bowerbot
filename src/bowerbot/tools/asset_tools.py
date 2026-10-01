@@ -141,17 +141,21 @@ TOOLS: list[skills.Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters. 0 = left edge of room.",
+                    "description": "X position in the scene, in project units.",
                 },
                 "translate_y": {
                     "type": "number",
                     "description": (
-                        "Y position in meters. 0 = floor, 2.7 = typical ceiling."
+                        "Y position in the scene, in project units "
+                        "(the height in a Y-up project)."
                     ),
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters. 0 = back wall.",
+                    "description": (
+                        "Z position in the scene, in project units "
+                        "(the height in a Z-up project)."
+                    ),
                 },
                 "rotate_y": {
                     "type": "number",
@@ -410,15 +414,24 @@ TOOLS: list[skills.Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters (container-local).",
+                    "description": (
+                        "X value in project units: a world position in "
+                        "'absolute' mode, an offset in 'bounds_offset' mode."
+                    ),
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "Y position in meters (container-local).",
+                    "description": (
+                        "Y value in project units: a world position in "
+                        "'absolute' mode, an offset in 'bounds_offset' mode."
+                    ),
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters (container-local).",
+                    "description": (
+                        "Z value in project units: a world position in "
+                        "'absolute' mode, an offset in 'bounds_offset' mode."
+                    ),
                 },
                 "rotate_y": {
                     "type": "number",

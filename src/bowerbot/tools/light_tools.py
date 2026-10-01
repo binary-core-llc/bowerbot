@@ -156,17 +156,29 @@ TOOLS: list[skills.Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters.",
+                    "description": (
+                        "X value in project units: a world position for a "
+                        "scene light or in 'absolute' mode, an offset in "
+                        "'bounds_offset' mode."
+                    ),
                     "default": 0.0,
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "Y position in meters.",
+                    "description": (
+                        "Y value in project units: a world position for a "
+                        "scene light or in 'absolute' mode, an offset in "
+                        "'bounds_offset' mode."
+                    ),
                     "default": 0.0,
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters.",
+                    "description": (
+                        "Z value in project units: a world position for a "
+                        "scene light or in 'absolute' mode, an offset in "
+                        "'bounds_offset' mode."
+                    ),
                     "default": 0.0,
                 },
                 "rotate_x": {

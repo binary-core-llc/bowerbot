@@ -252,11 +252,11 @@ TOOLS: list[skills.Tool] = [
             "for single-axis moves pass only the axis the user asked to "
             "change. Use this instead of place_asset when repositioning "
             "an object already in the scene. translate_x/y/z are "
-            "world-space meters; for a prim nested inside a referenced "
+            "world positions in project units; for a prim nested inside a referenced "
             "asset's contents (path containing '/asset/contents/'), the "
             "move is converted into the asset's local space and written "
-            "into that asset folder's contents.usda, while the returned "
-            "'position' still echoes the world-space values you passed."
+            "into that asset folder's contents.usda. The returned "
+            "'position' is the object's world position."
         ),
         parameters={
             "type": "object",
@@ -271,15 +271,15 @@ TOOLS: list[skills.Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "New X in meters. Omit to keep current X.",
+                    "description": "New X, in project units. Omit to keep current X.",
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "New Y in meters. Omit to keep current Y.",
+                    "description": "New Y, in project units. Omit to keep current Y.",
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "New Z in meters. Omit to keep current Z.",
+                    "description": "New Z, in project units. Omit to keep current Z.",
                 },
                 "rotate_y": {
                     "type": "number",

@@ -74,7 +74,7 @@ internal coordinate frame automatically.
 
 Workflow for interior fixtures:
 1. Call `list_prim_children` on the container asset
-2. For each fixture prim, read its `bounds` (world-space meters)
+2. For each fixture prim, read its `bounds` (world space, project units)
 3. Compute the center: `((min.x + max.x)/2, ...)`
 4. Call `create_light` with `position_mode: "absolute"` and those
    center coordinates as `translate_x/y/z`

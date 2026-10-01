@@ -29,18 +29,11 @@ class LightRules:
         schemas.LightType.DOME,
         schemas.LightType.DISTANT,
     })
-    # UsdLux inputs measured in stage units (scaled by asset MPU at write time).
+    # UsdLux inputs that are lengths: given in project units, converted to the
+    # asset's units for an asset light.
     SPATIAL_INPUTS: frozenset[str] = frozenset({
         "inputs:radius",
         "inputs:width",
         "inputs:height",
         "inputs:length",
     })
-
-
-class LightDefaults:
-    """Fallbacks when a light call leaves a value out."""
-
-    # Default vertical offset (meters) above an asset's top surface when
-    # placing a prim with no explicit Y position in BOUNDS_OFFSET mode.
-    Y_OFFSET = 0.5

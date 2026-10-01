@@ -63,13 +63,14 @@ def resolve_gravity(
     gravity_direction: tuple[float, float, float] | None,
     *,
     project_mpu: float,
+    project_up_axis: str,
 ) -> tuple[float, tuple[float, float, float]]:
-    """Resolve gravity to authored values; defaults to Earth gravity (project units) along -Y."""
+    """Resolve gravity to authored values; defaults to Earth gravity (project units), downward."""
     if gravity_magnitude is None:
         mpu = project_mpu or 1.0
         gravity_magnitude = 9.81 / mpu
     if gravity_direction is None:
-        gravity_direction = (0.0, -1.0, 0.0)
+        gravity_direction = (0.0, 0.0, -1.0) if project_up_axis == "Z" else (0.0, -1.0, 0.0)
     return float(gravity_magnitude), gravity_direction
 
 
@@ -80,6 +81,7 @@ def ensure(
     gravity_direction: tuple[float, float, float] | None = None,
     *,
     project_mpu: float,
+    project_up_axis: str,
 ) -> str:
     """Create the physics scope and a ``UsdPhysics.Scene`` child prim."""
     scope_path = ensure_scope(stage)
@@ -87,7 +89,8 @@ def ensure(
     scene_prim = UsdPhysics.Scene.Define(stage, scene_path)
 
     gravity_magnitude, gravity_direction = resolve_gravity(
-        gravity_magnitude, gravity_direction, project_mpu=project_mpu,
+        gravity_magnitude, gravity_direction,
+        project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
     scene_prim.CreateGravityDirectionAttr(Gf.Vec3f(*gravity_direction))
     scene_prim.CreateGravityMagnitudeAttr(gravity_magnitude)

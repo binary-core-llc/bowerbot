@@ -18,7 +18,6 @@ from bowerbot.constants.cameras import CameraTuning
 from bowerbot.constants.intake import IntakeRules
 from bowerbot.constants.library import LibraryDefaults
 from bowerbot.constants.library import LibraryRules
-from bowerbot.constants.lights import LightDefaults
 from bowerbot.constants.lights import LightRules
 from bowerbot.constants.lights import LightUsd
 from bowerbot.constants.materials import MaterialRules
@@ -30,6 +29,7 @@ from bowerbot.constants.naming import NamingRules
 from bowerbot.constants.physics import PhysicsNamespace
 from bowerbot.constants.physics import PhysicsRules
 from bowerbot.constants.physics import PhysicsUsd
+from bowerbot.constants.placement import PlacementDefaults
 from bowerbot.constants.placement import PlacementRules
 from bowerbot.constants.scatter import ScatterDefaults
 from bowerbot.constants.scatter import ScatterNamespace
@@ -49,7 +49,6 @@ __all__ = [
     "IntakeRules",
     "LibraryDefaults",
     "LibraryRules",
-    "LightDefaults",
     "LightRules",
     "LightUsd",
     "MaterialRules",
@@ -60,6 +59,7 @@ __all__ = [
     "PhysicsNamespace",
     "PhysicsRules",
     "PhysicsUsd",
+    "PlacementDefaults",
     "PlacementRules",
     "PreviewSurfaceShader",
     "ScatterDefaults",

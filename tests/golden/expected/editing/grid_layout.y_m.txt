@@ -105,7 +105,7 @@ validation:
 SUMMARY
   call: compute_grid_layout(count=6, spacing=2.0)
   current project: golden
-  said: ok: Computed 6 positions in grid with 2.0m spacing.
+  said: ok: Computed 6 positions on the x-z floor plane, 2.0 project units apart.
 
   what changed:
     nothing
@@ -124,7 +124,7 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 6,
-    "message": "Computed 6 positions in grid with 2.0m spacing.",
+    "message": "Computed 6 positions on the x-z floor plane, 2.0 project units apart.",
     "positions": [
       {
         "x": 3.0,
@@ -176,7 +176,7 @@ validation:
 SUMMARY
   call: compute_grid_layout(count=1)
   current project: golden
-  said: ok: Computed 1 positions in grid with 2.0m spacing.
+  said: ok: Computed 1 positions on the x-z floor plane, 2.0 project units apart.
 
   what changed:
     nothing
@@ -195,7 +195,7 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 1,
-    "message": "Computed 1 positions in grid with 2.0m spacing.",
+    "message": "Computed 1 positions on the x-z floor plane, 2.0 project units apart.",
     "positions": [
       {
         "x": 5.0,
@@ -228,7 +228,7 @@ intent: zero items
 SUMMARY
   call: compute_grid_layout(count=0)
   current project: golden
-  said: ok: Computed 0 positions in grid with 2.0m spacing.
+  said: ok: Computed 0 positions on the x-z floor plane, 2.0 project units apart.
 
   what changed:
     nothing
@@ -247,7 +247,7 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 0,
-    "message": "Computed 0 positions in grid with 2.0m spacing.",
+    "message": "Computed 0 positions on the x-z floor plane, 2.0 project units apart.",
     "positions": [],
     "spacing": 2.0
   }

@@ -233,6 +233,7 @@ def apply_in_scene(
     *,
     instance_name: str | None = None,
     project_mpu: float,
+    project_up_axis: str,
 ) -> dict[str, Any]:
     """Apply ``api_name`` on scene.usda; auto-ensures a ``UsdPhysics.Scene``."""
     attributes = attributes or {}
@@ -244,7 +245,7 @@ def apply_in_scene(
     )
     _refuse_unknown(api_name, attributes, schema_info, "attribute")
     _refuse_unknown(api_name, relationships, schema_info, "relationship")
-    physics.scenes.ensure(stage, project_mpu=project_mpu)
+    physics.scenes.ensure(stage, project_mpu=project_mpu, project_up_axis=project_up_axis)
 
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():

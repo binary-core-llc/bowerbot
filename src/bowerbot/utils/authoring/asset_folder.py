@@ -13,6 +13,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
+from pxr import Gf
 from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
@@ -364,15 +365,26 @@ def get_mpu(asset_dir: Path, *, project_mpu: float) -> float:
 
 
 def unit_factor(asset_dir: Path, *, project_mpu: float) -> float:
-    """Return the factor that converts meters into asset units."""
-    mpu = get_mpu(asset_dir, project_mpu=project_mpu)
-    return 1.0 / mpu if mpu > 0 else 1.0
+    """Return the factor that converts a length in project units into the asset's units."""
+    return project_mpu / get_mpu(asset_dir, project_mpu=project_mpu)
 
 
-def get_geometry_bounds(
-    asset_dir: Path, *, project_mpu: float,
-) -> dict[str, dict[str, float]] | None:
-    """Return the asset's geometry bounds in meters, or ``None``."""
+def conform_matrix(
+    asset_dir: Path, *, project_mpu: float, project_up_axis: str,
+) -> Gf.Matrix4d:
+    """The matrix a scene placement applies to the asset: into the project's units and up axis."""
+    mpu, up_axis = asset_metrics(
+        asset_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
+    unit_scale, correction = usd.metrics.conform(
+        mpu if mpu > 0 else 1.0, up_axis,
+        parent_mpu=project_mpu, parent_up_axis=project_up_axis,
+    )
+    return usd.metrics.conform_matrix(unit_scale, correction)
+
+
+def get_geometry_bounds(asset_dir: Path) -> dict[str, dict[str, float]] | None:
+    """Return the asset's geometry bounds in its own units and axes, or ``None``."""
     geo_path = asset_dir / constants.ASWFLayerNames.GEO
     if not geo_path.exists():
         return None
@@ -392,22 +404,21 @@ def get_geometry_bounds(
     if rng.IsEmpty():
         return None
 
-    mpu = get_mpu(asset_dir, project_mpu=project_mpu)
     mn = rng.GetMin()
     mx = rng.GetMax()
 
     return {
-        "min": {"x": mn[0] * mpu, "y": mn[1] * mpu, "z": mn[2] * mpu},
-        "max": {"x": mx[0] * mpu, "y": mx[1] * mpu, "z": mx[2] * mpu},
+        "min": {"x": mn[0], "y": mn[1], "z": mn[2]},
+        "max": {"x": mx[0], "y": mx[1], "z": mx[2]},
         "center": {
-            "x": (mn[0] + mx[0]) / 2 * mpu,
-            "y": (mn[1] + mx[1]) / 2 * mpu,
-            "z": (mn[2] + mx[2]) / 2 * mpu,
+            "x": (mn[0] + mx[0]) / 2,
+            "y": (mn[1] + mx[1]) / 2,
+            "z": (mn[2] + mx[2]) / 2,
         },
         "size": {
-            "x": (mx[0] - mn[0]) * mpu,
-            "y": (mx[1] - mn[1]) * mpu,
-            "z": (mx[2] - mn[2]) * mpu,
+            "x": mx[0] - mn[0],
+            "y": mx[1] - mn[1],
+            "z": mx[2] - mn[2],
         },
     }
 

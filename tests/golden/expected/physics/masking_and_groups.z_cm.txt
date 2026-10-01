@@ -456,7 +456,7 @@ SUMMARY
     ~ file scene.usda
     + prim /Scene/Physics [Scope]
     + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityDirection: (0, 0, -1)
           attr physics:gravityMagnitude: 981
     ~ /Scene/Props/Crate_02/asset  applied APIs: (none) → PhysicsMassAPI
     ~ /Scene/Props/Crate_02/asset  attr physics:mass: (none) → 40
@@ -514,7 +514,7 @@ file changes:
       +    {
       +        def PhysicsScene "PhysicsScene"
       +        {
-      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            vector3f physics:gravityDirection = (0, 0, -1)
       +            float physics:gravityMagnitude = 981
       +        }
       +    }
@@ -544,7 +544,7 @@ composed scene changes:
   +    {
   +        def PhysicsScene "PhysicsScene"
   +        {
-  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            vector3f physics:gravityDirection = (0, 0, -1)
   +            float physics:gravityMagnitude = 981
   +        }
   +    }

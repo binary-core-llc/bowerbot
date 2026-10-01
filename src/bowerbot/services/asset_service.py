@@ -308,18 +308,14 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         params.get("position_mode", schemas.PositionMode.ABSOLUTE.value),
     )
     tx, ty, tz = authoring.placement.resolve_asset_position(
-        mode,
-        authoring.asset_folder.get_geometry_bounds(
-            container_dir, project_mpu=state.meters_per_unit,
-        ),
-        tx, ty, tz,
-        has_explicit_y=params.get("translate_y") is not None,
+        mode, (tx, ty, tz),
+        asset_dir=container_dir,
         world_to_local_mat=authoring.placement.get_container_world_inverse(
             state.stage, ref_prim_path,
         ),
-        asset_mpu=authoring.asset_folder.get_mpu(
-            container_dir, project_mpu=state.meters_per_unit,
-        ),
+        up_given=True,
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
     )
 
     ref_asset_path = authoring.placement.compute_ref_asset_path(

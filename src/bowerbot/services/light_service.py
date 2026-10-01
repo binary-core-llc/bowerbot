@@ -67,18 +67,14 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             params.get("position_mode", schemas.PositionMode.BOUNDS_OFFSET.value),
         )
         tx, ty, tz = authoring.placement.resolve_asset_position(
-            mode,
-            authoring.asset_folder.get_geometry_bounds(
-                asset_dir, project_mpu=state.meters_per_unit,
-            ),
-            tx, ty, tz,
-            has_explicit_y=params.get("translate_y") is not None,
+            mode, (tx, ty, tz),
+            asset_dir=asset_dir,
             world_to_local_mat=authoring.placement.get_container_world_inverse(
-                state.stage, asset_prim_path,
+                state.stage, ref_prim_path,
             ),
-            asset_mpu=authoring.asset_folder.get_mpu(
-                asset_dir, project_mpu=state.meters_per_unit,
-            ),
+            up_given=params.get(f"translate_{state.up_axis.value.lower()}") is not None,
+            project_mpu=state.meters_per_unit,
+            project_up_axis=state.up_axis.value,
         )
 
         light = schemas.LightParams(
@@ -100,6 +96,12 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
         asset_local_tail = composed_path.lstrip("/").split("/", 1)[1]
         scene_light_path = f"{ref_prim_path}/{asset_local_tail}"
+        tx, ty, tz = (
+            round(v, 4) + 0.0
+            for v in usd.transforms.world_translation(
+                state.stage.GetPrimAtPath(scene_light_path),
+            )
+        )
         logger.info(
             "Created asset light %s in %s/lgt.usda",
             light_type.value, asset_dir.name,
@@ -145,7 +147,9 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Update a light's xform / HDRI texture in its asset or in scene.usda."""
     prim_path = params["prim_path"]
-    asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
+    asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+        state.stage, prim_path,
+    )
 
     translate = usd.values.unpack_vec3(
         params, "translate_x", "translate_y", "translate_z",
@@ -155,24 +159,20 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     )
     texture = params.get("texture")
 
-    if asset_dir is not None:
+    if asset_dir is not None and ref_prim_path is not None:
         if translate is not None:
             mode = schemas.PositionMode(
                 params.get("position_mode", schemas.PositionMode.BOUNDS_OFFSET.value),
             )
             translate = authoring.placement.resolve_asset_position(
-                mode,
-                authoring.asset_folder.get_geometry_bounds(
-                    asset_dir, project_mpu=state.meters_per_unit,
-                ),
-                *translate,
-                has_explicit_y=params.get("translate_y") is not None,
+                mode, translate,
+                asset_dir=asset_dir,
                 world_to_local_mat=authoring.placement.get_container_world_inverse(
-                    state.stage, prim_path,
+                    state.stage, ref_prim_path,
                 ),
-                asset_mpu=authoring.asset_folder.get_mpu(
-                    asset_dir, project_mpu=state.meters_per_unit,
-                ),
+                up_given=params.get(f"translate_{state.up_axis.value.lower()}") is not None,
+                project_mpu=state.meters_per_unit,
+                project_up_axis=state.up_axis.value,
             )
         light_name = prim_path.rstrip("/").split("/")[-1]
         lights.asset.update(
@@ -181,7 +181,6 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             translate=translate,
             rotate=rotate,
             texture=authoring.textures.stage_asset_texture(asset_dir, texture),
-            project_mpu=state.meters_per_unit,
         )
         state.stage = authoring.stage.open_stage(state.stage_path)
     else:

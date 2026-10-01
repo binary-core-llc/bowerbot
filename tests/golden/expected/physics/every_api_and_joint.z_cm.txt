@@ -662,7 +662,7 @@ SUMMARY
     ~ file scene.usda
     + prim /Scene/Physics [Scope]
     + prim /Scene/Physics/World [PhysicsScene]
-          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityDirection: (0, 0, -1)
           attr physics:gravityMagnitude: 981
 
   project state after the step:
@@ -680,8 +680,8 @@ full answer:
   {
     "gravity_direction": [
       0.0,
-      -1.0,
-      0.0
+      0.0,
+      -1.0
     ],
     "gravity_magnitude": 981.0,
     "prim_path": "/Scene/Physics/World"
@@ -707,7 +707,7 @@ file changes:
       +    {
       +        def PhysicsScene "World"
       +        {
-      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            vector3f physics:gravityDirection = (0, 0, -1)
       +            float physics:gravityMagnitude = 981
       +        }
       +    }
@@ -725,7 +725,7 @@ composed scene changes:
   +    {
   +        def PhysicsScene "World"
   +        {
-  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            vector3f physics:gravityDirection = (0, 0, -1)
   +            float physics:gravityMagnitude = 981
   +        }
   +    }
@@ -1176,7 +1176,7 @@ SUMMARY
   what changed:
     ~ file scene.usda
     + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityDirection: (0, 0, -1)
           attr physics:gravityMagnitude: 981
     + prim /Scene/Physics/Slide [PhysicsPrismaticJoint]
           attr physics:axis: 'X'
@@ -1226,7 +1226,7 @@ file changes:
       +
       +        def PhysicsScene "PhysicsScene"
       +        {
-      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            vector3f physics:gravityDirection = (0, 0, -1)
       +            float physics:gravityMagnitude = 981
       +        }
       +
@@ -1248,7 +1248,7 @@ composed scene changes:
   +
   +        def PhysicsScene "PhysicsScene"
   +        {
-  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            vector3f physics:gravityDirection = (0, 0, -1)
   +            float physics:gravityMagnitude = 981
   +        }
   +
@@ -2516,7 +2516,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Physics/PhysicsScene  attr physics:gravityDirection: (0, -1, 0) → (0, 0, 0)
+    ~ /Scene/Physics/PhysicsScene  attr physics:gravityDirection: (0, 0, -1) → (0, 0, 0)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -2557,7 +2557,7 @@ file changes:
       @@ -74,5 +74,5 @@
                def PhysicsScene "PhysicsScene"
                {
-      -            vector3f physics:gravityDirection = (0, -1, 0)
+      -            vector3f physics:gravityDirection = (0, 0, -1)
       +            vector3f physics:gravityDirection = (0, 0, 0)
                    float physics:gravityMagnitude = 981
                }
@@ -2568,7 +2568,7 @@ composed scene changes:
   @@ -138,5 +138,5 @@
            def PhysicsScene "PhysicsScene"
            {
-  -            vector3f physics:gravityDirection = (0, -1, 0)
+  -            vector3f physics:gravityDirection = (0, 0, -1)
   +            vector3f physics:gravityDirection = (0, 0, 0)
                float physics:gravityMagnitude = 981
            }

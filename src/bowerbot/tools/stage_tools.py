@@ -320,8 +320,10 @@ TOOLS: list[skills.Tool] = [
     skills.Tool(
         name="compute_grid_layout",
         description=(
-            "Compute evenly spaced positions for N objects in a grid, "
-            "centered in the room. Returns a list of (x, z) positions. "
+            "Compute evenly spaced positions for N objects in a grid on the "
+            "project's floor plane, centered in a 10 m by 8 m room. Returns a "
+            "list of positions in project units: (x, z) when Y is up, (x, y) "
+            "when Z is up. "
             "Use this to plan furniture layouts before calling place_asset."
         ),
         parameters={
@@ -333,8 +335,10 @@ TOOLS: list[skills.Tool] = [
                 },
                 "spacing": {
                     "type": "number",
-                    "description": "Distance between objects in meters.",
-                    "default": 2.0,
+                    "description": (
+                        "Distance between objects, in project units. "
+                        "Defaults to 2 meters."
+                    ),
                 },
             },
             "required": ["count"],

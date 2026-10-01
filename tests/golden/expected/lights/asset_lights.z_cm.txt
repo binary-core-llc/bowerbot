@@ -414,18 +414,18 @@ SUMMARY
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Props/Lamp_01/asset/lgt/Bulb [SphereLight]
           applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          attr inputs:radius: 0.05
-          attr xformOp:translate: (0, 0.65, 10)
+          attr inputs:radius: 0.0005
+          attr xformOp:translate: (0, 0.75, 0)
           attr xformOpOrder: ('xformOp:translate')
-          bounds: (-5.0000, -1005.0000, 60.0000)..(5.0000, -995.0000, 70.0000)
-          world position: (0.0000, -1000.0000, 65.0000)
-    ~ /Scene  bounds: (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000) → (-20.0000, -1005.0000, 0.0000)..(20.0000, 20.0000, 70.0000)
+          bounds: (-0.0500, -0.0500, 74.9500)..(0.0500, 0.0500, 75.0500)
+          world position: (0.0000, 0.0000, 75.0000)
+    ~ /Scene  bounds: (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 65.0000) → (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 75.0500)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the answer says /Scene/Props/Lamp_01/asset/lgt/Bulb is at (0.0000, 0.6500, 10.0000), but it is at (0.0000, -1000.0000, 65.0000)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -439,8 +439,8 @@ full answer:
     "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Props/Lamp_01/asset/lgt/Bulb",
     "position": {
       "x": 0.0,
-      "y": 0.650000006,
-      "z": 10.0
+      "y": 0.0,
+      "z": 75.0
     },
     "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Bulb"
   }
@@ -480,8 +480,8 @@ file changes:
           {
               def SphereLight "Bulb"
               {
-                  float inputs:radius = 0.05
-                  double3 xformOp:translate = (0, 0.650000006, 10)
+                  float inputs:radius = 0.0005
+                  double3 xformOp:translate = (0, 0.750000006, 0)
                   uniform token[] xformOpOrder = ["xformOp:translate"]
               }
           }
@@ -499,8 +499,8 @@ composed scene changes:
   +                {
   +                    def SphereLight "Bulb"
   +                    {
-  +                        float inputs:radius = 0.05
-  +                        double3 xformOp:translate = (0, 0.650000006, 10)
+  +                        float inputs:radius = 0.0005
+  +                        double3 xformOp:translate = (0, 0.750000006, 0)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +                }
@@ -508,14 +508,14 @@ composed scene changes:
            }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -1005.0000, 0.0000)..(20.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -1005.0000, 0.0000)..(20.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -1005.0000, 0.0000)..(20.0000, 20.0000, 70.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 75.0500)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 75.0500)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 75.0500)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
-  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, -1005.0000, 60.0000)..(5.0000, -995.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, -1000.0000, 65.0000)  bounds (-5.0000, -1005.0000, 60.0000)..(5.0000, -995.0000, 70.0000)
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.0500, -0.0500, 74.9500)..(0.0500, 0.0500, 75.0500)
+  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, 0.0000, 75.0000)  bounds (-0.0500, -0.0500, 74.9500)..(0.0500, 0.0500, 75.0500)
 
 validation:
   valid, no issues
@@ -533,17 +533,17 @@ SUMMARY
     ~ file assets/lamp/lgt.usda
     + prim /Scene/Props/Lamp_01/asset/lgt/Panel [RectLight]
           applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          attr xformOp:translate: (0, 0, 0.6)
+          attr xformOp:translate: (0, 0.6, 0)
           attr xformOpOrder: ('xformOp:translate')
-          bounds: (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-          world position: (0.0000, -60.0000, 0.0000)
-    ~ /Scene  bounds: (-20.0000, -1005.0000, 0.0000)..(20.0000, 20.0000, 70.0000) → (-50.0000, -1005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
+          bounds: (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+          world position: (0.0000, 0.0000, 60.0000)
+    ~ /Scene  bounds: (-20.0000, -20.0000, 0.0000)..(20.0000, 20.0000, 75.0500) → (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the answer says /Scene/Props/Lamp_01/asset/lgt/Panel is at (0.0000, 0.0000, 0.6000), but it is at (0.0000, -60.0000, 0.0000)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -558,7 +558,7 @@ full answer:
     "position": {
       "x": 0.0,
       "y": 0.0,
-      "z": 0.6
+      "z": 60.0
     },
     "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Panel"
   }
@@ -582,7 +582,7 @@ file changes:
       +
       +        def RectLight "Panel"
       +        {
-      +            double3 xformOp:translate = (0, 0, 0.6)
+      +            double3 xformOp:translate = (0, 0.6, 0)
       +            uniform token[] xformOpOrder = ["xformOp:translate"]
       +        }
            }
@@ -597,22 +597,22 @@ composed scene changes:
   +
   +                    def RectLight "Panel"
   +                    {
-  +                        double3 xformOp:translate = (0, 0, 0.6)
+  +                        double3 xformOp:translate = (0, 0.6, 0)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
                    }
                }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
-  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(50.0000, -60.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, -1000.0000, 65.0000)  bounds (-5.0000, -1005.0000, 60.0000)..(5.0000, -995.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, -60.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -0.0500, 10.0000)..(50.0000, 0.0500, 110.0000)
+  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, 0.0000, 75.0000)  bounds (-0.0500, -0.0500, 74.9500)..(0.0500, 0.0500, 75.0500)
+  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, 0.0000, 60.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
 
 validation:
   valid, no issues
@@ -637,7 +637,7 @@ SUMMARY
     + prim /Scene/Props/Lamp_02/asset [Xform]
           attr xformOp:rotateX: 90
           attr xformOpOrder: ('xformOp:rotateX')
-          bounds: (150.0000, -1005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
+          bounds: (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
           kind: component
           world position: (200.0000, 0.0000, 0.0000)
     + prim /Scene/Props/Lamp_02/asset/Base [Cube]
@@ -662,22 +662,22 @@ SUMMARY
           world position: (200.0000, 0.0000, 0.0000)
     + prim /Scene/Props/Lamp_02/asset/lgt/Bulb [SphereLight]
           applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          attr inputs:radius: 0.05
-          attr xformOp:translate: (0, 0.65, 10)
+          attr inputs:radius: 0.0005
+          attr xformOp:translate: (0, 0.75, 0)
           attr xformOpOrder: ('xformOp:translate')
-          bounds: (195.0000, -1005.0000, 60.0000)..(205.0000, -995.0000, 70.0000)
-          world position: (200.0000, -1000.0000, 65.0000)
+          bounds: (199.9500, -0.0500, 74.9500)..(200.0500, 0.0500, 75.0500)
+          world position: (200.0000, 0.0000, 75.0000)
     + prim /Scene/Props/Lamp_02/asset/lgt/Panel [RectLight]
           applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          attr xformOp:translate: (0, 0, 0.6)
+          attr xformOp:translate: (0, 0.6, 0)
           attr xformOpOrder: ('xformOp:translate')
-          bounds: (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
-          world position: (200.0000, -60.0000, 0.0000)
+          bounds: (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
+          world position: (200.0000, 0.0000, 60.0000)
     + prim /Scene/Props/Lamp_02/asset/mtl [Scope]
     + prim /Scene/Props/Lamp_02/asset/mtl/brass [Material] (+2 prims inside)
           attr outputs:surface: (no value)
           connect outputs:surface: /Scene/Props/Lamp_02/asset/mtl/brass/PreviewSurface.outputs:surface
-    ~ /Scene  bounds: (-50.0000, -1005.0000, -50.0000)..(50.0000, 20.0000, 70.0000) → (-50.0000, -1005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
+    ~ /Scene  bounds: (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000) → (-50.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -820,14 +820,14 @@ composed scene changes:
   +                {
   +                    def SphereLight "Bulb"
   +                    {
-  +                        float inputs:radius = 0.05
-  +                        double3 xformOp:translate = (0, 0.650000006, 10)
+  +                        float inputs:radius = 0.0005
+  +                        double3 xformOp:translate = (0, 0.750000006, 0)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +
   +                    def RectLight "Panel"
   +                    {
-  +                        double3 xformOp:translate = (0, 0, 0.6)
+  +                        double3 xformOp:translate = (0, 0.6, 0)
   +                        uniform token[] xformOpOrder = ["xformOp:translate"]
   +                    }
   +                }
@@ -837,23 +837,23 @@ composed scene changes:
    }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
-  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -1005.0000, -50.0000)..(50.0000, -60.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, -1000.0000, 65.0000)  bounds (-5.0000, -1005.0000, 60.0000)..(5.0000, -995.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, -60.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -1005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -1005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -0.0500, 10.0000)..(50.0000, 0.0500, 110.0000)
+  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, 0.0000, 75.0000)  bounds (-0.0500, -0.0500, 74.9500)..(0.0500, 0.0500, 75.0500)
+  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, 0.0000, 60.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_02/asset/Base  [Cube]  at (200.0000, 0.0000, 5.0000)  bounds (185.0000, -15.0000, 0.0000)..(215.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_02/asset/Shade  [Cube]  at (200.0000, 0.0000, 50.0000)  bounds (180.0000, -20.0000, 35.0000)..(220.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_02/asset/mtl/brass
   /Scene/Props/Lamp_02/asset/mtl  [Scope]
-  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -1005.0000, -50.0000)..(250.0000, -60.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Bulb  [SphereLight]  at (200.0000, -1000.0000, 65.0000)  bounds (195.0000, -1005.0000, 60.0000)..(205.0000, -995.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, -60.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
+  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -0.0500, 10.0000)..(250.0000, 0.0500, 110.0000)
+  /Scene/Props/Lamp_02/asset/lgt/Bulb  [SphereLight]  at (200.0000, 0.0000, 75.0000)  bounds (199.9500, -0.0500, 74.9500)..(200.0500, 0.0500, 75.0500)
+  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, 0.0000, 60.0000)  bounds (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
 
 validation:
   valid, no issues
@@ -869,9 +869,12 @@ SUMMARY
 
   what changed:
     ~ file assets/lamp/lgt.usda
-    ~ /Scene  bounds: (-50.0000, -1005.0000, -50.0000)..(250.0000, 20.0000, 70.0000) → (-50.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
-    ~ /Scene/Props/Lamp_01/asset/lgt/Bulb  attr xformOp:translate: (0, 0.65, 10) → (0, 0.65, 20)
-    ~ /Scene/Props/Lamp_02/asset/lgt/Bulb  attr xformOp:translate: (0, 0.65, 10) → (0, 0.65, 20)
+    ~ /Scene/Props/Lamp_01/asset/lgt/Bulb  attr xformOp:translate: (0, 0.75, 0) → (0, 0.85, 0)
+    ~ /Scene/Props/Lamp_01/asset/lgt/Bulb  bounds: (-0.0500, -0.0500, 74.9500)..(0.0500, 0.0500, 75.0500) → (-0.0500, -0.0500, 84.9500)..(0.0500, 0.0500, 85.0500)
+    ~ /Scene/Props/Lamp_01/asset/lgt/Bulb  world position: (0.0000, 0.0000, 75.0000) → (0.0000, 0.0000, 85.0000)
+    ~ /Scene/Props/Lamp_02/asset/lgt/Bulb  attr xformOp:translate: (0, 0.75, 0) → (0, 0.85, 0)
+    ~ /Scene/Props/Lamp_02/asset/lgt/Bulb  bounds: (199.9500, -0.0500, 74.9500)..(200.0500, 0.0500, 75.0500) → (199.9500, -0.0500, 84.9500)..(200.0500, 0.0500, 85.0500)
+    ~ /Scene/Props/Lamp_02/asset/lgt/Bulb  world position: (200.0000, 0.0000, 75.0000) → (200.0000, 0.0000, 85.0000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -905,9 +908,9 @@ file changes:
       +++ assets/lamp/lgt.usda (after)
       @@ -11,5 +11,5 @@
                {
-                   float inputs:radius = 0.05
-      -            double3 xformOp:translate = (0, 0.650000006, 10)
-      +            double3 xformOp:translate = (0, 0.650000006, 20)
+                   float inputs:radius = 0.0005
+      -            double3 xformOp:translate = (0, 0.750000006, 0)
+      +            double3 xformOp:translate = (0, 0.850000006, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate"]
                }
 
@@ -916,37 +919,37 @@ composed scene changes:
   +++ composed scene (after)
   @@ -78,5 +78,5 @@
                        {
-                           float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.650000006, 10)
-  +                        double3 xformOp:translate = (0, 0.650000006, 20)
+                           float inputs:radius = 0.0005
+  -                        double3 xformOp:translate = (0, 0.750000006, 0)
+  +                        double3 xformOp:translate = (0, 0.850000006, 0)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
   @@ -155,5 +155,5 @@
                        {
-                           float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.650000006, 10)
-  +                        double3 xformOp:translate = (0, 0.650000006, 20)
+                           float inputs:radius = 0.0005
+  -                        double3 xformOp:translate = (0, 0.750000006, 0)
+  +                        double3 xformOp:translate = (0, 0.850000006, 0)
                            uniform token[] xformOpOrder = ["xformOp:translate"]
                        }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
-  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(50.0000, -60.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, -2000.0000, 65.0000)  bounds (-5.0000, -2005.0000, 60.0000)..(5.0000, -1995.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, -60.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -0.0500, 10.0000)..(50.0000, 0.0500, 110.0000)
+  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, 0.0000, 85.0000)  bounds (-0.0500, -0.0500, 84.9500)..(0.0500, 0.0500, 85.0500)
+  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, 0.0000, 60.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_02/asset/Base  [Cube]  at (200.0000, 0.0000, 5.0000)  bounds (185.0000, -15.0000, 0.0000)..(215.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_02/asset/Shade  [Cube]  at (200.0000, 0.0000, 50.0000)  bounds (180.0000, -20.0000, 35.0000)..(220.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_02/asset/mtl/brass
   /Scene/Props/Lamp_02/asset/mtl  [Scope]
-  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -2005.0000, -50.0000)..(250.0000, -60.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Bulb  [SphereLight]  at (200.0000, -2000.0000, 65.0000)  bounds (195.0000, -2005.0000, 60.0000)..(205.0000, -1995.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, -60.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
+  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -0.0500, 10.0000)..(250.0000, 0.0500, 110.0000)
+  /Scene/Props/Lamp_02/asset/lgt/Bulb  [SphereLight]  at (200.0000, 0.0000, 85.0000)  bounds (199.9500, -0.0500, 84.9500)..(200.0500, 0.0500, 85.0500)
+  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, 0.0000, 60.0000)  bounds (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
 
 validation:
   valid, no issues
@@ -995,23 +998,23 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(50.0000, 20.0000, 70.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
-  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -2005.0000, -50.0000)..(50.0000, -60.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, -2000.0000, 65.0000)  bounds (-5.0000, -2005.0000, 60.0000)..(5.0000, -1995.0000, 70.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, -60.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000)
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -0.0500, 10.0000)..(50.0000, 0.0500, 110.0000)
+  /Scene/Props/Lamp_01/asset/lgt/Bulb  [SphereLight]  at (0.0000, 0.0000, 85.0000)  bounds (-0.0500, -0.0500, 84.9500)..(0.0500, 0.0500, 85.0500)
+  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, 0.0000, 60.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_02/asset/Base  [Cube]  at (200.0000, 0.0000, 5.0000)  bounds (185.0000, -15.0000, 0.0000)..(215.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_02/asset/Shade  [Cube]  at (200.0000, 0.0000, 50.0000)  bounds (180.0000, -20.0000, 35.0000)..(220.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_02/asset/mtl/brass
   /Scene/Props/Lamp_02/asset/mtl  [Scope]
-  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -2005.0000, -50.0000)..(250.0000, -60.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Bulb  [SphereLight]  at (200.0000, -2000.0000, 65.0000)  bounds (195.0000, -2005.0000, 60.0000)..(205.0000, -1995.0000, 70.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, -60.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
+  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -0.0500, 10.0000)..(250.0000, 0.0500, 110.0000)
+  /Scene/Props/Lamp_02/asset/lgt/Bulb  [SphereLight]  at (200.0000, 0.0000, 85.0000)  bounds (199.9500, -0.0500, 84.9500)..(200.0500, 0.0500, 85.0500)
+  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, 0.0000, 60.0000)  bounds (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
 
 validation:
   valid, no issues
@@ -1028,7 +1031,6 @@ SUMMARY
     ~ file assets/lamp/lgt.usda
     - prim /Scene/Props/Lamp_01/asset/lgt/Bulb [SphereLight]
     - prim /Scene/Props/Lamp_02/asset/lgt/Bulb [SphereLight]
-    ~ /Scene  bounds: (-50.0000, -2005.0000, -50.0000)..(250.0000, 20.0000, 70.0000) → (-50.0000, -60.0000, -50.0000)..(250.0000, 20.0000, 65.0000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -1067,8 +1069,8 @@ file changes:
            {
       -        def SphereLight "Bulb"
       -        {
-      -            float inputs:radius = 0.05
-      -            double3 xformOp:translate = (0, 0.650000006, 20)
+      -            float inputs:radius = 0.0005
+      -            double3 xformOp:translate = (0, 0.850000006, 0)
       -            uniform token[] xformOpOrder = ["xformOp:translate"]
       -        }
       -
@@ -1083,8 +1085,8 @@ composed scene changes:
                    {
   -                    def SphereLight "Bulb"
   -                    {
-  -                        float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.650000006, 20)
+  -                        float inputs:radius = 0.0005
+  -                        double3 xformOp:translate = (0, 0.850000006, 0)
   -                        uniform token[] xformOpOrder = ["xformOp:translate"]
   -                    }
   -
@@ -1095,8 +1097,8 @@ composed scene changes:
                    {
   -                    def SphereLight "Bulb"
   -                    {
-  -                        float inputs:radius = 0.05
-  -                        double3 xformOp:translate = (0, 0.650000006, 20)
+  -                        float inputs:radius = 0.0005
+  -                        double3 xformOp:translate = (0, 0.850000006, 0)
   -                        uniform token[] xformOpOrder = ["xformOp:translate"]
   -                    }
   -
@@ -1104,21 +1106,21 @@ composed scene changes:
                        {
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(250.0000, 20.0000, 65.0000)
-  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, 20.0000, 65.0000)
-  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, 20.0000, 65.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
-  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, -60.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, 20.0000, 65.0000)
-  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, 0.0000, 60.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_02/asset/Base  [Cube]  at (200.0000, 0.0000, 5.0000)  bounds (185.0000, -15.0000, 0.0000)..(215.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_02/asset/Shade  [Cube]  at (200.0000, 0.0000, 50.0000)  bounds (180.0000, -20.0000, 35.0000)..(220.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_02/asset/mtl/brass
   /Scene/Props/Lamp_02/asset/mtl  [Scope]
-  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, -60.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
+  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, 0.0000, 60.0000)  bounds (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
 
 validation:
   valid, no issues
@@ -1156,12 +1158,12 @@ full answer:
           "max": {
             "x": 50.0,
             "y": 20.0,
-            "z": 65.0
+            "z": 110.0
           },
           "min": {
             "x": -50.0,
-            "y": -60.0,
-            "z": -50.0
+            "y": -20.0,
+            "z": -0.0
           }
         },
         "kind": "asset",
@@ -1185,8 +1187,8 @@ full answer:
         "light_type": "RectLight",
         "position": {
           "x": 0.0,
-          "y": 0.0,
-          "z": 0.6
+          "y": 0.6,
+          "z": 0.0
         },
         "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Panel"
       },
@@ -1196,12 +1198,12 @@ full answer:
           "max": {
             "x": 250.0,
             "y": 20.0,
-            "z": 65.0
+            "z": 110.0
           },
           "min": {
             "x": 150.0,
-            "y": -60.0,
-            "z": -50.0
+            "y": -20.0,
+            "z": -0.0
           }
         },
         "kind": "asset",
@@ -1225,8 +1227,8 @@ full answer:
         "light_type": "RectLight",
         "position": {
           "x": 0.0,
-          "y": 0.0,
-          "z": 0.6
+          "y": 0.6,
+          "z": 0.0
         },
         "prim_path": "/Scene/Props/Lamp_02/asset/lgt/Panel"
       }
@@ -1249,21 +1251,21 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(250.0000, 20.0000, 65.0000)
-  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, 20.0000, 65.0000)
-  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, 20.0000, 65.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -20.0000, 0.0000)..(50.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0000, 5.0000)  bounds (-15.0000, -15.0000, 0.0000)..(15.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_01/asset/Shade  [Cube]  at (0.0000, 0.0000, 50.0000)  bounds (-20.0000, -20.0000, 35.0000)..(20.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_01/asset/mtl/brass
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
-  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, -60.0000, 0.0000)  bounds (-50.0000, -60.0000, -50.0000)..(50.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, 20.0000, 65.0000)
-  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, 20.0000, 65.0000)
+  /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_01/asset/lgt/Panel  [RectLight]  at (0.0000, 0.0000, 60.0000)  bounds (-50.0000, 0.0000, 10.0000)..(50.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
+  /Scene/Props/Lamp_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -20.0000, 0.0000)..(250.0000, 20.0000, 110.0000)
   /Scene/Props/Lamp_02/asset/Base  [Cube]  at (200.0000, 0.0000, 5.0000)  bounds (185.0000, -15.0000, 0.0000)..(215.0000, 15.0000, 10.0000)  material (none)
   /Scene/Props/Lamp_02/asset/Shade  [Cube]  at (200.0000, 0.0000, 50.0000)  bounds (180.0000, -20.0000, 35.0000)..(220.0000, 20.0000, 65.0000)  material /Scene/Props/Lamp_02/asset/mtl/brass
   /Scene/Props/Lamp_02/asset/mtl  [Scope]
-  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
-  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, -60.0000, 0.0000)  bounds (150.0000, -60.0000, -50.0000)..(250.0000, -60.0000, 50.0000)
+  /Scene/Props/Lamp_02/asset/lgt  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
+  /Scene/Props/Lamp_02/asset/lgt/Panel  [RectLight]  at (200.0000, 0.0000, 60.0000)  bounds (150.0000, 0.0000, 10.0000)..(250.0000, 0.0000, 110.0000)
 
 validation:
   valid, no issues

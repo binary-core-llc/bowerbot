@@ -46,14 +46,20 @@ Asset lights support two coordinate modes via the `position_mode`
 parameter. Choose the one that matches what the user is asking for.
 
 #### `position_mode: "bounds_offset"` (default)
-Translate values are OFFSETS from the asset's bounding box surfaces.
-Use this for "above/below/next to" placements relative to the whole
-asset — e.g. a bulb above a desk lamp.
+Translate values are OFFSETS from the asset's bounding box, in project
+units. Use this for "above/below/next to" placements relative to the
+whole asset — e.g. a bulb above a desk lamp.
+
+The value along the project's up axis (`translate_y` in a Y-up
+project, `translate_z` in a Z-up project) is measured from the top
+surface, or from the bottom surface when negative. The other two
+values are measured from the center of the box. In a Y-up project in
+meters:
 
 - translate_y = 1.0 → 1 meter above the top surface
-- translate_y = -0.5 → 0.5m below the bottom surface
-- translate_x = 0.5 → 0.5m to the right of the right face
-- If no translate is provided → defaults to 0.5m above top center
+- translate_y = -0.5 → 0.5 m below the bottom surface
+- translate_x = 0.5 → 0.5 m to the side of the center
+- If no up value is provided → defaults to 0.5 m above the top
 
 Example: "add a point light to the desk lamp" → `asset_prim_path`
 pointing to the lamp, `position_mode: "bounds_offset"` (or omit,
@@ -73,13 +79,13 @@ Workflow for interior fixtures:
 4. Call `create_light` with `position_mode: "absolute"` and those
    center coordinates as `translate_x/y/z`
 
-Values are always in meters. Spatial inputs (radius, width, height,
-length) inside `attributes` are also in meters; BowerBot scales them
-to the asset's native units for asset lights.
+Values are always in project units. Spatial inputs (radius, width,
+height, length) inside `attributes` are also in project units; BowerBot
+scales them to the asset's native units for asset lights.
 
-`create_light` returns the **resolved** `position` (in bounds_offset /
-absolute modes the final asset-local coordinates differ from what you
-passed) and, for asset lights, the composed scene `prim_path` (also
+`create_light` returns the light's `position` in the world (for an
+asset light this is where it ended up, not the offsets you passed)
+and, for asset lights, the composed scene `prim_path` (also
 restated in the `message`). Pass that `prim_path` to `update_light` or
 `set_prim_attribute` for later per-placement tweaks.
 

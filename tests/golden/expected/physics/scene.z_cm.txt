@@ -157,7 +157,7 @@ SUMMARY
     ~ file scene.usda
     + prim /Scene/Physics [Scope]
     + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityDirection: (0, 0, -1)
           attr physics:gravityMagnitude: 981
 
   project state after the step:
@@ -175,8 +175,8 @@ full answer:
   {
     "gravity_direction": [
       0.0,
-      -1.0,
-      0.0
+      0.0,
+      -1.0
     ],
     "gravity_magnitude": 981.0,
     "prim_path": "/Scene/Physics/PhysicsScene"
@@ -197,7 +197,7 @@ file changes:
       +    {
       +        def PhysicsScene "PhysicsScene"
       +        {
-      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            vector3f physics:gravityDirection = (0, 0, -1)
       +            float physics:gravityMagnitude = 981
       +        }
       +    }
@@ -214,7 +214,7 @@ composed scene changes:
   +    {
   +        def PhysicsScene "PhysicsScene"
   +        {
-  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            vector3f physics:gravityDirection = (0, 0, -1)
   +            float physics:gravityMagnitude = 981
   +        }
   +    }
@@ -239,6 +239,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
+    ~ /Scene/Physics/PhysicsScene  attr physics:gravityDirection: (0, 0, -1) → (0, -1, 0)
     ~ /Scene/Physics/PhysicsScene  attr physics:gravityMagnitude: 981 → 5
 
   project state after the step:
@@ -271,10 +272,12 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -15,5 +15,5 @@
+      @@ -14,6 +14,6 @@
+               def PhysicsScene "PhysicsScene"
                {
-                   vector3f physics:gravityDirection = (0, -1, 0)
+      -            vector3f physics:gravityDirection = (0, 0, -1)
       -            float physics:gravityMagnitude = 981
+      +            vector3f physics:gravityDirection = (0, -1, 0)
       +            float physics:gravityMagnitude = 5
                }
            }
@@ -282,10 +285,12 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -17,5 +17,5 @@
+  @@ -16,6 +16,6 @@
+           def PhysicsScene "PhysicsScene"
            {
-               vector3f physics:gravityDirection = (0, -1, 0)
+  -            vector3f physics:gravityDirection = (0, 0, -1)
   -            float physics:gravityMagnitude = 981
+  +            vector3f physics:gravityDirection = (0, -1, 0)
   +            float physics:gravityMagnitude = 5
            }
        }
@@ -309,7 +314,7 @@ SUMMARY
   what changed:
     ~ file scene.usda
     + prim /Scene/Physics/Space [PhysicsScene]
-          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityDirection: (0, 0, -1)
           attr physics:gravityMagnitude: 0
 
   project state after the step:
@@ -327,8 +332,8 @@ full answer:
   {
     "gravity_direction": [
       0.0,
-      -1.0,
-      0.0
+      0.0,
+      -1.0
     ],
     "gravity_magnitude": 0.0,
     "prim_path": "/Scene/Physics/Space"
@@ -348,7 +353,7 @@ file changes:
       +
       +        def PhysicsScene "Space"
       +        {
-      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            vector3f physics:gravityDirection = (0, 0, -1)
       +            float physics:gravityMagnitude = 0
       +        }
            }
@@ -363,7 +368,7 @@ composed scene changes:
   +
   +        def PhysicsScene "Space"
   +        {
-  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            vector3f physics:gravityDirection = (0, 0, -1)
   +            float physics:gravityMagnitude = 0
   +        }
        }
@@ -415,8 +420,8 @@ full answer:
       {
         "gravity_direction": [
           0.0,
-          -1.0,
-          0.0
+          0.0,
+          -1.0
         ],
         "gravity_magnitude": 0.0,
         "name": "Space",
@@ -486,7 +491,7 @@ file changes:
       -
       -        def PhysicsScene "Space"
       -        {
-      -            vector3f physics:gravityDirection = (0, -1, 0)
+      -            vector3f physics:gravityDirection = (0, 0, -1)
       -            float physics:gravityMagnitude = 0
       -        }
            }
@@ -501,7 +506,7 @@ composed scene changes:
   -
   -        def PhysicsScene "Space"
   -        {
-  -            vector3f physics:gravityDirection = (0, -1, 0)
+  -            vector3f physics:gravityDirection = (0, 0, -1)
   -            float physics:gravityMagnitude = 0
   -        }
        }

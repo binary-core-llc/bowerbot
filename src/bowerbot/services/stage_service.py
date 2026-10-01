@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot.utils import authoring
@@ -171,19 +172,18 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             msg = f"Failed to compute world-to-local for {ref_prim_path}"
             raise RuntimeError(msg)
         local = authoring.placement.resolve_asset_position(
-            schemas.PositionMode.ABSOLUTE, None, tx, ty, tz,
-            has_explicit_y=True,
+            schemas.PositionMode.ABSOLUTE, (tx, ty, tz),
+            asset_dir=container_dir,
             world_to_local_mat=world_to_local_mat,
-            asset_mpu=authoring.asset_folder.get_mpu(
-                container_dir, project_mpu=state.meters_per_unit,
-            ),
+            up_given=True,
+            project_mpu=state.meters_per_unit,
+            project_up_axis=state.up_axis.value,
         )
 
         success = authoring.placement.update_nested_asset_transform(
             container_dir, group, prim_name,
             translate=local,
             rotate=(0.0, ry, 0.0),
-            project_mpu=state.meters_per_unit,
         )
         if not success:
             msg = f"Failed to update nested transform for {prim_path}"
@@ -330,20 +330,35 @@ def list_prim_children(state: scene_state.SceneState, params: dict[str, Any]) ->
 
 
 def compute_grid_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Compute evenly spaced positions for N objects in a grid."""
+    """Compute evenly spaced positions for N objects in a grid on the project's floor."""
     count = int(params["count"])
-    spacing = float(params.get("spacing", 2.0))
+    mpu = state.meters_per_unit
+    spacing = float(
+        params.get("spacing", constants.PlacementDefaults.GRID_SPACING_METERS / mpu),
+    )
+    up = usd.metrics.axis_index(state.up_axis.value)
 
     placements = layout.grid.suggest(
         count,
         spacing=spacing,
+        room_size=(
+            constants.PlacementDefaults.GRID_ROOM_METERS[0] / mpu,
+            constants.PlacementDefaults.GRID_ROOM_METERS[1] / mpu,
+        ),
+        up=up,
     )
+    first, second = usd.metrics.horizontal_axes(up)
+    names = "xyz"
     positions = [
-        {"x": round(p[0], 2), "z": round(p[2], 2)} for p in placements
+        {names[first]: round(p[first], 2), names[second]: round(p[second], 2)}
+        for p in placements
     ]
     return {
         "count": count,
         "spacing": spacing,
         "positions": positions,
-        "message": f"Computed {count} positions in grid with {spacing}m spacing.",
+        "message": (
+            f"Computed {count} positions on the {names[first]}-{names[second]} floor "
+            f"plane, {spacing} project units apart."
+        ),
     }

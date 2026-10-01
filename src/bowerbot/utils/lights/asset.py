@@ -31,7 +31,11 @@ def add(
     *,
     project_mpu: float,
 ) -> str:
-    """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path."""
+    """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path.
+
+    *light*'s translate is in the asset's own units and axes; its lengths
+    (radius, width, ...) are in project units and are converted here.
+    """
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
 
@@ -72,13 +76,7 @@ def add(
     lights.prim.apply_light_link(light_prim, light.light_link_includes)
 
     xformable = UsdGeom.Xformable(light_prim)
-    xformable.AddTranslateOp().Set(
-        Gf.Vec3d(
-            light.translate[0] * factor,
-            light.translate[1] * factor,
-            light.translate[2] * factor,
-        ),
-    )
+    xformable.AddTranslateOp().Set(Gf.Vec3d(*light.translate))
     if any(v != 0.0 for v in light.rotate):
         xformable.AddRotateXYZOp().Set(Gf.Vec3f(*light.rotate))
 
@@ -99,9 +97,11 @@ def update(
     translate: tuple[float, float, float] | None = None,
     rotate: tuple[float, float, float] | None = None,
     texture: str | None = None,
-    project_mpu: float,
 ) -> None:
-    """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``."""
+    """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``.
+
+    *translate* is in the asset's own units and axes.
+    """
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     if not lgt_path.exists():
         msg = f"No lights authored in {asset_dir.name}/{constants.ASWFLayerNames.LGT}"
@@ -128,16 +128,8 @@ def update(
         if tex_attr:
             tex_attr.Set(Sdf.AssetPath(texture))
 
-    factor = authoring.asset_folder.unit_factor(asset_dir, project_mpu=project_mpu)
     if translate is not None:
-        usd.transforms.update_translate_op(
-            prim,
-            Gf.Vec3d(
-                translate[0] * factor,
-                translate[1] * factor,
-                translate[2] * factor,
-            ),
-        )
+        usd.transforms.update_translate_op(prim, Gf.Vec3d(*translate))
     if rotate is not None:
         usd.transforms.update_rotate_op(prim, Gf.Vec3f(*rotate))
 

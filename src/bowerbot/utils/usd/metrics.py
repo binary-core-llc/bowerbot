@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+from pxr import Gf
 from pxr import Usd
 from pxr import UsdGeom
 
@@ -67,6 +68,14 @@ def conform(
     elif asset_up_axis == "Z" and parent_up_axis == "Y":
         correction = -90.0
     return unit_scale, correction
+
+
+def conform_matrix(unit_scale: float, correction: float | None) -> Gf.Matrix4d:
+    """The matrix a placement applies to an asset: its up-axis turn, then its unit scale."""
+    matrix = Gf.Matrix4d(1.0)
+    if correction is not None:
+        matrix.SetRotate(Gf.Rotation(Gf.Vec3d.XAxis(), correction))
+    return matrix * Gf.Matrix4d(1.0).SetScale(unit_scale)
 
 # ── World axes ──
 

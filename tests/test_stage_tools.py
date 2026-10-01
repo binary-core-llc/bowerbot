@@ -11,6 +11,7 @@ from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 
+from bowerbot import config
 from tests import _helpers
 
 
@@ -386,6 +387,18 @@ def test_compute_grid_layout_single():
         }))
         assert r.success, r.error
         assert len(r.data["positions"]) == 1
+
+
+def test_compute_grid_layout_uses_the_project_floor_and_units():
+    """In a Z-up centimeter project the grid lies on x-y, in centimeters."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, _ = _helpers.make_state(
+            Path(tmp), up_axis=config.UpAxis.Z, meters_per_unit=0.01,
+        )
+        r = asyncio.run(_helpers.exec_tool(state, "compute_grid_layout", {"count": 2}))
+        assert r.success, r.error
+        assert r.data["spacing"] == 200.0
+        assert r.data["positions"] == [{"x": 400.0, "y": 400.0}, {"x": 600.0, "y": 400.0}]
 
 
 # ── move_asset with rotation ──

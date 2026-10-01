@@ -133,13 +133,7 @@ def asset_has_root_payload(asset_dir: Path) -> bool:
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return False
-    plist = prim_spec.payloadList
-    return bool(
-        plist.prependedItems
-        or plist.appendedItems
-        or plist.addedItems
-        or plist.explicitItems,
-    )
+    return bool(prim_spec.payloadList.GetAppliedItems())
 
 
 def clear_root_payload(asset_dir: Path) -> None:

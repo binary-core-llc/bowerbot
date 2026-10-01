@@ -16,23 +16,26 @@ logger = logging.getLogger(__name__)
 # ── Reading references ──
 
 
+def reference_paths(prim_spec: Sdf.PrimSpec) -> list[str]:
+    """Asset paths of the references a prim spec adds, in the order they apply."""
+    return [
+        arc.assetPath for arc in prim_spec.referenceList.GetAppliedItems() if arc.assetPath
+    ]
+
+
+def payload_paths(prim_spec: Sdf.PrimSpec) -> list[str]:
+    """Asset paths of the payloads a prim spec adds, in the order they apply."""
+    return [
+        arc.assetPath for arc in prim_spec.payloadList.GetAppliedItems() if arc.assetPath
+    ]
+
+
 def get_prim_ref_paths(prim: Usd.Prim) -> list[str]:
     """Return all reference asset paths authored on *prim*."""
     refs = prim.GetMetadata("references")
     if not refs:
         return []
-    paths: list[str] = []
-    for ref_list in (
-        refs.prependedItems,
-        refs.appendedItems,
-        refs.explicitItems,
-    ):
-        if not ref_list:
-            continue
-        for ref in ref_list:
-            if ref.assetPath:
-                paths.append(ref.assetPath)
-    return paths
+    return [arc.assetPath for arc in refs.GetAppliedItems() if arc.assetPath]
 
 
 def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:
@@ -60,16 +63,8 @@ def layer_file_targets(layer: Sdf.Layer) -> set[Path]:
     def visit(path: Sdf.Path) -> None:
         spec = layer.GetObjectAtPath(path)
         if isinstance(spec, Sdf.PrimSpec):
-            for proxy in (spec.referenceList, spec.payloadList):
-                for items in (
-                    proxy.prependedItems,
-                    proxy.appendedItems,
-                    proxy.addedItems,
-                    proxy.explicitItems,
-                    proxy.orderedItems,
-                ):
-                    for arc in items:
-                        add(arc.assetPath)
+            for asset_path in (*reference_paths(spec), *payload_paths(spec)):
+                add(asset_path)
         elif isinstance(spec, Sdf.AttributeSpec):
             value = spec.default
             if isinstance(value, Sdf.AssetPath):
@@ -160,25 +155,8 @@ def _walk_prim_arcs(
     if prim_spec is None:
         return
 
-    refs = prim_spec.referenceList
-    for list_op in (refs.prependedItems, refs.appendedItems, refs.explicitItems):
-        for ref in list_op:
-            if ref.assetPath:
-                _walk(
-                    (parent_dir / ref.assetPath).resolve(),
-                    visited, found, missing,
-                )
-
-    payloads = prim_spec.payloadList
-    for list_op in (
-        payloads.prependedItems, payloads.appendedItems, payloads.explicitItems,
-    ):
-        for payload in list_op:
-            if payload.assetPath:
-                _walk(
-                    (parent_dir / payload.assetPath).resolve(),
-                    visited, found, missing,
-                )
+    for asset_path in (*reference_paths(prim_spec), *payload_paths(prim_spec)):
+        _walk((parent_dir / asset_path).resolve(), visited, found, missing)
 
     for child in prim_spec.nameChildren:
         _walk_prim_arcs(child, parent_dir, visited, found, missing)

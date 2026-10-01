@@ -41,19 +41,10 @@ def validate_asset(asset_dir: Path) -> list[schemas.ValidationIssue]:
 
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     root_prim_spec = root_layer.GetPrimAtPath(f"/{default_prim_name}")
-    has_ref = False
-    if root_prim_spec is not None:
-        ref_list = root_prim_spec.referenceList
-        for items in (
-            ref_list.prependedItems,
-            ref_list.appendedItems,
-            ref_list.addedItems,
-            ref_list.explicitItems,
-            ref_list.orderedItems,
-        ):
-            if any(r.assetPath == f"./{constants.ASWFLayerNames.VARIANTS}" for r in items):
-                has_ref = True
-                break
+    has_ref = root_prim_spec is not None and (
+        f"./{constants.ASWFLayerNames.VARIANTS}"
+        in usd.references.reference_paths(root_prim_spec)
+    )
 
     if variants_path.exists() and not has_ref:
         issues.append(schemas.ValidationIssue(

@@ -47,11 +47,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
     attributes = params.get("attributes") or {}
     relationships = params.get("relationships") or {}
     instance_name = params.get("instance_name")
-    explicit_scope = params.get("scope")
-    scope = (
-        physics.scope.validate(explicit_scope) if explicit_scope
-        else physics.scope.autodetect(state.stage, prim_path)
-    )
+    scope = physics.scope.resolve(state.stage, prim_path, params.get("scope"))
 
     if scope == "scene":
         result = physics.apis.apply_in_scene(
@@ -65,18 +61,8 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         )
         return result
 
-    try:
-        asset_dir, ref_prim_path = authoring.placement.require_asset_context(
-            state.stage, prim_path,
-        )
-    except ValueError as exc:
-        raise ValueError(
-            f"{exc} This prim is authored directly in scene.usda, not as "
-            "an asset placement. Retry the call with scope='scene' to "
-            "author physics on this prim directly in scene.usda.",
-        ) from None
-    asset_local_path = authoring.placement.normalize_asset_prim_path(
-        prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
+    asset_dir, asset_local_path = physics.scope.require_asset_target(
+        state.stage, prim_path, scene_retry="author physics on this prim",
     )
 
     cleared = physics.masking.enforce(
@@ -103,10 +89,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         "asset_folder": asset_dir.name,
         "scene_prim_path": prim_path,
         "asset_prim_path": asset_local_path,
-        "cleared_masking_opinions": [
-            {"prim_path": p, "kind": k, "key": key}
-            for p, k, key in cleared
-        ],
+        "cleared_masking_opinions": physics.masking.cleared_rows(cleared),
     }
 
 
@@ -115,10 +98,10 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
     api_name = schemas.PhysicsApiName(params["api_name"])
     prim_path = params["prim_path"]
     instance_name = params.get("instance_name")
-    explicit_scope = params.get("scope")
-    scope = (
-        physics.scope.validate(explicit_scope) if explicit_scope
-        else physics.scope.autodetect(state.stage, prim_path)
+    scope = physics.scope.resolve(state.stage, prim_path, params.get("scope"))
+    api_label = (
+        f"{api_name.value}:{instance_name}" if instance_name
+        else api_name.value
     )
 
     if scope == "scene":
@@ -128,10 +111,6 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
         )
         if changed:
             state.touch_project()
-        api_label = (
-            f"{api_name.value}:{instance_name}" if instance_name
-            else api_name.value
-        )
         return {
             "scope": "scene",
             "prim_path": prim_path,
@@ -145,18 +124,8 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
             ),
         }
 
-    try:
-        asset_dir, ref_prim_path = authoring.placement.require_asset_context(
-            state.stage, prim_path,
-        )
-    except ValueError as exc:
-        raise ValueError(
-            f"{exc} This prim is authored directly in scene.usda, not as "
-            "an asset placement. Retry the call with scope='scene' to "
-            "remove physics from this prim directly in scene.usda.",
-        ) from None
-    asset_local_path = authoring.placement.normalize_asset_prim_path(
-        prim_path, ref_prim_path, authoring.asset_folder.resolve_default_prim_name(asset_dir),
+    asset_dir, asset_local_path = physics.scope.require_asset_target(
+        state.stage, prim_path, scene_retry="remove physics from this prim",
     )
 
     api_props = physics.apis.list_properties(
@@ -181,10 +150,6 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
-    api_label = (
-        f"{api_name.value}:{instance_name}" if instance_name
-        else api_name.value
-    )
     return {
         "scope": "asset",
         "scene_prim_path": prim_path,
@@ -197,10 +162,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
             if changed
             else f"{api_label} was not present on {asset_local_path}"
         ),
-        "cleared_masking_opinions": [
-            {"prim_path": p, "kind": k, "key": key}
-            for p, k, key in cleared
-        ],
+        "cleared_masking_opinions": physics.masking.cleared_rows(cleared),
     }
 
 

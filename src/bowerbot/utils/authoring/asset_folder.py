@@ -278,6 +278,31 @@ def ensure_root_reference(asset_dir: Path, layer_file: str) -> None:
     rebuild_root_references(asset_dir)
 
 
+def drop_root_reference(asset_dir: Path, layer_file: str) -> None:
+    """Remove the asset root's reference to *layer_file*."""
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
+        return
+    layer = Sdf.Layer.FindOrOpen(str(root_file))
+    if layer is None:
+        return
+    prim_spec = layer.GetPrimAtPath(f"/{resolve_default_prim_name(asset_dir)}")
+    if prim_spec is None:
+        return
+    target = f"./{layer_file}"
+    ref_list = prim_spec.referenceList
+    for items in (
+        ref_list.prependedItems,
+        ref_list.appendedItems,
+        ref_list.addedItems,
+        ref_list.explicitItems,
+        ref_list.orderedItems,
+    ):
+        for r in [x for x in items if x.assetPath == target]:
+            items.remove(r)
+    layer.Save()
+
+
 def rebuild_root_references(asset_dir: Path) -> None:
     """Rebuild the root's arcs to BowerBot's layers: geo via payload, the others via references.
 

@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""The asset's ``phy.usda``: its path, creating it, dropping its reference, removing it."""
+"""The asset's ``phy.usda``: its path, creating it, removing it once empty."""
 
 from __future__ import annotations
 
@@ -34,33 +34,6 @@ def ensure(asset_dir: Path) -> Path:
     return path
 
 
-def drop_reference(asset_dir: Path) -> None:
-    """Remove ``./phy.usda`` from the asset root's reference list."""
-    root_file = authoring.asset_folder.find_root_file(asset_dir)
-    if root_file is None:
-        return
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return
-    prim_spec = layer.GetPrimAtPath(
-        f"/{authoring.asset_folder.resolve_default_prim_name(asset_dir)}",
-    )
-    if prim_spec is None:
-        return
-    target = f"./{constants.ASWFLayerNames.PHY}"
-    ref_list = prim_spec.referenceList
-    for items in (
-        ref_list.prependedItems,
-        ref_list.appendedItems,
-        ref_list.addedItems,
-        ref_list.explicitItems,
-        ref_list.orderedItems,
-    ):
-        for r in [x for x in items if x.assetPath == target]:
-            items.remove(r)
-    layer.Save()
-
-
 def cleanup_if_empty(asset_dir: Path) -> bool:
     """Delete ``phy.usda`` and drop its reference when no opinions remain."""
     phy_path = file_path(asset_dir)
@@ -69,7 +42,7 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     if physics.summary.summarize_asset(asset_dir).prims:
         return False
 
-    drop_reference(asset_dir)
+    authoring.asset_folder.drop_root_reference(asset_dir, constants.ASWFLayerNames.PHY)
     layer = Sdf.Layer.FindOrOpen(str(phy_path))
     if layer is not None:
         layer.Clear()

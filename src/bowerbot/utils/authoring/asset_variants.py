@@ -38,34 +38,6 @@ def ensure_variants_layer(asset_dir: Path) -> Path:
     return path
 
 
-def remove_variants_reference(asset_dir: Path) -> None:
-    """Remove the ``variants.usda`` reference from the asset root."""
-    root_file = authoring.asset_folder.find_root_file(asset_dir)
-    if root_file is None:
-        return
-
-    layer = Sdf.Layer.FindOrOpen(str(root_file))
-    if layer is None:
-        return
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
-    if prim_spec is None:
-        return
-
-    target = f"./{constants.ASWFLayerNames.VARIANTS}"
-    ref_list = prim_spec.referenceList
-    for items in (
-        ref_list.prependedItems,
-        ref_list.appendedItems,
-        ref_list.addedItems,
-        ref_list.explicitItems,
-        ref_list.orderedItems,
-    ):
-        for r in [x for x in items if x.assetPath == target]:
-            items.remove(r)
-    layer.Save()
-
-
 # ── Opening variants.usda ──
 
 
@@ -294,7 +266,9 @@ def cleanup_if_empty(asset_dir: Path) -> bool:
     if _has_variant_sets(asset_dir):
         return False
 
-    remove_variants_reference(asset_dir)
+    authoring.asset_folder.drop_root_reference(
+        asset_dir, constants.ASWFLayerNames.VARIANTS,
+    )
     _clear_all_default_variants(asset_dir)
 
     variants_path = variants_layer_path(asset_dir)

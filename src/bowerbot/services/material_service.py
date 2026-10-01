@@ -150,11 +150,9 @@ def list_materials(state: scene_state.SceneState, params: dict[str, Any]) -> dic
     assets_dir = state.resolve_assets_dir()
     all_materials: list[dict] = []
 
-    for entry in sorted(assets_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-        if not (entry / constants.ASWFLayerNames.MTL).exists():
-            continue
+    for entry in authoring.asset_folder.folders_with_layer(
+        assets_dir, constants.ASWFLayerNames.MTL,
+    ):
         folder_materials = materials.layer.list_with_bindings(entry)
         for mat in folder_materials:
             mat["asset_folder"] = entry.name
@@ -199,11 +197,9 @@ def cleanup_unused_materials(
     assets_dir = state.resolve_assets_dir()
     per_folder: list[dict[str, Any]] = []
     total = 0
-    for entry in sorted(assets_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-        if not (entry / constants.ASWFLayerNames.MTL).exists():
-            continue
+    for entry in authoring.asset_folder.folders_with_layer(
+        assets_dir, constants.ASWFLayerNames.MTL,
+    ):
         removed = materials.layer.remove_unused(entry)
         if removed:
             per_folder.append({"asset_folder": entry.name, "removed": removed})

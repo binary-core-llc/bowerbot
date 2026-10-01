@@ -200,6 +200,14 @@ def apply_aswf_root_metadata(
 # ── The asset's layers ──
 
 
+def folders_with_layer(assets_dir: Path, layer_file: str) -> list[Path]:
+    """The asset folders under *assets_dir* that have *layer_file*, sorted by name."""
+    return [
+        entry for entry in sorted(assets_dir.iterdir())
+        if entry.is_dir() and (entry / layer_file).exists()
+    ]
+
+
 def list_alternate_geo_files(asset_dir: Path) -> list[str]:
     """USD files in the asset folder that aren't canonical ASWF layers or root."""
     if not asset_dir.is_dir():

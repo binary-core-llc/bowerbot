@@ -438,11 +438,9 @@ def cleanup_unused_contents(
     assets_dir = state.resolve_assets_dir()
     per_folder: list[dict[str, Any]] = []
     total = 0
-    for entry in sorted(assets_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-        if not (entry / constants.ASWFLayerNames.CONTENTS).exists():
-            continue
+    for entry in authoring.asset_folder.folders_with_layer(
+        assets_dir, constants.ASWFLayerNames.CONTENTS,
+    ):
         removed = authoring.placement.cleanup_unused_contents_in_folder(entry)
         if removed:
             per_folder.append({"asset_folder": entry.name, "removed": removed})
@@ -476,8 +474,9 @@ def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     else:
         results = [
             authoring.intake.freeze_one_asset(assets_dir, entry.name)
-            for entry in sorted(assets_dir.iterdir())
-            if entry.is_dir() and (entry / constants.ASWFLayerNames.GEO).exists()
+            for entry in authoring.asset_folder.folders_with_layer(
+                assets_dir, constants.ASWFLayerNames.GEO,
+            )
         ]
 
     state.touch_project()

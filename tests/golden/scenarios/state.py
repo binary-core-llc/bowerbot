@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Every tool called when nothing is open, and the library tools with no library configured."""
+"""Tools called where they cannot work: nothing open, no library configured, not an asset."""
 
 from __future__ import annotations
 
@@ -192,5 +192,58 @@ SCENARIOS = (
         ),
         conventions=(model.Y_M,),
         library=False,
+    ),
+    model.Scenario(
+        "state/not_an_asset",
+        "Tools that work on an asset, called on a scene prim that is not one.",
+        (
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "Key", **model.at(0.0, 3.0, 0.0)},
+                save="key",
+                note="a scene light: a prim that belongs to no asset",
+            ),
+            model.Step(
+                "add_asset_to_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "parent_prim_path": "$key",
+                    "group": "Props",
+                    **model.at(0.0),
+                },
+            ),
+            model.Step("cleanup_unused_contents", {"asset_prim_path": "$key"}),
+            model.Step("cleanup_unused_materials", {"asset_prim_path": "$key"}),
+            model.Step("create_material", {"prim_path": "$key", "material_name": "oak"}),
+            model.Step(
+                "bind_material",
+                {"prim_path": "$key", "material_file": "$lib/materials/oak.usda"},
+            ),
+            model.Step("remove_material", {"prim_path": "$key"}),
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "Bulb", "asset_prim_path": "$key"},
+                note="a light that should belong to an asset",
+            ),
+            model.Step(
+                "apply_physics_api",
+                {"prim_path": "$key", "api_name": "PhysicsRigidBodyAPI", "scope": "asset"},
+            ),
+            model.Step(
+                "remove_physics_api",
+                {"prim_path": "$key", "api_name": "PhysicsRigidBodyAPI", "scope": "asset"},
+            ),
+            model.Step(
+                "add_asset_configuration_variant",
+                {
+                    "prim_path": "$key",
+                    "variant_set": "s",
+                    "variant_name": "v",
+                    "activations": {"$key": False},
+                },
+            ),
+            model.Step("list_asset_geo_files", {"prim_path": "$key"}),
+        ),
     ),
 )

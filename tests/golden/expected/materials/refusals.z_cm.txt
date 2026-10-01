@@ -513,7 +513,7 @@ intent: the scene root is not an asset
 SUMMARY
   call: create_material(prim_path="/Scene", material_name="oak")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene. Procedural materials only work on assets placed as ASWF folders (not USDZ).
+  said: REFUSED: Cannot find ASWF asset folder for /Scene. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -531,7 +531,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene. Procedural materials only work on assets placed as ASWF folders (not USDZ)."
+    "error": "Cannot find ASWF asset folder for /Scene. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:

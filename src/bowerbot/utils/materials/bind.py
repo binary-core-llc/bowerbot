@@ -103,23 +103,18 @@ def unbind(asset_dir: Path, prim_path: str) -> None:
 def refuse_shared_modification(
     stage: Usd.Stage, asset_dir: Path, params: dict, *, op_label: str,
 ) -> None:
-    """Refuse if *asset_dir* is referenced by 2+ scene instances and not confirmed."""
-    instance_count = authoring.placement.count_scene_refs_to_asset_dir(stage, asset_dir)
-    confirmed = bool(params.get("confirm_shared_modification", False))
-    if instance_count >= 2 and not confirmed:
-        msg = (
-            f"Asset folder '{asset_dir.name}/' is referenced by "
-            f"{instance_count} scene instances. {op_label} writes to the "
-            f"shared {constants.ASWFLayerNames.MTL}, so the binding would apply to "
-            f"all {instance_count} instances. Two ways forward: "
-            f"(1) For per-instance materials (different material per "
-            f"instance), use place_asset to make each instance independent, "
-            f"then bind a material on each. "
-            f"(2) For deliberate shared modification (every instance "
-            f"should get this material), retry with "
-            f"confirm_shared_modification=true."
-        )
-        raise ValueError(msg)
+    """Refuse a material write to an asset folder two or more placements share, unless confirmed."""
+    authoring.placement.refuse_shared_modification(
+        stage, asset_dir,
+        confirmed=bool(params.get("confirm_shared_modification", False)),
+        op_label=op_label,
+        per_instance=(
+            "For per-instance materials (different material per "
+            "instance), use place_asset to make each instance independent, "
+            "then bind a material on each."
+        ),
+        shared="this material",
+    )
 
 
 def find_first_material(file_path: Path) -> str | None:

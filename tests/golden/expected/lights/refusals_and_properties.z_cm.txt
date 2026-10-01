@@ -1023,7 +1023,7 @@ intent: inside an asset that does not exist
 SUMMARY
   call: create_light(light_type="SphereLight", light_name="Bad", asset_prim_path="/Scene/Nope")
   current project: golden
-  said: REFUSED: Cannot find ASWF asset folder for /Scene/Nope. Asset-level lights only work on ASWF folder assets.
+  said: REFUSED: Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ).
 
   what changed:
     nothing
@@ -1041,7 +1041,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Cannot find ASWF asset folder for /Scene/Nope. Asset-level lights only work on ASWF folder assets."
+    "error": "Cannot find ASWF asset folder for /Scene/Nope. Operation only works on assets placed as ASWF folders (not USDZ)."
   }
 
 files:

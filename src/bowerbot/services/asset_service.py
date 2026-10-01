@@ -264,35 +264,21 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    parent_asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+    parent_asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, parent_prim_path,
     )
-    if parent_asset_dir is None or ref_prim_path is None:
-        msg = (
-            f"Cannot find ASWF asset folder for {parent_prim_path}. "
-            "An asset can only be added to an ASWF folder asset "
-            "(not a USDZ)."
-        )
-        raise ValueError(msg)
 
-    instance_count = authoring.placement.count_scene_refs_to_asset_dir(
+    authoring.placement.refuse_shared_modification(
         state.stage, parent_asset_dir,
+        confirmed=bool(params.get("confirm_shared_modification", False)),
+        op_label="add_asset_to_asset",
+        per_instance=(
+            "For per-instance placement (different positions per "
+            "instance), use 'place_asset' instead; it places the asset "
+            "as an independent scene-level prim."
+        ),
+        shared="the added asset",
     )
-    confirmed = bool(params.get("confirm_shared_modification", False))
-    if instance_count >= 2 and not confirmed:
-        msg = (
-            f"Asset folder '{parent_asset_dir.name}/' is referenced by "
-            f"{instance_count} scene instances. add_asset_to_asset modifies "
-            f"the shared asset folder, which would affect all "
-            f"{instance_count} instances. Two ways forward: "
-            f"(1) For per-instance placement (different positions per "
-            f"instance), use 'place_asset' instead; it places the asset "
-            f"as an independent scene-level prim. "
-            f"(2) For deliberate shared modification (every instance "
-            f"should get the added asset), retry with "
-            f"confirm_shared_modification=true."
-        )
-        raise ValueError(msg)
 
     assets_dir = state.resolve_assets_dir()
     report = authoring.intake.prepare_asset(
@@ -411,13 +397,7 @@ def cleanup_unused_contents(
     asset_prim_path = params.get("asset_prim_path")
 
     if asset_prim_path:
-        asset_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, asset_prim_path)
-        if asset_dir is None:
-            msg = (
-                f"Cannot find ASWF asset folder for {asset_prim_path}. "
-                "Cleanup only works on ASWF folder assets."
-            )
-            raise ValueError(msg)
+        asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_prim_path)
 
         removed = authoring.placement.cleanup_unused_contents_in_folder(asset_dir)
         state.stage = authoring.stage.open_stage(state.stage_path)

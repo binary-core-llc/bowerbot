@@ -875,6 +875,96 @@ def test_a_package_keeps_the_files_its_root_points_to():
             assert _geometry(copy) == expected, f"{name}: changed when the light was removed"
 
 
+# ── the asset's box: its real geometry ──
+
+
+def _exec(state, tool: str, params: dict):
+    result = asyncio.run(_helpers.exec_tool(state, tool, params))
+    assert result.success, result.error
+    return result.data
+
+
+def test_the_asset_box_counts_every_file_the_root_composes():
+    """'Above' and 'on top' measure a package's own model file, not only geo.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        state.library_dir = tmp_path / "lib"
+        shelf = _packages(state.library_dir)["shelf"]  # a 1 m box in shelf_model.usda
+        parent = _exec(state, "place_asset", {
+            "asset_file_path": str(shelf), "asset_name": "Shelf", "group": "Props",
+            "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
+        })["prim_path"]
+
+        light = _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
+        })
+        assert _world_position(project, light["prim_path"]) == (3.0, 1.5, 4.0)
+
+        book = _exec(state, "add_asset_to_asset", {
+            "asset_file_path": str(_asset(tmp_path, "book")), "asset_name": "Book",
+            "parent_prim_path": parent, "group": "Props", "position_mode": "bounds_offset",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })
+        assert _world_position(project, book["prim_path"]) == (3.0, 1.0, 4.0)
+
+
+def test_the_asset_box_ignores_its_lights_and_added_assets():
+    """A light or an added asset high above an asset does not raise that asset's 'top'."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        parent = _exec(state, "place_asset", {
+            "asset_file_path": str(_asset(tmp_path, "block")),  # a cube from -0.5 to 0.5
+            "asset_name": "Block", "group": "Props",
+            "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })["prim_path"]
+        _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "High",
+            "translate_y": 5.0,
+        })
+        _exec(state, "add_asset_to_asset", {
+            "asset_file_path": str(_asset(tmp_path, "book")), "asset_name": "Book",
+            "parent_prim_path": parent, "group": "Props", "position_mode": "bounds_offset",
+            "translate_x": 0.0, "translate_y": 3.0, "translate_z": 0.0,
+        })
+
+        light = _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
+        })
+        assert _world_position(project, light["prim_path"]) == (0.0, 1.0, 0.0)
+
+
+def test_the_asset_box_follows_the_selected_geometry_variant():
+    """A package that selects its short model is measured as that model, not as geo.usda."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lib = tmp_path / "lib"
+        state.library_dir = lib
+        _model_file(lib / "post" / "geo.usda", "post", "Pole", (0.0, 1.0, 0.0), (0.2, 2.0, 0.2))
+        _model_file(lib / "post" / "geo_low.usda", "post", "Pole", (0.0, 0.5, 0.0), (0.2, 1.0, 0.2))
+        root = Usd.Stage.CreateNew(str(lib / "post" / "post.usda"))
+        UsdGeom.SetStageMetersPerUnit(root, 1.0)
+        UsdGeom.SetStageUpAxis(root, UsdGeom.Tokens.y)
+        prim = UsdGeom.Xform.Define(root, "/post").GetPrim()
+        root.SetDefaultPrim(prim)
+        lod = prim.GetVariantSets().AddVariantSet("lod")
+        for variant, file_name in (("high", "./geo.usda"), ("low", "./geo_low.usda")):
+            lod.AddVariant(variant)
+            lod.SetVariantSelection(variant)
+            with lod.GetVariantEditContext():
+                prim.GetPayloads().AddPayload(file_name)
+        lod.SetVariantSelection("low")
+        root.Save()
+
+        parent = _exec(state, "place_asset", {
+            "asset_file_path": str(lib / "post" / "post.usda"), "asset_name": "Post",
+            "group": "Props", "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+        })["prim_path"]
+        light = _exec(state, "create_light", {
+            "asset_prim_path": parent, "light_type": "SphereLight", "light_name": "Bulb",
+        })
+        assert _world_position(project, light["prim_path"]) == (0.0, 1.5, 0.0)
+
+
 # ── freeze_asset: with non-identity root xform ──
 
 

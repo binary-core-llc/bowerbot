@@ -23,6 +23,15 @@ class ASWFLayerNames:
     TEXTURES = "textures"
 
 
+class AssetFolderNamespace:
+    """Prim names BowerBot authors under an asset's root prim."""
+
+    # Scope that holds the assets added to this asset (authored in contents.usda).
+    CONTENTS_SCOPE = "contents"
+    # Scope that holds the asset's lights (authored in lgt.usda).
+    LIGHTS_SCOPE = "lgt"
+
+
 class AssetFolderRules:
     """What counts as a USD layer in an asset folder, and how the root references them."""
 

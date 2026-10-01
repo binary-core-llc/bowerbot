@@ -400,18 +400,32 @@ def conform_matrix(
 
 
 def get_geometry_bounds(asset_dir: Path) -> dict[str, dict[str, float]] | None:
-    """Return the asset's geometry bounds in its own units and axes, or ``None``."""
-    geo_path = asset_dir / constants.ASWFLayerNames.GEO
-    if not geo_path.exists():
+    """Return the bounds of the asset's own geometry in its own units and axes, or ``None``.
+
+    Measured on the asset's root file, so geometry from every file the root
+    composes counts. The asset's lights and the assets added to it do not.
+    """
+    root_file = find_root_file(asset_dir)
+    if root_file is None:
         return None
 
-    stage = Usd.Stage.Open(str(geo_path))
+    stage = Usd.Stage.Open(str(root_file))
     if stage is None:
         return None
 
     root = stage.GetDefaultPrim()
-    if root is None:
+    if not root:
         return None
+
+    # Switched off in the session layer only: nothing is written to the asset.
+    stage.SetEditTarget(stage.GetSessionLayer())
+    for scope in (
+        constants.AssetFolderNamespace.CONTENTS_SCOPE,
+        constants.AssetFolderNamespace.LIGHTS_SCOPE,
+    ):
+        child = root.GetChild(scope)
+        if child:
+            child.SetActive(False)
 
     bbox = UsdGeom.BBoxCache(
         Usd.TimeCode.Default(), [UsdGeom.Tokens.default_],

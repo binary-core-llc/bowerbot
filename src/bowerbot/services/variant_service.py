@@ -624,23 +624,7 @@ def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
 
     removed = authoring.asset_variants.remove_variant(asset_dir, set_name, variant_name)
     if removed:
-        summary = authoring.asset_variants.get_variant_summary(asset_dir)
-        still_has_set = any(s.name == set_name for s in summary.variant_sets)
-        scrub_target = None if not still_has_set else variant_name
-        if not still_has_set:
-            authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        else:
-            current = next(
-                (s.selection for s in summary.variant_sets if s.name == set_name),
-                None,
-            )
-            if current == variant_name:
-                authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        authoring.placement.clear_scene_variant_selections(
-            state.stage, asset_dir, set_name, scrub_target,
-        )
-        variants.geometry.restore_canonical_geo_if_needed(asset_dir)
-        authoring.asset_variants.cleanup_if_empty(asset_dir)
+        variants.asset.clean_after_removal(state.stage, asset_dir, set_name, variant_name)
 
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)
@@ -779,12 +763,7 @@ def remove_asset_variant_set(
 
     removed = authoring.asset_variants.remove_variant_set(asset_dir, set_name)
     if removed:
-        authoring.asset_variants.clear_default_variant(asset_dir, set_name)
-        authoring.placement.clear_scene_variant_selections(
-            state.stage, asset_dir, set_name,
-        )
-        variants.geometry.restore_canonical_geo_if_needed(asset_dir)
-        authoring.asset_variants.cleanup_if_empty(asset_dir)
+        variants.asset.clean_after_removal(state.stage, asset_dir, set_name)
 
     if state.stage_path is not None:
         state.stage = authoring.stage.open_stage(state.stage_path)

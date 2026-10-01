@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Adding a variant to an asset's variants.usda, and checking its attribute overrides."""
+"""An asset's variants: adding one, checking its attribute overrides, cleaning up after removal."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from pxr import Usd
 from bowerbot import constants
 from bowerbot.utils import authoring
 from bowerbot.utils import usd
+from bowerbot.utils import variants
 
 
 def add(
@@ -39,6 +40,33 @@ def add(
     needs_default = set_as_default or (existing is not None and not existing.selection)
     if needs_default:
         authoring.asset_variants.set_default_variant(asset_dir, variant_set, variant_name)
+
+
+def clean_after_removal(
+    stage: Usd.Stage, asset_dir: Path, set_name: str, variant_name: str | None = None,
+) -> None:
+    """Tidy up once a variant (*variant_name*) or a whole set (None) is gone from an asset.
+
+    Drops the default selection and the scene selections that pointed at what
+    was removed, puts the plain geo payload back when no set swaps it any
+    more, and deletes ``variants.usda`` when it is empty.
+    """
+    remaining = None
+    if variant_name is not None:
+        summary = authoring.asset_variants.get_variant_summary(asset_dir)
+        remaining = next((s for s in summary.variant_sets if s.name == set_name), None)
+
+    if remaining is None:
+        authoring.asset_variants.clear_default_variant(asset_dir, set_name)
+        authoring.placement.clear_scene_variant_selections(stage, asset_dir, set_name)
+    else:
+        if remaining.selection == variant_name:
+            authoring.asset_variants.clear_default_variant(asset_dir, set_name)
+        authoring.placement.clear_scene_variant_selections(
+            stage, asset_dir, set_name, variant_name,
+        )
+    variants.geometry.restore_canonical_geo_if_needed(asset_dir)
+    authoring.asset_variants.cleanup_if_empty(asset_dir)
 
 
 def resolve_attribute_types_for_overrides(

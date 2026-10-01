@@ -301,7 +301,7 @@ full answer:
         "path": "<LIBRARY>/cabinet/cabinet.usda"
       }
     ],
-    "total_matches": 11,
+    "total_matches": 13,
     "truncated": true
   }
 
@@ -373,6 +373,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "stand",
+        "path": "<LIBRARY>/stand/stand.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "workbench",
         "path": "<LIBRARY>/workbench/workbench.usda"
       },
@@ -381,6 +387,18 @@ full answer:
         "format": ".usda",
         "name": "bare",
         "path": "<LIBRARY>/bare.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bin",
+        "path": "<LIBRARY>/bin.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bin_model",
+        "path": "<LIBRARY>/bin_model.usda"
       },
       {
         "category": "geo",
@@ -431,6 +449,12 @@ full answer:
         "path": "<LIBRARY>/path_curve.usda"
       },
       {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "plank",
+        "path": "<LIBRARY>/plank.usda"
+      },
+      {
         "category": "geo",
         "format": ".usda",
         "name": "post_z",
@@ -455,7 +479,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 18,
+    "total_matches": 22,
     "truncated": false
   }
 
@@ -527,11 +551,17 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "stand",
+        "path": "<LIBRARY>/stand/stand.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "workbench",
         "path": "<LIBRARY>/workbench/workbench.usda"
       }
     ],
-    "total_matches": 5,
+    "total_matches": 6,
     "truncated": false
   }
 
@@ -587,9 +617,15 @@ full answer:
         "format": ".usda",
         "name": "steel",
         "path": "<LIBRARY>/materials/steel.usda"
+      },
+      {
+        "category": "mtl",
+        "format": ".usda",
+        "name": "plank",
+        "path": "<LIBRARY>/plank.usda"
       }
     ],
-    "total_matches": 2,
+    "total_matches": 3,
     "truncated": false
   }
 
@@ -639,6 +675,18 @@ full answer:
         "format": ".usda",
         "name": "bare",
         "path": "<LIBRARY>/bare.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bin",
+        "path": "<LIBRARY>/bin.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bin_model",
+        "path": "<LIBRARY>/bin_model.usda"
       },
       {
         "category": "geo",
@@ -701,7 +749,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 11,
+    "total_matches": 13,
     "truncated": false
   }
 

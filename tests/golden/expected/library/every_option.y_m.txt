@@ -143,7 +143,7 @@ full answer:
         "path": "<LIBRARY>/lamp/lamp.usda"
       }
     ],
-    "total_matches": 18,
+    "total_matches": 22,
     "truncated": true
   }
 

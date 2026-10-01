@@ -76,6 +76,8 @@ PROJECT_NAME = "golden"
 CRASH_MARK = "CRASHED (the exception escaped the dispatcher):"
 STAGE_KEY = "(stage)"
 _TIME = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}:?\d{2}|Z)?")
+# A memory address USD prints in its warnings, different on every run.
+_ADDRESS = re.compile(r"<0x[0-9a-fA-F]+>")
 # A decimal or exponent number standing alone (not part of a name, hash or version).
 _NUMBER = re.compile(
     r"(?<![\w.])-?(?:\d+\.\d+(?:[eE][-+]?\d+)?|\d+[eE][-+]?\d+)(?![\w.])",
@@ -118,7 +120,7 @@ class _Capture:
 
 
 class _Normalizer:
-    """Replaces this run's temp paths and timestamps with stable placeholders."""
+    """Replaces this run's temp paths, timestamps and memory addresses with placeholders."""
 
     def __init__(self, workdir: Path, library: Path, projects: Path) -> None:
         pairs: list[tuple[str, str]] = []
@@ -136,7 +138,7 @@ class _Normalizer:
     def __call__(self, text: str) -> str:
         for spelling, label in [*self.snapshot_roots, *self._pairs]:
             text = text.replace(spelling, label)
-        return _TIME.sub("<TIME>", text)
+        return _ADDRESS.sub("<ADDRESS>", _TIME.sub("<TIME>", text))
 
     def has_temp_path(self, text: str) -> bool:
         return any(spelling in text for spelling, _ in self._pairs)
@@ -344,7 +346,7 @@ def _capture(
     capture.facts = _facts(stage, normalize)
     capture.world = _world(stage, normalize)
     capture.composition_errors = sorted(
-        normalize(error.GetErrorAsString()) for error in stage.GetCompositionErrors()
+        normalize(str(error)) for error in stage.GetCompositionErrors()
     )
     capture.dangling = _dangling(capture.facts)
     capture.unbound_materials = _unbound_materials(capture.facts, capture.files)

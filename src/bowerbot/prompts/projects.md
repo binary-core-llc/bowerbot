@@ -7,8 +7,9 @@ operates on the focused project.
 
 - `create_project(name, up_axis, meters_per_unit)` — start a fresh
   project and focus it. Use when the user wants a new scene ("make me a
-  coffee shop"). `up_axis` (`Y` or `Z`) and `meters_per_unit` (1.0 =
-  meters, 0.01 = centimeters, 0.001 = millimeters) are required and fix
+  coffee shop"). `up_axis` (`Y` or `Z`) and `meters_per_unit` (a number
+  greater than 0: 1.0 = meters, 0.01 = centimeters, 0.001 =
+  millimeters) are required and fix
   the scene at creation; every asset placed afterward is conformed to
   them. Ask the user, or match the source you are reconstructing (an
   Omniverse/Isaac scene is usually `Z`-up in meters; most Maya/web

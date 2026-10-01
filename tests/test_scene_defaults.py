@@ -109,6 +109,30 @@ def test_create_project_tool_accepts_params():
         assert r.data["up_axis"] == "Z"
 
 
+def test_create_project_refuses_units_that_are_not_positive():
+    """meters_per_unit must be a positive, finite number; otherwise nothing is created."""
+    for bad in (0, -1.0, float("nan"), float("inf")):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = _state(tmp)
+            r = asyncio.run(_helpers.exec_tool(
+                state, "create_project",
+                {"name": "bad", "up_axis": "Y", "meters_per_unit": bad},
+            ))
+            assert not r.success, f"meters_per_unit={bad} was accepted"
+            assert "meters_per_unit" in r.error
+            assert list(Path(tmp).iterdir()) == []
+            assert state.project is None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                project_folder.Project.create(Path(tmp), "bad", meters_per_unit=bad)
+            except ValueError as error:
+                assert "must be greater than 0" in str(error)
+            else:
+                raise AssertionError(f"Project.create accepted meters_per_unit={bad}")
+            assert list(Path(tmp).iterdir()) == []
+
+
 # ── up-axis correction in add_references ──
 
 

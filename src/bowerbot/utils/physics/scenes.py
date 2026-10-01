@@ -67,8 +67,7 @@ def resolve_gravity(
 ) -> tuple[float, tuple[float, float, float]]:
     """Resolve gravity to authored values; defaults to Earth gravity (project units), downward."""
     if gravity_magnitude is None:
-        mpu = project_mpu or 1.0
-        gravity_magnitude = 9.81 / mpu
+        gravity_magnitude = 9.81 / project_mpu
     if gravity_direction is None:
         gravity_direction = (0.0, 0.0, -1.0) if project_up_axis == "Z" else (0.0, -1.0, 0.0)
     return float(gravity_magnitude), gravity_direction

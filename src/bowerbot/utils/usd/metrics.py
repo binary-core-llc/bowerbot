@@ -73,7 +73,7 @@ def conform(
     asset_mpu: float, asset_up_axis: str, *, parent_mpu: float, parent_up_axis: str,
 ) -> tuple[float, float | None]:
     """Return (unit scale, up-axis X-rotation or None) taking an asset into its parent's frame."""
-    unit_scale = 1.0 if parent_mpu == 0 else asset_mpu / parent_mpu
+    unit_scale = asset_mpu / parent_mpu
 
     correction = None
     if asset_up_axis == "Y" and parent_up_axis == "Z":

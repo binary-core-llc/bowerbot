@@ -50,6 +50,13 @@ def local_translation(prim: Usd.Prim) -> schemas.Vec3:
     t = UsdGeom.Xformable(prim).GetLocalTransformation().ExtractTranslation()
     return (t[0], t[1], t[2])
 
+
+def world_translation(prim: Usd.Prim) -> schemas.Vec3:
+    """Return where a prim's origin is in the world."""
+    matrix = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+    t = matrix.ExtractTranslation()
+    return (t[0], t[1], t[2])
+
 # ── Writing transforms ──
 
 

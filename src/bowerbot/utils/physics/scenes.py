@@ -11,7 +11,6 @@ from typing import Any
 from pxr import Gf
 from pxr import Sdf
 from pxr import Usd
-from pxr import UsdGeom
 from pxr import UsdPhysics
 
 from bowerbot import constants
@@ -60,16 +59,17 @@ def remove(stage: Usd.Stage, name: str) -> bool:
 
 
 def resolve_gravity(
-    stage: Usd.Stage,
     gravity_magnitude: float | None,
     gravity_direction: tuple[float, float, float] | None,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> tuple[float, tuple[float, float, float]]:
-    """Resolve gravity to authored values; defaults to Earth gravity (stage units) along -Y."""
+    """Resolve gravity to authored values; defaults to Earth gravity (project units), downward."""
     if gravity_magnitude is None:
-        mpu = UsdGeom.GetStageMetersPerUnit(stage) or 1.0
-        gravity_magnitude = 9.81 / mpu
+        gravity_magnitude = 9.81 / project_mpu
     if gravity_direction is None:
-        gravity_direction = (0.0, -1.0, 0.0)
+        gravity_direction = (0.0, 0.0, -1.0) if project_up_axis == "Z" else (0.0, -1.0, 0.0)
     return float(gravity_magnitude), gravity_direction
 
 
@@ -78,6 +78,9 @@ def ensure(
     name: str = "PhysicsScene",
     gravity_magnitude: float | None = None,
     gravity_direction: tuple[float, float, float] | None = None,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> str:
     """Create the physics scope and a ``UsdPhysics.Scene`` child prim."""
     scope_path = ensure_scope(stage)
@@ -85,7 +88,8 @@ def ensure(
     scene_prim = UsdPhysics.Scene.Define(stage, scene_path)
 
     gravity_magnitude, gravity_direction = resolve_gravity(
-        stage, gravity_magnitude, gravity_direction,
+        gravity_magnitude, gravity_direction,
+        project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
     scene_prim.CreateGravityDirectionAttr(Gf.Vec3f(*gravity_direction))
     scene_prim.CreateGravityMagnitudeAttr(gravity_magnitude)

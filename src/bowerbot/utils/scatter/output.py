@@ -28,6 +28,8 @@ def write(
     prototypes: list[schemas.ScatterPrototype],
     instances: schemas.ScatterInstanceSet,
     first_index: int,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> dict[str, Any]:
     """Author a scatter in scene.usda as a PointInstancer or as placements."""
     if stage.GetPrimAtPath(prim_path).IsValid():
@@ -43,10 +45,14 @@ def write(
         local = to_local(stage, prim_path, instances)
         authoring.placement.add_references(
             stage, placement_objects(prim_path, prototypes, local, first_index),
+            project_mpu=project_mpu, project_up_axis=project_up_axis,
         )
         return {"placements": instances.count, "warnings": []}
 
-    write_instancer(stage, prim_path, prototypes, instances)
+    write_instancer(
+        stage, prim_path, prototypes, instances,
+        project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
     return {"placements": 0, "warnings": instancer_size_warning(instances.count)}
 
 
@@ -55,6 +61,9 @@ def write_instancer(
     prim_path: str,
     prototypes: list[schemas.ScatterPrototype],
     instances: schemas.ScatterInstanceSet,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> None:
     """Author a PointInstancer whose prototypes are placement wrappers of the assets."""
     instancer = UsdGeom.PointInstancer.Define(stage, prim_path)
@@ -74,7 +83,7 @@ def write_instancer(
             ),
         )
         for proto in prototypes
-    ])
+    ], project_mpu=project_mpu, project_up_axis=project_up_axis)
     instancer.CreatePrototypesRel().SetTargets(
         [Sdf.Path(f"{prototypes_path}/{proto.name}") for proto in prototypes],
     )

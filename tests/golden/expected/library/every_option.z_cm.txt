@@ -127,6 +127,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "bare_kit",
+        "path": "<LIBRARY>/bare_kit/bare_kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -135,15 +141,9 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "chair",
-        "path": "<LIBRARY>/chair.usda"
       }
     ],
-    "total_matches": 14,
+    "total_matches": 16,
     "truncated": true
   }
 
@@ -334,7 +334,7 @@ intent: a negative count
 SUMMARY
   call: compute_grid_layout(count=-2)
   current project: golden
-  said: ok: Computed -2 positions in grid with 2.0m spacing.
+  said: ok: Computed -2 positions on the x-y floor plane, 200.0 project units apart.
 
   what changed:
     nothing
@@ -353,9 +353,9 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": -2,
-    "message": "Computed -2 positions in grid with 2.0m spacing.",
+    "message": "Computed -2 positions on the x-y floor plane, 200.0 project units apart.",
     "positions": [],
-    "spacing": 2.0
+    "spacing": 200.0
   }
 
 files:
@@ -381,7 +381,7 @@ intent: a negative spacing
 SUMMARY
   call: compute_grid_layout(count=4, spacing=-1.0)
   current project: golden
-  said: ok: Computed 4 positions in grid with -1.0m spacing.
+  said: ok: Computed 4 positions on the x-y floor plane, -1.0 project units apart.
 
   what changed:
     nothing
@@ -400,23 +400,23 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 4,
-    "message": "Computed 4 positions in grid with -1.0m spacing.",
+    "message": "Computed 4 positions on the x-y floor plane, -1.0 project units apart.",
     "positions": [
       {
-        "x": 5.5,
-        "z": 4.5
+        "x": 500.5,
+        "y": 400.5
       },
       {
-        "x": 4.5,
-        "z": 4.5
+        "x": 499.5,
+        "y": 400.5
       },
       {
-        "x": 5.5,
-        "z": 3.5
+        "x": 500.5,
+        "y": 399.5
       },
       {
-        "x": 4.5,
-        "z": 3.5
+        "x": 499.5,
+        "y": 399.5
       }
     ],
     "spacing": -1.0

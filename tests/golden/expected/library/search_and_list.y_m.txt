@@ -291,17 +291,17 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp",
-        "path": "<LIBRARY>/lamp/lamp.usda"
+        "name": "bare_kit",
+        "path": "<LIBRARY>/bare_kit/bare_kit.usda"
       },
       {
         "category": "package",
         "format": ".usda",
-        "name": "lamp_lod",
-        "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+        "name": "lamp",
+        "path": "<LIBRARY>/lamp/lamp.usda"
       }
     ],
-    "total_matches": 8,
+    "total_matches": 10,
     "truncated": true
   }
 
@@ -349,6 +349,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "bare_kit",
+        "path": "<LIBRARY>/bare_kit/bare_kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -357,6 +363,12 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bare",
+        "path": "<LIBRARY>/bare.usda"
       },
       {
         "category": "geo",
@@ -431,7 +443,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 14,
+    "total_matches": 16,
     "truncated": false
   }
 
@@ -479,6 +491,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "bare_kit",
+        "path": "<LIBRARY>/bare_kit/bare_kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -489,7 +507,7 @@ full answer:
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
       }
     ],
-    "total_matches": 2,
+    "total_matches": 3,
     "truncated": false
   }
 
@@ -595,6 +613,12 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
+        "name": "bare",
+        "path": "<LIBRARY>/bare.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
         "name": "chair",
         "path": "<LIBRARY>/chair.usda"
       },
@@ -653,7 +677,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 10,
+    "total_matches": 11,
     "truncated": false
   }
 

@@ -364,12 +364,12 @@ SUMMARY
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Crate_02 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:scale: (1, 1, 1)
           attr xformOp:translate: (0, 0, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset [Xform]
-          bounds: (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
           kind: component
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box [Cube]
@@ -377,10 +377,9 @@ SUMMARY
           attr xformOp:scale: (0.5, 0.5, 0.5)
           attr xformOp:translate: (0, 0.25, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
+          bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
           material shown: (none)
-          world position: (0.0000, 0.0000, 2500.0000)
-    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
+          world position: (0.0000, 0.0000, 25.0000)
     ~ validity: valid → INVALID
     + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
 
@@ -486,7 +485,7 @@ file changes:
                   def Xform "Crate_02"
                   {
                       float3 xformOp:rotateXYZ = (0, 0, 0)
-                      float3 xformOp:scale = (100, 100, 100)
+                      float3 xformOp:scale = (1, 1, 1)
                       double3 xformOp:translate = (0, 0, 0)
                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
@@ -524,7 +523,7 @@ composed scene changes:
   +                        def Xform "Crate_02"
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +                            float3 xformOp:scale = (100, 100, 100)
+  +                            float3 xformOp:scale = (1, 1, 1)
   +                            double3 xformOp:translate = (0, 0, 0)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
@@ -552,17 +551,17 @@ composed scene changes:
            }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 2500.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
 
 validation:
   INVALID, 1 issue(s):
@@ -581,23 +580,23 @@ SUMMARY
     ~ file assets/table/contents.usda
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Crate_03 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
-          attr xformOp:translate: (0.3, 0, 0.8)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0.3, 0.8, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
-          world position: (30.0000, -80.0000, 0.0000)
+          world position: (30.0000, 0.0000, 80.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset [Xform]
-          bounds: (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
+          bounds: (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
           kind: component
-          world position: (30.0000, -80.0000, 0.0000)
+          world position: (30.0000, 0.0000, 80.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box [Cube]
           attr size: 1
           attr xformOp:scale: (0.5, 0.5, 0.5)
           attr xformOp:translate: (0, 0.25, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
+          bounds: (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
           material shown: (none)
-          world position: (30.0000, -80.0000, 2500.0000)
-    ~ /Scene  bounds: (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000) → (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
+          world position: (30.0000, 0.0000, 105.0000)
+    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
     + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
@@ -605,7 +604,6 @@ SUMMARY
 
   checks:
     ⚠ this step added 1 validation error(s)
-    ⚠ the answer says /Scene/Furniture/Table_01/asset/contents/Props/Crate_03 is at (0.0030, 0.0000, 0.0080), but it is at (30.0000, -80.0000, 0.0000)
 
 EVIDENCE
 
@@ -628,9 +626,9 @@ full answer:
     },
     "message": "Placed Crate inside table at /Scene/Furniture/Table_01/asset/contents/Props/Crate_03",
     "position": {
-      "x": 0.003,
+      "x": 30.0,
       "y": 0.0,
-      "z": 0.008
+      "z": 80.0
     },
     "prim_path": "/Scene/Furniture/Table_01/asset/contents/Props/Crate_03",
     "rotation_y": 0.0
@@ -656,8 +654,8 @@ file changes:
       +            def Xform "Crate_03"
       +            {
       +                float3 xformOp:rotateXYZ = (0, 0, 0)
-      +                float3 xformOp:scale = (100, 100, 100)
-      +                double3 xformOp:translate = (0.3, 0, 0.8)
+      +                float3 xformOp:scale = (1, 1, 1)
+      +                double3 xformOp:translate = (0.3, 0.8, 0)
       +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
       +
       +                def Xform "asset" (
@@ -679,8 +677,8 @@ composed scene changes:
   +                        def Xform "Crate_03"
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +                            float3 xformOp:scale = (100, 100, 100)
-  +                            double3 xformOp:translate = (0.3, 0, 0.8)
+  +                            float3 xformOp:scale = (1, 1, 1)
+  +                            double3 xformOp:translate = (0.3, 0.8, 0)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
   +                            def Xform "asset" (
@@ -705,20 +703,20 @@ composed scene changes:
                    }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 2500.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, -80.0000, 2500.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
 
 validation:
   INVALID, 2 issue(s):
@@ -815,13 +813,13 @@ full answer:
       {
         "bounds": {
           "max": {
-            "x": 2500.0,
-            "y": 2500.0,
-            "z": 5000.0
+            "x": 25.0,
+            "y": 25.0,
+            "z": 50.0
           },
           "min": {
-            "x": -2500.0,
-            "y": -2500.0,
+            "x": -25.0,
+            "y": -25.0,
             "z": -0.0
           }
         },
@@ -835,14 +833,14 @@ full answer:
       {
         "bounds": {
           "max": {
-            "x": 2530.0,
-            "y": 2420.0,
-            "z": 5000.0
+            "x": 55.0,
+            "y": 25.0,
+            "z": 130.0
           },
           "min": {
-            "x": -2470.0,
-            "y": -2580.0,
-            "z": -0.0
+            "x": 5.0,
+            "y": -25.0,
+            "z": 80.0
           }
         },
         "current_material": null,
@@ -872,20 +870,20 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 2500.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, -80.0000, 2500.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
 
 validation:
   INVALID, 2 issue(s):
@@ -912,7 +910,7 @@ SUMMARY
     + prim /Scene/Furniture/Table_04/asset [Xform]
           attr xformOp:rotateX: 90
           attr xformOpOrder: ('xformOp:rotateX')
-          bounds: (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
+          bounds: (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
           kind: component
           world position: (300.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_04/asset/Leg_L [Cube]
@@ -945,12 +943,12 @@ SUMMARY
           world position: (300.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:scale: (1, 1, 1)
           attr xformOp:translate: (0, 0, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (300.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset [Xform]
-          bounds: (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
+          bounds: (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
           kind: component
           world position: (300.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box [Cube]
@@ -958,28 +956,28 @@ SUMMARY
           attr xformOp:scale: (0.5, 0.5, 0.5)
           attr xformOp:translate: (0, 0.25, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
+          bounds: (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
           material shown: (none)
-          world position: (300.0000, 0.0000, 2500.0000)
+          world position: (300.0000, 0.0000, 25.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_03 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
-          attr xformOp:translate: (0.3, 0, 0.8)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0.3, 0.8, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
-          world position: (330.0000, -80.0000, 0.0000)
+          world position: (330.0000, 0.0000, 80.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset [Xform]
-          bounds: (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
+          bounds: (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
           kind: component
-          world position: (330.0000, -80.0000, 0.0000)
+          world position: (330.0000, 0.0000, 80.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box [Cube]
           attr size: 1
           attr xformOp:scale: (0.5, 0.5, 0.5)
           attr xformOp:translate: (0, 0.25, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
+          bounds: (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
           material shown: (none)
-          world position: (330.0000, -80.0000, 2500.0000)
-    ~ /Scene  bounds: (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000) → (-2500.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
+          world position: (330.0000, 0.0000, 105.0000)
+    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000) → (-60.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
     + issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
     + issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
 
@@ -1109,7 +1107,7 @@ composed scene changes:
   +                        def Xform "Crate_02"
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +                            float3 xformOp:scale = (100, 100, 100)
+  +                            float3 xformOp:scale = (1, 1, 1)
   +                            double3 xformOp:translate = (0, 0, 0)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
@@ -1135,8 +1133,8 @@ composed scene changes:
   +                        def Xform "Crate_03"
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +                            float3 xformOp:scale = (100, 100, 100)
-  +                            double3 xformOp:translate = (0.3, 0, 0.8)
+  +                            float3 xformOp:scale = (1, 1, 1)
+  +                            double3 xformOp:translate = (0.3, 0.8, 0)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
   +                            def Xform "asset" (
@@ -1165,33 +1163,33 @@ composed scene changes:
    }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 2500.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, -80.0000, 2500.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_04/asset/Top  [Cube]  at (300.0000, 0.0000, 75.0000)  bounds (240.0000, -40.0000, 72.5000)..(360.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_L  [Cube]  at (245.0000, 0.0000, 37.5000)  bounds (242.5000, -2.5000, 0.0000)..(247.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_R  [Cube]  at (355.0000, 0.0000, 37.5000)  bounds (352.5000, -2.5000, 0.0000)..(357.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (300.0000, 0.0000, 2500.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, -80.0000, 2500.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
 
 validation:
   INVALID, 4 issue(s):
@@ -1244,33 +1242,33 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 2500.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, -80.0000, 2500.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_04/asset/Top  [Cube]  at (300.0000, 0.0000, 75.0000)  bounds (240.0000, -40.0000, 72.5000)..(360.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_L  [Cube]  at (245.0000, 0.0000, 37.5000)  bounds (242.5000, -2.5000, 0.0000)..(247.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_R  [Cube]  at (355.0000, 0.0000, 37.5000)  bounds (352.5000, -2.5000, 0.0000)..(357.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (300.0000, 0.0000, 2500.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, -80.0000, 2500.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
 
 validation:
   INVALID, 4 issue(s):
@@ -1294,12 +1292,12 @@ SUMMARY
     ~ file assets/table/contents.usda
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Chair_05 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:scale: (1, 1, 1)
           attr xformOp:translate: (0, 0, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset [Xform]
-          bounds: (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2250.0000, 9500.0000)
+          bounds: (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
           kind: component
           world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Back [Cube]
@@ -1307,25 +1305,25 @@ SUMMARY
           attr xformOp:scale: (0.45, 0.5, 0.05)
           attr xformOp:translate: (0, 0.7, -0.2)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-2249.9999, 1750.0000, 4500.0000)..(2249.9999, 2250.0000, 9500.0000)
+          bounds: (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)
           material shown: (none)
-          world position: (0.0000, 2000.0000, 7000.0000)
+          world position: (0.0000, 20.0000, 70.0000)
     + prim /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Seat [Cube]
           attr size: 1
           attr xformOp:scale: (0.45, 0.05, 0.45)
           attr xformOp:translate: (0, 0.45, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2249.9999, 4750.0000)
+          bounds: (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)
           material shown: (none)
-          world position: (0.0000, 0.0000, 4500.0000)
+          world position: (0.0000, 0.0000, 45.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Chair_05 [Xform]
           attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:scale: (1, 1, 1)
           attr xformOp:translate: (0, 0, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
           world position: (300.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset [Xform]
-          bounds: (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2250.0000, 9500.0000)
+          bounds: (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 95.0000)
           kind: component
           world position: (300.0000, 0.0000, 0.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back [Cube]
@@ -1333,18 +1331,17 @@ SUMMARY
           attr xformOp:scale: (0.45, 0.5, 0.05)
           attr xformOp:translate: (0, 0.7, -0.2)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-1949.9999, 1750.0000, 4500.0000)..(2549.9999, 2250.0000, 9500.0000)
+          bounds: (277.5000, 17.5000, 45.0000)..(322.5000, 22.5000, 95.0000)
           material shown: (none)
-          world position: (300.0000, 2000.0000, 7000.0000)
+          world position: (300.0000, 20.0000, 70.0000)
     + prim /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Seat [Cube]
           attr size: 1
           attr xformOp:scale: (0.45, 0.05, 0.45)
           attr xformOp:translate: (0, 0.45, 0)
           attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2249.9999, 4750.0000)
+          bounds: (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 47.5000)
           material shown: (none)
-          world position: (300.0000, 0.0000, 4500.0000)
-    ~ /Scene  bounds: (-2500.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 5000.0000) → (-2500.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 9500.0000)
+          world position: (300.0000, 0.0000, 45.0000)
     + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
     + issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
 
@@ -1455,7 +1452,7 @@ file changes:
       +            def Xform "Chair_05"
       +            {
       +                float3 xformOp:rotateXYZ = (0, 0, 0)
-      +                float3 xformOp:scale = (100, 100, 100)
+      +                float3 xformOp:scale = (1, 1, 1)
       +                double3 xformOp:translate = (0, 0, 0)
       +                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
       +
@@ -1478,7 +1475,7 @@ composed scene changes:
   +                        def Xform "Chair_05"
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +                            float3 xformOp:scale = (100, 100, 100)
+  +                            float3 xformOp:scale = (1, 1, 1)
   +                            double3 xformOp:translate = (0, 0, 0)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
@@ -1517,7 +1514,7 @@ composed scene changes:
   +                        def Xform "Chair_05"
   +                        {
   +                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +                            float3 xformOp:scale = (100, 100, 100)
+  +                            float3 xformOp:scale = (1, 1, 1)
   +                            double3 xformOp:translate = (0, 0, 0)
   +                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   +
@@ -1551,41 +1548,41 @@ composed scene changes:
                    }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 9500.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 9500.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2580.0000, 0.0000)..(2530.0000, 2500.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 2500.0000)  bounds (-2500.0000, -2500.0000, 0.0000)..(2500.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, -80.0000, 2500.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (0.0000, 0.0000, 4500.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2249.9999, 4750.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (0.0000, 2000.0000, 7000.0000)  bounds (-2249.9999, 1750.0000, 4500.0000)..(2249.9999, 2250.0000, 9500.0000)  material (none)
-  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 9500.0000)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (0.0000, 0.0000, 45.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (0.0000, 20.0000, 70.0000)  bounds (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_04/asset/Top  [Cube]  at (300.0000, 0.0000, 75.0000)  bounds (240.0000, -40.0000, 72.5000)..(360.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_L  [Cube]  at (245.0000, 0.0000, 37.5000)  bounds (242.5000, -2.5000, 0.0000)..(247.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_R  [Cube]  at (355.0000, 0.0000, 37.5000)  bounds (352.5000, -2.5000, 0.0000)..(357.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (300.0000, 0.0000, 2500.0000)  bounds (-2200.0000, -2500.0000, 0.0000)..(2800.0000, 2500.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, -80.0000, 2500.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (300.0000, 0.0000, 4500.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2249.9999, 4750.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 2000.0000, 7000.0000)  bounds (-1949.9999, 1750.0000, 4500.0000)..(2549.9999, 2250.0000, 9500.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (300.0000, 0.0000, 45.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 20.0000, 70.0000)  bounds (277.5000, 17.5000, 45.0000)..(322.5000, 22.5000, 95.0000)  material (none)
 
 validation:
   INVALID, 6 issue(s):
@@ -1613,7 +1610,6 @@ SUMMARY
     - prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02 [Xform]
     - prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset [Xform]
     - prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box [Cube]
-    ~ /Scene  bounds: (-2500.0000, -2580.0000, 0.0000)..(2830.0000, 2500.0000, 9500.0000) → (-2470.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
     - issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
     - issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
 
@@ -1658,7 +1654,7 @@ file changes:
       -            def Xform "Crate_02"
       -            {
       -                float3 xformOp:rotateXYZ = (0, 0, 0)
-      -                float3 xformOp:scale = (100, 100, 100)
+      -                float3 xformOp:scale = (1, 1, 1)
       -                double3 xformOp:translate = (0, 0, 0)
       -                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
       -
@@ -1681,7 +1677,7 @@ composed scene changes:
   -                        def Xform "Crate_02"
   -                        {
   -                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  -                            float3 xformOp:scale = (100, 100, 100)
+  -                            float3 xformOp:scale = (1, 1, 1)
   -                            double3 xformOp:translate = (0, 0, 0)
   -                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   -
@@ -1712,7 +1708,7 @@ composed scene changes:
   -                        def Xform "Crate_02"
   -                        {
   -                            float3 xformOp:rotateXYZ = (0, 0, 0)
-  -                            float3 xformOp:scale = (100, 100, 100)
+  -                            float3 xformOp:scale = (1, 1, 1)
   -                            double3 xformOp:translate = (0, 0, 0)
   -                            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
   -
@@ -1739,35 +1735,35 @@ composed scene changes:
                            {
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, -80.0000, 2500.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (0.0000, 0.0000, 4500.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2249.9999, 4750.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (0.0000, 2000.0000, 7000.0000)  bounds (-2249.9999, 1750.0000, 4500.0000)..(2249.9999, 2250.0000, 9500.0000)  material (none)
-  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -25.0000, 42.5000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -25.0000, 42.5000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (0.0000, 0.0000, 45.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (0.0000, 20.0000, 70.0000)  bounds (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_04/asset/Top  [Cube]  at (300.0000, 0.0000, 75.0000)  bounds (240.0000, -40.0000, 72.5000)..(360.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_L  [Cube]  at (245.0000, 0.0000, 37.5000)  bounds (242.5000, -2.5000, 0.0000)..(247.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_R  [Cube]  at (355.0000, 0.0000, 37.5000)  bounds (352.5000, -2.5000, 0.0000)..(357.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, -80.0000, 2500.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (300.0000, 0.0000, 4500.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2249.9999, 4750.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 2000.0000, 7000.0000)  bounds (-1949.9999, 1750.0000, 4500.0000)..(2549.9999, 2250.0000, 9500.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -25.0000, 42.5000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -25.0000, 42.5000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (300.0000, 0.0000, 45.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 20.0000, 70.0000)  bounds (277.5000, 17.5000, 45.0000)..(322.5000, 22.5000, 95.0000)  material (none)
 
 validation:
   INVALID, 4 issue(s):
@@ -1824,35 +1820,35 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, -80.0000, 0.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, -80.0000, 2500.0000)  bounds (-2470.0000, -2580.0000, 0.0000)..(2530.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (0.0000, 0.0000, 4500.0000)  bounds (-2249.9999, -2249.9999, 4250.0000)..(2249.9999, 2249.9999, 4750.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (0.0000, 2000.0000, 7000.0000)  bounds (-2249.9999, 1750.0000, 4500.0000)..(2249.9999, 2250.0000, 9500.0000)  material (none)
-  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
+  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -25.0000, 42.5000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -25.0000, 42.5000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset  [Xform]  at (30.0000, 0.0000, 80.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (0.0000, 0.0000, 45.0000)  bounds (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (0.0000, 20.0000, 70.0000)  bounds (-22.5000, 17.5000, 45.0000)..(22.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Furniture/Table_04  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
   /Scene/Furniture/Table_04/asset/Top  [Cube]  at (300.0000, 0.0000, 75.0000)  bounds (240.0000, -40.0000, 72.5000)..(360.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_L  [Cube]  at (245.0000, 0.0000, 37.5000)  bounds (242.5000, -2.5000, 0.0000)..(247.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_04/asset/Leg_R  [Cube]  at (355.0000, 0.0000, 37.5000)  bounds (352.5000, -2.5000, 0.0000)..(357.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, -80.0000, 0.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, -80.0000, 2500.0000)  bounds (-2170.0000, -2580.0000, 0.0000)..(2830.0000, 2420.0000, 5000.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2250.0000, 9500.0000)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (300.0000, 0.0000, 4500.0000)  bounds (-1949.9999, -2249.9999, 4250.0000)..(2549.9999, 2249.9999, 4750.0000)  material (none)
-  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 2000.0000, 7000.0000)  bounds (-1949.9999, 1750.0000, 4500.0000)..(2549.9999, 2250.0000, 9500.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -25.0000, 42.5000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -25.0000, 42.5000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset  [Xform]  at (330.0000, 0.0000, 80.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Seat  [Cube]  at (300.0000, 0.0000, 45.0000)  bounds (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 20.0000, 70.0000)  bounds (277.5000, 17.5000, 45.0000)..(322.5000, 22.5000, 95.0000)  material (none)
 
 validation:
   INVALID, 4 issue(s):

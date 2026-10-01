@@ -145,24 +145,40 @@ TOOLS: list[skills.Tool] = [
                         "returned by list_scene / list_prim_children) — "
                         "BowerBot converts to the asset's internal "
                         "coordinate frame automatically; 'bounds_offset' = "
-                        "offsets from the asset's bounding box surfaces "
-                        "(e.g. a bulb 0.5m above a lamp)."
+                        "offsets in project units from the asset's bounding "
+                        "box: from its center on the floor plane, and from "
+                        "its top along the project's up axis (translate_y "
+                        "when Y is up, translate_z when Z is up; from its "
+                        "bottom when negative; 0.5 m above the top when "
+                        "omitted), e.g. a bulb above a lamp."
                     ),
                     "default": schemas.PositionMode.BOUNDS_OFFSET.value,
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters.",
+                    "description": (
+                        "X value in project units: a world position for a "
+                        "scene light or in 'absolute' mode, an offset in "
+                        "'bounds_offset' mode."
+                    ),
                     "default": 0.0,
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "Y position in meters.",
+                    "description": (
+                        "Y value in project units: a world position for a "
+                        "scene light or in 'absolute' mode, an offset in "
+                        "'bounds_offset' mode."
+                    ),
                     "default": 0.0,
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters.",
+                    "description": (
+                        "Z value in project units: a world position for a "
+                        "scene light or in 'absolute' mode, an offset in "
+                        "'bounds_offset' mode."
+                    ),
                     "default": 0.0,
                 },
                 "rotate_x": {
@@ -201,8 +217,8 @@ TOOLS: list[skills.Tool] = [
                         "'inputs:radius'). Use list_light_type_properties to "
                         "discover supported names and defaults. Spatial "
                         "inputs (radius, width, height, length) are given in "
-                        "meters; BowerBot converts to the asset's native "
-                        "units for asset lights."
+                        "project units; BowerBot converts to the asset's "
+                        "native units for asset lights."
                     ),
                     "additionalProperties": True,
                 },
@@ -255,8 +271,10 @@ TOOLS: list[skills.Tool] = [
                         "Asset-level lights only. How to interpret "
                         "translate values: 'absolute' = world-space "
                         "coordinates (BowerBot converts to asset-internal "
-                        "frame); 'bounds_offset' = offsets from the "
-                        "asset's bounding box surfaces."
+                        "frame); 'bounds_offset' = offsets in project units "
+                        "from the asset's bounding box: its center on the "
+                        "floor plane, its top (or bottom when negative) "
+                        "along the project's up axis."
                     ),
                     "default": schemas.PositionMode.BOUNDS_OFFSET.value,
                 },

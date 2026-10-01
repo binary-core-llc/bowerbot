@@ -1,39 +1,40 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Suggested grid layouts: ``(x, y, z)`` positions for a number of objects."""
+"""Suggested grid layouts: positions on the floor for a number of objects."""
 
 from __future__ import annotations
 
 import math
 
+from bowerbot.utils import usd
+
 
 def suggest(
     count: int,
     *,
-    spacing: float = 2.0,
-    room_bounds: tuple[float, float, float] = (10.0, 3.0, 8.0),
-    center: tuple[float, float] | None = None,
+    spacing: float,
+    room_size: tuple[float, float],
+    up: int,
 ) -> list[tuple[float, float, float]]:
-    """Compute ``(x, y, z)`` positions for *count* objects in a grid."""
+    """Compute ``(x, y, z)`` positions for *count* objects in a grid on the floor.
+
+    The grid is centered in a room of *room_size* on the two floor axes of
+    up axis *up*; the up coordinate is 0. Lengths are in project units.
+    """
     if count <= 0:
         return []
 
-    room_width, _, room_depth = room_bounds
     cols = math.ceil(math.sqrt(count))
     rows = math.ceil(count / cols)
-
-    cx = center[0] if center else room_width / 2
-    cz = center[1] if center else room_depth / 2
-
-    x_offset = cx - (cols - 1) * spacing / 2
-    z_offset = cz - (rows - 1) * spacing / 2
+    first, second = usd.metrics.horizontal_axes(up)
+    first_offset = room_size[0] / 2 - (cols - 1) * spacing / 2
+    second_offset = room_size[1] / 2 - (rows - 1) * spacing / 2
 
     placements: list[tuple[float, float, float]] = []
     for i in range(count):
-        row = i // cols
-        col = i % cols
-        x = x_offset + col * spacing
-        z = z_offset + row * spacing
-        placements.append((x, 0.0, z))
+        position = [0.0, 0.0, 0.0]
+        position[first] = first_offset + (i % cols) * spacing
+        position[second] = second_offset + (i // cols) * spacing
+        placements.append((position[0], position[1], position[2]))
     return placements

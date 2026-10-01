@@ -32,6 +32,12 @@ def _stage(path: Path, *, up: str = "Y", mpu: float = 1.0) -> Usd.Stage:
     return stage
 
 
+def _bare_stage(path: Path) -> Usd.Stage:
+    """A stage that declares no up axis and no metersPerUnit."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return Usd.Stage.CreateNew(str(path))
+
+
 def _box(stage: Usd.Stage, path: str, center: tuple[float, float, float],
          size: tuple[float, float, float]) -> None:
     """A cube of *size* (x, y, z extents) centred at *center*."""
@@ -80,6 +86,8 @@ def build_library(root: Path) -> Path:
     - ``materials/oak.usda``, ``materials/steel.usda``: material library files.
     - ``hdri/studio.hdr``, ``textures/wood_diffuse.png``: an HDRI and a texture.
     - ``gem.usdz``: a packaged asset.
+    - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
+    - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
     """
     root.mkdir(parents=True, exist_ok=True)
 
@@ -208,5 +216,21 @@ def build_library(root: Path) -> Path:
     for leftover in sorted(gem_src.parent.iterdir(), reverse=True):
         leftover.unlink()
     gem_src.parent.rmdir()
+
+    bare = _bare_stage(root / "bare.usda")
+    _root(bare, "bare")
+    _box(bare, "/bare/Body", (0.0, 0.25, 0.0), (0.5, 0.5, 0.5))
+    bare.Save()
+
+    bare_kit_dir = root / "bare_kit"
+    bare_geo = _bare_stage(bare_kit_dir / "geo.usda")
+    _root(bare_geo, "bare_kit")
+    _box(bare_geo, "/bare_kit/Body", (0.0, 0.25, 0.0), (0.5, 0.5, 0.5))
+    bare_geo.Save()
+    bare_kit = _bare_stage(bare_kit_dir / "bare_kit.usda")
+    bare_kit_root = UsdGeom.Xform.Define(bare_kit, "/bare_kit").GetPrim()
+    bare_kit.SetDefaultPrim(bare_kit_root)
+    bare_kit_root.GetPayloads().AddPayload("./geo.usda")
+    bare_kit.Save()
 
     return root

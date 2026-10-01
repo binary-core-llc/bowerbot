@@ -28,20 +28,27 @@ logger = logging.getLogger(__name__)
 # ── Placing assets in the scene ──
 
 
-def add_reference(stage: Usd.Stage, scene_object: schemas.SceneObject) -> None:
-    """Reference an asset under a wrapper Xform, conformed to the scene's units and up-axis."""
-    add_references(stage, [scene_object])
+def add_references(
+    stage: Usd.Stage,
+    scene_objects: list[schemas.SceneObject],
+    *,
+    project_mpu: float,
+    project_up_axis: str,
+) -> None:
+    """Reference each asset under a wrapper Xform, conformed to the project's units and up axis.
 
-
-def add_references(stage: Usd.Stage, scene_objects: list[schemas.SceneObject]) -> None:
-    """Author a batch of asset references, computing conform once per unique asset."""
+    The conform is computed once per unique asset.
+    """
     conform: dict[str, tuple[float, float | None]] = {}
     for scene_object in scene_objects:
         asset_path = (
             scene_object.asset.file_path or scene_object.asset.source_id
         )
         if asset_path not in conform:
-            conform[asset_path] = usd.metrics.asset_conform(stage, asset_path)
+            conform[asset_path] = usd.metrics.asset_conform(
+                stage, asset_path,
+                project_mpu=project_mpu, project_up_axis=project_up_axis,
+            )
         unit_scale, up_axis_correction = conform[asset_path]
 
         wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
@@ -264,8 +271,16 @@ def add_nested_asset_reference(
     prim_name: str,
     ref_asset_path: str,
     transform: schemas.TransformParams,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> str:
-    """Author a nested asset reference inside a container's ``contents.usda``."""
+    """Author a nested asset reference inside a container's ``contents.usda``.
+
+    Like a scene placement, the nested asset is scaled and turned into its
+    container's units and up axis. *transform*'s translate is in the
+    container's own units and axes (see :func:`resolve_asset_position`).
+    """
     contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(container_dir)
 
@@ -289,16 +304,19 @@ def add_nested_asset_reference(
     wrapper_path = f"/{default_prim_name}/contents/{group}/{prim_name}"
     wrapper = UsdGeom.Xform.Define(stage, wrapper_path)
 
-    container_mpu = authoring.asset_folder.get_mpu(container_dir)
-    factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
+    container_mpu, container_up = authoring.asset_folder.asset_metrics(
+        container_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
 
     ref_full_path = (container_dir / ref_asset_path).resolve()
-    nested_mpu = (
-        usd.metrics.read_asset_mpu_from_file(ref_full_path)
-        if ref_full_path.exists() else container_mpu
-    )
-    unit_scale = (
-        nested_mpu / container_mpu if container_mpu > 0 else 1.0
+    nested_mpu, nested_up = container_mpu, container_up
+    if ref_full_path.exists():
+        nested_mpu, nested_up = usd.metrics.file_metrics(
+            ref_full_path, default_mpu=project_mpu, default_up_axis=project_up_axis,
+        )
+        nested_mpu = usd.metrics.usable_mpu(nested_mpu)
+    unit_scale, up_axis_correction = usd.metrics.conform(
+        nested_mpu, nested_up, parent_mpu=container_mpu, parent_up_axis=container_up,
     )
 
     sx, sy, sz = transform.scale
@@ -306,17 +324,13 @@ def add_nested_asset_reference(
 
     xformable = UsdGeom.Xformable(wrapper)
     xformable.ClearXformOpOrder()
-    xformable.AddTranslateOp().Set(
-        Gf.Vec3d(
-            transform.translate[0] * factor,
-            transform.translate[1] * factor,
-            transform.translate[2] * factor,
-        ),
-    )
+    xformable.AddTranslateOp().Set(Gf.Vec3d(*transform.translate))
     xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
     xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
 
     asset_inner = stage.DefinePrim(f"{wrapper_path}/asset", "Xform")
+    if up_axis_correction is not None:
+        UsdGeom.Xformable(asset_inner).AddRotateXOp().Set(up_axis_correction)
     asset_inner.GetReferences().AddReference(ref_asset_path)
 
     stage.Save()
@@ -336,7 +350,10 @@ def update_nested_asset_transform(
     translate: tuple[float, float, float],
     rotate: tuple[float, float, float],
 ) -> bool:
-    """Update translate/rotate on a nested-asset wrapper in ``contents.usda``."""
+    """Update translate/rotate on a nested-asset wrapper in ``contents.usda``.
+
+    *translate* is in the container's own units and axes.
+    """
     contents_path = container_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return False
@@ -351,9 +368,6 @@ def update_nested_asset_transform(
     if not wrapper or not wrapper.IsValid():
         return False
 
-    container_mpu = authoring.asset_folder.get_mpu(container_dir)
-    factor = 1.0 / container_mpu if container_mpu > 0 else 1.0
-
     xformable = UsdGeom.Xformable(wrapper)
     existing_scale_op = next(
         (op for op in xformable.GetOrderedXformOps()
@@ -366,9 +380,7 @@ def update_nested_asset_transform(
     )
 
     xformable.ClearXformOpOrder()
-    xformable.AddTranslateOp().Set(
-        Gf.Vec3d(translate[0] * factor, translate[1] * factor, translate[2] * factor),
-    )
+    xformable.AddTranslateOp().Set(Gf.Vec3d(*translate))
     xformable.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
     xformable.AddScaleOp().Set(existing_scale)
 
@@ -497,67 +509,64 @@ def parse_nested_contents_path(prim_path: str) -> tuple[str, str] | None:
 
 
 def get_container_world_inverse(
-    stage: Usd.Stage, container_prim_path: str,
+    stage: Usd.Stage, frame_prim_path: str,
 ) -> Gf.Matrix4d | None:
-    """Return the inverse world transform of a container's wrapper Xform."""
-    prim = stage.GetPrimAtPath(container_prim_path)
+    """Return the inverse world transform of *frame_prim_path*.
+
+    For positions inside an asset folder, pass the prim that references the
+    folder (see :func:`resolve_asset_dir_for_prim`): its frame includes the
+    folder's unit scale and up-axis turn.
+    """
+    prim = stage.GetPrimAtPath(frame_prim_path)
     if not prim or not prim.IsValid():
         return None
 
-    wrapper = prim
-    if prim.GetName() == "asset":
-        parent = prim.GetParent()
-        if parent and parent.IsValid():
-            wrapper = parent
-
     xform_cache = UsdGeom.XformCache()
-    return xform_cache.GetLocalToWorldTransform(wrapper).GetInverse()
-
-
-def world_to_local_point(
-    stage: Usd.Stage,
-    container_prim_path: str,
-    x: float, y: float, z: float,
-) -> tuple[float, float, float] | None:
-    """Convert a world-space point into a container's local frame."""
-    inv = get_container_world_inverse(stage, container_prim_path)
-    if inv is None:
-        return None
-    local = inv.Transform(Gf.Vec3d(x, y, z))
-    return float(local[0]), float(local[1]), float(local[2])
+    return xform_cache.GetLocalToWorldTransform(prim).GetInverse()
 
 
 def resolve_asset_position(
     mode: schemas.PositionMode,
-    bounds: dict[str, dict[str, float]] | None,
-    tx: float,
-    ty: float,
-    tz: float,
+    translate: tuple[float, float, float],
     *,
-    has_explicit_y: bool,
-    world_to_local_mat: Gf.Matrix4d | None = None,
-    asset_mpu: float = 1.0,
+    asset_dir: Path,
+    world_to_local_mat: Gf.Matrix4d | None,
+    up_given: bool,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> tuple[float, float, float]:
-    """Resolve a translate value into asset-local meters.
+    """Resolve a tool's translate into a position in the asset's own units and axes.
 
-    For ``ABSOLUTE`` mode with a *world_to_local_mat*, world-space input
-    is converted to the asset's internal frame. For ``BOUNDS_OFFSET``
-    mode, *bounds* is used to position relative to the bbox surfaces.
+    ``ABSOLUTE``: *translate* is a world point, taken into the asset's frame
+    by *world_to_local_mat*. ``BOUNDS_OFFSET``: *translate* holds offsets in
+    the project's units and axes from the asset's bounding box: from its
+    center on the floor plane, and from its top along the up axis (from its
+    bottom when negative; a default distance above the top when *up_given*
+    is false).
     """
     if mode is schemas.PositionMode.ABSOLUTE:
         if world_to_local_mat is None:
-            return tx, ty, tz
-        internal = world_to_local_mat.Transform(Gf.Vec3d(tx, ty, tz))
-        return (
-            internal[0] * asset_mpu,
-            internal[1] * asset_mpu,
-            internal[2] * asset_mpu,
-        )
+            return translate
+        internal = world_to_local_mat.Transform(Gf.Vec3d(*translate))
+        return internal[0], internal[1], internal[2]
 
+    to_asset = authoring.asset_folder.conform_matrix(
+        asset_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    ).GetInverse()
+    offset = to_asset.TransformDir(Gf.Vec3d(*translate))
+    bounds = authoring.asset_folder.get_geometry_bounds(asset_dir)
     if bounds is None:
-        return tx, ty, tz
+        return offset[0], offset[1], offset[2]
 
-    return _apply_bounds_offsets(bounds, tx, ty, tz, has_explicit_y=has_explicit_y)
+    asset_mpu, asset_up_axis = authoring.asset_folder.asset_metrics(
+        asset_dir, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
+    return _apply_bounds_offsets(
+        bounds, (offset[0], offset[1], offset[2]),
+        up=usd.metrics.axis_index(asset_up_axis),
+        up_given=up_given,
+        default_above=constants.PlacementDefaults.ABOVE_OFFSET_METERS / asset_mpu,
+    )
 
 
 # ── Helpers ──
@@ -565,25 +574,22 @@ def resolve_asset_position(
 
 def _apply_bounds_offsets(
     bounds: dict[str, dict[str, float]],
-    tx: float,
-    ty: float,
-    tz: float,
+    offset: tuple[float, float, float],
     *,
-    has_explicit_y: bool,
+    up: int,
+    up_given: bool,
+    default_above: float,
 ) -> tuple[float, float, float]:
-    """Convert offset-from-bounds values to absolute asset-local positions."""
-    tx = bounds["center"]["x"] + tx
-    tz = bounds["center"]["z"] + tz
-
-    if has_explicit_y:
-        if ty >= 0:
-            ty = bounds["max"]["y"] + ty
-        else:
-            ty = bounds["min"]["y"] + ty
+    """Turn offsets from an asset's bounds into a position, all in the asset's units and axes."""
+    axes = "xyz"
+    position = [bounds["center"][axes[i]] + offset[i] for i in range(3)]
+    if not up_given:
+        position[up] = bounds["max"][axes[up]] + default_above
+    elif offset[up] >= 0:
+        position[up] = bounds["max"][axes[up]] + offset[up]
     else:
-        ty = bounds["max"]["y"] + constants.LightDefaults.Y_OFFSET
-
-    return tx, ty, tz
+        position[up] = bounds["min"][axes[up]] + offset[up]
+    return position[0], position[1], position[2]
 
 
 def _ensure_group_scope(

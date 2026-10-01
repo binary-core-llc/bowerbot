@@ -1431,13 +1431,11 @@ intent: zero meters per unit
 
 SUMMARY
   call: create_project(name="third", up_axis="Y", meters_per_unit=0)
-  current project: third (was odd_name)
-  said: ok: Created and opened project 'third' (Y-up, metersPerUnit=0.0).
+  current project: odd_name
+  said: REFUSED: invalid parameters for create_project at 'meters_per_unit': 0 is less than or equal to the minimum of 0
 
   what changed:
-    ~ file project.json
-    ~ file scene.usda
-    ~ stage  metersPerUnit: 1 → 0
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -1452,54 +1450,18 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "Created and opened project 'third' (Y-up, metersPerUnit=0.0).",
-    "meters_per_unit": 0.0,
-    "name": "third",
-    "object_count": 0,
-    "path": "<PROJECTS>/third",
-    "up_axis": "Y"
+    "error": "invalid parameters for create_project at 'meters_per_unit': 0 is less than or equal to the minimum of 0"
   }
 
 files:
-  ~ project.json
-  ~ scene.usda
+    project.json
+    scene.usda
 
 file changes:
-  ~ project.json:
-      --- project.json (before)
-      +++ project.json (after)
-      @@ -1,8 +1,8 @@
-       {
-      -  "name": "odd name!",
-      +  "name": "third",
-         "created_at": "<TIME>",
-         "updated_at": "<TIME>",
-         "scene_file": "scene.usda",
-         "up_axis": "Y",
-      -  "meters_per_unit": 1.0
-      +  "meters_per_unit": 0.0
-       }
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -2,5 +2,5 @@
-       (
-           defaultPrim = "Scene"
-      -    metersPerUnit = 1
-      +    metersPerUnit = 0
-           upAxis = "Y"
-       )
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -4,5 +4,5 @@
-       doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
-   """
-  -    metersPerUnit = 1
-  +    metersPerUnit = 0
-       upAxis = "Y"
-   )
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
@@ -1512,7 +1474,7 @@ validation:
 
 SUMMARY
   call: list_projects()
-  current project: third
+  current project: odd_name
   said: ok
 
   what changed:
@@ -1531,8 +1493,8 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "count": 4,
-    "current": "third",
+    "count": 3,
+    "current": "odd name!",
     "projects": [
       {
         "name": "golden",
@@ -1547,11 +1509,6 @@ full answer:
       {
         "name": "second",
         "path": "<PROJECTS>/second",
-        "updated_at": "<TIME>"
-      },
-      {
-        "name": "third",
-        "path": "<PROJECTS>/third",
         "updated_at": "<TIME>"
       }
     ]

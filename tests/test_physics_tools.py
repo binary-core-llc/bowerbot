@@ -12,6 +12,7 @@ from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdPhysics
 
+from bowerbot import config
 from tests import _helpers
 
 
@@ -235,6 +236,19 @@ def test_setup_physics_scene_custom_gravity():
         }))
         assert r.success, r.error
         assert r.data["gravity_magnitude"] == 1.62
+
+
+def test_default_gravity_points_down_in_a_z_up_centimeter_project():
+    """Default gravity is Earth's in project units, along minus the project's up axis."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, _ = _helpers.make_state(
+            Path(tmp), up_axis=config.UpAxis.Z, meters_per_unit=0.01,
+        )
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
+        r = asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
+        assert r.success, r.error
+        assert r.data["gravity_direction"] == [0.0, 0.0, -1.0]
+        assert abs(r.data["gravity_magnitude"] - 981.0) < 1e-6
 
 
 def test_setup_physics_scene_reports_resolved_gravity():

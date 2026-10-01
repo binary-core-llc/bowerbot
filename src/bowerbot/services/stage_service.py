@@ -8,7 +8,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from bowerbot import constants
 from bowerbot import scene_state
+from bowerbot import schemas
 from bowerbot.utils import authoring
 from bowerbot.utils import inspection
 from bowerbot.utils import layout
@@ -41,7 +43,10 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         }
 
     state.object_count = 0
-    state.stage = authoring.stage.create_stage(state.stage_path)
+    state.stage = authoring.stage.create_stage(
+        state.stage_path,
+        up_axis=state.up_axis.value, meters_per_unit=state.meters_per_unit,
+    )
     authoring.stage.save_stage(state.stage)
     state.touch_project()
 
@@ -140,27 +145,40 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
     if not prim.IsValid():
         raise ValueError(f"Prim not found: {prim_path}")
 
+    nested = authoring.placement.parse_nested_contents_path(prim_path)
     cur_tx, cur_ty, cur_tz, cur_ry = usd.transforms.read_translate_and_rotate_y(prim)
+    if nested is not None:
+        # A nested wrapper's translate is in its container's frame; axes left out keep
+        # where it is in the world.
+        cur_tx, cur_ty, cur_tz = usd.transforms.world_translation(prim)
     tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
     ty = float(params["translate_y"]) if params.get("translate_y") is not None else cur_ty
     tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
     ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
 
-    nested = authoring.placement.parse_nested_contents_path(prim_path)
     if nested is not None:
-        container_dir, _ = authoring.placement.resolve_asset_dir_for_prim(state.stage, prim_path)
-        if container_dir is None:
+        container_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+            state.stage, prim_path,
+        )
+        if container_dir is None or ref_prim_path is None:
             msg = f"Failed to resolve container for nested prim {prim_path}"
             raise RuntimeError(msg)
         group, prim_name = nested
 
-        container_prim_path = prim_path.split("/asset/contents/")[0]
-        local = authoring.placement.world_to_local_point(
-            state.stage, container_prim_path, tx, ty, tz,
+        world_to_local_mat = authoring.placement.get_container_world_inverse(
+            state.stage, ref_prim_path,
         )
-        if local is None:
-            msg = f"Failed to compute world-to-local for {container_prim_path}"
+        if world_to_local_mat is None:
+            msg = f"Failed to compute world-to-local for {ref_prim_path}"
             raise RuntimeError(msg)
+        local = authoring.placement.resolve_asset_position(
+            schemas.PositionMode.ABSOLUTE, (tx, ty, tz),
+            asset_dir=container_dir,
+            world_to_local_mat=world_to_local_mat,
+            up_given=True,
+            project_mpu=state.meters_per_unit,
+            project_up_axis=state.up_axis.value,
+        )
 
         success = authoring.placement.update_nested_asset_transform(
             container_dir, group, prim_name,
@@ -171,6 +189,10 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             msg = f"Failed to update nested transform for {prim_path}"
             raise RuntimeError(msg)
         state.stage = authoring.stage.open_stage(state.stage_path)
+        tx, ty, tz = (
+            round(v, 4) + 0.0
+            for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(prim_path))
+        )
     else:
         usd.transforms.set_transform(
             state.stage, prim_path,
@@ -308,20 +330,35 @@ def list_prim_children(state: scene_state.SceneState, params: dict[str, Any]) ->
 
 
 def compute_grid_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Compute evenly spaced positions for N objects in a grid."""
+    """Compute evenly spaced positions for N objects in a grid on the project's floor."""
     count = int(params["count"])
-    spacing = float(params.get("spacing", 2.0))
+    mpu = state.meters_per_unit
+    spacing = float(
+        params.get("spacing", constants.PlacementDefaults.GRID_SPACING_METERS / mpu),
+    )
+    up = usd.metrics.axis_index(state.up_axis.value)
 
     placements = layout.grid.suggest(
         count,
         spacing=spacing,
+        room_size=(
+            constants.PlacementDefaults.GRID_ROOM_METERS[0] / mpu,
+            constants.PlacementDefaults.GRID_ROOM_METERS[1] / mpu,
+        ),
+        up=up,
     )
+    first, second = usd.metrics.horizontal_axes(up)
+    names = "xyz"
     positions = [
-        {"x": round(p[0], 2), "z": round(p[2], 2)} for p in placements
+        {names[first]: round(p[first], 2), names[second]: round(p[second], 2)}
+        for p in placements
     ]
     return {
         "count": count,
         "spacing": spacing,
         "positions": positions,
-        "message": f"Computed {count} positions in grid with {spacing}m spacing.",
+        "message": (
+            f"Computed {count} positions on the {names[first]}-{names[second]} floor "
+            f"plane, {spacing} project units apart."
+        ),
     }

@@ -432,9 +432,10 @@ TOOLS: list[skills.Tool] = [
             "to a PhysicsScene; without one, the simulator picks an "
             "engine default. Call once per scene before authoring "
             "physics, unless you only need static colliders (no rigid "
-            "bodies). Gravity magnitude defaults to 9.81 / "
-            "metersPerUnit (Earth gravity in stage units); direction "
-            "defaults to (0, -1, 0) (negative Y). Returns prim_path and "
+            "bodies). Gravity magnitude defaults to 9.81 / the "
+            "project's meters_per_unit (Earth gravity in project units); direction "
+            "defaults to straight down: (0, -1, 0) in a Y-up project, (0, 0, -1) "
+            "in a Z-up project. Returns prim_path and "
             "the resolved gravity_magnitude and gravity_direction actually "
             "authored (the defaults when you omit them, never null)."
         ),
@@ -453,9 +454,9 @@ TOOLS: list[skills.Tool] = [
                 "gravity_magnitude": {
                     "type": "number",
                     "description": (
-                        "Gravity strength in stage units per second "
-                        "squared. Leave unset to derive 9.81 / "
-                        "metersPerUnit from the stage."
+                        "Gravity strength in project units per second "
+                        "squared. Leave unset to derive 9.81 / the "
+                        "project's meters_per_unit."
                     ),
                 },
                 "gravity_direction": {
@@ -465,7 +466,8 @@ TOOLS: list[skills.Tool] = [
                     "maxItems": 3,
                     "description": (
                         "Unit-vector gravity direction. Defaults to "
-                        "(0, -1, 0) which matches USD's Y-up convention."
+                        "straight down along the project's up axis: "
+                        "(0, -1, 0) for Y-up, (0, 0, -1) for Z-up."
                     ),
                 },
             },

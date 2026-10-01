@@ -12,6 +12,7 @@ from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdLux
 
+from bowerbot import config
 from tests import _helpers
 
 
@@ -550,3 +551,95 @@ def test_create_asset_light_spatial_garbage_refused():
         }))
         assert not r.success
         assert "spatial light input" in r.error
+
+
+# ── asset lights: units and up axis ──
+
+
+def _box_lamp(directory: Path, name: str, *, mpu: float = 1.0, up: str = "Y") -> Path:
+    """A box one meter wide and tall, standing on its origin, in the given units and up axis."""
+    path = directory / f"{name}.usda"
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, mpu)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z if up == "Z" else UsdGeom.Tokens.y)
+    root = stage.DefinePrim(f"/{name}", "Xform")
+    stage.SetDefaultPrim(root)
+    cube = UsdGeom.Cube.Define(stage, f"/{name}/Mesh")
+    cube.GetSizeAttr().Set(1.0 / mpu)
+    lift = (0.0, 0.0, 0.5 / mpu) if up == "Z" else (0.0, 0.5 / mpu, 0.0)
+    cube.AddTranslateOp().Set(lift)
+    stage.Save()
+    return path
+
+
+def _world_position(project, prim_path: str) -> tuple[float, float, float]:
+    stage = Usd.Stage.Open(str(project.scene_path))
+    matrix = UsdGeom.Xformable(stage.GetPrimAtPath(prim_path)).ComputeLocalToWorldTransform(
+        Usd.TimeCode.Default(),
+    )
+    x, y, z = matrix.ExtractTranslation()
+    return (round(x, 4), round(y, 4), round(z, 4))
+
+
+def _place_lamp(state, asset: Path, at: tuple[float, float, float]) -> str:
+    placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+        "asset_file_path": str(asset), "asset_name": "Lamp", "group": "Props",
+        "translate_x": at[0], "translate_y": at[1], "translate_z": at[2],
+    }))
+    assert placed.success, placed.error
+    return placed.data["prim_path"]
+
+
+def test_asset_light_offset_is_above_the_asset_in_a_z_up_centimeter_project():
+    """Offsets are in project units, and 'above' is the project's up axis, from the asset's top."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        state, project = _helpers.make_state(
+            tmp_path, up_axis=config.UpAxis.Z, meters_per_unit=0.01,
+        )
+        asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
+        lamp = _place_lamp(state, _box_lamp(tmp_path, "lamp"), (300.0, 0.0, 0.0))
+
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
+            "asset_prim_path": lamp, "light_type": "SphereLight", "light_name": "Bulb",
+            "translate_x": 10.0, "translate_z": 30.0,
+            "attributes": {"inputs:radius": 5.0},
+        }))
+        assert r.success, r.error
+        assert _world_position(project, r.data["prim_path"]) == (310.0, 0.0, 130.0)
+        assert r.data["position"] == {"x": 310.0, "y": 0.0, "z": 130.0}
+
+        lgt = Usd.Stage.Open(str(project.assets_dir / "lamp" / "lgt.usda"))
+        radius = lgt.GetPrimAtPath("/lamp/lgt/Bulb").GetAttribute("inputs:radius").Get()
+        assert abs(radius - 0.05) < 1e-6, "5 cm in the project is 0.05 in the meter asset"
+
+
+def test_asset_light_default_position_is_above_a_z_up_asset():
+    """With no position, the light is 0.5 m above the top of an asset authored Z-up."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lamp = _place_lamp(state, _box_lamp(tmp_path, "post", up="Z"), (3.0, 0.0, 4.0))
+
+        r = asyncio.run(_helpers.exec_tool(state, "create_light", {
+            "asset_prim_path": lamp, "light_type": "SphereLight", "light_name": "Beacon",
+        }))
+        assert r.success, r.error
+        assert _world_position(project, r.data["prim_path"]) == (3.0, 1.5, 4.0)
+
+
+def test_update_asset_light_absolute_goes_to_the_world_point():
+    """An absolute update is a world point, wherever the asset stands and whatever its units."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        lamp = _place_lamp(state, _box_lamp(tmp_path, "cmlamp", mpu=0.01), (3.0, 0.0, 4.0))
+        created = asyncio.run(_helpers.exec_tool(state, "create_light", {
+            "asset_prim_path": lamp, "light_type": "SphereLight", "light_name": "Bulb",
+        }))
+        assert created.success, created.error
+
+        r = asyncio.run(_helpers.exec_tool(state, "update_light", {
+            "prim_path": created.data["prim_path"], "position_mode": "absolute",
+            "translate_x": 3.2, "translate_y": 0.8, "translate_z": 4.1,
+        }))
+        assert r.success, r.error
+        assert _world_position(project, created.data["prim_path"]) == (3.2, 0.8, 4.1)

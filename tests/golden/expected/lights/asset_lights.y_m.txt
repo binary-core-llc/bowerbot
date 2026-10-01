@@ -432,7 +432,7 @@ full answer:
     "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Props/Lamp_01/asset/lgt/Bulb",
     "position": {
       "x": 0.0,
-      "y": 0.750000006,
+      "y": 0.75,
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_01/asset/lgt/Bulb"

@@ -658,6 +658,106 @@ def test_place_asset_inside_nested_visible_in_scene():
         assert prim.IsValid()
 
 
+# ── nested assets: units, up axis, moves ──
+
+
+def _box_asset(directory: Path, name: str, *, mpu: float = 1.0, up: str = "Y") -> Path:
+    """A cube one meter wide, authored in the given units and up axis."""
+    path = directory / f"{name}.usda"
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, mpu)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z if up == "Z" else UsdGeom.Tokens.y)
+    root = stage.DefinePrim(f"/{name}", "Xform")
+    stage.SetDefaultPrim(root)
+    UsdGeom.Cube.Define(stage, f"/{name}/Mesh").GetSizeAttr().Set(1.0 / mpu)
+    stage.Save()
+    return path
+
+
+def _nest(tmp_path, state, *, container_mpu: float = 1.0, container_up: str = "Y"):
+    """Place a container at (3, 0, 4) and nest a Y-up meter box in it at (3.2, 0.5, 4.1)."""
+    container = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+        "asset_file_path": str(
+            _box_asset(tmp_path, "shelf", mpu=container_mpu, up=container_up),
+        ),
+        "asset_name": "Shelf", "group": "Furniture",
+        "translate_x": 3.0, "translate_y": 0.0, "translate_z": 4.0,
+    }))
+    assert container.success, container.error
+    nested = asyncio.run(_helpers.exec_tool(state, "place_asset_inside", {
+        "asset_file_path": str(_box_asset(tmp_path, "book")),
+        "asset_name": "Book",
+        "container_prim_path": container.data["prim_path"],
+        "group": "Props",
+        "translate_x": 3.2, "translate_y": 0.5, "translate_z": 4.1,
+    }))
+    assert nested.success, nested.error
+    return nested
+
+
+def _world_position(project, prim_path: str) -> tuple[float, float, float]:
+    stage = Usd.Stage.Open(str(project.scene_path))
+    matrix = UsdGeom.Xformable(stage.GetPrimAtPath(prim_path)).ComputeLocalToWorldTransform(
+        Usd.TimeCode.Default(),
+    )
+    x, y, z = matrix.ExtractTranslation()
+    return (round(x, 4), round(y, 4), round(z, 4))
+
+
+def test_nested_asset_in_a_centimeter_container_lands_on_the_world_point():
+    """A meter box nested in a centimeter container is where it was asked, at its real size."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        nested = _nest(tmp_path, state, container_mpu=0.01)
+
+        assert _world_position(project, nested.data["prim_path"]) == (3.2, 0.5, 4.1)
+        assert nested.data["position"] == {"x": 3.2, "y": 0.5, "z": 4.1}
+        stage = Usd.Stage.Open(str(project.scene_path))
+        cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [UsdGeom.Tokens.default_])
+        box = cache.ComputeWorldBound(
+            stage.GetPrimAtPath(nested.data["prim_path"]),
+        ).ComputeAlignedRange()
+        assert all(abs(side - 1.0) < 1e-4 for side in box.GetSize())
+
+
+def test_nested_asset_in_a_z_up_container_stands_upright():
+    """A Y-up box nested in a Z-up container is turned to its container's up axis."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        nested = _nest(tmp_path, state, container_up="Z")
+
+        assert _world_position(project, nested.data["prim_path"]) == (3.2, 0.5, 4.1)
+        stage = Usd.Stage.Open(str(project.scene_path))
+        asset = UsdGeom.Xformable(stage.GetPrimAtPath(nested.data["prim_path"] + "/asset"))
+        assert [(op.GetOpName(), op.Get()) for op in asset.GetOrderedXformOps()] == [
+            ("xformOp:rotateX", 90.0),
+        ]
+        up = asset.ComputeLocalToWorldTransform(Usd.TimeCode.Default()).TransformDir(
+            Gf.Vec3d(0, 1, 0),
+        )
+        assert Gf.IsClose(up, Gf.Vec3d(0, 1, 0), 1e-6)
+
+
+def test_moving_a_nested_asset_keeps_the_axes_left_out():
+    """A nested move goes to the world point given; axes left out keep their world value."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        prim_path = _nest(tmp_path, state, container_mpu=0.01).data["prim_path"]
+
+        moved = asyncio.run(_helpers.exec_tool(state, "move_asset", {
+            "prim_path": prim_path, "translate_x": 3.4,
+        }))
+        assert moved.success, moved.error
+        assert _world_position(project, prim_path) == (3.4, 0.5, 4.1)
+        assert moved.data["position"] == {"x": 3.4, "y": 0.5, "z": 4.1}
+
+        turned = asyncio.run(_helpers.exec_tool(state, "move_asset", {
+            "prim_path": prim_path, "rotate_y": 30.0,
+        }))
+        assert turned.success, turned.error
+        assert _world_position(project, prim_path) == (3.4, 0.5, 4.1)
+
+
 # ── freeze_asset: with non-identity root xform ──
 
 

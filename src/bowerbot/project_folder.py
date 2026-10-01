@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from datetime import UTC
 from datetime import datetime
 from pathlib import Path
@@ -85,6 +86,13 @@ class Project:
         meters_per_unit: float = 1.0,
     ) -> Project:
         """Create a new project directory and initialize it."""
+        if not (math.isfinite(meters_per_unit) and meters_per_unit > 0):
+            msg = (
+                f"meters_per_unit must be greater than 0 (1.0 = meters, "
+                f"0.01 = centimeters, 0.001 = millimeters); got {meters_per_unit}."
+            )
+            raise ValueError(msg)
+
         safe_name = authoring.naming.safe_project_name(name)
         if not safe_name:
             safe_name = "untitled"

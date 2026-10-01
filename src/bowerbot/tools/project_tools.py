@@ -101,9 +101,11 @@ TOOLS: list[skills.Tool] = [
                 },
                 "meters_per_unit": {
                     "type": "number",
+                    "exclusiveMinimum": 0,
                     "description": (
                         "Scene units as USD metersPerUnit: 1.0 = meters, "
-                        "0.01 = centimeters, 0.001 = millimeters."
+                        "0.01 = centimeters, 0.001 = millimeters. Must be "
+                        "greater than 0."
                     ),
                 },
             },

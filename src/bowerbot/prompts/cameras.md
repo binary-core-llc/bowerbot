@@ -51,8 +51,8 @@ position unless you also pass new translate values.
 
 - **Orthographic plan/elevation view**: `attributes: {"projection":
   "orthographic", "horizontalAperture": <width * 10>}`. The visible
-  width is `horizontalAperture * 0.1` scene units, so framing a 20 m
-  wide area top-down needs aperture 200. `focalLength` has no effect
+  width is `horizontalAperture * 0.1` scene units, so framing an area
+  20 units wide top-down needs aperture 200. `focalLength` has no effect
   in ortho.
 - **Depth of field**: set `fStop` > 0 AND `focusDistance` (scene
   units, typically the distance from the camera to the subject).

@@ -46,6 +46,8 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         report = authoring.intake.prepare_asset(
             asset_path, assets_dir,
             library_dir=state.library_dir,
+            project_mpu=state.meters_per_unit,
+            project_up_axis=state.up_axis.value,
             fix_root_prim=params.get("fix_root_prim", False),
             fix_root_transforms=params.get("fix_root_transforms", False),
         )
@@ -65,7 +67,10 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         rotate=(0.0, ry, 0.0),
     )
 
-    authoring.placement.add_reference(state.stage, scene_object)
+    authoring.placement.add_references(
+        state.stage, [scene_object],
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
     authoring.stage.save_stage(state.stage)
     state.touch_project()
 
@@ -182,6 +187,8 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             reports[path] = authoring.intake.prepare_asset(
                 path, assets_dir,
                 library_dir=state.library_dir,
+                project_mpu=state.meters_per_unit,
+                project_up_axis=state.up_axis.value,
                 fix_root_prim=fix_prim[path],
                 fix_root_transforms=fix_transforms[path],
             )
@@ -214,7 +221,10 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                     rotate=transform.rotate,
                     scale=transform.scale,
                 ))
-        authoring.placement.add_references(state.stage, objects)
+        authoring.placement.add_references(
+            state.stage, objects,
+            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+        )
         authoring.stage.save_stage(state.stage)
     except Exception:
         state.object_count = object_count_snapshot
@@ -254,10 +264,10 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
-    container_dir, _ = authoring.placement.resolve_asset_dir_for_prim(
+    container_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
         state.stage, container_prim_path,
     )
-    if container_dir is None:
+    if container_dir is None or ref_prim_path is None:
         msg = (
             f"Cannot find ASWF asset folder for {container_prim_path}. "
             "Nested placement only works when the container is an "
@@ -288,6 +298,8 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     report = authoring.intake.prepare_asset(
         asset_path, assets_dir,
         library_dir=state.library_dir,
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
         fix_root_prim=params.get("fix_root_prim", False),
         fix_root_transforms=params.get("fix_root_transforms", False),
     )
@@ -296,14 +308,14 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         params.get("position_mode", schemas.PositionMode.ABSOLUTE.value),
     )
     tx, ty, tz = authoring.placement.resolve_asset_position(
-        mode,
-        authoring.asset_folder.get_geometry_bounds(container_dir),
-        tx, ty, tz,
-        has_explicit_y=params.get("translate_y") is not None,
+        mode, (tx, ty, tz),
+        asset_dir=container_dir,
         world_to_local_mat=authoring.placement.get_container_world_inverse(
-            state.stage, container_prim_path,
+            state.stage, ref_prim_path,
         ),
-        asset_mpu=authoring.asset_folder.get_mpu(container_dir),
+        up_given=True,
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
     )
 
     ref_asset_path = authoring.placement.compute_ref_asset_path(
@@ -324,6 +336,8 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
                 translate=(tx, ty, tz),
                 rotate=(0.0, ry, 0.0),
             ),
+            project_mpu=state.meters_per_unit,
+            project_up_axis=state.up_axis.value,
         )
     except (ValueError, RuntimeError):
         state.object_count -= 1
@@ -332,8 +346,10 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.stage = authoring.stage.open_stage(state.stage_path)
     state.touch_project()
 
-    composed_path = (
-        f"{container_prim_path}/asset/contents/{group}/{prim_name}"
+    composed_path = f"{ref_prim_path}/contents/{group}/{prim_name}"
+    wx, wy, wz = (
+        round(v, 4) + 0.0
+        for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(composed_path))
     )
     logger.info(
         "Placed %s inside %s at %s",
@@ -343,7 +359,7 @@ def place_asset_inside(state: scene_state.SceneState, params: dict[str, Any]) ->
         "prim_path": composed_path,
         "asset": asset_name,
         "container": container_dir.name,
-        "position": {"x": tx, "y": ty, "z": tz},
+        "position": {"x": wx, "y": wy, "z": wz},
         "rotation_y": ry,
         "intake": authoring.intake.intake_summary(report),
         "message": (

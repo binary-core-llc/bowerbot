@@ -141,17 +141,21 @@ TOOLS: list[skills.Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters. 0 = left edge of room.",
+                    "description": "X position in the scene, in project units.",
                 },
                 "translate_y": {
                     "type": "number",
                     "description": (
-                        "Y position in meters. 0 = floor, 2.7 = typical ceiling."
+                        "Y position in the scene, in project units "
+                        "(the height in a Y-up project)."
                     ),
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters. 0 = back wall.",
+                    "description": (
+                        "Z position in the scene, in project units "
+                        "(the height in a Z-up project)."
+                    ),
                 },
                 "rotate_y": {
                     "type": "number",
@@ -372,12 +376,13 @@ TOOLS: list[skills.Tool] = [
             "four sofa instances), use place_asset instead. If the container "
             "is shared by 2+ scene instances, this tool will refuse the call "
             "with a clear error unless confirm_shared_modification=true is "
-            "passed. Translate values are in the container's coordinate space; "
-            "use position_mode='absolute' with coordinates from list_prim_children "
-            "bounds, or 'bounds_offset' where X/Z are offsets from the container's "
-            "bounding-box CENTER and Y is an offset from its TOP surface (or BOTTOM "
-            "for negative Y; default 0.5 m above the top if Y is omitted). Returns "
-            "the composed prim_path, the resolved container-local position, and an "
+            "passed. Translate values are in project units: "
+            "use position_mode='absolute' with world coordinates from list_prim_children "
+            "bounds, or 'bounds_offset' where the two floor-plane values are offsets "
+            "from the container's bounding-box CENTER and the value along the "
+            "project's up axis is an offset from its TOP surface (or BOTTOM when "
+            "negative). Returns "
+            "the composed prim_path, the asset's world position, and an "
             "intake summary (asset_folder, renamed root, files_copied, localized "
             "dependencies, compliance warnings)."
         ),
@@ -409,15 +414,24 @@ TOOLS: list[skills.Tool] = [
                 },
                 "translate_x": {
                     "type": "number",
-                    "description": "X position in meters (container-local).",
+                    "description": (
+                        "X value in project units: a world position in "
+                        "'absolute' mode, an offset in 'bounds_offset' mode."
+                    ),
                 },
                 "translate_y": {
                     "type": "number",
-                    "description": "Y position in meters (container-local).",
+                    "description": (
+                        "Y value in project units: a world position in "
+                        "'absolute' mode, an offset in 'bounds_offset' mode."
+                    ),
                 },
                 "translate_z": {
                     "type": "number",
-                    "description": "Z position in meters (container-local).",
+                    "description": (
+                        "Z value in project units: a world position in "
+                        "'absolute' mode, an offset in 'bounds_offset' mode."
+                    ),
                 },
                 "rotate_y": {
                     "type": "number",
@@ -432,10 +446,11 @@ TOOLS: list[skills.Tool] = [
                         "world-space coordinates (as returned by list_scene / "
                         "list_prim_children) — BowerBot converts to the "
                         "container's internal coordinate frame; 'bounds_offset' "
-                        "= X and Z are offsets from the container's bounding-box "
-                        "CENTER, Y is an offset from the TOP surface (or BOTTOM "
-                        "for negative Y); if translate_y is omitted the asset is "
-                        "placed 0.5 m above the top surface."
+                        "= the two floor-plane values are offsets from the "
+                        "container's bounding-box CENTER, and the value along the "
+                        "project's up axis (translate_y when Y is up, translate_z "
+                        "when Z is up) is an offset from the TOP surface (or "
+                        "BOTTOM when negative). Offsets are in project units."
                     ),
                     "default": schemas.PositionMode.ABSOLUTE.value,
                 },

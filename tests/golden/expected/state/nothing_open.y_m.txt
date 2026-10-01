@@ -482,7 +482,7 @@ intent: no project is open
 SUMMARY
   call: compute_grid_layout(count=4)
   current project: (none)
-  said: ok: Computed 4 positions in grid with 2.0m spacing.
+  said: ok: Computed 4 positions on the x-z floor plane, 2.0 project units apart.
 
   what changed:
     nothing
@@ -501,7 +501,7 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 4,
-    "message": "Computed 4 positions in grid with 2.0m spacing.",
+    "message": "Computed 4 positions on the x-z floor plane, 2.0 project units apart.",
     "positions": [
       {
         "x": 4.0,
@@ -1170,6 +1170,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "bare_kit",
+        "path": "<LIBRARY>/bare_kit/bare_kit.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "lamp",
         "path": "<LIBRARY>/lamp/lamp.usda"
       },
@@ -1178,6 +1184,12 @@ full answer:
         "format": ".usda",
         "name": "lamp_lod",
         "path": "<LIBRARY>/lamp_lod/lamp_lod.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "bare",
+        "path": "<LIBRARY>/bare.usda"
       },
       {
         "category": "geo",
@@ -1252,7 +1264,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 14,
+    "total_matches": 16,
     "truncated": false
   }
 

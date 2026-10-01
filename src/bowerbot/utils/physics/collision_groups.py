@@ -29,10 +29,12 @@ def create_or_update(
     filtered_groups: list[str] | None = None,
     invert_filter: bool | None = None,
     merge_group: str | None = None,
+    project_mpu: float,
+    project_up_axis: str,
 ) -> dict[str, Any]:
     """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``."""
     usd.naming.validate_group_name(name)
-    physics.scenes.ensure(stage)
+    physics.scenes.ensure(stage, project_mpu=project_mpu, project_up_axis=project_up_axis)
 
     prim_path = _group_prim_path(name)
     group = UsdPhysics.CollisionGroup.Define(stage, prim_path)

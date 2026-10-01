@@ -105,7 +105,7 @@ validation:
 SUMMARY
   call: compute_grid_layout(count=6, spacing=200.0)
   current project: golden
-  said: ok: Computed 6 positions in grid with 200.0m spacing.
+  said: ok: Computed 6 positions on the x-y floor plane, 200.0 project units apart.
 
   what changed:
     nothing
@@ -124,31 +124,31 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 6,
-    "message": "Computed 6 positions in grid with 200.0m spacing.",
+    "message": "Computed 6 positions on the x-y floor plane, 200.0 project units apart.",
     "positions": [
       {
-        "x": -195.0,
-        "z": -96.0
+        "x": 300.0,
+        "y": 300.0
       },
       {
-        "x": 5.0,
-        "z": -96.0
+        "x": 500.0,
+        "y": 300.0
       },
       {
-        "x": 205.0,
-        "z": -96.0
+        "x": 700.0,
+        "y": 300.0
       },
       {
-        "x": -195.0,
-        "z": 104.0
+        "x": 300.0,
+        "y": 500.0
       },
       {
-        "x": 5.0,
-        "z": 104.0
+        "x": 500.0,
+        "y": 500.0
       },
       {
-        "x": 205.0,
-        "z": 104.0
+        "x": 700.0,
+        "y": 500.0
       }
     ],
     "spacing": 200.0
@@ -176,7 +176,7 @@ validation:
 SUMMARY
   call: compute_grid_layout(count=1)
   current project: golden
-  said: ok: Computed 1 positions in grid with 2.0m spacing.
+  said: ok: Computed 1 positions on the x-y floor plane, 200.0 project units apart.
 
   what changed:
     nothing
@@ -195,14 +195,14 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 1,
-    "message": "Computed 1 positions in grid with 2.0m spacing.",
+    "message": "Computed 1 positions on the x-y floor plane, 200.0 project units apart.",
     "positions": [
       {
-        "x": 5.0,
-        "z": 4.0
+        "x": 500.0,
+        "y": 400.0
       }
     ],
-    "spacing": 2.0
+    "spacing": 200.0
   }
 
 files:
@@ -228,7 +228,7 @@ intent: zero items
 SUMMARY
   call: compute_grid_layout(count=0)
   current project: golden
-  said: ok: Computed 0 positions in grid with 2.0m spacing.
+  said: ok: Computed 0 positions on the x-y floor plane, 200.0 project units apart.
 
   what changed:
     nothing
@@ -247,9 +247,9 @@ what USD printed while the tool ran:
 full answer:
   {
     "count": 0,
-    "message": "Computed 0 positions in grid with 2.0m spacing.",
+    "message": "Computed 0 positions on the x-y floor plane, 200.0 project units apart.",
     "positions": [],
-    "spacing": 2.0
+    "spacing": 200.0
   }
 
 files:

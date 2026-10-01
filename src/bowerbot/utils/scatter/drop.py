@@ -222,9 +222,7 @@ def drop_placement(
         rz, ry, rx = new_rot.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
         rotate_value = Gf.Vec3f(rx, ry, rz)
 
-        pivot = np.asarray(
-            usd.transforms.world_matrix(prim).ExtractTranslation(), dtype=np.float64,
-        )
+        pivot = np.asarray(usd.transforms.world_translation(prim), dtype=np.float64)
         base = usd.bounds.base_center(bmin, bmax, up)
         swung = base + usd.transforms.quat_rotate(tilt[None, :], (pivot - base)[None, :])[0]
         world_shift += swung - pivot

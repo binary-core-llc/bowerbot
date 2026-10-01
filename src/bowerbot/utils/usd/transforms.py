@@ -38,11 +38,10 @@ def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, fl
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
     """Return the translate component of a prim's local transform."""
-    xformable = UsdGeom.Xformable(prim)
-    if not xformable:
+    if not UsdGeom.Xformable(prim):
         return None
-    t = xformable.GetLocalTransformation().ExtractTranslation()
-    return {"x": round(t[0], 2), "y": round(t[1], 2), "z": round(t[2], 2)}
+    x, y, z = local_translation(prim)
+    return {"x": round(x, 2), "y": round(y, 2), "z": round(z, 2)}
 
 
 def local_translation(prim: Usd.Prim) -> schemas.Vec3:

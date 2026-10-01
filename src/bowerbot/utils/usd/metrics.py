@@ -47,6 +47,11 @@ def usable_mpu(mpu: float) -> float:
     """*mpu* when it is a real unit size; 1.0 for zero or a negative value."""
     return mpu if mpu > 0 else 1.0
 
+
+def area_in_square_meters(area: float, mpu: float) -> float:
+    """An *area* measured in stage units, in square metres."""
+    return area * mpu * mpu
+
 # ── Conforming an asset to the scene ──
 
 

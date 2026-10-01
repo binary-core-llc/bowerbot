@@ -113,7 +113,9 @@ def estimate(
     """Estimate ``(instances, eligible_area_m2)`` for validate_only."""
     rng = np.random.default_rng(seed)
     tri_mask = _require_eligible(triangles, up, surface)
-    area_m2 = float((triangles.areas * tri_mask).sum()) * mpu * mpu * _eligible_share(
+    area_m2 = usd.metrics.area_in_square_meters(
+        float((triangles.areas * tri_mask).sum()), mpu,
+    ) * _eligible_share(
         np.random.default_rng([seed, 1]), surface, triangles, tri_mask, avoid, up,
     )
     if surface.arrangement is schemas.ScatterArrangement.PILE:
@@ -272,7 +274,7 @@ def estimate_count(
 ) -> tuple[int, float]:
     """Estimate ``(instances, eligible_area_m2)`` without generating the scatter."""
     weights = triangles.areas * tri_mask
-    area_m2 = float(weights.sum()) * mpu * mpu
+    area_m2 = usd.metrics.area_in_square_meters(float(weights.sum()), mpu)
     if count is not None:
         return count, area_m2
     if density is None:

@@ -135,10 +135,8 @@ def clear_orphan_variant_overs(
                     vset_spec.RemoveVariant(variant_spec)
                     touched = True
             if len(vset_spec.variants) == 0:
-                del ancestor_spec.variantSets[vset_name]
-                usd.variant_sets.scrub_variant_set_metadata(ancestor_spec, vset_name)
-                if vset_name in ancestor_spec.variantSelections:
-                    del ancestor_spec.variantSelections[vset_name]
+                usd.variant_sets.delete_variant_set(ancestor_spec, vset_name)
+                usd.variant_sets.drop_variant_selection(ancestor_spec, vset_name)
                 touched = True
         ancestor = ancestor.GetParentPath()
 

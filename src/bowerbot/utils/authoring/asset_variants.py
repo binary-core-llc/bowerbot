@@ -168,8 +168,7 @@ def clear_default_variant(asset_dir: Path, set_name: str) -> None:
     prim_spec = layer.GetPrimAtPath(f"/{default_prim_name}")
     if prim_spec is None:
         return
-    if set_name in prim_spec.variantSelections:
-        del prim_spec.variantSelections[set_name]
+    if usd.variant_sets.drop_variant_selection(prim_spec, set_name):
         layer.Save()
 
 
@@ -216,8 +215,7 @@ def remove_variant_set(asset_dir: Path, set_name: str) -> bool:
     if set_name not in prim_spec.variantSets:
         return False
 
-    del prim_spec.variantSets[set_name]
-    usd.variant_sets.scrub_variant_set_metadata(prim_spec, set_name)
+    usd.variant_sets.delete_variant_set(prim_spec, set_name)
     layer.Save()
     return True
 

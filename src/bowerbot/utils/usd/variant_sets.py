@@ -146,8 +146,7 @@ def remove_scene_variant(
         return False
 
     if not surviving:
-        if set_name in prim_spec.variantSelections:
-            del prim_spec.variantSelections[set_name]
+        drop_variant_selection(prim_spec, set_name)
         layer.Save()
         usd.namespace.prune_empty_overrides(layer, carrier_prim_path)
         return True
@@ -182,8 +181,7 @@ def remove_variant_from_spec(
         if layer.GetObjectAtPath(var_path) is not None:
             Sdf.CopySpec(layer, var_path, temp_layer, var_path)
 
-    del prim_spec.variantSets[set_name]
-    scrub_variant_set_metadata(prim_spec, set_name)
+    delete_variant_set(prim_spec, set_name)
 
     for v in surviving:
         Sdf.CreateVariantInLayer(layer, prim_spec.path, set_name, v)
@@ -203,17 +201,16 @@ def remove_scene_variant_set(
         return False
     if set_name not in prim_spec.variantSets:
         return False
-    del prim_spec.variantSets[set_name]
-    scrub_variant_set_metadata(prim_spec, set_name)
-    if set_name in prim_spec.variantSelections:
-        del prim_spec.variantSelections[set_name]
+    delete_variant_set(prim_spec, set_name)
+    drop_variant_selection(prim_spec, set_name)
     layer.Save()
     usd.namespace.prune_empty_overrides(layer, carrier_prim_path)
     return True
 
 
-def scrub_variant_set_metadata(prim_spec: Sdf.PrimSpec, set_name: str) -> None:
-    """Remove ``set_name`` from every variantSetNameList slot."""
+def delete_variant_set(prim_spec: Sdf.PrimSpec, set_name: str) -> None:
+    """Delete a variant set from a prim spec, and its name from every variantSetNameList slot."""
+    del prim_spec.variantSets[set_name]
     name_list = prim_spec.variantSetNameList
     for items in (
         name_list.prependedItems,
@@ -226,3 +223,11 @@ def scrub_variant_set_metadata(prim_spec: Sdf.PrimSpec, set_name: str) -> None:
             items.remove(set_name)
     if set_name in name_list.deletedItems:
         name_list.deletedItems.remove(set_name)
+
+
+def drop_variant_selection(prim_spec: Sdf.PrimSpec, set_name: str) -> bool:
+    """Drop a prim spec's selection for *set_name*; False when it had none."""
+    if set_name not in prim_spec.variantSelections:
+        return False
+    del prim_spec.variantSelections[set_name]
+    return True

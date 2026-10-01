@@ -415,7 +415,7 @@ def _remove_api_from_layer(
             if name in constants.PhysicsRules.MULTI_APPLY_APIS and instance_name
             else name.value
         )
-        if _drop_from_api_listop(prim_spec, token):
+        if usd.attributes.drop_api_schema(prim_spec, token):
             touched = True
         props = list_properties(
             name,
@@ -439,19 +439,3 @@ def _remove_api_from_layer(
     return touched
 
 
-def _drop_from_api_listop(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
-    """Drop *api_name* from prim's apiSchemas list-op; True if changed."""
-    list_op = prim_spec.GetInfo("apiSchemas")
-    if list_op is None:
-        return False
-    new_op = Sdf.TokenListOp()
-    touched = False
-    for slot in ("prependedItems", "appendedItems", "explicitItems"):
-        items = list(getattr(list_op, slot, ()))
-        if api_name in items:
-            items.remove(api_name)
-            touched = True
-        setattr(new_op, slot, items)
-    if touched:
-        prim_spec.SetInfo("apiSchemas", new_op)
-    return touched

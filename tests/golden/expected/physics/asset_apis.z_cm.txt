@@ -921,9 +921,9 @@ SUMMARY
 
   what changed:
     ~ file assets/crate/phy.usda
-    ~ /Scene/Props/Crate_01/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsMassAPI → (none)
+    ~ /Scene/Props/Crate_01/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsMassAPI → PhysicsRigidBodyAPI
     ~ /Scene/Props/Crate_01/asset  attr physics:mass: 12.5 → (none)
-    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsMassAPI → (none)
+    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsRigidBodyAPI, PhysicsMassAPI → PhysicsRigidBodyAPI
     ~ /Scene/Props/Crate_02/asset  attr physics:mass: 12.5 → (none)
 
   project state after the step:
@@ -964,7 +964,7 @@ file changes:
        
        over "crate" (
       -    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
-      +    apiSchemas = None
+      +    prepend apiSchemas = ["PhysicsRigidBodyAPI"]
        )
        {
       -    float physics:mass = 12.5
@@ -979,7 +979,7 @@ composed scene changes:
    
                def Xform "asset" (
   -                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
-  +                apiSchemas = None
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
   @@ -31,5 +31,4 @@
@@ -992,7 +992,7 @@ composed scene changes:
    
                def Xform "asset" (
   -                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
-  +                apiSchemas = None
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
   @@ -64,5 +63,4 @@
@@ -1020,16 +1020,18 @@ validation:
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsRigidBodyAPI")
   current project: golden
-  said: ok: PhysicsRigidBodyAPI was not present on /crate
+  said: ok: Removed PhysicsRigidBodyAPI from /crate
 
   what changed:
-    nothing
+    ~ file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_01/asset  applied APIs: PhysicsRigidBodyAPI → (none)
+    ~ /Scene/Props/Crate_02/asset  applied APIs: PhysicsRigidBodyAPI → (none)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ reported success, but no file changed
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1042,8 +1044,8 @@ full answer:
     "asset_folder": "crate",
     "asset_prim_path": "/crate",
     "cleared_masking_opinions": [],
-    "message": "PhysicsRigidBodyAPI was not present on /crate",
-    "removed": false,
+    "message": "Removed PhysicsRigidBodyAPI from /crate",
+    "removed": true,
     "scene_prim_path": "/Scene/Props/Crate_01/asset",
     "scope": "asset"
   }
@@ -1051,15 +1053,39 @@ full answer:
 files:
     assets/crate/crate.usda
     assets/crate/geo.usda
-    assets/crate/phy.usda
+  ~ assets/crate/phy.usda
     project.json
     scene.usda
 
 file changes:
-  (none)
+  ~ assets/crate/phy.usda:
+      --- assets/crate/phy.usda (before)
+      +++ assets/crate/phy.usda (after)
+      @@ -4,7 +4,5 @@
+       )
+       
+      -over "crate" (
+      -    prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+      -)
+      +over "crate"
+       {
+           over "Box" (
 
 composed scene changes:
-  (none)
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -22,5 +22,4 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = ["PhysicsRigidBodyAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -54,5 +53,4 @@
+   
+               def Xform "asset" (
+  -                apiSchemas = ["PhysicsRigidBodyAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
@@ -1133,13 +1159,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -22,5 +22,4 @@
-   
-               def Xform "asset" (
-  -                apiSchemas = None
-                   assetInfo = {
-                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
-  @@ -34,7 +33,5 @@
+  @@ -33,7 +33,5 @@
                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
    
   -                def Cube "Box" (
@@ -1148,13 +1168,7 @@ composed scene changes:
   +                def Cube "Box"
                    {
                        double size = 1
-  @@ -54,5 +51,4 @@
-   
-               def Xform "asset" (
-  -                apiSchemas = None
-                   assetInfo = {
-                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
-  @@ -66,7 +62,5 @@
+  @@ -64,7 +62,5 @@
                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
    
   -                def Cube "Box" (

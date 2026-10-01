@@ -348,83 +348,35 @@ intent: an asset name that starts with a digit
 SUMMARY
   call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="3 crates", group="Props", translate_x=200.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'
+  said: REFUSED: asset name '3 crates' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
-    + file assets/crate/crate.usda
-    + file assets/crate/geo.usda
+    nothing
 
   project state after the step:
-    not used by the scene: assets/crate/crate.usda
-    not used by the scene: assets/crate/geo.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ refused, but the project changed anyway
-    ⚠ left behind a file nothing in the scene uses: assets/crate/crate.usda
-    ⚠ left behind a file nothing in the scene uses: assets/crate/geo.usda
-    ⚠ USD printed 1 line(s) while the tool ran (see EVIDENCE): Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Props/3crates_02> at character 14 ('3'): expe
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
 what USD printed while the tool ran:
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Props/3crates_02> at character 14 ('3'): expected prim name
+  (nothing)
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'"
+    "error": "asset name '3 crates' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
-  + assets/crate/crate.usda
-  + assets/crate/geo.usda
     assets/table/geo.usda
     assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  + assets/crate/crate.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "crate"
-          metersPerUnit = 1
-          upAxis = "Y"
-      )
-
-      def Xform "crate" (
-          assetInfo = {
-              asset identifier = @./crate.usda@
-              string name = "crate"
-              string version = "1.0"
-          }
-          prepend inherits = </_class_crate>
-          kind = "component"
-          prepend payload = @./geo.usda@
-      )
-      {
-      }
-
-      class Xform "_class_crate"
-      {
-      }
-
-  + assets/crate/geo.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "crate"
-      )
-
-      def Xform "crate"
-      {
-          def Cube "Box"
-          {
-              double size = 1
-              float3 xformOp:scale = (0.5, 0.5, 0.5)
-              double3 xformOp:translate = (0, 0.25, 0)
-              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-          }
-      }
-
+  (none)
 
 composed scene changes:
   (none)
@@ -447,32 +399,10 @@ intent: an asset name with nothing left once cleaned
 SUMMARY
   call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="--", group="Props", translate_x=300.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: ok: Placed -- at /Scene/Props/_03.
+  said: REFUSED: asset name '--' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
-    ~ file scene.usda
-    + prim /Scene/Props [typeless]
-    + prim /Scene/Props/_03 [Xform]
-          attr xformOp:rotateXYZ: (0, 0, 0)
-          attr xformOp:scale: (100, 100, 100)
-          attr xformOp:translate: (300, 0, 0)
-          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
-          world position: (300.0000, 0.0000, 0.0000)
-    + prim /Scene/Props/_03/asset [Xform]
-          attr xformOp:rotateX: 90
-          attr xformOpOrder: ('xformOp:rotateX')
-          bounds: (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-          kind: component
-          world position: (300.0000, 0.0000, 0.0000)
-    + prim /Scene/Props/_03/asset/Box [Cube]
-          attr size: 1
-          attr xformOp:scale: (0.5, 0.5, 0.5)
-          attr xformOp:translate: (0, 0.25, 0)
-          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
-          bounds: (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-          material shown: (none)
-          world position: (300.0000, 0.0000, 25.0000)
-    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -487,113 +417,28 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset": "--",
-    "intake": {
-      "asset_folder": "crate",
-      "files_copied": 1,
-      "root_canonical_name": "crate.usda",
-      "root_original_name": null,
-      "warnings": [],
-      "was_renamed": false
-    },
-    "message": "Placed -- at /Scene/Props/_03.",
-    "position": {
-      "x": 300.0,
-      "y": 0.0,
-      "z": 0.0
-    },
-    "prim_path": "/Scene/Props/_03",
-    "rotation_y": 0.0
+    "error": "asset name '--' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
     assets/table/geo.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -28,4 +28,23 @@
-               }
-           }
-      +
-      +    def "Props"
-      +    {
-      +        def Xform "_03"
-      +        {
-      +            float3 xformOp:rotateXYZ = (0, 0, 0)
-      +            float3 xformOp:scale = (100, 100, 100)
-      +            double3 xformOp:translate = (300, 0, 0)
-      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-      +
-      +            def Xform "asset" (
-      +                prepend references = @assets/crate/crate.usda@
-      +            )
-      +            {
-      +                float xformOp:rotateX = 90
-      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
-      +            }
-      +        }
-      +    }
-       }
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -59,4 +59,36 @@
-           }
-       }
-  +
-  +    def "Props"
-  +    {
-  +        def Xform "_03"
-  +        {
-  +            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +            float3 xformOp:scale = (100, 100, 100)
-  +            double3 xformOp:translate = (300, 0, 0)
-  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-  +
-  +            def Xform "asset" (
-  +                assetInfo = {
-  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
-  +                    string name = "crate"
-  +                    string version = "1.0"
-  +                }
-  +                kind = "component"
-  +            )
-  +            {
-  +                float xformOp:rotateX = 90
-  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
-  +
-  +                def Cube "Box"
-  +                {
-  +                    double size = 1
-  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
-  +                    double3 xformOp:translate = (0, 0.25, 0)
-  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  +                }
-  +            }
-  +        }
-  +    }
-   }
-   
+  (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
 
 validation:
   valid, no issues
@@ -605,69 +450,46 @@ intent: the same for an asset added to another
 SUMMARY
   call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="2nd", parent_prim_path="/Scene/Furniture/Table_01", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'
+  said: REFUSED: asset name '2nd' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
-    + file assets/table/contents.usda
+    nothing
 
   project state after the step:
-    not used by the scene: assets/table/contents.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ refused, but the project changed anyway
-    ⚠ left behind a file nothing in the scene uses: assets/table/contents.usda
-    ⚠ USD printed 1 line(s) while the tool ran (see EVIDENCE): Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </table/contents/Props/2nd_04> at character 23 ('2'):
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
 what USD printed while the tool ran:
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </table/contents/Props/2nd_04> at character 23 ('2'): expected prim name
+  (nothing)
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'"
+    "error": "asset name '2nd' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-  + assets/table/contents.usda
     assets/table/geo.usda
     assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  + assets/table/contents.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "table"
-      )
-
-      over "table"
-      {
-          def Xform "contents"
-          {
-              def Xform "Props"
-              {
-              }
-          }
-      }
-
+  (none)
 
 composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
 
 validation:
   valid, no issues
@@ -679,32 +501,28 @@ intent: a light name that starts with a digit
 SUMMARY
   call: create_light(light_type="SphereLight", light_name="9 lives", translate_x=0.0, translate_y=0.0, translate_z=300.0)
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'
+  said: REFUSED: light name '9 lives' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
     nothing
 
   project state after the step:
-    not used by the scene: assets/table/contents.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ USD printed 2 line(s) while the tool ran (see EVIDENCE): Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Lighting/9lives> at character 17 ('9'): expec
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
 what USD printed while the tool ran:
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Lighting/9lives> at character 17 ('9'): expected prim name
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Lighting/9lives> at character 17 ('9'): expected prim name
+  (nothing)
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'"
+    "error": "light name '9 lives' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/table.usda
     project.json
@@ -717,15 +535,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
 
 validation:
   valid, no issues
@@ -737,32 +552,28 @@ intent: a camera name
 SUMMARY
   call: create_camera(camera_name="2nd-cam")
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'
+  said: REFUSED: camera name '2nd-cam' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
     nothing
 
   project state after the step:
-    not used by the scene: assets/table/contents.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ USD printed 2 line(s) while the tool ran (see EVIDENCE): Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Cameras/2ndcam> at character 16 ('2'): expect
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
 what USD printed while the tool ran:
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Cameras/2ndcam> at character 16 ('2'): expected prim name
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Cameras/2ndcam> at character 16 ('2'): expected prim name
+  (nothing)
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'"
+    "error": "camera name '2nd-cam' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/table.usda
     project.json
@@ -775,15 +586,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
 
 validation:
   valid, no issues
@@ -800,10 +608,6 @@ SUMMARY
   what changed:
     + file assets/table/phy.usda
     ~ file assets/table/table.usda
-    + prim /Scene/Furniture/Table_01/asset/contents [Xform]
-          world position: (0.0000, 0.0000, 0.0000)
-    + prim /Scene/Furniture/Table_01/asset/contents/Props [Xform]
-          world position: (0.0000, 0.0000, 0.0000)
     ~ /Scene/Furniture/Table_01/asset  applied APIs: (none) → PhysicsRigidBodyAPI
 
   project state after the step:
@@ -834,9 +638,6 @@ full answer:
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
   + assets/table/phy.usda
   ~ assets/table/table.usda
@@ -859,13 +660,10 @@ file changes:
   ~ assets/table/table.usda:
       --- assets/table/table.usda (before)
       +++ assets/table/table.usda (after)
-      @@ -15,4 +15,8 @@
+      @@ -15,4 +15,5 @@
            kind = "component"
            prepend payload = @./geo.usda@
-      +    prepend references = [
-      +        @./contents.usda@,
-      +        @./phy.usda@
-      +    ]
+      +    prepend references = @./phy.usda@
        )
        {
 
@@ -878,31 +676,14 @@ composed scene changes:
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/table/table.usda@
-  @@ -55,4 +56,11 @@
-                       double3 xformOp:translate = (0.55, 0.375, 0)
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  +                }
-  +
-  +                def Xform "contents"
-  +                {
-  +                    def Xform "Props"
-  +                    {
-  +                    }
-                   }
-               }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
 
 validation:
   valid, no issues
@@ -914,92 +695,47 @@ intent: a joint name with a hyphen
 SUMMARY
   call: create_joint(joint_type="PhysicsFixedJoint", name="my-joint", body0="/Scene/Furniture/Table_01/asset", scope="scene")
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'
+  said: REFUSED: Joint name 'my-joint' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
-    ~ file scene.usda
-    + prim /Scene/Physics [Scope]
-    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, 0, -1)
-          attr physics:gravityMagnitude: 981
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ refused, but the project changed anyway
-    ⚠ USD printed 1 line(s) while the tool ran (see EVIDENCE): Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Physics/my-joint> at character 18 ('-'): expe
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
 what USD printed while the tool ran:
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Physics/my-joint> at character 18 ('-'): expected end of path
+  (nothing)
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3775 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be an absolute path: <>'"
+    "error": "Joint name 'my-joint' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/phy.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -47,4 +47,13 @@
-               }
-           }
-      +
-      +    def Scope "Physics"
-      +    {
-      +        def PhysicsScene "PhysicsScene"
-      +        {
-      +            vector3f physics:gravityDirection = (0, 0, -1)
-      +            float physics:gravityMagnitude = 981
-      +        }
-      +    }
-       }
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -99,4 +99,13 @@
-           }
-       }
-  +
-  +    def Scope "Physics"
-  +    {
-  +        def PhysicsScene "PhysicsScene"
-  +        {
-  +            vector3f physics:gravityDirection = (0, 0, -1)
-  +            float physics:gravityMagnitude = 981
-  +        }
-  +    }
-   }
-   
+  (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1011,7 +747,7 @@ intent: a collision group name with a dot
 SUMMARY
   call: create_or_update_collision_group(name="grp.a", includes=["/Scene/Furniture/Table_01"])
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3781 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be a prim path: </Scene/Physics/grp.a>'
+  said: REFUSED: Collision group name 'grp.a' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
     nothing
@@ -1029,13 +765,10 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::UsdStage::_IsValidPathForCreatingPrim' at line 3781 in file /opt/USD/pxr/usd/usd/stage.cpp : 'Path must be a prim path: </Scene/Physics/grp.a>'"
+    "error": "Collision group name 'grp.a' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/phy.usda
     assets/table/table.usda
@@ -1049,18 +782,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1072,17 +799,16 @@ intent: a variant set name with a hyphen
 SUMMARY
   call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="my-set", variant_name="x", activations={"/Scene/Furniture/Table_01/asset/Leg_L": false})
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSetSpec::New' at line 34 in file /opt/USD/pxr/usd/sdf/variantSetSpec.cpp : 'Cannot create variant set spec with invalid identifier: 'my-set'' Error in 'pxrInternal_v0_26_8__pxrReserved__::Sdf_ListEditor<TypePolicy>::_ValidateEdit [with TypePolicy = pxrInternal_v0_26_8__pxrReserved__::SdfNameKeyPolicy]' at line 262 in file /opt/USD/pxr/usd/sdf/listEditor.h : '"my-set" is not a valid identifier'
+  said: REFUSED: Invalid variant set name: 'my-set' (use letters, digits and underscores, and do not start with a digit).
 
   what changed:
-    ~ file assets/table/table.usda
-    + file assets/table/variants.usda
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ refused, but the project changed anyway
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1091,57 +817,29 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSetSpec::New' at line 34 in file /opt/USD/pxr/usd/sdf/variantSetSpec.cpp : 'Cannot create variant set spec with invalid identifier: 'my-set''\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::Sdf_ListEditor<TypePolicy>::_ValidateEdit [with TypePolicy = pxrInternal_v0_26_8__pxrReserved__::SdfNameKeyPolicy]' at line 262 in file /opt/USD/pxr/usd/sdf/listEditor.h : '\"my-set\" is not a valid identifier'"
+    "error": "Invalid variant set name: 'my-set' (use letters, digits and underscores, and do not start with a digit)."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/phy.usda
-  ~ assets/table/table.usda
-  + assets/table/variants.usda
+    assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -16,4 +16,5 @@
-           prepend payload = @./geo.usda@
-           prepend references = [
-      +        @./variants.usda@,
-               @./contents.usda@,
-               @./phy.usda@
-  + assets/table/variants.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "table"
-      )
-
-      over "table"
-      {
-      }
-
+  (none)
 
 composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1153,7 +851,7 @@ intent: a variant name with a colon
 SUMMARY
   call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="legs", variant_name="no:left", activations={"/Scene/Furniture/Table_01/asset/Leg_L": false})
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSpec::New' at line 37 in file /opt/USD/pxr/usd/sdf/variantSpec.cpp : 'Invalid variant name: no:left'
+  said: REFUSED: Invalid variant name: 'no:left' (use letters, digits, underscores and hyphens).
 
   what changed:
     nothing
@@ -1171,17 +869,13 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSpec::New' at line 37 in file /opt/USD/pxr/usd/sdf/variantSpec.cpp : 'Invalid variant name: no:left'"
+    "error": "Invalid variant name: 'no:left' (use letters, digits, underscores and hyphens)."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/phy.usda
     assets/table/table.usda
-    assets/table/variants.usda
     project.json
     scene.usda
 
@@ -1192,18 +886,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1215,7 +903,7 @@ intent: a variant name with a dot in the middle
 SUMMARY
   call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="legs", variant_name="no.left", activations={"/Scene/Furniture/Table_01/asset/Leg_L": false})
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSpec::New' at line 37 in file /opt/USD/pxr/usd/sdf/variantSpec.cpp : 'Invalid variant name: no.left'
+  said: REFUSED: Invalid variant name: 'no.left' (use letters, digits, underscores and hyphens).
 
   what changed:
     nothing
@@ -1233,17 +921,13 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSpec::New' at line 37 in file /opt/USD/pxr/usd/sdf/variantSpec.cpp : 'Invalid variant name: no.left'"
+    "error": "Invalid variant name: 'no.left' (use letters, digits, underscores and hyphens)."
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/phy.usda
     assets/table/table.usda
-    assets/table/variants.usda
     project.json
     scene.usda
 
@@ -1254,18 +938,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1281,7 +959,7 @@ SUMMARY
 
   what changed:
     ~ file assets/table/table.usda
-    ~ file assets/table/variants.usda
+    + file assets/table/variants.usda
     ~ /Scene/Furniture/Table_01/asset  variant set legs: (none) → no-left of no-left
     ~ /Scene/Furniture/Table_01/asset/Leg_L  active: (none) → false
 
@@ -1310,13 +988,10 @@ full answer:
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/phy.usda
   ~ assets/table/table.usda
-  ~ assets/table/variants.usda
+  + assets/table/variants.usda
     project.json
     scene.usda
 
@@ -1324,67 +999,65 @@ file changes:
   ~ assets/table/table.usda:
       --- assets/table/table.usda (before)
       +++ assets/table/table.usda (after)
-      @@ -20,4 +20,7 @@
-               @./phy.usda@
-           ]
+      @@ -15,5 +15,11 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      -    prepend references = @./phy.usda@
+      +    prepend references = [
+      +        @./variants.usda@,
+      +        @./phy.usda@
+      +    ]
       +    variants = {
       +        string legs = "no-left"
       +    }
        )
        {
-  ~ assets/table/variants.usda:
-      --- assets/table/variants.usda (before)
-      +++ assets/table/variants.usda (after)
-      @@ -4,6 +4,18 @@
-       )
-       
-      -over "table"
-      +over "table" (
-      +    prepend variantSets = "legs"
-      +)
-       {
-      +    variantSet "legs" = {
-      +        "no-left" {
-      +            over "Leg_L" (
-      +                active = false
-      +            )
-      +            {
-      +            }
-      +
-      +        }
-      +    }
-       }
-       
+  + assets/table/variants.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      over "table" (
+          prepend variantSets = "legs"
+      )
+      {
+          variantSet "legs" = {
+              "no-left" {
+                  over "Leg_L" (
+                      active = false
+                  )
+                  {
+                  }
+
+              }
+          }
+      }
+
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -39,12 +39,4 @@
-                       float3 xformOp:scale = (1.2, 0.05, 0.8)
-                       double3 xformOp:translate = (0, 0.75, 0)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -
+  @@ -42,12 +42,4 @@
+                   }
+   
   -                def Cube "Leg_L"
   -                {
   -                    double size = 1
   -                    float3 xformOp:scale = (0.05, 0.75, 0.05)
   -                    double3 xformOp:translate = (-0.55, 0.375, 0)
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-                   }
+  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                }
+  -
+                   def Cube "Leg_R"
+                   {
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1396,7 +1069,7 @@ intent: what ended up in the scene
 SUMMARY
   call: list_scene()
   current project: golden
-  said: ok: Scene has 3 object(s).
+  said: ok: Scene has 1 object(s).
 
   what changed:
     nothing
@@ -1414,8 +1087,8 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "Scene has 3 object(s).",
-    "object_count": 3,
+    "message": "Scene has 1 object(s).",
+    "object_count": 1,
     "objects": [
       {
         "asset": "assets/table/table.usda",
@@ -1439,42 +1112,11 @@ full answer:
         },
         "prim_path": "/Scene/Furniture/Table_01/asset",
         "type": "Xform"
-      },
-      {
-        "asset": "assets/crate/crate.usda",
-        "bounds": {
-          "max": {
-            "x": 325.0,
-            "y": 25.0,
-            "z": 50.0
-          },
-          "min": {
-            "x": 275.0,
-            "y": -25.0,
-            "z": -0.0
-          }
-        },
-        "kind": "asset",
-        "position": {
-          "x": 0.0,
-          "y": 0.0,
-          "z": 0.0
-        },
-        "prim_path": "/Scene/Props/_03/asset",
-        "type": "Xform"
-      },
-      {
-        "kind": "physics_scene",
-        "prim_path": "/Scene/Physics/PhysicsScene",
-        "type": "PhysicsScene"
       }
     ]
   }
 
 files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/contents.usda
     assets/table/geo.usda
     assets/table/phy.usda
     assets/table/table.usda
@@ -1489,17 +1131,11 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(325.0000, 40.0000, 77.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/contents  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Furniture/Table_01/asset/contents/Props  [Xform]  at (0.0000, 0.0000, 0.0000)
-  /Scene/Props/_03  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset  [Xform]  at (300.0000, 0.0000, 0.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)
-  /Scene/Props/_03/asset/Box  [Cube]  at (300.0000, 0.0000, 25.0000)  bounds (275.0000, -25.0000, 0.0000)..(325.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues

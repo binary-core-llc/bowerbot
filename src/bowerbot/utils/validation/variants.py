@@ -73,11 +73,11 @@ def validate_asset(asset_dir: Path) -> list[schemas.ValidationIssue]:
                 severity=schemas.Severity.ERROR,
                 message=(
                     f"Invalid variant set name {vset.name!r} in "
-                    f"{asset_dir.name} (no whitespace or path separators)."
+                    f"{asset_dir.name} (letters, digits and underscores only)."
                 ),
             ))
         for v in vset.variants:
-            if not usd.naming.is_valid_variant_set_name(v):
+            if not usd.naming.is_valid_variant_name(v):
                 issues.append(schemas.ValidationIssue(
                     severity=schemas.Severity.ERROR,
                     message=(

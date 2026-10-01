@@ -30,7 +30,7 @@ def list_light_type_properties(
 def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level or asset-level light."""
     light_type = schemas.LightType(params["light_type"])
-    safe_name = usd.naming.safe_prim_name(params["light_name"])
+    safe_name = usd.naming.clean_prim_name(params["light_name"], "light name")
     attributes = dict(params.get("attributes") or {})
     light_link_includes = params.get("light_link_includes") or []
     rotate = (

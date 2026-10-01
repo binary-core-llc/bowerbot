@@ -44,7 +44,7 @@ def add_asset_material_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     masking = authoring.opinions.find_variant_masking_opinions(
@@ -98,7 +98,7 @@ def add_asset_geometry_variant(
         for k, v in raw.items()
     }
     set_as_default = bool(params.get("set_as_default", False))
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
     for payload_ref in payloads.values():
         variants.geometry.validate_payload_path(asset_dir, payload_ref)
@@ -194,7 +194,7 @@ def add_asset_attribute_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     masking = authoring.opinions.find_variant_masking_opinions(
@@ -262,7 +262,7 @@ def add_asset_configuration_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     masking = authoring.opinions.find_variant_masking_opinions(
@@ -312,7 +312,7 @@ def add_scene_lighting_attribute_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     carrier = variants.scene.require_lighting_carrier(state.stage)
@@ -379,7 +379,7 @@ def add_scene_lighting_selection_variant(
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     carrier = variants.scene.require_lighting_carrier(state.stage)
@@ -425,7 +425,7 @@ def add_scene_model_selection_variant(
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
     set_as_default = bool(params.get("set_as_default", False))
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
     if state.stage is None:
         raise ValueError("No scene stage is open.")
@@ -464,9 +464,7 @@ def add_scene_model_selection_variant(
             raw = Path(existing[0]).parent.name or Path(existing[0]).stem
             if raw == "assets":
                 raw = Path(existing[0]).stem
-            promoted = "".join(
-                c if c not in " \t\n\r/\\" else "_" for c in raw
-            ) or "original"
+            promoted = usd.naming.safe_variant_name(raw) or "original"
             if promoted == variant_name:
                 raise ValueError(
                     f"variant_name='{variant_name}' collides with auto-promoted "
@@ -546,7 +544,7 @@ def select_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
     asset_dir = authoring.placement.require_asset_context(state.stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     authoring.asset_variants.set_default_variant(asset_dir, set_name, variant_name)
@@ -569,7 +567,7 @@ def select_asset_variant_for_instance(
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     if state.stage is None:
@@ -612,7 +610,7 @@ def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
     asset_dir = authoring.placement.require_asset_context(state.stage, params["prim_path"])[0]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     removed = authoring.asset_variants.remove_variant(asset_dir, set_name, variant_name)
@@ -641,7 +639,7 @@ def select_scene_variant(
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     if state.stage is None:
@@ -667,7 +665,7 @@ def remove_scene_variant(
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
     variant_name = params["variant_name"]
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
 
     if state.stage is None:
@@ -703,7 +701,7 @@ def remove_scene_variant_set(
     """Remove a scene variant set; demote model-selection active variant back to direct ref."""
     prim_path = params["prim_path"]
     set_name = params["variant_set"]
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
 
     if state.stage is None:
         raise ValueError("No scene stage is open.")
@@ -736,7 +734,7 @@ def remove_asset_variant_set(
     """Remove an entire variant set from one asset."""
     asset_dir = authoring.placement.require_asset_context(state.stage, params["prim_path"])[0]
     set_name = params["variant_set"]
-    usd.naming.validate_variant_name(set_name, "variant set")
+    usd.naming.validate_variant_set_name(set_name)
 
     removed = authoring.asset_variants.remove_variant_set(asset_dir, set_name)
     if removed:

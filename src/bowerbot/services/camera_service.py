@@ -28,7 +28,7 @@ def list_camera_properties(
 
 def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level camera, aimed via look_at or explicit rotation."""
-    safe_name = usd.naming.safe_prim_name(params["camera_name"])
+    safe_name = usd.naming.clean_prim_name(params["camera_name"], "camera name")
     attributes = dict(params.get("attributes") or {})
     look_at = params.get("look_at")
     rotate = usd.values.unpack_vec3(

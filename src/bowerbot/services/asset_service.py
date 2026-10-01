@@ -37,9 +37,10 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     tz = float(params["translate_z"])
     ry = float(params.get("rotate_y", 0.0))
 
+    safe_asset_name = usd.naming.clean_prim_name(asset_name, "asset name")
+    group_path = authoring.placement.scene_group_path(group)
     state.object_count += 1
-    safe_asset_name = usd.naming.safe_prim_name(asset_name)
-    prim_path = f"/Scene/{group}/{safe_asset_name}_{state.object_count:02d}"
+    prim_path = f"{group_path}/{safe_asset_name}_{state.object_count:02d}"
 
     assets_dir = state.resolve_assets_dir()
     try:
@@ -111,13 +112,10 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         except ValueError as e:
             problems.append(f"placements[{idx}]: {e}")
             continue
-        base_name = usd.naming.safe_prim_name(entry.name or asset_path.stem)
-        if not usd.naming.is_valid_prim_name(base_name):
-            problems.append(
-                f"placements[{idx}]: name '{base_name}' is not a valid USD "
-                f"prim name (it must start with a letter or underscore); "
-                f"set the entry's 'name'.",
-            )
+        try:
+            base_name = usd.naming.clean_prim_name(entry.name or asset_path.stem, "name")
+        except ValueError as e:
+            problems.append(f"placements[{idx}]: {e} Set the entry's 'name'.")
             continue
         target = authoring.intake.intake_target_name(
             asset_path, state.library_dir,
@@ -257,6 +255,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
         library_dir=state.library_dir,
     )
     asset_name = params["asset_name"]
+    safe_asset_name = usd.naming.clean_prim_name(asset_name, "asset name")
     parent_prim_path = params["parent_prim_path"]
     group = params["group"]
     tx = float(params["translate_x"])
@@ -309,7 +308,6 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
 
     state.object_count += 1
-    safe_asset_name = usd.naming.safe_prim_name(asset_name)
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
     try:

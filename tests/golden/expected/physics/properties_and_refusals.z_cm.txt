@@ -1968,7 +1968,123 @@ validation:
   valid, no issues
 
 
-=== step 19: place_asset
+=== step 19: apply_physics_api
+intent: a relationship to a prim that does not exist
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsCollisionAPI", scope="scene", relationships={"physics:simulationOwner": ["/Scene/Physics/Nope"]})
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, 0, -1)
+          attr physics:gravityMagnitude: 981
+    ~ /Scene/Props/Crate_01/asset/Box  applied APIs: (none) → PhysicsCollisionAPI
+    ~ /Scene/Props/Crate_01/asset/Box  rel physics:simulationOwner: (none) → /Scene/Physics/Nope
+
+  project state after the step:
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
+
+  checks:
+    ⚠ left behind a dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsCollisionAPI",
+    "attributes_set": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/Scene/Props/Crate_01/asset/Box",
+    "relationships_set": [
+      "physics:simulationOwner"
+    ],
+    "requested_prim_path": "/Scene/Props/Crate_01/asset",
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -25,5 +25,21 @@
+                       float xformOp:rotateX = 90
+                       uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +
+      +                over "Box" (
+      +                    prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +                )
+      +                {
+      +                    rel physics:simulationOwner = </Scene/Physics/Nope>
+      +                }
+                   }
+      +        }
+      +    }
+      +
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, 0, -1)
+      +            float physics:gravityMagnitude = 981
+               }
+           }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -35,6 +35,9 @@
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+   
+  -                def Cube "Box"
+  +                def Cube "Box" (
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
+  +                )
+                   {
+  +                    rel physics:simulationOwner = </Scene/Physics/Nope>
+                       double size = 1
+                       float3 xformOp:scale = (0.5, 0.5, 0.5)
+  @@ -45,4 +48,13 @@
+           }
+       }
+  +
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, 0, -1)
+  +            float physics:gravityMagnitude = 981
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 20: place_asset
 intent: place ground.usda as Ground
 
 SUMMARY
@@ -2003,7 +2119,7 @@ SUMMARY
     ~ /Scene  bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000) → (-25.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 50.0000)
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
 
   checks:
     no problems spotted by the automatic checks
@@ -2089,7 +2205,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -27,4 +27,20 @@
+      @@ -34,4 +34,20 @@
                    }
                }
       +
@@ -2109,12 +2225,12 @@ file changes:
       +            }
       +        }
            }
-       }
+       
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -44,4 +44,33 @@
+  @@ -47,4 +47,33 @@
                }
            }
   +
@@ -2147,7 +2263,7 @@ composed scene changes:
   +            }
   +        }
        }
-   }
+   
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 50.0000)
@@ -2157,12 +2273,13 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Ground_02  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 20: apply_physics_api
+=== step 21: apply_physics_api
 intent: an approximation USD does not have (asset scope)
 
 SUMMARY
@@ -2174,7 +2291,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
 
   checks:
     no problems spotted by the automatic checks
@@ -2212,12 +2329,13 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Ground_02  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 21: apply_physics_api
+=== step 22: apply_physics_api
 intent: an approximation USD does not have (scene scope)
 
 SUMMARY
@@ -2229,7 +2347,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
 
   checks:
     no problems spotted by the automatic checks
@@ -2267,12 +2385,13 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Ground_02  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 22: set_prim_attribute
+=== step 23: set_prim_attribute
 intent: a value outside the list an attribute allows, with the general tool
 
 SUMMARY
@@ -2284,7 +2403,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
 
   checks:
     no problems spotted by the automatic checks
@@ -2322,12 +2441,13 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Ground_02  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 23: get_physics_summary
+=== step 24: get_physics_summary
 
 SUMMARY
   call: get_physics_summary(prim_path="/Scene/Nope")
@@ -2338,7 +2458,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
 
   checks:
     no problems spotted by the automatic checks
@@ -2380,12 +2500,13 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Ground_02  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 24: list_joints
+=== step 25: list_joints
 
 SUMMARY
   call: list_joints()
@@ -2396,7 +2517,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
 
   checks:
     no problems spotted by the automatic checks
@@ -2434,12 +2555,13 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Ground_02  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 25: list_collision_groups
+=== step 26: list_collision_groups
 
 SUMMARY
   call: list_collision_groups()
@@ -2450,7 +2572,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    dangling target: /Scene/Props/Crate_01/asset/Box rel physics:simulationOwner -> /Scene/Physics/Nope
 
   checks:
     no problems spotted by the automatic checks
@@ -2488,6 +2610,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Ground_02  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset  [Xform]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)
   /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (600.0000, 0.0000, 0.0000)  bounds (100.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues

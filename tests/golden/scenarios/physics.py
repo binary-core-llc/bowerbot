@@ -281,6 +281,13 @@ SCENARIOS = (
                 note="a body that does not exist",
             ),
             model.Step("remove_joint", {"scope": "scene", "prim_path": "/Scene/Physics/Nope"}),
+            _api(
+                "$crate/asset",
+                "PhysicsCollisionAPI",
+                scope="scene",
+                relationships={"physics:simulationOwner": ["/Scene/Physics/Nope"]},
+                note="a relationship to a prim that does not exist",
+            ),
             _place("ground.usda", "Ground", 6.0, save="ground"),
             _api(
                 "$ground/asset/Plane",

@@ -104,6 +104,11 @@ def remove_prim(stage: Usd.Stage, prim_path: str) -> bool:
     if not prim.IsValid():
         msg = f"Prim not found: {prim_path}"
         raise ValueError(msg)
+    if prim == stage.GetDefaultPrim():
+        raise ValueError(
+            f"{prim_path} is the scene's root prim: everything in the scene sits under it, "
+            "so it cannot be removed. Remove the prims under it instead.",
+        )
 
     removed = stage.RemovePrim(prim_path)
     if removed:

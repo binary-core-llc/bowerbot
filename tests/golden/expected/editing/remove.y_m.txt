@@ -1131,162 +1131,7 @@ intent: the scene root
 SUMMARY
   call: remove_prim(prim_path="/Scene")
   current project: golden
-  said: ok: Removed /Scene
-
-  what changed:
-    ~ file scene.usda
-    ~ stage  defaultPrim: /Scene → (none)
-    - prim /Scene [Xform]
-    - prim /Scene/Furniture [typeless]
-    - prim /Scene/Furniture/Table_02 [Xform]
-    - prim /Scene/Furniture/Table_02/asset [Xform]
-    - prim /Scene/Furniture/Table_02/asset/Leg_L [Cube]
-    - prim /Scene/Furniture/Table_02/asset/Leg_R [Cube]
-    - prim /Scene/Furniture/Table_02/asset/Top [Cube]
-    ~ validity: valid → INVALID
-    + issue [error] -: Stage has no defaultPrim set.
-    + issue [error] /: MissingDefaultPrim: Stage with root layer <<PROJECT>/scene.usda> has an invalid or missing defaultPrim.
-
-  project state after the step:
-    not used by the scene: assets/chair/chair.usda
-    not used by the scene: assets/chair/geo.usda
-    not used by the scene: assets/crate/crate.usda
-    not used by the scene: assets/crate/geo.usda
-    not used by the scene: assets/table/geo.usda
-    not used by the scene: assets/table/table.usda
-
-  checks:
-    ⚠ this step made the scene invalid
-    ⚠ left behind a file nothing in the scene uses: assets/table/geo.usda
-    ⚠ left behind a file nothing in the scene uses: assets/table/table.usda
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "message": "Removed /Scene",
-    "prim_path": "/Scene",
-    "scrubbed_dangling_refs": {
-      "rels_touched": []
-    },
-    "suspect_variant_sets": []
-  }
-
-files:
-    assets/chair/chair.usda
-    assets/chair/geo.usda
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/geo.usda
-    assets/table/table.usda
-    project.json
-  ~ scene.usda
-
-file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -6,24 +6,2 @@
-       )
-       
-      -def Xform "Scene" (
-      -    kind = "assembly"
-      -)
-      -{
-      -    def "Furniture"
-      -    {
-      -        def Xform "Table_02"
-      -        {
-      -            float3 xformOp:rotateXYZ = (0, 0, 0)
-      -            float3 xformOp:scale = (1, 1, 1)
-      -            double3 xformOp:translate = (2, 0, 0)
-      -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-      -
-      -            def Xform "asset" (
-      -                prepend references = @assets/table/table.usda@
-      -            )
-      -            {
-      -            }
-      -        }
-      -    }
-      -}
-      -
-
-composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -8,52 +8,2 @@
-   )
-   
-  -def Xform "Scene" (
-  -    kind = "assembly"
-  -)
-  -{
-  -    def "Furniture"
-  -    {
-  -        def Xform "Table_02"
-  -        {
-  -            float3 xformOp:rotateXYZ = (0, 0, 0)
-  -            float3 xformOp:scale = (1, 1, 1)
-  -            double3 xformOp:translate = (2, 0, 0)
-  -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-  -
-  -            def Xform "asset" (
-  -                assetInfo = {
-  -                    asset identifier = @<PROJECT>/assets/table/table.usda@
-  -                    string name = "table"
-  -                    string version = "1.0"
-  -                }
-  -                kind = "component"
-  -            )
-  -            {
-  -                def Cube "Top"
-  -                {
-  -                    double size = 1
-  -                    float3 xformOp:scale = (1.2, 0.05, 0.8)
-  -                    double3 xformOp:translate = (0, 0.75, 0)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -
-  -                def Cube "Leg_L"
-  -                {
-  -                    double size = 1
-  -                    float3 xformOp:scale = (0.05, 0.75, 0.05)
-  -                    double3 xformOp:translate = (-0.55, 0.375, 0)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -
-  -                def Cube "Leg_R"
-  -                {
-  -                    double size = 1
-  -                    float3 xformOp:scale = (0.05, 0.75, 0.05)
-  -                    double3 xformOp:translate = (0.55, 0.375, 0)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -            }
-  -        }
-  -    }
-  -}
-  -
-
-world (position, bounds min..max, material shown):
-  (empty scene)
-
-validation:
-  INVALID, 2 issue(s):
-  - [error] -: Stage has no defaultPrim set.
-  - [error] /: MissingDefaultPrim: Stage with root layer <<PROJECT>/scene.usda> has an invalid or missing defaultPrim.
-
-
-=== step 09: list_scene
-
-SUMMARY
-  call: list_scene()
-  current project: golden
-  said: ok: Scene has 0 object(s).
+  said: REFUSED: /Scene is the scene's root prim: everything in the scene sits under it, so it cannot be removed. Remove the prims under it instead.
 
   what changed:
     nothing
@@ -1296,8 +1141,6 @@ SUMMARY
     not used by the scene: assets/chair/geo.usda
     not used by the scene: assets/crate/crate.usda
     not used by the scene: assets/crate/geo.usda
-    not used by the scene: assets/table/geo.usda
-    not used by the scene: assets/table/table.usda
 
   checks:
     no problems spotted by the automatic checks
@@ -1309,9 +1152,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "Scene has 0 object(s).",
-    "object_count": 0,
-    "objects": []
+    "error": "/Scene is the scene's root prim: everything in the scene sits under it, so it cannot be removed. Remove the prims under it instead."
   }
 
 files:
@@ -1331,21 +1172,23 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  (empty scene)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02/asset/Top  [Cube]  at (2.0000, 0.7500, 0.0000)  bounds (1.4000, 0.7250, -0.4000)..(2.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_02/asset/Leg_L  [Cube]  at (1.4500, 0.3750, 0.0000)  bounds (1.4250, 0.0000, -0.0250)..(1.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_02/asset/Leg_R  [Cube]  at (2.5500, 0.3750, 0.0000)  bounds (2.5250, 0.0000, -0.0250)..(2.5750, 0.7500, 0.0250)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: Stage has no defaultPrim set.
-  - [error] /: MissingDefaultPrim: Stage with root layer <<PROJECT>/scene.usda> has an invalid or missing defaultPrim.
+  valid, no issues
 
 
-=== step 10: list_project_assets
-intent: which copies are still in use
+=== step 09: list_scene
 
 SUMMARY
-  call: list_project_assets()
+  call: list_scene()
   current project: golden
-  said: ok: Project has 3 asset(s), 3 unused.
+  said: ok: Scene has 1 object(s).
 
   what changed:
     nothing
@@ -1355,8 +1198,90 @@ SUMMARY
     not used by the scene: assets/chair/geo.usda
     not used by the scene: assets/crate/crate.usda
     not used by the scene: assets/crate/geo.usda
-    not used by the scene: assets/table/geo.usda
-    not used by the scene: assets/table/table.usda
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Scene has 1 object(s).",
+    "object_count": 1,
+    "objects": [
+      {
+        "asset": "assets/table/table.usda",
+        "bounds": {
+          "max": {
+            "x": 2.6,
+            "y": 0.775,
+            "z": 0.4
+          },
+          "min": {
+            "x": 1.4,
+            "y": 0.0,
+            "z": -0.4
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Furniture/Table_02/asset",
+        "type": "Xform"
+      }
+    ]
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02/asset/Top  [Cube]  at (2.0000, 0.7500, 0.0000)  bounds (1.4000, 0.7250, -0.4000)..(2.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_02/asset/Leg_L  [Cube]  at (1.4500, 0.3750, 0.0000)  bounds (1.4250, 0.0000, -0.0250)..(1.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_02/asset/Leg_R  [Cube]  at (2.5500, 0.3750, 0.0000)  bounds (2.5250, 0.0000, -0.0250)..(2.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 10: list_project_assets
+intent: which copies are still in use
+
+SUMMARY
+  call: list_project_assets()
+  current project: golden
+  said: ok: Project has 3 asset(s), 2 unused.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    not used by the scene: assets/chair/chair.usda
+    not used by the scene: assets/chair/geo.usda
+    not used by the scene: assets/crate/crate.usda
+    not used by the scene: assets/crate/geo.usda
 
   checks:
     no problems spotted by the automatic checks
@@ -1380,14 +1305,14 @@ full answer:
         "type": "folder"
       },
       {
-        "in_scene": false,
+        "in_scene": true,
         "name": "table",
         "type": "folder"
       }
     ],
-    "message": "Project has 3 asset(s), 3 unused.",
+    "message": "Project has 3 asset(s), 2 unused.",
     "total": 3,
-    "unused_count": 3
+    "unused_count": 2
   }
 
 files:
@@ -1407,9 +1332,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  (empty scene)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.4000, 0.0000, -0.4000)..(2.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_02/asset/Top  [Cube]  at (2.0000, 0.7500, 0.0000)  bounds (1.4000, 0.7250, -0.4000)..(2.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_02/asset/Leg_L  [Cube]  at (1.4500, 0.3750, 0.0000)  bounds (1.4250, 0.0000, -0.0250)..(1.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_02/asset/Leg_R  [Cube]  at (2.5500, 0.3750, 0.0000)  bounds (2.5250, 0.0000, -0.0250)..(2.5750, 0.7500, 0.0250)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: Stage has no defaultPrim set.
-  - [error] /: MissingDefaultPrim: Stage with root layer <<PROJECT>/scene.usda> has an invalid or missing defaultPrim.
+  valid, no issues

@@ -91,6 +91,10 @@ Each named attribute must already exist on the target prim; unknown
 attribute names are refused with an available-inputs / did-you-mean
 hint (verify with `list_prim_attributes` if unsure).
 
+Physics attributes are refused (`physics:*`, `drive:*:physics:*`,
+`limit:*:physics:*`): there are no physics variants. Set physics
+with the physics tools.
+
 One call per variant. Example for a 4-color light palette:
 ```
 add_asset_attribute_variant(table, "light_colors", "blue",

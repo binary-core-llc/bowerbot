@@ -46,6 +46,8 @@ class PhysicsRules:
         schemas.PhysicsApiName.DRIVE,
         schemas.PhysicsApiName.LIMIT,
     })
+    # Namespace of every UsdPhysics attribute (physics:mass, drive:angular:physics:damping).
+    ATTRIBUTE_NAMESPACE = "physics"
     # Keyword USD's own physics validators carry in the validation registry.
     VALIDATOR_KEYWORD = "UsdPhysicsValidators"
     # Stands for the instance name in a multi-apply API's property names.

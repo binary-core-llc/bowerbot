@@ -52,6 +52,15 @@ refusal quotes USD's error. This covers `apply_physics_api`,
 - a plane collider under a dynamic rigid body;
 - an articulation root on a rigid body that is switched off.
 
+There are no physics variants: a variant that names a physics
+attribute (`physics:*`, `drive:*:physics:*`, `limit:*:physics:*`)
+is refused. Set physics with the physics tools.
+
+Any other tool that leaves the scene a new physics error (for
+example placing an asset whose own `phy.usda` is wrong) says so:
+its answer carries `physics_errors` and a WARNING. Fix the cause
+or undo the change before going on.
+
 ## Prim-type rules (enforced)
 
 The UsdPhysics spec restricts what each API can target. The tools

@@ -6,9 +6,13 @@
 A physics tool makes its edit, asks USD's validators whether the scene now has
 an error it did not have before, and only then saves. The rules are USD's, so
 what BowerBot accepts and what ``validate_scene`` reports cannot disagree.
+
+Physics is set with the physics tools only: a variant may not change it.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 from pxr import Usd
 
@@ -26,6 +30,21 @@ def errors(stage: Usd.Stage) -> set[str]:
         )
         if issue.severity == schemas.Severity.ERROR
     }
+
+
+def refuse_in_variant(overrides: dict[str, dict[str, Any]]) -> None:
+    """Refuse variant overrides of physics attributes: BowerBot has no physics variants."""
+    namespace = constants.PhysicsRules.ATTRIBUTE_NAMESPACE
+    found = sorted(
+        f"{prim_path}.{name}" for prim_path, attributes in overrides.items()
+        for name in attributes if namespace in name.split(":")[:-1]
+    )
+    if found:
+        raise ValueError(
+            f"A variant cannot change physics attributes ({', '.join(found)}): "
+            "BowerBot has no physics variants. Set physics with apply_physics_api or "
+            "create_joint, where every change is checked against USD's physics rules.",
+        )
 
 
 def refuse_new_errors(stage: Usd.Stage, known: set[str], doing: str) -> None:

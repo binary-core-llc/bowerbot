@@ -144,7 +144,7 @@ full answer:
         "path": "<LIBRARY>/kit/kit.usda"
       }
     ],
-    "total_matches": 26,
+    "total_matches": 27,
     "truncated": true
   }
 

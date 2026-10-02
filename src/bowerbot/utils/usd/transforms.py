@@ -121,11 +121,9 @@ def set_xform(
     rotate: schemas.PartialVec3 | None = None,
     scale: schemas.PartialVec3 | None = None,
 ) -> None:
-    """Set the translate, rotateXYZ and scale of a prim: the ones that are given.
+    """Set the given translate, rotateXYZ and scale of a prim; a None axis keeps its value.
 
-    An axis left out (None) keeps the value the op has now. An op the prim
-    does not have yet is added, in translate, rotate, scale order. A prim that
-    carries other transform ops is refused: adding to them would move it wrong.
+    A prim that carries other transform ops is refused.
     """
     xformable = UsdGeom.Xformable(prim)
     own = constants.TransformUsd.PLACEMENT_OPS

@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""BowerBot data schemas, grouped by domain.
-
-Import from ``bowerbot.schemas`` for anything — this package re-exports
-every public symbol so call sites don't need to know which file a
-schema lives in.
-"""
+"""BowerBot data schemas, grouped by domain and re-exported here."""
 
 from bowerbot.schemas.assets import AssetCategory
 from bowerbot.schemas.assets import AssetFormat

@@ -11,11 +11,7 @@ authors = [
 keywords = ["usd", "openusd", "3d", "scene-assembly", "ai", "llm", "digital-twin"]
 
 dependencies = [
-    # Core
-    # Upper bounds pinned to the next untested major. When upstream
-    # ships a new major, we test deliberately and bump the bound in
-    # a follow-up release. End users are protected from accidentally
-    # picking up breaking changes via `pip install bowerbot`.
+    # Core. Each upper bound is the next major, raised once that major is tested.
     "click>=8.1,<9",
     "pydantic>=2.0,<3",
     "pydantic-settings>=2.0,<3",

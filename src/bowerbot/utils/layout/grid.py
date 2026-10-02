@@ -17,11 +17,7 @@ def suggest(
     room_size: tuple[float, float],
     up: int,
 ) -> list[tuple[float, float, float]]:
-    """Compute ``(x, y, z)`` positions for *count* objects in a grid on the floor.
-
-    The grid is centered in a room of *room_size* on the two floor axes of
-    up axis *up*; the up coordinate is 0. Lengths are in project units.
-    """
+    """Positions for *count* objects in a grid on the floor of a room, in project units."""
     if count < 0:
         raise ValueError(f"count must be 0 or more, not {count}.")
     if spacing <= 0:

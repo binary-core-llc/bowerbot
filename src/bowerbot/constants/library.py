@@ -17,9 +17,7 @@ class LibraryRules:
     PROBLEM_EXAMPLES: int = 3
     # The category filter that lists every category.
     ANY_CATEGORY: str = "all"
-    # The only categories scan_library assigns: package roots, loose materials,
-    # loose geometry. Source of truth for the listable-category filter; 'lgt' is
-    # an ASWF layer kind, never a library result.
+    # The categories scan_library assigns: package roots, loose materials, loose geometry.
     CATEGORIES: tuple[schemas.AssetCategory, ...] = (
         schemas.AssetCategory.PACKAGE,
         schemas.AssetCategory.MTL,

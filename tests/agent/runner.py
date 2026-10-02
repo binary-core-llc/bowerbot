@@ -1,26 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Scenario runner for agent integration tests.
-
-Wraps :class:`bowerbot.agent.AgentRuntime` to record every tool call,
-token cost, and LLM response per prompt, then dumps human-readable
-artifacts to ``tests/agent/artifacts/<scenario>/<timestamp>/``. Each
-scenario is run in an isolated temporary project so scenarios cannot
-contaminate each other.
-
-Usage from pytest::
-
-    @pytest.mark.agent_integration
-    async def test_pendulum(scenario_runner):
-        scenario = AgentScenario(
-            name="pendulum",
-            description="Build a two-cube pendulum from a vague prompt",
-            prompts=["I want to make a pendulum out of two cubes"],
-            assertions=[has_physics_scene, has_revolute_joint],
-        )
-        await scenario_runner.run(scenario)
-"""
+"""Scenario runner for agent integration tests: records each tool call, cost and reply."""
 
 from __future__ import annotations
 
@@ -240,10 +221,7 @@ class ScenarioRunner:
         self, _agent: _RecordingAgent,
     ) -> tuple[int | None, int | None]:
         """Best-effort extraction of the last LLM turn's token usage."""
-        # litellm responses do not surface usage to AgentRuntime callers
-        # in a stable shape across providers; per-turn accounting is read
-        # from the file log instead. Return None here to keep TurnRecord
-        # typed but populated from the log slice during artifact dump.
+        # Usage is read from the file log when the artifacts are written.
         return None, None
 
     def _dump_artifacts(

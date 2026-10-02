@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Bringing a library asset into the project: copy it, then check its geometry.
-
-An asset folder is copied as it is, a geometry file is wrapped in a new asset
-folder (``authoring.asset_folder``), and a USDZ is copied as-is. Assets in any
-other shape are refused first (``authoring.accepted_shapes``). The geometry is
-then checked for ASWF compliance and, when asked, repaired.
-"""
+"""Bringing a library asset into the project: copy it, then check its geometry."""
 
 from __future__ import annotations
 
@@ -40,12 +34,7 @@ def prepare_asset(
     fix_root_prim: bool = False,
     fix_root_transforms: bool = False,
 ) -> schemas.IntakeReport:
-    """Bring a library asset into the project: a .usdz, an asset folder or a geometry file.
-
-    An asset in any other shape is refused before anything is copied (see
-    ``authoring.accepted_shapes``). An asset that declares no units or up axis
-    takes the project's; a .usdz is left as it is.
-    """
+    """Bring a library asset into the project: a .usdz, an asset folder or a geometry file."""
     authoring.accepted_shapes.require(asset_path, library_dir)
     if asset_path.suffix.lower() == ".usdz":
         return intake_usdz(asset_path, assets_dir)
@@ -106,12 +95,7 @@ def intake_folder(
     project_mpu: float,
     project_up_axis: str,
 ) -> schemas.IntakeReport:
-    """Copy the asset folder *source_folder* into *project_assets_dir*.
-
-    Every file the root depends on (its layers and their textures) is copied
-    to the same place under the project's folder. The root is renamed to
-    ``<folder>.usda`` when it has another extension.
-    """
+    """Copy the asset folder *source_folder* and the files its root depends on into the project."""
     source_folder = source_folder.resolve()
     project_assets_dir = project_assets_dir.resolve()
     source_root = authoring.accepted_shapes.folder_root_file(source_folder)
@@ -401,11 +385,7 @@ def _is_inside(path: Path, folder: Path) -> bool:
 def _rewrite_asset_paths(
     layer_targets: list[Path], path_map: dict[Path, Path],
 ) -> None:
-    """Point every asset path in *layer_targets* that names a copied file at its copy.
-
-    A relative path is read from where its layer was copied from, so a link
-    to a file outside the source folder (``../shared/wood.png``) is found.
-    """
+    """Point every asset path in *layer_targets* that names a copied file at its copy."""
     resolved_map = {src.resolve(): dst.resolve() for src, dst in path_map.items()}
     source_of = {dst: src for src, dst in resolved_map.items()}
 

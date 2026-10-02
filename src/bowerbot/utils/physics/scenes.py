@@ -81,11 +81,7 @@ def setup(
     project_mpu: float,
     project_up_axis: str,
 ) -> tuple[str, float, tuple[float, float, float]]:
-    """Create or update a physics scene; return its path and the gravity it has now.
-
-    A gravity value left out keeps what the scene already has. A new scene
-    gets Earth gravity in project units, pointing down.
-    """
+    """Create or update a physics scene; return its path and gravity. Values left out are kept."""
     scene_path, scene = _author(
         stage, name, gravity_magnitude, gravity_direction,
         project_mpu=project_mpu, project_up_axis=project_up_axis,

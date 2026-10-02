@@ -1,27 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Each layer holds only its kind of thing.
-
-- ``utils/`` and ``services/`` hold functions: no values, classes or type
-  aliases at module level (``logger`` excepted). Every utils module and group
-  opens with a docstring saying what it owns.
-- ``utils/usd/`` holds USD building blocks: a module there reaches other utils
-  only through ``usd``, never a module outside the group.
-- ``utils/authoring/`` holds BowerBot's authoring model: a module there uses
-  ``usd`` and ``authoring``, never ``features``.
-- Every other folder in ``utils/`` is a domain (``physics/``, ``scatter/``...)
-  holding one tool family's logic: a module there uses ``usd``, ``authoring``
-  and its own domain, never another domain.
-- ``constants/`` holds fixed values, grouped in classes.
-- ``schemas/`` holds data shapes (pydantic models, enums, dataclasses) and
-  type aliases, never values, and never imports ``pxr``.
-
-And everywhere, in the package and its tests, BowerBot code is imported as
-modules: ``from bowerbot import schemas`` then ``schemas.LightParams``, and
-``from bowerbot.utils import lights`` then ``lights.scene.create``.
-Only the package ``__init__`` files that re-export names import them directly.
-"""
+"""Each layer holds only its kind of thing, and BowerBot code is imported as modules."""
 
 from __future__ import annotations
 
@@ -248,12 +228,7 @@ _SHARED_GROUPS = {"usd", "authoring"}
     "path", _own_code_files(), ids=lambda p: p.relative_to(ROOT).as_posix(),
 )
 def test_utils_groups_are_imported_as_groups(path: Path) -> None:
-    """Code imports a group (``from bowerbot.utils import usd``), then calls ``usd.naming.x(...)``.
-
-    Never a module inside a group, and never a group through the package
-    (``utils.usd``). Only the utils package's own ``__init__`` files import its
-    modules directly.
-    """
+    """Code imports a group (``from bowerbot.utils import usd``), then calls through it."""
     if path.name == "__init__.py" and (PACKAGE / "utils") in path.parents:
         return
     problems = set()

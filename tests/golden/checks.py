@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Automatic checks on each golden step: does the tool do what it says?
-
-Each check reads the step (its call and answer) and the project before and
-after, and returns ``⚠`` lines for what looks wrong. They flag, they don't
-fail: the snapshot records them, and the reviewer decides.
-"""
+"""Automatic checks on each golden step: ``⚠`` lines for what looks wrong; they flag, not fail."""
 
 from __future__ import annotations
 
@@ -16,9 +11,7 @@ from typing import Any
 
 READ_ONLY_PREFIXES = ("list_", "search_", "get_", "compute_", "validate_")
 REMOVING_PREFIXES = ("remove_", "delete_")
-# Tools whose job may legitimately need no change: reopening, freezing what is
-# already frozen, cleaning up when nothing is unused, dropping what already rests
-# on the surface, packaging the same scene again.
+# Tools that may succeed without changing anything.
 MAY_CHANGE_NOTHING = frozenset({
     "create_stage", "freeze_asset", "cleanup_unused_contents", "cleanup_unused_materials",
     "open_project", "drop_to_surface", "package_scene",

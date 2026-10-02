@@ -5,11 +5,7 @@
 
 
 def safe_project_name(name: str) -> str:
-    """Sanitize a string for use as a project folder name.
-
-    Allows spaces during sanitization, then converts them to
-    underscores and lowercases the result.
-    """
+    """Sanitize a string into a project folder name: lowercase, spaces to underscores."""
     cleaned = "".join(
         c for c in name if c.isalnum() or c in "_- "
     ).strip()

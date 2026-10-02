@@ -1,14 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""USD's own physics rules: what its validators report, and refusing an edit that adds to it.
-
-A physics tool makes its edit, asks USD's validators whether the scene now has
-an error it did not have before, and only then saves. The rules are USD's, so
-what BowerBot accepts and what ``validate_scene`` reports cannot disagree.
-
-Physics is set with the physics tools only: a variant may not change it.
-"""
+"""USD's own physics rules: what its validators report, refusing an edit that adds to it."""
 
 from __future__ import annotations
 

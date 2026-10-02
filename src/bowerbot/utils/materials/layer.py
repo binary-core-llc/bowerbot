@@ -59,12 +59,7 @@ def list_with_bindings(asset_dir: Path) -> list[dict]:
 
 
 def remove_unused(asset_dir: Path) -> list[str]:
-    """Delete material definitions in *asset_dir*'s ``mtl.usda`` with no bindings.
-
-    Bindings are resolved through the composed root stage so opinions
-    authored on ``over`` prims count. When ``mtl.usda`` becomes empty,
-    it is removed and the root references are rebuilt.
-    """
+    """Delete the materials in ``mtl.usda`` nothing binds; the file goes when it is left empty."""
     mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     if not mtl_path.exists():
         return []

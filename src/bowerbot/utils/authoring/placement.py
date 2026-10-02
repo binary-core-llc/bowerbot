@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""How the scene refers to asset folders: /Scene placements, assets added to an asset, frames.
-
-A placement is a wrapper Xform under ``/Scene`` whose ``asset`` child references
-an asset folder's root file. An asset added to another asset is a wrapper in
-its parent asset's ``contents.usda``.
-"""
+"""How the scene refers to asset folders: /Scene placements, assets added to an asset."""
 
 from __future__ import annotations
 
@@ -118,12 +113,7 @@ def refuse_shared_modification(
     per_instance: str,
     shared: str,
 ) -> None:
-    """Refuse a write to an asset folder that two or more placements share, unless confirmed.
-
-    The refusal names the tool (*op_label*), says how to get a result for one
-    instance only (*per_instance*, a sentence) and what every instance gets
-    once confirmed (*shared*, e.g. ``"this material"``).
-    """
+    """Refuse a write to an asset folder two or more placements share, unless confirmed."""
     instance_count = len(find_asset_placements(stage, asset_dir))
     if instance_count < 2 or confirmed:
         return
@@ -144,11 +134,9 @@ def clear_scene_variant_selections(
     set_name: str,
     variant_name: str | None = None,
 ) -> int:
-    """Drop ``variantSelections[set_name]`` from every placement of the asset.
+    """Drop the scene selection of *set_name* from every placement; return how many.
 
-    When *variant_name* is given, only drop selections whose current value
-    matches it. Prunes empty over ancestors left behind on each touched
-    placement. Returns the number of placements scrubbed.
+    With *variant_name*, only selections of that variant are dropped.
     """
     placements = find_asset_placements(stage, asset_dir)
     if not placements:
@@ -180,12 +168,8 @@ def resolve_asset_dir_for_prim(
     prim_path: str,
 ) -> tuple[Path | None, str | None]:
     """Find the outer ASWF asset folder backing *prim_path* in *stage*."""
-    # Resolution is rooted at stage_dir (project root) on purpose: the
-    # refs in contents.usda are authored relative to that layer
-    # (../sibling_asset/...) and resolve to a nonexistent path here, so
-    # they are skipped and the walk continues to the parent asset's
-    # scene-level reference. That is the routing target move/remove/freeze
-    # need.
+    # Resolved from the project root: a contents.usda reference (../sibling/...) does not
+    # resolve from here, so the walk goes on to the parent asset's scene-level reference.
     stage_dir = Path(stage.GetRootLayer().realPath).parent
 
     def _check(prim: Usd.Prim) -> tuple[Path | None, str | None]:
@@ -291,12 +275,7 @@ def add_asset_to_parent(
     project_mpu: float,
     project_up_axis: str,
 ) -> str:
-    """Author a reference to an added asset in its parent asset's ``contents.usda``.
-
-    Like a scene placement, the added asset is scaled and turned into its
-    parent's units and up axis. *transform*'s translate is in the
-    parent's own units and axes (see :func:`resolve_asset_position`).
-    """
+    """Author a reference to an added asset in its parent asset's ``contents.usda``."""
     contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(parent_asset_dir)
 
@@ -362,11 +341,7 @@ def move_added_asset(
     translate: schemas.Vec3,
     rotate: schemas.Vec3 | None = None,
 ) -> bool:
-    """Update translate/rotate on an added asset's wrapper in ``contents.usda``.
-
-    *translate* is in the parent asset's own units and axes. Without *rotate*
-    the wrapper keeps the rotation it has.
-    """
+    """Update translate/rotate on an added asset's wrapper; without *rotate* it keeps its own."""
     contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return False
@@ -395,13 +370,7 @@ def remove_added_asset(
     group: str,
     prim_name: str,
 ) -> bool:
-    """Remove an added asset's reference from its parent asset's ``contents.usda``.
-
-    Idempotent: returns True whether the spec was deleted or was already
-    absent. Returns False only on a real error (cannot open the layer).
-    Empty group scopes and an empty contents layer are cleaned up
-    automatically via :func:`cleanup_unused_contents_in_folder`.
-    """
+    """Remove an added asset from its parent's ``contents.usda``; False only on a real error."""
     contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return True
@@ -426,15 +395,7 @@ def remove_added_asset(
 
 
 def cleanup_unused_contents_in_folder(parent_asset_dir: Path) -> list[str]:
-    """Drop empty group scopes in *parent_asset_dir*'s ``contents.usda``.
-
-    Mirrors :func:`bowerbot.utils.materials.layer.remove_unused`:
-    removes per-prim entries that no longer carry meaningful data, then
-    deletes the layer file when it has nothing left and rebuilds the
-    root references without it. For contents, "meaningful" means a
-    reference arc; empty group scopes (``Props``, ``Furniture``, etc.)
-    are the unused entries.
-    """
+    """Drop empty group scopes in ``contents.usda``, and the layer once nothing is left."""
     contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
         return []
@@ -508,23 +469,14 @@ def parse_added_asset_path(prim_path: str) -> tuple[str, str] | None:
 
 
 def contents_prim_path(root_path: str, *parts: str) -> str:
-    """A path in an asset's ``contents`` scope: ``<root>/contents[/<group>[/<name>]]``.
-
-    *root_path* is the asset's root prim: ``/<defaultPrim>`` inside the asset,
-    or the prim that references the asset in the scene.
-    """
+    """A path in an asset's ``contents`` scope: ``<root>/contents[/<group>[/<name>]]``."""
     return "/".join([root_path, constants.AssetFolderNamespace.CONTENTS_SCOPE, *parts])
 
 
 def world_to_frame_matrix(
     stage: Usd.Stage, frame_prim_path: str,
 ) -> Gf.Matrix4d | None:
-    """Return the inverse world transform of *frame_prim_path*.
-
-    For positions in an asset folder's frame, pass the prim that references the
-    folder (see :func:`resolve_asset_dir_for_prim`): its frame includes the
-    folder's unit scale and up-axis turn.
-    """
+    """Return the inverse world transform of *frame_prim_path*."""
     prim = stage.GetPrimAtPath(frame_prim_path)
     if not prim or not prim.IsValid():
         return None
@@ -544,12 +496,7 @@ def resolve_asset_position(
 ) -> tuple[float, float, float]:
     """Resolve a tool's translate into a position in the asset's own units and axes.
 
-    ``ABSOLUTE``: *translate* is a world point, taken into the asset's frame
-    by *world_to_local_mat*. ``BOUNDS_OFFSET``: *translate* holds offsets in
-    the project's units and axes from the asset's bounding box: from its
-    center on the floor plane, and from its top along the up axis (from its
-    bottom when negative; a default distance above the top when *up_given*
-    is false).
+    ``ABSOLUTE`` reads it as a world point; ``BOUNDS_OFFSET`` as offsets from the asset's box.
     """
     if mode is schemas.PositionMode.ABSOLUTE:
         if world_to_local_mat is None:

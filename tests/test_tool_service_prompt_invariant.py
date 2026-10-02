@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Enforce the tool/service/prompt 1:1:1 invariant.
-
-Every public function in ``src/bowerbot/tools/*_tools.py`` must have a
-same-named public function in the matching ``src/bowerbot/services/*_service.py``
-and must be mentioned in some ``src/bowerbot/prompts/*.md`` file.
-"""
+"""Every tool has a same-named service function and is mentioned in a prompt file."""
 
 from __future__ import annotations
 

@@ -80,50 +80,7 @@ def _material(stage: Usd.Stage, path: str, color: tuple[float, float, float],
 
 
 def build_library(root: Path) -> Path:
-    """Write the golden asset library under *root* and return it.
-
-    - ``table.usda``: a table with a Top and two Legs (Y-up, meters).
-    - ``chair.usda``: a chair with a Seat and a Back (Y-up, meters).
-    - ``armchair.usda``: a second chair, whose name contains ``chair``.
-    - ``chair_cm.usda``: the same chair authored in centimeters.
-    - ``post_z.usda``: a post authored Z-up.
-    - ``unfrozen.usda``: a box whose root carries a translate and scale (an
-      unfrozen DCC export).
-    - ``rooted_mesh.usda``: a cube that is itself the root prim (no Xform).
-    - ``path_curve.usda``: a linear BasisCurves path for scatter_along_path.
-    - ``crate.usda``: a single box.
-    - ``ground.usda``: a 10 x 10 m ground mesh (a surface for scatter and drops).
-    - ``lamp/``: an ASWF folder (root + ``geo.usda`` + textured ``mtl.usda``
-      + ``maps/``) with a low-detail ``geo_low.usda`` beside it.
-    - ``lamp_lod/``: a folder whose root ships its own LOD variant set
-      (``shipped_lod``: high = ``geo.usda``, low = ``geo_low.usda``).
-    - ``materials/oak.usda``, ``materials/steel.usda``: material library files.
-    - ``hdri/studio.hdr``, ``textures/wood_diffuse.png``: an HDRI and a texture.
-    - ``hdri/big_studio.hdr``: a second HDRI, whose name contains ``studio.hdr``.
-    - ``textures/panel.png``, and ``other/wood_diffuse.png`` and ``other/panel.png``:
-      files in ``other/`` share a name with one in ``textures/`` but hold other content.
-    - ``gem.usdz``: a packaged asset.
-    - ``bare.usda``: a box that declares no up axis and no metersPerUnit.
-    - ``bare_kit/``: an ASWF folder (root + ``geo.usda``) that declares neither.
-
-    Shapes BowerBot refuses (see ``authoring.accepted_shapes``):
-
-    - ``cabinet/``: a folder whose root payloads its own ``cabinet_model.usda`` and
-      references its own ``look.usda`` (a bound material); no ``geo.usda``.
-    - ``workbench/``: a folder whose root payloads ``geo.usda`` and also references
-      a prim of ``parts/vise.usda``, a USD file in a sub-folder.
-    - ``plank.usda``: a file with a material that reads ``./textures/wood_diffuse.png``.
-    - ``bin.usda``: a file whose root references ``bin_model.usda``.
-    - ``stand/``: a folder whose ``geo.usda`` holds a material that reads
-      ``../textures/wood_diffuse.png``, a texture outside the folder.
-
-    And two more accepted ones:
-
-    - ``kit/``: an asset folder (root + ``geo.usda``) whose root prim (``/Cupboard``) is
-      not named like the folder.
-    - ``shelf/``: an ASWF folder that ships ``mtl.usda`` (two materials, one bound) and
-      ``lgt.usda`` (two lights), each written with an ``over`` root prim.
-    """
+    """Write the golden asset library under *root* and return it."""
     root.mkdir(parents=True, exist_ok=True)
 
     table = _stage(root / "table.usda")

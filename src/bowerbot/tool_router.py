@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Unified tool routing across core tools and extension skills.
-
-Both runtimes (the agent loop and the MCP server) present one combined
-tool list to their client and route each call here. Core tools go to the
-dispatcher; skill tools (``skill__tool``) go to the skill registry.
-"""
+"""Tool routing: core tools go to the dispatcher, ``skill__tool`` names to the registry."""
 
 from __future__ import annotations
 

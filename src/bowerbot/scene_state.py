@@ -84,10 +84,7 @@ class SceneState:
             self.stage = authoring.stage.open_stage(self.stage_path)
 
     def restore_after_failure(self, object_count: int) -> None:
-        """Undo what a failed call left in memory: unsaved edits and the placement counter.
-
-        Without this a later call that saves the scene would write the half-made change.
-        """
+        """Undo what a failed call left in memory: unsaved edits and the placement counter."""
         self.object_count = object_count
         if self.stage is None:
             return
@@ -108,12 +105,7 @@ class SceneState:
         return physics.rules.errors(self.stage)
 
     def note_project_writes(self) -> None:
-        """The upkeep after a call that changed the project's files.
-
-        Scatter boxes are brought up to date, since any tool can change what a
-        scatter holds; then the project's ``updated_at`` moves. Called once
-        after every tool call, so no tool has to remember either.
-        """
+        """After a call that changed project files: refresh scatter boxes, move updated_at."""
         if self.project is None:
             return
         if self._project_fingerprint() == self.project_fingerprint:

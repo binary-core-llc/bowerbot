@@ -100,11 +100,7 @@ def create_in_asset(
     *,
     scene_stage: Usd.Stage,
 ) -> dict[str, Any]:
-    """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``.
-
-    Refused when *scene_stage* (the scene the asset is placed in) would then
-    have a physics error it does not have now.
-    """
+    """Create a typed joint in the asset's ``phy.usda``; refused if it adds a physics error."""
     usd.naming.require_prim_name(name, "Joint name")
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
@@ -216,11 +212,7 @@ def list_in_asset(asset_dir: Path) -> schemas.JointsSummary:
 def _validate_joint_bodies(
     stage: Usd.Stage, body0: str | None, body1: str | None,
 ) -> None:
-    """Refuse unless a body is an enabled rigid body itself, and both are Xformable.
-
-    This is USD's own rule: a joint whose bodies only sit under a rigid body
-    is an error to its validators.
-    """
+    """Refuse unless a body is an enabled rigid body itself and both are Xformable."""
     if not body0 and not body1:
         raise ValueError(
             "Joint must reference at least one body. Both body0 and "

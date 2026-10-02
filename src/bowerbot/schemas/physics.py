@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""UsdPhysics static-foundation schemas.
-
-Output-only models and the whitelist of supported applied-API schemas.
-Attribute values are passed as free ``{name: value}`` dicts and resolved
-against the live USD schema registry at write time, mirroring the variant
-attribute-authoring pattern.
-"""
+"""Physics schemas: the supported UsdPhysics APIs and joints, and what the tools return."""
 
 from __future__ import annotations
 

@@ -30,10 +30,9 @@ def add(
     *,
     project_mpu: float,
 ) -> str:
-    """Add a light to *asset_dir*'s ``lgt.usda`` and return its prim path.
+    """Add a light to the asset's ``lgt.usda`` and return its prim path.
 
-    *light*'s translate is in the asset's own units and axes; its lengths
-    (radius, width, ...) are in project units and are converted here.
+    Translate is in the asset's units and axes; lengths are given in project units.
     """
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
@@ -98,11 +97,7 @@ def update(
     rotate: schemas.PartialVec3 | None = None,
     texture: str | None = None,
 ) -> None:
-    """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``.
-
-    *translate* is in the asset's own units and axes. An axis left out of
-    *translate* or *rotate* keeps its value.
-    """
+    """Update a light's transform or texture in ``lgt.usda``; an axis left out keeps its value."""
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     if not lgt_path.exists():
         msg = f"No lights authored in {asset_dir.name}/{constants.ASWFLayerNames.LGT}"

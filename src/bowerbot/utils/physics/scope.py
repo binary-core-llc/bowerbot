@@ -38,12 +38,7 @@ def resolve(stage: Usd.Stage, prim_path: str, explicit: str | None) -> str:
 def asset_relationship_targets(
     stage: Usd.Stage, asset_dir: Path, relationships: dict[str, list[str]],
 ) -> dict[str, list[str]]:
-    """*relationships* with every target as a path inside the asset.
-
-    A relationship written in an asset's file can only reach prims of that
-    asset: a target outside it would be written and then point at nothing.
-    Such a target is refused.
-    """
+    """*relationships* with every target as an asset path; a target outside it is refused."""
     default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     inside: dict[str, list[str]] = {}
     for name, targets in relationships.items():
@@ -70,11 +65,7 @@ def asset_relationship_targets(
 def require_asset_target(
     stage: Usd.Stage, prim_path: str, *, scene_retry: str,
 ) -> tuple[Path, str]:
-    """The asset folder behind *prim_path* and the prim's path inside that asset.
-
-    A prim authored in the scene is refused; *scene_retry* says what retrying
-    with ``scope='scene'`` would do (e.g. ``"author physics on this prim"``).
-    """
+    """The asset folder behind *prim_path* and its path inside it; a scene prim is refused."""
     try:
         asset_dir, ref_prim_path = authoring.placement.require_asset_context(stage, prim_path)
     except ValueError as exc:

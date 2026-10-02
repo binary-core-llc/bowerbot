@@ -166,11 +166,7 @@ def delete_scene_snapshot(scene_path: Path, name: str) -> Path:
 
 
 def _relative_to(folder: Path, layer: Sdf.Layer, asset_path: str) -> str:
-    """*asset_path* as written in *layer*, re-expressed from *folder*.
-
-    A snapshot sits beside scene.usda, so the scene's own relative paths stay
-    as they are and the snapshot moves with the project like the scene does.
-    """
+    """*asset_path* as written in *layer*, re-expressed relative to *folder*."""
     if not asset_path or os.path.isabs(asset_path):
         return asset_path
     layer_dir = Path(layer.realPath).parent

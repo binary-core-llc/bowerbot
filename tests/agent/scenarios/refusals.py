@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Refusal tier: prompts that ask the agent to do something it should refuse.
-
-Either the tool layer refuses (with a clear error the LLM should surface
-to the user) or the LLM itself should push back, ask for confirmation,
-or propose a corrected approach.
-"""
+"""Refusal tier: prompts the agent or the tool layer should refuse."""
 
 from __future__ import annotations
 
@@ -38,10 +33,7 @@ refusal_collision_on_xform = runner.AgentScenario(
         "Apply PhysicsCollisionAPI to /Scene/EmptyParent directly. "
         "It is an Xform with no geometry.",
     ],
-    # The refusal can come from EITHER the LLM (preferred — it knows the
-    # spec and pushes back) or the tool layer (a fallback when the agent
-    # tries anyway). Either path is correct UX. State assertion is what
-    # matters: the invalid target must not end up with CollisionAPI.
+    # The LLM or the tool layer may refuse; either way the target must not get CollisionAPI.
     assertions=[_assert_collision_not_applied_to_xform],
 )
 

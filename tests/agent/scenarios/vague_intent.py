@@ -1,14 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Vague-intent tier: prompts without enough specificity to act on directly.
-
-Goal of these scenarios is mostly UX-quality (does the agent ask
-clarifying questions or pick reasonable defaults rather than hallucinate
-state). State assertions are minimal; the artifact transcripts are the
-primary value. Run with --capture=tee-sys to read the agent's responses
-inline.
-"""
+"""Vague-intent tier: prompts without enough detail to act on directly."""
 
 from __future__ import annotations
 

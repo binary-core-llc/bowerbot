@@ -5,11 +5,6 @@
 
 
 class AppleUSDZConstraints:
-    """Apple consumer USDZ subset (AR Quick Look on iOS Files/Safari/iMessage).
-
-    Targets the broadest Apple consumer path. visionOS and iOS 18+
-    RealityKit are permissive supersets (MaterialX, subdivision) but
-    the strict subset works everywhere.
-    """
+    """The strict Apple USDZ subset (AR Quick Look) that renders on every Apple platform."""
 
     TEXTURE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})

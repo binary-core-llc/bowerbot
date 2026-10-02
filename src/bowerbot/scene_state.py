@@ -79,6 +79,24 @@ class SceneState:
         if self.stage_path is not None:
             self.stage = authoring.stage.open_stage(self.stage_path)
 
+    def restore_after_failure(self, object_count: int) -> None:
+        """Undo what a failed call left in memory: unsaved edits and the placement counter.
+
+        Without this a later call that saves the scene would write the half-made change.
+        """
+        self.object_count = object_count
+        if self.stage is None:
+            return
+        dirty = [
+            layer for layer in self.stage.GetUsedLayers()
+            if layer.dirty and not layer.anonymous
+        ]
+        # Reloading one layer can release another (a reference the edit added), so
+        # the list is taken first and a handle that expired meanwhile is skipped.
+        for layer in dirty:
+            if layer:
+                layer.Reload(force=True)
+
     def touch_project(self) -> None:
         """Persist updated_at on the bound project, if any."""
         if self.project is not None:

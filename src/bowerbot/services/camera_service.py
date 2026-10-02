@@ -60,12 +60,8 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     camera = schemas.CameraParams(
         translate=(tx, ty, tz), rotate=rotate, attributes=attributes,
     )
-    try:
-        cameras.scene.create(state.stage, prim_path, camera)
-        authoring.stage.save_stage(state.stage)
-    except Exception:
-        state.stage.Reload()
-        raise
+    cameras.scene.create(state.stage, prim_path, camera)
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info("Created camera at %s", prim_path)

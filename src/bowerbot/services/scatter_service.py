@@ -141,20 +141,14 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
         msg = "The scatter produced no instances. " + " ".join(warnings)
         raise ValueError(msg.strip())
 
-    object_count_snapshot = state.object_count
-    try:
-        written = scatter.output.write(
-            stage, prim_path=prim_path, output=output,
-            prototypes=prototypes, instances=instances,
-            first_index=state.object_count + 1,
-            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
-        )
-        state.object_count += written["placements"] or 1
-        authoring.stage.save_stage(stage)
-    except Exception:
-        state.object_count = object_count_snapshot
-        stage.Reload()
-        raise
+    written = scatter.output.write(
+        stage, prim_path=prim_path, output=output,
+        prototypes=prototypes, instances=instances,
+        first_index=state.object_count + 1,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
+    state.object_count += written["placements"] or 1
+    authoring.stage.save_stage(stage)
     warnings += written["warnings"]
     state.touch_project()
 
@@ -276,20 +270,14 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
         stage, path, pose, prototypes=prototypes, index=index, up=up, seed=seed,
     )
 
-    object_count_snapshot = state.object_count
-    try:
-        written = scatter.output.write(
-            stage, prim_path=prim_path, output=output,
-            prototypes=prototypes, instances=instances,
-            first_index=state.object_count + 1,
-            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
-        )
-        state.object_count += written["placements"] or 1
-        authoring.stage.save_stage(stage)
-    except Exception:
-        state.object_count = object_count_snapshot
-        stage.Reload()
-        raise
+    written = scatter.output.write(
+        stage, prim_path=prim_path, output=output,
+        prototypes=prototypes, instances=instances,
+        first_index=state.object_count + 1,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
+    state.object_count += written["placements"] or 1
+    authoring.stage.save_stage(stage)
     warnings += written["warnings"]
     state.touch_project()
 
@@ -328,18 +316,14 @@ def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> di
         up, up_facing_only=True,
     )
 
-    try:
-        results = [
-            scatter.drop.drop_placement(stage, path, index, align=align)
-            for path in wrappers
-        ]
-        scatter_results = [
-            scatter.drop.drop_scatter(stage, path, index, align=align) for path in scatters
-        ]
-        authoring.stage.save_stage(stage)
-    except Exception:
-        stage.Reload()
-        raise
+    results = [
+        scatter.drop.drop_placement(stage, path, index, align=align)
+        for path in wrappers
+    ]
+    scatter_results = [
+        scatter.drop.drop_scatter(stage, path, index, align=align) for path in scatters
+    ]
+    authoring.stage.save_stage(stage)
     state.touch_project()
 
     moved = [r for r in results if r["supported"]]

@@ -404,17 +404,13 @@ SUMMARY
   what changed:
     ~ file scene.usda
     + prim /Scene/Lighting [typeless]
-    + prim /Scene/Lighting/Ghost [SphereLight]
-          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          bounds: (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-          world position: (0.0000, 0.0000, 0.0000)
     + prim /Scene/Lighting/Real [SphereLight]
           applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
           attr xformOp:translate: (0, 0, 200)
           attr xformOpOrder: ('xformOp:translate')
           bounds: (-0.5000, -0.5000, 199.5000)..(0.5000, 0.5000, 200.5000)
           world position: (0.0000, 0.0000, 200.0000)
-    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-60.0000, -40.0000, -0.5000)..(60.0000, 40.0000, 200.5000)
+    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 200.5000)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -449,16 +445,12 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -28,4 +28,17 @@
+      @@ -28,4 +28,13 @@
                }
            }
       +
       +    def "Lighting"
       +    {
-      +        def SphereLight "Ghost"
-      +        {
-      +        }
-      +
       +        def SphereLight "Real"
       +        {
       +            double3 xformOp:translate = (0, 0, 200)
@@ -471,16 +463,12 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -59,4 +59,17 @@
+  @@ -59,4 +59,13 @@
            }
        }
   +
   +    def "Lighting"
   +    {
-  +        def SphereLight "Ghost"
-  +        {
-  +        }
-  +
   +        def SphereLight "Real"
   +        {
   +            double3 xformOp:translate = (0, 0, 200)
@@ -491,13 +479,12 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, -0.5000)..(60.0000, 40.0000, 200.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 200.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Lighting/Ghost  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
   /Scene/Lighting/Real  [SphereLight]  at (0.0000, 0.0000, 200.0000)  bounds (-0.5000, -0.5000, 199.5000)..(0.5000, 0.5000, 200.5000)
 
 validation:
@@ -509,7 +496,7 @@ validation:
 SUMMARY
   call: list_scene()
   current project: golden
-  said: ok: Scene has 3 object(s).
+  said: ok: Scene has 2 object(s).
 
   what changed:
     nothing
@@ -527,8 +514,8 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "Scene has 3 object(s).",
-    "object_count": 3,
+    "message": "Scene has 2 object(s).",
+    "object_count": 2,
     "objects": [
       {
         "asset": "assets/table/table.usda",
@@ -566,23 +553,6 @@ full answer:
         "position": {
           "x": 0.0,
           "y": 0.0,
-          "z": 0.0
-        },
-        "prim_path": "/Scene/Lighting/Ghost"
-      },
-      {
-        "color": {
-          "b": 1.0,
-          "g": 1.0,
-          "r": 1.0
-        },
-        "exposure": 0.0,
-        "intensity": 1.0,
-        "kind": "light",
-        "light_type": "SphereLight",
-        "position": {
-          "x": 0.0,
-          "y": 0.0,
           "z": 200.0
         },
         "prim_path": "/Scene/Lighting/Real"
@@ -603,13 +573,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, -0.5000)..(60.0000, 40.0000, 200.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 200.5000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Lighting/Ghost  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
   /Scene/Lighting/Real  [SphereLight]  at (0.0000, 0.0000, 200.0000)  bounds (-0.5000, -0.5000, 199.5000)..(0.5000, 0.5000, 200.5000)
 
 validation:
@@ -622,131 +591,46 @@ intent: a new name that starts with a digit
 SUMMARY
   call: rename_prim(old_path="/Scene/Furniture/Table_01", new_path="/Scene/Furniture/9table")
   current project: golden
-  said: ok: Renamed /Scene/Furniture/Table_01 -> /Scene/Furniture/9table
+  said: REFUSED: Prim name '9table' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
 
   what changed:
-    ~ file scene.usda
-    - prim /Scene/Furniture/Table_01 [Xform]
-    - prim /Scene/Furniture/Table_01/asset [Xform]
-    - prim /Scene/Furniture/Table_01/asset/Leg_L [Cube]
-    - prim /Scene/Furniture/Table_01/asset/Leg_R [Cube]
-    - prim /Scene/Furniture/Table_01/asset/Top [Cube]
-    ~ /Scene  bounds: (-60.0000, -40.0000, -0.5000)..(60.0000, 40.0000, 200.5000) → (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 200.5000)
+    nothing
 
   project state after the step:
-    not used by the scene: assets/table/geo.usda
-    not used by the scene: assets/table/table.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/table/geo.usda
-    ⚠ left behind a file nothing in the scene uses: assets/table/table.usda
-    ⚠ USD printed 4 line(s) while the tool ran (see EVIDENCE): Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Furniture/9table> at character 18 ('9'): expe
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
 what USD printed while the tool ran:
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Furniture/9table> at character 18 ('9'): expected prim name
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Furniture/9table> at character 18 ('9'): expected prim name
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Furniture/9table> at character 18 ('9'): expected prim name
-  Warning: in SdfPath at line 129 of /opt/USD/pxr/usd/sdf/path.cpp -- Ill-formed SdfPath </Scene/Furniture/9table> at character 18 ('9'): expected prim name
+  (nothing)
 
 full answer:
   {
-    "message": "Renamed /Scene/Furniture/Table_01 -> /Scene/Furniture/9table",
-    "new_path": "/Scene/Furniture/9table",
-    "old_path": "/Scene/Furniture/Table_01",
-    "rewritten_refs": {
-      "rels_touched": []
-    }
+    "error": "Prim name '9table' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
   }
 
 files:
     assets/table/geo.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -12,19 +12,4 @@
-           def "Furniture"
-           {
-      -        def Xform "Table_01"
-      -        {
-      -            float3 xformOp:rotateXYZ = (0, 0, 0)
-      -            float3 xformOp:scale = (100, 100, 100)
-      -            double3 xformOp:translate = (0, 0, 0)
-      -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-      -
-      -            def Xform "asset" (
-      -                prepend references = @assets/table/table.usda@
-      -            )
-      -            {
-      -                float xformOp:rotateX = 90
-      -                uniform token[] xformOpOrder = ["xformOp:rotateX"]
-      -            }
-      -        }
-           }
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -14,48 +14,4 @@
-       def "Furniture"
-       {
-  -        def Xform "Table_01"
-  -        {
-  -            float3 xformOp:rotateXYZ = (0, 0, 0)
-  -            float3 xformOp:scale = (100, 100, 100)
-  -            double3 xformOp:translate = (0, 0, 0)
-  -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-  -
-  -            def Xform "asset" (
-  -                assetInfo = {
-  -                    asset identifier = @<PROJECT>/assets/table/table.usda@
-  -                    string name = "table"
-  -                    string version = "1.0"
-  -                }
-  -                kind = "component"
-  -            )
-  -            {
-  -                float xformOp:rotateX = 90
-  -                uniform token[] xformOpOrder = ["xformOp:rotateX"]
-  -
-  -                def Cube "Top"
-  -                {
-  -                    double size = 1
-  -                    float3 xformOp:scale = (1.2, 0.05, 0.8)
-  -                    double3 xformOp:translate = (0, 0.75, 0)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -
-  -                def Cube "Leg_L"
-  -                {
-  -                    double size = 1
-  -                    float3 xformOp:scale = (0.05, 0.75, 0.05)
-  -                    double3 xformOp:translate = (-0.55, 0.375, 0)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -
-  -                def Cube "Leg_R"
-  -                {
-  -                    double size = 1
-  -                    float3 xformOp:scale = (0.05, 0.75, 0.05)
-  -                    double3 xformOp:translate = (0.55, 0.375, 0)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -            }
-  -        }
-       }
-   
+  (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 200.5000)
-  /Scene/Lighting/Ghost  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 200.5000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
   /Scene/Lighting/Real  [SphereLight]  at (0.0000, 0.0000, 200.0000)  bounds (-0.5000, -0.5000, 199.5000)..(0.5000, 0.5000, 200.5000)
 
 validation:
@@ -765,8 +649,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    not used by the scene: assets/table/geo.usda
-    not used by the scene: assets/table/table.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -782,21 +665,27 @@ full answer:
     "object_count": 2,
     "objects": [
       {
-        "color": {
-          "b": 1.0,
-          "g": 1.0,
-          "r": 1.0
+        "asset": "assets/table/table.usda",
+        "bounds": {
+          "max": {
+            "x": 60.0,
+            "y": 40.0,
+            "z": 77.5
+          },
+          "min": {
+            "x": -60.0,
+            "y": -40.0,
+            "z": -0.0
+          }
         },
-        "exposure": 0.0,
-        "intensity": 1.0,
-        "kind": "light",
-        "light_type": "SphereLight",
+        "kind": "asset",
         "position": {
           "x": 0.0,
           "y": 0.0,
           "z": 0.0
         },
-        "prim_path": "/Scene/Lighting/Ghost"
+        "prim_path": "/Scene/Furniture/Table_01/asset",
+        "type": "Xform"
       },
       {
         "color": {
@@ -831,8 +720,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 200.5000)
-  /Scene/Lighting/Ghost  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 200.5000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
   /Scene/Lighting/Real  [SphereLight]  at (0.0000, 0.0000, 200.0000)  bounds (-0.5000, -0.5000, 199.5000)..(0.5000, 0.5000, 200.5000)
 
 validation:

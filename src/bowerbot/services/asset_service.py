@@ -43,18 +43,14 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     prim_path = f"{group_path}/{safe_asset_name}_{state.object_count:02d}"
 
     assets_dir = state.resolve_assets_dir()
-    try:
-        report = authoring.intake.prepare_asset(
-            asset_path, assets_dir,
-            library_dir=state.library_dir,
-            project_mpu=state.meters_per_unit,
-            project_up_axis=state.up_axis.value,
-            fix_root_prim=params.get("fix_root_prim", False),
-            fix_root_transforms=params.get("fix_root_transforms", False),
-        )
-    except (ValueError, RuntimeError):
-        state.object_count -= 1
-        raise
+    report = authoring.intake.prepare_asset(
+        asset_path, assets_dir,
+        library_dir=state.library_dir,
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
+        fix_root_prim=params.get("fix_root_prim", False),
+        fix_root_transforms=params.get("fix_root_transforms", False),
+    )
 
     scene_object = schemas.SceneObject(
         prim_path=prim_path,
@@ -196,38 +192,32 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         summary = f"asset intake failed ({len(intake_problems)} asset(s)):"
         raise ValueError("\n".join([summary, *intake_problems]))
 
-    object_count_snapshot = state.object_count
-    try:
-        objects: list[schemas.SceneObject] = []
-        for item in items:
-            report = reports[item["asset_path"]]
-            for transform in layout.entries.expand(item["entry"]):
-                state.object_count += 1
-                prim_path = (
-                    f"{item['group_path']}/"
-                    f"{item['base_name']}_{state.object_count:02d}"
-                )
-                objects.append(schemas.SceneObject(
-                    prim_path=prim_path,
-                    asset=schemas.AssetMetadata(
-                        name=item["base_name"],
-                        source_skill="local",
-                        source_id=str(item["asset_path"]),
-                        file_path=report.scene_ref_path,
-                    ),
-                    translate=transform.translate,
-                    rotate=transform.rotate,
-                    scale=transform.scale,
-                ))
-        authoring.placement.add_references(
-            state.stage, objects,
-            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
-        )
-        authoring.stage.save_stage(state.stage)
-    except Exception:
-        state.object_count = object_count_snapshot
-        state.stage.Reload()
-        raise
+    objects: list[schemas.SceneObject] = []
+    for item in items:
+        report = reports[item["asset_path"]]
+        for transform in layout.entries.expand(item["entry"]):
+            state.object_count += 1
+            prim_path = (
+                f"{item['group_path']}/"
+                f"{item['base_name']}_{state.object_count:02d}"
+            )
+            objects.append(schemas.SceneObject(
+                prim_path=prim_path,
+                asset=schemas.AssetMetadata(
+                    name=item["base_name"],
+                    source_skill="local",
+                    source_id=str(item["asset_path"]),
+                    file_path=report.scene_ref_path,
+                ),
+                translate=transform.translate,
+                rotate=transform.rotate,
+                scale=transform.scale,
+            ))
+    authoring.placement.add_references(
+        state.stage, objects,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
+    authoring.stage.save_stage(state.stage)
     state.touch_project()
 
     logger.info(
@@ -314,22 +304,18 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.object_count += 1
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
-    try:
-        authoring.placement.add_asset_to_parent(
-            parent_asset_dir=parent_asset_dir,
-            group=group,
-            prim_name=prim_name,
-            ref_asset_path=ref_asset_path,
-            transform=schemas.TransformParams(
-                translate=(tx, ty, tz),
-                rotate=usd.transforms.up_turn(turn, parent_up_axis),
-            ),
-            project_mpu=state.meters_per_unit,
-            project_up_axis=state.up_axis.value,
-        )
-    except (ValueError, RuntimeError):
-        state.object_count -= 1
-        raise
+    authoring.placement.add_asset_to_parent(
+        parent_asset_dir=parent_asset_dir,
+        group=group,
+        prim_name=prim_name,
+        ref_asset_path=ref_asset_path,
+        transform=schemas.TransformParams(
+            translate=(tx, ty, tz),
+            rotate=usd.transforms.up_turn(turn, parent_up_axis),
+        ),
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
+    )
 
     state.reload_stage()
     state.touch_project()

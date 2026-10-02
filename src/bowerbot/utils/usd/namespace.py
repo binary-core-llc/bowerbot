@@ -26,6 +26,12 @@ def rename_prim(stage: Usd.Stage, old_path: str, new_path: str) -> bool:
     if not old_prim.IsValid():
         msg = f"Prim not found: {old_path}"
         raise ValueError(msg)
+    # A path USD cannot parse becomes the empty path, and a move to it deletes the prim.
+    if not new_path.startswith("/") or not new_path.strip("/"):
+        msg = f"new_path {new_path!r} must be an absolute prim path such as /Scene/Props/Crate."
+        raise ValueError(msg)
+    for name in new_path.strip("/").split("/"):
+        usd.naming.require_prim_name(name, "Prim name")
 
     parent_path = str(Sdf.Path(new_path).GetParentPath())
     if parent_path and parent_path != "/":

@@ -116,9 +116,16 @@ async def execute(
         logger.info("tool-bad-params name=%s error=%s", tool_name, rejection)
         return skills.ToolResult(success=False, error=rejection)
 
-    result = handler(state, params)
-    if inspect.isawaitable(result):
-        result = await result
+    object_count = state.object_count
+    try:
+        result = handler(state, params)
+        if inspect.isawaitable(result):
+            result = await result
+    except Exception:
+        state.restore_after_failure(object_count)
+        raise
+    if not result.success:
+        state.restore_after_failure(object_count)
 
     logging_setup.log_tool_result(logger, tool_name, result)
     state.mark_saved()

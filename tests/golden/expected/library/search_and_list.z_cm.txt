@@ -308,7 +308,7 @@ full answer:
         "path": "<LIBRARY>/cabinet/cabinet.usda"
       }
     ],
-    "total_matches": 14,
+    "total_matches": 15,
     "truncated": true
   }
 
@@ -498,18 +498,18 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
-        "name": "table",
-        "path": "<LIBRARY>/table.usda"
+        "name": "shapes",
+        "path": "<LIBRARY>/shapes.usda"
       },
       {
         "category": "geo",
         "format": ".usda",
-        "name": "unfrozen",
-        "path": "<LIBRARY>/unfrozen.usda"
+        "name": "table",
+        "path": "<LIBRARY>/table.usda"
       }
     ],
-    "total_matches": 25,
-    "truncated": false
+    "total_matches": 26,
+    "truncated": true
   }
 
 files:
@@ -790,6 +790,12 @@ full answer:
       {
         "category": "geo",
         "format": ".usda",
+        "name": "shapes",
+        "path": "<LIBRARY>/shapes.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
         "name": "table",
         "path": "<LIBRARY>/table.usda"
       },
@@ -800,7 +806,7 @@ full answer:
         "path": "<LIBRARY>/unfrozen.usda"
       }
     ],
-    "total_matches": 14,
+    "total_matches": 15,
     "truncated": false
   }
 

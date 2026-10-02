@@ -1,0 +1,1557 @@
+##### scenario: physics/usd_rules_joint_bodies
+##### convention: Z-up, 0.01 meters per unit
+##### A joint needs a body that is a rigid body itself, and enabled: USD's own rule.
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place table.usda as Table
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/table.usda", asset_name="Table", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Table at /Scene/Props/Table_01.
+
+  what changed:
+    + file assets/table/geo.usda
+    + file assets/table/table.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Table_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Table_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Table_01/asset/Leg_L [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (-0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)
+          material shown: (none)
+          world position: (-55.0000, 0.0000, 37.5000)
+    + prim /Scene/Props/Table_01/asset/Leg_R [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)
+          material shown: (none)
+          world position: (55.0000, 0.0000, 37.5000)
+    + prim /Scene/Props/Table_01/asset/Top [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.05, 0.8)
+          attr xformOp:translate: (0, 0.75, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)
+          material shown: (none)
+          world position: (0.0000, 0.0000, 75.0000)
+    ~ /Scene  bounds: (none) → (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Table",
+    "intake": {
+      "asset_folder": "table",
+      "files_copied": 1,
+      "root_canonical_name": "table.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Table at /Scene/Props/Table_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Table_01",
+    "rotation_up": 0.0
+  }
+
+files:
+  + assets/table/geo.usda
+  + assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/table/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      def Xform "table"
+      {
+          def Cube "Top"
+          {
+              double size = 1
+              float3 xformOp:scale = (1.2, 0.05, 0.8)
+              double3 xformOp:translate = (0, 0.75, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_L"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (-0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_R"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/table/table.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "table" (
+          assetInfo = {
+              asset identifier = @./table.usda@
+              string name = "table"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_table>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_table"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Table_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/table/table.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,51 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Table_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/table/table.usda@
+  +                    string name = "table"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Top"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (1.2, 0.05, 0.8)
+  +                    double3 xformOp:translate = (0, 0.75, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_L"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (-0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_R"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: place_asset
+intent: place crate.usda as Crate
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=200.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Crate at /Scene/Props/Crate_02.
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Props/Crate_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (200, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (200.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (200.0000, 0.0000, 25.0000)
+    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Crate",
+    "intake": {
+      "asset_folder": "crate",
+      "files_copied": 1,
+      "root_canonical_name": "crate.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Crate at /Scene/Props/Crate_02.",
+    "position": {
+      "x": 200.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Crate_02",
+    "rotation_up": 0.0
+  }
+
+files:
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -27,4 +27,20 @@
+                   }
+               }
+      +
+      +        def Xform "Crate_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (200, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -58,4 +58,33 @@
+               }
+           }
+  +
+  +        def Xform "Crate_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (200, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: place crate.usda as Crate
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=400.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Crate at /Scene/Props/Crate_03.
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Props/Crate_03 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (400, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_03/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+          kind: component
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_03/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+          material shown: (none)
+          world position: (400.0000, 0.0000, 25.0000)
+    ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000) → (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Crate",
+    "intake": {
+      "asset_folder": "crate",
+      "files_copied": 1,
+      "root_canonical_name": "crate.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Crate at /Scene/Props/Crate_03.",
+    "position": {
+      "x": 400.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Crate_03",
+    "rotation_up": 0.0
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -43,4 +43,20 @@
+                   }
+               }
+      +
+      +        def Xform "Crate_03"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (400, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -87,4 +87,33 @@
+               }
+           }
+  +
+  +        def Xform "Crate_03"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (400, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: apply_physics_api
+intent: apply PhysicsRigidBodyAPI to $table/asset
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Table_01/asset", api_name="PhysicsRigidBodyAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    + file assets/table/phy.usda
+    ~ file assets/table/table.usda
+    ~ /Scene/Props/Table_01/asset  applied APIs: (none) → PhysicsRigidBodyAPI
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRigidBodyAPI",
+    "asset_folder": "table",
+    "asset_prim_path": "/table",
+    "attributes_set": [],
+    "cleared_masking_opinions": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/Scene/Props/Table_01/asset",
+    "relationships_set": [],
+    "requested_prim_path": "/table",
+    "scene_prim_path": "/Scene/Props/Table_01/asset",
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/table/geo.usda
+  + assets/table/phy.usda
+  ~ assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  + assets/table/phy.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      over "table" (
+          prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+      )
+      {
+      }
+
+  ~ assets/table/table.usda:
+      --- assets/table/table.usda (before)
+      +++ assets/table/table.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./phy.usda@
+       )
+       {
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -22,4 +22,5 @@
+   
+               def Xform "asset" (
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/table/table.usda@
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: create_joint
+intent: a part under the rigid body, not the body itself
+
+SUMMARY
+  call: create_joint(joint_type="PhysicsFixedJoint", name="UnderBody", body0="/Scene/Props/Table_01/asset/Top", body1="/Scene/Props/Crate_02/asset", scope="scene")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, 0, -1)
+          attr physics:gravityMagnitude: 981
+    + prim /Scene/Physics/UnderBody [PhysicsFixedJoint]
+          rel physics:body0: /Scene/Props/Table_01/asset/Top
+          rel physics:body1: /Scene/Props/Crate_02/asset
+    ~ validity: valid → INVALID
+    + issue [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ this step made the scene invalid
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attributes_set": [],
+    "body0": "/Scene/Props/Table_01/asset/Top",
+    "body1": "/Scene/Props/Crate_02/asset",
+    "joint_type": "PhysicsFixedJoint",
+    "prim_path": "/Scene/Physics/UnderBody",
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -60,4 +60,19 @@
+               }
+           }
+      +
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, 0, -1)
+      +            float physics:gravityMagnitude = 981
+      +        }
+      +
+      +        def PhysicsFixedJoint "UnderBody"
+      +        {
+      +            rel physics:body0 = </Scene/Props/Table_01/asset/Top>
+      +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -118,4 +118,19 @@
+           }
+       }
+  +
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, 0, -1)
+  +            float physics:gravityMagnitude = 981
+  +        }
+  +
+  +        def PhysicsFixedJoint "UnderBody"
+  +        {
+  +            rel physics:body0 = </Scene/Props/Table_01/asset/Top>
+  +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 06: create_joint
+intent: two parts under one rigid body
+
+SUMMARY
+  call: create_joint(joint_type="PhysicsRevoluteJoint", name="Hinge", body0="/Scene/Props/Table_01/asset/Top", body1="/Scene/Props/Table_01/asset/Leg_L", scope="asset")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file assets/table/phy.usda
+    + prim /Scene/Props/Table_01/asset/joints [Scope]
+    + prim /Scene/Props/Table_01/asset/joints/Hinge [PhysicsRevoluteJoint]
+          rel physics:body0: /Scene/Props/Table_01/asset/Top
+          rel physics:body1: /Scene/Props/Table_01/asset/Leg_L
+    + issue [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ this step added 1 validation error(s)
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "table",
+    "asset_prim_path": "/table/joints/Hinge",
+    "attributes_set": [],
+    "body0": "/table/Top",
+    "body1": "/table/Leg_L",
+    "joint_type": "PhysicsRevoluteJoint",
+    "prim_path": "/Scene/Props/Table_01/asset/joints/Hinge",
+    "scene_body0": "/Scene/Props/Table_01/asset/Top",
+    "scene_body1": "/Scene/Props/Table_01/asset/Leg_L",
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/table/geo.usda
+  ~ assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/table/phy.usda:
+      --- assets/table/phy.usda (before)
+      +++ assets/table/phy.usda (after)
+      @@ -4,8 +4,16 @@
+       )
+       
+      -over "table" (
+      +def "table" (
+           prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+       )
+       {
+      +    def Scope "joints"
+      +    {
+      +        def PhysicsRevoluteJoint "Hinge"
+      +        {
+      +            rel physics:body0 = </table/Top>
+      +            rel physics:body1 = </table/Leg_L>
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -56,4 +56,13 @@
+                       double3 xformOp:translate = (0.55, 0.375, 0)
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Scope "joints"
+  +                {
+  +                    def PhysicsRevoluteJoint "Hinge"
+  +                    {
+  +                        rel physics:body0 = </Scene/Props/Table_01/asset/Top>
+  +                        rel physics:body1 = </Scene/Props/Table_01/asset/Leg_L>
+  +                    }
+                   }
+               }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 07: apply_physics_api
+intent: a rigid body switched off
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_03/asset", api_name="PhysicsRigidBodyAPI", attributes={"physics:rigidBodyEnabled": false})
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file assets/crate/crate.usda
+    + file assets/crate/phy.usda
+    ~ /Scene/Props/Crate_02/asset  applied APIs: (none) → PhysicsRigidBodyAPI
+    ~ /Scene/Props/Crate_02/asset  attr physics:rigidBodyEnabled: (none) → false
+    ~ /Scene/Props/Crate_03/asset  applied APIs: (none) → PhysicsRigidBodyAPI
+    ~ /Scene/Props/Crate_03/asset  attr physics:rigidBodyEnabled: (none) → false
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRigidBodyAPI",
+    "asset_folder": "crate",
+    "asset_prim_path": "/crate",
+    "attributes_set": [
+      "physics:rigidBodyEnabled"
+    ],
+    "cleared_masking_opinions": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/Scene/Props/Crate_03/asset",
+    "relationships_set": [],
+    "requested_prim_path": "/crate",
+    "scene_prim_path": "/Scene/Props/Crate_03/asset",
+    "scope": "asset"
+  }
+
+files:
+  ~ assets/crate/crate.usda
+    assets/crate/geo.usda
+  + assets/crate/phy.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/crate/crate.usda:
+      --- assets/crate/crate.usda (before)
+      +++ assets/crate/crate.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./phy.usda@
+       )
+       {
+  + assets/crate/phy.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      over "crate" (
+          prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+      )
+      {
+          bool physics:rigidBodyEnabled = 0
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -77,4 +77,5 @@
+   
+               def Xform "asset" (
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -85,4 +86,5 @@
+               )
+               {
+  +                bool physics:rigidBodyEnabled = 0
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  @@ -106,4 +108,5 @@
+   
+               def Xform "asset" (
+  +                apiSchemas = ["PhysicsRigidBodyAPI"]
+                   assetInfo = {
+                       asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  @@ -114,4 +117,5 @@
+               )
+               {
+  +                bool physics:rigidBodyEnabled = 0
+                   float xformOp:rotateX = 90
+                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 2 issue(s):
+  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 08: create_joint
+intent: the only rigid body is switched off
+
+SUMMARY
+  call: create_joint(joint_type="PhysicsFixedJoint", name="ToOff", body0="/Scene/Props/Crate_03/asset", body1="/Scene/Props/Crate_02/asset", scope="scene")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics/ToOff [PhysicsFixedJoint]
+          rel physics:body0: /Scene/Props/Crate_03/asset
+          rel physics:body1: /Scene/Props/Crate_02/asset
+    + issue [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    ⚠ this step added 1 validation error(s)
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attributes_set": [],
+    "body0": "/Scene/Props/Crate_03/asset",
+    "body1": "/Scene/Props/Crate_02/asset",
+    "joint_type": "PhysicsFixedJoint",
+    "prim_path": "/Scene/Physics/ToOff",
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -74,4 +74,10 @@
+                   rel physics:body1 = </Scene/Props/Crate_02/asset>
+               }
+      +
+      +        def PhysicsFixedJoint "ToOff"
+      +        {
+      +            rel physics:body0 = </Scene/Props/Crate_03/asset>
+      +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -145,4 +145,10 @@
+               rel physics:body1 = </Scene/Props/Crate_02/asset>
+           }
+  +
+  +        def PhysicsFixedJoint "ToOff"
+  +        {
+  +            rel physics:body0 = </Scene/Props/Crate_03/asset>
+  +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
+  /Scene/Physics/ToOff  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 3 issue(s):
+  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 09: create_joint
+intent: the body itself: correct
+
+SUMMARY
+  call: create_joint(joint_type="PhysicsFixedJoint", name="Weld", body0="/Scene/Props/Table_01/asset", body1="/Scene/Props/Crate_02/asset", scope="scene")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics/Weld [PhysicsFixedJoint]
+          rel physics:body0: /Scene/Props/Table_01/asset
+          rel physics:body1: /Scene/Props/Crate_02/asset
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attributes_set": [],
+    "body0": "/Scene/Props/Table_01/asset",
+    "body1": "/Scene/Props/Crate_02/asset",
+    "joint_type": "PhysicsFixedJoint",
+    "prim_path": "/Scene/Physics/Weld",
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -80,4 +80,10 @@
+                   rel physics:body1 = </Scene/Props/Crate_02/asset>
+               }
+      +
+      +        def PhysicsFixedJoint "Weld"
+      +        {
+      +            rel physics:body0 = </Scene/Props/Table_01/asset>
+      +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -151,4 +151,10 @@
+               rel physics:body1 = </Scene/Props/Crate_02/asset>
+           }
+  +
+  +        def PhysicsFixedJoint "Weld"
+  +        {
+  +            rel physics:body0 = </Scene/Props/Table_01/asset>
+  +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
+  /Scene/Physics/ToOff  [PhysicsFixedJoint]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 3 issue(s):
+  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 10: create_joint
+intent: one body is rigid itself, the other a part: USD accepts it
+
+SUMMARY
+  call: create_joint(joint_type="PhysicsFixedJoint", name="Mixed", body0="/Scene/Props/Table_01/asset", body1="/Scene/Props/Table_01/asset/Top", scope="scene")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics/Mixed [PhysicsFixedJoint]
+          rel physics:body0: /Scene/Props/Table_01/asset
+          rel physics:body1: /Scene/Props/Table_01/asset/Top
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attributes_set": [],
+    "body0": "/Scene/Props/Table_01/asset",
+    "body1": "/Scene/Props/Table_01/asset/Top",
+    "joint_type": "PhysicsFixedJoint",
+    "prim_path": "/Scene/Physics/Mixed",
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -86,4 +86,10 @@
+                   rel physics:body1 = </Scene/Props/Crate_02/asset>
+               }
+      +
+      +        def PhysicsFixedJoint "Mixed"
+      +        {
+      +            rel physics:body0 = </Scene/Props/Table_01/asset>
+      +            rel physics:body1 = </Scene/Props/Table_01/asset/Top>
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -157,4 +157,10 @@
+               rel physics:body1 = </Scene/Props/Crate_02/asset>
+           }
+  +
+  +        def PhysicsFixedJoint "Mixed"
+  +        {
+  +            rel physics:body0 = </Scene/Props/Table_01/asset>
+  +            rel physics:body1 = </Scene/Props/Table_01/asset/Top>
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
+  /Scene/Physics/ToOff  [PhysicsFixedJoint]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
+  /Scene/Physics/Mixed  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 3 issue(s):
+  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 11: validate_scene
+
+SUMMARY
+  call: validate_scene()
+  current project: golden
+  said: ok: Found 3 error(s).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error_count": 3,
+    "is_valid": false,
+    "issues": [
+      {
+        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
+        "prim": "/Scene/Physics/ToOff",
+        "severity": "error"
+      },
+      {
+        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
+        "prim": "/Scene/Physics/UnderBody",
+        "severity": "error"
+      },
+      {
+        "message": "JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
+        "prim": "/Scene/Props/Table_01/asset/joints/Hinge",
+        "severity": "error"
+      }
+    ],
+    "message": "Found 3 error(s)."
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
+  /Scene/Physics/ToOff  [PhysicsFixedJoint]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
+  /Scene/Physics/Mixed  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 3 issue(s):
+  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.

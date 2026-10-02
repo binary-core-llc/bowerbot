@@ -149,7 +149,7 @@ def to_local(
     if not parent.IsValid():
         return instances
     world = usd.transforms.world_matrix(parent)
-    if world == Gf.Matrix4d(1.0):
+    if usd.transforms.is_identity(world):
         return instances
     inverse = world.GetInverse()
     matrix = usd.transforms.gf_matrix_to_numpy(inverse)

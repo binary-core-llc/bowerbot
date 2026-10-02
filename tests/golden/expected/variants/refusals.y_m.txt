@@ -178,7 +178,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -342,7 +342,7 @@ intent: a set name with a space
 SUMMARY
   call: add_asset_configuration_variant(prim_path="/Scene/Furniture/Table_01", variant_set="bad name", variant_name="x", activations={"/Scene/Furniture/Table_01/asset/Leg_L": false})
   current project: golden
-  said: REFUSED: Invalid variant set name: 'bad name'
+  said: REFUSED: Invalid variant set name: 'bad name' (use letters, digits and underscores, and do not start with a digit).
 
   what changed:
     nothing
@@ -360,7 +360,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Invalid variant set name: 'bad name'"
+    "error": "Invalid variant set name: 'bad name' (use letters, digits and underscores, and do not start with a digit)."
   }
 
 files:

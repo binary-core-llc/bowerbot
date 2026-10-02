@@ -18,14 +18,7 @@ from bowerbot.utils import usd
 def target_path(group: str, name: str) -> str:
     """``/Scene/<group>/<name>`` for a scatter, validating both parts."""
     group_path = authoring.placement.scene_group_path(group)
-    prim_name = usd.naming.safe_prim_name(name)
-    if not usd.naming.is_valid_prim_name(prim_name):
-        msg = (
-            f"name '{name}' is not a valid USD prim name (letters, digits, "
-            "underscores; must start with a letter or underscore)."
-        )
-        raise ValueError(msg)
-    return f"{group_path}/{prim_name}"
+    return f"{group_path}/{usd.naming.clean_prim_name(name)}"
 
 
 def check_target(stage: Usd.Stage, prim_path: str, *, replace: bool) -> bool:

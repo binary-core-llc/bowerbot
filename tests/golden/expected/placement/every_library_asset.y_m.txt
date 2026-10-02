@@ -178,7 +178,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -397,7 +397,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/ChairCm_02",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -588,7 +588,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Architecture/Post_03",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -809,7 +809,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_04",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1099,7 +1099,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Products/Gem_05",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1264,7 +1264,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Architecture/Ground_06",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:

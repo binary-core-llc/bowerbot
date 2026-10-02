@@ -1,0 +1,1575 @@
+##### scenario: editing/partial_updates_and_turns
+##### convention: Z-up, 0.01 meters per unit
+##### Updating one value of a transform, and turning things: do the values that were not named keep what they had, and does a turn spin the object on the floor?
+
+
+=== step 00: create_project
+intent: a new Z-up project, 0.01 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Z", meters_per_unit=0.01)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Z-up, metersPerUnit=0.01).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 0.01
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Z
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Z-up, metersPerUnit=0.01).",
+    "meters_per_unit": 0.01,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Z"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Z",
+        "meters_per_unit": 0.01
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 0.01
+          upAxis = "Z"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 0.01
+  +    upAxis = "Z"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_layout
+intent: a crate turned on all three axes
+
+SUMMARY
+  call: place_layout(placements=[{"asset": "<LIBRARY>/crate.usda", "group": "Props", "name": "Tilted", "transforms": [{"translate": [0.0, 0.0, 0.0], "rotate": [10, 20, 30]}]}])
+  current project: golden
+  said: ok: Placed 1 asset(s) across 1 group(s) in one call.
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Tilted_01 [Xform]
+          attr xformOp:rotateXYZ: (10, 20, 30)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Tilted_01/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Tilted_01/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007)
+          material shown: (none)
+          world position: (9.4631, 0.4507, 23.1354)
+    ~ /Scene  bounds: (none) → (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "by_asset": {
+      "crate": 1
+    },
+    "groups": [
+      "/Scene/Props"
+    ],
+    "message": "Placed 1 asset(s) across 1 group(s) in one call.",
+    "placed": 1,
+    "sources": {
+      "crate": "<LIBRARY>/crate.usda"
+    }
+  }
+
+files:
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,22 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Tilted_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (10, 20, 30)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,35 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Tilted_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (10, 20, 30)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (9.4631, 0.4507, 23.1354)  bounds (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: move_asset
+intent: move it along x only: does it keep its rotation?
+
+SUMMARY
+  call: move_asset(prim_path="/Scene/Props/Tilted_01", translate_x=2.0)
+  current project: golden
+  said: ok: Moved /Scene/Props/Tilted_01 to (2.0, 0.0, 0.0)
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene  bounds: (-31.3692, -33.8103, -12.6299)..(50.2953, 34.7117, 58.9007) → (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+    ~ /Scene/Props/Tilted_01  attr xformOp:translate: (0, 0, 0) → (2, 0, 0)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Moved /Scene/Props/Tilted_01 to (2.0, 0.0, 0.0)",
+    "position": {
+      "x": 2.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Tilted_01",
+    "rotation_up": 30.0
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -16,5 +16,5 @@
+                   float3 xformOp:rotateXYZ = (10, 20, 30)
+                   float3 xformOp:scale = (100, 100, 100)
+      -            double3 xformOp:translate = (0, 0, 0)
+      +            double3 xformOp:translate = (2, 0, 0)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -18,5 +18,5 @@
+               float3 xformOp:rotateXYZ = (10, 20, 30)
+               float3 xformOp:scale = (100, 100, 100)
+  -            double3 xformOp:translate = (0, 0, 0)
+  +            double3 xformOp:translate = (2, 0, 0)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: a chair turned a quarter: is it still standing on the floor?
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", group="Furniture", translate_x=400.0, translate_y=0.0, translate_z=0.0, rotate_up=90.0)
+  current project: golden
+  said: ok: Placed Chair at /Scene/Furniture/Chair_02.
+
+  what changed:
+    + file assets/chair/chair.usda
+    + file assets/chair/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Chair_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 90)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (400, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_02/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+          kind: component
+          world position: (400.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Chair_02/asset/Back [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.5, 0.05)
+          attr xformOp:translate: (0, 0.7, -0.2)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)
+          material shown: (none)
+          world position: (380.0000, 0.0000, 70.0000)
+    + prim /Scene/Furniture/Chair_02/asset/Seat [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.45, 0.05, 0.45)
+          attr xformOp:translate: (0, 0.45, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)
+          material shown: (none)
+          world position: (400.0000, 0.0000, 45.0000)
+    ~ /Scene  bounds: (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007) → (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Chair",
+    "intake": {
+      "asset_folder": "chair",
+      "files_copied": 1,
+      "root_canonical_name": "chair.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Chair at /Scene/Furniture/Chair_02.",
+    "position": {
+      "x": 400.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Chair_02",
+    "rotation_up": 90.0
+  }
+
+files:
+  + assets/chair/chair.usda
+  + assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/chair/chair.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "chair" (
+          assetInfo = {
+              asset identifier = @./chair.usda@
+              string name = "chair"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_chair>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_chair"
+      {
+      }
+
+  + assets/chair/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "chair"
+      )
+
+      def Xform "chair"
+      {
+          def Cube "Seat"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.05, 0.45)
+              double3 xformOp:translate = (0, 0.45, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Back"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.45, 0.5, 0.05)
+              double3 xformOp:translate = (0, 0.7, -0.2)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -28,4 +28,23 @@
+               }
+           }
+      +
+      +    def "Furniture"
+      +    {
+      +        def Xform "Chair_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 90)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (400, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/chair/chair.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -43,4 +43,44 @@
+           }
+       }
+  +
+  +    def "Furniture"
+  +    {
+  +        def Xform "Chair_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 90)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (400, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/chair/chair.usda@
+  +                    string name = "chair"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Seat"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.05, 0.45)
+  +                    double3 xformOp:translate = (0, 0.45, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Back"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.45, 0.5, 0.05)
+  +                    double3 xformOp:translate = (0, 0.7, -0.2)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: create_light
+intent: a light created with no rotation
+
+SUMMARY
+  call: create_light(light_type="DistantLight", light_name="Sun", translate_x=100.0, translate_y=-300.0, translate_z=200.0)
+  current project: golden
+  said: ok: Created DistantLight at /Scene/Lighting/Sun
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Sun [DistantLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (100, -300, 200)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (100.0000, -300.0000, 200.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DistantLight",
+    "message": "Created DistantLight at /Scene/Lighting/Sun",
+    "position": {
+      "x": 100.0,
+      "y": -300.0,
+      "z": 200.0
+    },
+    "prim_path": "/Scene/Lighting/Sun"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -47,4 +47,13 @@
+               }
+           }
+      +
+      +    def "Lighting"
+      +    {
+      +        def DistantLight "Sun"
+      +        {
+      +            double3 xformOp:translate = (100, -300, 200)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -83,4 +83,13 @@
+           }
+       }
+  +
+  +    def "Lighting"
+  +    {
+  +        def DistantLight "Sun"
+  +        {
+  +            double3 xformOp:translate = (100, -300, 200)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (100.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: update_light
+intent: turn it
+
+SUMMARY
+  call: update_light(prim_path="/Scene/Lighting/Sun", rotate_x=-45.0)
+  current project: golden
+  said: ok: Updated light at /Scene/Lighting/Sun
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Lighting/Sun  attr xformOp:rotateXYZ: (none) → (-45, 0, 0)
+    ~ /Scene/Lighting/Sun  attr xformOpOrder: ('xformOp:translate') → ('xformOp:translate', 'xformOp:rotateXYZ')
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated light at /Scene/Lighting/Sun",
+    "prim_path": "/Scene/Lighting/Sun"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -52,6 +52,7 @@
+               def DistantLight "Sun"
+               {
+      +            float3 xformOp:rotateXYZ = (-45, 0, 0)
+                   double3 xformOp:translate = (100, -300, 200)
+      -            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+               }
+           }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -88,6 +88,7 @@
+           def DistantLight "Sun"
+           {
+  +            float3 xformOp:rotateXYZ = (-45, 0, 0)
+               double3 xformOp:translate = (100, -300, 200)
+  -            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+           }
+       }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (100.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: update_light
+intent: move it along x only: do the other two keep their values?
+
+SUMMARY
+  call: update_light(prim_path="/Scene/Lighting/Sun", translate_x=5.0)
+  current project: golden
+  said: ok: Updated light at /Scene/Lighting/Sun
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Lighting/Sun  attr xformOp:translate: (100, -300, 200) → (5, -300, 200)
+    ~ /Scene/Lighting/Sun  world position: (100.0000, -300.0000, 200.0000) → (5.0000, -300.0000, 200.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated light at /Scene/Lighting/Sun",
+    "prim_path": "/Scene/Lighting/Sun"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -53,5 +53,5 @@
+               {
+                   float3 xformOp:rotateXYZ = (-45, 0, 0)
+      -            double3 xformOp:translate = (100, -300, 200)
+      +            double3 xformOp:translate = (5, -300, 200)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -89,5 +89,5 @@
+           {
+               float3 xformOp:rotateXYZ = (-45, 0, 0)
+  -            double3 xformOp:translate = (100, -300, 200)
+  +            double3 xformOp:translate = (5, -300, 200)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (5.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: create_camera
+
+SUMMARY
+  call: create_camera(camera_name="Cam", translate_x=100.0, translate_y=-300.0, translate_z=200.0)
+  current project: golden
+  said: ok: Created camera at /Scene/Cameras/Cam
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Cameras [typeless]
+    + prim /Scene/Cameras/Cam [Camera]
+          attr clippingRange: (1, 10000000.0)
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:translate: (100, -300, 200)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ')
+          world position: (100.0000, -300.0000, 200.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created camera at /Scene/Cameras/Cam",
+    "position": {
+      "x": 100.0,
+      "y": -300.0,
+      "z": 200.0
+    },
+    "prim_path": "/Scene/Cameras/Cam",
+    "rotation": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    }
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -57,4 +57,15 @@
+               }
+           }
+      +
+      +    def "Cameras"
+      +    {
+      +        def Camera "Cam"
+      +        {
+      +            float2 clippingRange = (1, 10000000)
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            double3 xformOp:translate = (100, -300, 200)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -93,4 +93,15 @@
+           }
+       }
+  +
+  +    def "Cameras"
+  +    {
+  +        def Camera "Cam"
+  +        {
+  +            float2 clippingRange = (1, 10000000)
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            double3 xformOp:translate = (100, -300, 200)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (5.0000, -300.0000, 200.0000)
+  /Scene/Cameras/Cam  [Camera]  at (100.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: update_camera
+intent: the same for a camera
+
+SUMMARY
+  call: update_camera(prim_path="/Scene/Cameras/Cam", translate_x=5.0)
+  current project: golden
+  said: ok: Updated camera at /Scene/Cameras/Cam
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene/Cameras/Cam  attr xformOp:translate: (100, -300, 200) → (5, -300, 200)
+    ~ /Scene/Cameras/Cam  world position: (100.0000, -300.0000, 200.0000) → (5.0000, -300.0000, 200.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Updated camera at /Scene/Cameras/Cam",
+    "prim_path": "/Scene/Cameras/Cam"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -64,5 +64,5 @@
+                   float2 clippingRange = (1, 10000000)
+                   float3 xformOp:rotateXYZ = (0, 0, 0)
+      -            double3 xformOp:translate = (100, -300, 200)
+      +            double3 xformOp:translate = (5, -300, 200)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -100,5 +100,5 @@
+               float2 clippingRange = (1, 10000000)
+               float3 xformOp:rotateXYZ = (0, 0, 0)
+  -            double3 xformOp:translate = (100, -300, 200)
+  +            double3 xformOp:translate = (5, -300, 200)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (5.0000, -300.0000, 200.0000)
+  /Scene/Cameras/Cam  [Camera]  at (5.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 09: place_asset
+intent: place lamp/lamp.usda as Lamp in Lighting
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/lamp/lamp.usda", asset_name="Lamp", group="Lighting", translate_x=800.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Lamp at /Scene/Lighting/Lamp_03.
+
+  what changed:
+    + file assets/lamp/geo.usda
+    + file assets/lamp/lamp.usda
+    + file assets/lamp/maps/lamp_diffuse.png
+    + file assets/lamp/mtl.usda
+    ~ file scene.usda
+    + prim /Scene/Lighting/Lamp_03 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (100, 100, 100)
+          attr xformOp:translate: (800, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (800.0000, 0.0000, 0.0000)
+    + prim /Scene/Lighting/Lamp_03/asset [Xform]
+          attr xformOp:rotateX: 90
+          attr xformOpOrder: ('xformOp:rotateX')
+          bounds: (780.0000, -20.0000, 0.0000)..(820.0000, 20.0000, 65.0000)
+          kind: component
+          world position: (800.0000, 0.0000, 0.0000)
+    + prim /Scene/Lighting/Lamp_03/asset/Base [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.3, 0.1, 0.3)
+          attr xformOp:translate: (0, 0.05, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (785.0000, -15.0000, 0.0000)..(815.0000, 15.0000, 10.0000)
+          material shown: (none)
+          world position: (800.0000, 0.0000, 5.0000)
+    + prim /Scene/Lighting/Lamp_03/asset/Shade [Cube]
+          applied APIs: MaterialBindingAPI
+          attr size: 1
+          attr xformOp:scale: (0.4, 0.3, 0.4)
+          attr xformOp:translate: (0, 0.5, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (780.0000, -20.0000, 35.0000)..(820.0000, 20.0000, 65.0000)
+          material shown: /Scene/Lighting/Lamp_03/asset/mtl/brass
+          rel material:binding: /Scene/Lighting/Lamp_03/asset/mtl/brass
+          world position: (800.0000, 0.0000, 50.0000)
+    + prim /Scene/Lighting/Lamp_03/asset/mtl [Scope]
+    + prim /Scene/Lighting/Lamp_03/asset/mtl/brass [Material] (+2 prims inside)
+          attr outputs:surface: (no value)
+          connect outputs:surface: /Scene/Lighting/Lamp_03/asset/mtl/brass/PreviewSurface.outputs:surface
+    ~ /Scene  bounds: (-29.3692, -33.8103, -12.6299)..(422.5000, 34.7117, 95.0000) → (-29.3692, -33.8103, -12.6299)..(820.0000, 34.7117, 95.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Lamp",
+    "intake": {
+      "asset_folder": "lamp",
+      "files_copied": 4,
+      "root_canonical_name": "lamp.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Lamp at /Scene/Lighting/Lamp_03.",
+    "position": {
+      "x": 800.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Lamp_03",
+    "rotation_up": 0.0
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+  + assets/lamp/geo.usda
+  + assets/lamp/lamp.usda
+  + assets/lamp/maps/lamp_diffuse.png
+  + assets/lamp/mtl.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/lamp/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp"
+      {
+          def Cube "Base"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.3, 0.1, 0.3)
+              double3 xformOp:translate = (0, 0.05, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Shade"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.4, 0.3, 0.4)
+              double3 xformOp:translate = (0, 0.5, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/lamp/lamp.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "lamp" (
+          assetInfo = {
+              asset identifier = @./lamp.usda@
+              string name = "lamp"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_lamp>
+          kind = "component"
+          prepend payload = @./geo.usda@
+          prepend references = @./mtl.usda@
+      )
+      {
+      }
+
+      class Xform "_class_lamp"
+      {
+      }
+
+  + assets/lamp/maps/lamp_diffuse.png (new):
+      <binary: 70 bytes, sha256:9b25e3bbeaa1ec03>
+  + assets/lamp/mtl.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def "lamp"
+      {
+          def Scope "mtl"
+          {
+              def Material "brass"
+              {
+                  token outputs:surface.connect = </lamp/mtl/brass/PreviewSurface.outputs:surface>
+
+                  def Shader "PreviewSurface"
+                  {
+                      uniform token info:id = "UsdPreviewSurface"
+                      color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+                      token outputs:surface
+                  }
+
+                  def Shader "Diffuse"
+                  {
+                      uniform token info:id = "UsdUVTexture"
+                      asset inputs:file = @./maps/lamp_diffuse.png@
+                  }
+              }
+          }
+
+          over "Shade" (
+              prepend apiSchemas = ["MaterialBindingAPI"]
+          )
+          {
+              rel material:binding = </lamp/mtl/brass>
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -56,4 +56,20 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+               }
+      +
+      +        def Xform "Lamp_03"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (100, 100, 100)
+      +            double3 xformOp:translate = (800, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/lamp/lamp.usda@
+      +            )
+      +            {
+      +                float xformOp:rotateX = 90
+      +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +            }
+      +        }
+           }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -92,4 +92,65 @@
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+           }
+  +
+  +        def Xform "Lamp_03"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (100, 100, 100)
+  +            double3 xformOp:translate = (800, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/lamp/lamp.usda@
+  +                    string name = "lamp"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                float xformOp:rotateX = 90
+  +                uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  +
+  +                def Cube "Base"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.3, 0.1, 0.3)
+  +                    double3 xformOp:translate = (0, 0.05, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Shade" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+  +                {
+  +                    rel material:binding = </Scene/Lighting/Lamp_03/asset/mtl/brass>
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.4, 0.3, 0.4)
+  +                    double3 xformOp:translate = (0, 0.5, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Scope "mtl"
+  +                {
+  +                    def Material "brass"
+  +                    {
+  +                        token outputs:surface.connect = </Scene/Lighting/Lamp_03/asset/mtl/brass/PreviewSurface.outputs:surface>
+  +
+  +                        def Shader "PreviewSurface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.8, 0.6, 0.2)
+  +                            token outputs:surface
+  +                        }
+  +
+  +                        def Shader "Diffuse"
+  +                        {
+  +                            uniform token info:id = "UsdUVTexture"
+  +                            asset inputs:file = @<PROJECT>/assets/lamp/maps/lamp_diffuse.png@
+  +                        }
+  +                    }
+  +                }
+  +            }
+  +        }
+       }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(820.0000, 34.7117, 95.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (5.0000, -300.0000, 200.0000)
+  /Scene/Lighting/Lamp_03  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (780.0000, -20.0000, 0.0000)..(820.0000, 20.0000, 65.0000)
+  /Scene/Lighting/Lamp_03/asset  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (780.0000, -20.0000, 0.0000)..(820.0000, 20.0000, 65.0000)
+  /Scene/Lighting/Lamp_03/asset/Base  [Cube]  at (800.0000, 0.0000, 5.0000)  bounds (785.0000, -15.0000, 0.0000)..(815.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Lighting/Lamp_03/asset/Shade  [Cube]  at (800.0000, 0.0000, 50.0000)  bounds (780.0000, -20.0000, 35.0000)..(820.0000, 20.0000, 65.0000)  material /Scene/Lighting/Lamp_03/asset/mtl/brass
+  /Scene/Lighting/Lamp_03/asset/mtl  [Scope]
+  /Scene/Cameras/Cam  [Camera]  at (5.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 10: create_light
+intent: a light inside the lamp
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Bulb", asset_prim_path="/Scene/Lighting/Lamp_03")
+  current project: golden
+  said: ok: Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Lighting/Lamp_03/asset/lgt/Bulb
+
+  what changed:
+    ~ file assets/lamp/lamp.usda
+    + file assets/lamp/lgt.usda
+    + prim /Scene/Lighting/Lamp_03/asset/lgt [Xform]
+          world position: (800.0000, 0.0000, 0.0000)
+    + prim /Scene/Lighting/Lamp_03/asset/lgt/Bulb [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 1.15, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (750.0000, -50.0000, 65.0000)..(850.0000, 50.0000, 165.0000)
+          world position: (800.0000, 0.0000, 115.0000)
+    ~ /Scene  bounds: (-29.3692, -33.8103, -12.6299)..(820.0000, 34.7117, 95.0000) → (-29.3692, -50.0000, -12.6299)..(850.0000, 50.0000, 165.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "lamp",
+    "light_type": "SphereLight",
+    "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Lighting/Lamp_03/asset/lgt/Bulb",
+    "position": {
+      "x": 800.0,
+      "y": 0.0,
+      "z": 115.0
+    },
+    "prim_path": "/Scene/Lighting/Lamp_03/asset/lgt/Bulb"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/lamp/geo.usda
+  ~ assets/lamp/lamp.usda
+  + assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lamp.usda:
+      --- assets/lamp/lamp.usda (before)
+      +++ assets/lamp/lamp.usda (after)
+      @@ -15,5 +15,8 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      -    prepend references = @./mtl.usda@
+      +    prepend references = [
+      +        @./lgt.usda@,
+      +        @./mtl.usda@
+      +    ]
+       )
+       {
+  + assets/lamp/lgt.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "lamp"
+      )
+
+      def "lamp"
+      {
+          def Xform "lgt"
+          {
+              def SphereLight "Bulb"
+              {
+                  double3 xformOp:translate = (0, 1.150000006, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate"]
+              }
+          }
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -151,4 +151,13 @@
+                       }
+                   }
+  +
+  +                def Xform "lgt"
+  +                {
+  +                    def SphereLight "Bulb"
+  +                    {
+  +                        double3 xformOp:translate = (0, 1.150000006, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate"]
+  +                    }
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -50.0000, -12.6299)..(850.0000, 50.0000, 165.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (5.0000, -300.0000, 200.0000)
+  /Scene/Lighting/Lamp_03  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (750.0000, -50.0000, 0.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Lighting/Lamp_03/asset  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (750.0000, -50.0000, 0.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Lighting/Lamp_03/asset/Base  [Cube]  at (800.0000, 0.0000, 5.0000)  bounds (785.0000, -15.0000, 0.0000)..(815.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Lighting/Lamp_03/asset/Shade  [Cube]  at (800.0000, 0.0000, 50.0000)  bounds (780.0000, -20.0000, 35.0000)..(820.0000, 20.0000, 65.0000)  material /Scene/Lighting/Lamp_03/asset/mtl/brass
+  /Scene/Lighting/Lamp_03/asset/mtl  [Scope]
+  /Scene/Lighting/Lamp_03/asset/lgt  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (750.0000, -50.0000, 65.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Lighting/Lamp_03/asset/lgt/Bulb  [SphereLight]  at (800.0000, 0.0000, 115.0000)  bounds (750.0000, -50.0000, 65.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Cameras/Cam  [Camera]  at (5.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 11: create_light
+intent: a second light with the same name
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Bulb", asset_prim_path="/Scene/Lighting/Lamp_03")
+  current project: golden
+  said: ok: Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Lighting/Lamp_03/asset/lgt/Bulb_02
+
+  what changed:
+    ~ file assets/lamp/lgt.usda
+    + prim /Scene/Lighting/Lamp_03/asset/lgt/Bulb_02 [SphereLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 1.15, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          bounds: (750.0000, -50.0000, 65.0000)..(850.0000, 50.0000, 165.0000)
+          world position: (800.0000, 0.0000, 115.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "lamp",
+    "light_type": "SphereLight",
+    "message": "Created SphereLight in lamp/lgt.usda. To update this light, use prim_path: /Scene/Lighting/Lamp_03/asset/lgt/Bulb_02",
+    "position": {
+      "x": 800.0,
+      "y": 0.0,
+      "z": 115.0
+    },
+    "prim_path": "/Scene/Lighting/Lamp_03/asset/lgt/Bulb_02"
+  }
+
+files:
+    assets/chair/chair.usda
+    assets/chair/geo.usda
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/lamp/geo.usda
+    assets/lamp/lamp.usda
+  ~ assets/lamp/lgt.usda
+    assets/lamp/maps/lamp_diffuse.png
+    assets/lamp/mtl.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/lamp/lgt.usda:
+      --- assets/lamp/lgt.usda (before)
+      +++ assets/lamp/lgt.usda (after)
+      @@ -13,4 +13,10 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +
+      +        def SphereLight "Bulb_02"
+      +        {
+      +            double3 xformOp:translate = (0, 1.150000006, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -159,4 +159,10 @@
+                           uniform token[] xformOpOrder = ["xformOp:translate"]
+                       }
+  +
+  +                    def SphereLight "Bulb_02"
+  +                    {
+  +                        double3 xformOp:translate = (0, 1.150000006, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate"]
+  +                    }
+                   }
+               }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-29.3692, -50.0000, -12.6299)..(850.0000, 50.0000, 165.0000)
+  /Scene/Props/Tilted_01  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)
+  /Scene/Props/Tilted_01/asset/Box  [Cube]  at (11.4631, 0.4507, 23.1354)  bounds (-29.3692, -33.8103, -12.6299)..(52.2953, 34.7117, 58.9007)  material (none)
+  /Scene/Furniture/Chair_02  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 95.0000)
+  /Scene/Furniture/Chair_02/asset/Seat  [Cube]  at (400.0000, 0.0000, 45.0000)  bounds (377.5000, -22.5000, 42.5000)..(422.5000, 22.5000, 47.5000)  material (none)
+  /Scene/Furniture/Chair_02/asset/Back  [Cube]  at (380.0000, 0.0000, 70.0000)  bounds (377.5000, -22.5000, 45.0000)..(382.5000, 22.5000, 95.0000)  material (none)
+  /Scene/Lighting/Sun  [DistantLight]  at (5.0000, -300.0000, 200.0000)
+  /Scene/Lighting/Lamp_03  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (750.0000, -50.0000, 0.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Lighting/Lamp_03/asset  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (750.0000, -50.0000, 0.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Lighting/Lamp_03/asset/Base  [Cube]  at (800.0000, 0.0000, 5.0000)  bounds (785.0000, -15.0000, 0.0000)..(815.0000, 15.0000, 10.0000)  material (none)
+  /Scene/Lighting/Lamp_03/asset/Shade  [Cube]  at (800.0000, 0.0000, 50.0000)  bounds (780.0000, -20.0000, 35.0000)..(820.0000, 20.0000, 65.0000)  material /Scene/Lighting/Lamp_03/asset/mtl/brass
+  /Scene/Lighting/Lamp_03/asset/mtl  [Scope]
+  /Scene/Lighting/Lamp_03/asset/lgt  [Xform]  at (800.0000, 0.0000, 0.0000)  bounds (750.0000, -50.0000, 65.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Lighting/Lamp_03/asset/lgt/Bulb  [SphereLight]  at (800.0000, 0.0000, 115.0000)  bounds (750.0000, -50.0000, 65.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Lighting/Lamp_03/asset/lgt/Bulb_02  [SphereLight]  at (800.0000, 0.0000, 115.0000)  bounds (750.0000, -50.0000, 65.0000)..(850.0000, 50.0000, 165.0000)
+  /Scene/Cameras/Cam  [Camera]  at (5.0000, -300.0000, 200.0000)
+
+validation:
+  valid, no issues

@@ -56,7 +56,7 @@ def create_in_scene(
     project_up_axis: str,
 ) -> dict[str, Any]:
     """Create a typed joint at ``/Scene/Physics/<name>``; auto-ensures a ``UsdPhysics.Scene``."""
-    usd.naming.validate_joint_name(name)
+    usd.naming.require_prim_name(name, "Joint name")
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
@@ -93,7 +93,7 @@ def create_in_asset(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``."""
-    usd.naming.validate_joint_name(name)
+    usd.naming.require_prim_name(name, "Joint name")
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
 

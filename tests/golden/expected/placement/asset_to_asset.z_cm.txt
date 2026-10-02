@@ -180,7 +180,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -411,7 +411,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_01/asset/contents/Props/Crate_02",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -625,7 +625,7 @@ full answer:
       "z": 80.0
     },
     "prim_path": "/Scene/Furniture/Table_01/asset/contents/Props/Crate_03",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1004,7 +1004,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_04",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1367,7 +1367,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_01/asset/contents/Props/Chair_05",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1620,7 +1620,8 @@ full answer:
     "prim_path": "/Scene/Furniture/Table_01/asset/contents/Props/Crate_02",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

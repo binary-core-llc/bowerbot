@@ -180,7 +180,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -585,7 +585,7 @@ full answer:
     "prim_path": "/Scene/Cameras/Front",
     "rotation": {
       "x": 81.4692,
-      "y": -0.0,
+      "y": 0.0,
       "z": 0.0
     }
   }
@@ -609,7 +609,7 @@ file changes:
       +        def Camera "Front"
       +        {
       +            float2 clippingRange = (1, 10000000)
-      +            float3 xformOp:rotateXYZ = (81.46923, -0, 0)
+      +            float3 xformOp:rotateXYZ = (81.4692, 0, 0)
       +            double3 xformOp:translate = (0, -500, 150)
       +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
       +        }
@@ -629,7 +629,7 @@ composed scene changes:
   +        def Camera "Front"
   +        {
   +            float2 clippingRange = (1, 10000000)
-  +            float3 xformOp:rotateXYZ = (81.46923, -0, 0)
+  +            float3 xformOp:rotateXYZ = (81.4692, 0, 0)
   +            double3 xformOp:translate = (0, -500, 150)
   +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
   +        }
@@ -799,9 +799,9 @@ file changes:
       @@ -34,6 +34,6 @@
                {
                    float2 clippingRange = (1, 10000000)
-      -            float3 xformOp:rotateXYZ = (81.46923, -0, 0)
+      -            float3 xformOp:rotateXYZ = (81.4692, 0, 0)
       -            double3 xformOp:translate = (0, -500, 150)
-      +            float3 xformOp:rotateXYZ = (73.58356, 0, 45)
+      +            float3 xformOp:rotateXYZ = (73.5836, 0, 45)
       +            double3 xformOp:translate = (300, -300, 200)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
                }
@@ -812,9 +812,9 @@ composed scene changes:
   @@ -65,6 +65,6 @@
            {
                float2 clippingRange = (1, 10000000)
-  -            float3 xformOp:rotateXYZ = (81.46923, -0, 0)
+  -            float3 xformOp:rotateXYZ = (81.4692, 0, 0)
   -            double3 xformOp:translate = (0, -500, 150)
-  +            float3 xformOp:rotateXYZ = (73.58356, 0, 45)
+  +            float3 xformOp:rotateXYZ = (73.5836, 0, 45)
   +            double3 xformOp:translate = (300, -300, 200)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
            }
@@ -843,7 +843,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Cameras/Top  attr xformOp:rotateXYZ: (-90, 0, 0) → (0, 0, 90)
+    ~ /Scene/Cameras/Top  attr xformOp:rotateXYZ: (-90, 0, 0) → (-90, 0, 90)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -876,7 +876,7 @@ file changes:
                    float focalLength = 35
                    token projection = "orthographic"
       -            float3 xformOp:rotateXYZ = (-90, 0, 0)
-      +            float3 xformOp:rotateXYZ = (0, 0, 90)
+      +            float3 xformOp:rotateXYZ = (-90, 0, 90)
                    double3 xformOp:translate = (0, 0, 800)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
@@ -887,7 +887,7 @@ composed scene changes:
                float focalLength = 35
                token projection = "orthographic"
   -            float3 xformOp:rotateXYZ = (-90, 0, 0)
-  +            float3 xformOp:rotateXYZ = (0, 0, 90)
+  +            float3 xformOp:rotateXYZ = (-90, 0, 90)
                double3 xformOp:translate = (0, 0, 800)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
@@ -1085,6 +1085,9 @@ full answer:
   {
     "message": "Removed camera at /Scene/Cameras/Top",
     "prim_path": "/Scene/Cameras/Top",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    },
     "suspect_variant_sets": []
   }
 
@@ -1106,7 +1109,7 @@ file changes:
       -            float2 clippingRange = (1, 10000000)
       -            float focalLength = 35
       -            token projection = "orthographic"
-      -            float3 xformOp:rotateXYZ = (0, 0, 90)
+      -            float3 xformOp:rotateXYZ = (-90, 0, 90)
       -            double3 xformOp:translate = (0, 0, 800)
       -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
       -        }
@@ -1125,7 +1128,7 @@ composed scene changes:
   -            float2 clippingRange = (1, 10000000)
   -            float focalLength = 35
   -            token projection = "orthographic"
-  -            float3 xformOp:rotateXYZ = (0, 0, 90)
+  -            float3 xformOp:rotateXYZ = (-90, 0, 90)
   -            double3 xformOp:translate = (0, 0, 800)
   -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
   -        }

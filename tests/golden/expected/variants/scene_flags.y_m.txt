@@ -344,7 +344,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Seat_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1404,7 +1404,7 @@ intent: an alternative that does not exist
 SUMMARY
   call: add_scene_model_selection_variant(prim_path="/Scene/Furniture/Seat_01", variant_set="model", variant_name="nope", asset_file_path="<LIBRARY>/nope.usda")
   current project: golden
-  said: REFUSED: Asset file not found: <LIBRARY>/nope.usda
+  said: REFUSED: asset '<LIBRARY>/nope.usda' not found (searched: <LIBRARY>/nope.usda).
 
   what changed:
     nothing
@@ -1422,7 +1422,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Asset file not found: <LIBRARY>/nope.usda"
+    "error": "asset '<LIBRARY>/nope.usda' not found (searched: <LIBRARY>/nope.usda)."
   }
 
 files:

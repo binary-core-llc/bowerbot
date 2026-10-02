@@ -1,0 +1,1064 @@
+##### scenario: lights/files_named_by_path
+##### convention: Y-up, 1.0 meters per unit
+##### A texture or material named by its path inside the library, and two library files that share a name: is the file that was named the one that gets used?
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: an asset named by its path inside the library
+
+SUMMARY
+  call: place_asset(asset_file_path="table.usda", asset_name="Table", group="Furniture", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Table at /Scene/Furniture/Table_01.
+
+  what changed:
+    + file assets/table/geo.usda
+    + file assets/table/table.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Table_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset [Xform]
+          bounds: (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_L [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (-0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (-0.5500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_R [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (0.5500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Top [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.05, 0.8)
+          attr xformOp:translate: (0, 0.75, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)
+          material shown: (none)
+          world position: (0.0000, 0.7500, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Table",
+    "intake": {
+      "asset_folder": "table",
+      "files_copied": 1,
+      "root_canonical_name": "table.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Table at /Scene/Furniture/Table_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Table_01",
+    "rotation_up": 0.0
+  }
+
+files:
+  + assets/table/geo.usda
+  + assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/table/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      def Xform "table"
+      {
+          def Cube "Top"
+          {
+              double size = 1
+              float3 xformOp:scale = (1.2, 0.05, 0.8)
+              double3 xformOp:translate = (0, 0.75, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_L"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (-0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_R"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/table/table.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "table" (
+          assetInfo = {
+              asset identifier = @./table.usda@
+              string name = "table"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_table>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_table"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Table_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/table/table.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,48 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Table_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/table/table.usda@
+  +                    string name = "table"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Top"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (1.2, 0.05, 0.8)
+  +                    double3 xformOp:translate = (0, 0.75, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_L"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (-0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_R"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: bind_material
+intent: a material file named the same way
+
+SUMMARY
+  call: bind_material(prim_path="/Scene/Furniture/Table_01/asset/Top", material_file="materials/oak.usda")
+  current project: golden
+  said: ok: Bound /table/mtl/oak to /Scene/Furniture/Table_01/asset/Top in table/mtl.usda
+
+  what changed:
+    + file assets/table/mtl.usda
+    ~ file assets/table/table.usda
+    + prim /Scene/Furniture/Table_01/asset/mtl [Scope]
+    + prim /Scene/Furniture/Table_01/asset/mtl/oak [Material] (+1 prims inside)
+          attr outputs:surface: (no value)
+          connect outputs:surface: /Scene/Furniture/Table_01/asset/mtl/oak/PreviewSurface.outputs:surface
+    ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
+    ~ /Scene/Furniture/Table_01/asset/Top  material shown: (none) → /Scene/Furniture/Table_01/asset/mtl/oak
+    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/oak
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "table",
+    "material": "/table/mtl/oak",
+    "message": "Bound /table/mtl/oak to /Scene/Furniture/Table_01/asset/Top in table/mtl.usda",
+    "prim_path": "/Scene/Furniture/Table_01/asset/Top"
+  }
+
+files:
+    assets/table/geo.usda
+  + assets/table/mtl.usda
+  ~ assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  + assets/table/mtl.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      over "table"
+      {
+          def Scope "mtl"
+          {
+              def Material "oak"
+              {
+                  token outputs:surface.connect = </table/mtl/oak/PreviewSurface.outputs:surface>
+
+                  def Shader "PreviewSurface"
+                  {
+                      uniform token info:id = "UsdPreviewSurface"
+                      color3f inputs:diffuseColor = (0.55, 0.35, 0.2)
+                      token outputs:surface
+                  }
+              }
+          }
+
+          over "Top" (
+              prepend apiSchemas = ["MaterialBindingAPI"]
+          )
+          {
+              rel material:binding = </table/mtl/oak>
+          }
+      }
+
+  ~ assets/table/table.usda:
+      --- assets/table/table.usda (before)
+      +++ assets/table/table.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./mtl.usda@
+       )
+       {
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -30,6 +30,9 @@
+               )
+               {
+  -                def Cube "Top"
+  +                def Cube "Top" (
+  +                    apiSchemas = ["MaterialBindingAPI"]
+  +                )
+                   {
+  +                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/oak>
+                       double size = 1
+                       float3 xformOp:scale = (1.2, 0.05, 0.8)
+  @@ -53,4 +56,19 @@
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                   }
+  +
+  +                def Scope "mtl"
+  +                {
+  +                    def Material "oak"
+  +                    {
+  +                        token outputs:surface.connect = </Scene/Furniture/Table_01/asset/mtl/oak/PreviewSurface.outputs:surface>
+  +
+  +                        def Shader "PreviewSurface"
+  +                        {
+  +                            uniform token info:id = "UsdPreviewSurface"
+  +                            color3f inputs:diffuseColor = (0.55, 0.35, 0.2)
+  +                            token outputs:surface
+  +                        }
+  +                    }
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 03: create_light
+intent: a texture named the same way
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Sky", texture="hdri/studio.hdr")
+  current project: golden
+  said: ok: Created DomeLight at /Scene/Lighting/Sky
+
+  what changed:
+    ~ file scene.usda
+    + file textures/studio.hdr
+    + prim /Scene/Lighting [typeless]
+    + prim /Scene/Lighting/Sky [DomeLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr inputs:texture:file: @./textures/studio.hdr@
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "message": "Created DomeLight at /Scene/Lighting/Sky",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Sky"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/mtl.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+  + textures/studio.hdr
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -26,4 +26,14 @@
+               }
+           }
+      +
+      +    def "Lighting"
+      +    {
+      +        def DomeLight "Sky"
+      +        {
+      +            asset inputs:texture:file = @./textures/studio.hdr@
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+      +    }
+       }
+       
+  + textures/studio.hdr (new):
+      <binary: 49 bytes, sha256:a6047f6d65ac4310>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -74,4 +74,14 @@
+           }
+       }
+  +
+  +    def "Lighting"
+  +    {
+  +        def DomeLight "Sky"
+  +        {
+  +            asset inputs:texture:file = @<PROJECT>/textures/studio.hdr@
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 04: create_light
+intent: textures/wood_diffuse.png
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Wood", texture="<LIBRARY>/textures/wood_diffuse.png")
+  current project: golden
+  said: ok: Created DomeLight at /Scene/Lighting/Wood
+
+  what changed:
+    ~ file scene.usda
+    + file textures/wood_diffuse.png
+    + prim /Scene/Lighting/Wood [DomeLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr inputs:texture:file: @./textures/wood_diffuse.png@
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "message": "Created DomeLight at /Scene/Lighting/Wood",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Wood"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/mtl.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+    textures/studio.hdr
+  + textures/wood_diffuse.png
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -35,4 +35,11 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +
+      +        def DomeLight "Wood"
+      +        {
+      +            asset inputs:texture:file = @./textures/wood_diffuse.png@
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+           }
+       }
+  + textures/wood_diffuse.png (new):
+      <binary: 70 bytes, sha256:9b25e3bbeaa1ec03>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -83,4 +83,11 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+  +
+  +        def DomeLight "Wood"
+  +        {
+  +            asset inputs:texture:file = @<PROJECT>/textures/wood_diffuse.png@
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 05: create_light
+intent: other/wood_diffuse.png: the same name, other content
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Wood2", texture="<LIBRARY>/other/wood_diffuse.png")
+  current project: golden
+  said: ok: Created DomeLight at /Scene/Lighting/Wood2
+
+  what changed:
+    ~ file scene.usda
+    + file textures/wood_diffuse_2.png
+    + prim /Scene/Lighting/Wood2 [DomeLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr inputs:texture:file: @./textures/wood_diffuse_2.png@
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "message": "Created DomeLight at /Scene/Lighting/Wood2",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Wood2"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/mtl.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+    textures/studio.hdr
+    textures/wood_diffuse.png
+  + textures/wood_diffuse_2.png
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -42,4 +42,11 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +
+      +        def DomeLight "Wood2"
+      +        {
+      +            asset inputs:texture:file = @./textures/wood_diffuse_2.png@
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+           }
+       }
+  + textures/wood_diffuse_2.png (new):
+      <binary: 70 bytes, sha256:adfde14c99ac3c94>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -90,4 +90,11 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+  +
+  +        def DomeLight "Wood2"
+  +        {
+  +            asset inputs:texture:file = @<PROJECT>/textures/wood_diffuse_2.png@
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 06: create_light
+intent: a dome with no texture yet
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Plain")
+  current project: golden
+  said: ok: Created DomeLight at /Scene/Lighting/Plain
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Lighting/Plain [DomeLight]
+          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "light_type": "DomeLight",
+    "message": "Created DomeLight at /Scene/Lighting/Plain",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Lighting/Plain"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/mtl.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+    textures/studio.hdr
+    textures/wood_diffuse.png
+    textures/wood_diffuse_2.png
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -49,4 +49,10 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +
+      +        def DomeLight "Plain"
+      +        {
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate"]
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -97,4 +97,10 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+  +
+  +        def DomeLight "Plain"
+  +        {
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Plain  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: add_scene_lighting_attribute_variant
+intent: textures/panel.png, while other/panel.png also exists
+
+SUMMARY
+  call: add_scene_lighting_attribute_variant(variant_set="look", variant_name="panel", overrides={"/Scene/Lighting/Plain": {"inputs:texture:file": "textures/panel.png"}})
+  current project: golden
+  said: ok: Added scene lighting attribute variant 'panel' to 'look' on /Scene/Lighting
+
+  what changed:
+    ~ file scene.usda
+    + file textures/panel.png
+    ~ /Scene/Lighting  variant set look: (none) → panel of panel
+    ~ /Scene/Lighting/Plain  attr inputs:texture:file: (none) → @./textures/panel.png@
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "carrier_prim_path": "/Scene/Lighting",
+    "category": "lighting",
+    "default_selected": false,
+    "message": "Added scene lighting attribute variant 'panel' to 'look' on /Scene/Lighting",
+    "overrides": {
+      "/Scene/Lighting/Plain": {
+        "inputs:texture:file": "./textures/panel.png"
+      }
+    },
+    "variant_name": "panel",
+    "variant_set": "look"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/mtl.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+  + textures/panel.png
+    textures/studio.hdr
+    textures/wood_diffuse.png
+    textures/wood_diffuse_2.png
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -27,5 +27,10 @@
+           }
+       
+      -    def "Lighting"
+      +    def "Lighting" (
+      +        variants = {
+      +            string look = "panel"
+      +        }
+      +        prepend variantSets = "look"
+      +    )
+           {
+               def DomeLight "Sky"
+      @@ -55,4 +60,13 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate"]
+               }
+      +        variantSet "look" = {
+      +            "panel" {
+      +                over "Plain"
+      +                {
+      +                    asset inputs:texture:file = @./textures/panel.png@
+      +                }
+      +
+      +            }
+      +        }
+           }
+       }
+  + textures/panel.png (new):
+      <binary: 70 bytes, sha256:9b25e3bbeaa1ec03>
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -77,4 +77,11 @@
+       def "Lighting"
+       {
+  +        def DomeLight "Plain"
+  +        {
+  +            asset inputs:texture:file = @<PROJECT>/textures/panel.png@
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate"]
+  +        }
+  +
+           def DomeLight "Sky"
+           {
+  @@ -97,10 +104,4 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+  -
+  -        def DomeLight "Plain"
+  -        {
+  -            double3 xformOp:translate = (0, 0, 0)
+  -            uniform token[] xformOpOrder = ["xformOp:translate"]
+  -        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
+  /Scene/Lighting/Plain  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: create_light
+intent: a texture that is nowhere
+
+SUMMARY
+  call: create_light(light_type="DomeLight", light_name="Lost", texture="hdri/nope.hdr")
+  current project: golden
+  said: REFUSED: texture 'hdri/nope.hdr' not found (searched: <PROJECT>/hdri/nope.hdr, <LIBRARY>/hdri/nope.hdr).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "texture 'hdri/nope.hdr' not found (searched: <PROJECT>/hdri/nope.hdr, <LIBRARY>/hdri/nope.hdr)."
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/mtl.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+    textures/panel.png
+    textures/studio.hdr
+    textures/wood_diffuse.png
+    textures/wood_diffuse_2.png
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/oak
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/mtl  [Scope]
+  /Scene/Lighting/Plain  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+  /Scene/Lighting/Wood2  [DomeLight]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues

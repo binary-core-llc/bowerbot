@@ -162,7 +162,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Architecture/Ground_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -992,7 +992,8 @@ full answer:
     "prim_path": "/Scene/Scatter/Crates",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

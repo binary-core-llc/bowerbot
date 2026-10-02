@@ -170,7 +170,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -373,7 +373,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Crate_02",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -725,7 +725,8 @@ full answer:
     "prim_path": "/Scene/Props/Crate_02",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

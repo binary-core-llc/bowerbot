@@ -30,7 +30,7 @@ def resolve_asset_sources(
     targets: dict[str, Path] = {}
     for idx, entry in enumerate(assets):
         try:
-            path = authoring.library.resolve_layout_asset(
+            path = authoring.library.resolve_source_file(
                 entry.asset, project_dir=project_dir, library_dir=library_dir,
             )
         except ValueError as e:
@@ -154,16 +154,9 @@ def _conformed_extents(
         msg = f"{root_file.name} has no geometry bounds, so it cannot rest on a surface."
         raise ValueError(msg)
     corners = usd.bounds.range_corners(rng)
-    triangles = usd.surface.collect_triangles(
-        stage, [str(root.GetPath())], up=asset_up,
-    )
-    points = (
-        np.concatenate([
-            triangles.v0, triangles.v1, triangles.v2,
-            (triangles.v0 + triangles.v1 + triangles.v2) / 3.0,
-        ])
-        if triangles.count else corners
-    )
+    points = usd.surface.shape_points(stage, str(root.GetPath()), asset_up)
+    if points is None:
+        points = corners
     matrix = usd.transforms.gf_matrix_to_numpy(conform)[:3, :3]
     corners = corners @ matrix
     points = points @ matrix

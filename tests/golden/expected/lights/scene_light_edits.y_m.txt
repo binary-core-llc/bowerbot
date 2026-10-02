@@ -453,7 +453,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Lighting/Sun  attr xformOp:rotateXYZ: (-45, 30, 0) → (-60, 0, 0)
+    ~ /Scene/Lighting/Sun  attr xformOp:rotateXYZ: (-45, 30, 0) → (-60, 30, 0)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -485,7 +485,7 @@ file changes:
                def DistantLight "Sun"
                {
       -            float3 xformOp:rotateXYZ = (-45, 30, 0)
-      +            float3 xformOp:rotateXYZ = (-60, 0, 0)
+      +            float3 xformOp:rotateXYZ = (-60, 30, 0)
                    double3 xformOp:translate = (0, 0, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
@@ -496,7 +496,7 @@ composed scene changes:
            def DistantLight "Sun"
            {
   -            float3 xformOp:rotateXYZ = (-45, 30, 0)
-  +            float3 xformOp:rotateXYZ = (-60, 0, 0)
+  +            float3 xformOp:rotateXYZ = (-60, 30, 0)
                double3 xformOp:translate = (0, 0, 0)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
@@ -697,6 +697,9 @@ full answer:
   {
     "message": "Removed light at /Scene/Lighting/Key",
     "prim_path": "/Scene/Lighting/Key",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    },
     "suspect_variant_sets": []
   }
 
@@ -780,6 +783,9 @@ full answer:
   {
     "message": "Removed light at /Scene/Lighting/Sky",
     "prim_path": "/Scene/Lighting/Sky",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    },
     "suspect_variant_sets": [],
     "texture_file": "./textures/wood_diffuse.png"
   }

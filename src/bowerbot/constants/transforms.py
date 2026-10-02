@@ -8,7 +8,10 @@ from pxr import UsdGeom
 
 
 class TransformUsd:
-    """The xformOp type and value type for each op name."""
+    """The xformOp type and value type for each op name, and the ops a placement carries."""
+
+    # The ops BowerBot authors on what it places, in the order they apply.
+    PLACEMENT_OPS: tuple[str, ...] = ("xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale")
 
     XFORM_OPS: dict[str, tuple[object, Sdf.ValueTypeName]] = {
         "translate": (UsdGeom.XformOp.TypeTranslate, Sdf.ValueTypeNames.Double3),

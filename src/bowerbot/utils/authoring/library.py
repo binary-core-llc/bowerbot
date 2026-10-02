@@ -119,33 +119,19 @@ def truncate_with_total(
 # ── Resolving an asset path ──
 
 
-def resolve_asset_file_path(
-    raw: str,
-    project_dir: Path | None,
-    library_dir: Path | None,
-) -> Path:
-    """Resolve a relative asset path against project dir, then library dir."""
-    p = Path(raw)
-    if p.is_absolute():
-        return p
-    if project_dir is not None:
-        candidate = project_dir / p
-        if candidate.exists():
-            return candidate
-    if library_dir is not None:
-        candidate = library_dir / p
-        if candidate.exists():
-            return candidate
-    return p.resolve()
-
-
-def resolve_layout_asset(
+def resolve_source_file(
     raw: str,
     *,
     project_dir: Path | None,
     library_dir: Path | None,
+    what: str = "asset",
 ) -> Path:
-    """Resolve an entry's asset to an existing root file, never falling back to the CWD."""
+    """The existing file *raw* names: an absolute path, or a path inside the project or library.
+
+    A relative path is looked up in the project, then in the library, and
+    never in the folder BowerBot was started from. *what* names the kind of
+    file in the refusal (``"asset"``, ``"material file"``, ``"texture"``).
+    """
     path = Path(raw)
     if path.is_absolute():
         candidates = [path]
@@ -158,12 +144,12 @@ def resolve_layout_asset(
     for candidate in candidates:
         if candidate.is_dir():
             msg = (
-                f"'{raw}' is a folder ({candidate}); reference the asset's root "
+                f"'{raw}' is a folder ({candidate}); reference the {what}'s root "
                 f"file instead (e.g. '{candidate.name}/{candidate.name}.usda')."
             )
             raise ValueError(msg)
     searched = ", ".join(str(c) for c in candidates) or "no roots available"
-    msg = f"asset '{raw}' not found (searched: {searched})."
+    msg = f"{what} '{raw}' not found (searched: {searched})."
     raise ValueError(msg)
 
 

@@ -223,7 +223,7 @@ def sample_points(
     if count is not None:
         target = count
     elif density is not None:
-        target = int(round(density * area * mpu * mpu))
+        target = int(round(density * usd.metrics.area_in_square_meters(area, mpu)))
     else:
         raise ValueError(constants.ScatterRules.COUNT_OR_DENSITY)
     if target > constants.ScatterRules.MAX_INSTANCES:

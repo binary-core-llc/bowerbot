@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 from bowerbot import constants
@@ -50,7 +49,7 @@ def create_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
         params=material_params,
     )
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     logger.info(
         "Created procedural material %s on %s in %s/",
         material_prim_path, prim_path, asset_dir.name,
@@ -69,12 +68,13 @@ def create_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
 def bind_material(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Copy a material from a file into the asset and bind it to a prim."""
     prim_path = params["prim_path"]
-    material_file = Path(params["material_file"])
+    material_file = authoring.library.resolve_source_file(
+        params["material_file"],
+        project_dir=state.project_dir,
+        library_dir=state.library_dir,
+        what="material file",
+    )
     material_prim_path = params.get("material_prim_path")
-
-    if not material_file.exists():
-        msg = f"Material file not found: {material_file}"
-        raise ValueError(msg)
 
     asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, prim_path,
@@ -92,7 +92,7 @@ def bind_material(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         material_prim_path=material_prim_path,
     )
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     logger.info(
         "Bound %s to %s in %s/",
         material_prim_path, prim_path, asset_dir.name,
@@ -117,7 +117,7 @@ def remove_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
 
     asset_local_path = authoring.placement.to_asset_local(prim_path, ref_prim_path)
     materials.bind.unbind(asset_dir, asset_local_path)
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
 
     logger.info("Removed material from %s", prim_path)
     return {
@@ -158,7 +158,7 @@ def cleanup_unused_materials(
         asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_prim_path)
 
         removed = materials.layer.remove_unused(asset_dir)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         logger.info(
             "Cleaned %d unused material(s) from %s", len(removed), asset_dir.name,
         )
@@ -182,7 +182,7 @@ def cleanup_unused_materials(
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     logger.info(
         "Cleaned %d unused material(s) across %d asset folder(s)",
         total, len(per_folder),

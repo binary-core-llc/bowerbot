@@ -104,7 +104,7 @@ validation:
 intent: a library-relative path, turned 90 degrees
 
 SUMMARY
-  call: place_asset(asset_file_path="chair.usda", asset_name="Chair", group="Furniture", translate_x=1.0, translate_y=0.0, translate_z=2.0, rotate_y=90.0)
+  call: place_asset(asset_file_path="chair.usda", asset_name="Chair", group="Furniture", translate_x=1.0, translate_y=0.0, translate_z=2.0, rotate_up=90.0)
   current project: golden
   said: ok: Placed Chair at /Scene/Furniture/Chair_01.
 
@@ -170,7 +170,7 @@ full answer:
       "z": 2.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 90.0
+    "rotation_up": 90.0
   }
 
 files:

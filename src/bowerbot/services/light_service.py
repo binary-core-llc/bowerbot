@@ -11,6 +11,7 @@ from typing import Any
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
+from bowerbot.services import stage_service
 from bowerbot.utils import authoring
 from bowerbot.utils import lights
 from bowerbot.utils import usd
@@ -30,7 +31,7 @@ def list_light_type_properties(
 def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Create a scene-level or asset-level light."""
     light_type = schemas.LightType(params["light_type"])
-    safe_name = usd.naming.safe_prim_name(params["light_name"])
+    safe_name = usd.naming.clean_prim_name(params["light_name"], "light name")
     attributes = dict(params.get("attributes") or {})
     light_link_includes = params.get("light_link_includes") or []
     rotate = (
@@ -75,6 +76,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             rotate=rotate,
             texture=authoring.textures.stage_asset_texture(
                 asset_dir, params.get("texture"),
+                project_dir=state.project_dir, library_dir=state.library_dir,
             ),
             light_link_includes=light_link_includes,
             attributes=attributes,
@@ -84,7 +86,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             project_mpu=state.meters_per_unit,
         )
 
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
         asset_local_tail = composed_path.lstrip("/").split("/", 1)[1]
         scene_light_path = f"{ref_prim_path}/{asset_local_tail}"
@@ -117,15 +119,14 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         translate=(tx, ty, tz),
         rotate=rotate,
         texture=authoring.textures.stage_scene_texture(
-            state.project_dir,
             params.get("texture"),
+            project_dir=state.project_dir, library_dir=state.library_dir,
         ),
         light_link_includes=light_link_includes,
         attributes=attributes,
     )
     lights.scene.create(state.stage, prim_path, light)
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Created %s at %s", light_type.value, prim_path)
     return {
@@ -156,8 +157,9 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             mode = schemas.PositionMode(
                 params.get("position_mode", schemas.PositionMode.BOUNDS_OFFSET.value),
             )
+            # In an asset's frame a value left out counts as 0 (the offset from its bounds).
             translate = authoring.placement.resolve_asset_position(
-                mode, translate,
+                mode, usd.values.fill_vec3(translate, (0.0, 0.0, 0.0)),
                 asset_dir=asset_dir,
                 world_to_local_mat=authoring.placement.world_to_frame_matrix(
                     state.stage, ref_prim_path,
@@ -172,9 +174,12 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             light_name,
             translate=translate,
             rotate=rotate,
-            texture=authoring.textures.stage_asset_texture(asset_dir, texture),
+            texture=authoring.textures.stage_asset_texture(
+                asset_dir, texture,
+                project_dir=state.project_dir, library_dir=state.library_dir,
+            ),
         )
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
     else:
         lights.scene.update(
             state.stage,
@@ -182,12 +187,11 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             translate=translate,
             rotate=rotate,
             texture=authoring.textures.stage_scene_texture(
-                state.project_dir, texture,
+                texture, project_dir=state.project_dir, library_dir=state.library_dir,
             ),
         )
         authoring.stage.save_stage(state.stage)
 
-    state.touch_project()
     logger.info("Updated light at %s", prim_path)
     return {
         "prim_path": prim_path,
@@ -203,7 +207,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
         lights.asset.remove(asset_dir, light_name)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
         return {
             "prim_path": prim_path,
@@ -215,20 +219,10 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         }
 
     texture_file = lights.prim.get_texture(state.stage, prim_path)
-    success = usd.namespace.remove_prim(state.stage, prim_path)
-    if not success:
-        msg = f"Failed to remove light {prim_path}"
-        raise RuntimeError(msg)
-
-    authoring.stage.save_stage(state.stage)
-    state.touch_project()
+    removed = stage_service.remove_prim(state, {"prim_path": prim_path})
 
     logger.info("Removed scene light at %s", prim_path)
-    data: dict[str, Any] = {
-        "prim_path": prim_path,
-        "suspect_variant_sets": variants.suspect_sets.find_above(state.stage, prim_path),
-        "message": f"Removed light at {prim_path}",
-    }
+    data: dict[str, Any] = {**removed, "message": f"Removed light at {prim_path}"}
     if texture_file:
         data["texture_file"] = texture_file
     return data

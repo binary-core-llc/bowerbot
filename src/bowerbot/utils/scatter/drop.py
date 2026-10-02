@@ -218,9 +218,7 @@ def drop_placement(
             raise ValueError(msg)
         old_rot = usd.transforms.rotate_xyz_rotation(rotate_op.Get())
         tilt_rot = Gf.Rotation(Gf.Quatd(tilt[0], Gf.Vec3d(*tilt[1:].tolist())))
-        new_rot = old_rot * tilt_rot
-        rz, ry, rx = new_rot.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
-        rotate_value = Gf.Vec3f(rx, ry, rz)
+        rotate_value = usd.transforms.rotation_to_rotate_xyz(old_rot * tilt_rot)
 
         pivot = np.asarray(usd.transforms.world_translation(prim), dtype=np.float64)
         base = usd.bounds.base_center(bmin, bmax, up)
@@ -236,9 +234,9 @@ def drop_placement(
 
     shift_local = np.asarray(to_parent.TransformDir(Gf.Vec3d(*world_shift.tolist())))
     new_local = old_local + shift_local
-    translate_op.Set(Gf.Vec3d(*new_local.tolist()))
-    if rotate_value is not None:
-        ops[UsdGeom.XformOp.TypeRotateXYZ].Set(rotate_value)
+    usd.transforms.set_xform(
+        prim, translate=(new_local[0], new_local[1], new_local[2]), rotate=rotate_value,
+    )
     return {
         "prim_path": prim_path,
         "supported": True,
@@ -252,14 +250,9 @@ def drop_placement(
 
 
 def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.FloatArray:
-    """World-space vertices of a prototype, or its box corners if it has no mesh."""
-    triangles = usd.surface.collect_triangles(stage, [prim_path], up=up)
-    if triangles.count:
-        return np.concatenate([triangles.v0, triangles.v1, triangles.v2])
-    rng = usd.bounds.world_range(
-        stage.GetPrimAtPath(prim_path), usd.bounds.bounds_cache(include_render=True),
-    )
-    if rng is None:
+    """World-space points of a prototype's shape; refused when it has no geometry."""
+    points = usd.surface.shape_points(stage, prim_path, up)
+    if points is None:
         msg = f"Prototype {prim_path} has no geometry, so it cannot rest on a surface."
         raise ValueError(msg)
-    return usd.bounds.range_corners(rng)
+    return points

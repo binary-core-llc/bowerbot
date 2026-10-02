@@ -10,6 +10,8 @@ from pydantic import BaseModel
 from bowerbot.schemas import assets
 
 Vec3 = tuple[float, float, float]
+# A triple some axes of which were not given: those keep the value they had.
+PartialVec3 = tuple[float | None, float | None, float | None]
 
 
 class TransformParams(BaseModel):

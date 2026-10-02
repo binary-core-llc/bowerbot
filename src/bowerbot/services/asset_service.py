@@ -25,35 +25,32 @@ logger = logging.getLogger(__name__)
 
 def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Bring an asset into the project and add it to the scene."""
-    asset_path = authoring.library.resolve_asset_file_path(
+    asset_path = authoring.library.resolve_source_file(
         params["asset_file_path"],
-        state.project_dir,
-        state.library_dir,
+        project_dir=state.project_dir,
+        library_dir=state.library_dir,
     )
     asset_name = params["asset_name"]
     group = params["group"]
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
+    turn = float(params.get("rotate_up", 0.0))
 
+    safe_asset_name = usd.naming.clean_prim_name(asset_name, "asset name")
+    group_path = authoring.placement.scene_group_path(group)
     state.object_count += 1
-    safe_asset_name = usd.naming.safe_prim_name(asset_name)
-    prim_path = f"/Scene/{group}/{safe_asset_name}_{state.object_count:02d}"
+    prim_path = f"{group_path}/{safe_asset_name}_{state.object_count:02d}"
 
     assets_dir = state.resolve_assets_dir()
-    try:
-        report = authoring.intake.prepare_asset(
-            asset_path, assets_dir,
-            library_dir=state.library_dir,
-            project_mpu=state.meters_per_unit,
-            project_up_axis=state.up_axis.value,
-            fix_root_prim=params.get("fix_root_prim", False),
-            fix_root_transforms=params.get("fix_root_transforms", False),
-        )
-    except (ValueError, RuntimeError):
-        state.object_count -= 1
-        raise
+    report = authoring.intake.prepare_asset(
+        asset_path, assets_dir,
+        library_dir=state.library_dir,
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
+        fix_root_prim=params.get("fix_root_prim", False),
+        fix_root_transforms=params.get("fix_root_transforms", False),
+    )
 
     scene_object = schemas.SceneObject(
         prim_path=prim_path,
@@ -64,7 +61,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
             file_path=report.scene_ref_path,
         ),
         translate=(tx, ty, tz),
-        rotate=(0.0, ry, 0.0),
+        rotate=usd.transforms.up_turn(turn, state.up_axis.value),
     )
 
     authoring.placement.add_references(
@@ -72,14 +69,13 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Placed %s at %s (%s, %s, %s)", asset_name, prim_path, tx, ty, tz)
     return {
         "prim_path": prim_path,
         "asset": asset_name,
         "position": {"x": tx, "y": ty, "z": tz},
-        "rotation_y": ry,
+        "rotation_up": turn,
         "intake": authoring.intake.intake_summary(report),
         "message": authoring.intake.placement_message(asset_name, prim_path, report),
     }
@@ -102,7 +98,7 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     folder_sources: dict[str, Path] = {}
     for idx, entry in valid:
         try:
-            asset_path = authoring.library.resolve_layout_asset(
+            asset_path = authoring.library.resolve_source_file(
                 entry.asset,
                 project_dir=project_dir,
                 library_dir=state.library_dir,
@@ -111,13 +107,10 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         except ValueError as e:
             problems.append(f"placements[{idx}]: {e}")
             continue
-        base_name = usd.naming.safe_prim_name(entry.name or asset_path.stem)
-        if not usd.naming.is_valid_prim_name(base_name):
-            problems.append(
-                f"placements[{idx}]: name '{base_name}' is not a valid USD "
-                f"prim name (it must start with a letter or underscore); "
-                f"set the entry's 'name'.",
-            )
+        try:
+            base_name = usd.naming.clean_prim_name(entry.name or asset_path.stem, "name")
+        except ValueError as e:
+            problems.append(f"placements[{idx}]: {e} Set the entry's 'name'.")
             continue
         target = authoring.intake.intake_target_name(
             asset_path, state.library_dir,
@@ -198,39 +191,32 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         summary = f"asset intake failed ({len(intake_problems)} asset(s)):"
         raise ValueError("\n".join([summary, *intake_problems]))
 
-    object_count_snapshot = state.object_count
-    try:
-        objects: list[schemas.SceneObject] = []
-        for item in items:
-            report = reports[item["asset_path"]]
-            for transform in layout.entries.expand(item["entry"]):
-                state.object_count += 1
-                prim_path = (
-                    f"{item['group_path']}/"
-                    f"{item['base_name']}_{state.object_count:02d}"
-                )
-                objects.append(schemas.SceneObject(
-                    prim_path=prim_path,
-                    asset=schemas.AssetMetadata(
-                        name=item["base_name"],
-                        source_skill="local",
-                        source_id=str(item["asset_path"]),
-                        file_path=report.scene_ref_path,
-                    ),
-                    translate=transform.translate,
-                    rotate=transform.rotate,
-                    scale=transform.scale,
-                ))
-        authoring.placement.add_references(
-            state.stage, objects,
-            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
-        )
-        authoring.stage.save_stage(state.stage)
-    except Exception:
-        state.object_count = object_count_snapshot
-        state.stage.Reload()
-        raise
-    state.touch_project()
+    objects: list[schemas.SceneObject] = []
+    for item in items:
+        report = reports[item["asset_path"]]
+        for transform in layout.entries.expand(item["entry"]):
+            state.object_count += 1
+            prim_path = (
+                f"{item['group_path']}/"
+                f"{item['base_name']}_{state.object_count:02d}"
+            )
+            objects.append(schemas.SceneObject(
+                prim_path=prim_path,
+                asset=schemas.AssetMetadata(
+                    name=item["base_name"],
+                    source_skill="local",
+                    source_id=str(item["asset_path"]),
+                    file_path=report.scene_ref_path,
+                ),
+                translate=transform.translate,
+                rotate=transform.rotate,
+                scale=transform.scale,
+            ))
+    authoring.placement.add_references(
+        state.stage, objects,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
+    authoring.stage.save_stage(state.stage)
 
     logger.info(
         "place_layout placed %d asset(s) across %d group(s)", placed, len(groups),
@@ -251,18 +237,19 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
 def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
     """Add an asset to another asset: a reference in the parent's ``contents.usda``."""
-    asset_path = authoring.library.resolve_asset_file_path(
+    asset_path = authoring.library.resolve_source_file(
         params["asset_file_path"],
-        state.project_dir,
-        state.library_dir,
+        project_dir=state.project_dir,
+        library_dir=state.library_dir,
     )
     asset_name = params["asset_name"]
+    safe_asset_name = usd.naming.clean_prim_name(asset_name, "asset name")
     parent_prim_path = params["parent_prim_path"]
     group = params["group"]
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
+    turn = float(params.get("rotate_up", 0.0))
 
     parent_asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, parent_prim_path,
@@ -308,29 +295,27 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
         report.scene_ref_path, assets_dir, parent_asset_dir,
     )
 
+    _, parent_up_axis = authoring.asset_folder.asset_metrics(
+        parent_asset_dir,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
     state.object_count += 1
-    safe_asset_name = usd.naming.safe_prim_name(asset_name)
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
-    try:
-        authoring.placement.add_asset_to_parent(
-            parent_asset_dir=parent_asset_dir,
-            group=group,
-            prim_name=prim_name,
-            ref_asset_path=ref_asset_path,
-            transform=schemas.TransformParams(
-                translate=(tx, ty, tz),
-                rotate=(0.0, ry, 0.0),
-            ),
-            project_mpu=state.meters_per_unit,
-            project_up_axis=state.up_axis.value,
-        )
-    except (ValueError, RuntimeError):
-        state.object_count -= 1
-        raise
+    authoring.placement.add_asset_to_parent(
+        parent_asset_dir=parent_asset_dir,
+        group=group,
+        prim_name=prim_name,
+        ref_asset_path=ref_asset_path,
+        transform=schemas.TransformParams(
+            translate=(tx, ty, tz),
+            rotate=usd.transforms.up_turn(turn, parent_up_axis),
+        ),
+        project_mpu=state.meters_per_unit,
+        project_up_axis=state.up_axis.value,
+    )
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
-    state.touch_project()
+    state.reload_stage()
 
     composed_path = authoring.placement.contents_prim_path(ref_prim_path, group, prim_name)
     wx, wy, wz = (
@@ -346,7 +331,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
         "asset": asset_name,
         "parent": parent_asset_dir.name,
         "position": {"x": wx, "y": wy, "z": wz},
-        "rotation_y": ry,
+        "rotation_up": turn,
         "intake": authoring.intake.intake_summary(report),
         "message": (
             f"Added {asset_name} to {parent_asset_dir.name} at {composed_path}"
@@ -397,7 +382,7 @@ def cleanup_unused_contents(
         asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_prim_path)
 
         removed = authoring.placement.cleanup_unused_contents_in_folder(asset_dir)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         logger.info(
             "Cleaned %d empty group(s) from %s/contents",
             len(removed), asset_dir.name,
@@ -423,7 +408,7 @@ def cleanup_unused_contents(
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     logger.info(
         "Cleaned %d empty group(s) across %d asset folder(s)",
         total, len(per_folder),
@@ -456,9 +441,8 @@ def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             )
         ]
 
-    state.touch_project()
     if state.stage is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
     baked_count = sum(1 for r in results if r["baked"])
     logger.info(

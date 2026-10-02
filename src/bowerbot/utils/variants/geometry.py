@@ -30,7 +30,7 @@ def setup(
             f"default_variant {default_variant!r} not present in variants "
             f"{list(variants)!r}",
         )
-    usd.naming.validate_variant_name(variant_set, "variant set")
+    usd.naming.validate_variant_set_name(variant_set)
     for name in variants:
         usd.naming.validate_variant_name(name)
     for payload_ref in variants.values():

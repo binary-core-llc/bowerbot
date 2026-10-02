@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Naming values: which prim, variant, joint and group names are valid."""
+"""Naming values: which prim and variant names are valid."""
 
 import re
 
@@ -11,5 +11,5 @@ class NamingRules:
 
     # A legal USD prim name.
     PRIM_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
-    # Characters refused in variant, variant set, joint and collision group names.
-    FORBIDDEN_CHARS = frozenset(" \t\n\r/\\")
+    # A legal USD variant name (a variant SET name follows PRIM_NAME).
+    VARIANT_NAME = re.compile(r"\.?[A-Za-z0-9_|\-]+\Z")

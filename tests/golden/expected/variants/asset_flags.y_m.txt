@@ -178,7 +178,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1124,7 +1124,7 @@ intent: an invalid set name
 SUMMARY
   call: add_asset_material_variant(prim_path="/Scene/Props/Lamp_01", variant_set="finish!", variant_name="x", bindings={"/Scene/Props/Lamp_01/asset/Shade": "/Scene/Props/Lamp_01/asset/mtl/red"})
   current project: golden
-  said: REFUSED: Error in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSetSpec::New' at line 34 in file /opt/USD/pxr/usd/sdf/variantSetSpec.cpp : 'Cannot create variant set spec with invalid identifier: 'finish!'' Error in 'pxrInternal_v0_26_8__pxrReserved__::Sdf_ListEditor<TypePolicy>::_ValidateEdit [with TypePolicy = pxrInternal_v0_26_8__pxrReserved__::SdfNameKeyPolicy]' at line 262 in file /opt/USD/pxr/usd/sdf/listEditor.h : '"finish!" is not a valid identifier'
+  said: REFUSED: Invalid variant set name: 'finish!' (use letters, digits and underscores, and do not start with a digit).
 
   what changed:
     nothing
@@ -1142,7 +1142,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfVariantSetSpec::New' at line 34 in file /opt/USD/pxr/usd/sdf/variantSetSpec.cpp : 'Cannot create variant set spec with invalid identifier: 'finish!''\n\tError in 'pxrInternal_v0_26_8__pxrReserved__::Sdf_ListEditor<TypePolicy>::_ValidateEdit [with TypePolicy = pxrInternal_v0_26_8__pxrReserved__::SdfNameKeyPolicy]' at line 262 in file /opt/USD/pxr/usd/sdf/listEditor.h : '\"finish!\" is not a valid identifier'"
+    "error": "Invalid variant set name: 'finish!' (use letters, digits and underscores, and do not start with a digit)."
   }
 
 files:

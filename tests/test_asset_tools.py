@@ -606,7 +606,7 @@ def test_delete_project_texture_refuses_when_referenced():
 
 
 def test_place_asset_with_rotation():
-    """Placed asset respects rotate_y."""
+    """Placed asset respects rotate_up."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path, state, project = _setup(tmp)
         asset = _asset(tmp_path, "chair")
@@ -614,7 +614,7 @@ def test_place_asset_with_rotation():
             "asset_file_path": str(asset), "asset_name": "Chair",
             "group": "Furniture",
             "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
-            "rotate_y": 90.0,
+            "rotate_up": 90.0,
         }))
         assert r.success, r.error
 
@@ -752,7 +752,7 @@ def test_moving_an_added_asset_keeps_the_axes_left_out():
         assert moved.data["position"] == {"x": 3.4, "y": 0.5, "z": 4.1}
 
         turned = asyncio.run(_helpers.exec_tool(state, "move_asset", {
-            "prim_path": prim_path, "rotate_y": 30.0,
+            "prim_path": prim_path, "rotate_up": 30.0,
         }))
         assert turned.success, turned.error
         assert _world_position(project, prim_path) == (3.4, 0.5, 4.1)

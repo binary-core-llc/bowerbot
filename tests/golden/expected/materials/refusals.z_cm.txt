@@ -180,7 +180,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -565,7 +565,7 @@ intent: a material file that does not exist
 SUMMARY
   call: bind_material(prim_path="/Scene/Furniture/Table_01/asset/Top", material_file="<LIBRARY>/materials/nope.usda")
   current project: golden
-  said: REFUSED: Material file not found: <LIBRARY>/materials/nope.usda
+  said: REFUSED: material file '<LIBRARY>/materials/nope.usda' not found (searched: <LIBRARY>/materials/nope.usda).
 
   what changed:
     nothing
@@ -583,7 +583,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Material file not found: <LIBRARY>/materials/nope.usda"
+    "error": "material file '<LIBRARY>/materials/nope.usda' not found (searched: <LIBRARY>/materials/nope.usda)."
   }
 
 files:

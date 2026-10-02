@@ -15,6 +15,7 @@ from bowerbot.utils import authoring
 from bowerbot.utils import inspection
 from bowerbot.utils import layout
 from bowerbot.utils import usd
+from bowerbot.utils import variants
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     state.stage_path = state.project.scene_path
     if state.stage_path.exists():
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         state.object_count = len(inspection.scene.list_prims(state.stage))
         logger.info("Reopened existing stage: %s", state.stage_path)
         return {
@@ -48,7 +49,6 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         up_axis=state.up_axis.value, meters_per_unit=state.meters_per_unit,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Created stage: %s", state.stage_path)
     return {
@@ -89,7 +89,7 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         msg = f"Failed to rename {old_path} to {new_path}"
         raise RuntimeError(msg)
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     rewrites = usd.namespace.rewrite_refs(
         state.stage, {old_path: new_path},
     )
@@ -103,7 +103,12 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
 
 
 def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Remove an object from the scene, scrubbing every rel that targeted it."""
+    """Remove a prim from the scene, scrubbing every rel that targeted it.
+
+    Every removal of a scene prim goes through here (lights and cameras
+    too), so each one cleans up the same way and reports the variant sets
+    the removal may have left without a purpose.
+    """
     prim_path = params["prim_path"]
 
     added = authoring.placement.parse_added_asset_path(prim_path)
@@ -119,21 +124,23 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         if not success:
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
+        suspects = variants.suspect_sets.find_in_asset(parent_asset_dir)
     else:
         success = usd.namespace.remove_prim(state.stage, prim_path)
         if not success:
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
+        suspects = variants.suspect_sets.find_above(state.stage, prim_path)
 
     scrubbed = usd.namespace.scrub_dangling_refs(state.stage)
 
     state.object_count = max(0, state.object_count - 1)
-    state.touch_project()
     logger.info("Removed %s", prim_path)
     return {
         "prim_path": prim_path,
         "scrubbed_dangling_refs": scrubbed,
+        "suspect_variant_sets": suspects,
         "message": f"Removed {prim_path}",
     }
 
@@ -146,15 +153,18 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
         raise ValueError(f"Prim not found: {prim_path}")
 
     added = authoring.placement.parse_added_asset_path(prim_path)
-    cur_tx, cur_ty, cur_tz, cur_ry = usd.transforms.read_translate_and_rotate_y(prim)
+    up_axis = state.up_axis.value
+    cur_tx, cur_ty, cur_tz, cur_turn = usd.transforms.read_translate_and_turn(prim, up_axis)
     if added is not None:
         # An added asset's translate is in its parent asset's frame; axes left out keep
         # where it is in the world.
         cur_tx, cur_ty, cur_tz = usd.transforms.world_translation(prim)
-    tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
-    ty = float(params["translate_y"]) if params.get("translate_y") is not None else cur_ty
-    tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
-    ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
+    tx, ty, tz = usd.values.fill_vec3(
+        usd.values.unpack_vec3(params, "translate_x", "translate_y", "translate_z"),
+        (cur_tx, cur_ty, cur_tz),
+    )
+    # Without rotate_up the prim keeps the whole rotation it has.
+    turn = float(params["rotate_up"]) if params.get("rotate_up") is not None else None
 
     if added is not None:
         parent_asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
@@ -180,33 +190,37 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             project_up_axis=state.up_axis.value,
         )
 
+        _, parent_up_axis = authoring.asset_folder.asset_metrics(
+            parent_asset_dir,
+            project_mpu=state.meters_per_unit, project_up_axis=up_axis,
+        )
         success = authoring.placement.move_added_asset(
             parent_asset_dir, group, prim_name,
             translate=local,
-            rotate=(0.0, ry, 0.0),
+            rotate=None if turn is None else usd.transforms.up_turn(turn, parent_up_axis),
         )
         if not success:
             msg = f"Failed to update the transform of {prim_path}"
             raise RuntimeError(msg)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         tx, ty, tz = (
             round(v, 4) + 0.0
             for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(prim_path))
         )
     else:
-        usd.transforms.set_transform(
-            state.stage, prim_path,
-            translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
+        usd.transforms.set_xform(
+            prim,
+            translate=(tx, ty, tz),
+            rotate=None if turn is None else usd.transforms.up_turn(turn, up_axis),
         )
         authoring.stage.save_stage(state.stage)
 
-    state.touch_project()
 
     logger.info("Moved %s to (%s, %s, %s)", prim_path, tx, ty, tz)
     return {
         "prim_path": prim_path,
         "position": {"x": tx, "y": ty, "z": tz},
-        "rotation_y": ry,
+        "rotation_up": cur_turn if turn is None else turn,
         "message": f"Moved {prim_path} to ({tx}, {ty}, {tz})",
     }
 
@@ -238,7 +252,6 @@ def set_prim_attribute(
         state.stage, prim_path, attribute_name, value,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
     action = "Cleared" if value is None else "Authored"
     logger.info(
         "%s %s.%s in %s", action, prim_path, attribute_name, state.stage_path,
@@ -264,7 +277,6 @@ def save_scene_snapshot(state: scene_state.SceneState, params: dict[str, Any]) -
     snapshot_path = authoring.stage.save_scene_snapshot(
         state.stage_path, name, force=force,
     )
-    state.touch_project()
     return {
         "scene_path": str(state.stage_path),
         "snapshot_path": str(snapshot_path),
@@ -299,7 +311,6 @@ def delete_scene_snapshot(
         raise ValueError("No scene is open.")
     name = params["name"]
     removed = authoring.stage.delete_scene_snapshot(state.stage_path, name)
-    state.touch_project()
     return {
         "snapshot_path": str(removed),
         "snapshot_name": removed.stem,

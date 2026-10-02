@@ -76,7 +76,7 @@ SCENARIOS = (
                     "asset_name": "Chair",
                     "group": "Furniture",
                     **model.at(1.0, 0.0, 2.0),
-                    "rotate_y": 90.0,
+                    "rotate_up": 90.0,
                 },
                 save="chair",
                 note="a library-relative path, turned 90 degrees",

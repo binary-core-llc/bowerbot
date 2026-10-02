@@ -126,22 +126,31 @@ def test_texture_search_and_listing(tmp_path, monkeypatch):
     assert search() == ["sky_a", "sky_b"]
 
 
-def test_same_named_textures_copy_the_same_file(tmp_path, monkeypatch):
-    """With two library textures of one name, the first path alphabetically is copied."""
+def test_same_named_textures_are_never_guessed(tmp_path, monkeypatch):
+    """With two library textures of one name, a bare name is refused; a path picks its file."""
     library = tmp_path / "library"
     for folder in ("b", "a"):
         (library / folder).mkdir(parents=True)
         (library / folder / "wood.png").write_bytes(folder.encode())
     projects = count()
 
-    def copied() -> bytes:
+    def refusal() -> str:
         project = tmp_path / f"project_{next(projects)}"
         project.mkdir()
-        rel = authoring.textures.stage_asset_value("wood.png", project, library)
-        return (project / rel).read_bytes()
+        with pytest.raises(ValueError, match="names 2 files in the library") as refused:
+            authoring.textures.stage_asset_value("wood.png", project, library)
+        return str(refused.value)
 
-    disk_order, reversed_order = _both_orders(monkeypatch, copied)
-    assert disk_order == reversed_order == b"a"
+    disk_order, reversed_order = _both_orders(monkeypatch, refusal)
+    assert disk_order == reversed_order
+    assert "(a/wood.png, b/wood.png)" in disk_order
+
+    project = tmp_path / "project_by_path"
+    project.mkdir()
+    for folder in ("b", "a"):
+        rel = authoring.textures.stage_asset_value(f"{folder}/wood.png", project, library)
+        assert (project / rel).read_bytes() == folder.encode()
+    assert sorted(p.name for p in (project / "textures").iterdir()) == ["wood.png", "wood_2.png"]
 
 
 def test_reference_scans(tmp_path, monkeypatch):

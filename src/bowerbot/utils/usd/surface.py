@@ -290,6 +290,24 @@ def plan_bounds(
     lo, hi = triangle_plan_boxes(triangles, up)
     return lo.min(axis=0), hi.max(axis=0)
 
+def shape_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.FloatArray | None:
+    """World-space points of the geometry under a prim, or None when it has none.
+
+    Every mesh vertex and the centre of every triangle; the eight corners of
+    its box when the prim holds no mesh.
+    """
+    triangles = collect_triangles(stage, [prim_path], up=up)
+    if triangles.count:
+        return np.concatenate([
+            triangles.v0, triangles.v1, triangles.v2,
+            (triangles.v0 + triangles.v1 + triangles.v2) / 3.0,
+        ])
+    rng = usd.bounds.world_range(
+        stage.GetPrimAtPath(prim_path), usd.bounds.bounds_cache(include_render=True),
+    )
+    return None if rng is None else usd.bounds.range_corners(rng)
+
+
 # ── Helpers ──
 
 

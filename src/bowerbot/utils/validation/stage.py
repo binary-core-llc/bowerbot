@@ -154,11 +154,7 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[schemas.ValidationIssu
 
 
 def _referenced_files(stage: Usd.Stage) -> list[tuple[str, str, Path]]:
-    """``(prim path, path as written, file it points to)`` for every reference and payload.
-
-    Each path is read from the layer that wrote it, so a link an asset makes
-    to a sibling asset (``../crate/crate.usda``) is followed from that asset.
-    """
+    """``(prim path, path as written, file)`` for every reference and payload."""
     found: dict[tuple[str, str], Path] = {}
     for prim in stage.Traverse():
         for spec in prim.GetPrimStack():
@@ -171,12 +167,7 @@ def _referenced_files(stage: Usd.Stage) -> list[tuple[str, str, Path]]:
 
 
 def _known_shader_note(issue: schemas.ValidationIssue) -> schemas.ValidationIssue:
-    """A shader BowerBot authors that this USD build cannot look up is a note, not an error.
-
-    USD reports the MaterialX shader of a procedural material as missing when
-    it was built without MaterialX; the scene is right, and a renderer with
-    MaterialX reads it. Any other unknown shader stays an error.
-    """
+    """Turn USD's missing-shader error into a note for the MaterialX shaders BowerBot authors."""
     if not issue.message.startswith("MissingShaderIdInRegistry"):
         return issue
     if not any(f"'{shader}'" in issue.message for shader in constants.MaterialXShaders.ALL):

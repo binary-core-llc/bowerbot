@@ -1,15 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""BowerBot configuration management.
-
-All settings live in ~/.bowerbot/config.json — one file, one place.
-No .env files needed.
-
-Load order:
-1. ~/.bowerbot/config.json
-2. Built-in defaults
-"""
+"""BowerBot settings, loaded from ~/.bowerbot/config.json over built-in defaults."""
 
 from __future__ import annotations
 
@@ -107,12 +99,7 @@ class SkillConfig(BaseModel):
 
 
 class LoggingSettings(BaseModel):
-    """Structured file + console logging configuration.
-
-    Log file location is always ``~/.bowerbot/logs/bowerbot.log`` and
-    cannot be overridden via config; only verbosity, rotation, and
-    enable/disable are user-tunable.
-    """
+    """File and console logging settings; the log file location is fixed."""
 
     enabled: bool = True
     level: str = "INFO"           # file log level
@@ -157,13 +144,7 @@ def load_settings() -> Settings:
 
 
 def save_settings(settings: Settings) -> None:
-    """Save settings to ~/.bowerbot/config.json.
-
-    Writes only user-facing fields. Internal defaults
-    (token management tuning, error recovery tuning) are
-    omitted — they take effect from code defaults and can
-    be added manually by advanced users.
-    """
+    """Save the user-facing settings to ~/.bowerbot/config.json; internal tuning is left out."""
     ensure_home()
 
     data: dict[str, Any] = {

@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""AgentRuntime — the 'Architect' layer.
-
-Runs a tool-calling loop against an LLM: the model decides what to
-call, the dispatcher executes it against the shared
-:class:`~bowerbot.state.SceneState`, results feed back into the
-conversation, and the loop repeats until the model returns prose.
-"""
+"""The agent runtime: a tool-calling loop between the LLM and the dispatcher."""
 
 from __future__ import annotations
 

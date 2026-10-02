@@ -46,12 +46,9 @@ def set_prim_attribute(
     *,
     expected_type: Sdf.ValueTypeName | None = None,
 ) -> None:
-    """Author or clear an attribute opinion at the stage's current edit target.
+    """Author or clear an attribute opinion at the stage's edit target.
 
-    When *expected_type* is provided it overrides value-shape inference and
-    the schema-registry lookup; callers that know the declared type from a
-    separate composition (e.g. variant body authoring against an asset's
-    composed stage) should pass it to avoid the wrong type being authored.
+    *expected_type* overrides the type lookup.
     """
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
@@ -95,11 +92,7 @@ def set_prim_attribute(
 
 
 def drop_api_schema(prim_spec: Sdf.PrimSpec, api_name: str) -> bool:
-    """Take *api_name* out of a prim spec's ``apiSchemas``; True if it was there.
-
-    When nothing is left the opinion is cleared, so the spec does not end up
-    with an empty list that would hide the APIs weaker layers apply.
-    """
+    """Take *api_name* out of a spec's ``apiSchemas``; True if it was there."""
     if not prim_spec.HasInfo("apiSchemas"):
         return False
     list_op = prim_spec.GetInfo("apiSchemas")

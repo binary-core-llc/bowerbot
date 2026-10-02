@@ -26,12 +26,7 @@ def list_properties(
     *,
     instance_name: str | None = None,
 ) -> schemas.PhysicsApiSchemaInfo:
-    """Live schema-registry view of every property the API declares.
-
-    For multi-apply APIs (DriveAPI, LimitAPI) *instance_name* is
-    required; property names are returned with the instance substituted
-    (e.g. ``drive:angular:physics:stiffness``).
-    """
+    """Every property the API declares; multi-apply APIs need *instance_name*."""
     if api_name in constants.PhysicsRules.MULTI_APPLY_APIS and not instance_name:
         raise ValueError(
             f"{api_name.value} is a multi-apply API. "
@@ -107,11 +102,7 @@ def apply_in_asset(
     instance_name: str | None = None,
     scene_stage: Usd.Stage,
 ) -> dict[str, Any]:
-    """Apply ``api_name`` to *prim_path* and author opinions in ``phy.usda``.
-
-    Refused when *scene_stage* (the scene the asset is placed in) would then
-    have a physics error it does not have now.
-    """
+    """Apply ``api_name`` to *prim_path* in ``phy.usda``; refused if it adds a physics error."""
     attributes = attributes or {}
     relationships = relationships or {}
     is_multi = api_name in constants.PhysicsRules.MULTI_APPLY_APIS
@@ -340,11 +331,7 @@ def resolve_typed_target(
 
 
 def refuse_nested_articulation_root(stage: Usd.Stage, prim_path: str) -> None:
-    """Refuse if any ancestor or descendant already has ``ArticulationRootAPI``.
-
-    The UsdPhysics spec forbids nesting two ArticulationRootAPIs in the
-    same subtree; call this before applying it on a new prim.
-    """
+    """Refuse if an ancestor or descendant already has ``ArticulationRootAPI``."""
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         return

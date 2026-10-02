@@ -1,25 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Structured file + console logging for BowerBot.
-
-On ``configure_logging(settings)``:
-
-- Bowerbot's own loggers (``bowerbot.*``) get a rotating file handler at
-  the configured level (default ``INFO``) writing to
-  ``~/.bowerbot/logs/bowerbot.log`` (rotated at 10 MB, keep 5 backups).
-  The log directory is fixed; only verbosity and rotation are tunable.
-- Console handler stays at ``WARNING`` by default so interactive use is
-  not noisy; users can lower it via ``logging.console_level``.
-- A session ID prefix is added to every line so a single chat session
-  is easy to grep out of a multi-session log file.
-- ``bowerbot`` logger is set with ``propagate=False`` so logs do not
-  double-emit through the root logger.
-
-Idempotent: callable multiple times (clears prior bowerbot handlers
-before reattaching). Safe to import without configuring (just call
-``configure_logging`` at startup).
-"""
+"""Structured file and console logging for BowerBot."""
 
 from __future__ import annotations
 

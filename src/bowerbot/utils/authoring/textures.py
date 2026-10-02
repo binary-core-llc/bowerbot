@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""The project's textures: copying texture files in, staging file-path values, finding users.
-
-Texture files are copied into the project's ``textures/`` or an asset folder's
-``maps/``; file-path (Asset) attribute values are resolved and copied the same way.
-"""
+"""The project's textures: copying files in, staging file-path values, finding users."""
 
 from __future__ import annotations
 
@@ -22,13 +18,7 @@ from bowerbot.utils import authoring
 
 
 def resolve_texture(raw: str, *, project_dir: Path | None, library_dir: Path | None) -> Path:
-    """The texture file *raw* names.
-
-    A path is read as ``authoring.library.resolve_source_file`` reads it. A bare
-    file name is also looked up in the project's ``textures/`` and across the
-    library; when several library files have that name the call is refused, so
-    the wrong one is never picked.
-    """
+    """The texture file *raw* names; a bare name is looked up in the project and the library."""
     try:
         return authoring.library.resolve_source_file(
             raw, project_dir=project_dir, library_dir=library_dir, what="texture",
@@ -53,11 +43,7 @@ def resolve_texture(raw: str, *, project_dir: Path | None, library_dir: Path | N
 
 
 def copy_into(source: Path, folder: Path) -> str:
-    """Copy *source* into *folder* and return the name of the copy.
-
-    A file already there with the same content is reused; one with the same
-    name and other content is left alone, and the copy gets a numbered name.
-    """
+    """Copy *source* into *folder* and return the copy's name; identical content is reused."""
     folder.mkdir(parents=True, exist_ok=True)
     if source.resolve().parent == folder.resolve():
         return source.name

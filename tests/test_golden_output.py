@@ -1,18 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Every golden scenario still produces, step by step, exactly what was recorded.
-
-Each scenario and convention has one recording,
-``tests/golden/expected/<area>/<scenario>.<convention>.txt``, holding every
-step in order. A failure names the first step whose snapshot differs and shows
-the difference. When the difference is intended, review it and re-record with
-``BOWERBOT_UPDATE_GOLDEN=1 pytest tests/test_golden_output.py``.
-
-Each scenario is also recorded with every folder listed in reverse order and
-must give the same recording: the disk's listing order differs between
-machines, so BowerBot's output must not depend on it.
-"""
+"""Every golden scenario still produces, step by step, exactly what was recorded."""
 
 from __future__ import annotations
 
@@ -108,11 +97,7 @@ def test_golden_output(
 def test_golden_output_ignores_listing_order(
     scenario: model.Scenario, convention: model.Convention, tmp_path: Path,
 ) -> None:
-    """The same recording with every folder listed in reverse order.
-
-    Failing here while test_golden_output passes means BowerBot's output
-    depends on the order the disk lists files in, which differs between machines.
-    """
+    """The same recording with every folder listed in reverse order."""
     if UPDATE:
         pytest.skip("re-recording")
     steps = recorder.record(scenario, convention, tmp_path, reverse_listings=True)

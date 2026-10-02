@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Physics materials: friction and bounce for colliders, in the scene or in ``phy.usda``.
-
-A physics material is a ``Material`` prim with ``PhysicsMaterialAPI``. A
-collider uses the one bound to it, or to a prim above it, with the
-``physics`` purpose (``material:binding:physics``). The look a prim renders
-with is another binding, which these functions never touch.
-"""
+"""Physics materials: friction and bounce bound to colliders with the physics purpose."""
 
 from __future__ import annotations
 

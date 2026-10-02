@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tool-coverage tier: scenarios that exercise tool families not hit elsewhere.
-
-Each scenario here is responsible for at least one tool category we
-have not already exercised via the discovery / vague / goal / iteration
-suites: materials, variants, validation, snapshots, scene-level
-collision groups, joints + articulation root, light linking.
-"""
+"""Tool-coverage tier: scenarios for tool families the other tiers do not reach."""
 
 from __future__ import annotations
 

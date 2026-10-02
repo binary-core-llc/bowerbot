@@ -1,17 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Token management — context window optimization for long sessions.
-
-Keeps conversations within model context limits by:
-1. Compressing old tool results (lightweight, always runs)
-2. Summarizing older history when approaching the token budget
-   (heavier, only when needed)
-
-Follows OpenClaw-style sliding-window compaction: old messages get
-summarized, recent messages stay verbatim, scene state is always
-re-queryable via tools.
-"""
+"""Token management: keeps a conversation within the model's context window."""
 
 from __future__ import annotations
 
@@ -26,9 +16,7 @@ from bowerbot import config
 
 logger = logging.getLogger(__name__)
 
-# Internal prompt for the summarization call — same pattern as
-# CORE_PROMPT in agent.py. Tightly coupled to compaction logic,
-# not a user-facing skill prompt.
+# Internal prompt for the summarization call.
 SUMMARY_PROMPT = """\
 Summarize this conversation history for a 3D scene assembly agent.
 
@@ -77,16 +65,7 @@ class TokenCounter:
 
 
 class TokenManager:
-    """Manages conversation context to stay within model token limits.
-
-    Called by AgentRuntime before each LLM call. Applies two
-    optimizations in order:
-
-    1. Tool result compression — old tool outputs are replaced with
-       compact placeholders. The LLM can always re-call the tool.
-    2. History summarization — when token count exceeds the threshold,
-       older messages are summarized via a short LLM call.
-    """
+    """Compresses old tool results and summarizes older history to stay within token limits."""
 
     def __init__(self, llm_settings: config.LLMSettings) -> None:
         self._settings = llm_settings
@@ -125,16 +104,13 @@ class TokenManager:
         compressed = False
         summarized = False
 
-        # Step 1: Compress old tool results (always, lightweight)
         working_history = self._compress_tool_results(history)
 
-        # Build candidate messages
         messages = [
             {"role": "system", "content": system_prompt},
             *working_history,
         ]
 
-        # Count current token usage
         prompt_tokens = self._counter.count_messages(self._model, messages)
         trigger_point = int(
             self._token_budget * self._settings.summarization_threshold
@@ -179,12 +155,7 @@ class TokenManager:
     def _compress_tool_results(
         self, history: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Replace old tool results with compact placeholders.
-
-        Tool results from list_scene, search_assets, list_my_models,
-        and search_my_models older than the configured age threshold
-        are compressed. The LLM can always re-call the tool.
-        """
+        """Replace tool results older than the age threshold with compact placeholders."""
         user_turn_count = 0
         turn_ages: dict[int, int] = {}
 
@@ -250,11 +221,7 @@ class TokenManager:
         self,
         history: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """Summarize older messages, keeping recent ones verbatim.
-
-        Splits history into old (summarized) and recent (kept).
-        The split point respects tool_call/tool_result pairs.
-        """
+        """Summarize older messages and keep recent ones verbatim, never splitting a tool pair."""
         split = self._find_safe_split(history)
 
         if split <= 0:
@@ -299,11 +266,7 @@ class TokenManager:
         return [summary_message, *recent_messages]
 
     def _find_safe_split(self, history: list[dict[str, Any]]) -> int:
-        """Find a split point that doesn't break tool_call/result pairs.
-
-        Walks backward to find a user or plain assistant message,
-        keeping at least min_keep_recent messages in the recent portion.
-        """
+        """Find a split point that keeps tool_call/result pairs together."""
         min_keep = self._settings.min_keep_recent
 
         if len(history) <= min_keep:

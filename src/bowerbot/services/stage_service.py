@@ -104,12 +104,7 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
 
 
 def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Remove a prim from the scene, scrubbing every rel that targeted it.
-
-    Every removal of a scene prim goes through here (lights and cameras
-    too), so each one cleans up the same way and reports the variant sets
-    the removal may have left without a purpose.
-    """
+    """Remove a prim from the scene and scrub every relationship that targeted it."""
     prim_path = params["prim_path"]
     known_physics_errors = physics.rules.errors(state.stage)
 

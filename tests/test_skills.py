@@ -194,13 +194,7 @@ def test_skill_context_carries_project_and_scene_when_state_provided():
 
 
 def test_registry_discovers_external_skill_via_entry_points(monkeypatch):
-    """A skill installed as a separate pip package is discovered by entry points.
-
-    Simulates the third-party install path by injecting a fake entry
-    point into ``importlib.metadata.entry_points``. Proves the registry
-    finds the skill, instantiates it with config, and routes a tool
-    through it without any in-tree code.
-    """
+    """A skill installed as a separate package is discovered through entry points."""
     from importlib.metadata import EntryPoint
 
     from bowerbot.skills import registry as registry_mod

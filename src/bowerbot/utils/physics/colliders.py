@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Collider shapes: a basic shape under a part that only physics sees, in the scene or ``phy.usda``.
-
-USD has no setting that makes a mesh collide as a cylinder: a collider is
-always a geometry prim with ``PhysicsCollisionAPI``. A collider shape is that
-prim: a Cube, Sphere, Capsule or Cylinder, sized in project units, with
-purpose ``guide`` so renderers skip it and the asset's box does not count it.
-"""
+"""Collider shapes: a basic shape under a part that only physics uses."""
 
 from __future__ import annotations
 
@@ -54,11 +48,9 @@ def add_in_asset(
     scene_stage: Usd.Stage,
     scene_parent_path: str,
 ) -> dict[str, Any]:
-    """Add a collider shape under *parent_path* of the asset, written in its ``phy.usda``.
+    """Add a collider shape under *parent_path* in the asset's ``phy.usda``.
 
-    *scene_parent_path* is the same part in *scene_stage*: its size in the
-    scene turns the project-unit sizes into the asset's own. Refused when the
-    scene would then have a physics error it does not have now.
+    *scene_parent_path* is the same part in the scene: its scale converts project units.
     """
     refuse_bad_sizes(params)
     root_file = authoring.asset_folder.find_root_file(asset_dir)
@@ -185,11 +177,7 @@ def _author(
     params: schemas.PhysicsColliderShapeParams,
     scale: schemas.Vec3,
 ) -> None:
-    """Write the shape at the stage's edit target; *scale* is how its parent is sized in the world.
-
-    Sizes come in project units, measured in the world, so each is divided by
-    the parent's scale along the axis it runs on.
-    """
+    """Write the shape, dividing its project-unit sizes by the parent's world *scale*."""
     shape_class = constants.PhysicsUsd.COLLIDER_SHAPES[params.shape]
     spec = Sdf.CreatePrimInLayer(stage.GetEditTarget().GetLayer(), prim_path)
     spec.specifier = Sdf.SpecifierDef

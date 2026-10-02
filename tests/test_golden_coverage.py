@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""The golden scenarios cover every tool fully.
-
-Every tool is called and succeeds at least once; every parameter (nested ones
-included) and every allowed value is used at least once; and every tool is
-refused at least once, except the ones listed in NEVER_REFUSED with the reason.
-A tool or parameter added later fails this test until a scenario records it.
-"""
+"""The golden scenarios cover every tool: each succeeds, is refused, uses every parameter."""
 
 from __future__ import annotations
 

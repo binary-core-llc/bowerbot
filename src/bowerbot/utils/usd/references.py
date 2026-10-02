@@ -45,11 +45,7 @@ def has_direct_references(stage: Usd.Stage, prim_path: str) -> bool:
 
 
 def layer_file_targets(layer: Sdf.Layer) -> set[Path]:
-    """The files *layer* points to, as absolute paths.
-
-    Every reference, payload and asset-valued attribute counts, also inside
-    variant bodies. Paths are taken relative to the layer's own folder.
-    """
+    """The files *layer* points to: references, payloads and asset-valued attributes."""
     base = Path(layer.realPath).parent
     targets: set[Path] = set()
 

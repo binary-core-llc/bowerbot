@@ -1,17 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Project management — one folder, one scene.
-
-A project is a self-contained directory with everything needed
-to build and resume a scene:
-
-    my_project/
-      project.json     ← Metadata and state
-      scene.usda       ← The USD stage
-      scene.usdz       ← Packaged output
-      assets/          ← Assets used by this project
-"""
+"""Project management: one folder holds project.json, scene.usda and the assets it uses."""
 
 from __future__ import annotations
 
@@ -43,11 +33,7 @@ class ProjectMeta(BaseModel):
 
 
 class Project:
-    """A BowerBot project — one folder, one scene.
-
-    Handles creating, loading, saving, and providing paths.
-    Delegates USD operations to the engine layer.
-    """
+    """A BowerBot project: one folder, one scene."""
 
     def __init__(self, path: Path, meta: ProjectMeta) -> None:
         self.path = path
@@ -102,18 +88,15 @@ class Project:
             msg = f"Project already exists: {project_path}"
             raise FileExistsError(msg)
 
-        # Create directory structure
         project_path.mkdir(parents=True)
         (project_path / "assets").mkdir()
 
-        # Create and save metadata
         meta = ProjectMeta(
             name=name, up_axis=up_axis, meters_per_unit=meters_per_unit,
         )
         project = Project(path=project_path, meta=meta)
         project.save()
 
-        # Create empty scene file with the project's up-axis and units
         authoring.stage.create_empty_scene(
             project.scene_path,
             up_axis=meta.up_axis,
@@ -124,11 +107,7 @@ class Project:
 
     @staticmethod
     def load(project_path: Path) -> Project:
-        """Load an existing project from a directory.
-
-        Ensures the project's on-disk state is valid:
-        missing directories or scene files are recreated.
-        """
+        """Load a project from a directory, recreating a missing folder or scene file."""
         meta_path = project_path / "project.json"
         if not meta_path.exists():
             msg = (
@@ -143,7 +122,6 @@ class Project:
         meta = ProjectMeta(**raw)
         project = Project(path=project_path, meta=meta)
 
-        # Ensure project invariants
         project.assets_dir.mkdir(parents=True, exist_ok=True)
         authoring.stage.create_empty_scene(
             project.scene_path,

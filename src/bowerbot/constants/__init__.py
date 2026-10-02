@@ -1,15 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""BowerBot's fixed values, grouped by domain.
-
-Each domain file groups its values in classes named for what they hold:
-``<Domain>Rules`` (what BowerBot accepts), ``<Domain>Defaults`` (fallbacks
-when a call leaves a value out), ``<Domain>Tuning`` (internal algorithm
-knobs), ``<Domain>Namespace`` (prim and file names BowerBot authors) and
-``<Domain>Usd`` (the pxr classes and values behind a name). Import from
-``bowerbot.constants``; this package re-exports every class.
-"""
+"""BowerBot's fixed values, one file per domain, in classes named for their role."""
 
 from bowerbot.constants.asset_folder import AssetFolderNamespace
 from bowerbot.constants.asset_folder import AssetFolderRules

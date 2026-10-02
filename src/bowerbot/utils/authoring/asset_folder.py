@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""The ASWF asset folder on disk: its root file and defaultPrim, its layers, building one.
-
-An asset folder holds a root file that references its layers (``geo.usda`` as a
-payload; ``mtl``, ``lgt``, ``phy``, ``variants`` and ``contents`` as references).
-"""
+"""The ASWF asset folder on disk: its root file and default prim, its layers, building one."""
 
 from __future__ import annotations
 
@@ -36,11 +32,7 @@ def find_root_file(asset_dir: Path) -> Path | None:
 
 
 def resolve_default_prim_name(asset_dir: Path) -> str:
-    """The name of the asset's root prim: the ``defaultPrim`` of its root file.
-
-    While the folder is being built and has no root file yet, ``geo.usda``'s
-    ``defaultPrim`` stands in; the folder name when neither file says.
-    """
+    """The asset's root prim name: the ``defaultPrim`` of its root file, else of ``geo.usda``."""
     for layer_path in (find_root_file(asset_dir), asset_dir / constants.ASWFLayerNames.GEO):
         if layer_path is None or not layer_path.exists():
             continue
@@ -110,11 +102,7 @@ def apply_aswf_root_metadata(
     version: str = "1.0",
     force: bool = False,
 ) -> None:
-    """Apply ASWF-canonical Kind + assetInfo to an asset root prim.
-
-    When *force* is False, only fills missing fields, preserving any
-    metadata already authored upstream (DCC, asset-management system).
-    """
+    """Apply ASWF Kind and assetInfo to an asset root; without *force* only missing fields."""
     model_api = Usd.ModelAPI(prim)
     if force or not model_api.GetKind():
         model_api.SetKind(kind)
@@ -180,13 +168,7 @@ def to_layer_local_path(prim_path: str, default_prim_name: str) -> str:
 def open_scope_layer(
     asset_dir: Path, layer_file: str, scope_name: str, scope_type: str,
 ) -> Sdf.Layer:
-    """Open a side layer that keeps its prims under one scope, creating what is missing.
-
-    ``lgt.usda``, ``mtl.usda`` and ``contents.usda`` are such layers. The file,
-    its ``defaultPrim``, the ``over`` for the asset's root prim and the scope
-    ``/<root>/<scope_name>`` are created when they are not there. The layer
-    is returned unsaved.
-    """
+    """Open a side layer whose prims sit under one scope, creating what is missing; not saved."""
     layer_path = asset_dir / layer_file
     default_prim_name = resolve_default_prim_name(asset_dir)
     layer = (
@@ -272,13 +254,7 @@ def drop_root_reference(asset_dir: Path, layer_file: str) -> None:
 
 
 def rebuild_root_references(asset_dir: Path) -> None:
-    """Rebuild the root's arcs to BowerBot's layers: geo via payload, the others via references.
-
-    Arcs to any other file (a package's own model, look or part files) are
-    kept, with their prim path and layer offset. The references among them
-    come after BowerBot's layers, so an edit made through BowerBot stays the
-    stronger opinion.
-    """
+    """Rebuild the root's arcs: geo as payload, BowerBot's layers as references, others kept."""
     root_file = find_root_file(asset_dir)
     if root_file is None:
         return
@@ -406,11 +382,7 @@ def conform_matrix(
 
 
 def get_geometry_bounds(asset_dir: Path) -> dict[str, dict[str, float]] | None:
-    """Return the bounds of the asset's own geometry in its own units and axes, or ``None``.
-
-    Measured on the asset's root file, so geometry from every file the root
-    composes counts. The asset's lights and the assets added to it do not.
-    """
+    """Bounds of the asset's own geometry in its own units and axes, or ``None``."""
     root_file = find_root_file(asset_dir)
     if root_file is None:
         return None
@@ -467,11 +439,7 @@ def create_asset_folder(
     project_mpu: float,
     project_up_axis: str,
 ) -> Path:
-    """Create an ASWF asset folder with root + ``geo.usda``.
-
-    The root declares the units and up axis the source file declares, or the
-    project's where the source declares none.
-    """
+    """Create an asset folder (root + ``geo.usda``) with the source's units, or the project's."""
     asset_dir = output_dir / asset_name
     asset_dir.mkdir(parents=True, exist_ok=True)
 
@@ -497,19 +465,13 @@ def create_asset_folder(
 def find_files_using(project_dir: Path, target: Path) -> list[str]:
     """Project USD files that point at *target*: a file, or anything inside a folder.
 
-    A reference, a payload or an asset-valued attribute counts, also inside
-    variant bodies. The match is on the whole path, never on part of a name.
-    Files inside *target* itself are not looked at.
+    References, payloads and asset-valued attributes count, also inside variant bodies.
     """
     return find_files_using_each(project_dir, [target])[target]
 
 
 def find_files_using_each(project_dir: Path, targets: list[Path]) -> dict[Path, list[str]]:
-    """For each of *targets*, the project USD files that point at it (see ``find_files_using``).
-
-    Every project file is read once, however many targets are asked about: a
-    big project has hundreds of assets and gigabytes of geometry.
-    """
+    """``find_files_using`` for many targets at once: every project file is read once."""
     resolved = {target: target.resolve() for target in targets}
     using: dict[Path, list[str]] = {target: [] for target in targets}
     for usd_file in sorted(project_dir.rglob("*")):
@@ -532,11 +494,7 @@ def find_files_using_each(project_dir: Path, targets: list[Path]) -> dict[Path, 
 
 
 def _files_pointed_at(usd_file: Path) -> set[Path]:
-    """The files *usd_file* points to; a text layer with no asset path in it is not parsed.
-
-    In ``.usda`` every asset path is written between ``@`` signs, so a file
-    without one (most geometry files, and the big ones) points at nothing.
-    """
+    """The files *usd_file* points to; a ``.usda`` with no ``@`` in it is not parsed."""
     if usd_file.suffix == constants.AssetFolderRules.TEXT_LAYER_EXTENSION:
         with usd_file.open("rb") as handle:
             if not any(b"@" in chunk for chunk in iter(lambda: handle.read(1 << 20), b"")):

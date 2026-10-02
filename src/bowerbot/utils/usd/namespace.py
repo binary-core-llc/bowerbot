@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Renaming, moving and removing prims, and what must follow them.
-
-Variant-body overs, relationship targets and empty overs are kept in step
-with the prims they point at.
-"""
+"""Renaming, moving and removing prims, keeping overs and relationship targets in step."""
 
 from __future__ import annotations
 

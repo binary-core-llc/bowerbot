@@ -164,12 +164,7 @@ def to_local(
 
 
 def refresh_extents(stage: Usd.Stage) -> list[str]:
-    """Bring the stored box of every scatter in the scene up to date; return the ones that changed.
-
-    A scatter's box depends on what its prototypes show, and other tools change
-    that: a model switch, an edit of the scattered asset, a scale. Renderers frame
-    and cull with the stored box, so it must follow. Not saved: the caller saves.
-    """
+    """Refresh every scatter's stored box; return the ones that changed. Not saved."""
     root_layer = stage.GetRootLayer()
     time = Usd.TimeCode.Default()
     tolerance = constants.ScatterTuning.EXTENT_TOLERANCE

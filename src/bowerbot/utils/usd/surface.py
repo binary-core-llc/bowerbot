@@ -291,11 +291,7 @@ def plan_bounds(
     return lo.min(axis=0), hi.max(axis=0)
 
 def shape_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.FloatArray | None:
-    """World-space points of the geometry under a prim, or None when it has none.
-
-    Every mesh vertex and the centre of every triangle; the eight corners of
-    its box when the prim holds no mesh.
-    """
+    """World-space points of the geometry under a prim, or None when it has none."""
     triangles = collect_triangles(stage, [prim_path], up=up)
     if triangles.count:
         return np.concatenate([

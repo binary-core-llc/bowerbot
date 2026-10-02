@@ -1,20 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Physics service — UsdPhysics applied-API orchestration.
-
-Routes writes based on the ``scope`` param:
-
-- ``"asset"`` (default): authors into the asset's ``phy.usda`` after a
-  masking scan of ``scene.usda``. Refuses when scene overrides would
-  mask the write unless ``clear_masking_overrides`` or ``confirm_masked``
-  is set.
-- ``"scene"``: authors directly on the scene stage at the given prim
-  path (per-placement override or scene-only prim). No masking scan.
-
-Also exposes ``setup_physics_scene`` (creates ``/Scene/Physics`` +
-``UsdPhysics.Scene``) and ``get_physics_summary`` (asset + scene).
-"""
+"""Physics service: routes each physics tool to the asset's ``phy.usda`` or to the scene."""
 
 from __future__ import annotations
 

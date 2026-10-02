@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""USD variant sets: author inside a variant, read, select and remove variant sets.
-
-Opinion-agnostic: anything USD can author into a variant goes through
-``author_in_variant``.
-"""
+"""USD variant sets: author inside a variant, read, select and remove."""
 
 from __future__ import annotations
 
@@ -183,11 +179,7 @@ def remove_scene_variant(
 def remove_variant_from_spec(
     layer: Sdf.Layer, prim_spec: Sdf.PrimSpec, set_name: str, variant_name: str,
 ) -> list[str] | None:
-    """Take one variant out of a set on *prim_spec*; the set goes with its last variant.
-
-    Returns the names of the variants that remain, or None when the variant
-    was not there. The layer is not saved.
-    """
+    """Remove one variant from a set; return the names left, or None if absent. Not saved."""
     vset_spec = prim_spec.variantSets.get(set_name)
     if vset_spec is None:
         return None

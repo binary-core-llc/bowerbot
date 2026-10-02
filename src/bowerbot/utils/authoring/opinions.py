@@ -1,13 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Scene.usda opinions that would mask what BowerBot writes into an asset layer or a variant.
-
-An opinion authored on a placement in scene.usda is stronger than the asset's
-own layers (``phy.usda``, ``variants.usda``), so a write there has no visible
-effect until the scene opinion is cleared. Physics and variants each keep
-their own pair of functions here.
-"""
+"""Scene opinions that would mask what BowerBot writes into an asset layer or a variant."""
 
 from __future__ import annotations
 
@@ -32,12 +26,7 @@ def find_physics_masking_opinions(
     attributes: dict[str, Any] | None = None,
     relationships: dict[str, list[str]] | None = None,
 ) -> list[tuple[str, str, str]]:
-    """Scene.usda opinions on placements that would mask a phy.usda write.
-
-    Returns ``(placement_prim_path, kind, key)`` tuples; ``kind`` is
-    ``"attribute"`` or ``"relationship"``. Empty list when no masking
-    opinions exist or the asset has no placements in the open scene.
-    """
+    """Scene opinions on placements that would mask a phy.usda write: (prim path, kind, key)."""
     attr_names = set((attributes or {}).keys())
     rel_names = set((relationships or {}).keys())
     if not attr_names and not rel_names:
@@ -100,13 +89,10 @@ def find_variant_masking_opinions(
     target_map: dict[str, Iterable[str]],
     kind: schemas.OpinionKind,
 ) -> list[tuple[str, str]]:
-    """Return (scene_prim_path, key) pairs in scene.usda that would mask a variant body opinion.
+    """Scene opinions that would mask a variant body opinion: (scene prim path, key) pairs.
 
-    *target_map* maps asset-local prim path -> iterable of keys the variant
-    is about to author at that path. *kind* names which spec slot to inspect:
-    ``"attribute"`` (key is attribute name), ``"relationship"`` (key is
-    relationship name, typically ``"material:binding"``), or ``"active"``
-    (key is always ``"active"`` — the prim's active metadata).
+    *target_map* maps an asset prim path to the keys the variant authors there; *kind* is
+    ``attribute``, ``relationship`` or ``active``.
     """
     placements = authoring.placement.find_asset_placements(stage, asset_dir)
     if not placements:

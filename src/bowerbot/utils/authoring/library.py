@@ -26,12 +26,7 @@ def scan_library(
     query: str | None = None,
     category: str = constants.LibraryRules.ANY_CATEGORY,
 ) -> list[dict[str, str]]:
-    """Return matching assets in *library_dir*.
-
-    Detects ASWF asset folders at the top level, then scans loose files
-    recursively. Each entry has ``name``, ``path``, ``format``, and
-    ``category`` (``geo`` / ``mtl`` / ``package``).
-    """
+    """The assets in *library_dir* that match, each with name, path, format and category."""
     if not library_dir.exists():
         return []
 
@@ -126,12 +121,7 @@ def resolve_source_file(
     library_dir: Path | None,
     what: str = "asset",
 ) -> Path:
-    """The existing file *raw* names: an absolute path, or a path inside the project or library.
-
-    A relative path is looked up in the project, then in the library, and
-    never in the folder BowerBot was started from. *what* names the kind of
-    file in the refusal (``"asset"``, ``"material file"``, ``"texture"``).
-    """
+    """The existing file *raw* names: an absolute path, or one inside the project or library."""
     path = Path(raw)
     if path.is_absolute():
         candidates = [path]

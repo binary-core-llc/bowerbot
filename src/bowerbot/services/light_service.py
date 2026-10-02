@@ -85,7 +85,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             project_mpu=state.meters_per_unit,
         )
 
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
         asset_local_tail = composed_path.lstrip("/").split("/", 1)[1]
         scene_light_path = f"{ref_prim_path}/{asset_local_tail}"
@@ -179,7 +179,7 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
                 project_dir=state.project_dir, library_dir=state.library_dir,
             ),
         )
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
     else:
         lights.scene.update(
             state.stage,
@@ -208,7 +208,7 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if asset_dir is not None:
         light_name = prim_path.rstrip("/").split("/")[-1]
         lights.asset.remove(asset_dir, light_name)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         logger.info("Removed asset light %s from %s", light_name, asset_dir.name)
         return {
             "prim_path": prim_path,

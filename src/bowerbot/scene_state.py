@@ -74,6 +74,11 @@ class SceneState:
         self.object_count = len(inspection.scene.list_prims(self.stage))
         self.mark_saved()
 
+    def reload_stage(self) -> None:
+        """Reopen the scene from disk, so it shows what was just written to an asset's files."""
+        if self.stage_path is not None:
+            self.stage = authoring.stage.open_stage(self.stage_path)
+
     def touch_project(self) -> None:
         """Persist updated_at on the bound project, if any."""
         if self.project is not None:

@@ -76,7 +76,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         asset_dir, asset_local_path, api_name, attributes, relationships,
         instance_name=instance_name,
     )
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     state.touch_project()
 
     logger.info(
@@ -147,7 +147,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
     if changed:
         physics.layer.cleanup_if_empty(asset_dir)
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     state.touch_project()
 
     return {
@@ -315,7 +315,7 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         asset_dir, joint_type, name,
         asset_body0, asset_body1, attributes,
     )
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     state.touch_project()
     logger.info(
         "Service created %s asset-level (%s in %s)",
@@ -353,7 +353,7 @@ def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     removed = physics.joints.remove_from_asset(asset_dir, name)
     if removed:
         physics.layer.cleanup_if_empty(asset_dir)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         state.touch_project()
     return {
         "scope": "asset",

@@ -30,7 +30,7 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     state.stage_path = state.project.scene_path
     if state.stage_path.exists():
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         state.object_count = len(inspection.scene.list_prims(state.stage))
         logger.info("Reopened existing stage: %s", state.stage_path)
         return {
@@ -89,7 +89,7 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         msg = f"Failed to rename {old_path} to {new_path}"
         raise RuntimeError(msg)
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     rewrites = usd.namespace.rewrite_refs(
         state.stage, {old_path: new_path},
     )
@@ -119,7 +119,7 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         if not success:
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
     else:
         success = usd.namespace.remove_prim(state.stage, prim_path)
         if not success:
@@ -195,7 +195,7 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
         if not success:
             msg = f"Failed to update the transform of {prim_path}"
             raise RuntimeError(msg)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         tx, ty, tz = (
             round(v, 4) + 0.0
             for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(prim_path))

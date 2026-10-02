@@ -55,15 +55,14 @@ def add_asset_material_variant(
         state.stage, masking, "relationship", "material",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
     variants.asset.add(
         asset_dir, set_name, variant_name,
         lambda stage, _prim_path: variants.bodies.author_bindings(stage, bindings),
         set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -125,8 +124,7 @@ def add_asset_geometry_variant(
         lambda stage, _prim_path: variants.bodies.author_payloads(stage, payloads),
         set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -157,8 +155,7 @@ def setup_asset_geometry_variants(
     variants.geometry.setup(
         asset_dir, set_name, payloads, default_variant,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -205,7 +202,7 @@ def add_asset_attribute_variant(
         state.stage, masking, "attribute", "attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
     resolved_types = variants.asset.resolve_attribute_types_for_overrides(
         asset_dir, overrides,
@@ -224,8 +221,7 @@ def add_asset_attribute_variant(
         ),
         set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -273,15 +269,14 @@ def add_asset_configuration_variant(
         state.stage, masking, "active", "configuration",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
     variants.asset.add(
         asset_dir, set_name, variant_name,
         lambda stage, _prim_path: variants.bodies.author_activations(stage, activations),
         set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -327,7 +322,7 @@ def add_scene_lighting_attribute_variant(
         state.stage, masking, "attribute", "lighting attribute",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
     resolved_types = usd.attributes.resolve_attribute_types(
         state.stage, overrides,
@@ -346,8 +341,7 @@ def add_scene_lighting_attribute_variant(
         ),
         set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "carrier_prim_path": carrier,
         "variant_set": set_name,
@@ -394,15 +388,14 @@ def add_scene_lighting_selection_variant(
         state.stage, masking, "active", "lighting selection",
         clear=clear_masking, confirm=confirm_masked,
     ):
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
     variants.scene.add(
         state.stage, carrier, set_name, variant_name,
         lambda stage, _carrier: variants.bodies.author_activations(stage, activations),
         set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "carrier_prim_path": carrier,
         "variant_set": set_name,
@@ -479,15 +472,14 @@ def add_scene_model_selection_variant(
                 set_as_default=True,
             )
             usd.references.clear_direct_references(state.stage, asset_child)
-            state.stage = authoring.stage.open_stage(state.stage_path)
+            state.reload_stage()
 
     variants.scene.add(
         state.stage, prim_path, set_name, variant_name,
         lambda stage, _carrier: variants.bodies.author_references(stage, asset_child, [new_ref]),
         set_as_default,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     suffix = f" (auto-promoted existing as '{promoted}')" if promoted else ""
     return {
         "carrier_prim_path": prim_path,
@@ -548,8 +540,7 @@ def select_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
     usd.naming.validate_variant_name(variant_name)
 
     authoring.asset_variants.set_default_variant(asset_dir, set_name, variant_name)
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -617,8 +608,7 @@ def remove_asset_variant(state: scene_state.SceneState, params: dict[str, Any]) 
     if removed:
         variants.asset.clean_after_removal(state.stage, asset_dir, set_name, variant_name)
 
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,
@@ -645,8 +635,7 @@ def select_scene_variant(
     if state.stage is None:
         raise ValueError("No scene stage is open.")
     usd.variant_sets.select_variant(state.stage, prim_path, set_name, variant_name)
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "carrier_prim_path": prim_path,
         "variant_set": set_name,
@@ -678,8 +667,7 @@ def remove_scene_variant(
         suspects = variants.suspect_sets.find_on_scene_carrier(
             state.stage, prim_path,
         )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "carrier_prim_path": prim_path,
         "variant_set": set_name,
@@ -711,8 +699,7 @@ def remove_scene_variant_set(
     removed = usd.variant_sets.remove_scene_variant_set(
         state.stage, prim_path, set_name,
     )
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     suffix = f" (restored '{demoted}' as direct reference)" if demoted else ""
     return {
         "carrier_prim_path": prim_path,
@@ -740,8 +727,7 @@ def remove_asset_variant_set(
     if removed:
         variants.asset.clean_after_removal(state.stage, asset_dir, set_name)
 
-    if state.stage_path is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     return {
         "asset_path": str(asset_dir),
         "variant_set": set_name,

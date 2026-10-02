@@ -331,7 +331,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
         state.object_count -= 1
         raise
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     state.touch_project()
 
     composed_path = authoring.placement.contents_prim_path(ref_prim_path, group, prim_name)
@@ -399,7 +399,7 @@ def cleanup_unused_contents(
         asset_dir, _ = authoring.placement.require_asset_context(state.stage, asset_prim_path)
 
         removed = authoring.placement.cleanup_unused_contents_in_folder(asset_dir)
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
         logger.info(
             "Cleaned %d empty group(s) from %s/contents",
             len(removed), asset_dir.name,
@@ -425,7 +425,7 @@ def cleanup_unused_contents(
             per_folder.append({"asset_folder": entry.name, "removed": removed})
             total += len(removed)
 
-    state.stage = authoring.stage.open_stage(state.stage_path)
+    state.reload_stage()
     logger.info(
         "Cleaned %d empty group(s) across %d asset folder(s)",
         total, len(per_folder),
@@ -460,7 +460,7 @@ def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     state.touch_project()
     if state.stage is not None:
-        state.stage = authoring.stage.open_stage(state.stage_path)
+        state.reload_stage()
 
     baked_count = sum(1 for r in results if r["baked"])
     logger.info(

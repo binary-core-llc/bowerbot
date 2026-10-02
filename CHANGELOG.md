@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/binary-core-llc/bowerbot/compare/v2.0.0...v2.0.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* bowerbot skills lists each skill with its own tools ([#281](https://github.com/binary-core-llc/bowerbot/issues/281)) ([5d3db35](https://github.com/binary-core-llc/bowerbot/commit/5d3db351edae6096cc0d328ad08e38a6095c327f))
+
 ## [2.0.0](https://github.com/binary-core-llc/bowerbot/compare/v1.13.0...v2.0.0) (2026-10-02)
 
 

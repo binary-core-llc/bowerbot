@@ -737,12 +737,19 @@ validation:
 intent: weld the crate to the table
 
 SUMMARY
-  call: create_joint(joint_type="PhysicsFixedJoint", name="Weld", body0="/Scene/Props/Table_01", body1="/Scene/Props/Crate_02", scope="scene")
+  call: create_joint(joint_type="PhysicsFixedJoint", name="Weld", body0="/Scene/Props/Table_01/asset", body1="/Scene/Props/Crate_02/asset", scope="scene")
   current project: golden
-  said: REFUSED: Joint must connect to at least one prim that reaches PhysicsRigidBodyAPI (self or ancestor). Neither '/Scene/Props/Table_01' nor '/Scene/Props/Crate_02' does. Apply RigidBodyAPI to one of them first.
+  said: ok
 
   what changed:
-    nothing
+    ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, 0, -1)
+          attr physics:gravityMagnitude: 981
+    + prim /Scene/Physics/Weld [PhysicsFixedJoint]
+          rel physics:body0: /Scene/Props/Table_01/asset
+          rel physics:body1: /Scene/Props/Crate_02/asset
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -757,7 +764,12 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "Joint must connect to at least one prim that reaches PhysicsRigidBodyAPI (self or ancestor). Neither '/Scene/Props/Table_01' nor '/Scene/Props/Crate_02' does. Apply RigidBodyAPI to one of them first."
+    "attributes_set": [],
+    "body0": "/Scene/Props/Table_01/asset",
+    "body1": "/Scene/Props/Crate_02/asset",
+    "joint_type": "PhysicsFixedJoint",
+    "prim_path": "/Scene/Physics/Weld",
+    "scope": "scene"
   }
 
 files:
@@ -768,13 +780,56 @@ files:
     assets/table/phy.usda
     assets/table/table.usda
     project.json
-    scene.usda
+  ~ scene.usda
 
 file changes:
-  (none)
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -44,4 +44,19 @@
+               }
+           }
+      +
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, 0, -1)
+      +            float physics:gravityMagnitude = 981
+      +        }
+      +
+      +        def PhysicsFixedJoint "Weld"
+      +        {
+      +            rel physics:body0 = </Scene/Props/Table_01/asset>
+      +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+      +        }
+      +    }
+       }
+       
 
 composed scene changes:
-  (none)
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -90,4 +90,19 @@
+           }
+       }
+  +
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, 0, -1)
+  +            float physics:gravityMagnitude = 981
+  +        }
+  +
+  +        def PhysicsFixedJoint "Weld"
+  +        {
+  +            rel physics:body0 = </Scene/Props/Table_01/asset>
+  +            rel physics:body1 = </Scene/Props/Crate_02/asset>
+  +        }
+  +    }
+   }
+   
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
@@ -786,6 +841,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
   valid, no issues
@@ -901,6 +958,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
   INVALID, 1 issue(s):
@@ -940,6 +999,14 @@ full answer:
         "body1": "/Scene/Props/Table_01/asset/Leg_L",
         "joint_type": "PhysicsRevoluteJoint",
         "prim_path": "/Scene/Props/Table_01/asset/joints/Hinge"
+      },
+      {
+        "applied_apis": [],
+        "attributes": {},
+        "body0": "/Scene/Props/Table_01/asset",
+        "body1": "/Scene/Props/Crate_02/asset",
+        "joint_type": "PhysicsFixedJoint",
+        "prim_path": "/Scene/Physics/Weld"
       }
     ]
   }
@@ -972,6 +1039,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
   INVALID, 1 issue(s):
@@ -1043,6 +1112,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
   INVALID, 1 issue(s):
@@ -1053,128 +1124,7 @@ validation:
 intent: a taken name
 
 SUMMARY
-  call: create_joint(joint_type="PhysicsFixedJoint", name="Weld", body0="/Scene/Props/Table_01", body1="/Scene/Props/Crate_02", scope="scene")
-  current project: golden
-  said: REFUSED: Joint must connect to at least one prim that reaches PhysicsRigidBodyAPI (self or ancestor). Neither '/Scene/Props/Table_01' nor '/Scene/Props/Crate_02' does. Apply RigidBodyAPI to one of them first.
-
-  what changed:
-    nothing
-
-  project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
-
-  checks:
-    no problems spotted by the automatic checks
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "error": "Joint must connect to at least one prim that reaches PhysicsRigidBodyAPI (self or ancestor). Neither '/Scene/Props/Table_01' nor '/Scene/Props/Crate_02' does. Apply RigidBodyAPI to one of them first."
-  }
-
-files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/crate/phy.usda
-    assets/table/geo.usda
-    assets/table/phy.usda
-    assets/table/table.usda
-    project.json
-    scene.usda
-
-file changes:
-  (none)
-
-composed scene changes:
-  (none)
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
-  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
-  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
-  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
-  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
-  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
-  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
-  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
-
-validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-
-
-=== step 10: apply_physics_api
-intent: a limit on a typed joint
-
-SUMMARY
-  call: apply_physics_api(prim_path="/Scene/Physics/Weld", api_name="PhysicsLimitAPI", instance_name="rotX")
-  current project: golden
-  said: REFUSED: Prim not found in scene: /Scene/Physics/Weld
-
-  what changed:
-    nothing
-
-  project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
-
-  checks:
-    no problems spotted by the automatic checks
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "error": "Prim not found in scene: /Scene/Physics/Weld"
-  }
-
-files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/crate/phy.usda
-    assets/table/geo.usda
-    assets/table/phy.usda
-    assets/table/table.usda
-    project.json
-    scene.usda
-
-file changes:
-  (none)
-
-composed scene changes:
-  (none)
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
-  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
-  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
-  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
-  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
-  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
-  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
-  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
-
-validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-
-
-=== step 11: remove_joint
-
-SUMMARY
-  call: remove_joint(scope="scene", prim_path="/Scene/Physics/Weld")
+  call: create_joint(joint_type="PhysicsFixedJoint", name="Weld", body0="/Scene/Props/Table_01/asset", body1="/Scene/Props/Crate_02/asset", scope="scene")
   current project: golden
   said: ok
 
@@ -1194,8 +1144,11 @@ what USD printed while the tool ran:
 
 full answer:
   {
+    "attributes_set": [],
+    "body0": "/Scene/Props/Table_01/asset",
+    "body1": "/Scene/Props/Crate_02/asset",
+    "joint_type": "PhysicsFixedJoint",
     "prim_path": "/Scene/Physics/Weld",
-    "removed": false,
     "scope": "scene"
   }
 
@@ -1227,6 +1180,160 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 10: apply_physics_api
+intent: a limit on a typed joint
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Physics/Weld", api_name="PhysicsLimitAPI", instance_name="rotX")
+  current project: golden
+  said: REFUSED: PhysicsLimitAPI is not supported on PhysicsFixedJoint.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "PhysicsLimitAPI is not supported on PhysicsFixedJoint."
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
+
+validation:
+  INVALID, 1 issue(s):
+  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+
+
+=== step 11: remove_joint
+
+SUMMARY
+  call: remove_joint(scope="scene", prim_path="/Scene/Physics/Weld")
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Physics/Weld [PhysicsFixedJoint]
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "prim_path": "/Scene/Physics/Weld",
+    "removed": true,
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -52,10 +52,4 @@
+                   float physics:gravityMagnitude = 981
+               }
+      -
+      -        def PhysicsFixedJoint "Weld"
+      -        {
+      -            rel physics:body0 = </Scene/Props/Table_01/asset>
+      -            rel physics:body1 = </Scene/Props/Crate_02/asset>
+      -        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -108,10 +108,4 @@
+               float physics:gravityMagnitude = 981
+           }
+  -
+  -        def PhysicsFixedJoint "Weld"
+  -        {
+  -            rel physics:body0 = </Scene/Props/Table_01/asset>
+  -            rel physics:body1 = </Scene/Props/Crate_02/asset>
+  -        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
+  /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   INVALID, 1 issue(s):
@@ -1317,6 +1424,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1343,9 +1451,7 @@ SUMMARY
     not used by the scene: assets/crate/phy.usda
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/crate/crate.usda
-    ⚠ left behind a file nothing in the scene uses: assets/crate/geo.usda
-    ⚠ left behind a file nothing in the scene uses: assets/crate/phy.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1396,7 +1502,7 @@ file changes:
       -            }
       -        }
            }
-       }
+       
 
 composed scene changes:
   --- composed scene (before)
@@ -1435,7 +1541,7 @@ composed scene changes:
   -            }
   -        }
        }
-   }
+   
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
@@ -1445,6 +1551,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/joints  [Scope]
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues

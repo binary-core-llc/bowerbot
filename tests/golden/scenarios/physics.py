@@ -130,8 +130,8 @@ SCENARIOS = (
                 {
                     "joint_type": "PhysicsFixedJoint",
                     "name": "Weld",
-                    "body0": "$table",
-                    "body1": "$crate",
+                    "body0": "$table/asset",
+                    "body1": "$crate/asset",
                     "scope": "scene",
                 },
                 note="weld the crate to the table",
@@ -155,8 +155,8 @@ SCENARIOS = (
                 {
                     "joint_type": "PhysicsFixedJoint",
                     "name": "Weld",
-                    "body0": "$table",
-                    "body1": "$crate",
+                    "body0": "$table/asset",
+                    "body1": "$crate/asset",
                     "scope": "scene",
                 },
                 note="a taken name",

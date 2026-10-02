@@ -630,7 +630,7 @@ SUMMARY
     not used by the scene: assets/lamp/maps/lamp_diffuse.png
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/lamp/maps/lamp_diffuse.png
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

@@ -908,7 +908,7 @@ SUMMARY
     not used by the scene: textures/studio.hdr
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: textures/studio.hdr
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

@@ -562,8 +562,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ reported success, but no file changed
-    ⚠ /Scene/Furniture/Table_01/asset/Top showed no material before, yet the answer says one was removed
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

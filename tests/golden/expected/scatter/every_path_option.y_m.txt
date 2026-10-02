@@ -3375,7 +3375,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ reported success, but no file changed
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

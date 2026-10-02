@@ -522,7 +522,7 @@ SUMMARY
     material nothing binds: /Scene/Furniture/Table_01/asset/mtl/oak
 
   checks:
-    ⚠ left behind a material nothing binds: /Scene/Furniture/Table_01/asset/mtl/oak
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

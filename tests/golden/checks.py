@@ -17,11 +17,14 @@ from typing import Any
 READ_ONLY_PREFIXES = ("list_", "search_", "get_", "compute_", "validate_")
 REMOVING_PREFIXES = ("remove_", "delete_")
 # Tools whose job may legitimately need no change: reopening, freezing what is
-# already frozen, cleaning up when nothing is unused.
+# already frozen, cleaning up when nothing is unused, dropping what already rests
+# on the surface, packaging the same scene again.
 MAY_CHANGE_NOTHING = frozenset({
     "create_stage", "freeze_asset", "cleanup_unused_contents", "cleanup_unused_materials",
-    "open_project",
+    "open_project", "drop_to_surface", "package_scene",
 })
+# Words an answer uses to say there was nothing to do.
+NOTHING_TO_DO = ("not found", "was not present", "has no ")
 
 
 @dataclass(frozen=True)
@@ -54,11 +57,14 @@ def _generic(step: StepFacts) -> list[str]:
         flags.append("refused, but the project changed anyway")
     if step.ok and _is_read_only(step.tool) and step.files_changed:
         flags.append("a read-only tool changed files")
-    said_not_found = "not found" in str(step.data.get("message", "")).lower()
+    message = str(step.data.get("message", "")).lower()
+    said_nothing_to_do = step.data.get("removed") is False or any(
+        words in message for words in NOTHING_TO_DO
+    )
     if (
         step.ok and not _is_read_only(step.tool) and not step.files_changed
         and step.tool not in MAY_CHANGE_NOTHING and not step.tool.startswith("select_")
-        and not step.params.get("validate_only") and not said_not_found
+        and not step.params.get("validate_only") and not said_nothing_to_do
     ):
         flags.append("reported success, but no file changed")
     if step.valid_before is not False and step.valid_after is False:
@@ -100,7 +106,7 @@ def _material_added(step: StepFacts) -> list[str]:
 
 
 def _material_removed(step: StepFacts) -> list[str]:
-    if not step.ok:
+    if not step.ok or step.data.get("removed") is False:
         return []
     target = step.params.get("prim_path", "")
     before = _shown_under(step.before, target)

@@ -16,6 +16,7 @@ from pxr import Usd
 from bowerbot import config
 from bowerbot.utils import authoring
 from bowerbot.utils import inspection
+from bowerbot.utils import physics
 
 if TYPE_CHECKING:
     from bowerbot import project_folder
@@ -98,6 +99,12 @@ class SceneState:
         for layer in dirty:
             if layer:
                 layer.Reload(force=True)
+
+    def physics_errors(self) -> set[str] | None:
+        """The physics errors USD reports on the open scene; None when no scene is open."""
+        if self.stage is None or self.stage_path is None:
+            return None
+        return physics.rules.errors(self.stage)
 
     def note_project_writes(self) -> None:
         """Move the project's ``updated_at`` when any of its files changed since the last check.

@@ -741,7 +741,7 @@ intent: a variant that switches off the body the joint needs, made the default
 SUMMARY
   call: add_asset_attribute_variant(prim_path="/Scene/Props/Table_01", variant_set="state", variant_name="frozen", overrides={"/Scene/Props/Table_01/asset": {"physics:rigidBodyEnabled": false}}, set_as_default=true)
   current project: golden
-  said: ok: Added attribute variant 'frozen' to 'state' in table
+  said: ok: Added attribute variant 'frozen' to 'state' in table. WARNING: this change left the scene with 1 physics error(s) it did not have: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Undo it or fix the cause.
 
   what changed:
     ~ file assets/table/table.usda
@@ -767,12 +767,15 @@ full answer:
     "asset_path": "<PROJECT>/assets/table",
     "category": "attribute",
     "default_selected": true,
-    "message": "Added attribute variant 'frozen' to 'state' in table",
+    "message": "Added attribute variant 'frozen' to 'state' in table. WARNING: this change left the scene with 1 physics error(s) it did not have: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Undo it or fix the cause.",
     "overrides": {
       "/table": {
         "physics:rigidBodyEnabled": false
       }
     },
+    "physics_errors": [
+      "JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI."
+    ],
     "variant_name": "frozen",
     "variant_set": "state"
   }

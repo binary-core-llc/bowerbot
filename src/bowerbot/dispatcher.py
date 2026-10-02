@@ -117,6 +117,8 @@ async def execute(
         return skills.ToolResult(success=False, error=rejection)
 
     object_count = state.object_count
+    scene_before = state.stage_path
+    physics_errors_before = state.physics_errors()
     try:
         result = handler(state, params)
         if inspect.isawaitable(result):
@@ -126,11 +128,35 @@ async def execute(
         raise
     if not result.success:
         state.restore_after_failure(object_count)
+    elif physics_errors_before is not None and state.stage_path == scene_before:
+        _report_new_physics_errors(state, result, physics_errors_before)
 
     logging_setup.log_tool_result(logger, tool_name, result)
     state.mark_saved()
     state.note_project_writes()
     return result
+
+
+def _report_new_physics_errors(
+    state: scene_state.SceneState, result: skills.ToolResult, before: set[str],
+) -> None:
+    """Say so in the answer when a call left the scene a physics error it did not have.
+
+    The physics tools refuse such a change before saving it. This catches every
+    other way to get there (a variant, an asset that ships its own physics), so
+    no tool leaves a physics error without telling.
+    """
+    added = sorted((state.physics_errors() or set()) - before)
+    if not added or not isinstance(result.data, dict):
+        return
+    found = "; ".join(message.rstrip(".") for message in added)
+    said = str(result.data.get("message") or "Done").rstrip()
+    result.data["physics_errors"] = added
+    result.data["message"] = (
+        f"{said if said.endswith(('.', '!', '?')) else said + '.'} WARNING: this change left "
+        f"the scene with {len(added)} physics error(s) it did not have: {found}. "
+        "Undo it or fix the cause."
+    )
 
 
 _VALIDATORS: dict[str, jsonschema.Draft202012Validator] = {}

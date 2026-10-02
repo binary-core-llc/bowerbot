@@ -60,11 +60,12 @@ def create_in_scene(
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
+    prim_path = f"{constants.SceneNamespace.PHYSICS}/{name}"
+    _refuse_taken_name(stage, prim_path, name)
 
     physics.scenes.ensure_default(
         stage, project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
-    prim_path = f"{constants.SceneNamespace.PHYSICS}/{name}"
     joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
@@ -102,18 +103,19 @@ def create_in_asset(
     root_file = authoring.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         raise ValueError(f"No root file in asset {asset_dir.name}")
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    joints_scope_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}"
+    prim_path = f"{joints_scope_path}/{name}"
     composed = Usd.Stage.Open(str(root_file))
     _validate_joint_bodies(composed, body0, body1)
+    _refuse_taken_name(composed, prim_path, name)
     del composed
 
     authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
     stage = Usd.Stage.Open(str(physics.layer.file_path(asset_dir)))
-    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
-    joints_scope_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}"
     if not stage.GetPrimAtPath(joints_scope_path).IsValid():
         stage.DefinePrim(joints_scope_path, "Scope")
 
-    prim_path = f"{joints_scope_path}/{name}"
     joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
@@ -236,6 +238,15 @@ def _validate_joint_bodies(
             "PhysicsRigidBodyAPI (self or ancestor). Neither "
             f"{body0!r} nor {body1!r} does. Apply RigidBodyAPI to one "
             "of them first.",
+        )
+
+
+def _refuse_taken_name(stage: Usd.Stage, prim_path: str, name: str) -> None:
+    """Refuse a joint name a prim already has; creating it again would rewrite that prim."""
+    if stage.GetPrimAtPath(prim_path).IsValid():
+        raise ValueError(
+            f"The name '{name}' is taken: {prim_path} already exists. "
+            "Remove it first with remove_joint, or use another name.",
         )
 
 

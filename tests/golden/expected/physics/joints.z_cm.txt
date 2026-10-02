@@ -1126,7 +1126,7 @@ intent: a taken name
 SUMMARY
   call: create_joint(joint_type="PhysicsFixedJoint", name="Weld", body0="/Scene/Props/Table_01/asset", body1="/Scene/Props/Crate_02/asset", scope="scene")
   current project: golden
-  said: ok
+  said: REFUSED: The name 'Weld' is taken: /Scene/Physics/Weld already exists. Remove it first with remove_joint, or use another name.
 
   what changed:
     nothing
@@ -1135,7 +1135,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ reported success, but no file changed
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1144,12 +1144,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "attributes_set": [],
-    "body0": "/Scene/Props/Table_01/asset",
-    "body1": "/Scene/Props/Crate_02/asset",
-    "joint_type": "PhysicsFixedJoint",
-    "prim_path": "/Scene/Physics/Weld",
-    "scope": "scene"
+    "error": "The name 'Weld' is taken: /Scene/Physics/Weld already exists. Remove it first with remove_joint, or use another name."
   }
 
 files:

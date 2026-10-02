@@ -614,16 +614,16 @@ intent: a set that does not exist
 SUMMARY
   call: select_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="nope", variant_name="x")
   current project: golden
-  said: ok: Selected 'x' for 'nope' in table
+  said: REFUSED: Variant set 'nope' not found on table
 
   what changed:
-    ~ file assets/table/table.usda
+    nothing
 
   project state after the step:
     dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
 
   checks:
-    ⚠ no prim at or under /Scene/Furniture/Table_01 has a variant set named 'nope'
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -632,29 +632,18 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_path": "<PROJECT>/assets/table",
-    "message": "Selected 'x' for 'nope' in table",
-    "variant_name": "x",
-    "variant_set": "nope"
+    "error": "Variant set 'nope' not found on table"
   }
 
 files:
     assets/table/geo.usda
-  ~ assets/table/table.usda
+    assets/table/table.usda
     assets/table/variants.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -19,4 +19,5 @@
-               string finish = "x"
-               string legs = "x"
-      +        string nope = "x"
-           }
-       )
+  (none)
 
 composed scene changes:
   (none)

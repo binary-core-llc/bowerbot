@@ -141,9 +141,14 @@ def set_default_variant(
     if root_prim is None:
         raise ValueError(f"No defaultPrim in {root_file}")
 
+    if not root_prim.GetVariantSets().HasVariantSet(set_name):
+        raise ValueError(f"Variant set '{set_name}' not found on {asset_dir.name}")
     vset = root_prim.GetVariantSets().GetVariantSet(set_name)
-    if not vset.IsValid():
-        raise ValueError(f"Variant set '{set_name}' not visible on root prim")
+    if variant_name not in vset.GetVariantNames():
+        raise ValueError(
+            f"Variant '{variant_name}' does not exist in set '{set_name}' "
+            f"on {asset_dir.name}. Available: {list(vset.GetVariantNames())}",
+        )
     vset.SetVariantSelection(variant_name)
     stage.Save()
 

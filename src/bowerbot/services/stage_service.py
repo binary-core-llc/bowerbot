@@ -26,7 +26,7 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         msg = "No project open."
         raise RuntimeError(msg)
 
-    safe_name = authoring.naming.safe_file_name(params["filename"]) or "scene"
+    safe_name = authoring.naming.safe_file_name(params.get("filename") or "") or "scene"
     logger.debug("create_stage filename=%s", safe_name)
 
     state.stage_path = state.project.scene_path

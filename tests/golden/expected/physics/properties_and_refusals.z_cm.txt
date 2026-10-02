@@ -1826,17 +1826,13 @@ SUMMARY
   said: REFUSED: Prim not found in scene: /Scene/Nope
 
   what changed:
-    ~ file scene.usda
-    + prim /Scene/Physics [Scope]
-    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, 0, -1)
-          attr physics:gravityMagnitude: 981
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ refused, but the project changed anyway
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1853,51 +1849,19 @@ files:
     assets/crate/geo.usda
     assets/crate/phy.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -28,4 +28,13 @@
-               }
-           }
-      +
-      +    def Scope "Physics"
-      +    {
-      +        def PhysicsScene "PhysicsScene"
-      +        {
-      +            vector3f physics:gravityDirection = (0, 0, -1)
-      +            float physics:gravityMagnitude = 981
-      +        }
-      +    }
-       }
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -45,4 +45,13 @@
-           }
-       }
-  +
-  +    def Scope "Physics"
-  +    {
-  +        def PhysicsScene "PhysicsScene"
-  +        {
-  +            vector3f physics:gravityDirection = (0, 0, -1)
-  +            float physics:gravityMagnitude = 981
-  +        }
-  +    }
-   }
-   
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -1948,7 +1912,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -2000,7 +1963,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -2054,7 +2016,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -2104,7 +2065,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
@@ -2154,7 +2114,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues

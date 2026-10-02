@@ -374,7 +374,7 @@ validation:
 SUMMARY
   call: create_stage()
   current project: golden
-  said: REFUSED: CRASHED (the exception escaped the dispatcher): KeyError: 'filename'
+  said: ok: Stage already exists at <PROJECT>/scene.usda with 1 object(s). Reopened.
 
   what changed:
     nothing
@@ -383,7 +383,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the tool crashed instead of answering
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -392,7 +392,9 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error": "CRASHED (the exception escaped the dispatcher): KeyError: 'filename'"
+    "message": "Stage already exists at <PROJECT>/scene.usda with 1 object(s). Reopened.",
+    "object_count": 1,
+    "stage_path": "<PROJECT>/scene.usda"
   }
 
 files:

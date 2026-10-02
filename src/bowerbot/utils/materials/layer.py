@@ -106,6 +106,7 @@ def remove_unused(asset_dir: Path) -> list[str]:
             mtl_layer.Apply(edit)
             if variants_layer is not None:
                 usd.namespace.clear_orphan_variant_overs(variants_layer, str(path))
+                variants_layer.Save()
 
     mtl_layer.Save()
     if removed and variants_layer is not None:

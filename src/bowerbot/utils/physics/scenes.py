@@ -86,6 +86,44 @@ def setup(
     A gravity value left out keeps what the scene already has. A new scene
     gets Earth gravity in project units, pointing down.
     """
+    scene_path, scene = _author(
+        stage, name, gravity_magnitude, gravity_direction,
+        project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
+    stage.Save()
+    held = scene.GetGravityDirectionAttr().Get()
+    magnitude = _rounded(scene.GetGravityMagnitudeAttr().Get())
+    direction = (_rounded(held[0]), _rounded(held[1]), _rounded(held[2]))
+    logger.info("Set up PhysicsScene at %s (gravity magnitude %s)", scene_path, magnitude)
+    return scene_path, magnitude, direction
+
+
+def ensure_default(stage: Usd.Stage, *, project_mpu: float, project_up_axis: str) -> None:
+    """Make sure the scene has a physics scene; one that is already there is left as it is.
+
+    Not saved here: the caller saves it with its own edit, or drops both.
+    """
+    if list_all(stage):
+        return
+    _author(
+        stage, "PhysicsScene", None, None,
+        project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
+
+
+# ── Helpers ──
+
+
+def _author(
+    stage: Usd.Stage,
+    name: str,
+    gravity_magnitude: float | None,
+    gravity_direction: tuple[float, float, float] | None,
+    *,
+    project_mpu: float,
+    project_up_axis: str,
+) -> tuple[str, UsdPhysics.Scene]:
+    """Create or update a physics scene, without saving; return its path and the scene."""
     scope_path = ensure_scope(stage)
     scene_path = f"{scope_path}/{name}"
     existing = stage.GetPrimAtPath(scene_path)
@@ -101,23 +139,7 @@ def setup(
         )
     if gravity_direction is not None or is_new:
         scene.CreateGravityDirectionAttr(Gf.Vec3f(*(gravity_direction or default_direction)))
-
-    stage.Save()
-    held = scene.GetGravityDirectionAttr().Get()
-    magnitude = _rounded(scene.GetGravityMagnitudeAttr().Get())
-    direction = (_rounded(held[0]), _rounded(held[1]), _rounded(held[2]))
-    logger.info("Set up PhysicsScene at %s (gravity magnitude %s)", scene_path, magnitude)
-    return scene_path, magnitude, direction
-
-
-def ensure_default(stage: Usd.Stage, *, project_mpu: float, project_up_axis: str) -> None:
-    """Make sure the scene has a physics scene; one that is already there is left as it is."""
-    if list_all(stage):
-        return
-    setup(stage, project_mpu=project_mpu, project_up_axis=project_up_axis)
-
-
-# ── Helpers ──
+    return scene_path, scene
 
 
 def _rounded(value: float) -> float:

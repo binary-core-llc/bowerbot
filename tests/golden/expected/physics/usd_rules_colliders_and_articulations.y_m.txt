@@ -415,23 +415,16 @@ intent: a sphere collider that is stretched
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Stretched_01/asset/Ball", api_name="PhysicsCollisionAPI", scope="scene")
   current project: golden
-  said: ok
+  said: REFUSED: Applying PhysicsCollisionAPI to /Scene/Props/Stretched_01/asset/Ball is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    + prim /Scene/Physics [Scope]
-    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, -1, 0)
-          attr physics:gravityMagnitude: 9.81
-    ~ /Scene/Props/Stretched_01/asset/Ball  applied APIs: (none) → PhysicsCollisionAPI
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -440,73 +433,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsCollisionAPI",
-    "attributes_set": [],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Stretched_01/asset/Ball",
-    "relationships_set": [],
-    "requested_prim_path": "/Scene/Props/Stretched_01/asset/Ball",
-    "scope": "scene"
+    "error": "Applying PhysicsCollisionAPI to /Scene/Props/Stretched_01/asset/Ball is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball. Nothing was changed."
   }
 
 files:
     assets/shapes/geo.usda
     assets/shapes/shapes.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -23,5 +23,19 @@
-                   )
-                   {
-      +                over "Ball" (
-      +                    prepend apiSchemas = ["PhysicsCollisionAPI"]
-      +                )
-      +                {
-      +                }
-                   }
-      +        }
-      +    }
-      +
-      +    def Scope "Physics"
-      +    {
-      +        def PhysicsScene "PhysicsScene"
-      +        {
-      +            vector3f physics:gravityDirection = (0, -1, 0)
-      +            float physics:gravityMagnitude = 9.81
-               }
-           }
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -30,5 +30,7 @@
-               )
-               {
-  -                def Sphere "Ball"
-  +                def Sphere "Ball" (
-  +                    apiSchemas = ["PhysicsCollisionAPI"]
-  +                )
-                   {
-                       double radius = 0.25
-  @@ -54,4 +56,13 @@
-           }
-       }
-  +
-  +    def Scope "Physics"
-  +    {
-  +        def PhysicsScene "PhysicsScene"
-  +        {
-  +            vector3f physics:gravityDirection = (0, -1, 0)
-  +            float physics:gravityMagnitude = 9.81
-  +        }
-  +    }
-   }
-   
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
@@ -516,11 +456,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
+  valid, no issues
 
 
 === step 04: apply_physics_api
@@ -529,18 +467,16 @@ intent: a capsule collider that is stretched
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Stretched_01/asset/Pill", api_name="PhysicsCollisionAPI", scope="scene")
   current project: golden
-  said: ok
+  said: REFUSED: Applying PhysicsCollisionAPI to /Scene/Props/Stretched_01/asset/Pill is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Props/Stretched_01/asset/Pill  applied APIs: (none) → PhysicsCollisionAPI
-    + issue [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -549,50 +485,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsCollisionAPI",
-    "attributes_set": [],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Stretched_01/asset/Pill",
-    "relationships_set": [],
-    "requested_prim_path": "/Scene/Props/Stretched_01/asset/Pill",
-    "scope": "scene"
+    "error": "Applying PhysicsCollisionAPI to /Scene/Props/Stretched_01/asset/Pill is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill. Nothing was changed."
   }
 
 files:
     assets/shapes/geo.usda
     assets/shapes/shapes.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -28,4 +28,10 @@
-                       {
-                       }
-      +
-      +                over "Pill" (
-      +                    prepend apiSchemas = ["PhysicsCollisionAPI"]
-      +                )
-      +                {
-      +                }
-                   }
-               }
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -37,5 +37,7 @@
-                   }
-   
-  -                def Capsule "Pill"
-  +                def Capsule "Pill" (
-  +                    apiSchemas = ["PhysicsCollisionAPI"]
-  +                )
-                   {
-                       double height = 0.4
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
@@ -602,12 +508,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 05: place_asset
@@ -696,7 +599,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -36,4 +36,18 @@
+      @@ -25,4 +25,18 @@
                    }
                }
       +
@@ -714,12 +617,12 @@ file changes:
       +            }
       +        }
            }
-       
+       }
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -57,4 +57,44 @@
+  @@ -53,4 +53,44 @@
                }
            }
   +
@@ -763,7 +666,7 @@ composed scene changes:
   +            }
   +        }
        }
-   
+   }
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
@@ -779,12 +682,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
   /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 06: apply_physics_api
@@ -793,12 +693,10 @@ intent: a sphere collider in the asset: its other placement is stretched
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Shapes_02/asset/Ball", api_name="PhysicsCollisionAPI")
   current project: golden
-  said: ok
+  said: REFUSED: Applying PhysicsCollisionAPI to /shapes/Ball in asset shapes is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball. Nothing was changed.
 
   what changed:
-    + file assets/shapes/phy.usda
-    ~ file assets/shapes/shapes.usda
-    ~ /Scene/Props/Shapes_02/asset/Ball  applied APIs: (none) → PhysicsCollisionAPI
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -813,65 +711,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsCollisionAPI",
-    "asset_folder": "shapes",
-    "asset_prim_path": "/shapes/Ball",
-    "attributes_set": [],
-    "cleared_masking_opinions": [],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Shapes_02/asset/Ball",
-    "relationships_set": [],
-    "requested_prim_path": "/shapes/Ball",
-    "scene_prim_path": "/Scene/Props/Shapes_02/asset/Ball",
-    "scope": "asset"
+    "error": "Applying PhysicsCollisionAPI to /shapes/Ball in asset shapes is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball. Nothing was changed."
   }
 
 files:
     assets/shapes/geo.usda
-  + assets/shapes/phy.usda
-  ~ assets/shapes/shapes.usda
+    assets/shapes/shapes.usda
     project.json
     scene.usda
 
 file changes:
-  + assets/shapes/phy.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "shapes"
-      )
-
-      over "shapes"
-      {
-          over "Ball" (
-              prepend apiSchemas = ["PhysicsCollisionAPI"]
-          )
-          {
-          }
-      }
-
-  ~ assets/shapes/shapes.usda:
-      --- assets/shapes/shapes.usda (before)
-      +++ assets/shapes/shapes.usda (after)
-      @@ -15,4 +15,5 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      +    prepend references = @./phy.usda@
-       )
-       {
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -74,5 +74,7 @@
-               )
-               {
-  -                def Sphere "Ball"
-  +                def Sphere "Ball" (
-  +                    apiSchemas = ["PhysicsCollisionAPI"]
-  +                )
-                   {
-                       double radius = 0.25
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
@@ -887,12 +740,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
   /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
-  /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 07: apply_physics_api
@@ -905,6 +755,11 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityMagnitude: 9.81
+    ~ /Scene/Props/Shapes_02/asset/Ball  applied APIs: (none) → PhysicsCollisionAPI
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -931,7 +786,6 @@ full answer:
 
 files:
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     project.json
   ~ scene.usda
@@ -940,7 +794,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -48,4 +48,9 @@
+      @@ -37,5 +37,19 @@
                    )
                    {
       +                over "Ball" (
@@ -949,7 +803,100 @@ file changes:
       +                {
       +                }
                    }
+      +        }
+      +    }
+      +
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            float physics:gravityMagnitude = 9.81
                }
+           }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -70,5 +70,7 @@
+               )
+               {
+  -                def Sphere "Ball"
+  +                def Sphere "Ball" (
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
+  +                )
+                   {
+                       double radius = 0.25
+  @@ -94,4 +96,13 @@
+           }
+       }
+  +
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            float physics:gravityMagnitude = 9.81
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
+  /Scene/Props/Stretched_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
+  /Scene/Props/Stretched_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
+  /Scene/Props/Stretched_01/asset/Ball  [Sphere]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.5000, -0.7500)..(0.2500, 0.5000, 0.7500)  material (none)
+  /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
+  /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 08: set_prim_attribute
+intent: stretch the placement after its sphere collider exists
+
+SUMMARY
+  call: set_prim_attribute(prim_path="/Scene/Props/Shapes_02", attribute_name="xformOp:scale", value=[1, 2, 3])
+  current project: golden
+  said: REFUSED: Setting xformOp:scale on /Scene/Props/Shapes_02 is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball. Nothing was changed.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Setting xformOp:scale on /Scene/Props/Shapes_02 is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball. Nothing was changed."
+  }
+
+files:
+    assets/shapes/geo.usda
+    assets/shapes/shapes.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
 
 composed scene changes:
   (none)
@@ -971,99 +918,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
-
-
-=== step 08: set_prim_attribute
-intent: stretch the placement after its sphere collider exists
-
-SUMMARY
-  call: set_prim_attribute(prim_path="/Scene/Props/Shapes_02", attribute_name="xformOp:scale", value=[1, 2, 3])
-  current project: golden
-  said: ok: Authored /Scene/Props/Shapes_02.xformOp:scale in scene.usda.
-
-  what changed:
-    ~ file scene.usda
-    ~ /Scene/Props/Shapes_02  attr xformOp:scale: (1, 1, 1) → (1, 2, 3)
-    ~ /Scene/Props/Shapes_02/asset  bounds: (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000) → (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-    + issue [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-
-  project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
-
-  checks:
-    ⚠ this step added 1 validation error(s)
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "attribute_name": "xformOp:scale",
-    "message": "Authored /Scene/Props/Shapes_02.xformOp:scale in scene.usda.",
-    "prim_path": "/Scene/Props/Shapes_02",
-    "value": [
-      1,
-      2,
-      3
-    ]
-  }
-
-files:
-    assets/shapes/geo.usda
-    assets/shapes/phy.usda
-    assets/shapes/shapes.usda
-    project.json
-  ~ scene.usda
-
-file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -40,5 +40,5 @@
-               {
-                   float3 xformOp:rotateXYZ = (0, 0, 0)
-      -            float3 xformOp:scale = (1, 1, 1)
-      +            float3 xformOp:scale = (1, 2, 3)
-                   double3 xformOp:translate = (5, 0, 0)
-                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-
-composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -61,5 +61,5 @@
-           {
-               float3 xformOp:rotateXYZ = (0, 0, 0)
-  -            float3 xformOp:scale = (1, 1, 1)
-  +            float3 xformOp:scale = (1, 2, 3)
-               double3 xformOp:translate = (5, 0, 0)
-               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Stretched_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
-  /Scene/Props/Stretched_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
-  /Scene/Props/Stretched_01/asset/Ball  [Sphere]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.5000, -0.7500)..(0.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Physics  [Scope]
-
-validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 09: apply_physics_api
@@ -1072,19 +927,16 @@ intent: points with no widths
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Shapes_02/asset/Dots", api_name="PhysicsCollisionAPI", scope="scene")
   current project: golden
-  said: ok
+  said: REFUSED: Applying PhysicsCollisionAPI to /Scene/Props/Shapes_02/asset/Dots is refused: USD's physics rules would then report 1 error(s): ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Props/Shapes_02/asset/Dots  applied APIs: (none) → PhysicsCollisionAPI
-    + issue [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-    + issue [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 2 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1093,51 +945,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsCollisionAPI",
-    "attributes_set": [],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Shapes_02/asset/Dots",
-    "relationships_set": [],
-    "requested_prim_path": "/Scene/Props/Shapes_02/asset/Dots",
-    "scope": "scene"
+    "error": "Applying PhysicsCollisionAPI to /Scene/Props/Shapes_02/asset/Dots is refused: USD's physics rules would then report 1 error(s): ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots. Nothing was changed."
   }
 
 files:
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -53,4 +53,10 @@
-                       {
-                       }
-      +
-      +                over "Dots" (
-      +                    prepend apiSchemas = ["PhysicsCollisionAPI"]
-      +                )
-      +                {
-      +                }
-                   }
-               }
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -93,5 +93,7 @@
-                   }
-   
-  -                def Points "Dots"
-  +                def Points "Dots" (
-  +                    apiSchemas = ["PhysicsCollisionAPI"]
-  +                )
-                   {
-                       point3f[] points = [(0, 0, 0), (0, 1, 0)]
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
@@ -1147,21 +968,16 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 5 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 10: apply_physics_api
@@ -1201,7 +1017,6 @@ full answer:
 
 files:
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     project.json
   ~ scene.usda
@@ -1210,7 +1025,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -59,4 +59,10 @@
+      @@ -42,4 +42,10 @@
                        {
                        }
       +
@@ -1225,7 +1040,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -89,5 +89,7 @@
+  @@ -85,5 +85,7 @@
                    }
    
   -                def Plane "Floor"
@@ -1243,21 +1058,16 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 5 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 11: apply_physics_api
@@ -1266,18 +1076,16 @@ intent: a rigid body above the plane collider: the plane becomes dynamic
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Shapes_02/asset", api_name="PhysicsRigidBodyAPI", scope="scene")
   current project: golden
-  said: ok
+  said: REFUSED: Applying PhysicsRigidBodyAPI to /Scene/Props/Shapes_02/asset is refused: USD's physics rules would then report 1 error(s): ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Props/Shapes_02/asset  applied APIs: (none) → PhysicsRigidBodyAPI
-    + issue [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1286,43 +1094,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsRigidBodyAPI",
-    "attributes_set": [],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Shapes_02/asset",
-    "relationships_set": [],
-    "requested_prim_path": "/Scene/Props/Shapes_02/asset",
-    "scope": "scene"
+    "error": "Applying PhysicsRigidBodyAPI to /Scene/Props/Shapes_02/asset is refused: USD's physics rules would then report 1 error(s): ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor. Nothing was changed."
   }
 
 files:
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -45,4 +45,5 @@
-       
-                   def Xform "asset" (
-      +                prepend apiSchemas = ["PhysicsRigidBodyAPI"]
-                       prepend references = @assets/shapes/shapes.usda@
-                   )
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -66,4 +66,5 @@
-   
-               def Xform "asset" (
-  +                apiSchemas = ["PhysicsRigidBodyAPI"]
-                   assetInfo = {
-                       asset identifier = @<PROJECT>/assets/shapes/shapes.usda@
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
@@ -1332,22 +1117,16 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 6 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 12: place_asset
@@ -1432,7 +1211,6 @@ full answer:
 
 files:
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
   + assets/table/geo.usda
   + assets/table/table.usda
@@ -1501,7 +1279,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -68,4 +68,18 @@
+      @@ -50,4 +50,18 @@
                    }
                }
       +
@@ -1524,7 +1302,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -104,4 +104,46 @@
+  @@ -97,4 +97,46 @@
                }
            }
   +
@@ -1580,12 +1358,12 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
@@ -1594,13 +1372,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 6 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 13: apply_physics_api
@@ -1648,7 +1420,6 @@ full answer:
 
 files:
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     assets/table/geo.usda
   + assets/table/phy.usda
@@ -1683,13 +1454,13 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -113,4 +113,5 @@
+  @@ -106,4 +106,5 @@
    
                def Xform "asset" (
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/table/table.usda@
-  @@ -121,4 +122,6 @@
+  @@ -114,4 +115,6 @@
                )
                {
   +                bool physics:rigidBodyEnabled = 0
@@ -1705,12 +1476,12 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
@@ -1719,13 +1490,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 6 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
+  valid, no issues
 
 
 === step 14: apply_physics_api
@@ -1734,18 +1499,16 @@ intent: an articulation root on a body that is switched off
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Table_03/asset", api_name="PhysicsArticulationRootAPI")
   current project: golden
-  said: ok
+  said: REFUSED: Applying PhysicsArticulationRootAPI to /table in asset table is refused: USD's physics rules would then report 1 error(s): ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset. Nothing was changed.
 
   what changed:
-    ~ file assets/table/phy.usda
-    ~ /Scene/Props/Table_03/asset  applied APIs: PhysicsRigidBodyAPI → PhysicsRigidBodyAPI, PhysicsArticulationRootAPI
-    + issue [error] /Scene/Props/Table_03/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1754,52 +1517,23 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsArticulationRootAPI",
-    "asset_folder": "table",
-    "asset_prim_path": "/table",
-    "attributes_set": [],
-    "cleared_masking_opinions": [],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Table_03/asset",
-    "relationships_set": [],
-    "requested_prim_path": "/table",
-    "scene_prim_path": "/Scene/Props/Table_03/asset",
-    "scope": "asset"
+    "error": "Applying PhysicsArticulationRootAPI to /table in asset table is refused: USD's physics rules would then report 1 error(s): ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset. Nothing was changed."
   }
 
 files:
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     assets/table/geo.usda
-  ~ assets/table/phy.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/table/phy.usda:
-      --- assets/table/phy.usda (before)
-      +++ assets/table/phy.usda (after)
-      @@ -5,5 +5,5 @@
-       
-       over "table" (
-      -    prepend apiSchemas = ["PhysicsRigidBodyAPI"]
-      +    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsArticulationRootAPI"]
-       )
-       {
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -113,5 +113,5 @@
-   
-               def Xform "asset" (
-  -                apiSchemas = ["PhysicsRigidBodyAPI"]
-  +                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsArticulationRootAPI"]
-                   assetInfo = {
-                       asset identifier = @<PROJECT>/assets/table/table.usda@
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(10.6000, 2.0000, 0.9000)
@@ -1809,12 +1543,12 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
@@ -1823,14 +1557,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 7 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
-  - [error] /Scene/Props/Table_03/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset
+  valid, no issues
 
 
 === step 15: place_asset
@@ -1901,7 +1628,6 @@ files:
   + assets/crate/crate.usda
   + assets/crate/geo.usda
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     assets/table/geo.usda
     assets/table/phy.usda
@@ -1955,7 +1681,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -82,4 +82,18 @@
+      @@ -64,4 +64,18 @@
                    }
                }
       +
@@ -1978,7 +1704,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -149,4 +149,30 @@
+  @@ -142,4 +142,30 @@
                }
            }
   +
@@ -2018,12 +1744,12 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
@@ -2035,14 +1761,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 7 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
-  - [error] /Scene/Props/Table_03/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset
+  valid, no issues
 
 
 === step 16: apply_physics_api
@@ -2090,7 +1809,6 @@ files:
     assets/crate/geo.usda
   + assets/crate/phy.usda
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     assets/table/geo.usda
     assets/table/phy.usda
@@ -2124,7 +1842,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -158,4 +158,5 @@
+  @@ -151,4 +151,5 @@
    
                def Xform "asset" (
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -2139,12 +1857,12 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
@@ -2156,14 +1874,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 7 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
-  - [error] /Scene/Props/Table_03/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset
+  valid, no issues
 
 
 === step 17: apply_physics_api
@@ -2210,7 +1921,6 @@ files:
     assets/crate/geo.usda
   ~ assets/crate/phy.usda
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     assets/table/geo.usda
     assets/table/phy.usda
@@ -2233,7 +1943,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -158,5 +158,5 @@
+  @@ -151,5 +151,5 @@
    
                def Xform "asset" (
   -                apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -2249,12 +1959,12 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
@@ -2266,14 +1976,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 7 issue(s):
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
-  - [error] /Scene/Props/Table_03/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset
+  valid, no issues
 
 
 === step 18: apply_physics_api
@@ -2282,119 +1985,7 @@ intent: switch off a body that is an articulation root
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Crate_04/asset", api_name="PhysicsRigidBodyAPI", attributes={"physics:rigidBodyEnabled": false})
   current project: golden
-  said: ok
-
-  what changed:
-    ~ file assets/crate/phy.usda
-    ~ /Scene/Props/Crate_04/asset  attr physics:rigidBodyEnabled: (none) → false
-    + issue [error] /Scene/Props/Crate_04/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Crate_04/asset
-
-  project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
-
-  checks:
-    ⚠ this step added 1 validation error(s)
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "api_name": "PhysicsRigidBodyAPI",
-    "asset_folder": "crate",
-    "asset_prim_path": "/crate",
-    "attributes_set": [
-      "physics:rigidBodyEnabled"
-    ],
-    "cleared_masking_opinions": [],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Crate_04/asset",
-    "relationships_set": [],
-    "requested_prim_path": "/crate",
-    "scene_prim_path": "/Scene/Props/Crate_04/asset",
-    "scope": "asset"
-  }
-
-files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-  ~ assets/crate/phy.usda
-    assets/shapes/geo.usda
-    assets/shapes/phy.usda
-    assets/shapes/shapes.usda
-    assets/table/geo.usda
-    assets/table/phy.usda
-    assets/table/table.usda
-    project.json
-    scene.usda
-
-file changes:
-  ~ assets/crate/phy.usda:
-      --- assets/crate/phy.usda (before)
-      +++ assets/crate/phy.usda (after)
-      @@ -8,4 +8,5 @@
-       )
-       {
-      +    bool physics:rigidBodyEnabled = 0
-       }
-       
-
-composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -167,4 +167,6 @@
-               )
-               {
-  +                bool physics:rigidBodyEnabled = 0
-  +
-                   def Cube "Box"
-                   {
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(14.2500, 2.0000, 0.9000)
-  /Scene/Props/Stretched_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
-  /Scene/Props/Stretched_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
-  /Scene/Props/Stretched_01/asset/Ball  [Sphere]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.5000, -0.7500)..(0.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
-  /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
-  /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
-  /Scene/Props/Table_03/asset/Leg_L  [Cube]  at (9.4500, 0.3750, 0.0000)  bounds (9.4250, 0.0000, -0.0250)..(9.4750, 0.7500, 0.0250)  material (none)
-  /Scene/Props/Table_03/asset/Leg_R  [Cube]  at (10.5500, 0.3750, 0.0000)  bounds (10.5250, 0.0000, -0.0250)..(10.5750, 0.7500, 0.0250)  material (none)
-  /Scene/Props/Crate_04  [Xform]  at (14.0000, 0.0000, 0.0000)  bounds (13.7500, 0.0000, -0.2500)..(14.2500, 0.5000, 0.2500)
-  /Scene/Props/Crate_04/asset  [Xform]  at (14.0000, 0.0000, 0.0000)  bounds (13.7500, 0.0000, -0.2500)..(14.2500, 0.5000, 0.2500)
-  /Scene/Props/Crate_04/asset/Box  [Cube]  at (14.0000, 0.2500, 0.0000)  bounds (13.7500, 0.0000, -0.2500)..(14.2500, 0.5000, 0.2500)  material (none)
-  /Scene/Physics  [Scope]
-
-validation:
-  INVALID, 8 issue(s):
-  - [error] /Scene/Props/Crate_04/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Crate_04/asset
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
-  - [error] /Scene/Props/Table_03/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset
-
-
-=== step 19: validate_scene
-
-SUMMARY
-  call: validate_scene()
-  current project: golden
-  said: ok: Found 8 error(s).
+  said: REFUSED: Applying PhysicsRigidBodyAPI to /crate in asset crate is refused: USD's physics rules would then report 1 error(s): ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Crate_04/asset. Nothing was changed.
 
   what changed:
     nothing
@@ -2412,51 +2003,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error_count": 8,
-    "is_valid": false,
-    "issues": [
-      {
-        "message": "ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Crate_04/asset",
-        "prim": "/Scene/Props/Crate_04/asset",
-        "severity": "error"
-      },
-      {
-        "message": "ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball",
-        "prim": "/Scene/Props/Shapes_02/asset/Ball",
-        "severity": "error"
-      },
-      {
-        "message": "ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots",
-        "prim": "/Scene/Props/Shapes_02/asset/Dots",
-        "severity": "error"
-      },
-      {
-        "message": "ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots",
-        "prim": "/Scene/Props/Shapes_02/asset/Dots",
-        "severity": "error"
-      },
-      {
-        "message": "ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor",
-        "prim": "/Scene/Props/Shapes_02/asset/Floor",
-        "severity": "error"
-      },
-      {
-        "message": "ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball",
-        "prim": "/Scene/Props/Stretched_01/asset/Ball",
-        "severity": "error"
-      },
-      {
-        "message": "ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill",
-        "prim": "/Scene/Props/Stretched_01/asset/Pill",
-        "severity": "error"
-      },
-      {
-        "message": "ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset",
-        "prim": "/Scene/Props/Table_03/asset",
-        "severity": "error"
-      }
-    ],
-    "message": "Found 8 error(s)."
+    "error": "Applying PhysicsRigidBodyAPI to /crate in asset crate is refused: USD's physics rules would then report 1 error(s): ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Crate_04/asset. Nothing was changed."
   }
 
 files:
@@ -2464,7 +2011,6 @@ files:
     assets/crate/geo.usda
     assets/crate/phy.usda
     assets/shapes/geo.usda
-    assets/shapes/phy.usda
     assets/shapes/shapes.usda
     assets/table/geo.usda
     assets/table/phy.usda
@@ -2486,12 +2032,12 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
   /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
   /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, -0.9000)..(6.1000, 2.0000, 0.9000)
-  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.5000, -0.7500)..(5.2500, 0.5000, 0.7500)  material (none)
-  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.2000, -0.9000)..(6.1000, 0.2000, 0.9000)  material (none)
-  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -2.0000, 0.0000)..(6.0000, 2.0000, 0.0000)  material (none)
-  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
   /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
   /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
@@ -2503,12 +2049,79 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 8 issue(s):
-  - [error] /Scene/Props/Crate_04/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Crate_04/asset
-  - [error] /Scene/Props/Shapes_02/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Shapes_02/asset/Ball
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderNonUniformScale: Non-uniform scale is not supported for Points geometry, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Dots: ColliderSpherePointsDataMissing: UsdGeomPoints widths array has 0 elements but points has 2 elements, prim path: /Scene/Props/Shapes_02/asset/Dots
-  - [error] /Scene/Props/Shapes_02/asset/Floor: ColliderPlaneDynamic: UsdGeomPlane collider cannot be attached to a simulated rigid body, prim path: /Scene/Props/Shapes_02/asset/Floor
-  - [error] /Scene/Props/Stretched_01/asset/Ball: ColliderNonUniformScale: Non-uniform scale is not supported for Sphere geometry, prim path: /Scene/Props/Stretched_01/asset/Ball
-  - [error] /Scene/Props/Stretched_01/asset/Pill: ColliderNonUniformScale: Non-uniform scale is not supported for Capsule geometry, prim path: /Scene/Props/Stretched_01/asset/Pill
-  - [error] /Scene/Props/Table_03/asset: ArticulationOnStaticBody: ArticulationRootAPI definition on a static rigid body is not allowed. Prim: /Scene/Props/Table_03/asset
+  valid, no issues
+
+
+=== step 19: validate_scene
+
+SUMMARY
+  call: validate_scene()
+  current project: golden
+  said: ok: Scene is valid!
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error_count": 0,
+    "is_valid": true,
+    "issues": [],
+    "message": "Scene is valid!"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/shapes/geo.usda
+    assets/shapes/shapes.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(14.2500, 2.0000, 0.9000)
+  /Scene/Props/Stretched_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
+  /Scene/Props/Stretched_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, -0.9000)..(1.1000, 2.0000, 0.9000)
+  /Scene/Props/Stretched_01/asset/Ball  [Sphere]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, -0.5000, -0.7500)..(0.2500, 0.5000, 0.7500)  material (none)
+  /Scene/Props/Stretched_01/asset/Pill  [Capsule]  at (1.0000, 0.0000, 0.0000)  bounds (0.9000, -0.2000, -0.9000)..(1.1000, 0.2000, 0.9000)  material (none)
+  /Scene/Props/Stretched_01/asset/Floor  [Plane]  at (0.0000, 0.0000, 0.0000)  bounds (-1.0000, -2.0000, 0.0000)..(1.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Stretched_01/asset/Dots  [Points]  at (0.0000, 0.0000, 0.0000)  bounds (0.0000, 0.0000, 0.0000)..(0.0000, 2.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset  [Xform]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, -0.3000)..(6.1000, 1.0000, 0.3000)
+  /Scene/Props/Shapes_02/asset/Ball  [Sphere]  at (5.0000, 0.0000, 0.0000)  bounds (4.7500, -0.2500, -0.2500)..(5.2500, 0.2500, 0.2500)  material (none)
+  /Scene/Props/Shapes_02/asset/Pill  [Capsule]  at (6.0000, 0.0000, 0.0000)  bounds (5.9000, -0.1000, -0.3000)..(6.1000, 0.1000, 0.3000)  material (none)
+  /Scene/Props/Shapes_02/asset/Floor  [Plane]  at (5.0000, 0.0000, 0.0000)  bounds (4.0000, -1.0000, 0.0000)..(6.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Shapes_02/asset/Dots  [Points]  at (5.0000, 0.0000, 0.0000)  bounds (5.0000, 0.0000, 0.0000)..(5.0000, 1.0000, 0.0000)  material (none)
+  /Scene/Props/Table_03  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
+  /Scene/Props/Table_03/asset  [Xform]  at (10.0000, 0.0000, 0.0000)  bounds (9.4000, 0.0000, -0.4000)..(10.6000, 0.7750, 0.4000)
+  /Scene/Props/Table_03/asset/Top  [Cube]  at (10.0000, 0.7500, 0.0000)  bounds (9.4000, 0.7250, -0.4000)..(10.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Props/Table_03/asset/Leg_L  [Cube]  at (9.4500, 0.3750, 0.0000)  bounds (9.4250, 0.0000, -0.0250)..(9.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Props/Table_03/asset/Leg_R  [Cube]  at (10.5500, 0.3750, 0.0000)  bounds (10.5250, 0.0000, -0.0250)..(10.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Props/Crate_04  [Xform]  at (14.0000, 0.0000, 0.0000)  bounds (13.7500, 0.0000, -0.2500)..(14.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_04/asset  [Xform]  at (14.0000, 0.0000, 0.0000)  bounds (13.7500, 0.0000, -0.2500)..(14.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_04/asset/Box  [Cube]  at (14.0000, 0.2500, 0.0000)  bounds (13.7500, 0.0000, -0.2500)..(14.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues

@@ -105,8 +105,13 @@ def apply_in_asset(
     relationships: dict[str, list[str]] | None = None,
     *,
     instance_name: str | None = None,
+    scene_stage: Usd.Stage,
 ) -> dict[str, Any]:
-    """Apply ``api_name`` to *prim_path* and author opinions in ``phy.usda``."""
+    """Apply ``api_name`` to *prim_path* and author opinions in ``phy.usda``.
+
+    Refused when *scene_stage* (the scene the asset is placed in) would then
+    have a physics error it does not have now.
+    """
     attributes = attributes or {}
     relationships = relationships or {}
     is_multi = api_name in constants.PhysicsRules.MULTI_APPLY_APIS
@@ -140,8 +145,8 @@ def apply_in_asset(
             refuse_nested_articulation_root(composed, target_path)
     del composed
 
-    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
-    stage = Usd.Stage.Open(str(physics.layer.file_path(asset_dir)))
+    known = physics.rules.errors(scene_stage)
+    stage = physics.layer.open_for_edit(asset_dir)
     prim = stage.OverridePrim(Sdf.Path(target_path))
 
     companion = constants.PhysicsRules.COMPANION_APIS.get(api_name)
@@ -164,8 +169,10 @@ def apply_in_asset(
             [Sdf.Path(t) for t in targets],
         )
 
-    stage.Save()
-    authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.PHY)
+    physics.layer.save_edit(
+        asset_dir, stage, scene_stage, known,
+        f"Applying {api_name.value} to {target_path} in asset {asset_dir.name}",
+    )
 
     logger.info(
         "Applied %s%s on %s in %s/phy.usda",
@@ -190,8 +197,12 @@ def remove_from_asset(
     api_name: schemas.PhysicsApiName,
     *,
     instance_name: str | None = None,
+    scene_stage: Usd.Stage,
 ) -> bool:
-    """Remove ``api_name`` (and any dependent APIs) from *prim_path*."""
+    """Remove ``api_name`` (and any dependent APIs) from *prim_path*.
+
+    Refused when *scene_stage* would then have a physics error it does not have now.
+    """
     phy_path = physics.layer.file_path(asset_dir)
     if not phy_path.exists():
         return False
@@ -199,7 +210,8 @@ def remove_from_asset(
     if layer is None:
         return False
     return _remove_api_from_layer(
-        layer, prim_path, api_name, instance_name=instance_name,
+        layer, prim_path, api_name, instance_name=instance_name, scene_stage=scene_stage,
+        doing=f"Removing {api_name.value} from {prim_path} in asset {asset_dir.name}",
     )
 
 
@@ -227,6 +239,7 @@ def apply_in_scene(
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Prim not found in scene: {prim_path}")
+    known = physics.rules.errors(stage)
     physics.scenes.ensure_default(
         stage, project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
@@ -263,6 +276,9 @@ def apply_in_scene(
             [Sdf.Path(t) for t in targets],
         )
 
+    physics.rules.refuse_new_errors(
+        stage, known, f"Applying {api_name.value} to {target_path}",
+    )
     stage.Save()
     logger.info(
         "Applied %s%s scene-level on %s",
@@ -289,10 +305,14 @@ def remove_from_scene(
     *,
     instance_name: str | None = None,
 ) -> bool:
-    """Remove ``api_name`` opinions from scene.usda at *prim_path*."""
+    """Remove ``api_name`` opinions from scene.usda at *prim_path*.
+
+    Refused when the scene would then have a physics error it does not have now.
+    """
     return _remove_api_from_layer(
         stage.GetRootLayer(), prim_path, api_name,
-        instance_name=instance_name,
+        instance_name=instance_name, scene_stage=stage,
+        doing=f"Removing {api_name.value} from {prim_path}",
     )
 
 
@@ -397,11 +417,14 @@ def _remove_api_from_layer(
     api_name: schemas.PhysicsApiName,
     *,
     instance_name: str | None = None,
+    scene_stage: Usd.Stage,
+    doing: str,
 ) -> bool:
     """Drop ``api_name`` + dependents + their opinions from *layer*."""
     prim_spec = layer.GetPrimAtPath(prim_path)
     if prim_spec is None:
         return False
+    known = physics.rules.errors(scene_stage)
 
     authored = set(read_api_schemas(prim_spec))
     targets: list[schemas.PhysicsApiName] = [api_name]
@@ -435,6 +458,7 @@ def _remove_api_from_layer(
                 touched = True
 
     if touched:
+        physics.rules.refuse_new_errors(scene_stage, known, doing)
         layer.Save()
         usd.namespace.prune_empty_overrides(layer, prim_path)
     return touched

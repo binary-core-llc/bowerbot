@@ -798,25 +798,16 @@ intent: a part under the rigid body, not the body itself
 SUMMARY
   call: create_joint(joint_type="PhysicsFixedJoint", name="UnderBody", body0="/Scene/Props/Table_01/asset/Top", body1="/Scene/Props/Crate_02/asset", scope="scene")
   current project: golden
-  said: ok
+  said: REFUSED: A joint needs at least one body that is an enabled rigid body itself (PhysicsRigidBodyAPI on that prim, not on a prim above it). Neither '/Scene/Props/Table_01/asset/Top' nor '/Scene/Props/Crate_02/asset' is. /Scene/Props/Table_01/asset/Top sits under the rigid body /Scene/Props/Table_01/asset: use /Scene/Props/Table_01/asset as the body.
 
   what changed:
-    ~ file scene.usda
-    + prim /Scene/Physics [Scope]
-    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, 0, -1)
-          attr physics:gravityMagnitude: 981
-    + prim /Scene/Physics/UnderBody [PhysicsFixedJoint]
-          rel physics:body0: /Scene/Props/Table_01/asset/Top
-          rel physics:body1: /Scene/Props/Crate_02/asset
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -825,12 +816,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "attributes_set": [],
-    "body0": "/Scene/Props/Table_01/asset/Top",
-    "body1": "/Scene/Props/Crate_02/asset",
-    "joint_type": "PhysicsFixedJoint",
-    "prim_path": "/Scene/Physics/UnderBody",
-    "scope": "scene"
+    "error": "A joint needs at least one body that is an enabled rigid body itself (PhysicsRigidBodyAPI on that prim, not on a prim above it). Neither '/Scene/Props/Table_01/asset/Top' nor '/Scene/Props/Crate_02/asset' is. /Scene/Props/Table_01/asset/Top sits under the rigid body /Scene/Props/Table_01/asset: use /Scene/Props/Table_01/asset as the body."
   }
 
 files:
@@ -840,56 +826,13 @@ files:
     assets/table/phy.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -60,4 +60,19 @@
-               }
-           }
-      +
-      +    def Scope "Physics"
-      +    {
-      +        def PhysicsScene "PhysicsScene"
-      +        {
-      +            vector3f physics:gravityDirection = (0, 0, -1)
-      +            float physics:gravityMagnitude = 981
-      +        }
-      +
-      +        def PhysicsFixedJoint "UnderBody"
-      +        {
-      +            rel physics:body0 = </Scene/Props/Table_01/asset/Top>
-      +            rel physics:body1 = </Scene/Props/Crate_02/asset>
-      +        }
-      +    }
-       }
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -118,4 +118,19 @@
-           }
-       }
-  +
-  +    def Scope "Physics"
-  +    {
-  +        def PhysicsScene "PhysicsScene"
-  +        {
-  +            vector3f physics:gravityDirection = (0, 0, -1)
-  +            float physics:gravityMagnitude = 981
-  +        }
-  +
-  +        def PhysicsFixedJoint "UnderBody"
-  +        {
-  +            rel physics:body0 = </Scene/Props/Table_01/asset/Top>
-  +            rel physics:body1 = </Scene/Props/Crate_02/asset>
-  +        }
-  +    }
-   }
-   
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
@@ -904,12 +847,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
-  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 06: create_joint
@@ -918,21 +858,16 @@ intent: two parts under one rigid body
 SUMMARY
   call: create_joint(joint_type="PhysicsRevoluteJoint", name="Hinge", body0="/Scene/Props/Table_01/asset/Top", body1="/Scene/Props/Table_01/asset/Leg_L", scope="asset")
   current project: golden
-  said: ok
+  said: REFUSED: A joint needs at least one body that is an enabled rigid body itself (PhysicsRigidBodyAPI on that prim, not on a prim above it). Neither '/table/Top' nor '/table/Leg_L' is. /table/Top sits under the rigid body /table: use /table as the body. /table/Leg_L sits under the rigid body /table: use /table as the body.
 
   what changed:
-    ~ file assets/table/phy.usda
-    + prim /Scene/Props/Table_01/asset/joints [Scope]
-    + prim /Scene/Props/Table_01/asset/joints/Hinge [PhysicsRevoluteJoint]
-          rel physics:body0: /Scene/Props/Table_01/asset/Top
-          rel physics:body1: /Scene/Props/Table_01/asset/Leg_L
-    + issue [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -941,67 +876,23 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_folder": "table",
-    "asset_prim_path": "/table/joints/Hinge",
-    "attributes_set": [],
-    "body0": "/table/Top",
-    "body1": "/table/Leg_L",
-    "joint_type": "PhysicsRevoluteJoint",
-    "prim_path": "/Scene/Props/Table_01/asset/joints/Hinge",
-    "scene_body0": "/Scene/Props/Table_01/asset/Top",
-    "scene_body1": "/Scene/Props/Table_01/asset/Leg_L",
-    "scope": "asset"
+    "error": "A joint needs at least one body that is an enabled rigid body itself (PhysicsRigidBodyAPI on that prim, not on a prim above it). Neither '/table/Top' nor '/table/Leg_L' is. /table/Top sits under the rigid body /table: use /table as the body. /table/Leg_L sits under the rigid body /table: use /table as the body."
   }
 
 files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     assets/table/geo.usda
-  ~ assets/table/phy.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/table/phy.usda:
-      --- assets/table/phy.usda (before)
-      +++ assets/table/phy.usda (after)
-      @@ -4,8 +4,16 @@
-       )
-       
-      -over "table" (
-      +def "table" (
-           prepend apiSchemas = ["PhysicsRigidBodyAPI"]
-       )
-       {
-      +    def Scope "joints"
-      +    {
-      +        def PhysicsRevoluteJoint "Hinge"
-      +        {
-      +            rel physics:body0 = </table/Top>
-      +            rel physics:body1 = </table/Leg_L>
-      +        }
-      +    }
-       }
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -56,4 +56,13 @@
-                       double3 xformOp:translate = (0.55, 0.375, 0)
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  +                }
-  +
-  +                def Scope "joints"
-  +                {
-  +                    def PhysicsRevoluteJoint "Hinge"
-  +                    {
-  +                        rel physics:body0 = </Scene/Props/Table_01/asset/Top>
-  +                        rel physics:body1 = </Scene/Props/Table_01/asset/Leg_L>
-  +                    }
-                   }
-               }
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
@@ -1010,21 +901,15 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
   /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
-  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 07: apply_physics_api
@@ -1109,25 +994,25 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -77,4 +77,5 @@
+  @@ -68,4 +68,5 @@
    
                def Xform "asset" (
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
-  @@ -85,4 +86,5 @@
+  @@ -76,4 +77,5 @@
                )
                {
   +                bool physics:rigidBodyEnabled = 0
                    float xformOp:rotateX = 90
                    uniform token[] xformOpOrder = ["xformOp:rotateX"]
-  @@ -106,4 +108,5 @@
+  @@ -97,4 +99,5 @@
    
                def Xform "asset" (
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
                    assetInfo = {
                        asset identifier = @<PROJECT>/assets/crate/crate.usda@
-  @@ -114,4 +117,5 @@
+  @@ -105,4 +108,5 @@
                )
                {
   +                bool physics:rigidBodyEnabled = 0
@@ -1141,21 +1026,15 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
   /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
-  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 08: create_joint
@@ -1164,20 +1043,16 @@ intent: the only rigid body is switched off
 SUMMARY
   call: create_joint(joint_type="PhysicsFixedJoint", name="ToOff", body0="/Scene/Props/Crate_03/asset", body1="/Scene/Props/Crate_02/asset", scope="scene")
   current project: golden
-  said: ok
+  said: REFUSED: A joint needs at least one body that is an enabled rigid body itself (PhysicsRigidBodyAPI on that prim, not on a prim above it). Neither '/Scene/Props/Crate_03/asset' nor '/Scene/Props/Crate_02/asset' is. /Scene/Props/Crate_03/asset is a rigid body that is switched off (physics:rigidBodyEnabled). /Scene/Props/Crate_02/asset is a rigid body that is switched off (physics:rigidBodyEnabled).
 
   what changed:
-    ~ file scene.usda
-    + prim /Scene/Physics/ToOff [PhysicsFixedJoint]
-          rel physics:body0: /Scene/Props/Crate_03/asset
-          rel physics:body1: /Scene/Props/Crate_02/asset
-    + issue [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1186,12 +1061,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "attributes_set": [],
-    "body0": "/Scene/Props/Crate_03/asset",
-    "body1": "/Scene/Props/Crate_02/asset",
-    "joint_type": "PhysicsFixedJoint",
-    "prim_path": "/Scene/Physics/ToOff",
-    "scope": "scene"
+    "error": "A joint needs at least one body that is an enabled rigid body itself (PhysicsRigidBodyAPI on that prim, not on a prim above it). Neither '/Scene/Props/Crate_03/asset' nor '/Scene/Props/Crate_02/asset' is. /Scene/Props/Crate_03/asset is a rigid body that is switched off (physics:rigidBodyEnabled). /Scene/Props/Crate_02/asset is a rigid body that is switched off (physics:rigidBodyEnabled)."
   }
 
 files:
@@ -1202,38 +1072,13 @@ files:
     assets/table/phy.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -74,4 +74,10 @@
-                   rel physics:body1 = </Scene/Props/Crate_02/asset>
-               }
-      +
-      +        def PhysicsFixedJoint "ToOff"
-      +        {
-      +            rel physics:body0 = </Scene/Props/Crate_03/asset>
-      +            rel physics:body1 = </Scene/Props/Crate_02/asset>
-      +        }
-           }
-       }
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -145,4 +145,10 @@
-               rel physics:body1 = </Scene/Props/Crate_02/asset>
-           }
-  +
-  +        def PhysicsFixedJoint "ToOff"
-  +        {
-  +            rel physics:body0 = </Scene/Props/Crate_03/asset>
-  +            rel physics:body1 = </Scene/Props/Crate_02/asset>
-  +        }
-       }
-   }
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
@@ -1242,23 +1087,15 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
   /Scene/Props/Crate_03  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
-  /Scene/Physics  [Scope]
-  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
-  /Scene/Physics/ToOff  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 09: create_joint
@@ -1271,6 +1108,10 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, 0, -1)
+          attr physics:gravityMagnitude: 981
     + prim /Scene/Physics/Weld [PhysicsFixedJoint]
           rel physics:body0: /Scene/Props/Table_01/asset
           rel physics:body1: /Scene/Props/Crate_02/asset
@@ -1310,32 +1151,50 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -80,4 +80,10 @@
-                   rel physics:body1 = </Scene/Props/Crate_02/asset>
+      @@ -60,4 +60,19 @@
                }
+           }
+      +
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, 0, -1)
+      +            float physics:gravityMagnitude = 981
+      +        }
       +
       +        def PhysicsFixedJoint "Weld"
       +        {
       +            rel physics:body0 = </Scene/Props/Table_01/asset>
       +            rel physics:body1 = </Scene/Props/Crate_02/asset>
       +        }
-           }
+      +    }
        }
+       
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -151,4 +151,10 @@
-               rel physics:body1 = </Scene/Props/Crate_02/asset>
+  @@ -122,4 +122,19 @@
            }
+       }
+  +
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, 0, -1)
+  +            float physics:gravityMagnitude = 981
+  +        }
   +
   +        def PhysicsFixedJoint "Weld"
   +        {
   +            rel physics:body0 = </Scene/Props/Table_01/asset>
   +            rel physics:body1 = </Scene/Props/Crate_02/asset>
   +        }
-       }
+  +    }
    }
+   
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(425.0000, 40.0000, 77.5000)
@@ -1344,8 +1203,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
@@ -1353,15 +1210,10 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
   /Scene/Physics  [Scope]
-  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
-  /Scene/Physics/ToOff  [PhysicsFixedJoint]
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 10: create_joint
@@ -1413,7 +1265,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -86,4 +86,10 @@
+      @@ -74,4 +74,10 @@
                    rel physics:body1 = </Scene/Props/Crate_02/asset>
                }
       +
@@ -1428,7 +1280,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -157,4 +157,10 @@
+  @@ -136,4 +136,10 @@
                rel physics:body1 = </Scene/Props/Crate_02/asset>
            }
   +
@@ -1447,8 +1299,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
@@ -1456,16 +1306,11 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
   /Scene/Physics  [Scope]
-  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
-  /Scene/Physics/ToOff  [PhysicsFixedJoint]
   /Scene/Physics/Weld  [PhysicsFixedJoint]
   /Scene/Physics/Mixed  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 11: validate_scene
@@ -1473,7 +1318,7 @@ validation:
 SUMMARY
   call: validate_scene()
   current project: golden
-  said: ok: Found 3 error(s).
+  said: ok: Scene is valid!
 
   what changed:
     nothing
@@ -1491,26 +1336,10 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error_count": 3,
-    "is_valid": false,
-    "issues": [
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/ToOff",
-        "severity": "error"
-      },
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/UnderBody",
-        "severity": "error"
-      },
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Props/Table_01/asset/joints/Hinge",
-        "severity": "error"
-      }
-    ],
-    "message": "Found 3 error(s)."
+    "error_count": 0,
+    "is_valid": true,
+    "issues": [],
+    "message": "Scene is valid!"
   }
 
 files:
@@ -1536,8 +1365,6 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
   /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
   /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Props/Table_01/asset/joints  [Scope]
-  /Scene/Props/Table_01/asset/joints/Hinge  [PhysicsRevoluteJoint]
   /Scene/Props/Crate_02  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset  [Xform]  at (200.0000, 0.0000, 0.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_02/asset/Box  [Cube]  at (200.0000, 0.0000, 25.0000)  bounds (175.0000, -25.0000, 0.0000)..(225.0000, 25.0000, 50.0000)  material (none)
@@ -1545,13 +1372,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_03/asset  [Xform]  at (400.0000, 0.0000, 0.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)
   /Scene/Props/Crate_03/asset/Box  [Cube]  at (400.0000, 0.0000, 25.0000)  bounds (375.0000, -25.0000, 0.0000)..(425.0000, 25.0000, 50.0000)  material (none)
   /Scene/Physics  [Scope]
-  /Scene/Physics/UnderBody  [PhysicsFixedJoint]
-  /Scene/Physics/ToOff  [PhysicsFixedJoint]
   /Scene/Physics/Weld  [PhysicsFixedJoint]
   /Scene/Physics/Mixed  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/ToOff: JointNoEnabledRigidBody: Joint (/Scene/Physics/ToOff) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/UnderBody: JointNoEnabledRigidBody: Joint (/Scene/Physics/UnderBody) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues

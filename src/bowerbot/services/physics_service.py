@@ -73,7 +73,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
 
     result = physics.apis.apply_in_asset(
         asset_dir, asset_local_path, api_name, attributes, relationships,
-        instance_name=instance_name,
+        instance_name=instance_name, scene_stage=state.stage,
     )
     state.reload_stage()
 
@@ -147,7 +147,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
 
     changed = physics.apis.remove_from_asset(
         asset_dir, asset_local_path, api_name,
-        instance_name=instance_name,
+        instance_name=instance_name, scene_stage=state.stage,
     )
     if changed:
         physics.layer.cleanup_if_empty(asset_dir)
@@ -308,7 +308,7 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     result = physics.joints.create_in_asset(
         asset_dir, joint_type, name,
-        asset_body0, asset_body1, attributes,
+        asset_body0, asset_body1, attributes, scene_stage=state.stage,
     )
     state.reload_stage()
     logger.info(
@@ -405,6 +405,7 @@ def remove_collision_group(
     scrubbed = (
         usd.namespace.scrub_dangling_refs(state.stage) if removed else {}
     )
+    authoring.stage.save_stage(state.stage)
     return {
         "name": name,
         "removed": removed,

@@ -849,10 +849,10 @@ validation:
 
 
 === step 06: create_joint
-intent: a hinge between two parts of the table
+intent: a hinge between the table and one of its legs
 
 SUMMARY
-  call: create_joint(joint_type="PhysicsRevoluteJoint", name="Hinge", body0="/Scene/Props/Table_01/asset/Top", body1="/Scene/Props/Table_01/asset/Leg_L", scope="asset", attributes={"physics:axis": "Y"})
+  call: create_joint(joint_type="PhysicsRevoluteJoint", name="Hinge", body0="/Scene/Props/Table_01/asset", body1="/Scene/Props/Table_01/asset/Leg_L", scope="asset", attributes={"physics:axis": "Y"})
   current project: golden
   said: ok
 
@@ -861,16 +861,14 @@ SUMMARY
     + prim /Scene/Props/Table_01/asset/joints [Scope]
     + prim /Scene/Props/Table_01/asset/joints/Hinge [PhysicsRevoluteJoint]
           attr physics:axis: 'Y'
-          rel physics:body0: /Scene/Props/Table_01/asset/Top
+          rel physics:body0: /Scene/Props/Table_01/asset
           rel physics:body1: /Scene/Props/Table_01/asset/Leg_L
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -884,11 +882,11 @@ full answer:
     "attributes_set": [
       "physics:axis"
     ],
-    "body0": "/table/Top",
+    "body0": "/table",
     "body1": "/table/Leg_L",
     "joint_type": "PhysicsRevoluteJoint",
     "prim_path": "/Scene/Props/Table_01/asset/joints/Hinge",
-    "scene_body0": "/Scene/Props/Table_01/asset/Top",
+    "scene_body0": "/Scene/Props/Table_01/asset",
     "scene_body1": "/Scene/Props/Table_01/asset/Leg_L",
     "scope": "asset"
   }
@@ -920,7 +918,7 @@ file changes:
       +        def PhysicsRevoluteJoint "Hinge"
       +        {
       +            uniform token physics:axis = "Y"
-      +            rel physics:body0 = </table/Top>
+      +            rel physics:body0 = </table>
       +            rel physics:body1 = </table/Leg_L>
       +        }
       +    }
@@ -939,7 +937,7 @@ composed scene changes:
   +                    def PhysicsRevoluteJoint "Hinge"
   +                    {
   +                        uniform token physics:axis = "Y"
-  +                        rel physics:body0 = </Scene/Props/Table_01/asset/Top>
+  +                        rel physics:body0 = </Scene/Props/Table_01/asset>
   +                        rel physics:body1 = </Scene/Props/Table_01/asset/Leg_L>
   +                    }
   +                }
@@ -962,8 +960,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 07: list_joints
@@ -995,7 +992,7 @@ full answer:
         "attributes": {
           "physics:axis": "Y"
         },
-        "body0": "/Scene/Props/Table_01/asset/Top",
+        "body0": "/Scene/Props/Table_01/asset",
         "body1": "/Scene/Props/Table_01/asset/Leg_L",
         "joint_type": "PhysicsRevoluteJoint",
         "prim_path": "/Scene/Props/Table_01/asset/joints/Hinge"
@@ -1043,8 +1040,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 08: list_joints
@@ -1076,7 +1072,7 @@ full answer:
         "attributes": {
           "physics:axis": "Y"
         },
-        "body0": "/table/Top",
+        "body0": "/table",
         "body1": "/table/Leg_L",
         "joint_type": "PhysicsRevoluteJoint",
         "prim_path": "/table/joints/Hinge"
@@ -1116,8 +1112,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 09: create_joint
@@ -1179,8 +1174,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 10: apply_physics_api
@@ -1242,8 +1236,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 11: remove_joint
@@ -1331,8 +1324,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 12: remove_joint
@@ -1345,8 +1337,6 @@ SUMMARY
   what changed:
     ~ file assets/table/phy.usda
     - prim /Scene/Props/Table_01/asset/joints/Hinge [PhysicsRevoluteJoint]
-    ~ validity: INVALID → valid
-    - issue [error] /Scene/Props/Table_01/asset/joints/Hinge: JointNoEnabledRigidBody: Joint (/Scene/Props/Table_01/asset/joints/Hinge) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -1387,7 +1377,7 @@ file changes:
       -        def PhysicsRevoluteJoint "Hinge"
       -        {
       -            uniform token physics:axis = "Y"
-      -            rel physics:body0 = </table/Top>
+      -            rel physics:body0 = </table>
       -            rel physics:body1 = </table/Leg_L>
       -        }
            }
@@ -1402,7 +1392,7 @@ composed scene changes:
   -                    def PhysicsRevoluteJoint "Hinge"
   -                    {
   -                        uniform token physics:axis = "Y"
-  -                        rel physics:body0 = </Scene/Props/Table_01/asset/Top>
+  -                        rel physics:body0 = </Scene/Props/Table_01/asset>
   -                        rel physics:body1 = </Scene/Props/Table_01/asset/Leg_L>
   -                    }
                    }

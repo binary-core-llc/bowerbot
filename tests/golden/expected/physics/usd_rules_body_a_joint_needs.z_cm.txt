@@ -755,20 +755,16 @@ intent: remove the rigid body (asset scope)
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Props/Table_01/asset", api_name="PhysicsRigidBodyAPI")
   current project: golden
-  said: ok: Removed PhysicsRigidBodyAPI from /table
+  said: REFUSED: Removing PhysicsRigidBodyAPI from /table in asset table is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed.
 
   what changed:
-    - file assets/table/phy.usda
-    ~ file assets/table/table.usda
-    ~ /Scene/Props/Table_01/asset  applied APIs: PhysicsRigidBodyAPI → (none)
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -777,46 +773,23 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsRigidBodyAPI",
-    "asset_folder": "table",
-    "asset_prim_path": "/table",
-    "cleared_masking_opinions": [],
-    "message": "Removed PhysicsRigidBodyAPI from /table",
-    "removed": true,
-    "scene_prim_path": "/Scene/Props/Table_01/asset",
-    "scope": "asset"
+    "error": "Removing PhysicsRigidBodyAPI from /table in asset table is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed."
   }
 
 files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     assets/table/geo.usda
-  - assets/table/phy.usda
-  ~ assets/table/table.usda
+    assets/table/phy.usda
+    assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  - assets/table/phy.usda (removed)
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -15,5 +15,4 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      -    prepend references = @./phy.usda@
-       )
-       {
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -22,5 +22,4 @@
-   
-               def Xform "asset" (
-  -                apiSchemas = ["PhysicsRigidBodyAPI"]
-                   assetInfo = {
-                       asset identifier = @<PROJECT>/assets/table/table.usda@
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(225.0000, 40.0000, 77.5000)
@@ -832,8 +805,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldA  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 06: place_asset
@@ -908,6 +880,7 @@ files:
   + assets/ground/geo.usda
   + assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -983,7 +956,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -87,4 +87,33 @@
+  @@ -88,4 +88,33 @@
                }
            }
   +
@@ -1035,8 +1008,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldA  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 07: apply_physics_api
@@ -1080,6 +1052,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -1098,7 +1071,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -96,4 +96,5 @@
+  @@ -97,4 +97,5 @@
    
                def Xform "asset" (
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -1122,8 +1095,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldA  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 08: create_joint
@@ -1167,6 +1139,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -1190,7 +1163,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -132,4 +132,10 @@
+  @@ -133,4 +133,10 @@
                rel physics:body1 = </Scene/Props/Crate_02/asset>
            }
   +
@@ -1220,8 +1193,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldB  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 09: remove_physics_api
@@ -1230,18 +1202,16 @@ intent: remove the rigid body (scene scope)
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Props/Slab_03/asset", api_name="PhysicsRigidBodyAPI", scope="scene")
   current project: golden
-  said: ok: Removed PhysicsRigidBodyAPI from /Scene/Props/Slab_03/asset
+  said: REFUSED: Removing PhysicsRigidBodyAPI from /Scene/Props/Slab_03/asset is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Props/Slab_03/asset  applied APIs: PhysicsRigidBodyAPI → (none)
-    + issue [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1250,12 +1220,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsRigidBodyAPI",
-    "instance_name": null,
-    "message": "Removed PhysicsRigidBodyAPI from /Scene/Props/Slab_03/asset",
-    "prim_path": "/Scene/Props/Slab_03/asset",
-    "removed": true,
-    "scope": "scene"
+    "error": "Removing PhysicsRigidBodyAPI from /Scene/Props/Slab_03/asset is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed."
   }
 
 files:
@@ -1264,30 +1229,16 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -52,5 +52,4 @@
-       
-                   def Xform "asset" (
-      -                prepend apiSchemas = ["PhysicsRigidBodyAPI"]
-                       prepend references = @assets/ground/ground.usda@
-                   )
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -96,5 +96,4 @@
-   
-               def Xform "asset" (
-  -                apiSchemas = ["PhysicsRigidBodyAPI"]
-                   assetInfo = {
-                       asset identifier = @<PROJECT>/assets/ground/ground.usda@
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 77.5000)
@@ -1307,9 +1258,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldB  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 10: place_asset
@@ -1394,6 +1343,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -1452,7 +1402,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -59,4 +59,20 @@
+      @@ -60,4 +60,20 @@
                    }
                }
       +
@@ -1477,7 +1427,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -116,4 +116,41 @@
+  @@ -118,4 +118,41 @@
                }
            }
   +
@@ -1542,9 +1492,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldB  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 11: apply_physics_api
@@ -1590,6 +1538,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -1598,7 +1547,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -68,4 +68,5 @@
+      @@ -69,4 +69,5 @@
        
                    def Xform "asset" (
       +                prepend apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -1608,7 +1557,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -125,4 +125,5 @@
+  @@ -127,4 +127,5 @@
    
                def Xform "asset" (
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -1637,9 +1586,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldB  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 12: create_joint
@@ -1685,6 +1632,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -1693,7 +1641,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -97,4 +97,10 @@
+      @@ -98,4 +98,10 @@
                    rel physics:body1 = </Scene/Props/Crate_02/asset>
                }
       +
@@ -1708,7 +1656,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -175,4 +175,10 @@
+  @@ -177,4 +177,10 @@
                rel physics:body1 = </Scene/Props/Crate_02/asset>
            }
   +
@@ -1743,9 +1691,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldC  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 13: apply_physics_api
@@ -1754,18 +1700,16 @@ intent: switch the body off
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Chair_04/asset", api_name="PhysicsRigidBodyAPI", scope="scene", attributes={"physics:rigidBodyEnabled": false})
   current project: golden
-  said: ok
+  said: REFUSED: Applying PhysicsRigidBodyAPI to /Scene/Props/Chair_04/asset is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Props/Chair_04/asset  attr physics:rigidBodyEnabled: (none) → false
-    + issue [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1774,16 +1718,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "api_name": "PhysicsRigidBodyAPI",
-    "attributes_set": [
-      "physics:rigidBodyEnabled"
-    ],
-    "companion_api": null,
-    "instance_name": null,
-    "prim_path": "/Scene/Props/Chair_04/asset",
-    "relationships_set": [],
-    "requested_prim_path": "/Scene/Props/Chair_04/asset",
-    "scope": "scene"
+    "error": "Applying PhysicsRigidBodyAPI to /Scene/Props/Chair_04/asset is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed."
   }
 
 files:
@@ -1794,30 +1729,16 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -72,4 +72,5 @@
-                   )
-                   {
-      +                bool physics:rigidBodyEnabled = 0
-                       float xformOp:rotateX = 90
-                       uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -134,4 +134,5 @@
-               )
-               {
-  +                bool physics:rigidBodyEnabled = 0
-                   float xformOp:rotateX = 90
-                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1100.0000, 500.0000, 95.0000)
@@ -1842,10 +1763,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldC  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 14: place_asset
@@ -1932,6 +1850,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -2015,7 +1934,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -155,4 +155,41 @@
+  @@ -156,4 +156,41 @@
                }
            }
   +
@@ -2085,10 +2004,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldC  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 15: apply_physics_api
@@ -2136,6 +2052,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -2154,7 +2071,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -164,4 +164,5 @@
+  @@ -165,4 +165,5 @@
    
                def Xform "asset" (
   +                apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -2188,10 +2105,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldC  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 16: create_joint
@@ -2239,6 +2153,7 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -2262,7 +2177,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -220,4 +220,10 @@
+  @@ -221,4 +221,10 @@
                rel physics:body1 = </Scene/Props/Crate_02/asset>
            }
   +
@@ -2302,10 +2217,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldD  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 17: set_prim_attribute
@@ -2314,18 +2226,16 @@ intent: switch the body off with the general attribute tool
 SUMMARY
   call: set_prim_attribute(prim_path="/Scene/Props/Armchair_05/asset", attribute_name="physics:rigidBodyEnabled", value=false)
   current project: golden
-  said: ok: Authored /Scene/Props/Armchair_05/asset.physics:rigidBodyEnabled in scene.usda.
+  said: REFUSED: Setting physics:rigidBodyEnabled on /Scene/Props/Armchair_05/asset is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Props/Armchair_05/asset  attr physics:rigidBodyEnabled: (none) → false
-    + issue [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -2334,10 +2244,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "attribute_name": "physics:rigidBodyEnabled",
-    "message": "Authored /Scene/Props/Armchair_05/asset.physics:rigidBodyEnabled in scene.usda.",
-    "prim_path": "/Scene/Props/Armchair_05/asset",
-    "value": false
+    "error": "Setting physics:rigidBodyEnabled on /Scene/Props/Armchair_05/asset is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed."
   }
 
 files:
@@ -2350,30 +2257,16 @@ files:
     assets/ground/geo.usda
     assets/ground/ground.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -90,4 +90,5 @@
-                   )
-                   {
-      +                bool physics:rigidBodyEnabled = 0
-                       float xformOp:rotateX = 90
-                       uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -173,4 +173,5 @@
-               )
-               {
-  +                bool physics:rigidBodyEnabled = 0
-                   float xformOp:rotateX = 90
-                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1440.0000, 500.0000, 95.0000)
@@ -2403,11 +2296,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldD  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 18: place_asset
@@ -2486,6 +2375,7 @@ files:
   + assets/post_z/geo.usda
   + assets/post_z/post_z.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -2536,7 +2426,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -95,4 +95,18 @@
+      @@ -94,4 +94,18 @@
                    }
                }
       +
@@ -2622,11 +2512,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldD  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 19: apply_physics_api
@@ -2676,6 +2562,7 @@ files:
     assets/post_z/geo.usda
     assets/post_z/post_z.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -2684,7 +2571,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -104,4 +104,5 @@
+      @@ -103,4 +103,5 @@
        
                    def Xform "asset" (
       +                prepend apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -2732,11 +2619,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldD  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 20: create_joint
@@ -2786,6 +2669,7 @@ files:
     assets/post_z/geo.usda
     assets/post_z/post_z.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
   ~ scene.usda
@@ -2794,7 +2678,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -143,4 +143,10 @@
+      @@ -142,4 +142,10 @@
                    rel physics:body1 = </Scene/Props/Crate_02/asset>
                }
       +
@@ -2853,11 +2737,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldE  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 21: remove_prim
@@ -2866,23 +2746,16 @@ intent: remove the placement that holds the body
 SUMMARY
   call: remove_prim(prim_path="/Scene/Props/Post_06")
   current project: golden
-  said: ok: Removed /Scene/Props/Post_06
+  said: REFUSED: Removing /Scene/Props/Post_06 is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldE) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed.
 
   what changed:
-    ~ file scene.usda
-    - prim /Scene/Props/Post_06 [Xform]
-    - prim /Scene/Props/Post_06/asset [Xform]
-    - prim /Scene/Props/Post_06/asset/Pole [Cube]
-    ~ /Scene  bounds: (-60.0000, -500.0000, 0.0000)..(1805.0000, 500.0000, 200.0000) → (-60.0000, -500.0000, 0.0000)..(1440.0000, 500.0000, 95.0000)
-    ~ /Scene/Physics/WeldE  rel physics:body0: /Scene/Props/Post_06/asset → (no targets)
-    + issue [error] /Scene/Physics/WeldE: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldE) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+    nothing
 
   project state after the step:
-    not used by the scene: assets/post_z/geo.usda
-    not used by the scene: assets/post_z/post_z.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -2891,25 +2764,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "message": "Removed /Scene/Props/Post_06",
-    "prim_path": "/Scene/Props/Post_06",
-    "scrubbed_dangling_refs": {
-      "rels_touched": [
-        {
-          "after": {
-            "explicitItems": []
-          },
-          "before": {
-            "explicitItems": [
-              "/Scene/Props/Post_06/asset"
-            ]
-          },
-          "prim_path": "/Scene/Physics/WeldE",
-          "relationship": "physics:body0"
-        }
-      ]
-    },
-    "suspect_variant_sets": []
+    "error": "Removing /Scene/Props/Post_06 is refused: USD's physics rules would then report 1 error(s): JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldE) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Nothing was changed."
   }
 
 files:
@@ -2924,87 +2779,19 @@ files:
     assets/post_z/geo.usda
     assets/post_z/post_z.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -95,19 +95,4 @@
-                   }
-               }
-      -
-      -        def Xform "Post_06"
-      -        {
-      -            float3 xformOp:rotateXYZ = (0, 0, 0)
-      -            float3 xformOp:scale = (100, 100, 100)
-      -            double3 xformOp:translate = (1800, 0, 0)
-      -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-      -
-      -            def Xform "asset" (
-      -                prepend apiSchemas = ["PhysicsRigidBodyAPI"]
-      -                prepend references = @assets/post_z/post_z.usda@
-      -            )
-      -            {
-      -            }
-      -        }
-           }
-       
-      @@ -146,5 +131,5 @@
-               def PhysicsFixedJoint "WeldE"
-               {
-      -            rel physics:body0 = </Scene/Props/Post_06/asset>
-      +            rel physics:body0 = None
-                   rel physics:body1 = </Scene/Props/Crate_02/asset>
-               }
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -194,31 +194,4 @@
-               }
-           }
-  -
-  -        def Xform "Post_06"
-  -        {
-  -            float3 xformOp:rotateXYZ = (0, 0, 0)
-  -            float3 xformOp:scale = (100, 100, 100)
-  -            double3 xformOp:translate = (1800, 0, 0)
-  -            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-  -
-  -            def Xform "asset" (
-  -                apiSchemas = ["PhysicsRigidBodyAPI"]
-  -                assetInfo = {
-  -                    asset identifier = @<PROJECT>/assets/post_z/post_z.usda@
-  -                    string name = "post_z"
-  -                    string version = "1.0"
-  -                }
-  -                kind = "component"
-  -            )
-  -            {
-  -                def Cube "Pole"
-  -                {
-  -                    double size = 1
-  -                    float3 xformOp:scale = (0.1, 0.1, 2)
-  -                    double3 xformOp:translate = (0, 0, 1)
-  -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-  -                }
-  -            }
-  -        }
-       }
-   
-  @@ -257,5 +230,5 @@
-           def PhysicsFixedJoint "WeldE"
-           {
-  -            rel physics:body0 = </Scene/Props/Post_06/asset>
-  +            rel physics:body0
-               rel physics:body1 = </Scene/Props/Crate_02/asset>
-           }
+  (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1440.0000, 500.0000, 95.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1805.0000, 500.0000, 200.0000)
   /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
@@ -3024,6 +2811,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Armchair_05/asset  [Xform]  at (1400.0000, 0.0000, 0.0000)  bounds (1370.0000, -30.0000, 35.0000)..(1440.0000, 30.0000, 75.0000)
   /Scene/Props/Armchair_05/asset/Seat  [Cube]  at (1400.0000, 0.0000, 40.0000)  bounds (1370.0000, -30.0000, 35.0000)..(1430.0000, 30.0000, 45.0000)  material (none)
   /Scene/Props/Armchair_05/asset/Arm  [Cube]  at (1435.0000, 0.0000, 60.0000)  bounds (1430.0000, -30.0000, 45.0000)..(1440.0000, 30.0000, 75.0000)  material (none)
+  /Scene/Props/Post_06  [Xform]  at (1800.0000, 0.0000, 0.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)
+  /Scene/Props/Post_06/asset  [Xform]  at (1800.0000, 0.0000, 0.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)
+  /Scene/Props/Post_06/asset/Pole  [Cube]  at (1800.0000, 0.0000, 100.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)  material (none)
   /Scene/Physics  [Scope]
   /Scene/Physics/WeldA  [PhysicsFixedJoint]
   /Scene/Physics/WeldB  [PhysicsFixedJoint]
@@ -3032,12 +2822,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldE  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 5 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldE: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldE) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 22: list_joints
@@ -3051,8 +2836,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    not used by the scene: assets/post_z/geo.usda
-    not used by the scene: assets/post_z/post_z.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -3100,7 +2884,7 @@ full answer:
       {
         "applied_apis": [],
         "attributes": {},
-        "body0": null,
+        "body0": "/Scene/Props/Post_06/asset",
         "body1": "/Scene/Props/Crate_02/asset",
         "joint_type": "PhysicsFixedJoint",
         "prim_path": "/Scene/Physics/WeldE"
@@ -3120,6 +2904,7 @@ files:
     assets/post_z/geo.usda
     assets/post_z/post_z.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
     scene.usda
@@ -3131,7 +2916,7 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1440.0000, 500.0000, 95.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1805.0000, 500.0000, 200.0000)
   /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
@@ -3151,6 +2936,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Armchair_05/asset  [Xform]  at (1400.0000, 0.0000, 0.0000)  bounds (1370.0000, -30.0000, 35.0000)..(1440.0000, 30.0000, 75.0000)
   /Scene/Props/Armchair_05/asset/Seat  [Cube]  at (1400.0000, 0.0000, 40.0000)  bounds (1370.0000, -30.0000, 35.0000)..(1430.0000, 30.0000, 45.0000)  material (none)
   /Scene/Props/Armchair_05/asset/Arm  [Cube]  at (1435.0000, 0.0000, 60.0000)  bounds (1430.0000, -30.0000, 45.0000)..(1440.0000, 30.0000, 75.0000)  material (none)
+  /Scene/Props/Post_06  [Xform]  at (1800.0000, 0.0000, 0.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)
+  /Scene/Props/Post_06/asset  [Xform]  at (1800.0000, 0.0000, 0.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)
+  /Scene/Props/Post_06/asset/Pole  [Cube]  at (1800.0000, 0.0000, 100.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)  material (none)
   /Scene/Physics  [Scope]
   /Scene/Physics/WeldA  [PhysicsFixedJoint]
   /Scene/Physics/WeldB  [PhysicsFixedJoint]
@@ -3159,12 +2947,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldE  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 5 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldE: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldE) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 23: validate_scene
@@ -3172,14 +2955,13 @@ validation:
 SUMMARY
   call: validate_scene()
   current project: golden
-  said: ok: Found 5 error(s).
+  said: ok: Scene is valid!
 
   what changed:
     nothing
 
   project state after the step:
-    not used by the scene: assets/post_z/geo.usda
-    not used by the scene: assets/post_z/post_z.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -3191,36 +2973,10 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error_count": 5,
-    "is_valid": false,
-    "issues": [
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/WeldA",
-        "severity": "error"
-      },
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/WeldB",
-        "severity": "error"
-      },
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/WeldC",
-        "severity": "error"
-      },
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/WeldD",
-        "severity": "error"
-      },
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldE) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/WeldE",
-        "severity": "error"
-      }
-    ],
-    "message": "Found 5 error(s)."
+    "error_count": 0,
+    "is_valid": true,
+    "issues": [],
+    "message": "Scene is valid!"
   }
 
 files:
@@ -3235,6 +2991,7 @@ files:
     assets/post_z/geo.usda
     assets/post_z/post_z.usda
     assets/table/geo.usda
+    assets/table/phy.usda
     assets/table/table.usda
     project.json
     scene.usda
@@ -3246,7 +3003,7 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1440.0000, 500.0000, 95.0000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -500.0000, 0.0000)..(1805.0000, 500.0000, 200.0000)
   /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
   /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
@@ -3266,6 +3023,9 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Armchair_05/asset  [Xform]  at (1400.0000, 0.0000, 0.0000)  bounds (1370.0000, -30.0000, 35.0000)..(1440.0000, 30.0000, 75.0000)
   /Scene/Props/Armchair_05/asset/Seat  [Cube]  at (1400.0000, 0.0000, 40.0000)  bounds (1370.0000, -30.0000, 35.0000)..(1430.0000, 30.0000, 45.0000)  material (none)
   /Scene/Props/Armchair_05/asset/Arm  [Cube]  at (1435.0000, 0.0000, 60.0000)  bounds (1430.0000, -30.0000, 45.0000)..(1440.0000, 30.0000, 75.0000)  material (none)
+  /Scene/Props/Post_06  [Xform]  at (1800.0000, 0.0000, 0.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)
+  /Scene/Props/Post_06/asset  [Xform]  at (1800.0000, 0.0000, 0.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)
+  /Scene/Props/Post_06/asset/Pole  [Cube]  at (1800.0000, 0.0000, 100.0000)  bounds (1795.0000, -5.0000, 0.0000)..(1805.0000, 5.0000, 200.0000)  material (none)
   /Scene/Physics  [Scope]
   /Scene/Physics/WeldA  [PhysicsFixedJoint]
   /Scene/Physics/WeldB  [PhysicsFixedJoint]
@@ -3274,9 +3034,4 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/WeldE  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 5 issue(s):
-  - [error] /Scene/Physics/WeldA: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldA) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldB: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldB) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldC: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldC) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldD: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldD) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-  - [error] /Scene/Physics/WeldE: JointNoEnabledRigidBody: Joint (/Scene/Physics/WeldE) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues

@@ -36,6 +36,22 @@ asset inherits them automatically. `phy.usda` is auto-created on the
 first physics authoring and auto-deleted when the last opinion is
 removed.
 
+## USD's physics rules (enforced)
+
+Every physics change is checked with USD's own physics validators
+before it is saved. A change that would give the scene a physics
+error it does not have is refused, and nothing is written. The
+refusal quotes USD's error. This covers `apply_physics_api`,
+`remove_physics_api`, `create_joint`, `set_prim_attribute` and
+`remove_prim`. Typical cases:
+
+- removing or switching off (`physics:rigidBodyEnabled = false`)
+  the only rigid body a joint has: remove the joint first;
+- a sphere, capsule, cylinder or cone collider on a prim with
+  non-uniform scale;
+- a plane collider under a dynamic rigid body;
+- an articulation root on a rigid body that is switched off.
+
 ## Prim-type rules (enforced)
 
 The UsdPhysics spec restricts what each API can target. The tools
@@ -312,10 +328,11 @@ in the same subtree; the tool refuses.
 ### body0 / body1 semantics
 
 - Both targets must be `UsdGeom.Xformable`.
-- At least one of body0 / body1 must reach `PhysicsRigidBodyAPI`
-  (self or ancestor). Empty / omitted target means "attach to
-  world" — legal per spec but only when there's a real body on the
-  other side.
+- At least one of body0 / body1 must be an enabled rigid body
+  itself: `PhysicsRigidBodyAPI` on that prim, not on a prim above
+  it. A part under a rigid body does not count; name the body.
+  Empty / omitted target means "attach to world" — legal per spec
+  but only when there's a real body on the other side.
 - Convention is **body0 = parent, body1 = child** for articulated
   chains. Spec is silent on this, but PhysX/Isaac follow it and
   ignoring it inverts drive target-position signs (relevant once

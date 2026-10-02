@@ -14,6 +14,7 @@ from bowerbot import schemas
 from bowerbot.utils import authoring
 from bowerbot.utils import inspection
 from bowerbot.utils import layout
+from bowerbot.utils import physics
 from bowerbot.utils import usd
 from bowerbot.utils import variants
 
@@ -110,6 +111,7 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     the removal may have left without a purpose.
     """
     prim_path = params["prim_path"]
+    known_physics_errors = physics.rules.errors(state.stage)
 
     added = authoring.placement.parse_added_asset_path(prim_path)
     if added is not None:
@@ -134,6 +136,8 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         suspects = variants.suspect_sets.find_above(state.stage, prim_path)
 
     scrubbed = usd.namespace.scrub_dangling_refs(state.stage)
+    physics.rules.refuse_new_errors(state.stage, known_physics_errors, f"Removing {prim_path}")
+    authoring.stage.save_stage(state.stage)
 
     state.object_count = max(0, state.object_count - 1)
     logger.info("Removed %s", prim_path)
@@ -247,9 +251,13 @@ def set_prim_attribute(
     prim_path = params["prim_path"]
     attribute_name = params["attribute_name"]
     value = params.get("value")
+    known_physics_errors = physics.rules.errors(state.stage)
 
     usd.attributes.set_prim_attribute(
         state.stage, prim_path, attribute_name, value,
+    )
+    physics.rules.refuse_new_errors(
+        state.stage, known_physics_errors, f"Setting {attribute_name} on {prim_path}",
     )
     authoring.stage.save_stage(state.stage)
     action = "Cleared" if value is None else "Authored"

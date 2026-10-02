@@ -20,6 +20,7 @@ from bowerbot.utils.physics import collision_groups
 from bowerbot.utils.physics import joints
 from bowerbot.utils.physics import layer
 from bowerbot.utils.physics import masking
+from bowerbot.utils.physics import rules
 from bowerbot.utils.physics import scenes
 from bowerbot.utils.physics import scope
 from bowerbot.utils.physics import summary
@@ -30,6 +31,7 @@ __all__ = [
     "joints",
     "layer",
     "masking",
+    "rules",
     "scenes",
     "scope",
     "summary",

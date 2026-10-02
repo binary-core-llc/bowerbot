@@ -46,6 +46,8 @@ class PhysicsRules:
         schemas.PhysicsApiName.DRIVE,
         schemas.PhysicsApiName.LIMIT,
     })
+    # Keyword USD's own physics validators carry in the validation registry.
+    VALIDATOR_KEYWORD = "UsdPhysicsValidators"
     # Stands for the instance name in a multi-apply API's property names.
     INSTANCE_NAME_PLACEHOLDER = "__INSTANCE_NAME__"
     # Drive instance names each joint type accepts.

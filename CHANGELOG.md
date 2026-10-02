@@ -1,5 +1,41 @@
 # Changelog
 
+## [2.0.0](https://github.com/binary-core-llc/bowerbot/compare/v1.13.0...v2.0.0) (2026-10-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* physics changes follow USD's own rules; remaining bugs and warnings fixed ([#275](https://github.com/binary-core-llc/bowerbot/issues/275))
+* the rest of the duplicate code does each job one way (stage 3, part 2) ([#274](https://github.com/binary-core-llc/bowerbot/issues/274))
+* library assets are accepted in three shapes only ([#273](https://github.com/binary-core-llc/bowerbot/issues/273))
+* rename place_asset_inside to add_asset_to_asset ([#268](https://github.com/binary-core-llc/bowerbot/issues/268))
+* remove layout files from place_layout ([#255](https://github.com/binary-core-llc/bowerbot/issues/255))
+
+### Features
+
+* bodies of one asset can be told not to collide with each other ([#279](https://github.com/binary-core-llc/bowerbot/issues/279)) ([67bc370](https://github.com/binary-core-llc/bowerbot/commit/67bc370ac499099ab94b5bc39cfa349b99410e76))
+* collider shapes and physics materials ([#277](https://github.com/binary-core-llc/bowerbot/issues/277)) ([83d3e98](https://github.com/binary-core-llc/bowerbot/commit/83d3e98a26dd92176623170d65789c4e3b2753da))
+* library assets are accepted in three shapes only ([#273](https://github.com/binary-core-llc/bowerbot/issues/273)) ([4efc745](https://github.com/binary-core-llc/bowerbot/commit/4efc7451db3b3165b46e6b90bfcda5dedbd70cd1))
+* **scatter:** scatter assets over surfaces and along paths, resting on real geometry ([#206](https://github.com/binary-core-llc/bowerbot/issues/206)) ([5b12990](https://github.com/binary-core-llc/bowerbot/commit/5b129906f6f305c463f28dcf48266b98eb97e4bd))
+
+
+### Bug Fixes
+
+* a variant cannot change physics attributes ([#276](https://github.com/binary-core-llc/bowerbot/issues/276)) ([7c3b53c](https://github.com/binary-core-llc/bowerbot/commit/7c3b53c5d72e36b7593a68be4a8513ab4b6138c3))
+* an asset arrives in the project with everything it needs ([#269](https://github.com/binary-core-llc/bowerbot/issues/269)) ([3998fc1](https://github.com/binary-core-llc/bowerbot/commit/3998fc1bc1cb52b2625ab301f0dc8b3ccd771dcc))
+* asset files are found, emptied and matched one way (stage 3, part 1) ([#272](https://github.com/binary-core-llc/bowerbot/issues/272)) ([9538431](https://github.com/binary-core-llc/bowerbot/commit/953843133899ca928ed628654e956ebb4c09add0))
+* list library and project files in the same order on every machine ([#257](https://github.com/binary-core-llc/bowerbot/issues/257)) ([cc5a544](https://github.com/binary-core-llc/bowerbot/commit/cc5a544d1577ff7f52d7f91c97fb26103258176a))
+* physics changes follow USD's own rules; remaining bugs and warnings fixed ([#275](https://github.com/binary-core-llc/bowerbot/issues/275)) ([c03c290](https://github.com/binary-core-llc/bowerbot/commit/c03c290d74836efa7f82d37e3d12a3d33b784c82))
+* scatter boxes stay right, asset listing is fast, groups are free names ([#278](https://github.com/binary-core-llc/bowerbot/issues/278)) ([c883b65](https://github.com/binary-core-llc/bowerbot/commit/c883b655079443568ec66bd5b50b07eaf292290c))
+* the rest of the duplicate code does each job one way (stage 3, part 2) ([#274](https://github.com/binary-core-llc/bowerbot/issues/274)) ([d9ffd55](https://github.com/binary-core-llc/bowerbot/commit/d9ffd5505ff780eda5cde5a0f17459efd56dd4dd))
+* units and up axis follow project.json everywhere ([#266](https://github.com/binary-core-llc/bowerbot/issues/266)) ([8e9bb2d](https://github.com/binary-core-llc/bowerbot/commit/8e9bb2d6676e5cc3146980c678cdcd4fbc087621))
+
+
+### Code Refactoring
+
+* remove layout files from place_layout ([#255](https://github.com/binary-core-llc/bowerbot/issues/255)) ([fece37d](https://github.com/binary-core-llc/bowerbot/commit/fece37d59f3615b75d85b55acfe62c5e652a7f1b))
+* rename place_asset_inside to add_asset_to_asset ([#268](https://github.com/binary-core-llc/bowerbot/issues/268)) ([3ca0606](https://github.com/binary-core-llc/bowerbot/commit/3ca0606812e4ccaf74e275249088a03b3b7562c5))
+
 ## [1.13.0](https://github.com/binary-core-llc/bowerbot/compare/v1.12.0...v1.13.0) (2026-06-19)
 
 

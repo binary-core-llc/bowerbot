@@ -530,7 +530,7 @@ SCENARIOS = (
                     "parent_prim_path": "$table",
                     "group": "Architecture",
                     **model.at(0.0),
-                    "rotate_y": 30.0,
+                    "rotate_up": 30.0,
                     "position_mode": "bounds_offset",
                 },
                 note="bounds_offset mode, turned 30 degrees",

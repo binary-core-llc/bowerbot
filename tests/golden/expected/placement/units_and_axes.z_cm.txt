@@ -226,7 +226,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Bare_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -411,7 +411,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/BareKit_02",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -600,7 +600,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/ChairCm_03",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -810,7 +810,7 @@ full answer:
       "z": 50.0
     },
     "prim_path": "/Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1004,7 +1004,7 @@ full answer:
       "z": 50.0
     },
     "prim_path": "/Scene/Furniture/ChairCm_03/asset/contents/Props/Crate_04",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1127,7 +1127,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Architecture/Post_05",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1345,7 +1345,7 @@ full answer:
       "z": 100.0
     },
     "prim_path": "/Scene/Architecture/Post_05/asset/contents/Props/Crate_06",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1514,7 +1514,7 @@ full answer:
       "z": 150.0
     },
     "prim_path": "/Scene/Architecture/Post_05/asset/contents/Props/Crate_06",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:

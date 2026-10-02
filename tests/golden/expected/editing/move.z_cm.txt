@@ -172,7 +172,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -351,7 +351,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -398,14 +398,14 @@ validation:
 intent: turn it only
 
 SUMMARY
-  call: move_asset(prim_path="/Scene/Furniture/Chair_01", rotate_y=45.0)
+  call: move_asset(prim_path="/Scene/Furniture/Chair_01", rotate_up=45.0)
   current project: golden
   said: ok: Moved /Scene/Furniture/Chair_01 to (200.0, -100.0, 0.0)
 
   what changed:
     ~ file scene.usda
-    ~ /Scene  bounds: (177.5000, -122.5000, 42.5000)..(222.5000, -77.5000, 95.0000) → (214.1421, -122.5000, 14.1421)..(283.0850, -77.5000, 83.0850)
-    ~ /Scene/Furniture/Chair_01  attr xformOp:rotateXYZ: (0, 0, 0) → (0, 45, 0)
+    ~ /Scene  bounds: (177.5000, -122.5000, 42.5000)..(222.5000, -77.5000, 95.0000) → (168.1802, -131.8198, 42.5000)..(231.8198, -68.1802, 95.0000)
+    ~ /Scene/Furniture/Chair_01  attr xformOp:rotateXYZ: (0, 0, 0) → (0, 0, 45)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -427,7 +427,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 45.0
+    "rotation_up": 45.0
   }
 
 files:
@@ -444,7 +444,7 @@ file changes:
                def Xform "Chair_01"
                {
       -            float3 xformOp:rotateXYZ = (0, 0, 0)
-      +            float3 xformOp:rotateXYZ = (0, 45, 0)
+      +            float3 xformOp:rotateXYZ = (0, 0, 45)
                    float3 xformOp:scale = (100, 100, 100)
                    double3 xformOp:translate = (200, -100, 0)
 
@@ -455,16 +455,16 @@ composed scene changes:
            def Xform "Chair_01"
            {
   -            float3 xformOp:rotateXYZ = (0, 0, 0)
-  +            float3 xformOp:rotateXYZ = (0, 45, 0)
+  +            float3 xformOp:rotateXYZ = (0, 0, 45)
                float3 xformOp:scale = (100, 100, 100)
                double3 xformOp:translate = (200, -100, 0)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (214.1421, -122.5000, 14.1421)..(283.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01  [Xform]  at (200.0000, -100.0000, 0.0000)  bounds (214.1421, -122.5000, 14.1421)..(283.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset  [Xform]  at (200.0000, -100.0000, 0.0000)  bounds (214.1421, -122.5000, 14.1421)..(283.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (231.8198, -100.0000, 31.8198)  bounds (214.1421, -122.5000, 14.1421)..(249.4975, -77.5000, 49.4975)  material (none)
-  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (249.4975, -80.0000, 49.4975)  bounds (215.9099, -82.5000, 15.9099)..(283.0850, -77.5000, 83.0850)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (168.1802, -131.8198, 42.5000)..(231.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (200.0000, -100.0000, 0.0000)  bounds (168.1802, -131.8198, 42.5000)..(231.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (200.0000, -100.0000, 0.0000)  bounds (168.1802, -131.8198, 42.5000)..(231.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (200.0000, -100.0000, 45.0000)  bounds (168.1802, -131.8198, 42.5000)..(231.8198, -68.1802, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (185.8579, -85.8579, 70.0000)  bounds (168.1802, -103.5355, 45.0000)..(203.5355, -68.1802, 95.0000)  material (none)
 
 validation:
   valid, no issues
@@ -480,7 +480,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene  bounds: (214.1421, -122.5000, 14.1421)..(283.0850, -77.5000, 83.0850) → (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
+    ~ /Scene  bounds: (168.1802, -131.8198, 42.5000)..(231.8198, -68.1802, 95.0000) → (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
     ~ /Scene/Furniture/Chair_01  attr xformOp:translate: (200, -100, 0) → (50, -100, 0)
 
   project state after the step:
@@ -503,7 +503,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 45.0
+    "rotation_up": 45.0
   }
 
 files:
@@ -517,7 +517,7 @@ file changes:
       --- scene.usda (before)
       +++ scene.usda (after)
       @@ -16,5 +16,5 @@
-                   float3 xformOp:rotateXYZ = (0, 45, 0)
+                   float3 xformOp:rotateXYZ = (0, 0, 45)
                    float3 xformOp:scale = (100, 100, 100)
       -            double3 xformOp:translate = (200, -100, 0)
       +            double3 xformOp:translate = (50, -100, 0)
@@ -528,7 +528,7 @@ composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
   @@ -18,5 +18,5 @@
-               float3 xformOp:rotateXYZ = (0, 45, 0)
+               float3 xformOp:rotateXYZ = (0, 0, 45)
                float3 xformOp:scale = (100, 100, 100)
   -            double3 xformOp:translate = (200, -100, 0)
   +            double3 xformOp:translate = (50, -100, 0)
@@ -536,11 +536,11 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (81.8198, -100.0000, 31.8198)  bounds (64.1421, -122.5000, 14.1421)..(99.4975, -77.5000, 49.4975)  material (none)
-  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (99.4975, -80.0000, 49.4975)  bounds (65.9099, -82.5000, 15.9099)..(133.0850, -77.5000, 83.0850)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (50.0000, -100.0000, 45.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (35.8579, -85.8579, 70.0000)  bounds (18.1802, -103.5355, 45.0000)..(53.5355, -68.1802, 95.0000)  material (none)
 
 validation:
   valid, no issues
@@ -586,11 +586,11 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (81.8198, -100.0000, 31.8198)  bounds (64.1421, -122.5000, 14.1421)..(99.4975, -77.5000, 49.4975)  material (none)
-  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (99.4975, -80.0000, 49.4975)  bounds (65.9099, -82.5000, 15.9099)..(133.0850, -77.5000, 83.0850)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (50.0000, -100.0000, 45.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (35.8579, -85.8579, 70.0000)  bounds (18.1802, -103.5355, 45.0000)..(53.5355, -68.1802, 95.0000)  material (none)
 
 validation:
   valid, no issues
@@ -636,11 +636,11 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (81.8198, -100.0000, 31.8198)  bounds (64.1421, -122.5000, 14.1421)..(99.4975, -77.5000, 49.4975)  material (none)
-  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (99.4975, -80.0000, 49.4975)  bounds (65.9099, -82.5000, 15.9099)..(133.0850, -77.5000, 83.0850)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (50.0000, -100.0000, 45.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (35.8579, -85.8579, 70.0000)  bounds (18.1802, -103.5355, 45.0000)..(53.5355, -68.1802, 95.0000)  material (none)
 
 validation:
   valid, no issues
@@ -676,14 +676,14 @@ full answer:
         "asset": "assets/chair/chair.usda",
         "bounds": {
           "max": {
-            "x": 133.085,
-            "y": -77.5,
-            "z": 83.085
+            "x": 81.8198,
+            "y": -68.1802,
+            "z": 95.0
           },
           "min": {
-            "x": 64.1421,
-            "y": -122.5,
-            "z": 14.1421
+            "x": 18.1802,
+            "y": -131.8198,
+            "z": 42.5
           }
         },
         "kind": "asset",
@@ -711,11 +711,11 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (64.1421, -122.5000, 14.1421)..(133.0850, -77.5000, 83.0850)
-  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (81.8198, -100.0000, 31.8198)  bounds (64.1421, -122.5000, 14.1421)..(99.4975, -77.5000, 49.4975)  material (none)
-  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (99.4975, -80.0000, 49.4975)  bounds (65.9099, -82.5000, 15.9099)..(133.0850, -77.5000, 83.0850)  material (none)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset  [Xform]  at (50.0000, -100.0000, 0.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 95.0000)
+  /Scene/Furniture/Chair_01/asset/Seat  [Cube]  at (50.0000, -100.0000, 45.0000)  bounds (18.1802, -131.8198, 42.5000)..(81.8198, -68.1802, 47.5000)  material (none)
+  /Scene/Furniture/Chair_01/asset/Back  [Cube]  at (35.8579, -85.8579, 70.0000)  bounds (18.1802, -103.5355, 45.0000)..(53.5355, -68.1802, 95.0000)  material (none)
 
 validation:
   valid, no issues

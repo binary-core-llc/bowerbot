@@ -178,7 +178,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -622,8 +622,8 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene  bounds: (-0.6274, 0.0000, -0.5000)..(0.6274, 3.6762, 0.5000) → (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
-    ~ /Scene/Lighting/Disk  attr xformOp:rotateXYZ: (10, 20, 30) → (0, 90, 0)
+    ~ /Scene  bounds: (-0.6274, 0.0000, -0.5000)..(0.6274, 3.6762, 0.5000) → (-0.5000, 0.0000, -0.5000)..(0.5000, 3.4924, 0.5000)
+    ~ /Scene/Lighting/Disk  attr xformOp:rotateXYZ: (10, 20, 30) → (10, 90, 0)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -659,7 +659,7 @@ file changes:
                def DiskLight "Disk"
                {
       -            float3 xformOp:rotateXYZ = (10, 20, 30)
-      +            float3 xformOp:rotateXYZ = (0, 90, 0)
+      +            float3 xformOp:rotateXYZ = (10, 90, 0)
                    double3 xformOp:translate = (0, 3, 0)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
@@ -670,12 +670,12 @@ composed scene changes:
            def DiskLight "Disk"
            {
   -            float3 xformOp:rotateXYZ = (10, 20, 30)
-  +            float3 xformOp:rotateXYZ = (0, 90, 0)
+  +            float3 xformOp:rotateXYZ = (10, 90, 0)
                double3 xformOp:translate = (0, 3, 0)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.4924, 0.5000)
   /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2500, 0.5000)
   /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2500, 0.5000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
@@ -683,7 +683,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
   /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2500, -0.5000)..(0.5000, 1.2500, 0.5000)
   /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7500, 0.0000)  bounds (-0.5000, 0.2500, -0.5000)..(0.5000, 1.2500, 0.5000)
-  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.0868, 2.5076, -0.5000)..(0.0868, 3.4924, 0.5000)
 
 validation:
   valid, no issues
@@ -751,7 +751,7 @@ composed scene changes:
                        }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.4924, 0.5000)
   /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.3000, 0.5000)
   /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.3000, 0.5000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
@@ -759,7 +759,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
   /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.3000, -0.5000)..(0.5000, 1.3000, 0.5000)
   /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.8000, 0.0000)  bounds (-0.5000, 0.3000, -0.5000)..(0.5000, 1.3000, 0.5000)
-  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.0868, 2.5076, -0.5000)..(0.0868, 3.4924, 0.5000)
 
 validation:
   valid, no issues
@@ -827,7 +827,7 @@ composed scene changes:
                        }
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.4924, 0.5000)
   /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
@@ -835,7 +835,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
   /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
-  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.0868, 2.5076, -0.5000)..(0.0868, 3.4924, 0.5000)
 
 validation:
   valid, no issues
@@ -936,7 +936,7 @@ composed scene changes:
    
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.4924, 0.5000)
   /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
@@ -944,7 +944,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
   /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
-  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.0868, 2.5076, -0.5000)..(0.0868, 3.4924, 0.5000)
   /Scene/Cameras/Tilted  [Camera]  at (0.0000, 2.0000, 4.0000)
 
 validation:
@@ -960,7 +960,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Cameras/Tilted  attr xformOp:rotateXYZ: (-10, 15, 5) → (-20, 0, 0)
+    ~ /Scene/Cameras/Tilted  attr xformOp:rotateXYZ: (-10, 15, 5) → (-20, 0, 5)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -996,7 +996,7 @@ file changes:
                {
                    float2 clippingRange = (0.01, 100000)
       -            float3 xformOp:rotateXYZ = (-10, 15, 5)
-      +            float3 xformOp:rotateXYZ = (-20, 0, 0)
+      +            float3 xformOp:rotateXYZ = (-20, 0, 5)
                    double3 xformOp:translate = (0, 2, 4)
                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
@@ -1007,12 +1007,12 @@ composed scene changes:
            {
                float2 clippingRange = (0.01, 100000)
   -            float3 xformOp:rotateXYZ = (-10, 15, 5)
-  +            float3 xformOp:rotateXYZ = (-20, 0, 0)
+  +            float3 xformOp:rotateXYZ = (-20, 0, 5)
                double3 xformOp:translate = (0, 2, 4)
                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 3.4924, 0.5000)
   /Scene/Props/Lamp_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.0000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset/Base  [Cube]  at (0.0000, 0.0500, 0.0000)  bounds (-0.1500, 0.0000, -0.1500)..(0.1500, 0.1000, 0.1500)  material (none)
@@ -1020,7 +1020,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
   /Scene/Props/Lamp_01/asset/lgt  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
   /Scene/Props/Lamp_01/asset/lgt/Glow  [SphereLight]  at (0.0000, 0.7000, 0.0000)  bounds (-0.5000, 0.2000, -0.5000)..(0.5000, 1.2000, 0.5000)
-  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (0.0000, 2.5000, -0.5000)..(0.0000, 3.5000, 0.5000)
+  /Scene/Lighting/Disk  [DiskLight]  at (0.0000, 3.0000, 0.0000)  bounds (-0.0868, 2.5076, -0.5000)..(0.0868, 3.4924, 0.5000)
   /Scene/Cameras/Tilted  [Camera]  at (0.0000, 2.0000, 4.0000)
 
 validation:

@@ -53,7 +53,10 @@ def add(
         msg = f"Cannot open lgt layer: {lgt_path}"
         raise RuntimeError(msg)
 
-    light_prim_path = f"/{default_prim_name}/lgt/{light_name}"
+    # A name already taken in the asset gets the next free number, as in the scene.
+    light_prim_path = usd.namespace.unique_prim_path(
+        stage, f"/{default_prim_name}/lgt", light_name,
+    )
     light_cls = constants.LightUsd.CLASSES.get(light.light_type.value)
     if light_cls is None:
         msg = f"Unknown light type: {light.light_type.value}"
@@ -72,17 +75,18 @@ def add(
             tex_attr.Set(Sdf.AssetPath(light.texture))
     lights.prim.apply_light_link(light_prim, light.light_link_includes)
 
-    xformable = UsdGeom.Xformable(light_prim)
-    xformable.AddTranslateOp().Set(Gf.Vec3d(*light.translate))
-    if any(v != 0.0 for v in light.rotate):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*light.rotate))
+    usd.transforms.set_xform(
+        light_prim,
+        translate=light.translate,
+        rotate=light.rotate if any(v != 0.0 for v in light.rotate) else None,
+    )
 
     stage.Save()
     authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.LGT)
 
     logger.info(
         "Added light %s (%s) to %s",
-        light_name, light.light_type.value, asset_dir.name,
+        Sdf.Path(light_prim_path).name, light.light_type.value, asset_dir.name,
     )
     return light_prim_path
 
@@ -91,13 +95,14 @@ def update(
     asset_dir: Path,
     light_name: str,
     *,
-    translate: tuple[float, float, float] | None = None,
-    rotate: tuple[float, float, float] | None = None,
+    translate: schemas.PartialVec3 | None = None,
+    rotate: schemas.PartialVec3 | None = None,
     texture: str | None = None,
 ) -> None:
     """Update a light's xform / HDRI texture in *asset_dir*'s ``lgt.usda``.
 
-    *translate* is in the asset's own units and axes.
+    *translate* is in the asset's own units and axes. An axis left out of
+    *translate* or *rotate* keeps its value.
     """
     lgt_path = asset_dir / constants.ASWFLayerNames.LGT
     if not lgt_path.exists():
@@ -125,10 +130,7 @@ def update(
         if tex_attr:
             tex_attr.Set(Sdf.AssetPath(texture))
 
-    if translate is not None:
-        usd.transforms.update_translate_op(prim, Gf.Vec3d(*translate))
-    if rotate is not None:
-        usd.transforms.update_rotate_op(prim, Gf.Vec3f(*rotate))
+    usd.transforms.set_xform(prim, translate=translate, rotate=rotate)
 
     stage.Save()
     logger.info(

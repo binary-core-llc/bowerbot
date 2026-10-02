@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-from pxr import Gf
 from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
@@ -28,26 +27,26 @@ def create(stage: Usd.Stage, prim_path: str, light: schemas.LightParams) -> None
             tex_attr.Set(Sdf.AssetPath(light.texture))
     lights.prim.apply_light_link(light_prim, light.light_link_includes)
 
-    xformable = UsdGeom.Xformable(light_prim)
-    xformable.ClearXformOpOrder()
-
-    tx, ty, tz = light.translate
-    xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-
-    rx, ry, rz = light.rotate
-    if any(v != 0.0 for v in (rx, ry, rz)):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
+    UsdGeom.Xformable(light_prim).ClearXformOpOrder()
+    usd.transforms.set_xform(
+        light_prim,
+        translate=light.translate,
+        rotate=light.rotate if any(v != 0.0 for v in light.rotate) else None,
+    )
 
 
 def update(
     stage: Usd.Stage,
     prim_path: str,
     *,
-    translate: tuple[float, float, float] | None = None,
-    rotate: tuple[float, float, float] | None = None,
+    translate: schemas.PartialVec3 | None = None,
+    rotate: schemas.PartialVec3 | None = None,
     texture: str | None = None,
 ) -> None:
-    """Update an existing scene-level light's xform / HDRI texture."""
+    """Update an existing scene-level light's xform / HDRI texture.
+
+    An axis left out of *translate* or *rotate* keeps its value.
+    """
     prim = stage.GetPrimAtPath(prim_path)
     if not prim.IsValid():
         msg = f"Prim not found: {prim_path}"
@@ -58,7 +57,4 @@ def update(
         if tex_attr:
             tex_attr.Set(Sdf.AssetPath(texture))
 
-    if translate is not None:
-        usd.transforms.update_translate_op(prim, Gf.Vec3d(*translate))
-    if rotate is not None:
-        usd.transforms.update_rotate_op(prim, Gf.Vec3f(*rotate))
+    usd.transforms.set_xform(prim, translate=translate, rotate=rotate)

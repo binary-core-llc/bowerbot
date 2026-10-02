@@ -46,8 +46,7 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
             tuple(float(v) for v in look_at),
             state.up_axis.value,
         )
-    if rotate is None:
-        rotate = (0.0, 0.0, 0.0)
+    rotate = usd.values.fill_vec3(rotate, (0.0, 0.0, 0.0))
 
     near, far = constants.CameraDefaults.CLIPPING_RANGE_METERS
     attributes.setdefault(
@@ -97,12 +96,8 @@ def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
 
     prim = cameras.scene.require(state.stage, prim_path)
     if look_at is not None:
-        eye = (
-            translate if translate is not None
-            else usd.transforms.local_translation(prim)
-        )
         rotate = cameras.aim.look_at_rotation(
-            eye,
+            usd.values.fill_vec3(translate, usd.transforms.local_translation(prim)),
             tuple(float(v) for v in look_at),
             state.up_axis.value,
         )

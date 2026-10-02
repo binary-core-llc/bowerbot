@@ -163,10 +163,12 @@ TOOLS: list[skills.Tool] = [
                         "(the height in a Z-up project)."
                     ),
                 },
-                "rotate_y": {
+                "rotate_up": {
                     "type": "number",
                     "description": (
-                        "Rotation around Y axis in degrees. 0 = facing forward."
+                        "Turn around the project's up axis in degrees, "
+                        "counter-clockwise seen from above: it spins the "
+                        "object on the floor. 0 = as the asset was modelled."
                     ),
                     "default": 0.0,
                 },
@@ -443,9 +445,12 @@ TOOLS: list[skills.Tool] = [
                         "'absolute' mode, an offset in 'bounds_offset' mode."
                     ),
                 },
-                "rotate_y": {
+                "rotate_up": {
                     "type": "number",
-                    "description": "Rotation around Y axis in degrees.",
+                    "description": (
+                        "Turn around the parent asset's up axis in degrees, "
+                        "counter-clockwise seen from above."
+                    ),
                     "default": 0.0,
                 },
                 "position_mode": {

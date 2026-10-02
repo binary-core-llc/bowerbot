@@ -20,10 +20,15 @@ from bowerbot.utils import usd
 # ── Reading transforms ──
 
 
-def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, float]:
-    """Return ``(tx, ty, tz, ry)`` resolved on ``prim``; missing ops read as 0."""
+def read_translate_and_turn(
+    prim: Usd.Prim, up_axis: str,
+) -> tuple[float, float, float, float]:
+    """Return ``(tx, ty, tz, turn)``: the prim's translate and its turn around the up axis.
+
+    Missing ops read as 0.
+    """
     xformable = UsdGeom.Xformable(prim)
-    tx = ty = tz = ry = 0.0
+    tx = ty = tz = turn = 0.0
     for op in xformable.GetOrderedXformOps():
         if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
             value = op.Get()
@@ -32,8 +37,8 @@ def read_translate_and_rotate_y(prim: Usd.Prim) -> tuple[float, float, float, fl
         elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
             value = op.Get()
             if value is not None:
-                ry = float(value[1])
-    return tx, ty, tz, ry
+                turn = float(value[usd.metrics.axis_index(up_axis)])
+    return tx, ty, tz, turn
 
 
 def extract_position(prim: Usd.Prim) -> dict[str, float] | None:
@@ -82,55 +87,58 @@ def add_xform_op(
     return xformable.AddXformOp(op_type, opSuffix=namespace or "")
 
 
-def set_transform(
-    stage: Usd.Stage,
-    prim_path: str,
-    translate: tuple[float, float, float],
-    rotate: tuple[float, float, float] = (0.0, 0.0, 0.0),
+def up_turn(angle: float, up_axis: str) -> schemas.Vec3:
+    """The rotateXYZ degrees that turn *angle* around the up axis.
+
+    The turn spins an object on the floor, counter-clockwise seen from above.
+    """
+    return (0.0, 0.0, angle) if up_axis == "Z" else (0.0, angle, 0.0)
+
+
+def set_xform(
+    prim: Usd.Prim,
+    *,
+    translate: schemas.PartialVec3 | None = None,
+    rotate: schemas.PartialVec3 | None = None,
+    scale: schemas.PartialVec3 | None = None,
 ) -> None:
-    """Update translate/rotate on an existing prim in place."""
-    prim = stage.GetPrimAtPath(prim_path)
-    if not prim.IsValid():
-        msg = f"Prim not found: {prim_path}"
-        raise ValueError(msg)
+    """Set the translate, rotateXYZ and scale of a prim: the ones that are given.
 
+    An axis left out (None) keeps the value the op has now. An op the prim
+    does not have yet is added, in translate, rotate, scale order. A prim that
+    carries other transform ops is refused: adding to them would move it wrong.
+    """
     xformable = UsdGeom.Xformable(prim)
-    tx, ty, tz = translate
-    rx, ry, rz = rotate
+    own = constants.TransformUsd.PLACEMENT_OPS
+    ops = {op.GetOpName(): op for op in xformable.GetOrderedXformOps()}
+    wanted = (
+        (own[0], translate, Gf.Vec3d, 0.0, xformable.AddTranslateOp),
+        (own[1], rotate, Gf.Vec3f, 0.0, xformable.AddRotateXYZOp),
+        (own[2], scale, Gf.Vec3f, 1.0, xformable.AddScaleOp),
+    )
+    added = False
+    for name, value, vec_type, default, add_op in wanted:
+        if value is None:
+            continue
+        op = ops.get(name)
+        if op is None:
+            foreign = sorted(n for n in ops if n not in own)
+            if foreign:
+                raise ValueError(
+                    f"{prim.GetPath()} carries transform ops BowerBot did not author "
+                    f"({', '.join(foreign)}); adjust them with set_prim_attribute instead.",
+                )
+            op = ops[name] = add_op()
+            added = True
+        current = op.Get()
+        kept = (
+            (default, default, default) if current is None
+            else (float(current[0]), float(current[1]), float(current[2]))
+        )
+        op.Set(vec_type(*usd.values.fill_vec3(value, kept)))
+    if added:
+        xformable.SetXformOpOrder([ops[name] for name in own if name in ops])
 
-    found_translate = False
-    found_rotate = False
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
-            if op.GetOpName() == "xformOp:translate":
-                op.Set(Gf.Vec3d(tx, ty, tz))
-                found_translate = True
-        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            op.Set(Gf.Vec3f(rx, ry, rz))
-            found_rotate = True
-
-    if not found_translate:
-        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-    if not found_rotate and any(v != 0.0 for v in (rx, ry, rz)):
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
-
-
-def update_translate_op(prim: Usd.Prim, value: Gf.Vec3d) -> None:
-    """Update the first translate xform op on *prim*."""
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpName() == "xformOp:translate":
-            op.Set(value)
-            return
-
-
-def update_rotate_op(prim: Usd.Prim, value: Gf.Vec3f) -> None:
-    """Update the first rotateXYZ xform op on *prim*."""
-    xformable = UsdGeom.Xformable(prim)
-    for op in xformable.GetOrderedXformOps():
-        if op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
-            op.Set(value)
-            return
 
 # ── Baking a transform into geometry ──
 

@@ -60,6 +60,7 @@ from bowerbot.schemas.surface import SurfaceTriangles
 from bowerbot.schemas.textures import HDRIFormat
 from bowerbot.schemas.textures import TextureCategory
 from bowerbot.schemas.transforms import LayoutPattern
+from bowerbot.schemas.transforms import PartialVec3
 from bowerbot.schemas.transforms import PositionMode
 from bowerbot.schemas.transforms import SceneObject
 from bowerbot.schemas.transforms import TransformParams
@@ -98,6 +99,7 @@ __all__ = [
     "LightTypeSchemaInfo",
     "LinearPattern",
     "OpinionKind",
+    "PartialVec3",
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",
     "PhysicsJointType",

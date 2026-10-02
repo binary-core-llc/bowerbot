@@ -172,7 +172,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Lighting/Lamp_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -398,7 +398,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_02",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -573,7 +573,7 @@ validation:
 intent: bounds_offset mode, turned 30 degrees
 
 SUMMARY
-  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="A", parent_prim_path="/Scene/Furniture/Table_02", group="Architecture", translate_x=0.0, translate_y=0.0, translate_z=0.0, rotate_y=30.0, position_mode="bounds_offset")
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="A", parent_prim_path="/Scene/Furniture/Table_02", group="Architecture", translate_x=0.0, translate_y=0.0, translate_z=0.0, rotate_up=30.0, position_mode="bounds_offset")
   current project: golden
   said: ok: Added A to table at /Scene/Furniture/Table_02/asset/contents/Architecture/A_03
 
@@ -638,7 +638,7 @@ full answer:
       "z": 77.5
     },
     "prim_path": "/Scene/Furniture/Table_02/asset/contents/Architecture/A_03",
-    "rotation_y": 30.0
+    "rotation_up": 30.0
   }
 
 files:
@@ -861,7 +861,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_02/asset/contents/Furniture/B_04",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1072,7 +1072,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_02/asset/contents/Lighting/C_05",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -1284,7 +1284,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Table_02/asset/contents/Products/D_06",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:

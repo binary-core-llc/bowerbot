@@ -46,14 +46,23 @@ def unpack_vec3(
     kx: str,
     ky: str,
     kz: str,
-) -> tuple[float, float, float] | None:
-    """Read a triple of optional keys; return ``None`` if all are missing."""
+) -> schemas.PartialVec3 | None:
+    """Read a triple of optional keys; ``None`` if all are missing, else None per missing axis."""
     if all(params.get(k) is None for k in (kx, ky, kz)):
         return None
+    x, y, z = (None if params.get(k) is None else float(params[k]) for k in (kx, ky, kz))
+    return (x, y, z)
+
+
+def fill_vec3(given: schemas.PartialVec3 | None, current: schemas.Vec3) -> schemas.Vec3:
+    """*given* with each axis that was left out taken from *current*."""
+    if given is None:
+        return current
+    gx, gy, gz = given
     return (
-        float(params.get(kx, 0.0)),
-        float(params.get(ky, 0.0)),
-        float(params.get(kz, 0.0)),
+        current[0] if gx is None else gx,
+        current[1] if gy is None else gy,
+        current[2] if gz is None else gz,
     )
 
 

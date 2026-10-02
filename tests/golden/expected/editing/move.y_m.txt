@@ -170,7 +170,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -344,7 +344,7 @@ full answer:
       "z": 1.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -391,7 +391,7 @@ validation:
 intent: turn it only
 
 SUMMARY
-  call: move_asset(prim_path="/Scene/Furniture/Chair_01", rotate_y=45.0)
+  call: move_asset(prim_path="/Scene/Furniture/Chair_01", rotate_up=45.0)
   current project: golden
   said: ok: Moved /Scene/Furniture/Chair_01 to (2.0, 0.0, 1.0)
 
@@ -420,7 +420,7 @@ full answer:
       "z": 1.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 45.0
+    "rotation_up": 45.0
   }
 
 files:
@@ -496,7 +496,7 @@ full answer:
       "z": 1.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 45.0
+    "rotation_up": 45.0
   }
 
 files:

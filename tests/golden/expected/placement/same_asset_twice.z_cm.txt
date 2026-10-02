@@ -172,7 +172,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -387,7 +387,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/Chair_02",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -552,7 +552,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Furniture/chair_03",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:

@@ -146,15 +146,18 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
         raise ValueError(f"Prim not found: {prim_path}")
 
     added = authoring.placement.parse_added_asset_path(prim_path)
-    cur_tx, cur_ty, cur_tz, cur_ry = usd.transforms.read_translate_and_rotate_y(prim)
+    up_axis = state.up_axis.value
+    cur_tx, cur_ty, cur_tz, cur_turn = usd.transforms.read_translate_and_turn(prim, up_axis)
     if added is not None:
         # An added asset's translate is in its parent asset's frame; axes left out keep
         # where it is in the world.
         cur_tx, cur_ty, cur_tz = usd.transforms.world_translation(prim)
-    tx = float(params["translate_x"]) if params.get("translate_x") is not None else cur_tx
-    ty = float(params["translate_y"]) if params.get("translate_y") is not None else cur_ty
-    tz = float(params["translate_z"]) if params.get("translate_z") is not None else cur_tz
-    ry = float(params["rotate_y"]) if params.get("rotate_y") is not None else cur_ry
+    tx, ty, tz = usd.values.fill_vec3(
+        usd.values.unpack_vec3(params, "translate_x", "translate_y", "translate_z"),
+        (cur_tx, cur_ty, cur_tz),
+    )
+    # Without rotate_up the prim keeps the whole rotation it has.
+    turn = float(params["rotate_up"]) if params.get("rotate_up") is not None else None
 
     if added is not None:
         parent_asset_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
@@ -180,10 +183,14 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             project_up_axis=state.up_axis.value,
         )
 
+        _, parent_up_axis = authoring.asset_folder.asset_metrics(
+            parent_asset_dir,
+            project_mpu=state.meters_per_unit, project_up_axis=up_axis,
+        )
         success = authoring.placement.move_added_asset(
             parent_asset_dir, group, prim_name,
             translate=local,
-            rotate=(0.0, ry, 0.0),
+            rotate=None if turn is None else usd.transforms.up_turn(turn, parent_up_axis),
         )
         if not success:
             msg = f"Failed to update the transform of {prim_path}"
@@ -194,9 +201,10 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
             for v in usd.transforms.world_translation(state.stage.GetPrimAtPath(prim_path))
         )
     else:
-        usd.transforms.set_transform(
-            state.stage, prim_path,
-            translate=(tx, ty, tz), rotate=(0.0, ry, 0.0),
+        usd.transforms.set_xform(
+            prim,
+            translate=(tx, ty, tz),
+            rotate=None if turn is None else usd.transforms.up_turn(turn, up_axis),
         )
         authoring.stage.save_stage(state.stage)
 
@@ -206,7 +214,7 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
     return {
         "prim_path": prim_path,
         "position": {"x": tx, "y": ty, "z": tz},
-        "rotation_y": ry,
+        "rotation_up": cur_turn if turn is None else turn,
         "message": f"Moved {prim_path} to ({tx}, {ty}, {tz})",
     }
 

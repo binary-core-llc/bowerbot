@@ -414,7 +414,7 @@ def test_move_asset_with_rotation():
         r = asyncio.run(_helpers.exec_tool(state, "move_asset", {
             "prim_path": prim_path,
             "translate_x": 5.0, "translate_y": 0.0, "translate_z": 3.0,
-            "rotate_y": 90.0,
+            "rotate_up": 90.0,
         }))
         assert r.success, r.error
         assert r.data["position"]["x"] == 5.0

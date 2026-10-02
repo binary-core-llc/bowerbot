@@ -52,16 +52,13 @@ def add_references(
         unit_scale, up_axis_correction = conform[asset_path]
 
         wrapper = stage.DefinePrim(scene_object.prim_path, "Xform")
-        xformable = UsdGeom.Xformable(wrapper)
-
-        tx, ty, tz = scene_object.translate
-        rx, ry, rz = scene_object.rotate
         sx, sy, sz = scene_object.scale
-        final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
-
-        xformable.AddTranslateOp().Set(Gf.Vec3d(tx, ty, tz))
-        xformable.AddRotateXYZOp().Set(Gf.Vec3f(rx, ry, rz))
-        xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+        usd.transforms.set_xform(
+            wrapper,
+            translate=scene_object.translate,
+            rotate=scene_object.rotate,
+            scale=(sx * unit_scale, sy * unit_scale, sz * unit_scale),
+        )
 
         asset_prim = stage.DefinePrim(
             f"{scene_object.prim_path}/asset", "Xform",
@@ -336,11 +333,10 @@ def add_asset_to_parent(
     sx, sy, sz = transform.scale
     final_scale = (sx * unit_scale, sy * unit_scale, sz * unit_scale)
 
-    xformable = UsdGeom.Xformable(wrapper)
-    xformable.ClearXformOpOrder()
-    xformable.AddTranslateOp().Set(Gf.Vec3d(*transform.translate))
-    xformable.AddRotateXYZOp().Set(Gf.Vec3f(*transform.rotate))
-    xformable.AddScaleOp().Set(Gf.Vec3f(*final_scale))
+    UsdGeom.Xformable(wrapper).ClearXformOpOrder()
+    usd.transforms.set_xform(
+        wrapper, translate=transform.translate, rotate=transform.rotate, scale=final_scale,
+    )
 
     asset_inner = stage.DefinePrim(f"{wrapper_path}/asset", "Xform")
     if up_axis_correction is not None:
@@ -363,12 +359,13 @@ def move_added_asset(
     parent_asset_dir: Path,
     group: str,
     prim_name: str,
-    translate: tuple[float, float, float],
-    rotate: tuple[float, float, float],
+    translate: schemas.Vec3,
+    rotate: schemas.Vec3 | None = None,
 ) -> bool:
     """Update translate/rotate on an added asset's wrapper in ``contents.usda``.
 
-    *translate* is in the parent asset's own units and axes.
+    *translate* is in the parent asset's own units and axes. Without *rotate*
+    the wrapper keeps the rotation it has.
     """
     contents_path = parent_asset_dir / constants.ASWFLayerNames.CONTENTS
     if not contents_path.exists():
@@ -384,22 +381,7 @@ def move_added_asset(
     if not wrapper or not wrapper.IsValid():
         return False
 
-    xformable = UsdGeom.Xformable(wrapper)
-    existing_scale_op = next(
-        (op for op in xformable.GetOrderedXformOps()
-         if op.GetOpType() == UsdGeom.XformOp.TypeScale),
-        None,
-    )
-    existing_scale = (
-        existing_scale_op.Get() if existing_scale_op is not None
-        else Gf.Vec3f(1.0, 1.0, 1.0)
-    )
-
-    xformable.ClearXformOpOrder()
-    xformable.AddTranslateOp().Set(Gf.Vec3d(*translate))
-    xformable.AddRotateXYZOp().Set(Gf.Vec3f(*rotate))
-    xformable.AddScaleOp().Set(existing_scale)
-
+    usd.transforms.set_xform(wrapper, translate=translate, rotate=rotate)
     stage.Save()
     logger.info(
         "Updated added asset %s in %s/%s",

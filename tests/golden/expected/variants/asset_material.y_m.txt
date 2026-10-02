@@ -178,7 +178,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_01",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:
@@ -465,7 +465,7 @@ full answer:
       "z": 0.0
     },
     "prim_path": "/Scene/Props/Lamp_02",
-    "rotation_y": 0.0
+    "rotation_up": 0.0
   }
 
 files:

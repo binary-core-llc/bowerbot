@@ -157,8 +157,9 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             mode = schemas.PositionMode(
                 params.get("position_mode", schemas.PositionMode.BOUNDS_OFFSET.value),
             )
+            # In an asset's frame a value left out counts as 0 (the offset from its bounds).
             translate = authoring.placement.resolve_asset_position(
-                mode, translate,
+                mode, usd.values.fill_vec3(translate, (0.0, 0.0, 0.0)),
                 asset_dir=asset_dir,
                 world_to_local_mat=authoring.placement.world_to_frame_matrix(
                     state.stage, ref_prim_path,

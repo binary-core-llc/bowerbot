@@ -247,8 +247,9 @@ TOOLS: list[skills.Tool] = [
     skills.Tool(
         name="move_asset",
         description=(
-            "Move an existing object. Any axis (translate_x, translate_y, "
-            "translate_z, rotate_y) you omit keeps its current value, so "
+            "Move an existing object. Any value (translate_x, translate_y, "
+            "translate_z, rotate_up) you omit keeps what it has now (without "
+            "rotate_up the object keeps its whole rotation), so "
             "for single-axis moves pass only the axis the user asked to "
             "change. Use this instead of place_asset when repositioning "
             "an object already in the scene. translate_x/y/z are "
@@ -281,11 +282,12 @@ TOOLS: list[skills.Tool] = [
                     "type": "number",
                     "description": "New Z, in project units. Omit to keep current Z.",
                 },
-                "rotate_y": {
+                "rotate_up": {
                     "type": "number",
                     "description": (
-                        "Rotation around Y axis in degrees. Omit to keep "
-                        "current rotation."
+                        "Turn around the project's up axis in degrees, "
+                        "counter-clockwise seen from above; it replaces the "
+                        "rotation the object has. Omit to keep its rotation."
                     ),
                 },
             },

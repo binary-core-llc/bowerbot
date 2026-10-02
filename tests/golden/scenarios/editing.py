@@ -39,7 +39,7 @@ SCENARIOS = (
                 "move_asset", {"prim_path": "$chair", **model.at(2.0, 0.0, 1.0)}, note="move it"
             ),
             model.Step(
-                "move_asset", {"prim_path": "$chair", "rotate_y": 45.0}, note="turn it only"
+                "move_asset", {"prim_path": "$chair", "rotate_up": 45.0}, note="turn it only"
             ),
             model.Step(
                 "move_asset",
@@ -121,7 +121,7 @@ SCENARIOS = (
                     "asset_name": "Chair",
                     "group": "Furniture",
                     **model.at(4.0),
-                    "rotate_y": 90.0,
+                    "rotate_up": 90.0,
                 },
                 save="chair",
                 note="a chair turned a quarter: is it still standing on the floor?",

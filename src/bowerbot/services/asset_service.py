@@ -35,7 +35,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
+    turn = float(params.get("rotate_up", 0.0))
 
     safe_asset_name = usd.naming.clean_prim_name(asset_name, "asset name")
     group_path = authoring.placement.scene_group_path(group)
@@ -65,7 +65,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
             file_path=report.scene_ref_path,
         ),
         translate=(tx, ty, tz),
-        rotate=(0.0, ry, 0.0),
+        rotate=usd.transforms.up_turn(turn, state.up_axis.value),
     )
 
     authoring.placement.add_references(
@@ -80,7 +80,7 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         "prim_path": prim_path,
         "asset": asset_name,
         "position": {"x": tx, "y": ty, "z": tz},
-        "rotation_y": ry,
+        "rotation_up": turn,
         "intake": authoring.intake.intake_summary(report),
         "message": authoring.intake.placement_message(asset_name, prim_path, report),
     }
@@ -261,7 +261,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
-    ry = float(params.get("rotate_y", 0.0))
+    turn = float(params.get("rotate_up", 0.0))
 
     parent_asset_dir, ref_prim_path = authoring.placement.require_asset_context(
         state.stage, parent_prim_path,
@@ -307,6 +307,10 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
         report.scene_ref_path, assets_dir, parent_asset_dir,
     )
 
+    _, parent_up_axis = authoring.asset_folder.asset_metrics(
+        parent_asset_dir,
+        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+    )
     state.object_count += 1
     prim_name = f"{safe_asset_name}_{state.object_count:02d}"
 
@@ -318,7 +322,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
             ref_asset_path=ref_asset_path,
             transform=schemas.TransformParams(
                 translate=(tx, ty, tz),
-                rotate=(0.0, ry, 0.0),
+                rotate=usd.transforms.up_turn(turn, parent_up_axis),
             ),
             project_mpu=state.meters_per_unit,
             project_up_axis=state.up_axis.value,
@@ -344,7 +348,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
         "asset": asset_name,
         "parent": parent_asset_dir.name,
         "position": {"x": wx, "y": wy, "z": wz},
-        "rotation_y": ry,
+        "rotation_up": turn,
         "intake": authoring.intake.intake_summary(report),
         "message": (
             f"Added {asset_name} to {parent_asset_dir.name} at {composed_path}"

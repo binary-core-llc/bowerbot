@@ -250,14 +250,9 @@ def drop_placement(
 
 
 def _prototype_points(stage: Usd.Stage, prim_path: str, up: int) -> schemas.FloatArray:
-    """World-space vertices of a prototype, or its box corners if it has no mesh."""
-    triangles = usd.surface.collect_triangles(stage, [prim_path], up=up)
-    if triangles.count:
-        return np.concatenate([triangles.v0, triangles.v1, triangles.v2])
-    rng = usd.bounds.world_range(
-        stage.GetPrimAtPath(prim_path), usd.bounds.bounds_cache(include_render=True),
-    )
-    if rng is None:
+    """World-space points of a prototype's shape; refused when it has no geometry."""
+    points = usd.surface.shape_points(stage, prim_path, up)
+    if points is None:
         msg = f"Prototype {prim_path} has no geometry, so it cannot rest on a surface."
         raise ValueError(msg)
-    return usd.bounds.range_corners(rng)
+    return points

@@ -52,6 +52,8 @@ def run_usd_compliance_checker(file_path: str | Path) -> list[schemas.Validation
             message=f"{err.GetName()}: {err.GetMessage()}",
             prim_path=prim_path,
         ))
+    # USD runs its validators in parallel, so the order it reports in changes from run to run.
+    issues.sort(key=lambda issue: (issue.prim_path or "", issue.message))
     return issues
 
 

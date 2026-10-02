@@ -393,9 +393,16 @@ TOOLS: list[skills.Tool] = [
                     },
                     "description": (
                         "Map of relationship name -> list of target prim "
-                        "paths. Use for physics:simulationOwner (point at "
-                        "/Scene/Physics/PhysicsScene). A physics material "
-                        "is bound with create_physics_material, not here."
+                        "paths (scene paths; each must exist). Use for "
+                        "physics:filteredPairs on PhysicsFilteredPairsAPI: "
+                        "the bodies or colliders this prim must not collide "
+                        "with (e.g. a vehicle body and its front wheels, "
+                        "which no joint connects directly). Also for "
+                        "physics:simulationOwner (point at "
+                        "/Scene/Physics/PhysicsScene, scope='scene' only). "
+                        "With scope='asset' every target must be a prim of "
+                        "the same asset. A physics material is bound with "
+                        "create_physics_material, not here."
                     ),
                 },
                 "scope": {

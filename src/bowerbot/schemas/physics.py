@@ -27,6 +27,7 @@ class PhysicsApiName(StrEnum):
     COLLISION = "PhysicsCollisionAPI"
     MESH_COLLISION = "PhysicsMeshCollisionAPI"
     ARTICULATION_ROOT = "PhysicsArticulationRootAPI"
+    FILTERED_PAIRS = "PhysicsFilteredPairsAPI"
     DRIVE = "PhysicsDriveAPI"
     LIMIT = "PhysicsLimitAPI"
 

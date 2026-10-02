@@ -744,18 +744,75 @@ validation:
 
 
 === step 05: apply_physics_api
-intent: a collider on the ground mesh, owned by the World scene
+intent: from the asset, the scene's physics scene cannot be reached
 
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Architecture/Ground_01/asset/Plane", api_name="PhysicsCollisionAPI", scope="asset", relationships={"physics:simulationOwner": ["/Scene/Physics/World"]})
   current project: golden
+  said: REFUSED: physics:simulationOwner -> /Scene/Physics/World: with scope='asset' a relationship can only point to a prim of the same asset (ground); the asset's files cannot reach a prim outside it. Use scope='scene' for this.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "physics:simulationOwner -> /Scene/Physics/World: with scope='asset' a relationship can only point to a prim of the same asset (ground); the asset's files cannot reach a prim outside it. Use scope='scene' for this."
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)
+  /Scene/Architecture/Ground_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)
+  /Scene/Architecture/Ground_01/asset/Plane  [Mesh]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (-100.0000, 0.0000, 0.0000)  bounds (-125.0000, -25.0000, 0.0000)..(-75.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset  [Xform]  at (-100.0000, 0.0000, 0.0000)  bounds (-125.0000, -25.0000, 0.0000)..(-75.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (-100.0000, 0.0000, 25.0000)  bounds (-125.0000, -25.0000, 0.0000)..(-75.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Props/Crate_03  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (75.0000, -25.0000, 0.0000)..(125.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset  [Xform]  at (100.0000, 0.0000, 0.0000)  bounds (75.0000, -25.0000, 0.0000)..(125.0000, 25.0000, 50.0000)
+  /Scene/Props/Crate_03/asset/Box  [Cube]  at (100.0000, 0.0000, 25.0000)  bounds (75.0000, -25.0000, 0.0000)..(125.0000, 25.0000, 50.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 06: apply_physics_api
+intent: a collider on the ground mesh, owned by the World scene
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Architecture/Ground_01/asset/Plane", api_name="PhysicsCollisionAPI", scope="scene", relationships={"physics:simulationOwner": ["/Scene/Physics/World"]})
+  current project: golden
   said: ok
 
   what changed:
-    ~ file assets/ground/ground.usda
-    + file assets/ground/phy.usda
+    ~ file scene.usda
     ~ /Scene/Architecture/Ground_01/asset/Plane  applied APIs: (none) → PhysicsCollisionAPI
-    ~ /Scene/Architecture/Ground_01/asset/Plane  rel physics:simulationOwner: (none) → (no targets)
+    ~ /Scene/Architecture/Ground_01/asset/Plane  rel physics:simulationOwner: (none) → /Scene/Physics/World
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -771,56 +828,41 @@ what USD printed while the tool ran:
 full answer:
   {
     "api_name": "PhysicsCollisionAPI",
-    "asset_folder": "ground",
-    "asset_prim_path": "/ground/Plane",
     "attributes_set": [],
-    "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
     "prim_path": "/Scene/Architecture/Ground_01/asset/Plane",
     "relationships_set": [
       "physics:simulationOwner"
     ],
-    "requested_prim_path": "/ground/Plane",
-    "scene_prim_path": "/Scene/Architecture/Ground_01/asset/Plane",
-    "scope": "asset"
+    "requested_prim_path": "/Scene/Architecture/Ground_01/asset/Plane",
+    "scope": "scene"
   }
 
 files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     assets/ground/geo.usda
-  ~ assets/ground/ground.usda
-  + assets/ground/phy.usda
+    assets/ground/ground.usda
     project.json
-    scene.usda
+  ~ scene.usda
 
 file changes:
-  ~ assets/ground/ground.usda:
-      --- assets/ground/ground.usda (before)
-      +++ assets/ground/ground.usda (after)
-      @@ -15,4 +15,5 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      +    prepend references = @./phy.usda@
-       )
-       {
-  + assets/ground/phy.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "ground"
-      )
-
-      over "ground"
-      {
-          over "Plane" (
-              prepend apiSchemas = ["PhysicsCollisionAPI"]
-          )
-          {
-              rel physics:simulationOwner = </Scene/Physics/World>
-          }
-      }
-
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -25,4 +25,11 @@
+                       float xformOp:rotateX = 90
+                       uniform token[] xformOpOrder = ["xformOp:rotateX"]
+      +
+      +                over "Plane" (
+      +                    prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +                )
+      +                {
+      +                    rel physics:simulationOwner = </Scene/Physics/World>
+      +                }
+                   }
+               }
 
 composed scene changes:
   --- composed scene (before)
@@ -836,7 +878,7 @@ composed scene changes:
                        float3[] extent = [(-5, 0, -5), (5, 0, 5)]
                        int[] faceVertexCounts = [4]
                        int[] faceVertexIndices = [0, 3, 2, 1]
-  +                    rel physics:simulationOwner
+  +                    rel physics:simulationOwner = </Scene/Physics/World>
                        point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
                    }
 
@@ -857,7 +899,7 @@ validation:
   valid, no issues
 
 
-=== step 06: apply_physics_api
+=== step 07: apply_physics_api
 intent: exact mesh collision on the ground
 
 SUMMARY
@@ -866,7 +908,8 @@ SUMMARY
   said: ok
 
   what changed:
-    ~ file assets/ground/phy.usda
+    ~ file assets/ground/ground.usda
+    + file assets/ground/phy.usda
     ~ /Scene/Architecture/Ground_01/asset/Plane  applied APIs: PhysicsCollisionAPI → PhysicsCollisionAPI, PhysicsMeshCollisionAPI
     ~ /Scene/Architecture/Ground_01/asset/Plane  attr physics:approximation: (none) → 'none'
 
@@ -903,25 +946,37 @@ files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     assets/ground/geo.usda
-    assets/ground/ground.usda
-  ~ assets/ground/phy.usda
+  ~ assets/ground/ground.usda
+  + assets/ground/phy.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/ground/phy.usda:
-      --- assets/ground/phy.usda (before)
-      +++ assets/ground/phy.usda (after)
-      @@ -7,7 +7,8 @@
+  ~ assets/ground/ground.usda:
+      --- assets/ground/ground.usda (before)
+      +++ assets/ground/ground.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./phy.usda@
+       )
        {
-           over "Plane" (
-      -        prepend apiSchemas = ["PhysicsCollisionAPI"]
-      +        prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
-           )
-           {
-      +        uniform token physics:approximation = "none"
-               rel physics:simulationOwner = </Scene/Physics/World>
-           }
+  + assets/ground/phy.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+      )
+
+      over "ground"
+      {
+          over "Plane" (
+              prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+          )
+          {
+              uniform token physics:approximation = "none"
+          }
+      }
+
 
 composed scene changes:
   --- composed scene (before)
@@ -937,7 +992,7 @@ composed scene changes:
                        int[] faceVertexCounts = [4]
                        int[] faceVertexIndices = [0, 3, 2, 1]
   +                    uniform token physics:approximation = "none"
-                       rel physics:simulationOwner
+                       rel physics:simulationOwner = </Scene/Physics/World>
                        point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
 
 world (position, bounds min..max, material shown):
@@ -957,7 +1012,7 @@ validation:
   valid, no issues
 
 
-=== step 07: apply_physics_api
+=== step 08: apply_physics_api
 
 SUMMARY
   call: apply_physics_api(prim_path="/Scene/Props/Crate_02/asset", api_name="PhysicsRigidBodyAPI", scope="asset")
@@ -1063,7 +1118,7 @@ validation:
   valid, no issues
 
 
-=== step 08: apply_physics_api
+=== step 09: apply_physics_api
 intent: an articulation root on the crate
 
 SUMMARY
@@ -1160,7 +1215,7 @@ validation:
   valid, no issues
 
 
-=== step 09: create_joint
+=== step 10: create_joint
 
 SUMMARY
   call: create_joint(joint_type="PhysicsPrismaticJoint", name="Slide", body0="/Scene/Props/Crate_02/asset", body1="/Scene/Props/Crate_03/asset", scope="scene", attributes={"physics:axis": "X"})
@@ -1211,7 +1266,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -71,4 +71,11 @@
+      @@ -78,4 +78,11 @@
                    float physics:gravityMagnitude = 981
                }
       +
@@ -1258,7 +1313,7 @@ validation:
   valid, no issues
 
 
-=== step 10: create_joint
+=== step 11: create_joint
 
 SUMMARY
   call: create_joint(joint_type="PhysicsSphericalJoint", name="Ball", body0="/Scene/Props/Crate_02/asset", body1="/Scene/Props/Crate_03/asset", scope="scene")
@@ -1306,7 +1361,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -78,4 +78,10 @@
+      @@ -85,4 +85,10 @@
                    rel physics:body1 = </Scene/Props/Crate_03/asset>
                }
       +
@@ -1352,7 +1407,7 @@ validation:
   valid, no issues
 
 
-=== step 11: create_joint
+=== step 12: create_joint
 
 SUMMARY
   call: create_joint(joint_type="PhysicsDistanceJoint", name="Rope", body0="/Scene/Props/Crate_02/asset", body1="/Scene/Props/Crate_03/asset", scope="scene", attributes={"physics:maxDistance": 2.0})
@@ -1403,7 +1458,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -84,4 +84,11 @@
+      @@ -91,4 +91,11 @@
                    rel physics:body1 = </Scene/Props/Crate_03/asset>
                }
       +
@@ -1452,7 +1507,7 @@ validation:
   valid, no issues
 
 
-=== step 12: create_joint
+=== step 13: create_joint
 
 SUMMARY
   call: create_joint(joint_type="PhysicsRevoluteJoint", name="Door", body0="/Scene/Props/Crate_02/asset", body1="/Scene/Props/Crate_03/asset", scope="scene")
@@ -1500,7 +1555,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -91,4 +91,10 @@
+      @@ -98,4 +98,10 @@
                    float physics:maxDistance = 2
                }
       +
@@ -1548,7 +1603,7 @@ validation:
   valid, no issues
 
 
-=== step 13: list_physics_api_properties
+=== step 14: list_physics_api_properties
 
 SUMMARY
   call: list_physics_api_properties(api_name="PhysicsDriveAPI", instance_name="angular")
@@ -1666,7 +1721,7 @@ validation:
   valid, no issues
 
 
-=== step 14: apply_physics_api
+=== step 15: apply_physics_api
 intent: a drive on the revolute joint
 
 SUMMARY
@@ -1718,7 +1773,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -92,6 +92,9 @@
+      @@ -99,6 +99,9 @@
                }
        
       -        def PhysicsRevoluteJoint "Door"
@@ -1766,7 +1821,7 @@ validation:
   valid, no issues
 
 
-=== step 15: apply_physics_api
+=== step 16: apply_physics_api
 intent: a limit on the revolute joint
 
 SUMMARY
@@ -1815,7 +1870,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -93,5 +93,5 @@
+      @@ -100,5 +100,5 @@
        
                def PhysicsRevoluteJoint "Door" (
       -            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
@@ -1855,7 +1910,7 @@ validation:
   valid, no issues
 
 
-=== step 16: create_joint
+=== step 17: create_joint
 intent: an asset joint anchored on the first crate
 
 SUMMARY
@@ -1989,7 +2044,7 @@ validation:
   valid, no issues
 
 
-=== step 17: list_joints
+=== step 18: list_joints
 
 SUMMARY
   call: list_joints(under_prim_path="/Scene/Physics")
@@ -2096,7 +2151,7 @@ validation:
   valid, no issues
 
 
-=== step 18: remove_physics_api
+=== step 19: remove_physics_api
 
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Physics/Door", api_name="PhysicsDriveAPI", instance_name="angular")
@@ -2143,7 +2198,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -93,8 +93,7 @@
+      @@ -100,8 +100,7 @@
        
                def PhysicsRevoluteJoint "Door" (
       -            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsLimitAPI:angular"]
@@ -2193,7 +2248,7 @@ validation:
   valid, no issues
 
 
-=== step 19: remove_physics_api
+=== step 20: remove_physics_api
 
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Physics/Door", api_name="PhysicsLimitAPI", instance_name="angular")
@@ -2239,7 +2294,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -92,7 +92,5 @@
+      @@ -99,7 +99,5 @@
                }
        
       -        def PhysicsRevoluteJoint "Door" (
@@ -2287,7 +2342,7 @@ validation:
   valid, no issues
 
 
-=== step 20: remove_physics_api
+=== step 21: remove_physics_api
 
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Props/Crate_02/asset", api_name="PhysicsArticulationRootAPI", scope="asset")
@@ -2387,7 +2442,7 @@ validation:
   valid, no issues
 
 
-=== step 21: remove_physics_api
+=== step 22: remove_physics_api
 
 SUMMARY
   call: remove_physics_api(prim_path="/Scene/Architecture/Ground_01/asset/Plane", api_name="PhysicsMeshCollisionAPI", scope="asset")
@@ -2444,8 +2499,8 @@ file changes:
            )
            {
       -        uniform token physics:approximation = "none"
-               rel physics:simulationOwner = </Scene/Physics/World>
            }
+       }
 
 composed scene changes:
   --- composed scene (before)
@@ -2461,7 +2516,7 @@ composed scene changes:
                        int[] faceVertexCounts = [4]
                        int[] faceVertexIndices = [0, 3, 2, 1]
   -                    uniform token physics:approximation = "none"
-                       rel physics:simulationOwner
+                       rel physics:simulationOwner = </Scene/Physics/World>
                        point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
 
 world (position, bounds min..max, material shown):
@@ -2489,7 +2544,7 @@ validation:
   valid, no issues
 
 
-=== step 22: setup_physics_scene
+=== step 23: setup_physics_scene
 intent: a gravity direction of zero length
 
 SUMMARY
@@ -2539,7 +2594,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -97,4 +97,10 @@
+      @@ -104,4 +104,10 @@
                    rel physics:body1 = </Scene/Props/Crate_03/asset>
                }
       +

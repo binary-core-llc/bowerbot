@@ -12,6 +12,7 @@ from typing import Any
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot.utils import authoring
+from bowerbot.utils import physics
 from bowerbot.utils import usd
 from bowerbot.utils import variants
 
@@ -189,6 +190,7 @@ def add_asset_attribute_variant(
         authoring.placement.normalize_asset_prim_path(k, ref_prim_path, default_prim): dict(v)
         for k, v in raw.items()
     }
+    physics.rules.refuse_in_variant(overrides)
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))
@@ -305,6 +307,7 @@ def add_scene_lighting_attribute_variant(
         "{'inputs:intensity': 1500, 'inputs:color': [1.0, 0.8, 0.6]}}).",
     )
     overrides = {k: dict(v) for k, v in raw.items()}
+    physics.rules.refuse_in_variant(overrides)
     set_as_default = bool(params.get("set_as_default", False))
     confirm_masked = bool(params.get("confirm_masked", False))
     clear_masking = bool(params.get("clear_masking_overrides", False))

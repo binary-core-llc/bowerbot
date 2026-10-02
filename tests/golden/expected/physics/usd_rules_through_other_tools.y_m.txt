@@ -741,131 +741,10 @@ intent: a variant that switches off the body the joint needs, made the default
 SUMMARY
   call: add_asset_attribute_variant(prim_path="/Scene/Props/Table_01", variant_set="state", variant_name="frozen", overrides={"/Scene/Props/Table_01/asset": {"physics:rigidBodyEnabled": false}}, set_as_default=true)
   current project: golden
-  said: ok: Added attribute variant 'frozen' to 'state' in table. WARNING: this change left the scene with 1 physics error(s) it did not have: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Undo it or fix the cause.
+  said: REFUSED: A variant cannot change physics attributes (/table.physics:rigidBodyEnabled): BowerBot has no physics variants. Set physics with apply_physics_api or create_joint, where every change is checked against USD's physics rules.
 
   what changed:
-    ~ file assets/table/table.usda
-    + file assets/table/variants.usda
-    ~ /Scene/Props/Table_01/asset  attr physics:rigidBodyEnabled: (none) → false
-    ~ /Scene/Props/Table_01/asset  variant set state: (none) → frozen of frozen
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-
-  project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
-
-  checks:
-    ⚠ this step made the scene invalid
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "asset_path": "<PROJECT>/assets/table",
-    "category": "attribute",
-    "default_selected": true,
-    "message": "Added attribute variant 'frozen' to 'state' in table. WARNING: this change left the scene with 1 physics error(s) it did not have: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI. Undo it or fix the cause.",
-    "overrides": {
-      "/table": {
-        "physics:rigidBodyEnabled": false
-      }
-    },
-    "physics_errors": [
-      "JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI."
-    ],
-    "variant_name": "frozen",
-    "variant_set": "state"
-  }
-
-files:
-    assets/crate/crate.usda
-    assets/crate/geo.usda
-    assets/table/geo.usda
-    assets/table/phy.usda
-  ~ assets/table/table.usda
-  + assets/table/variants.usda
-    project.json
-    scene.usda
-
-file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -15,5 +15,11 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      -    prepend references = @./phy.usda@
-      +    prepend references = [
-      +        @./variants.usda@,
-      +        @./phy.usda@
-      +    ]
-      +    variants = {
-      +        string state = "frozen"
-      +    }
-       )
-       {
-  + assets/table/variants.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "table"
-      )
-
-      over "table" (
-          prepend variantSets = "state"
-      )
-      {
-          variantSet "state" = {
-              "frozen" {
-                  bool physics:rigidBodyEnabled = 0
-
-              }
-          }
-      }
-
-
-composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -31,4 +31,6 @@
-               )
-               {
-  +                bool physics:rigidBodyEnabled = 0
-  +
-                   def Cube "Top"
-                   {
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(2.2500, 0.7750, 0.4000)
-  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
-  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
-  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-  /Scene/Props/Crate_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7500, 0.0000, -0.2500)..(2.2500, 0.5000, 0.2500)
-  /Scene/Props/Crate_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7500, 0.0000, -0.2500)..(2.2500, 0.5000, 0.2500)
-  /Scene/Props/Crate_02/asset/Box  [Cube]  at (2.0000, 0.2500, 0.0000)  bounds (1.7500, 0.0000, -0.2500)..(2.2500, 0.5000, 0.2500)  material (none)
-  /Scene/Physics  [Scope]
-  /Scene/Physics/Weld  [PhysicsFixedJoint]
-
-validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
-
-
-=== step 06: add_asset_attribute_variant
-intent: the same physics attribute in a variant that is not selected
-
-SUMMARY
-  call: add_asset_attribute_variant(prim_path="/Scene/Props/Table_01", variant_set="state", variant_name="parked", overrides={"/Scene/Props/Table_01/asset": {"physics:rigidBodyEnabled": false}})
-  current project: golden
-  said: ok: Added attribute variant 'parked' to 'state' in table
-
-  what changed:
-    ~ file assets/table/variants.usda
-    ~ /Scene/Props/Table_01/asset  variant set state: frozen of frozen → frozen of frozen, parked
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -880,17 +759,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_path": "<PROJECT>/assets/table",
-    "category": "attribute",
-    "default_selected": false,
-    "message": "Added attribute variant 'parked' to 'state' in table",
-    "overrides": {
-      "/table": {
-        "physics:rigidBodyEnabled": false
-      }
-    },
-    "variant_name": "parked",
-    "variant_set": "state"
+    "error": "A variant cannot change physics attributes (/table.physics:rigidBodyEnabled): BowerBot has no physics variants. Set physics with apply_physics_api or create_joint, where every change is checked against USD's physics rules."
   }
 
 files:
@@ -899,23 +768,11 @@ files:
     assets/table/geo.usda
     assets/table/phy.usda
     assets/table/table.usda
-  ~ assets/table/variants.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/table/variants.usda:
-      --- assets/table/variants.usda (before)
-      +++ assets/table/variants.usda (after)
-      @@ -13,4 +13,8 @@
-       
-               }
-      +        "parked" {
-      +            bool physics:rigidBodyEnabled = 0
-      +
-      +        }
-           }
-       }
+  (none)
 
 composed scene changes:
   (none)
@@ -934,8 +791,66 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
+
+
+=== step 06: add_asset_attribute_variant
+intent: the same physics attribute in a variant that is not selected
+
+SUMMARY
+  call: add_asset_attribute_variant(prim_path="/Scene/Props/Table_01", variant_set="state", variant_name="parked", overrides={"/Scene/Props/Table_01/asset": {"physics:rigidBodyEnabled": false}})
+  current project: golden
+  said: REFUSED: A variant cannot change physics attributes (/table.physics:rigidBodyEnabled): BowerBot has no physics variants. Set physics with apply_physics_api or create_joint, where every change is checked against USD's physics rules.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "A variant cannot change physics attributes (/table.physics:rigidBodyEnabled): BowerBot has no physics variants. Set physics with apply_physics_api or create_joint, where every change is checked against USD's physics rules."
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/table/geo.usda
+    assets/table/phy.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(2.2500, 0.7750, 0.4000)
+  /Scene/Props/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Props/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
+  /Scene/Props/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Props/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
+  /Scene/Props/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7500, 0.0000, -0.2500)..(2.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (2.0000, 0.0000, 0.0000)  bounds (1.7500, 0.0000, -0.2500)..(2.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (2.0000, 0.2500, 0.0000)  bounds (1.7500, 0.0000, -0.2500)..(2.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Physics  [Scope]
+  /Scene/Physics/Weld  [PhysicsFixedJoint]
+
+validation:
+  valid, no issues
 
 
 === step 07: apply_physics_api
@@ -983,7 +898,6 @@ files:
     assets/table/geo.usda
   ~ assets/table/phy.usda
     assets/table/table.usda
-    assets/table/variants.usda
     project.json
     scene.usda
 
@@ -1005,9 +919,9 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -33,5 +33,7 @@
-                   bool physics:rigidBodyEnabled = 0
-   
+  @@ -31,5 +31,7 @@
+               )
+               {
   -                def Cube "Top"
   +                def Cube "Top" (
   +                    apiSchemas = ["PhysicsRigidBodyAPI"]
@@ -1029,8 +943,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/Weld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 08: create_joint
@@ -1074,7 +987,6 @@ files:
     assets/table/geo.usda
     assets/table/phy.usda
     assets/table/table.usda
-    assets/table/variants.usda
     project.json
   ~ scene.usda
 
@@ -1097,7 +1009,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -101,4 +101,10 @@
+  @@ -99,4 +99,10 @@
                rel physics:body1 = </Scene/Props/Crate_02/asset>
            }
   +
@@ -1124,8 +1036,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/TopWeld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 09: add_asset_configuration_variant
@@ -1138,7 +1049,7 @@ SUMMARY
 
   what changed:
     ~ file assets/table/table.usda
-    ~ file assets/table/variants.usda
+    + file assets/table/variants.usda
     ~ /Scene  bounds: (-0.6000, 0.0000, -0.4000)..(2.2500, 0.7750, 0.4000) → (-0.5750, 0.0000, -0.2500)..(2.2500, 0.7500, 0.2500)
     ~ /Scene/Props/Table_01/asset  variant set parts: (none) → no_top of no_top
     ~ /Scene/Props/Table_01/asset/Top  active: (none) → false
@@ -1173,7 +1084,7 @@ files:
     assets/table/geo.usda
     assets/table/phy.usda
   ~ assets/table/table.usda
-  ~ assets/table/variants.usda
+  + assets/table/variants.usda
     project.json
     scene.usda
 
@@ -1181,45 +1092,48 @@ file changes:
   ~ assets/table/table.usda:
       --- assets/table/table.usda (before)
       +++ assets/table/table.usda (after)
-      @@ -20,4 +20,5 @@
-           ]
-           variants = {
+      @@ -15,5 +15,11 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      -    prepend references = @./phy.usda@
+      +    prepend references = [
+      +        @./variants.usda@,
+      +        @./phy.usda@
+      +    ]
+      +    variants = {
       +        string parts = "no_top"
-               string state = "frozen"
-           }
-  ~ assets/table/variants.usda:
-      --- assets/table/variants.usda (before)
-      +++ assets/table/variants.usda (after)
-      @@ -5,5 +5,5 @@
-       
-       over "table" (
-      -    prepend variantSets = "state"
-      +    prepend variantSets = ["state", "parts"]
+      +    }
        )
        {
-      @@ -18,4 +18,14 @@
-               }
-           }
-      +    variantSet "parts" = {
-      +        "no_top" {
-      +            over "Top" (
-      +                active = false
-      +            )
-      +            {
-      +            }
-      +
-      +        }
-      +    }
-       }
-       
+  + assets/table/variants.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      over "table" (
+          prepend variantSets = "parts"
+      )
+      {
+          variantSet "parts" = {
+              "no_top" {
+                  over "Top" (
+                      active = false
+                  )
+                  {
+                  }
+
+              }
+          }
+      }
+
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -32,14 +32,4 @@
+  @@ -31,14 +31,4 @@
+               )
                {
-                   bool physics:rigidBodyEnabled = 0
-  -
   -                def Cube "Top" (
   -                    apiSchemas = ["PhysicsRigidBodyAPI"]
   -                )
@@ -1229,8 +1143,9 @@ composed scene changes:
   -                    double3 xformOp:translate = (0, 0.75, 0)
   -                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
   -                }
-   
+  -
                    def Cube "Leg_L"
+                   {
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5750, 0.0000, -0.2500)..(2.2500, 0.7500, 0.2500)
@@ -1246,8 +1161,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/TopWeld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  valid, no issues
 
 
 === step 10: place_asset
@@ -1294,13 +1208,14 @@ SUMMARY
           rel physics:body0: /Scene/Props/Rig_03/asset/Base
           rel physics:body1: /Scene/Props/Rig_03/asset/Arm
     ~ /Scene  bounds: (-0.5750, 0.0000, -0.2500)..(2.2500, 0.7500, 0.2500) → (-0.5750, 0.0000, -0.2500)..(6.2000, 0.8000, 0.2500)
+    ~ validity: valid → INVALID
     + issue [error] /Scene/Props/Rig_03/asset/joints/Loose: JointNoEnabledRigidBody: Joint (/Scene/Props/Rig_03/asset/joints/Loose) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    ⚠ this step made the scene invalid
 
 EVIDENCE
 
@@ -1446,7 +1361,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -76,4 +76,47 @@
+  @@ -74,4 +74,47 @@
                }
            }
   +
@@ -1515,8 +1430,7 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/TopWeld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  INVALID, 1 issue(s):
   - [error] /Scene/Props/Rig_03/asset/joints/Loose: JointNoEnabledRigidBody: Joint (/Scene/Props/Rig_03/asset/joints/Loose) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
 
 
@@ -1525,7 +1439,7 @@ validation:
 SUMMARY
   call: validate_scene()
   current project: golden
-  said: ok: Found 2 error(s).
+  said: ok: Found 1 error(s).
 
   what changed:
     nothing
@@ -1543,21 +1457,16 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error_count": 2,
+    "error_count": 1,
     "is_valid": false,
     "issues": [
-      {
-        "message": "JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
-        "prim": "/Scene/Physics/Weld",
-        "severity": "error"
-      },
       {
         "message": "JointNoEnabledRigidBody: Joint (/Scene/Props/Rig_03/asset/joints/Loose) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.",
         "prim": "/Scene/Props/Rig_03/asset/joints/Loose",
         "severity": "error"
       }
     ],
-    "message": "Found 2 error(s)."
+    "message": "Found 1 error(s)."
   }
 
 files:
@@ -1599,6 +1508,5 @@ world (position, bounds min..max, material shown):
   /Scene/Physics/TopWeld  [PhysicsFixedJoint]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Physics/Weld: JointNoEnabledRigidBody: Joint (/Scene/Physics/Weld) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.
+  INVALID, 1 issue(s):
   - [error] /Scene/Props/Rig_03/asset/joints/Loose: JointNoEnabledRigidBody: Joint (/Scene/Props/Rig_03/asset/joints/Loose) must have at least one body relationship pointing to a prim with an enabled RigidBodyAPI.

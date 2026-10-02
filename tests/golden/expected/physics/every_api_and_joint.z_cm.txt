@@ -761,7 +761,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /ground/Plane does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -777,7 +777,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/ground/Plane",
+    "prim_path": "/Scene/Architecture/Ground_01/asset/Plane",
     "relationships_set": [
       "physics:simulationOwner"
     ],
@@ -874,7 +874,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /ground/Plane does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -892,7 +892,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": "PhysicsCollisionAPI",
     "instance_name": null,
-    "prim_path": "/ground/Plane",
+    "prim_path": "/Scene/Architecture/Ground_01/asset/Plane",
     "relationships_set": [],
     "requested_prim_path": "/ground/Plane",
     "scene_prim_path": "/Scene/Architecture/Ground_01/asset/Plane",
@@ -974,7 +974,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /crate does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -990,7 +990,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/crate",
+    "prim_path": "/Scene/Props/Crate_02/asset",
     "relationships_set": [],
     "requested_prim_path": "/crate",
     "scene_prim_path": "/Scene/Props/Crate_02/asset",
@@ -1080,7 +1080,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /crate does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1096,7 +1096,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/crate",
+    "prim_path": "/Scene/Props/Crate_02/asset",
     "relationships_set": [],
     "requested_prim_path": "/crate",
     "scene_prim_path": "/Scene/Props/Crate_02/asset",
@@ -1878,7 +1878,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /crate/joints/Glue does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1888,11 +1888,12 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset_folder": "crate",
+    "asset_prim_path": "/crate/joints/Glue",
     "attributes_set": [],
     "body0": "/crate/Box",
     "body1": "/crate",
     "joint_type": "PhysicsFixedJoint",
-    "prim_path": "/crate/joints/Glue",
+    "prim_path": "/Scene/Props/Crate_02/asset/joints/Glue",
     "scene_body0": "/Scene/Props/Crate_02/asset/Box",
     "scene_body1": "/Scene/Props/Crate_02/asset",
     "scope": "asset"

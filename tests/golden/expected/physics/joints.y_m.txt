@@ -541,7 +541,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /table does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -557,7 +557,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/table",
+    "prim_path": "/Scene/Props/Table_01/asset",
     "relationships_set": [],
     "requested_prim_path": "/table",
     "scene_prim_path": "/Scene/Props/Table_01/asset",
@@ -638,7 +638,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /crate does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -654,7 +654,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/crate",
+    "prim_path": "/Scene/Props/Crate_02/asset",
     "relationships_set": [],
     "requested_prim_path": "/crate",
     "scene_prim_path": "/Scene/Props/Crate_02/asset",
@@ -800,7 +800,6 @@ SUMMARY
 
   checks:
     ⚠ this step made the scene invalid
-    ⚠ the returned prim_path /table/joints/Hinge does not exist in the scene
 
 EVIDENCE
 
@@ -810,13 +809,14 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset_folder": "table",
+    "asset_prim_path": "/table/joints/Hinge",
     "attributes_set": [
       "physics:axis"
     ],
     "body0": "/table/Top",
     "body1": "/table/Leg_L",
     "joint_type": "PhysicsRevoluteJoint",
-    "prim_path": "/table/joints/Hinge",
+    "prim_path": "/Scene/Props/Table_01/asset/joints/Hinge",
     "scene_body0": "/Scene/Props/Table_01/asset/Top",
     "scene_body1": "/Scene/Props/Table_01/asset/Leg_L",
     "scope": "asset"

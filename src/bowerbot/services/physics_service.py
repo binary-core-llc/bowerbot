@@ -81,12 +81,20 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         "Service applied %s asset-level on %s (asset %s)",
         api_name.value, prim_path, asset_dir.name,
     )
+    # prim_path is where the API landed in the scene; the path inside the asset's
+    # own files is asset_prim_path.
+    asset_target = result["prim_path"]
+    scene_target = (
+        prim_path + asset_target[len(asset_local_path):]
+        if asset_target.startswith(asset_local_path) else prim_path
+    )
     return {
         **result,
+        "prim_path": scene_target,
         "scope": "asset",
         "asset_folder": asset_dir.name,
         "scene_prim_path": prim_path,
-        "asset_prim_path": asset_local_path,
+        "asset_prim_path": asset_target,
         "cleared_masking_opinions": physics.masking.cleared_rows(cleared),
     }
 
@@ -307,8 +315,11 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         "Service created %s asset-level (%s in %s)",
         joint_type.value, name, asset_dir.name,
     )
+    asset_joint = result["prim_path"]
     return {
         **result,
+        "prim_path": ref_prim_path + asset_joint[len(f"/{default_prim}"):],
+        "asset_prim_path": asset_joint,
         "scene_body0": body0,
         "scene_body1": body1,
     }

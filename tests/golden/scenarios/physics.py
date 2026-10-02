@@ -319,6 +319,28 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "physics/usd_rules_through_other_tools",
+        "A tool that is not a physics tool leaves a physics error: what the answer says.",
+        (
+            _place("table.usda", "Table", save="table"),
+            _place("crate.usda", "Crate", 2.0, save="crate"),
+            _api("$table/asset", "PhysicsRigidBodyAPI"),
+            _joint("Weld", "$table/asset", "$crate/asset"),
+            model.Step(
+                "add_asset_attribute_variant",
+                {
+                    "prim_path": "$table",
+                    "variant_set": "state",
+                    "variant_name": "frozen",
+                    "overrides": {"$table/asset": {"physics:rigidBodyEnabled": False}},
+                    "set_as_default": True,
+                },
+                note="a variant that switches off the body the joint needs, made the default",
+            ),
+            model.Step("validate_scene"),
+        ),
+    ),
+    model.Scenario(
         "physics/usd_rules_colliders_and_articulations",
         "Colliders and articulation roots USD's own rules do not accept.",
         (

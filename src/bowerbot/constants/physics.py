@@ -62,6 +62,8 @@ class PhysicsRules:
     }
     # The part's own axis a capsule or cylinder runs along; the order is the axis index.
     COLLIDER_AXES: tuple[str, ...] = ("X", "Y", "Z")
+    # Material purpose a collider looks up its physics material with.
+    MATERIAL_PURPOSE = "physics"
     # Namespace of every UsdPhysics attribute (physics:mass, drive:angular:physics:damping).
     ATTRIBUTE_NAMESPACE = "physics"
     # Keyword USD's own physics validators carry in the validation registry.
@@ -105,3 +107,5 @@ class PhysicsNamespace:
 
     # Scope under the asset's default prim that holds its joints.
     JOINTS_SCOPE = "joints"
+    # Scope under the asset's default prim that holds its physics materials.
+    MATERIALS_SCOPE = "physics_materials"

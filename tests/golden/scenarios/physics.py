@@ -61,6 +61,32 @@ def _shape(part: str, name: str, shape: str, note: str = "", **sizes: object) ->
     )
 
 
+def _grip(
+    prim: str, name: str, static: float, dynamic: float, note: str = "", **extra: object,
+) -> model.Step:
+    return model.Step(
+        "create_physics_material",
+        {"prim_path": prim, "material_name": name, "static_friction": static,
+         "dynamic_friction": dynamic, **extra},
+        note=note or f"physics material {name} on {prim}",
+    )
+
+
+def _bind_grip(prim: str, name: str, note: str = "", **extra: object) -> model.Step:
+    return model.Step(
+        "bind_physics_material",
+        {"prim_path": prim, "material_name": name, **extra},
+        note=note or f"bind physics material {name} to {prim}",
+    )
+
+
+def _ungrip(prim: str, note: str = "") -> model.Step:
+    return model.Step(
+        "remove_physics_material", {"prim_path": prim},
+        note=note or f"take the physics material off {prim}",
+    )
+
+
 SCENARIOS = (
     model.Scenario(
         "physics/scene",
@@ -346,6 +372,60 @@ SCENARIOS = (
                        note="nothing there any more"),
             model.Step("remove_collider_shape", {"prim_path": "$wagon/asset/Wheel_R/Tire"},
                        note="a mesh of the asset, not a collider shape"),
+            model.Step("get_physics_summary", {"prim_path": "$wagon"}),
+            model.Step("validate_scene"),
+        ),
+    ),
+    model.Scenario(
+        "physics/materials",
+        "Physics materials: friction and bounce bound to colliders, apart from the look.",
+        (
+            _place("wagon.usda", "Wagon", save="wagon"),
+            _place("ground.usda", "Ground", 6.0, save="ground"),
+            _api("$wagon/asset/Wheel_L", "PhysicsRigidBodyAPI"),
+            _shape("$wagon/asset/Wheel_L", "collider", "cylinder",
+                   radius=model.Meters(0.3), height=model.Meters(0.2), axis="X"),
+            _grip("$wagon/asset/Wheel_L", "rubber", 0.9, 0.8,
+                  note="rubber on a wheel part, in the asset"),
+            _bind_grip("$wagon/asset/Wheel_R", "rubber", scope="asset",
+                       note="the same material on the other wheel"),
+            _grip("$ground/asset/Plane", "soil", 0.6, 0.5, restitution=0.1, scope="scene",
+                  note="soil on the ground, in the scene"),
+            _bind_grip("$wagon/asset/Bed", "soil", scope="scene",
+                       note="the scene's material on a part of a placed asset"),
+            _grip("$wagon/asset/Wheel_L", "rubber", 1.0, 0.9, restitution=0.2, scope="asset",
+                  note="the same name again: its values are updated"),
+            model.Step("get_physics_summary", {"prim_path": "$wagon"}),
+            model.Step("get_physics_summary", {"prim_path": "/Scene/Physics"}),
+            model.Step(
+                "create_material",
+                {"prim_path": "$wagon/asset/Wheel_L/Tire", "material_name": "black",
+                 "base_color_r": 0.05, "base_color_g": 0.05, "base_color_b": 0.05},
+                note="a look on the tire: a separate binding",
+            ),
+            model.Step("list_materials", note="looks only: the physics materials are not looks"),
+            model.Step("remove_material", {"prim_path": "$wagon/asset/Wheel_L/Tire"},
+                       note="removing the look leaves the physics material bound"),
+            model.Step("validate_scene"),
+            _grip("$wagon/asset/Bed", "ice", -0.1, 0.05, note="friction below zero"),
+            _grip("$wagon/asset/Bed", "ball", 0.5, 0.5, restitution=2.0,
+                  note="bounce above 1"),
+            _grip("$wagon/asset/Bed", "my-grip", 0.5, 0.5, note="a name USD cannot take"),
+            _grip("$wagon/asset/Nope", "rubber", 0.5, 0.5, note="a prim that does not exist"),
+            _grip("$ground/asset/Plane", "PhysicsScene", 0.5, 0.5, scope="scene",
+                  note="a name another prim has"),
+            _bind_grip("$wagon/asset/Bed", "velvet", note="a material that does not exist"),
+            _bind_grip("$wagon/asset/Wheel_R", "soil", scope="scene",
+                       note="a scene binding over the asset's: this placement uses soil"),
+            _bind_grip("$wagon/asset/Wheel_R", "rubber", scope="asset",
+                       note="an asset binding the scene binding would hide"),
+            _ungrip("$wagon/asset/Wheel_R", note="the scene binding goes first"),
+            _ungrip("$wagon/asset/Wheel_R", note="then the asset's; rubber is still used"),
+            _ungrip("$wagon/asset/Wheel_R", note="nothing left on this prim"),
+            _ungrip("$wagon/asset/Wheel_L", note="the last user of rubber: it is deleted too"),
+            _ungrip("$wagon/asset/Bed"),
+            _ungrip("$ground/asset/Plane", note="the last user of soil"),
+            _ungrip("$wagon/asset/Nope", note="a prim that does not exist"),
             model.Step("get_physics_summary", {"prim_path": "$wagon"}),
             model.Step("validate_scene"),
         ),

@@ -11,6 +11,7 @@ from pxr import Gf
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdPhysics
+from pxr import UsdShade
 
 from bowerbot import config
 from tests import _helpers
@@ -1251,3 +1252,122 @@ def test_removing_the_only_collider_shape_leaves_nothing_behind():
             assert not phy.exists()
             assert state.stage_path.read_text() == scene_before
             assert "phy.usda" not in (phy.parent / "cart.usda").read_text()
+
+
+# ── physics materials ──
+
+
+def _physics_material_of(state, prim_path: str):
+    """The physics material a prim resolves to, and the look it renders with."""
+    stage = Usd.Stage.Open(str(state.stage_path))
+    binding = UsdShade.MaterialBindingAPI(stage.GetPrimAtPath(prim_path))
+    grip = binding.ComputeBoundMaterial("physics")[0]
+    look = binding.ComputeBoundMaterial()[0]
+    # With no physics binding USD hands back the look; that one carries no physics values.
+    if grip and not grip.GetPrim().HasAPI(UsdPhysics.MaterialAPI):
+        grip = None
+    values = None
+    if grip:
+        api = UsdPhysics.MaterialAPI(grip.GetPrim())
+        values = (
+            round(api.GetStaticFrictionAttr().Get(), 6),
+            round(api.GetDynamicFrictionAttr().Get(), 6),
+            round(api.GetRestitutionAttr().Get(), 6),
+        )
+    return (str(grip.GetPath()) if grip else None), values, (str(look.GetPath()) if look else None)
+
+
+def _physics_material_reaches_the_colliders(scope: str) -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        shape = asyncio.run(_helpers.exec_tool(state, "add_collider_shape", {
+            "prim_path": wheel, "name": "collider", "shape": "sphere", "radius": 0.2,
+            "scope": scope,
+        }))
+        assert shape.success, shape.error
+        r = asyncio.run(_helpers.exec_tool(state, "create_physics_material", {
+            "prim_path": wheel, "material_name": "rubber", "scope": scope,
+            "static_friction": 0.9, "dynamic_friction": 0.8, "restitution": 0.1,
+        }))
+        assert r.success, r.error
+
+        # Bound to the part: the collider shape and the mesh under it both get it.
+        for prim_path in (shape.data["prim_path"], f"{wheel}/Tire"):
+            grip, values, _look = _physics_material_of(state, prim_path)
+            assert grip is not None and grip.endswith("/rubber"), (prim_path, grip)
+            assert values == (0.9, 0.8, 0.1)
+
+        valid = asyncio.run(_helpers.exec_tool(state, "validate_scene", {}))
+        assert valid.success and valid.data["is_valid"], valid.data
+
+
+def test_physics_material_reaches_the_colliders_asset_scope():
+    _physics_material_reaches_the_colliders("asset")
+
+
+def test_physics_material_reaches_the_colliders_scene_scope():
+    _physics_material_reaches_the_colliders("scene")
+
+
+def test_a_look_and_a_physics_material_do_not_touch_each_other():
+    """Removing the look keeps the physics material, and the other way round."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        tire = f"{wheel}/Tire"
+
+        def call(tool: str, **params):
+            result = asyncio.run(_helpers.exec_tool(state, tool, params))
+            assert result.success, result.error
+            return result.data
+
+        call("create_material", prim_path=tire, material_name="black")
+        call("create_physics_material", prim_path=tire, material_name="rubber",
+             static_friction=0.9, dynamic_friction=0.8)
+        grip, _values, look = _physics_material_of(state, tire)
+        assert grip.endswith("/physics_materials/rubber") and look.endswith("/mtl/black")
+
+        assert call("remove_material", prim_path=tire)["removed"] is True
+        grip, _values, look = _physics_material_of(state, tire)
+        assert grip.endswith("/physics_materials/rubber") and look is None
+
+        call("create_material", prim_path=tire, material_name="black")
+        removed = call("remove_physics_material", prim_path=tire)
+        assert removed["removed"] is True and removed["material_deleted"] is True
+        grip, _values, look = _physics_material_of(state, tire)
+        assert grip is None and look.endswith("/mtl/black")
+
+        listed = call("list_materials")["materials"]
+        assert [m["material_name"] for m in listed] == ["black"]
+
+
+def test_removing_the_last_physics_material_leaves_nothing_behind():
+    """After the removal the asset has no physics file and the scene no leftover opinion."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        phy = state.project.assets_dir / "cart" / "phy.usda"
+        scene_before = state.stage_path.read_text()
+
+        for scope in ("asset", "scene"):
+            made = asyncio.run(_helpers.exec_tool(state, "create_physics_material", {
+                "prim_path": wheel, "material_name": "rubber", "scope": scope,
+                "static_friction": 0.9, "dynamic_friction": 0.8,
+            }))
+            assert made.success, made.error
+            assert made.data["scope"] == scope
+            assert phy.exists() == (scope == "asset")
+
+            removed = asyncio.run(_helpers.exec_tool(state, "remove_physics_material", {
+                "prim_path": wheel,
+            }))
+            assert removed.success, removed.error
+            assert removed.data["removed"] is True
+            assert removed.data["material_deleted"] is True
+            assert not phy.exists()
+            assert "phy.usda" not in (phy.parent / "cart.usda").read_text()
+            if scope == "asset":
+                assert state.stage_path.read_text() == scene_before
+            else:
+                # The scene keeps the physics scene the first physics edit adds, nothing else.
+                stage = Usd.Stage.Open(str(state.stage_path))
+                assert not stage.GetPrimAtPath("/Scene/Physics/rubber").IsValid()
+                assert stage.GetRootLayer().GetPrimAtPath(wheel) is None

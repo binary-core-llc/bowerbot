@@ -312,6 +312,43 @@ written. A prim from the asset's own geometry is refused (use
 `remove_physics_api` to stop a mesh from colliding). A path with
 nothing at it answers `removed: false`.
 
+## Physics materials (friction and bounce)
+
+A collider has no grip of its own. A physics material gives it one:
+`static_friction` (resists starting to slide), `dynamic_friction`
+(resists sliding, usually a little lower) and `restitution` (bounce,
+0 to 1). The numbers have no unit. In USD it is a Material prim with
+`PhysicsMaterialAPI`, bound with the `physics` purpose
+(`material:binding:physics`).
+
+- Bind it to a collider, or to a part above colliders: every collider
+  at or under that prim uses it. Bind `rubber` to a wheel part and its
+  collider shape gets it.
+- Both sides of a contact need one: the tires AND the ground.
+- It is separate from the look. `create_material`, `bind_material`
+  and `remove_material` never touch a physics material, and the
+  physics-material tools never touch the look. `list_materials` shows
+  looks only; `get_physics_summary` shows physics materials (on a
+  placement for the asset's, on `/Scene/Physics` for the scene's).
+- `scope="asset"` keeps the material in the asset's `phy.usda` (every
+  placement has it); `scope="scene"` keeps it under `/Scene/Physics`
+  for this scene. A scene binding wins over the asset's on that
+  placement; an asset binding it would hide is refused.
+
+### `create_physics_material(prim_path, material_name, static_friction, dynamic_friction, restitution?, scope?)`
+Create the material and bind it to `prim_path`. Calling it again with
+the same `material_name` updates its values. Friction below zero and
+restitution outside 0 to 1 are refused.
+
+### `bind_physics_material(prim_path, material_name, scope?)`
+Bind a material that already exists to another prim, by name. A name
+that does not exist in that scope is refused.
+
+### `remove_physics_material(prim_path)`
+Take the binding off the prim, wherever it was written. The material
+is deleted too once nothing else binds it. A prim with no binding of
+its own answers `removed: false`.
+
 ## Collision groups
 
 `UsdPhysicsCollisionGroup` is a typed prim that defines a named

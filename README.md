@@ -517,6 +517,7 @@ square meter. The same inputs and seed always give the same result.
 | `setup_physics_scene` | Create `/Scene/Physics` and a `UsdPhysics.Scene` with gravity |
 | `get_physics_summary` | Return asset-side + scene-side physics opinions for a prim |
 | `add_collider_shape` / `remove_collider_shape` | Add or remove a basic collider shape (box, sphere, capsule, cylinder) under a part: hidden from renders, sized in project units |
+| `create_physics_material` / `bind_physics_material` / `remove_physics_material` | Give colliders friction and bounce with a `PhysicsMaterialAPI` material bound for the `physics` purpose, apart from the look |
 | `list_joint_properties` | Schema view for a UsdPhysics typed joint |
 | `create_joint` / `remove_joint` / `list_joints` | Author / remove / list typed joints (Revolute, Prismatic, Spherical, Fixed, Distance) at scene or asset scope |
 | `create_or_update_collision_group` / `remove_collision_group` / `list_collision_groups` | Manage `UsdPhysicsCollisionGroup` membership and filter relationships |
@@ -847,7 +848,8 @@ src/bowerbot/
     materials.py      #   ProceduralMaterialParams
     opinions.py       #   OpinionKind (what a masking scene opinion sets)
     physics.py        #   PhysicsApiName, PhysicsJointType, PhysicsApiSchemaInfo,
-                      #   PhysicsColliderShape(Params), joint/collision-group summaries
+                      #   PhysicsColliderShape(Params), PhysicsMaterialParams,
+                      #   joint/collision-group summaries
     scatter.py        #   ScatterSurfaceParams, ScatterPathParams, ScatterPoseParams,
                       #   ScatterAsset/Region, ScatterPrototype, ScatterInstanceSet
     surface.py        #   SurfaceTriangles, SurfaceIndex
@@ -870,7 +872,8 @@ src/bowerbot/
                            #   cleanup_unused_materials
     physics_service.py     #   list_physics_api_properties, apply/remove_physics_api,
                            #   setup_physics_scene, get_physics_summary, joints (3),
-                           #   collision groups (3), collider shapes (2)
+                           #   collision groups (3), collider shapes (2),
+                           #   physics materials (3)
     scatter_service.py     #   scatter_on_surface, scatter_along_path, drop_to_surface
     texture_service.py     #   list_textures, search_textures
     validation_service.py  #   validate_scene, package_scene
@@ -895,7 +898,8 @@ src/bowerbot/
     material_tools.py      #   create/bind/remove_material, list_materials,
                            #   cleanup_unused_materials
     physics_tools.py       #   physics APIs (3), physics scene + summary (2),
-                           #   joints (4), collision groups (3), collider shapes (2)
+                           #   joints (4), collision groups (3), collider shapes (2),
+                           #   physics materials (3)
     scatter_tools.py       #   scatter_on_surface, scatter_along_path, drop_to_surface
     texture_tools.py       #   search_textures, list_textures
     validation_tools.py    #   validate_scene, package_scene
@@ -982,6 +986,7 @@ src/bowerbot/
       apis.py                  #   Apply/remove UsdPhysics APIs (asset or scene)
       rules.py                 #   USD's own physics rules: refuse an edit that adds an error
       colliders.py             #   Collider shapes: a hidden basic shape under a part
+      materials.py             #   Physics materials: friction and bounce for colliders
       layer.py                 #   The asset's phy.usda: path, one checked edit, remove
       scope.py                 #   Where a physics write goes: asset or scene
       scenes.py                #   Physics scenes and gravity

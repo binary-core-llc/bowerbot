@@ -34,6 +34,7 @@ from bowerbot.schemas.physics import PhysicsApiSchemaInfo
 from bowerbot.schemas.physics import PhysicsColliderShape
 from bowerbot.schemas.physics import PhysicsColliderShapeParams
 from bowerbot.schemas.physics import PhysicsJointType
+from bowerbot.schemas.physics import PhysicsMaterialParams
 from bowerbot.schemas.physics import PhysicsPrimSummary
 from bowerbot.schemas.physics import PhysicsSummary
 from bowerbot.schemas.physics import ScenePhysicsSummary
@@ -107,6 +108,7 @@ __all__ = [
     "PhysicsColliderShape",
     "PhysicsColliderShapeParams",
     "PhysicsJointType",
+    "PhysicsMaterialParams",
     "PhysicsPrimSummary",
     "PhysicsSummary",
     "PositionMode",

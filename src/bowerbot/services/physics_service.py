@@ -315,6 +315,126 @@ def remove_collider_shape(state: scene_state.SceneState, params: dict[str, Any])
     }
 
 
+# ── Physics materials ──
+
+
+def create_physics_material(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Create or update a physics material and bind it to a prim. Auto-detects scope."""
+    prim_path = params["prim_path"]
+    material = schemas.PhysicsMaterialParams(
+        name=params["material_name"],
+        static_friction=params["static_friction"],
+        dynamic_friction=params["dynamic_friction"],
+        restitution=params.get("restitution"),
+    )
+    scope = physics.scope.resolve(state.stage, prim_path, params.get("scope"))
+
+    if scope == "scene":
+        result = physics.materials.create_in_scene(
+            state.stage, prim_path, material,
+            project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
+        )
+        return {
+            **result,
+            "prim_path": prim_path,
+            "message": (
+                f"Physics material '{material.name}' is bound to {prim_path}: colliders "
+                "at or under it use its friction and bounce."
+            ),
+        }
+
+    asset_dir, asset_prim_path = physics.scope.require_asset_target(
+        state.stage, prim_path, scene_retry="bind the physics material to this prim",
+    )
+    result = physics.materials.create_in_asset(
+        asset_dir, asset_prim_path, material, scene_stage=state.stage,
+    )
+    state.reload_stage()
+    return {
+        **result,
+        "prim_path": prim_path,
+        "asset_prim_path": asset_prim_path,
+        "asset_folder": asset_dir.name,
+        "message": (
+            f"Physics material '{material.name}' is bound to {prim_path}, in "
+            f"{asset_dir.name}/{constants.ASWFLayerNames.PHY}: every placement of the "
+            "asset has it. Colliders at or under the prim use its friction and bounce."
+        ),
+    }
+
+
+def bind_physics_material(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Bind a physics material that already exists to another prim. Auto-detects scope."""
+    prim_path = params["prim_path"]
+    name = params["material_name"]
+    scope = physics.scope.resolve(state.stage, prim_path, params.get("scope"))
+
+    if scope == "scene":
+        result = physics.materials.bind_in_scene(state.stage, prim_path, name)
+        return {
+            **result,
+            "prim_path": prim_path,
+            "message": f"Bound the physics material '{name}' to {prim_path}",
+        }
+
+    asset_dir, asset_prim_path = physics.scope.require_asset_target(
+        state.stage, prim_path, scene_retry="bind the physics material to this prim",
+    )
+    result = physics.materials.bind_in_asset(
+        asset_dir, asset_prim_path, name, scene_stage=state.stage,
+    )
+    state.reload_stage()
+    return {
+        **result,
+        "prim_path": prim_path,
+        "asset_prim_path": asset_prim_path,
+        "asset_folder": asset_dir.name,
+        "message": (
+            f"Bound the physics material '{name}' to {prim_path} in "
+            f"{asset_dir.name}/{constants.ASWFLayerNames.PHY}"
+        ),
+    }
+
+
+def remove_physics_material(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> dict[str, Any]:
+    """Take the physics material off a prim, wherever the binding was written."""
+    prim_path = params["prim_path"]
+    physics.materials.require_prim(state.stage, prim_path)
+    result = physics.materials.unbind_from_scene(state.stage, prim_path)
+    if result is None and physics.scope.autodetect(state.stage, prim_path) == "asset":
+        asset_dir, asset_prim_path = physics.scope.require_asset_target(
+            state.stage, prim_path, scene_retry="remove the physics material from this prim",
+        )
+        result = physics.materials.unbind_from_asset(
+            asset_dir, asset_prim_path, scene_stage=state.stage,
+        )
+        if result is not None:
+            physics.layer.cleanup_if_empty(asset_dir)
+            state.reload_stage()
+    if result is None:
+        return {
+            "prim_path": prim_path,
+            "removed": False,
+            "message": f"{prim_path} has no physics material binding of its own to remove",
+        }
+    return {
+        **result,
+        "prim_path": prim_path,
+        "removed": True,
+        "message": (
+            f"Removed the physics material binding from {prim_path}"
+            + ("; nothing else used the material, so it is deleted too"
+               if result["material_deleted"] else "")
+        ),
+    }
+
+
 # ── Joints + articulation ──
 
 

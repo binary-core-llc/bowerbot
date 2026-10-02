@@ -62,6 +62,15 @@ class PhysicsColliderShapeParams(BaseModel):
     translate: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
 
+class PhysicsMaterialParams(BaseModel):
+    """A physics material: how much a surface grips and bounces. The numbers have no unit."""
+
+    name: str
+    static_friction: float
+    dynamic_friction: float
+    restitution: float | None = None
+
+
 class PhysicsApiSchemaInfo(BaseModel):
     """Live introspection of a UsdPhysics applied-API schema."""
 

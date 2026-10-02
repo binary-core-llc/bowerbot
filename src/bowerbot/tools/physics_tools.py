@@ -119,6 +119,45 @@ def remove_collider_shape(
     return skills.ToolResult(success=True, data=data)
 
 
+def create_physics_material(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
+    """Create a physics material (friction, bounce) and bind it to a prim."""
+    if (err := _helpers.require_stage(state)):
+        return err
+    try:
+        data = physics_service.create_physics_material(state, params)
+    except (ValueError, RuntimeError) as e:
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
+
+
+def bind_physics_material(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
+    """Bind an existing physics material to another prim."""
+    if (err := _helpers.require_stage(state)):
+        return err
+    try:
+        data = physics_service.bind_physics_material(state, params)
+    except (ValueError, RuntimeError) as e:
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
+
+
+def remove_physics_material(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
+    """Take the physics material off a prim."""
+    if (err := _helpers.require_stage(state)):
+        return err
+    try:
+        data = physics_service.remove_physics_material(state, params)
+    except (ValueError, RuntimeError) as e:
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
+
+
 def list_joint_properties(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> skills.ToolResult:
@@ -355,8 +394,8 @@ TOOLS: list[skills.Tool] = [
                     "description": (
                         "Map of relationship name -> list of target prim "
                         "paths. Use for physics:simulationOwner (point at "
-                        "/Scene/Physics/PhysicsScene) or "
-                        "material:binding:physics."
+                        "/Scene/Physics/PhysicsScene). A physics material "
+                        "is bound with create_physics_material, not here."
                     ),
                 },
                 "scope": {
@@ -780,6 +819,117 @@ TOOLS.append(skills.Tool(
         "required": ["prim_path"],
     },
 ))
+_PHYSICS_MATERIAL_SCOPE = {
+    "type": "string",
+    "enum": ["asset", "scene"],
+    "description": (
+        "Where to write it. scope='asset': the asset's phy.usda, so every "
+        "placement of the asset has it. scope='scene': scene.usda, for "
+        "this placement only (the material lives under /Scene/Physics). "
+        "Omit to auto-detect."
+    ),
+}
+TOOLS.append(skills.Tool(
+    name="create_physics_material",
+    description=(
+        "Create a physics material and bind it to a prim: how much the "
+        "surface grips (friction) and bounces (restitution). Without one a "
+        "collider has no friction of its own and the simulator falls back "
+        "to its defaults. Authors a Material prim with PhysicsMaterialAPI "
+        "and binds it with the 'physics' purpose "
+        "(material:binding:physics).\n\n"
+        "prim_path is a collider, or a part above colliders: every "
+        "collider at or under it uses the material. Bind it to a wheel "
+        "part and both its tire mesh and its collider shape get it. The "
+        "look the prim renders with is a different binding and is not "
+        "touched.\n\n"
+        "The numbers have no unit. static_friction resists starting to "
+        "slide, dynamic_friction resists sliding (usually a little lower); "
+        "typical values: rubber on dry ground about 0.8-1.0, ice about "
+        "0.05. restitution is the bounce, 0 (none) to 1 (full).\n\n"
+        "Calling it again with the same material_name updates that "
+        "material's values. To put an existing material on another prim "
+        "use bind_physics_material. Mass is not set here: use "
+        "PhysicsMassAPI."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "prim_path": {
+                "type": "string",
+                "description": (
+                    "Scene prim path of the collider, or of a part above "
+                    "colliders, the material is bound to."
+                ),
+            },
+            "material_name": {
+                "type": "string",
+                "description": "Name of the physics material (e.g. 'rubber').",
+            },
+            "static_friction": {
+                "type": "number",
+                "description": "Grip against starting to slide; 0 or more.",
+            },
+            "dynamic_friction": {
+                "type": "number",
+                "description": "Grip while sliding; 0 or more.",
+            },
+            "restitution": {
+                "type": "number",
+                "description": "Bounce, from 0 (none) to 1 (full). Left out: 0.",
+            },
+            "scope": _PHYSICS_MATERIAL_SCOPE,
+        },
+        "required": ["prim_path", "material_name", "static_friction", "dynamic_friction"],
+    },
+))
+TOOLS.append(skills.Tool(
+    name="bind_physics_material",
+    description=(
+        "Bind a physics material that already exists to another prim "
+        "(a collider, or a part above colliders). The material is looked "
+        "up by name where the scope keeps it: scope='asset' in this "
+        "asset's phy.usda, scope='scene' under /Scene/Physics. "
+        "get_physics_summary shows the materials there are. A name that "
+        "does not exist is REFUSED: create it with "
+        "create_physics_material."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "prim_path": {
+                "type": "string",
+                "description": "Scene prim path the material is bound to.",
+            },
+            "material_name": {
+                "type": "string",
+                "description": "Name of an existing physics material.",
+            },
+            "scope": _PHYSICS_MATERIAL_SCOPE,
+        },
+        "required": ["prim_path", "material_name"],
+    },
+))
+TOOLS.append(skills.Tool(
+    name="remove_physics_material",
+    description=(
+        "Take the physics material off a prim, wherever the binding was "
+        "written (scene.usda or the asset's phy.usda). The material "
+        "itself is deleted too once nothing else binds it. The look the "
+        "prim renders with is not touched. A prim with no physics "
+        "material binding of its own answers removed: false."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "prim_path": {
+                "type": "string",
+                "description": "Scene prim path that carries the binding.",
+            },
+        },
+        "required": ["prim_path"],
+    },
+))
 TOOLS.append(skills.Tool(
     name="list_joint_properties",
     description=(
@@ -1011,6 +1161,9 @@ HANDLERS = {
     "list_collision_groups": list_collision_groups,
     "add_collider_shape": add_collider_shape,
     "remove_collider_shape": remove_collider_shape,
+    "create_physics_material": create_physics_material,
+    "bind_physics_material": bind_physics_material,
+    "remove_physics_material": remove_physics_material,
     "list_joint_properties": list_joint_properties,
     "create_joint": create_joint,
     "remove_joint": remove_joint,

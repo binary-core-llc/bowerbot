@@ -108,14 +108,21 @@ def unbind(asset_dir: Path, prim_path: str) -> bool:
     prim = stage.GetPrimAtPath(local_path)
     if prim.IsValid():
         folder = asset_dir.resolve()
+        # Only the bindings that give the prim its look: USD's own material purposes.
+        # A binding for another purpose (physics) belongs to the tools of that domain.
+        binding_api = UsdShade.MaterialBindingAPI(prim)
         binding_specs = [
             (spec.layer, spec.owner.path, spec.name)
-            for rel in prim.GetAuthoredRelationships()
-            if rel.GetName().startswith(UsdShade.Tokens.materialBinding)
+            for purpose in UsdShade.MaterialBindingAPI.GetMaterialPurposes()
+            for rel in (
+                binding_api.GetDirectBindingRel(purpose),
+                *binding_api.GetCollectionBindingRels(purpose),
+            )
+            if rel
             for spec in rel.GetPropertyStack(Usd.TimeCode.Default())
         ]
         prim_specs = [(spec.layer, spec.path) for spec in prim.GetPrimStack()]
-        del prim, stage
+        del binding_api, prim, stage
 
         api_name = Usd.SchemaRegistry().GetAPISchemaTypeName(UsdShade.MaterialBindingAPI)
         for layer, owner_path, name in binding_specs:
@@ -129,7 +136,12 @@ def unbind(asset_dir: Path, prim_path: str) -> bool:
                 continue
             spec = layer.GetPrimAtPath(spec_path)
             if spec is not None:
-                usd.attributes.drop_api_schema(spec, api_name)
+                still_binds = any(
+                    name.startswith(UsdShade.Tokens.materialBinding)
+                    for name in spec.relationships.keys()
+                )
+                if not still_binds:
+                    usd.attributes.drop_api_schema(spec, api_name)
                 usd.namespace.prune_empty_overrides(layer, str(spec_path))
         for layer in edited.values():
             layer.Save()

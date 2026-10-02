@@ -387,6 +387,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "loose_rig",
+        "path": "<LIBRARY>/loose_rig/loose_rig.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "shelf",
         "path": "<LIBRARY>/shelf/shelf.usda"
       },
@@ -500,15 +506,9 @@ full answer:
         "format": ".usda",
         "name": "shapes",
         "path": "<LIBRARY>/shapes.usda"
-      },
-      {
-        "category": "geo",
-        "format": ".usda",
-        "name": "table",
-        "path": "<LIBRARY>/table.usda"
       }
     ],
-    "total_matches": 26,
+    "total_matches": 27,
     "truncated": true
   }
 
@@ -587,6 +587,12 @@ full answer:
       {
         "category": "package",
         "format": ".usda",
+        "name": "loose_rig",
+        "path": "<LIBRARY>/loose_rig/loose_rig.usda"
+      },
+      {
+        "category": "package",
+        "format": ".usda",
         "name": "shelf",
         "path": "<LIBRARY>/shelf/shelf.usda"
       },
@@ -605,7 +611,7 @@ full answer:
         "path": "<LIBRARY>/workbench/workbench.usda"
       }
     ],
-    "total_matches": 8,
+    "total_matches": 9,
     "truncated": false
   }
 

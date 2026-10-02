@@ -12,6 +12,7 @@ from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdLux
+from pxr import UsdPhysics
 from pxr import UsdShade
 from pxr import UsdUtils
 
@@ -403,5 +404,27 @@ def build_library(root: Path) -> Path:
     shelf_root.GetReferences().AddReference("./lgt.usda")
     shelf_root.GetPayloads().AddPayload("./geo.usda")
     shelf.Save()
+
+    # An asset that ships physics USD calls an error: a joint with no rigid body.
+    rig_dir = root / "loose_rig"
+    rig_geo = _stage(rig_dir / "geo.usda")
+    _root(rig_geo, "loose_rig")
+    _box(rig_geo, "/loose_rig/Base", (0.0, 0.1, 0.0), (0.4, 0.2, 0.4))
+    _box(rig_geo, "/loose_rig/Arm", (0.0, 0.5, 0.0), (0.1, 0.6, 0.1))
+    rig_geo.Save()
+    rig_phy = _stage(rig_dir / "phy.usda")
+    rig_phy.SetDefaultPrim(rig_phy.OverridePrim("/loose_rig"))
+    UsdGeom.Scope.Define(rig_phy, "/loose_rig/joints")
+    loose = UsdPhysics.FixedJoint.Define(rig_phy, "/loose_rig/joints/Loose")
+    loose.CreateBody0Rel().SetTargets(["/loose_rig/Base"])
+    loose.CreateBody1Rel().SetTargets(["/loose_rig/Arm"])
+    _over_root(rig_phy, "loose_rig")
+    rig_phy.Save()
+    rig = _stage(rig_dir / "loose_rig.usda")
+    rig_root = UsdGeom.Xform.Define(rig, "/loose_rig").GetPrim()
+    rig.SetDefaultPrim(rig_root)
+    rig_root.GetReferences().AddReference("./phy.usda")
+    rig_root.GetPayloads().AddPayload("./geo.usda")
+    rig.Save()
 
     return root

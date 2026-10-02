@@ -89,6 +89,81 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "editing/partial_updates_and_turns",
+        "Updating one value of a transform, and turning things: do the values that were not "
+        "named keep what they had, and does a turn spin the object on the floor?",
+        (
+            model.Step(
+                "place_layout",
+                {
+                    "placements": [
+                        {
+                            "asset": "$lib/crate.usda",
+                            "group": "Props",
+                            "name": "Tilted",
+                            "transforms": [
+                                {"translate": model.Point(0.0, 0.0, 0.0), "rotate": [10, 20, 30]},
+                            ],
+                        },
+                    ],
+                },
+                note="a crate turned on all three axes",
+            ),
+            model.Step(
+                "move_asset",
+                {"prim_path": "/Scene/Props/Tilted_01", "translate_x": 2.0},
+                note="move it along x only: does it keep its rotation?",
+            ),
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/chair.usda",
+                    "asset_name": "Chair",
+                    "group": "Furniture",
+                    **model.at(4.0),
+                    "rotate_y": 90.0,
+                },
+                save="chair",
+                note="a chair turned a quarter: is it still standing on the floor?",
+            ),
+            model.Step(
+                "create_light",
+                {"light_type": "DistantLight", "light_name": "Sun", **model.at(1.0, 2.0, 3.0)},
+                save="sun",
+                note="a light created with no rotation",
+            ),
+            model.Step(
+                "update_light", {"prim_path": "$sun", "rotate_x": -45.0}, note="turn it"
+            ),
+            model.Step(
+                "update_light",
+                {"prim_path": "$sun", "translate_x": 5.0},
+                note="move it along x only: do the other two keep their values?",
+            ),
+            model.Step(
+                "create_camera",
+                {"camera_name": "Cam", **model.at(1.0, 2.0, 3.0)},
+                save="cam",
+            ),
+            model.Step(
+                "update_camera",
+                {"prim_path": "$cam", "translate_x": 5.0},
+                note="the same for a camera",
+            ),
+            _place("lamp/lamp.usda", "Lamp", "Lighting", x=8.0, save="lamp"),
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "Bulb", "asset_prim_path": "$lamp"},
+                note="a light inside the lamp",
+            ),
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "Bulb", "asset_prim_path": "$lamp"},
+                note="a second light with the same name",
+            ),
+        ),
+    ),
+    model.Scenario(
         "editing/rename",
         "rename_prim: a placement, into another group, onto a taken name, a group itself.",
         (

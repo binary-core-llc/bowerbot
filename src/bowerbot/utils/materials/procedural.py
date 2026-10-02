@@ -16,6 +16,7 @@ from pxr import UsdShade
 from bowerbot import constants
 from bowerbot import schemas
 from bowerbot.utils import authoring
+from bowerbot.utils import materials
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,16 @@ def create(
     params: schemas.ProceduralMaterialParams,
 ) -> str:
     """Author a MaterialX ``standard_surface`` material and bind it."""
+    values = {
+        "base_color_r": params.base_color[0], "base_color_g": params.base_color[1],
+        "base_color_b": params.base_color[2], "metalness": params.metalness,
+        "roughness": params.roughness, "opacity": params.opacity,
+    }
+    outside = [f"{name}={value:g}" for name, value in values.items() if not 0.0 <= value <= 1.0]
+    if outside:
+        raise ValueError(f"Material values go from 0 to 1; got {', '.join(outside)}.")
+    materials.bind.require_target(asset_dir, prim_path)
+
     mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
 

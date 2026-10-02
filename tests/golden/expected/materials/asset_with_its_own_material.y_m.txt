@@ -634,7 +634,8 @@ full answer:
   {
     "asset_folder": "lamp",
     "message": "Removed material binding from /Scene/Props/Lamp_01/asset/Shade",
-    "prim_path": "/Scene/Props/Lamp_01/asset/Shade"
+    "prim_path": "/Scene/Props/Lamp_01/asset/Shade",
+    "removed": true
   }
 
 files:
@@ -769,7 +770,8 @@ full answer:
   {
     "asset_folder": "lamp",
     "message": "Removed material binding from /Scene/Props/Lamp_01/asset/Base",
-    "prim_path": "/Scene/Props/Lamp_01/asset/Base"
+    "prim_path": "/Scene/Props/Lamp_01/asset/Base",
+    "removed": true
   }
 
 files:

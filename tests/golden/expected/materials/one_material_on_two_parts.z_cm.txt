@@ -683,7 +683,8 @@ full answer:
   {
     "asset_folder": "table",
     "message": "Removed material binding from /Scene/Furniture/Table_01/asset/Leg_L",
-    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_L"
+    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_L",
+    "removed": true
   }
 
 files:
@@ -770,7 +771,8 @@ full answer:
   {
     "asset_folder": "table",
     "message": "Removed material binding from /Scene/Furniture/Table_01/asset/Leg_R",
-    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_R"
+    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_R",
+    "removed": true
   }
 
 files:

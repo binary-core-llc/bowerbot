@@ -41,6 +41,7 @@ def bind_from_file(
         raise RuntimeError(msg)
 
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    require_target(asset_dir, prim_path)
     mtl_layer = authoring.asset_folder.open_scope_layer(
         asset_dir, constants.ASWFLayerNames.MTL,
         constants.AssetFolderNamespace.MATERIALS_SCOPE, "Scope",
@@ -76,8 +77,21 @@ def bind_from_file(
     return composed_mat_path
 
 
-def unbind(asset_dir: Path, prim_path: str) -> None:
+def require_target(asset_dir: Path, prim_path: str) -> None:
+    """Refuse a material for a prim the asset does not have."""
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
+    stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
+    default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    local_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
+    prim = stage.GetPrimAtPath(local_path) if stage is not None else None
+    if prim is None or not prim.IsValid():
+        raise ValueError(f"Prim not found in asset {asset_dir.name}: {prim_path}")
+
+
+def unbind(asset_dir: Path, prim_path: str) -> bool:
     """Take a prim's material binding out of the asset, then drop the materials nothing uses.
+
+    Returns False when the prim had no binding of its own to take out.
 
     The binding is removed from every file of the asset folder that authors
     it: ``mtl.usda``, or a file the asset shipped with (the project's copy,
@@ -86,8 +100,9 @@ def unbind(asset_dir: Path, prim_path: str) -> None:
     root_file = authoring.asset_folder.find_root_file(asset_dir)
     stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
     if stage is None:
-        return
+        return False
 
+    edited: dict[str, Sdf.Layer] = {}
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     local_path = authoring.asset_folder.to_layer_local_path(prim_path, default_prim_name)
     prim = stage.GetPrimAtPath(local_path)
@@ -103,7 +118,6 @@ def unbind(asset_dir: Path, prim_path: str) -> None:
         del prim, stage
 
         api_name = Usd.SchemaRegistry().GetAPISchemaTypeName(UsdShade.MaterialBindingAPI)
-        edited: dict[str, Sdf.Layer] = {}
         for layer, owner_path, name in binding_specs:
             if folder not in Path(layer.realPath).resolve().parents:
                 continue
@@ -121,6 +135,7 @@ def unbind(asset_dir: Path, prim_path: str) -> None:
             layer.Save()
 
     materials.layer.remove_unused(asset_dir)
+    return bool(edited)
 
 
 def refuse_shared_modification(

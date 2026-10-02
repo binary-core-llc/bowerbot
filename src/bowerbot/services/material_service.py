@@ -116,14 +116,18 @@ def remove_material(state: scene_state.SceneState, params: dict[str, Any]) -> di
     )
 
     asset_local_path = authoring.placement.to_asset_local(prim_path, ref_prim_path)
-    materials.bind.unbind(asset_dir, asset_local_path)
+    removed = materials.bind.unbind(asset_dir, asset_local_path)
     state.reload_stage()
 
     logger.info("Removed material from %s", prim_path)
     return {
         "prim_path": prim_path,
         "asset_folder": asset_dir.name,
-        "message": f"Removed material binding from {prim_path}",
+        "removed": removed,
+        "message": (
+            f"Removed material binding from {prim_path}" if removed
+            else f"{prim_path} has no material binding of its own to remove"
+        ),
     }
 
 

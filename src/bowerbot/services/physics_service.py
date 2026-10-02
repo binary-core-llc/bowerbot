@@ -55,7 +55,6 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
             instance_name=instance_name,
             project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
         )
-        state.touch_project()
         logger.info(
             "Service applied %s scene-level on %s", api_name.value, prim_path,
         )
@@ -77,7 +76,6 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         instance_name=instance_name,
     )
     state.reload_stage()
-    state.touch_project()
 
     logger.info(
         "Service applied %s asset-level on %s (asset %s)",
@@ -109,8 +107,6 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
             state.stage, prim_path, api_name,
             instance_name=instance_name,
         )
-        if changed:
-            state.touch_project()
         return {
             "scope": "scene",
             "prim_path": prim_path,
@@ -148,7 +144,6 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
     if changed:
         physics.layer.cleanup_if_empty(asset_dir)
     state.reload_stage()
-    state.touch_project()
 
     return {
         "scope": "asset",
@@ -188,7 +183,6 @@ def setup_physics_scene(
         gravity_magnitude, gravity_direction,
         project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
-    state.touch_project()
     logger.info("setup_physics_scene -> %s", scene_path)
     return {
         "prim_path": scene_path,
@@ -211,8 +205,6 @@ def remove_physics_scene(
     """Remove a UsdPhysics.Scene prim by name."""
     name = params["name"]
     removed = physics.scenes.remove(state.stage, name)
-    if removed:
-        state.touch_project()
     return {
         "name": name,
         "removed": removed,
@@ -269,7 +261,6 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             state.stage, joint_type, name, body0, body1, attributes,
             project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
         )
-        state.touch_project()
         logger.info(
             "Service created %s scene-level (%s)", joint_type.value, name,
         )
@@ -316,7 +307,6 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         asset_body0, asset_body1, attributes,
     )
     state.reload_stage()
-    state.touch_project()
     logger.info(
         "Service created %s asset-level (%s in %s)",
         joint_type.value, name, asset_dir.name,
@@ -335,8 +325,6 @@ def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if scope == "scene":
         prim_path = params["prim_path"]
         removed = physics.joints.remove_from_scene(state.stage, prim_path)
-        if removed:
-            state.touch_project()
         return {"scope": "scene", "prim_path": prim_path, "removed": removed}
 
     asset_anchor = (
@@ -354,7 +342,6 @@ def remove_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     if removed:
         physics.layer.cleanup_if_empty(asset_dir)
         state.reload_stage()
-        state.touch_project()
     return {
         "scope": "asset",
         "asset_folder": asset_dir.name,
@@ -396,7 +383,6 @@ def create_or_update_collision_group(
         project_mpu=state.meters_per_unit,
         project_up_axis=state.up_axis.value,
     )
-    state.touch_project()
     return result
 
 
@@ -412,8 +398,6 @@ def remove_collision_group(
     scrubbed = (
         usd.namespace.scrub_dangling_refs(state.stage) if removed else {}
     )
-    if removed:
-        state.touch_project()
     return {
         "name": name,
         "removed": removed,

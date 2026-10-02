@@ -62,7 +62,6 @@ def create_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     )
     cameras.scene.create(state.stage, prim_path, camera)
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Created camera at %s", prim_path)
     return {
@@ -102,7 +101,6 @@ def update_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         state.stage, prim_path, translate=translate, rotate=rotate,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Updated camera at %s", prim_path)
     return {
@@ -122,7 +120,6 @@ def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
         raise RuntimeError(msg)
 
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Removed camera at %s", prim_path)
     return {

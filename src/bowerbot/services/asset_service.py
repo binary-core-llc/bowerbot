@@ -69,7 +69,6 @@ def place_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
         project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Placed %s at %s (%s, %s, %s)", asset_name, prim_path, tx, ty, tz)
     return {
@@ -218,7 +217,6 @@ def place_layout(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info(
         "place_layout placed %d asset(s) across %d group(s)", placed, len(groups),
@@ -318,7 +316,6 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     )
 
     state.reload_stage()
-    state.touch_project()
 
     composed_path = authoring.placement.contents_prim_path(ref_prim_path, group, prim_name)
     wx, wy, wz = (
@@ -444,7 +441,6 @@ def freeze_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
             )
         ]
 
-    state.touch_project()
     if state.stage is not None:
         state.reload_stage()
 

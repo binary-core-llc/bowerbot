@@ -37,6 +37,7 @@ class SceneState:
     library_dir: Path | None = None
     projects_dir: Path | None = None
     layer_baselines: dict[Path, tuple[float, str]] = field(default_factory=dict)
+    project_fingerprint: tuple[int, int, int] = (0, 0, 0)
 
     @classmethod
     def from_settings(cls, settings: config.Settings) -> SceneState:
@@ -73,6 +74,7 @@ class SceneState:
         self.stage = authoring.stage.open_stage(project.scene_path)
         self.object_count = len(inspection.scene.list_prims(self.stage))
         self.mark_saved()
+        self.project_fingerprint = self._project_fingerprint()
 
     def reload_stage(self) -> None:
         """Reopen the scene from disk, so it shows what was just written to an asset's files."""
@@ -97,10 +99,31 @@ class SceneState:
             if layer:
                 layer.Reload(force=True)
 
-    def touch_project(self) -> None:
-        """Persist updated_at on the bound project, if any."""
-        if self.project is not None:
+    def note_project_writes(self) -> None:
+        """Move the project's ``updated_at`` when any of its files changed since the last check.
+
+        Called once after every tool call, so no tool has to remember to do it.
+        """
+        if self.project is None:
+            return
+        fingerprint = self._project_fingerprint()
+        if fingerprint != self.project_fingerprint:
             self.project.save()
+            self.project_fingerprint = fingerprint
+
+    def _project_fingerprint(self) -> tuple[int, int, int]:
+        """File count, newest change time and total size of the project's files."""
+        if self.project is None:
+            return (0, 0, 0)
+        count = newest = size = 0
+        for path in self.project.path.rglob("*"):
+            if not path.is_file() or path == self.project.meta_path:
+                continue
+            stat = path.stat()
+            count += 1
+            newest = max(newest, stat.st_mtime_ns)
+            size += stat.st_size
+        return (count, newest, size)
 
     def _hash_file(self, path: Path) -> str:
         """Hash a file with blake2b in chunks."""

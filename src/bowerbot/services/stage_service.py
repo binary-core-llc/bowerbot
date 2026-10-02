@@ -48,7 +48,6 @@ def create_stage(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         up_axis=state.up_axis.value, meters_per_unit=state.meters_per_unit,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Created stage: %s", state.stage_path)
     return {
@@ -129,7 +128,6 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     scrubbed = usd.namespace.scrub_dangling_refs(state.stage)
 
     state.object_count = max(0, state.object_count - 1)
-    state.touch_project()
     logger.info("Removed %s", prim_path)
     return {
         "prim_path": prim_path,
@@ -208,7 +206,6 @@ def move_asset(state: scene_state.SceneState, params: dict[str, Any]) -> dict[st
         )
         authoring.stage.save_stage(state.stage)
 
-    state.touch_project()
 
     logger.info("Moved %s to (%s, %s, %s)", prim_path, tx, ty, tz)
     return {
@@ -246,7 +243,6 @@ def set_prim_attribute(
         state.stage, prim_path, attribute_name, value,
     )
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
     action = "Cleared" if value is None else "Authored"
     logger.info(
         "%s %s.%s in %s", action, prim_path, attribute_name, state.stage_path,
@@ -272,7 +268,6 @@ def save_scene_snapshot(state: scene_state.SceneState, params: dict[str, Any]) -
     snapshot_path = authoring.stage.save_scene_snapshot(
         state.stage_path, name, force=force,
     )
-    state.touch_project()
     return {
         "scene_path": str(state.stage_path),
         "snapshot_path": str(snapshot_path),
@@ -307,7 +302,6 @@ def delete_scene_snapshot(
         raise ValueError("No scene is open.")
     name = params["name"]
     removed = authoring.stage.delete_scene_snapshot(state.stage_path, name)
-    state.touch_project()
     return {
         "snapshot_path": str(removed),
         "snapshot_name": removed.stem,

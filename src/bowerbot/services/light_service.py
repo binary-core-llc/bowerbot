@@ -126,7 +126,6 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     )
     lights.scene.create(state.stage, prim_path, light)
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Created %s at %s", light_type.value, prim_path)
     return {
@@ -192,7 +191,6 @@ def update_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         )
         authoring.stage.save_stage(state.stage)
 
-    state.touch_project()
     logger.info("Updated light at %s", prim_path)
     return {
         "prim_path": prim_path,
@@ -226,7 +224,6 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         raise RuntimeError(msg)
 
     authoring.stage.save_stage(state.stage)
-    state.touch_project()
 
     logger.info("Removed scene light at %s", prim_path)
     data: dict[str, Any] = {

@@ -150,7 +150,6 @@ def scatter_on_surface(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.object_count += written["placements"] or 1
     authoring.stage.save_stage(stage)
     warnings += written["warnings"]
-    state.touch_project()
 
     logger.info(
         "scatter_on_surface %s: %d instance(s) as %s", prim_path, instances.count,
@@ -279,7 +278,6 @@ def scatter_along_path(state: scene_state.SceneState, params: dict[str, Any]) ->
     state.object_count += written["placements"] or 1
     authoring.stage.save_stage(stage)
     warnings += written["warnings"]
-    state.touch_project()
 
     logger.info(
         "scatter_along_path %s: %d instance(s) as %s", prim_path, instances.count,
@@ -324,7 +322,6 @@ def drop_to_surface(state: scene_state.SceneState, params: dict[str, Any]) -> di
         scatter.drop.drop_scatter(stage, path, index, align=align) for path in scatters
     ]
     authoring.stage.save_stage(stage)
-    state.touch_project()
 
     moved = [r for r in results if r["supported"]]
     reseated = [r for r in scatter_results if r["supported"]]

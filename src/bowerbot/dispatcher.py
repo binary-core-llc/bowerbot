@@ -129,6 +129,7 @@ async def execute(
 
     logging_setup.log_tool_result(logger, tool_name, result)
     state.mark_saved()
+    state.note_project_writes()
     return result
 
 

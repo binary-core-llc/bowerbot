@@ -258,6 +258,60 @@ opinions on the same path). Use to check what's authored before
 making changes, or to debug why a placement behaves differently from
 the asset default.
 
+## Collider shapes
+
+A mesh collides with the shape its approximation gives it (see
+Approximation rules). The approximations USD offers are `none`,
+`convexHull`, `convexDecomposition`, `boundingSphere`, `boundingCube`
+and `meshSimplification`; any other value is refused. There is no
+"cylinder" among them: USD has no setting that makes a mesh collide as
+a cylinder. A collider is always a geometry prim with
+`PhysicsCollisionAPI`.
+
+So when a mesh's own shape collides badly, give its part a collider
+shape: a basic prim (box, sphere, capsule or cylinder) that only
+physics uses. The classic case is a wheel: a tire as a convex hull
+rolls like a polygon; a cylinder rolls smoothly.
+
+Recipe for a wheel:
+1. `list_prim_children` on the asset -> find the wheel PART (the
+   Xform that groups the tire mesh), not the mesh.
+2. `add_collider_shape(prim_path=<wheel part>, name="collider",
+   shape="cylinder", radius=..., height=..., axis=<the axle axis>)`.
+3. `remove_physics_api(prim_path=<tire mesh>,
+   api_name="PhysicsCollisionAPI")` so only the cylinder collides.
+   If you skip this, both collide.
+
+Facts to rely on:
+- The shape goes UNDER the part, so it moves with it and belongs to
+  the part's rigid body. Naming a mesh as the part is refused.
+- Sizes and the offset are in project units, measured in the world:
+  a radius of 0.59 in a meters project is 0.59 m whatever units the
+  asset was made in.
+- `axis` and the offset follow the PART's own axes, not the world's.
+  For a wheel, `axis` is the axle: the same axis its joint turns on.
+- The shape has purpose `guide`: renders skip it, and the asset's box
+  (bounds, drop, scatter) does not count it.
+- USD's physics rules apply as everywhere: a sphere, capsule or
+  cylinder under a part with non-uniform scale is refused; a box is
+  fine there.
+
+### `add_collider_shape(prim_path, name, shape, radius?, height?, axis?, size_x?, size_y?, size_z?, translate_x?, translate_y?, translate_z?, scope?)`
+Add the shape under the part at `prim_path`. Each shape takes its own
+sizes and no others: `box` -> `size_x`, `size_y`, `size_z`; `sphere`
+-> `radius`; `capsule` and `cylinder` -> `radius`, `height`, `axis`
+(`X`, `Y` or `Z`). The `translate_*` offset moves it from the part's
+origin. `scope="asset"` writes it into the asset's `phy.usda` (every
+placement has it); `scope="scene"` into `scene.usda` for this
+placement only; omit `scope` to auto-detect. Returns the new prim's
+scene `prim_path`.
+
+### `remove_collider_shape(prim_path)`
+Remove a shape added with `add_collider_shape`, wherever it was
+written. A prim from the asset's own geometry is refused (use
+`remove_physics_api` to stop a mesh from colliding). A path with
+nothing at it answers `removed: false`.
+
 ## Collision groups
 
 `UsdPhysicsCollisionGroup` is a typed prim that defines a named

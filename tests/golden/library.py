@@ -196,6 +196,17 @@ def build_library(root: Path) -> Path:
     dots.CreatePointsAttr([(0, 0, 0), (0, 1, 0)])
     shapes.Save()
 
+    # Parts that are groups (an Xform holding a mesh), the way a rig is exported.
+    wagon = _stage(root / "wagon.usda")
+    _root(wagon, "wagon")
+    for part, x, up in (("Bed", 0.0, 0.5), ("Wheel_L", -0.7, 0.3), ("Wheel_R", 0.7, 0.3)):
+        group = UsdGeom.Xform.Define(wagon, f"/wagon/{part}")
+        group.AddTranslateOp().Set(Gf.Vec3d(x, up, 0.0))
+    _box(wagon, "/wagon/Bed/Box", (0.0, 0.0, 0.0), (1.2, 0.2, 0.8))
+    _box(wagon, "/wagon/Wheel_L/Tire", (0.0, 0.0, 0.0), (0.2, 0.6, 0.6))
+    _box(wagon, "/wagon/Wheel_R/Tire", (0.0, 0.0, 0.0), (0.2, 0.6, 0.6))
+    wagon.Save()
+
     ground = _stage(root / "ground.usda")
     _root(ground, "ground")
     mesh = UsdGeom.Mesh.Define(ground, "/ground/Plane")

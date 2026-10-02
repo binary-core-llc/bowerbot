@@ -30,6 +30,13 @@ class PhysicsUsd:
         schemas.PhysicsApiName.MESH_COLLISION: UsdGeom.Mesh,
         schemas.PhysicsApiName.ARTICULATION_ROOT: UsdGeom.Xformable,
     }
+    # Geometry prim behind each collider shape.
+    COLLIDER_SHAPES: dict[schemas.PhysicsColliderShape, type] = {
+        schemas.PhysicsColliderShape.BOX: UsdGeom.Cube,
+        schemas.PhysicsColliderShape.SPHERE: UsdGeom.Sphere,
+        schemas.PhysicsColliderShape.CAPSULE: UsdGeom.Capsule,
+        schemas.PhysicsColliderShape.CYLINDER: UsdGeom.Cylinder,
+    }
     JOINTS: dict[schemas.PhysicsJointType, type] = {
         schemas.PhysicsJointType.REVOLUTE: UsdPhysics.RevoluteJoint,
         schemas.PhysicsJointType.PRISMATIC: UsdPhysics.PrismaticJoint,
@@ -46,6 +53,15 @@ class PhysicsRules:
         schemas.PhysicsApiName.DRIVE,
         schemas.PhysicsApiName.LIMIT,
     })
+    # Sizes each collider shape takes, and no others.
+    COLLIDER_SIZES: dict[schemas.PhysicsColliderShape, tuple[str, ...]] = {
+        schemas.PhysicsColliderShape.BOX: ("size",),
+        schemas.PhysicsColliderShape.SPHERE: ("radius",),
+        schemas.PhysicsColliderShape.CAPSULE: ("radius", "height", "axis"),
+        schemas.PhysicsColliderShape.CYLINDER: ("radius", "height", "axis"),
+    }
+    # The part's own axis a capsule or cylinder runs along; the order is the axis index.
+    COLLIDER_AXES: tuple[str, ...] = ("X", "Y", "Z")
     # Namespace of every UsdPhysics attribute (physics:mass, drive:angular:physics:damping).
     ATTRIBUTE_NAMESPACE = "physics"
     # Keyword USD's own physics validators carry in the validation registry.

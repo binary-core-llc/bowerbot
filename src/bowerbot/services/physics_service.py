@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
 from bowerbot.utils import authoring
@@ -237,6 +238,80 @@ def get_physics_summary(
     return {
         "asset": asset_summary.model_dump() if asset_summary else None,
         "scene": scene_summary.model_dump(),
+    }
+
+
+# ── Collider shapes ──
+
+
+def add_collider_shape(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Add a basic collider shape under a part. Auto-detects scope when not explicitly given."""
+    parent_path = params["prim_path"]
+    shape = physics.colliders.shape_from_params(params)
+    scope = physics.scope.resolve(state.stage, parent_path, params.get("scope"))
+
+    if scope == "scene":
+        result = physics.colliders.add_in_scene(state.stage, parent_path, shape)
+        return {
+            **result,
+            "parent_prim_path": parent_path,
+            "message": (
+                f"Added a {shape.shape.value} collider at {result['prim_path']}. "
+                "Only physics uses it: its purpose is guide, so renders skip it."
+            ),
+        }
+
+    asset_dir, asset_parent = physics.scope.require_asset_target(
+        state.stage, parent_path, scene_retry="add the collider under this prim",
+    )
+    _, ref_prim_path = authoring.placement.require_asset_context(state.stage, parent_path)
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    scene_parent = ref_prim_path + asset_parent[len(f"/{default_prim}"):]
+
+    result = physics.colliders.add_in_asset(
+        asset_dir, asset_parent, shape,
+        scene_stage=state.stage, scene_parent_path=scene_parent,
+    )
+    state.reload_stage()
+    prim_path = f"{scene_parent}/{shape.name}"
+    return {
+        **result,
+        "prim_path": prim_path,
+        "parent_prim_path": scene_parent,
+        "asset_prim_path": result["prim_path"],
+        "asset_folder": asset_dir.name,
+        "message": (
+            f"Added a {shape.shape.value} collider at {prim_path}, in "
+            f"{asset_dir.name}/{constants.ASWFLayerNames.PHY}: every placement of the asset "
+            "has it. Only physics uses it: its purpose is guide, so renders skip it."
+        ),
+    }
+
+
+def remove_collider_shape(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
+    """Remove a collider shape added with add_collider_shape, wherever it was written."""
+    prim_path = params["prim_path"]
+    removed = physics.colliders.remove_from_scene(state.stage, prim_path)
+    scope = "scene"
+    if not removed and physics.scope.autodetect(state.stage, prim_path) == "asset":
+        scope = "asset"
+        asset_dir, asset_prim_path = physics.scope.require_asset_target(
+            state.stage, prim_path, scene_retry="remove the collider from this prim",
+        )
+        removed = physics.colliders.remove_from_asset(asset_dir, asset_prim_path)
+        if removed:
+            physics.layer.cleanup_if_empty(asset_dir)
+            state.reload_stage()
+    if not removed:
+        physics.colliders.refuse_other_prim(state.stage, prim_path)
+    return {
+        "prim_path": prim_path,
+        "removed": removed,
+        "scope": scope if removed else None,
+        "message": (
+            f"Removed the collider shape {prim_path}" if removed
+            else f"No collider shape at {prim_path}"
+        ),
     }
 
 

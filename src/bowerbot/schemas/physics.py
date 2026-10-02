@@ -41,6 +41,27 @@ class PhysicsJointType(StrEnum):
     DISTANCE = "PhysicsDistanceJoint"
 
 
+class PhysicsColliderShape(StrEnum):
+    """The basic shapes a collider can be given."""
+
+    BOX = "box"
+    SPHERE = "sphere"
+    CAPSULE = "capsule"
+    CYLINDER = "cylinder"
+
+
+class PhysicsColliderShapeParams(BaseModel):
+    """A collider shape to add under a part; lengths in project units, in the part's own frame."""
+
+    shape: PhysicsColliderShape
+    name: str
+    radius: float | None = None
+    height: float | None = None
+    axis: str | None = None
+    size: tuple[float, float, float] | None = None
+    translate: tuple[float, float, float] = (0.0, 0.0, 0.0)
+
+
 class PhysicsApiSchemaInfo(BaseModel):
     """Live introspection of a UsdPhysics applied-API schema."""
 

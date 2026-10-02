@@ -308,7 +308,7 @@ full answer:
         "path": "<LIBRARY>/cabinet/cabinet.usda"
       }
     ],
-    "total_matches": 15,
+    "total_matches": 16,
     "truncated": true
   }
 
@@ -508,7 +508,7 @@ full answer:
         "path": "<LIBRARY>/shapes.usda"
       }
     ],
-    "total_matches": 27,
+    "total_matches": 28,
     "truncated": true
   }
 
@@ -810,9 +810,15 @@ full answer:
         "format": ".usda",
         "name": "unfrozen",
         "path": "<LIBRARY>/unfrozen.usda"
+      },
+      {
+        "category": "geo",
+        "format": ".usda",
+        "name": "wagon",
+        "path": "<LIBRARY>/wagon.usda"
       }
     ],
-    "total_matches": 15,
+    "total_matches": 16,
     "truncated": false
   }
 

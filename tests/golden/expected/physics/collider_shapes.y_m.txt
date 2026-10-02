@@ -1,0 +1,2870 @@
+##### scenario: physics/collider_shapes
+##### convention: Y-up, 1.0 meters per unit
+##### Basic collider shapes under a part: every shape, both scopes, sizes, and what is refused.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place wagon.usda as Wagon
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/wagon.usda", asset_name="Wagon", group="Props", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Wagon at /Scene/Props/Wagon_01.
+
+  what changed:
+    + file assets/wagon/geo.usda
+    + file assets/wagon/wagon.usda
+    ~ file scene.usda
+    + prim /Scene/Props [typeless]
+    + prim /Scene/Props/Wagon_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Wagon_01/asset [Xform]
+          bounds: (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+          kind: component
+          world position: (0.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Wagon_01/asset/Bed [Xform]
+          attr xformOp:translate: (0, 0.5, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.0000, 0.5000, 0.0000)
+    + prim /Scene/Props/Wagon_01/asset/Bed/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.2, 0.8)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+          material shown: (none)
+          world position: (0.0000, 0.5000, 0.0000)
+    + prim /Scene/Props/Wagon_01/asset/Wheel_L [Xform]
+          attr xformOp:translate: (-0.7, 0.3, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (-0.7000, 0.3000, 0.0000)
+    + prim /Scene/Props/Wagon_01/asset/Wheel_L/Tire [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.2, 0.6, 0.6)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+          material shown: (none)
+          world position: (-0.7000, 0.3000, 0.0000)
+    + prim /Scene/Props/Wagon_01/asset/Wheel_R [Xform]
+          attr xformOp:translate: (0.7, 0.3, 0)
+          attr xformOpOrder: ('xformOp:translate')
+          world position: (0.7000, 0.3000, 0.0000)
+    + prim /Scene/Props/Wagon_01/asset/Wheel_R/Tire [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.2, 0.6, 0.6)
+          attr xformOp:translate: (0, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+          material shown: (none)
+          world position: (0.7000, 0.3000, 0.0000)
+    ~ /Scene  bounds: (none) → (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Wagon",
+    "intake": {
+      "asset_folder": "wagon",
+      "files_copied": 1,
+      "root_canonical_name": "wagon.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Wagon at /Scene/Props/Wagon_01.",
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Wagon_01",
+    "rotation_up": 0.0
+  }
+
+files:
+  + assets/wagon/geo.usda
+  + assets/wagon/wagon.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/wagon/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "wagon"
+      )
+
+      def Xform "wagon"
+      {
+          def Xform "Bed"
+          {
+              double3 xformOp:translate = (0, 0.5, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate"]
+
+              def Cube "Box"
+              {
+                  double size = 1
+                  float3 xformOp:scale = (1.2, 0.2, 0.8)
+                  double3 xformOp:translate = (0, 0, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+              }
+          }
+
+          def Xform "Wheel_L"
+          {
+              double3 xformOp:translate = (-0.7, 0.3, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate"]
+
+              def Cube "Tire"
+              {
+                  double size = 1
+                  float3 xformOp:scale = (0.2, 0.6, 0.6)
+                  double3 xformOp:translate = (0, 0, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+              }
+          }
+
+          def Xform "Wheel_R"
+          {
+              double3 xformOp:translate = (0.7, 0.3, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate"]
+
+              def Cube "Tire"
+              {
+                  double size = 1
+                  float3 xformOp:scale = (0.2, 0.6, 0.6)
+                  double3 xformOp:translate = (0, 0, 0)
+                  uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+              }
+          }
+      }
+
+  + assets/wagon/wagon.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "wagon"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "wagon" (
+          assetInfo = {
+              asset identifier = @./wagon.usda@
+              string name = "wagon"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_wagon>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_wagon"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Props"
+      +    {
+      +        def Xform "Wagon_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (0, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/wagon/wagon.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,66 @@
+   )
+   {
+  +    def "Props"
+  +    {
+  +        def Xform "Wagon_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (0, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/wagon/wagon.usda@
+  +                    string name = "wagon"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Xform "Bed"
+  +                {
+  +                    double3 xformOp:translate = (0, 0.5, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate"]
+  +
+  +                    def Cube "Box"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (1.2, 0.2, 0.8)
+  +                        double3 xformOp:translate = (0, 0, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +
+  +                def Xform "Wheel_L"
+  +                {
+  +                    double3 xformOp:translate = (-0.7, 0.3, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate"]
+  +
+  +                    def Cube "Tire"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.2, 0.6, 0.6)
+  +                        double3 xformOp:translate = (0, 0, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +
+  +                def Xform "Wheel_R"
+  +                {
+  +                    double3 xformOp:translate = (0.7, 0.3, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate"]
+  +
+  +                    def Cube "Tire"
+  +                    {
+  +                        double size = 1
+  +                        float3 xformOp:scale = (0.2, 0.6, 0.6)
+  +                        double3 xformOp:translate = (0, 0, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 02: apply_physics_api
+intent: apply PhysicsRigidBodyAPI to $wagon/asset/Wheel_L
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Wagon_01/asset/Wheel_L", api_name="PhysicsRigidBodyAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    + file assets/wagon/phy.usda
+    ~ file assets/wagon/wagon.usda
+    ~ /Scene/Props/Wagon_01/asset/Wheel_L  applied APIs: (none) → PhysicsRigidBodyAPI
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsRigidBodyAPI",
+    "asset_folder": "wagon",
+    "asset_prim_path": "/wagon/Wheel_L",
+    "attributes_set": [],
+    "cleared_masking_opinions": [],
+    "companion_api": null,
+    "instance_name": null,
+    "prim_path": "/Scene/Props/Wagon_01/asset/Wheel_L",
+    "relationships_set": [],
+    "requested_prim_path": "/wagon/Wheel_L",
+    "scene_prim_path": "/Scene/Props/Wagon_01/asset/Wheel_L",
+    "scope": "asset"
+  }
+
+files:
+    assets/wagon/geo.usda
+  + assets/wagon/phy.usda
+  ~ assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  + assets/wagon/phy.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "wagon"
+      )
+
+      over "wagon"
+      {
+          over "Wheel_L" (
+              prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+          )
+          {
+          }
+      }
+
+  ~ assets/wagon/wagon.usda:
+      --- assets/wagon/wagon.usda (before)
+      +++ assets/wagon/wagon.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./phy.usda@
+       )
+       {
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -44,5 +44,7 @@
+                   }
+   
+  -                def Xform "Wheel_L"
+  +                def Xform "Wheel_L" (
+  +                    apiSchemas = ["PhysicsRigidBodyAPI"]
+  +                )
+                   {
+                       double3 xformOp:translate = (-0.7, 0.3, 0)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 03: add_collider_shape
+intent: a cylinder for a wheel, in the asset (every placement has it)
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_L", name="collider", shape="cylinder", radius=0.3, height=0.2, axis="X")
+  current project: golden
+  said: ok: Added a cylinder collider at /Scene/Props/Wagon_01/asset/Wheel_L/collider, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.
+
+  what changed:
+    ~ file assets/wagon/phy.usda
+    + prim /Scene/Props/Wagon_01/asset/Wheel_L/collider [Cylinder]
+          applied APIs: PhysicsCollisionAPI
+          attr axis: 'X'
+          attr extent: ((-0.1, -0.3, -0.3), (0.1, 0.3, 0.3))
+          attr height: 0.2
+          attr purpose: 'guide'
+          attr radius: 0.3
+          material shown: (none)
+          world position: (-0.7000, 0.3000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "wagon",
+    "asset_prim_path": "/wagon/Wheel_L/collider",
+    "message": "Added a cylinder collider at /Scene/Props/Wagon_01/asset/Wheel_L/collider, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.",
+    "parent_prim_path": "/Scene/Props/Wagon_01/asset/Wheel_L",
+    "prim_path": "/Scene/Props/Wagon_01/asset/Wheel_L/collider",
+    "scope": "asset",
+    "shape": "cylinder"
+  }
+
+files:
+    assets/wagon/geo.usda
+  ~ assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/wagon/phy.usda:
+      --- assets/wagon/phy.usda (before)
+      +++ assets/wagon/phy.usda (after)
+      @@ -10,4 +10,14 @@
+           )
+           {
+      +        def Cylinder "collider" (
+      +            prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +        )
+      +        {
+      +            uniform token axis = "X"
+      +            float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+      +            double height = 0.2
+      +            uniform token purpose = "guide"
+      +            double radius = 0.3
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -58,4 +58,15 @@
+                           uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                       }
+  +
+  +                    def Cylinder "collider" (
+  +                        apiSchemas = ["PhysicsCollisionAPI"]
+  +                    )
+  +                    {
+  +                        uniform token axis = "X"
+  +                        float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+  +                        double height = 0.2
+  +                        uniform token purpose = "guide"
+  +                        double radius = 0.3
+  +                    }
+                   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: add_collider_shape
+intent: the same on the other wheel, for this placement only
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_R", name="collider", shape="cylinder", scope="scene", radius=0.3, height=0.2, axis="X")
+  current project: golden
+  said: ok: Added a cylinder collider at /Scene/Props/Wagon_01/asset/Wheel_R/collider. Only physics uses it: its purpose is guide, so renders skip it.
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Props/Wagon_01/asset/Wheel_R/collider [Cylinder]
+          applied APIs: PhysicsCollisionAPI
+          attr axis: 'X'
+          attr extent: ((-0.1, -0.3, -0.3), (0.1, 0.3, 0.3))
+          attr height: 0.2
+          attr purpose: 'guide'
+          attr radius: 0.3
+          material shown: (none)
+          world position: (0.7000, 0.3000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Added a cylinder collider at /Scene/Props/Wagon_01/asset/Wheel_R/collider. Only physics uses it: its purpose is guide, so renders skip it.",
+    "parent_prim_path": "/Scene/Props/Wagon_01/asset/Wheel_R",
+    "prim_path": "/Scene/Props/Wagon_01/asset/Wheel_R/collider",
+    "scope": "scene",
+    "shape": "cylinder"
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -23,4 +23,17 @@
+                   )
+                   {
+      +                over "Wheel_R"
+      +                {
+      +                    def Cylinder "collider" (
+      +                        prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +                    )
+      +                    {
+      +                        uniform token axis = "X"
+      +                        float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+      +                        double height = 0.2
+      +                        uniform token purpose = "guide"
+      +                        double radius = 0.3
+      +                    }
+      +                }
+                   }
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -83,4 +83,15 @@
+                           uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                       }
+  +
+  +                    def Cylinder "collider" (
+  +                        apiSchemas = ["PhysicsCollisionAPI"]
+  +                    )
+  +                    {
+  +                        uniform token axis = "X"
+  +                        float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+  +                        double height = 0.2
+  +                        uniform token purpose = "guide"
+  +                        double radius = 0.3
+  +                    }
+                   }
+               }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: add_collider_shape
+intent: a box, lifted a little
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Bed", name="floor", shape="box", scope="asset", size_x=1.2, size_y=0.2, size_z=0.8, translate_y=0.1)
+  current project: golden
+  said: ok: Added a box collider at /Scene/Props/Wagon_01/asset/Bed/floor, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.
+
+  what changed:
+    ~ file assets/wagon/phy.usda
+    + prim /Scene/Props/Wagon_01/asset/Bed/floor [Cube]
+          applied APIs: PhysicsCollisionAPI
+          attr extent: ((-0.5, -0.5, -0.5), (0.5, 0.5, 0.5))
+          attr purpose: 'guide'
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.2, 0.8)
+          attr xformOp:translate: (0, 0.1, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          material shown: (none)
+          world position: (0.0000, 0.6000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "wagon",
+    "asset_prim_path": "/wagon/Bed/floor",
+    "message": "Added a box collider at /Scene/Props/Wagon_01/asset/Bed/floor, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.",
+    "parent_prim_path": "/Scene/Props/Wagon_01/asset/Bed",
+    "prim_path": "/Scene/Props/Wagon_01/asset/Bed/floor",
+    "scope": "asset",
+    "shape": "box"
+  }
+
+files:
+    assets/wagon/geo.usda
+  ~ assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/wagon/phy.usda:
+      --- assets/wagon/phy.usda (before)
+      +++ assets/wagon/phy.usda (after)
+      @@ -21,4 +21,19 @@
+               }
+           }
+      +
+      +    over "Bed"
+      +    {
+      +        def Cube "floor" (
+      +            prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +        )
+      +        {
+      +            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+      +            uniform token purpose = "guide"
+      +            double size = 1
+      +            float3 xformOp:scale = (1.2, 0.2, 0.8)
+      +            double3 xformOp:translate = (0, 0.1, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -40,4 +40,16 @@
+                           float3 xformOp:scale = (1.2, 0.2, 0.8)
+                           double3 xformOp:translate = (0, 0, 0)
+  +                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +
+  +                    def Cube "floor" (
+  +                        apiSchemas = ["PhysicsCollisionAPI"]
+  +                    )
+  +                    {
+  +                        float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+  +                        uniform token purpose = "guide"
+  +                        double size = 1
+  +                        float3 xformOp:scale = (1.2, 0.2, 0.8)
+  +                        double3 xformOp:translate = (0, 0.1, 0)
+                           uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                       }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: add_collider_shape
+intent: a sphere under the asset root, off to one side
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset", name="hitch", shape="sphere", radius=0.25, translate_x=1.0, translate_z=0.5)
+  current project: golden
+  said: ok: Added a sphere collider at /Scene/Props/Wagon_01/asset/hitch, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.
+
+  what changed:
+    ~ file assets/wagon/phy.usda
+    + prim /Scene/Props/Wagon_01/asset/hitch [Sphere]
+          applied APIs: PhysicsCollisionAPI
+          attr extent: ((-0.25, -0.25, -0.25), (0.25, 0.25, 0.25))
+          attr purpose: 'guide'
+          attr radius: 0.25
+          attr xformOp:translate: (1, 0, 0.5)
+          attr xformOpOrder: ('xformOp:translate')
+          material shown: (none)
+          world position: (1.0000, 0.0000, 0.5000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "wagon",
+    "asset_prim_path": "/wagon/hitch",
+    "message": "Added a sphere collider at /Scene/Props/Wagon_01/asset/hitch, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.",
+    "parent_prim_path": "/Scene/Props/Wagon_01/asset",
+    "prim_path": "/Scene/Props/Wagon_01/asset/hitch",
+    "scope": "asset",
+    "shape": "sphere"
+  }
+
+files:
+    assets/wagon/geo.usda
+  ~ assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/wagon/phy.usda:
+      --- assets/wagon/phy.usda (before)
+      +++ assets/wagon/phy.usda (after)
+      @@ -36,4 +36,15 @@
+               }
+           }
+      +
+      +    def Sphere "hitch" (
+      +        prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +    )
+      +    {
+      +        float3[] extent = [(-0.25, -0.25, -0.25), (0.25, 0.25, 0.25)]
+      +        uniform token purpose = "guide"
+      +        double radius = 0.25
+      +        double3 xformOp:translate = (1, 0, 0.5)
+      +        uniform token[] xformOpOrder = ["xformOp:translate"]
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -107,4 +107,15 @@
+                       }
+                   }
+  +
+  +                def Sphere "hitch" (
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
+  +                )
+  +                {
+  +                    float3[] extent = [(-0.25, -0.25, -0.25), (0.25, 0.25, 0.25)]
+  +                    uniform token purpose = "guide"
+  +                    double radius = 0.25
+  +                    double3 xformOp:translate = (1, 0, 0.5)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate"]
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 07: add_collider_shape
+intent: a capsule standing up
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset", name="handle", shape="capsule", radius=0.1, height=0.5, axis="Y")
+  current project: golden
+  said: ok: Added a capsule collider at /Scene/Props/Wagon_01/asset/handle, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.
+
+  what changed:
+    ~ file assets/wagon/phy.usda
+    + prim /Scene/Props/Wagon_01/asset/handle [Capsule]
+          applied APIs: PhysicsCollisionAPI
+          attr axis: 'Y'
+          attr extent: ((-0.1, -0.35, -0.1), (0.1, 0.35, 0.1))
+          attr height: 0.5
+          attr purpose: 'guide'
+          attr radius: 0.1
+          material shown: (none)
+          world position: (0.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "wagon",
+    "asset_prim_path": "/wagon/handle",
+    "message": "Added a capsule collider at /Scene/Props/Wagon_01/asset/handle, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.",
+    "parent_prim_path": "/Scene/Props/Wagon_01/asset",
+    "prim_path": "/Scene/Props/Wagon_01/asset/handle",
+    "scope": "asset",
+    "shape": "capsule"
+  }
+
+files:
+    assets/wagon/geo.usda
+  ~ assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/wagon/phy.usda:
+      --- assets/wagon/phy.usda (before)
+      +++ assets/wagon/phy.usda (after)
+      @@ -47,4 +47,15 @@
+               uniform token[] xformOpOrder = ["xformOp:translate"]
+           }
+      +
+      +    def Capsule "handle" (
+      +        prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +    )
+      +    {
+      +        uniform token axis = "Y"
+      +        float3[] extent = [(-0.1, -0.35, -0.1), (0.1, 0.35, 0.1)]
+      +        double height = 0.5
+      +        uniform token purpose = "guide"
+      +        double radius = 0.1
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -118,4 +118,15 @@
+                       uniform token[] xformOpOrder = ["xformOp:translate"]
+                   }
+  +
+  +                def Capsule "handle" (
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
+  +                )
+  +                {
+  +                    uniform token axis = "Y"
+  +                    float3[] extent = [(-0.1, -0.35, -0.1), (0.1, 0.35, 0.1)]
+  +                    double height = 0.5
+  +                    uniform token purpose = "guide"
+  +                    double radius = 0.1
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 08: add_collider_shape
+intent: a cylinder along Z
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Bed", name="roller", shape="cylinder", radius=0.1, height=0.8, axis="Z")
+  current project: golden
+  said: ok: Added a cylinder collider at /Scene/Props/Wagon_01/asset/Bed/roller, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.
+
+  what changed:
+    ~ file assets/wagon/phy.usda
+    + prim /Scene/Props/Wagon_01/asset/Bed/roller [Cylinder]
+          applied APIs: PhysicsCollisionAPI
+          attr axis: 'Z'
+          attr extent: ((-0.1, -0.1, -0.4), (0.1, 0.1, 0.4))
+          attr height: 0.8
+          attr purpose: 'guide'
+          attr radius: 0.1
+          material shown: (none)
+          world position: (0.0000, 0.5000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset_folder": "wagon",
+    "asset_prim_path": "/wagon/Bed/roller",
+    "message": "Added a cylinder collider at /Scene/Props/Wagon_01/asset/Bed/roller, in wagon/phy.usda: every placement of the asset has it. Only physics uses it: its purpose is guide, so renders skip it.",
+    "parent_prim_path": "/Scene/Props/Wagon_01/asset/Bed",
+    "prim_path": "/Scene/Props/Wagon_01/asset/Bed/roller",
+    "scope": "asset",
+    "shape": "cylinder"
+  }
+
+files:
+    assets/wagon/geo.usda
+  ~ assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/wagon/phy.usda:
+      --- assets/wagon/phy.usda (before)
+      +++ assets/wagon/phy.usda (after)
+      @@ -35,4 +35,15 @@
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+               }
+      +
+      +        def Cylinder "roller" (
+      +            prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +        )
+      +        {
+      +            uniform token axis = "Z"
+      +            float3[] extent = [(-0.1, -0.1, -0.4), (0.1, 0.1, 0.4)]
+      +            double height = 0.8
+      +            uniform token purpose = "guide"
+      +            double radius = 0.1
+      +        }
+           }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -53,4 +53,15 @@
+                           double3 xformOp:translate = (0, 0.1, 0)
+                           uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                    }
+  +
+  +                    def Cylinder "roller" (
+  +                        apiSchemas = ["PhysicsCollisionAPI"]
+  +                    )
+  +                    {
+  +                        uniform token axis = "Z"
+  +                        float3[] extent = [(-0.1, -0.1, -0.4), (0.1, 0.1, 0.4)]
+  +                        double height = 0.8
+  +                        uniform token purpose = "guide"
+  +                        double radius = 0.1
+                       }
+                   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 09: get_physics_summary
+
+SUMMARY
+  call: get_physics_summary(prim_path="/Scene/Props/Wagon_01")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": {
+      "asset_path": "<PROJECT>/assets/wagon",
+      "has_physics_layer": true,
+      "prims": [
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "axis": "X",
+            "extent": "[(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]",
+            "height": 0.2,
+            "purpose": "guide",
+            "radius": 0.3
+          },
+          "prim_path": "/wagon/Wheel_L/collider",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsRigidBodyAPI"
+          ],
+          "attributes": {},
+          "prim_path": "/wagon/Wheel_L",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "extent": "[(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]",
+            "purpose": "guide",
+            "size": 1.0,
+            "xformOp:scale": "(1.2, 0.2, 0.8)",
+            "xformOp:translate": "(0, 0.1, 0)",
+            "xformOpOrder": "[xformOp:translate, xformOp:scale]"
+          },
+          "prim_path": "/wagon/Bed/floor",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "axis": "Z",
+            "extent": "[(-0.1, -0.1, -0.4), (0.1, 0.1, 0.4)]",
+            "height": 0.8,
+            "purpose": "guide",
+            "radius": 0.1
+          },
+          "prim_path": "/wagon/Bed/roller",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "extent": "[(-0.25, -0.25, -0.25), (0.25, 0.25, 0.25)]",
+            "purpose": "guide",
+            "radius": 0.25,
+            "xformOp:translate": "(1, 0, 0.5)",
+            "xformOpOrder": "[xformOp:translate]"
+          },
+          "prim_path": "/wagon/hitch",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "axis": "Y",
+            "extent": "[(-0.1, -0.35, -0.1), (0.1, 0.35, 0.1)]",
+            "height": 0.5,
+            "purpose": "guide",
+            "radius": 0.1
+          },
+          "prim_path": "/wagon/handle",
+          "relationships": {}
+        }
+      ]
+    },
+    "scene": {
+      "prim_path": "/Scene/Props/Wagon_01",
+      "prims": [
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {},
+          "prim_path": "/Scene/Props/Wagon_01/asset/Wheel_R/collider",
+          "relationships": {}
+        }
+      ]
+    }
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 10: validate_scene
+
+SUMMARY
+  call: validate_scene()
+  current project: golden
+  said: ok: Scene is valid!
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error_count": 0,
+    "is_valid": true,
+    "issues": [],
+    "message": "Scene is valid!"
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 11: add_collider_shape
+intent: a name that is taken
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_L", name="collider", shape="sphere", radius=0.3)
+  current project: golden
+  said: REFUSED: The name 'collider' is taken: /wagon/Wheel_L/collider already exists. Remove it first with remove_collider_shape, or use another name.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "The name 'collider' is taken: /wagon/Wheel_L/collider already exists. Remove it first with remove_collider_shape, or use another name."
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 12: add_collider_shape
+intent: under a mesh, not under the part
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_L/Tire", name="extra", shape="sphere", radius=0.3)
+  current project: golden
+  said: REFUSED: /wagon/Wheel_L/Tire is a Cube: a collider shape goes under a part that groups geometry (an Xform), so it moves with that part. Name the prim above the mesh.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "/wagon/Wheel_L/Tire is a Cube: a collider shape goes under a part that groups geometry (an Xform), so it moves with that part. Name the prim above the mesh."
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 13: add_collider_shape
+intent: a part that does not exist
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Nope", name="extra", shape="sphere", radius=0.3)
+  current project: golden
+  said: REFUSED: Prim not found: /wagon/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found: /wagon/Nope"
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 14: add_collider_shape
+intent: a cylinder with no height
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Bed", name="extra", shape="cylinder", radius=0.3, axis="X")
+  current project: golden
+  said: REFUSED: A cylinder collider takes radius, height, axis; missing: height.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "A cylinder collider takes radius, height, axis; missing: height."
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 15: add_collider_shape
+intent: a sphere given box sizes
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Bed", name="extra", shape="sphere", radius=0.3, size_x=1.0, size_y=1.0, size_z=1.0)
+  current project: golden
+  said: REFUSED: A sphere collider takes radius; not used by a sphere: size.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "A sphere collider takes radius; not used by a sphere: size."
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 16: add_collider_shape
+intent: a box with one side only
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Bed", name="extra", shape="box", size_x=1.0)
+  current project: golden
+  said: REFUSED: A box size needs size_x, size_y and size_z together.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "A box size needs size_x, size_y and size_z together."
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 17: add_collider_shape
+intent: a radius below zero
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Bed", name="extra", shape="sphere", radius=-0.3)
+  current project: golden
+  said: REFUSED: Collider sizes must be above zero; got radius=-0.3.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Collider sizes must be above zero; got radius=-0.3."
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 18: add_collider_shape
+intent: a name USD cannot take
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Bed", name="my-shape", shape="sphere", radius=0.3)
+  current project: golden
+  said: REFUSED: Collider name 'my-shape' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Collider name 'my-shape' is not a valid USD prim name: use letters, digits and underscores, and do not start with a digit."
+  }
+
+files:
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 19: place_asset
+intent: place crate.usda as Crate
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Props", translate_x=4.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Crate at /Scene/Props/Crate_02.
+
+  what changed:
+    + file assets/crate/crate.usda
+    + file assets/crate/geo.usda
+    ~ file scene.usda
+    + prim /Scene/Props/Crate_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (4, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (4.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset [Xform]
+          bounds: (3.7500, 0.0000, -0.2500)..(4.2500, 0.5000, 0.2500)
+          kind: component
+          world position: (4.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Crate_02/asset/Box [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.5, 0.5)
+          attr xformOp:translate: (0, 0.25, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (3.7500, 0.0000, -0.2500)..(4.2500, 0.5000, 0.2500)
+          material shown: (none)
+          world position: (4.0000, 0.2500, 0.0000)
+    ~ /Scene  bounds: (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000) → (-0.8000, 0.0000, -0.4000)..(4.2500, 0.6000, 0.4000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Crate",
+    "intake": {
+      "asset_folder": "crate",
+      "files_copied": 1,
+      "root_canonical_name": "crate.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Crate at /Scene/Props/Crate_02.",
+    "position": {
+      "x": 4.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Crate_02",
+    "rotation_up": 0.0
+  }
+
+files:
+  + assets/crate/crate.usda
+  + assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/crate/crate.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "crate" (
+          assetInfo = {
+              asset identifier = @./crate.usda@
+              string name = "crate"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_crate>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_crate"
+      {
+      }
+
+  + assets/crate/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "crate"
+      )
+
+      def Xform "crate"
+      {
+          def Cube "Box"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.5, 0.5, 0.5)
+              double3 xformOp:translate = (0, 0.25, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -38,4 +38,18 @@
+                   }
+               }
+      +
+      +        def Xform "Crate_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (4, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/crate/crate.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -142,4 +142,30 @@
+               }
+           }
+  +
+  +        def Xform "Crate_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (4, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/crate/crate.usda@
+  +                    string name = "crate"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Box"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.5, 0.5)
+  +                    double3 xformOp:translate = (0, 0.25, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.2500, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 20: set_prim_attribute
+intent: stretch the crate placement
+
+SUMMARY
+  call: set_prim_attribute(prim_path="/Scene/Props/Crate_02", attribute_name="xformOp:scale", value=[1, 2, 1])
+  current project: golden
+  said: ok: Authored /Scene/Props/Crate_02.xformOp:scale in scene.usda.
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene  bounds: (-0.8000, 0.0000, -0.4000)..(4.2500, 0.6000, 0.4000) → (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+    ~ /Scene/Props/Crate_02  attr xformOp:scale: (1, 1, 1) → (1, 2, 1)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attribute_name": "xformOp:scale",
+    "message": "Authored /Scene/Props/Crate_02.xformOp:scale in scene.usda.",
+    "prim_path": "/Scene/Props/Crate_02",
+    "value": [
+      1,
+      2,
+      1
+    ]
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -42,5 +42,5 @@
+               {
+                   float3 xformOp:rotateXYZ = (0, 0, 0)
+      -            float3 xformOp:scale = (1, 1, 1)
+      +            float3 xformOp:scale = (1, 2, 1)
+                   double3 xformOp:translate = (4, 0, 0)
+                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -146,5 +146,5 @@
+           {
+               float3 xformOp:rotateXYZ = (0, 0, 0)
+  -            float3 xformOp:scale = (1, 1, 1)
+  +            float3 xformOp:scale = (1, 2, 1)
+               double3 xformOp:translate = (4, 0, 0)
+               uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 21: add_collider_shape
+intent: a cylinder under a stretched part: USD's rule refuses it
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Crate_02/asset", name="round", shape="cylinder", scope="scene", radius=0.3, height=0.5, axis="Y")
+  current project: golden
+  said: REFUSED: Adding the collider /Scene/Props/Crate_02/asset/round is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Cylinder geometry, prim path: /Scene/Props/Crate_02/asset/round. Nothing was changed.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Adding the collider /Scene/Props/Crate_02/asset/round is refused: USD's physics rules would then report 1 error(s): ColliderNonUniformScale: Non-uniform scale is not supported for Cylinder geometry, prim path: /Scene/Props/Crate_02/asset/round. Nothing was changed."
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 22: add_collider_shape
+intent: a box under a stretched part is fine
+
+SUMMARY
+  call: add_collider_shape(prim_path="/Scene/Props/Crate_02/asset", name="block", shape="box", scope="scene", size_x=0.5, size_y=0.5, size_z=0.5)
+  current project: golden
+  said: ok: Added a box collider at /Scene/Props/Crate_02/asset/block. Only physics uses it: its purpose is guide, so renders skip it.
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Props/Crate_02/asset/block [Cube]
+          applied APIs: PhysicsCollisionAPI
+          attr extent: ((-0.5, -0.5, -0.5), (0.5, 0.5, 0.5))
+          attr purpose: 'guide'
+          attr size: 1
+          attr xformOp:scale: (0.5, 0.25, 0.5)
+          attr xformOpOrder: ('xformOp:scale')
+          material shown: (none)
+          world position: (4.0000, 0.0000, 0.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Added a box collider at /Scene/Props/Crate_02/asset/block. Only physics uses it: its purpose is guide, so renders skip it.",
+    "parent_prim_path": "/Scene/Props/Crate_02/asset",
+    "prim_path": "/Scene/Props/Crate_02/asset/block",
+    "scope": "scene",
+    "shape": "box"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -50,4 +50,14 @@
+                   )
+                   {
+      +                def Cube "block" (
+      +                    prepend apiSchemas = ["PhysicsCollisionAPI"]
+      +                )
+      +                {
+      +                    float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+      +                    uniform token purpose = "guide"
+      +                    double size = 1
+      +                    float3 xformOp:scale = (0.5, 0.25, 0.5)
+      +                    uniform token[] xformOpOrder = ["xformOp:scale"]
+      +                }
+                   }
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -166,4 +166,15 @@
+                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                   }
+  +
+  +                def Cube "block" (
+  +                    apiSchemas = ["PhysicsCollisionAPI"]
+  +                )
+  +                {
+  +                    float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+  +                    uniform token purpose = "guide"
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.5, 0.25, 0.5)
+  +                    uniform token[] xformOpOrder = ["xformOp:scale"]
+  +                }
+               }
+           }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L/collider  [Cylinder]  at (-0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+  /Scene/Props/Crate_02/asset/block  [Cube]  at (4.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 23: remove_collider_shape
+intent: remove the one in the asset
+
+SUMMARY
+  call: remove_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_L/collider")
+  current project: golden
+  said: ok: Removed the collider shape /Scene/Props/Wagon_01/asset/Wheel_L/collider
+
+  what changed:
+    ~ file assets/wagon/phy.usda
+    - prim /Scene/Props/Wagon_01/asset/Wheel_L/collider [Cylinder]
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed the collider shape /Scene/Props/Wagon_01/asset/Wheel_L/collider",
+    "prim_path": "/Scene/Props/Wagon_01/asset/Wheel_L/collider",
+    "removed": true,
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+  ~ assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/wagon/phy.usda:
+      --- assets/wagon/phy.usda (before)
+      +++ assets/wagon/phy.usda (after)
+      @@ -10,14 +10,4 @@
+           )
+           {
+      -        def Cylinder "collider" (
+      -            prepend apiSchemas = ["PhysicsCollisionAPI"]
+      -        )
+      -        {
+      -            uniform token axis = "X"
+      -            float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+      -            double height = 0.2
+      -            uniform token purpose = "guide"
+      -            double radius = 0.3
+      -        }
+           }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -80,15 +80,4 @@
+                           double3 xformOp:translate = (0, 0, 0)
+                           uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  -                    }
+  -
+  -                    def Cylinder "collider" (
+  -                        apiSchemas = ["PhysicsCollisionAPI"]
+  -                    )
+  -                    {
+  -                        uniform token axis = "X"
+  -                        float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+  -                        double height = 0.2
+  -                        uniform token purpose = "guide"
+  -                        double radius = 0.3
+                       }
+                   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R/collider  [Cylinder]  at (0.7000, 0.3000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+  /Scene/Props/Crate_02/asset/block  [Cube]  at (4.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 24: remove_collider_shape
+intent: remove the one in the scene
+
+SUMMARY
+  call: remove_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_R/collider")
+  current project: golden
+  said: ok: Removed the collider shape /Scene/Props/Wagon_01/asset/Wheel_R/collider
+
+  what changed:
+    ~ file scene.usda
+    - prim /Scene/Props/Wagon_01/asset/Wheel_R/collider [Cylinder]
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Removed the collider shape /Scene/Props/Wagon_01/asset/Wheel_R/collider",
+    "prim_path": "/Scene/Props/Wagon_01/asset/Wheel_R/collider",
+    "removed": true,
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -23,17 +23,4 @@
+                   )
+                   {
+      -                over "Wheel_R"
+      -                {
+      -                    def Cylinder "collider" (
+      -                        prepend apiSchemas = ["PhysicsCollisionAPI"]
+      -                    )
+      -                    {
+      -                        uniform token axis = "X"
+      -                        float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+      -                        double height = 0.2
+      -                        uniform token purpose = "guide"
+      -                        double radius = 0.3
+      -                    }
+      -                }
+                   }
+               }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -95,15 +95,4 @@
+                           uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                       }
+  -
+  -                    def Cylinder "collider" (
+  -                        apiSchemas = ["PhysicsCollisionAPI"]
+  -                    )
+  -                    {
+  -                        uniform token axis = "X"
+  -                        float3[] extent = [(-0.1, -0.3, -0.3), (0.1, 0.3, 0.3)]
+  -                        double height = 0.2
+  -                        uniform token purpose = "guide"
+  -                        double radius = 0.3
+  -                    }
+                   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+  /Scene/Props/Crate_02/asset/block  [Cube]  at (4.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 25: remove_collider_shape
+intent: nothing there any more
+
+SUMMARY
+  call: remove_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_R/collider")
+  current project: golden
+  said: ok: No collider shape at /Scene/Props/Wagon_01/asset/Wheel_R/collider
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "No collider shape at /Scene/Props/Wagon_01/asset/Wheel_R/collider",
+    "prim_path": "/Scene/Props/Wagon_01/asset/Wheel_R/collider",
+    "removed": false,
+    "scope": null
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+  /Scene/Props/Crate_02/asset/block  [Cube]  at (4.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 26: remove_collider_shape
+intent: a mesh of the asset, not a collider shape
+
+SUMMARY
+  call: remove_collider_shape(prim_path="/Scene/Props/Wagon_01/asset/Wheel_R/Tire")
+  current project: golden
+  said: REFUSED: /Scene/Props/Wagon_01/asset/Wheel_R/Tire is a Cube that was not added with add_collider_shape, so it is not removed here. To stop a mesh from colliding use remove_physics_api with PhysicsCollisionAPI.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "/Scene/Props/Wagon_01/asset/Wheel_R/Tire is a Cube that was not added with add_collider_shape, so it is not removed here. To stop a mesh from colliding use remove_physics_api with PhysicsCollisionAPI."
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+  /Scene/Props/Crate_02/asset/block  [Cube]  at (4.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 27: get_physics_summary
+
+SUMMARY
+  call: get_physics_summary(prim_path="/Scene/Props/Wagon_01")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": {
+      "asset_path": "<PROJECT>/assets/wagon",
+      "has_physics_layer": true,
+      "prims": [
+        {
+          "applied_apis": [
+            "PhysicsRigidBodyAPI"
+          ],
+          "attributes": {},
+          "prim_path": "/wagon/Wheel_L",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "extent": "[(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]",
+            "purpose": "guide",
+            "size": 1.0,
+            "xformOp:scale": "(1.2, 0.2, 0.8)",
+            "xformOp:translate": "(0, 0.1, 0)",
+            "xformOpOrder": "[xformOp:translate, xformOp:scale]"
+          },
+          "prim_path": "/wagon/Bed/floor",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "axis": "Z",
+            "extent": "[(-0.1, -0.1, -0.4), (0.1, 0.1, 0.4)]",
+            "height": 0.8,
+            "purpose": "guide",
+            "radius": 0.1
+          },
+          "prim_path": "/wagon/Bed/roller",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "extent": "[(-0.25, -0.25, -0.25), (0.25, 0.25, 0.25)]",
+            "purpose": "guide",
+            "radius": 0.25,
+            "xformOp:translate": "(1, 0, 0.5)",
+            "xformOpOrder": "[xformOp:translate]"
+          },
+          "prim_path": "/wagon/hitch",
+          "relationships": {}
+        },
+        {
+          "applied_apis": [
+            "PhysicsCollisionAPI"
+          ],
+          "attributes": {
+            "axis": "Y",
+            "extent": "[(-0.1, -0.35, -0.1), (0.1, 0.35, 0.1)]",
+            "height": 0.5,
+            "purpose": "guide",
+            "radius": 0.1
+          },
+          "prim_path": "/wagon/handle",
+          "relationships": {}
+        }
+      ]
+    },
+    "scene": {
+      "prim_path": "/Scene/Props/Wagon_01",
+      "prims": []
+    }
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+  /Scene/Props/Crate_02/asset/block  [Cube]  at (4.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 28: validate_scene
+
+SUMMARY
+  call: validate_scene()
+  current project: golden
+  said: ok: Scene is valid!
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error_count": 0,
+    "is_valid": true,
+    "issues": [],
+    "message": "Scene is valid!"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/wagon/geo.usda
+    assets/wagon/phy.usda
+    assets/wagon/wagon.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(4.2500, 1.0000, 0.4000)
+  /Scene/Props/Wagon_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.8000, 0.0000, -0.4000)..(0.8000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed  [Xform]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)
+  /Scene/Props/Wagon_01/asset/Bed/Box  [Cube]  at (0.0000, 0.5000, 0.0000)  bounds (-0.6000, 0.4000, -0.4000)..(0.6000, 0.6000, 0.4000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/floor  [Cube]  at (0.0000, 0.6000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Bed/roller  [Cylinder]  at (0.0000, 0.5000, 0.0000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_L  [Xform]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_L/Tire  [Cube]  at (-0.7000, 0.3000, 0.0000)  bounds (-0.8000, 0.0000, -0.3000)..(-0.6000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/Wheel_R  [Xform]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)
+  /Scene/Props/Wagon_01/asset/Wheel_R/Tire  [Cube]  at (0.7000, 0.3000, 0.0000)  bounds (0.6000, 0.0000, -0.3000)..(0.8000, 0.6000, 0.3000)  material (none)
+  /Scene/Props/Wagon_01/asset/hitch  [Sphere]  at (1.0000, 0.0000, 0.5000)  material (none)
+  /Scene/Props/Wagon_01/asset/handle  [Capsule]  at (0.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Props/Crate_02  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)
+  /Scene/Props/Crate_02/asset/Box  [Cube]  at (4.0000, 0.5000, 0.0000)  bounds (3.7500, 0.0000, -0.2500)..(4.2500, 1.0000, 0.2500)  material (none)
+  /Scene/Props/Crate_02/asset/block  [Cube]  at (4.0000, 0.0000, 0.0000)  material (none)
+
+validation:
+  valid, no issues

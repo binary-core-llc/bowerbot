@@ -95,6 +95,30 @@ def get_physics_summary(state: scene_state.SceneState, params: dict[str, Any]) -
     return skills.ToolResult(success=True, data=data)
 
 
+def add_collider_shape(state: scene_state.SceneState, params: dict[str, Any]) -> skills.ToolResult:
+    """Add a basic collider shape (box, sphere, capsule, cylinder) under a part."""
+    if (err := _helpers.require_stage(state)):
+        return err
+    try:
+        data = physics_service.add_collider_shape(state, params)
+    except (ValueError, RuntimeError) as e:
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
+
+
+def remove_collider_shape(
+    state: scene_state.SceneState, params: dict[str, Any],
+) -> skills.ToolResult:
+    """Remove a collider shape added with add_collider_shape."""
+    if (err := _helpers.require_stage(state)):
+        return err
+    try:
+        data = physics_service.remove_collider_shape(state, params)
+    except (ValueError, RuntimeError) as e:
+        return skills.ToolResult(success=False, error=str(e))
+    return skills.ToolResult(success=True, data=data)
+
+
 def list_joint_properties(
     state: scene_state.SceneState, params: dict[str, Any],
 ) -> skills.ToolResult:
@@ -636,6 +660,127 @@ TOOLS.append(skills.Tool(
     },
 ))
 TOOLS.append(skills.Tool(
+    name="add_collider_shape",
+    description=(
+        "Add a basic collider shape under a part: a box, sphere, capsule "
+        "or cylinder that only physics uses. USD has no setting that makes "
+        "a mesh collide as a cylinder; a collider is always a geometry prim "
+        "with PhysicsCollisionAPI, so this adds that prim (a UsdGeom Cube, "
+        "Sphere, Capsule or Cylinder) with the collision API applied and "
+        "purpose 'guide', which renders skip and the asset's box ignores. "
+        "Use it when a mesh's own shape collides badly: a tire as a convex "
+        "hull rolls like a polygon, a cylinder rolls smoothly.\n\n"
+        "prim_path is the PART the shape goes under (an Xform that groups "
+        "geometry, e.g. a wheel), not the mesh: the shape then moves with "
+        "that part and belongs to its rigid body. Sizes and the offset are "
+        "in project units, measured in the world; axis and the offset "
+        "follow the part's own axes.\n\n"
+        "Each shape takes its own sizes and no others: box -> size_x, "
+        "size_y, size_z; sphere -> radius; capsule and cylinder -> radius, "
+        "height, axis. USD's physics rules apply: a sphere, capsule or "
+        "cylinder under a part with non-uniform scale is REFUSED (a box is "
+        "fine).\n\n"
+        "The mesh under the part keeps colliding if it has "
+        "PhysicsCollisionAPI: remove that with remove_physics_api so only "
+        "the shape collides.\n\n"
+        "scope='asset' writes the shape into the asset's phy.usda, so every "
+        "placement of the asset has it. scope='scene' writes it into "
+        "scene.usda for this placement only. Omit scope to auto-detect."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "prim_path": {
+                "type": "string",
+                "description": (
+                    "Scene prim path of the part the shape goes under "
+                    "(e.g. /Scene/Props/Tractor_01/asset/wheel_front_L)."
+                ),
+            },
+            "name": {
+                "type": "string",
+                "description": (
+                    "Name of the new collider prim under the part "
+                    "(e.g. 'collider'). Must be a valid USD prim name "
+                    "and not taken."
+                ),
+            },
+            "shape": {
+                "type": "string",
+                "enum": ["box", "sphere", "capsule", "cylinder"],
+                "description": "Which basic shape the collider is.",
+            },
+            "radius": {
+                "type": "number",
+                "description": "sphere, capsule, cylinder: radius in project units.",
+            },
+            "height": {
+                "type": "number",
+                "description": (
+                    "capsule, cylinder: length along the axis in project "
+                    "units (for a capsule, without its two round caps)."
+                ),
+            },
+            "axis": {
+                "type": "string",
+                "enum": ["X", "Y", "Z"],
+                "description": (
+                    "capsule, cylinder: which of the PART's own axes the "
+                    "shape runs along (a wheel's axle axis)."
+                ),
+            },
+            "size_x": {"type": "number", "description": "box: width in project units."},
+            "size_y": {"type": "number", "description": "box: size along Y in project units."},
+            "size_z": {"type": "number", "description": "box: size along Z in project units."},
+            "translate_x": {
+                "type": "number",
+                "description": "Offset from the part's origin along its X, in project units.",
+            },
+            "translate_y": {
+                "type": "number",
+                "description": "Offset from the part's origin along its Y, in project units.",
+            },
+            "translate_z": {
+                "type": "number",
+                "description": "Offset from the part's origin along its Z, in project units.",
+            },
+            "scope": {
+                "type": "string",
+                "enum": ["asset", "scene"],
+                "description": (
+                    "Where to write the shape. Omit to auto-detect: asset "
+                    "scope for a part of a placed asset, scene otherwise."
+                ),
+            },
+        },
+        "required": ["prim_path", "name", "shape"],
+    },
+))
+TOOLS.append(skills.Tool(
+    name="remove_collider_shape",
+    description=(
+        "Remove a collider shape added with add_collider_shape, from "
+        "wherever it was written (scene.usda or the asset's phy.usda). "
+        "Only removes those shapes: a prim from the asset's own geometry "
+        "is REFUSED; to stop a mesh from colliding use remove_physics_api "
+        "with PhysicsCollisionAPI. A path with nothing at it answers "
+        "removed: false."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "prim_path": {
+                "type": "string",
+                "description": (
+                    "Scene prim path of the collider shape, as returned "
+                    "by add_collider_shape."
+                ),
+            },
+        },
+        "required": ["prim_path"],
+    },
+))
+TOOLS.append(skills.Tool(
     name="list_joint_properties",
     description=(
         "Schema-registry introspection for a UsdPhysics typed joint "
@@ -864,6 +1009,8 @@ HANDLERS = {
     "create_or_update_collision_group": create_or_update_collision_group,
     "remove_collision_group": remove_collision_group,
     "list_collision_groups": list_collision_groups,
+    "add_collider_shape": add_collider_shape,
+    "remove_collider_shape": remove_collider_shape,
     "list_joint_properties": list_joint_properties,
     "create_joint": create_joint,
     "remove_joint": remove_joint,

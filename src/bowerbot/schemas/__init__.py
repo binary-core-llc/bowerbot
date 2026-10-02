@@ -31,6 +31,8 @@ from bowerbot.schemas.physics import JointsSummary
 from bowerbot.schemas.physics import JointSummary
 from bowerbot.schemas.physics import PhysicsApiName
 from bowerbot.schemas.physics import PhysicsApiSchemaInfo
+from bowerbot.schemas.physics import PhysicsColliderShape
+from bowerbot.schemas.physics import PhysicsColliderShapeParams
 from bowerbot.schemas.physics import PhysicsJointType
 from bowerbot.schemas.physics import PhysicsPrimSummary
 from bowerbot.schemas.physics import PhysicsSummary
@@ -102,6 +104,8 @@ __all__ = [
     "PartialVec3",
     "PhysicsApiName",
     "PhysicsApiSchemaInfo",
+    "PhysicsColliderShape",
+    "PhysicsColliderShapeParams",
     "PhysicsJointType",
     "PhysicsPrimSummary",
     "PhysicsSummary",

@@ -60,6 +60,14 @@ def world_matrix(prim: Usd.Prim) -> Gf.Matrix4d:
     return UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
 
 
+def world_scale(prim: Usd.Prim) -> schemas.Vec3:
+    """How long one unit along each of a prim's own axes is in the world."""
+    matrix = world_matrix(prim)
+    return (
+        matrix.GetRow3(0).GetLength(), matrix.GetRow3(1).GetLength(), matrix.GetRow3(2).GetLength(),
+    )
+
+
 def world_translation(prim: Usd.Prim) -> schemas.Vec3:
     """Return where a prim's origin is in the world."""
     t = world_matrix(prim).ExtractTranslation()

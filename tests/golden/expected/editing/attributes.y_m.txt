@@ -920,11 +920,10 @@ intent: a value of the wrong type
 SUMMARY
   call: set_prim_attribute(prim_path="/Scene/Furniture/Chair_01", attribute_name="visibility", value=5)
   current project: golden
-  said: ok: Authored /Scene/Furniture/Chair_01.visibility in scene.usda.
+  said: REFUSED: visibility takes one of ['inherited', 'invisible']; got 5.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Furniture/Chair_01  attr visibility: (none) → '5'
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -939,38 +938,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "attribute_name": "visibility",
-    "message": "Authored /Scene/Furniture/Chair_01.visibility in scene.usda.",
-    "prim_path": "/Scene/Furniture/Chair_01",
-    "value": 5
+    "error": "visibility takes one of ['inherited', 'invisible']; got 5."
   }
 
 files:
     assets/chair/chair.usda
     assets/chair/geo.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -15,4 +15,5 @@
-               {
-                   token userProperties:note = "front row"
-      +            token visibility = "5"
-                   float3 xformOp:rotateXYZ = (0, 0, 0)
-                   float3 xformOp:scale = (2, 2, 2)
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -17,4 +17,5 @@
-           {
-               token userProperties:note = "front row"
-  +            token visibility = "5"
-               float3 xformOp:rotateXYZ = (0, 0, 0)
-               float3 xformOp:scale = (2, 2, 2)
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.9000, 0.8000, -0.9000)..(0.9000, 1.9000, 0.9000)
@@ -1070,10 +1051,10 @@ full answer:
         "value": "front row"
       },
       {
-        "authored": true,
+        "authored": false,
         "name": "visibility",
         "type": "token",
-        "value": "5"
+        "value": "inherited"
       },
       {
         "authored": true,

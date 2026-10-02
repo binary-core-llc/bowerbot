@@ -74,6 +74,12 @@ def set_prim_attribute(
             prim, attribute_name, value, expected_type,
         )
 
+    allowed = attr.GetMetadata("allowedTokens")
+    if allowed and value not in allowed:
+        raise ValueError(
+            f"{attribute_name} takes one of {sorted(allowed)}; got {value!r}.",
+        )
+
     type_name = expected_type if expected_type is not None else attr.GetTypeName()
     converted = usd.values.json_to_usd_value(value, type_name)
     try:

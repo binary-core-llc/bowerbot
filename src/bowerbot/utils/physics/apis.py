@@ -145,34 +145,29 @@ def apply_in_asset(
             refuse_nested_articulation_root(composed, target_path)
     del composed
 
-    known = physics.rules.errors(scene_stage)
-    stage = physics.layer.open_for_edit(asset_dir)
-    prim = stage.OverridePrim(Sdf.Path(target_path))
+    doing = f"Applying {api_name.value} to {target_path} in asset {asset_dir.name}"
+    with physics.layer.edit(asset_dir, scene_stage, doing) as stage:
+        prim = stage.OverridePrim(Sdf.Path(target_path))
 
-    companion = constants.PhysicsRules.COMPANION_APIS.get(api_name)
-    if companion is not None:
-        constants.PhysicsUsd.APIS[companion].Apply(prim)
-    if is_multi:
-        _apply_multi(prim, api_name, instance_name)
-    else:
-        constants.PhysicsUsd.APIS[api_name].Apply(prim)
+        companion = constants.PhysicsRules.COMPANION_APIS.get(api_name)
+        if companion is not None:
+            constants.PhysicsUsd.APIS[companion].Apply(prim)
+        if is_multi:
+            _apply_multi(prim, api_name, instance_name)
+        else:
+            constants.PhysicsUsd.APIS[api_name].Apply(prim)
 
-    for name, value in attributes.items():
-        attr = prim.GetAttribute(name)
-        usd.attributes.set_prim_attribute(
-            stage, target_path, name, value,
-            expected_type=attr.GetTypeName(),
-        )
+        for name, value in attributes.items():
+            attr = prim.GetAttribute(name)
+            usd.attributes.set_prim_attribute(
+                stage, target_path, name, value,
+                expected_type=attr.GetTypeName(),
+            )
 
-    for name, targets in relationships.items():
-        prim.GetRelationship(name).SetTargets(
-            [Sdf.Path(t) for t in targets],
-        )
-
-    physics.layer.save_edit(
-        asset_dir, stage, scene_stage, known,
-        f"Applying {api_name.value} to {target_path} in asset {asset_dir.name}",
-    )
+        for name, targets in relationships.items():
+            prim.GetRelationship(name).SetTargets(
+                [Sdf.Path(t) for t in targets],
+            )
 
     logger.info(
         "Applied %s%s on %s in %s/phy.usda",

@@ -1365,7 +1365,7 @@ full answer:
         "path": "<LIBRARY>/shapes.usda"
       }
     ],
-    "total_matches": 27,
+    "total_matches": 28,
     "truncated": true
   }
 

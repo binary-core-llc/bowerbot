@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 def list_with_bindings(asset_dir: Path) -> list[dict]:
-    """List all materials and their bindings in *asset_dir*."""
+    """List the materials that give *asset_dir* its look, and the prims each is bound to.
+
+    A material with no shader output describes no look and is left out.
+    """
     mtl_path = asset_dir / constants.ASWFLayerNames.MTL
     if not mtl_path.exists():
         return []
@@ -35,7 +38,7 @@ def list_with_bindings(asset_dir: Path) -> list[dict]:
 
     materials: dict[str, list[str]] = {}
     for prim in stage.Traverse():
-        if prim.IsA(UsdShade.Material):
+        if prim.IsA(UsdShade.Material) and UsdShade.Material(prim).GetOutputs():
             materials[str(prim.GetPath())] = []
 
     for prim in stage.Traverse():

@@ -1,10 +1,12 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""The asset's ``phy.usda``: its path, opening it for an edit, saving, removing it once empty."""
+"""The asset's ``phy.usda``: its path, making one checked edit to it, removing it once empty."""
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import Generator
 from pathlib import Path
 
 from pxr import Usd
@@ -19,28 +21,25 @@ def file_path(asset_dir: Path) -> Path:
     return asset_dir / constants.ASWFLayerNames.PHY
 
 
-def open_for_edit(asset_dir: Path) -> Usd.Stage:
-    """Open ``phy.usda`` as a stage, creating it and the asset root's reference to it if missing.
+@contextlib.contextmanager
+def edit(
+    asset_dir: Path, scene_stage: Usd.Stage, doing: str,
+) -> Generator[Usd.Stage, None, None]:
+    """Open ``phy.usda`` for one edit: saved on the way out, or dropped if it is refused.
 
-    The reference is made first, while the file has no edit: the scene then
-    shows the edit before it is saved, which is what ``save_edit`` checks.
+    The file and the asset root's reference to it are made first, while the
+    file has no edit, so *scene_stage* shows the edit before it is saved. The
+    edit is refused when it fails, or when it gives the scene a physics error
+    it did not have; then nothing is left behind, not even an empty file.
     """
+    known = physics.rules.errors(scene_stage)
     authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
     authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.PHY)
-    return Usd.Stage.Open(str(file_path(asset_dir)))
-
-
-def save_edit(
-    asset_dir: Path, stage: Usd.Stage, scene_stage: Usd.Stage, known: set[str], doing: str,
-) -> None:
-    """Save an edit made to ``phy.usda``.
-
-    An edit that gives the scene a physics error it did not have (*known*)
-    is dropped instead, and refused.
-    """
+    stage = Usd.Stage.Open(str(file_path(asset_dir)))
     try:
+        yield stage
         physics.rules.refuse_new_errors(scene_stage, known, doing)
-    except ValueError:
+    except Exception:
         stage.GetRootLayer().Reload(force=True)
         cleanup_if_empty(asset_dir)
         raise

@@ -9,7 +9,7 @@ import asyncio
 import contextlib
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version
 
@@ -109,7 +109,7 @@ def build_app(settings: config.Settings) -> Starlette:
         await manager.handle_request(scope, receive, send)
 
     @contextlib.asynccontextmanager
-    async def lifespan(_app: Starlette) -> AsyncIterator[None]:
+    async def lifespan(_app: Starlette) -> AsyncGenerator[None, None]:
         async with manager.run():
             logger.info(
                 "MCP server ready: %d tool(s), %d skill(s) on %s",

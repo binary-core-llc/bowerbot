@@ -11,6 +11,7 @@ from pxr import Gf
 from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdPhysics
+from pxr import UsdShade
 
 from bowerbot import config
 from tests import _helpers
@@ -1088,3 +1089,285 @@ def test_remove_limit_api():
         }))
         assert r.success, r.error
         assert r.data["removed"] is True
+
+
+# ── collider shapes ──
+
+
+def _cart_asset(directory: Path) -> Path:
+    """A Y-up, meters asset whose parts are groups: /cart/Wheel (an Xform) holds the mesh."""
+    path = directory / "cart.usda"
+    stage = Usd.Stage.CreateNew(str(path))
+    UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    stage.SetDefaultPrim(stage.DefinePrim("/cart", "Xform"))
+    wheel = UsdGeom.Xform.Define(stage, "/cart/Wheel")
+    wheel.AddTranslateOp().Set(Gf.Vec3d(0.5, 0.3, 0.0))
+    UsdGeom.Cube.Define(stage, "/cart/Wheel/Tire").GetSizeAttr().Set(0.4)
+    stage.Save()
+    return path
+
+
+def _cart_scene(tmp: str, up_axis: config.UpAxis, meters_per_unit: float):
+    """A project in the given convention with the cart placed; returns state and the wheel path."""
+    tmp_path = Path(tmp)
+    state, _ = _helpers.make_state(tmp_path, up_axis=up_axis, meters_per_unit=meters_per_unit)
+    asyncio.run(_helpers.exec_tool(state, "create_stage", {"filename": "test"}))
+    placed = asyncio.run(_helpers.exec_tool(state, "place_asset", {
+        "asset_file_path": str(_cart_asset(tmp_path)), "asset_name": "Cart", "group": "Props",
+        "translate_x": 0.0, "translate_y": 0.0, "translate_z": 0.0,
+    }))
+    assert placed.success, placed.error
+    return state, f"{placed.data['prim_path']}/asset/Wheel"
+
+
+def _world_box(state, prim_path: str, purpose: str):
+    """World bounds (min, max) of a prim, counting only geometry of *purpose*."""
+    stage = Usd.Stage.Open(str(state.stage_path))
+    cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [purpose])
+    box = cache.ComputeWorldBound(stage.GetPrimAtPath(prim_path)).ComputeAlignedRange()
+    return box.GetMin(), box.GetMax()
+
+
+def _collider_shape_sizes(scope: str, up_axis: config.UpAxis, meters_per_unit: float) -> None:
+    """A cylinder asked for in project units measures exactly that in the world."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, up_axis, meters_per_unit)
+        radius, height = 0.3 / meters_per_unit, 0.2 / meters_per_unit
+        r = asyncio.run(_helpers.exec_tool(state, "add_collider_shape", {
+            "prim_path": wheel, "name": "collider", "shape": "cylinder",
+            "radius": radius, "height": height, "axis": "X", "scope": scope,
+        }))
+        assert r.success, r.error
+        assert r.data["prim_path"] == f"{wheel}/collider"
+
+        lo, hi = _world_box(state, r.data["prim_path"], UsdGeom.Tokens.guide)
+        size = sorted(hi[i] - lo[i] for i in range(3))
+        assert abs(size[0] - height) < 1e-6 * height, size
+        assert abs(size[1] - 2 * radius) < 1e-6 * radius, size
+        assert abs(size[2] - 2 * radius) < 1e-6 * radius, size
+        # The axle runs along the asset's X, which is the world's X in both conventions.
+        assert abs((hi[0] - lo[0]) - height) < 1e-6 * height
+
+        # It sits on the wheel's pivot.
+        stage = Usd.Stage.Open(str(state.stage_path))
+        pivot = UsdGeom.Xformable(stage.GetPrimAtPath(wheel)).ComputeLocalToWorldTransform(
+            Usd.TimeCode.Default(),
+        ).ExtractTranslation()
+        for i in range(3):
+            assert abs((lo[i] + hi[i]) / 2 - pivot[i]) < 1e-6 / meters_per_unit
+
+
+def test_collider_shape_size_asset_scope_y_up_meters():
+    _collider_shape_sizes("asset", config.UpAxis.Y, 1.0)
+
+
+def test_collider_shape_size_asset_scope_z_up_centimeters():
+    _collider_shape_sizes("asset", config.UpAxis.Z, 0.01)
+
+
+def test_collider_shape_size_scene_scope_y_up_meters():
+    _collider_shape_sizes("scene", config.UpAxis.Y, 1.0)
+
+
+def test_collider_shape_size_scene_scope_z_up_centimeters():
+    _collider_shape_sizes("scene", config.UpAxis.Z, 0.01)
+
+
+def test_collider_shape_is_seen_by_physics_only():
+    """Renders and the asset's box skip the shape; physics gets a collider under the body."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        placement = wheel.rsplit("/asset/", 1)[0]
+        before = _world_box(state, placement, UsdGeom.Tokens.default_)
+        body = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
+            "prim_path": wheel, "api_name": "PhysicsRigidBodyAPI",
+        }))
+        assert body.success, body.error
+
+        r = asyncio.run(_helpers.exec_tool(state, "add_collider_shape", {
+            "prim_path": wheel, "name": "collider", "shape": "sphere", "radius": 2.0,
+        }))
+        assert r.success, r.error
+
+        # A sphere far bigger than the cart does not change the box renders and layout use.
+        assert _world_box(state, placement, UsdGeom.Tokens.default_) == before
+        stage = Usd.Stage.Open(str(state.stage_path))
+        shape = stage.GetPrimAtPath(r.data["prim_path"])
+        assert shape.IsA(UsdGeom.Sphere)
+        assert UsdGeom.Imageable(shape).GetPurposeAttr().Get() == UsdGeom.Tokens.guide
+        assert shape.HasAPI(UsdPhysics.CollisionAPI)
+        assert shape.GetParent().HasAPI(UsdPhysics.RigidBodyAPI)
+
+        valid = asyncio.run(_helpers.exec_tool(state, "validate_scene", {}))
+        assert valid.success and valid.data["is_valid"], valid.data
+
+
+def test_box_collider_keeps_its_size_under_a_stretched_part():
+    """A box is the size asked for in the world, even when its part is stretched."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        placement = wheel.rsplit("/asset/", 1)[0]
+        stretched = asyncio.run(_helpers.exec_tool(state, "set_prim_attribute", {
+            "prim_path": placement, "attribute_name": "xformOp:scale", "value": [1, 2, 4],
+        }))
+        assert stretched.success, stretched.error
+
+        r = asyncio.run(_helpers.exec_tool(state, "add_collider_shape", {
+            "prim_path": wheel, "name": "block", "shape": "box", "scope": "scene",
+            "size_x": 0.5, "size_y": 0.25, "size_z": 1.0,
+        }))
+        assert r.success, r.error
+        lo, hi = _world_box(state, r.data["prim_path"], UsdGeom.Tokens.guide)
+        assert [round(hi[i] - lo[i], 6) for i in range(3)] == [0.5, 0.25, 1.0]
+
+        round_one = asyncio.run(_helpers.exec_tool(state, "add_collider_shape", {
+            "prim_path": wheel, "name": "ball", "shape": "sphere", "scope": "scene", "radius": 0.2,
+        }))
+        assert not round_one.success
+        assert "ColliderNonUniformScale" in round_one.error
+
+
+def test_removing_the_only_collider_shape_leaves_nothing_behind():
+    """After the removal the asset has no physics file and the scene no leftover opinion."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        phy = state.project.assets_dir / "cart" / "phy.usda"
+        scene_before = state.stage_path.read_text()
+
+        for scope in ("asset", "scene"):
+            added = asyncio.run(_helpers.exec_tool(state, "add_collider_shape", {
+                "prim_path": wheel, "name": "collider", "shape": "capsule", "scope": scope,
+                "radius": 0.1, "height": 0.4, "axis": "Y",
+            }))
+            assert added.success, added.error
+            assert phy.exists() == (scope == "asset")
+
+            removed = asyncio.run(_helpers.exec_tool(state, "remove_collider_shape", {
+                "prim_path": added.data["prim_path"],
+            }))
+            assert removed.success, removed.error
+            assert removed.data["removed"] is True
+            assert removed.data["scope"] == scope
+            assert not phy.exists()
+            assert state.stage_path.read_text() == scene_before
+            assert "phy.usda" not in (phy.parent / "cart.usda").read_text()
+
+
+# ── physics materials ──
+
+
+def _physics_material_of(state, prim_path: str):
+    """The physics material a prim resolves to, and the look it renders with."""
+    stage = Usd.Stage.Open(str(state.stage_path))
+    binding = UsdShade.MaterialBindingAPI(stage.GetPrimAtPath(prim_path))
+    grip = binding.ComputeBoundMaterial("physics")[0]
+    look = binding.ComputeBoundMaterial()[0]
+    # With no physics binding USD hands back the look; that one carries no physics values.
+    if grip and not grip.GetPrim().HasAPI(UsdPhysics.MaterialAPI):
+        grip = None
+    values = None
+    if grip:
+        api = UsdPhysics.MaterialAPI(grip.GetPrim())
+        values = (
+            round(api.GetStaticFrictionAttr().Get(), 6),
+            round(api.GetDynamicFrictionAttr().Get(), 6),
+            round(api.GetRestitutionAttr().Get(), 6),
+        )
+    return (str(grip.GetPath()) if grip else None), values, (str(look.GetPath()) if look else None)
+
+
+def _physics_material_reaches_the_colliders(scope: str) -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        shape = asyncio.run(_helpers.exec_tool(state, "add_collider_shape", {
+            "prim_path": wheel, "name": "collider", "shape": "sphere", "radius": 0.2,
+            "scope": scope,
+        }))
+        assert shape.success, shape.error
+        r = asyncio.run(_helpers.exec_tool(state, "create_physics_material", {
+            "prim_path": wheel, "material_name": "rubber", "scope": scope,
+            "static_friction": 0.9, "dynamic_friction": 0.8, "restitution": 0.1,
+        }))
+        assert r.success, r.error
+
+        # Bound to the part: the collider shape and the mesh under it both get it.
+        for prim_path in (shape.data["prim_path"], f"{wheel}/Tire"):
+            grip, values, _look = _physics_material_of(state, prim_path)
+            assert grip is not None and grip.endswith("/rubber"), (prim_path, grip)
+            assert values == (0.9, 0.8, 0.1)
+
+        valid = asyncio.run(_helpers.exec_tool(state, "validate_scene", {}))
+        assert valid.success and valid.data["is_valid"], valid.data
+
+
+def test_physics_material_reaches_the_colliders_asset_scope():
+    _physics_material_reaches_the_colliders("asset")
+
+
+def test_physics_material_reaches_the_colliders_scene_scope():
+    _physics_material_reaches_the_colliders("scene")
+
+
+def test_a_look_and_a_physics_material_do_not_touch_each_other():
+    """Removing the look keeps the physics material, and the other way round."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        tire = f"{wheel}/Tire"
+
+        def call(tool: str, **params):
+            result = asyncio.run(_helpers.exec_tool(state, tool, params))
+            assert result.success, result.error
+            return result.data
+
+        call("create_material", prim_path=tire, material_name="black")
+        call("create_physics_material", prim_path=tire, material_name="rubber",
+             static_friction=0.9, dynamic_friction=0.8)
+        grip, _values, look = _physics_material_of(state, tire)
+        assert grip.endswith("/physics_materials/rubber") and look.endswith("/mtl/black")
+
+        assert call("remove_material", prim_path=tire)["removed"] is True
+        grip, _values, look = _physics_material_of(state, tire)
+        assert grip.endswith("/physics_materials/rubber") and look is None
+
+        call("create_material", prim_path=tire, material_name="black")
+        removed = call("remove_physics_material", prim_path=tire)
+        assert removed["removed"] is True and removed["material_deleted"] is True
+        grip, _values, look = _physics_material_of(state, tire)
+        assert grip is None and look.endswith("/mtl/black")
+
+        listed = call("list_materials")["materials"]
+        assert [m["material_name"] for m in listed] == ["black"]
+
+
+def test_removing_the_last_physics_material_leaves_nothing_behind():
+    """After the removal the asset has no physics file and the scene no leftover opinion."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        phy = state.project.assets_dir / "cart" / "phy.usda"
+        scene_before = state.stage_path.read_text()
+
+        for scope in ("asset", "scene"):
+            made = asyncio.run(_helpers.exec_tool(state, "create_physics_material", {
+                "prim_path": wheel, "material_name": "rubber", "scope": scope,
+                "static_friction": 0.9, "dynamic_friction": 0.8,
+            }))
+            assert made.success, made.error
+            assert made.data["scope"] == scope
+            assert phy.exists() == (scope == "asset")
+
+            removed = asyncio.run(_helpers.exec_tool(state, "remove_physics_material", {
+                "prim_path": wheel,
+            }))
+            assert removed.success, removed.error
+            assert removed.data["removed"] is True
+            assert removed.data["material_deleted"] is True
+            assert not phy.exists()
+            assert "phy.usda" not in (phy.parent / "cart.usda").read_text()
+            if scope == "asset":
+                assert state.stage_path.read_text() == scene_before
+            else:
+                # The scene keeps the physics scene the first physics edit adds, nothing else.
+                stage = Usd.Stage.Open(str(state.stage_path))
+                assert not stage.GetPrimAtPath("/Scene/Physics/rubber").IsValid()
+                assert stage.GetRootLayer().GetPrimAtPath(wheel) is None

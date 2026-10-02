@@ -120,21 +120,16 @@ def create_in_asset(
     _refuse_taken_name(composed, prim_path, name)
     del composed
 
-    known = physics.rules.errors(scene_stage)
-    stage = physics.layer.open_for_edit(asset_dir)
-    if not stage.GetPrimAtPath(joints_scope_path).IsValid():
-        stage.DefinePrim(joints_scope_path, "Scope")
+    doing = f"Creating the joint {prim_path} in asset {asset_dir.name}"
+    with physics.layer.edit(asset_dir, scene_stage, doing) as stage:
+        if not stage.GetPrimAtPath(joints_scope_path).IsValid():
+            stage.DefinePrim(joints_scope_path, "Scope")
 
-    joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
+        joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 
-    _set_body_rel(joint, "physics:body0", body0)
-    _set_body_rel(joint, "physics:body1", body1)
-    _author_joint_attributes(joint, attributes, joint_type)
-
-    physics.layer.save_edit(
-        asset_dir, stage, scene_stage, known,
-        f"Creating the joint {prim_path} in asset {asset_dir.name}",
-    )
+        _set_body_rel(joint, "physics:body0", body0)
+        _set_body_rel(joint, "physics:body1", body1)
+        _author_joint_attributes(joint, attributes, joint_type)
 
     logger.info(
         "Created %s asset-level at %s in %s/phy.usda",

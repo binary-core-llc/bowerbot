@@ -49,7 +49,7 @@ import shutil
 import sys
 import tempfile
 import zipfile
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from dataclasses import field
@@ -167,7 +167,7 @@ class _OrderedScan:
 
 
 @contextmanager
-def listing_order(*, reverse: bool) -> Iterator[None]:
+def listing_order(*, reverse: bool) -> Generator[None, None, None]:
     """List every folder in sorted order (or reversed) instead of the disk's order."""
     listdir, scandir = os.listdir, os.scandir
 

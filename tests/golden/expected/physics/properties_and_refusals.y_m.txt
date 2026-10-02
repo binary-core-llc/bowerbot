@@ -1962,7 +1962,498 @@ validation:
   valid, no issues
 
 
-=== step 19: get_physics_summary
+=== step 19: place_asset
+intent: place ground.usda as Ground
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/ground.usda", asset_name="Ground", group="Props", translate_x=6.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Ground at /Scene/Props/Ground_02.
+
+  what changed:
+    + file assets/ground/geo.usda
+    + file assets/ground/ground.usda
+    ~ file scene.usda
+    + prim /Scene/Props/Ground_02 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (6, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (6.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Ground_02/asset [Xform]
+          bounds: (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+          kind: component
+          world position: (6.0000, 0.0000, 0.0000)
+    + prim /Scene/Props/Ground_02/asset/Plane [Mesh]
+          attr extent: ((-5, 0, -5), (5, 0, 5))
+          attr faceVertexCounts: (4)
+          attr faceVertexIndices: (0, 3, 2, 1)
+          attr points: ((-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5))
+          bounds: (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+          material shown: (none)
+          world position: (6.0000, 0.0000, 0.0000)
+    ~ /Scene  bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500) → (-0.2500, 0.0000, -5.0000)..(11.0000, 0.5000, 5.0000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Ground",
+    "intake": {
+      "asset_folder": "ground",
+      "files_copied": 1,
+      "root_canonical_name": "ground.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Ground at /Scene/Props/Ground_02.",
+    "position": {
+      "x": 6.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Props/Ground_02",
+    "rotation_up": 0.0
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+  + assets/ground/geo.usda
+  + assets/ground/ground.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/ground/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+      )
+
+      def Xform "ground"
+      {
+          def Mesh "Plane"
+          {
+              float3[] extent = [(-5, 0, -5), (5, 0, 5)]
+              int[] faceVertexCounts = [4]
+              int[] faceVertexIndices = [0, 3, 2, 1]
+              point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+          }
+      }
+
+  + assets/ground/ground.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "ground" (
+          assetInfo = {
+              asset identifier = @./ground.usda@
+              string name = "ground"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_ground>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_ground"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -25,4 +25,18 @@
+                   }
+               }
+      +
+      +        def Xform "Ground_02"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (6, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/ground/ground.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+           }
+       }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -42,4 +42,30 @@
+               }
+           }
+  +
+  +        def Xform "Ground_02"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (6, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/ground/ground.usda@
+  +                    string name = "ground"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Mesh "Plane"
+  +                {
+  +                    float3[] extent = [(-5, 0, -5), (5, 0, 5)]
+  +                    int[] faceVertexCounts = [4]
+  +                    int[] faceVertexIndices = [0, 3, 2, 1]
+  +                    point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+  +                }
+  +            }
+  +        }
+       }
+   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -5.0000)..(11.0000, 0.5000, 5.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/Ground_02  [Xform]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+  /Scene/Props/Ground_02/asset  [Xform]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+  /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 20: apply_physics_api
+intent: an approximation USD does not have (asset scope)
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Ground_02/asset/Plane", api_name="PhysicsMeshCollisionAPI", attributes={"physics:approximation": "nonsense"})
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file assets/ground/ground.usda
+    + file assets/ground/phy.usda
+    ~ /Scene/Props/Ground_02/asset/Plane  applied APIs: (none) → PhysicsCollisionAPI, PhysicsMeshCollisionAPI
+    ~ /Scene/Props/Ground_02/asset/Plane  attr physics:approximation: (none) → 'nonsense'
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsMeshCollisionAPI",
+    "asset_folder": "ground",
+    "asset_prim_path": "/ground/Plane",
+    "attributes_set": [
+      "physics:approximation"
+    ],
+    "cleared_masking_opinions": [],
+    "companion_api": "PhysicsCollisionAPI",
+    "instance_name": null,
+    "prim_path": "/Scene/Props/Ground_02/asset/Plane",
+    "relationships_set": [],
+    "requested_prim_path": "/ground/Plane",
+    "scene_prim_path": "/Scene/Props/Ground_02/asset/Plane",
+    "scope": "asset"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/ground/geo.usda
+  ~ assets/ground/ground.usda
+  + assets/ground/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  ~ assets/ground/ground.usda:
+      --- assets/ground/ground.usda (before)
+      +++ assets/ground/ground.usda (after)
+      @@ -15,4 +15,5 @@
+           kind = "component"
+           prepend payload = @./geo.usda@
+      +    prepend references = @./phy.usda@
+       )
+       {
+  + assets/ground/phy.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "ground"
+      )
+
+      over "ground"
+      {
+          over "Plane" (
+              prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+          )
+          {
+              uniform token physics:approximation = "nonsense"
+          }
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -59,9 +59,12 @@
+               )
+               {
+  -                def Mesh "Plane"
+  +                def Mesh "Plane" (
+  +                    apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+  +                )
+                   {
+                       float3[] extent = [(-5, 0, -5), (5, 0, 5)]
+                       int[] faceVertexCounts = [4]
+                       int[] faceVertexIndices = [0, 3, 2, 1]
+  +                    uniform token physics:approximation = "nonsense"
+                       point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+                   }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -5.0000)..(11.0000, 0.5000, 5.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/Ground_02  [Xform]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+  /Scene/Props/Ground_02/asset  [Xform]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+  /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 21: apply_physics_api
+intent: an approximation USD does not have (scene scope)
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Ground_02/asset/Plane", api_name="PhysicsMeshCollisionAPI", scope="scene", attributes={"physics:approximation": "roundish"})
+  current project: golden
+  said: ok
+
+  what changed:
+    ~ file scene.usda
+    + prim /Scene/Physics [Scope]
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, -1, 0)
+          attr physics:gravityMagnitude: 9.81
+    ~ /Scene/Props/Ground_02/asset/Plane  attr physics:approximation: 'nonsense' → 'roundish'
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsMeshCollisionAPI",
+    "attributes_set": [
+      "physics:approximation"
+    ],
+    "companion_api": "PhysicsCollisionAPI",
+    "instance_name": null,
+    "prim_path": "/Scene/Props/Ground_02/asset/Plane",
+    "relationships_set": [],
+    "requested_prim_path": "/Scene/Props/Ground_02/asset/Plane",
+    "scope": "scene"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    assets/ground/phy.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -37,5 +37,20 @@
+                   )
+                   {
+      +                over "Plane" (
+      +                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+      +                )
+      +                {
+      +                    uniform token physics:approximation = "roundish"
+      +                }
+                   }
+      +        }
+      +    }
+      +
+      +    def Scope "Physics"
+      +    {
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, -1, 0)
+      +            float physics:gravityMagnitude = 9.81
+               }
+           }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -66,5 +66,5 @@
+                       int[] faceVertexCounts = [4]
+                       int[] faceVertexIndices = [0, 3, 2, 1]
+  -                    uniform token physics:approximation = "nonsense"
+  +                    uniform token physics:approximation = "roundish"
+                       point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+                   }
+  @@ -72,4 +72,13 @@
+           }
+       }
+  +
+  +    def Scope "Physics"
+  +    {
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, -1, 0)
+  +            float physics:gravityMagnitude = 9.81
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -5.0000)..(11.0000, 0.5000, 5.0000)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/Ground_02  [Xform]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+  /Scene/Props/Ground_02/asset  [Xform]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)
+  /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (6.0000, 0.0000, 0.0000)  bounds (1.0000, 0.0000, -5.0000)..(11.0000, 0.0000, 5.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 22: set_prim_attribute
+intent: a value outside the list an attribute allows, with the general tool
+
+SUMMARY
+  call: set_prim_attribute(prim_path="/Scene/Props/Ground_02/asset/Plane", attribute_name="purpose", value="nonsense")
+  current project: golden
+  said: ok: Authored /Scene/Props/Ground_02/asset/Plane.purpose in scene.usda.
+
+  what changed:
+    ~ file scene.usda
+    ~ /Scene  bounds: (-0.2500, 0.0000, -5.0000)..(11.0000, 0.5000, 5.0000) → (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+    ~ /Scene/Props/Ground_02/asset/Plane  attr purpose: (none) → 'nonsense'
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "attribute_name": "purpose",
+    "message": "Authored /Scene/Props/Ground_02/asset/Plane.purpose in scene.usda.",
+    "prim_path": "/Scene/Props/Ground_02/asset/Plane",
+    "value": "nonsense"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    assets/ground/phy.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -42,4 +42,5 @@
+                       {
+                           uniform token physics:approximation = "roundish"
+      +                    uniform token purpose = "nonsense"
+                       }
+                   }
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -68,4 +68,5 @@
+                       uniform token physics:approximation = "roundish"
+                       point3f[] points = [(-5, 0, -5), (5, 0, -5), (5, 0, 5), (-5, 0, 5)]
+  +                    uniform token purpose = "nonsense"
+                   }
+               }
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/Ground_02  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (6.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
+
+validation:
+  valid, no issues
+
+
+=== step 23: get_physics_summary
 
 SUMMARY
   call: get_physics_summary(prim_path="/Scene/Nope")
@@ -1996,6 +2487,9 @@ files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     assets/crate/phy.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    assets/ground/phy.usda
     project.json
     scene.usda
 
@@ -2010,12 +2504,16 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/Ground_02  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (6.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 20: list_joints
+=== step 24: list_joints
 
 SUMMARY
   call: list_joints()
@@ -2045,6 +2543,9 @@ files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     assets/crate/phy.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    assets/ground/phy.usda
     project.json
     scene.usda
 
@@ -2059,12 +2560,16 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/Ground_02  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (6.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues
 
 
-=== step 21: list_collision_groups
+=== step 25: list_collision_groups
 
 SUMMARY
   call: list_collision_groups()
@@ -2094,6 +2599,9 @@ files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     assets/crate/phy.usda
+    assets/ground/geo.usda
+    assets/ground/ground.usda
+    assets/ground/phy.usda
     project.json
     scene.usda
 
@@ -2108,6 +2616,10 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+  /Scene/Props/Ground_02  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset  [Xform]  at (6.0000, 0.0000, 0.0000)
+  /Scene/Props/Ground_02/asset/Plane  [Mesh]  at (6.0000, 0.0000, 0.0000)  material (none)
+  /Scene/Physics  [Scope]
 
 validation:
   valid, no issues

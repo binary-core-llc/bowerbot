@@ -309,6 +309,44 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "state/a_failed_call_changes_nothing",
+        "A call that is refused half-way: does anything it started show up later, and does a "
+        "rename to a name USD cannot take keep the object?",
+        (
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/table.usda",
+                    "asset_name": "Table",
+                    "group": "Furniture",
+                    **model.at(0.0),
+                },
+                save="table",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "SphereLight",
+                    "light_name": "Ghost",
+                    "attributes": {"inputs:radius": "big"},
+                },
+                note="refused: the radius is not a number",
+            ),
+            model.Step(
+                "create_light",
+                {"light_type": "SphereLight", "light_name": "Real", **model.at(0.0, 2.0, 0.0)},
+                note="a good call right after: is the refused light saved along with it?",
+            ),
+            model.Step("list_scene"),
+            model.Step(
+                "rename_prim",
+                {"old_path": "$table", "new_path": "/Scene/Furniture/9table"},
+                note="a new name that starts with a digit",
+            ),
+            model.Step("list_scene", note="is the table still there?"),
+        ),
+    ),
+    model.Scenario(
         "state/not_an_asset",
         "Tools that work on an asset, called on a scene prim that is not one.",
         (

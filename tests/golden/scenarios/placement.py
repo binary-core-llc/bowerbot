@@ -445,6 +445,29 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "placement/groups_of_your_own",
+        "Groups are free names, nested with '/', in every tool that places.",
+        (
+            _place("crate.usda", "Crate", "Terrain", save="crate"),
+            _place("chair.usda", "Chair", "Barn/Loft", 2.0, save="chair"),
+            _place("table.usda", "Table", "Furniture", 4.0, save="table"),
+            model.Step(
+                "add_asset_to_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "parent_prim_path": "$table",
+                    "group": "Storage/Top",
+                    **model.at(0.0, 0.775, 0.0),
+                },
+                note="a group of its own inside the table's contents",
+            ),
+            _place("crate.usda", "Crate", "my group!", 6.0, note="a group name to be cleaned"),
+            _place("crate.usda", "Crate", "//", 8.0, note="a group with no name in it"),
+            model.Step("list_scene"),
+        ),
+    ),
+    model.Scenario(
         "placement/project_assets",
         "The project's asset copies: listing, deleting, and what is still in use.",
         (

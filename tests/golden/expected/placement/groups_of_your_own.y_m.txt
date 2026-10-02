@@ -1,0 +1,653 @@
+##### scenario: placement/groups_of_your_own
+##### convention: Y-up, 1.0 meters per unit
+##### Groups are free names, nested with '/', in every tool that places.
+
+
+=== step 00: create_project
+intent: a new Y-up project, 1.0 meters per unit
+
+SUMMARY
+  call: create_project(name="golden", up_axis="Y", meters_per_unit=1.0)
+  current project: golden
+  said: ok: Created and opened project 'golden' (Y-up, metersPerUnit=1.0).
+
+  what changed:
+    + file project.json
+    + file scene.usda
+    ~ stage  defaultPrim: (none) → /Scene
+    ~ stage  metersPerUnit: (none) → 1
+    ~ stage  sublayers: (none) → (none)
+    ~ stage  upAxis: (none) → Y
+    + prim /Scene [Xform]
+          kind: assembly
+          world position: (0.0000, 0.0000, 0.0000)
+    ~ validity: no scene → valid
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Created and opened project 'golden' (Y-up, metersPerUnit=1.0).",
+    "meters_per_unit": 1.0,
+    "name": "golden",
+    "object_count": 0,
+    "path": "<PROJECT>",
+    "up_axis": "Y"
+  }
+
+files:
+  + project.json
+  + scene.usda
+
+file changes:
+  + project.json (new):
+      {
+        "name": "golden",
+        "created_at": "<TIME>",
+        "updated_at": "<TIME>",
+        "scene_file": "scene.usda",
+        "up_axis": "Y",
+        "meters_per_unit": 1.0
+      }
+  + scene.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "Scene"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "Scene" (
+          kind = "assembly"
+      )
+      {
+      }
+
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -0,0 +1,15 @@
+  +#usda 1.0
+  +(
+  +    defaultPrim = "Scene"
+  +    doc = """Generated from Composed Stage of root layer <PROJECT>/scene.usda
+  +"""
+  +    metersPerUnit = 1
+  +    upAxis = "Y"
+  +)
+  +
+  +def Xform "Scene" (
+  +    kind = "assembly"
+  +)
+  +{
+  +}
+  +
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 01: place_asset
+intent: place crate.usda as Crate in Terrain
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="Terrain", translate_x=0.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: invalid parameters for place_asset at 'group': 'Terrain' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "invalid parameters for place_asset at 'group': 'Terrain' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 02: place_asset
+intent: place chair.usda as Chair in Barn/Loft
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/chair.usda", asset_name="Chair", group="Barn/Loft", translate_x=2.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: invalid parameters for place_asset at 'group': 'Barn/Loft' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "invalid parameters for place_asset at 'group': 'Barn/Loft' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 03: place_asset
+intent: place table.usda as Table in Furniture
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/table.usda", asset_name="Table", group="Furniture", translate_x=4.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: ok: Placed Table at /Scene/Furniture/Table_01.
+
+  what changed:
+    + file assets/table/geo.usda
+    + file assets/table/table.usda
+    ~ file scene.usda
+    + prim /Scene/Furniture [typeless]
+    + prim /Scene/Furniture/Table_01 [Xform]
+          attr xformOp:rotateXYZ: (0, 0, 0)
+          attr xformOp:scale: (1, 1, 1)
+          attr xformOp:translate: (4, 0, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:rotateXYZ', 'xformOp:scale')
+          world position: (4.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset [Xform]
+          bounds: (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+          kind: component
+          world position: (4.0000, 0.0000, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_L [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (-0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (3.4250, 0.0000, -0.0250)..(3.4750, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (3.4500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Leg_R [Cube]
+          attr size: 1
+          attr xformOp:scale: (0.05, 0.75, 0.05)
+          attr xformOp:translate: (0.55, 0.375, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (4.5250, 0.0000, -0.0250)..(4.5750, 0.7500, 0.0250)
+          material shown: (none)
+          world position: (4.5500, 0.3750, 0.0000)
+    + prim /Scene/Furniture/Table_01/asset/Top [Cube]
+          attr size: 1
+          attr xformOp:scale: (1.2, 0.05, 0.8)
+          attr xformOp:translate: (0, 0.75, 0)
+          attr xformOpOrder: ('xformOp:translate', 'xformOp:scale')
+          bounds: (3.4000, 0.7250, -0.4000)..(4.6000, 0.7750, 0.4000)
+          material shown: (none)
+          world position: (4.0000, 0.7500, 0.0000)
+    ~ /Scene  bounds: (none) → (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "asset": "Table",
+    "intake": {
+      "asset_folder": "table",
+      "files_copied": 1,
+      "root_canonical_name": "table.usda",
+      "root_original_name": null,
+      "warnings": [],
+      "was_renamed": false
+    },
+    "message": "Placed Table at /Scene/Furniture/Table_01.",
+    "position": {
+      "x": 4.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "prim_path": "/Scene/Furniture/Table_01",
+    "rotation_up": 0.0
+  }
+
+files:
+  + assets/table/geo.usda
+  + assets/table/table.usda
+    project.json
+  ~ scene.usda
+
+file changes:
+  + assets/table/geo.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+      )
+
+      def Xform "table"
+      {
+          def Cube "Top"
+          {
+              double size = 1
+              float3 xformOp:scale = (1.2, 0.05, 0.8)
+              double3 xformOp:translate = (0, 0.75, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_L"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (-0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+
+          def Cube "Leg_R"
+          {
+              double size = 1
+              float3 xformOp:scale = (0.05, 0.75, 0.05)
+              double3 xformOp:translate = (0.55, 0.375, 0)
+              uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+          }
+      }
+
+  + assets/table/table.usda (new):
+      #usda 1.0
+      (
+          defaultPrim = "table"
+          metersPerUnit = 1
+          upAxis = "Y"
+      )
+
+      def Xform "table" (
+          assetInfo = {
+              asset identifier = @./table.usda@
+              string name = "table"
+              string version = "1.0"
+          }
+          prepend inherits = </_class_table>
+          kind = "component"
+          prepend payload = @./geo.usda@
+      )
+      {
+      }
+
+      class Xform "_class_table"
+      {
+      }
+
+  ~ scene.usda:
+      --- scene.usda (before)
+      +++ scene.usda (after)
+      @@ -10,4 +10,20 @@
+       )
+       {
+      +    def "Furniture"
+      +    {
+      +        def Xform "Table_01"
+      +        {
+      +            float3 xformOp:rotateXYZ = (0, 0, 0)
+      +            float3 xformOp:scale = (1, 1, 1)
+      +            double3 xformOp:translate = (4, 0, 0)
+      +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+      +
+      +            def Xform "asset" (
+      +                prepend references = @assets/table/table.usda@
+      +            )
+      +            {
+      +            }
+      +        }
+      +    }
+       }
+       
+
+composed scene changes:
+  --- composed scene (before)
+  +++ composed scene (after)
+  @@ -12,4 +12,48 @@
+   )
+   {
+  +    def "Furniture"
+  +    {
+  +        def Xform "Table_01"
+  +        {
+  +            float3 xformOp:rotateXYZ = (0, 0, 0)
+  +            float3 xformOp:scale = (1, 1, 1)
+  +            double3 xformOp:translate = (4, 0, 0)
+  +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+  +
+  +            def Xform "asset" (
+  +                assetInfo = {
+  +                    asset identifier = @<PROJECT>/assets/table/table.usda@
+  +                    string name = "table"
+  +                    string version = "1.0"
+  +                }
+  +                kind = "component"
+  +            )
+  +            {
+  +                def Cube "Top"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (1.2, 0.05, 0.8)
+  +                    double3 xformOp:translate = (0, 0.75, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_L"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (-0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +
+  +                def Cube "Leg_R"
+  +                {
+  +                    double size = 1
+  +                    float3 xformOp:scale = (0.05, 0.75, 0.05)
+  +                    double3 xformOp:translate = (0.55, 0.375, 0)
+  +                    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+  +                }
+  +            }
+  +        }
+  +    }
+   }
+   
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (4.0000, 0.7500, 0.0000)  bounds (3.4000, 0.7250, -0.4000)..(4.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (3.4500, 0.3750, 0.0000)  bounds (3.4250, 0.0000, -0.0250)..(3.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (4.5500, 0.3750, 0.0000)  bounds (4.5250, 0.0000, -0.0250)..(4.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 04: add_asset_to_asset
+intent: a group of its own inside the table's contents
+
+SUMMARY
+  call: add_asset_to_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", parent_prim_path="/Scene/Furniture/Table_01", group="Storage/Top", translate_x=0.0, translate_y=0.775, translate_z=0.0)
+  current project: golden
+  said: REFUSED: invalid parameters for add_asset_to_asset at 'group': 'Storage/Top' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "invalid parameters for add_asset_to_asset at 'group': 'Storage/Top' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (4.0000, 0.7500, 0.0000)  bounds (3.4000, 0.7250, -0.4000)..(4.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (3.4500, 0.3750, 0.0000)  bounds (3.4250, 0.0000, -0.0250)..(3.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (4.5500, 0.3750, 0.0000)  bounds (4.5250, 0.0000, -0.0250)..(4.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 05: place_asset
+intent: a group name to be cleaned
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="my group!", translate_x=6.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: invalid parameters for place_asset at 'group': 'my group!' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "invalid parameters for place_asset at 'group': 'my group!' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (4.0000, 0.7500, 0.0000)  bounds (3.4000, 0.7250, -0.4000)..(4.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (3.4500, 0.3750, 0.0000)  bounds (3.4250, 0.0000, -0.0250)..(3.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (4.5500, 0.3750, 0.0000)  bounds (4.5250, 0.0000, -0.0250)..(4.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 06: place_asset
+intent: a group with no name in it
+
+SUMMARY
+  call: place_asset(asset_file_path="<LIBRARY>/crate.usda", asset_name="Crate", group="//", translate_x=8.0, translate_y=0.0, translate_z=0.0)
+  current project: golden
+  said: REFUSED: invalid parameters for place_asset at 'group': '//' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "invalid parameters for place_asset at 'group': '//' is not one of ['Architecture', 'Furniture', 'Products', 'Lighting', 'Props']"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (4.0000, 0.7500, 0.0000)  bounds (3.4000, 0.7250, -0.4000)..(4.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (3.4500, 0.3750, 0.0000)  bounds (3.4250, 0.0000, -0.0250)..(3.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (4.5500, 0.3750, 0.0000)  bounds (4.5250, 0.0000, -0.0250)..(4.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 07: list_scene
+
+SUMMARY
+  call: list_scene()
+  current project: golden
+  said: ok: Scene has 1 object(s).
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "message": "Scene has 1 object(s).",
+    "object_count": 1,
+    "objects": [
+      {
+        "asset": "assets/table/table.usda",
+        "bounds": {
+          "max": {
+            "x": 4.6,
+            "y": 0.775,
+            "z": 0.4
+          },
+          "min": {
+            "x": 3.4,
+            "y": 0.0,
+            "z": -0.4
+          }
+        },
+        "kind": "asset",
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "prim_path": "/Scene/Furniture/Table_01/asset",
+        "type": "Xform"
+      }
+    ]
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (4.0000, 0.0000, 0.0000)  bounds (3.4000, 0.0000, -0.4000)..(4.6000, 0.7750, 0.4000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (4.0000, 0.7500, 0.0000)  bounds (3.4000, 0.7250, -0.4000)..(4.6000, 0.7750, 0.4000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (3.4500, 0.3750, 0.0000)  bounds (3.4250, 0.0000, -0.0250)..(3.4750, 0.7500, 0.0250)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (4.5500, 0.3750, 0.0000)  bounds (4.5250, 0.0000, -0.0250)..(4.5750, 0.7500, 0.0250)  material (none)
+
+validation:
+  valid, no issues

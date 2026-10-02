@@ -329,10 +329,10 @@ SUMMARY
     + file first.usda
 
   project state after the step:
-    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ left behind an absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -379,7 +379,7 @@ file changes:
                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
                   def Xform "asset" (
-                      prepend references = @<PROJECT>/assets/chair/chair.usda@
+                      prepend references = @assets/chair/chair.usda@
                   )
                   {
                       float xformOp:rotateX = 90
@@ -440,7 +440,7 @@ SUMMARY
     ~ /Scene  bounds: (-22.5000, -22.5000, 42.5000)..(22.5000, 22.5000, 95.0000) → (-22.5000, -25.0000, 0.0000)..(125.0000, 25.0000, 95.0000)
 
   project state after the step:
-    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -618,7 +618,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -674,11 +674,10 @@ SUMMARY
     ~ file first.usda
 
   project state after the step:
-    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ left behind an absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -720,7 +719,7 @@ file changes:
       +            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
       +
       +            def Xform "asset" (
-      +                prepend references = @<PROJECT>/assets/crate/crate.usda@
+      +                prepend references = @assets/crate/crate.usda@
       +            )
       +            {
       +                float xformOp:rotateX = 90
@@ -760,8 +759,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -817,14 +815,10 @@ SUMMARY
     + file withspace.usda
 
   project state after the step:
-    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
-    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ left behind an absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
-    ⚠ left behind an absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -874,7 +868,7 @@ file changes:
                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
                   def Xform "asset" (
-                      prepend references = @<PROJECT>/assets/chair/chair.usda@
+                      prepend references = @assets/chair/chair.usda@
                   )
                   {
                       float xformOp:rotateX = 90
@@ -893,7 +887,7 @@ file changes:
                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
                   def Xform "asset" (
-                      prepend references = @<PROJECT>/assets/crate/crate.usda@
+                      prepend references = @assets/crate/crate.usda@
                   )
                   {
                       float xformOp:rotateX = 90
@@ -932,10 +926,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    absolute path: first.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: first.usda -> <PROJECT>/assets/crate/crate.usda
-    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -954,12 +945,12 @@ full answer:
       {
         "name": "first",
         "path": "<PROJECT>/first.usda",
-        "size_bytes": "<depends on the test's temp path: the file stores absolute paths>"
+        "size_bytes": 1325
       },
       {
         "name": "withspace",
         "path": "<PROJECT>/withspace.usda",
-        "size_bytes": "<depends on the test's temp path: the file stores absolute paths>"
+        "size_bytes": 1325
       }
     ]
   }
@@ -1005,8 +996,7 @@ SUMMARY
     - file first.usda
 
   project state after the step:
-    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -1065,8 +1055,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -1121,8 +1110,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    absolute path: withspace.usda -> <PROJECT>/assets/chair/chair.usda
-    absolute path: withspace.usda -> <PROJECT>/assets/crate/crate.usda
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -1141,7 +1129,7 @@ full answer:
       {
         "name": "withspace",
         "path": "<PROJECT>/withspace.usda",
-        "size_bytes": "<depends on the test's temp path: the file stores absolute paths>"
+        "size_bytes": 1325
       }
     ]
   }

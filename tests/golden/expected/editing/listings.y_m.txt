@@ -416,14 +416,12 @@ SUMMARY
           bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
           material shown: (none)
           world position: (0.0000, 0.2500, 0.0000)
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -598,8 +596,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 04: place_asset
@@ -906,8 +903,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_03/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 05: list_scene
@@ -1046,8 +1042,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_03/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 06: list_prim_children
@@ -1238,8 +1233,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_03/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 07: list_prim_children
@@ -1390,8 +1384,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_03/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 08: list_prim_children
@@ -1542,8 +1535,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_03/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 09: list_prim_children
@@ -1613,5 +1605,4 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_03/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues

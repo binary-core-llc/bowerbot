@@ -378,14 +378,12 @@ SUMMARY
           bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
           material shown: (none)
           world position: (0.0000, 0.0000, 25.0000)
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -560,8 +558,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 03: add_asset_to_asset
@@ -593,13 +590,12 @@ SUMMARY
           material shown: (none)
           world position: (30.0000, 0.0000, 105.0000)
     ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000) → (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000)
-    + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -713,9 +709,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 04: list_prim_children
@@ -880,9 +874,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 05: place_asset
@@ -972,14 +964,12 @@ SUMMARY
           material shown: (none)
           world position: (330.0000, 0.0000, 105.0000)
     ~ /Scene  bounds: (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 130.0000) → (-60.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 130.0000)
-    + issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-    + issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 2 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1184,11 +1174,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 06: add_asset_to_asset
@@ -1263,11 +1249,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 07: add_asset_to_asset
@@ -1334,14 +1316,12 @@ SUMMARY
           bounds: (277.5000, -22.5000, 42.5000)..(322.5000, 22.5000, 47.5000)
           material shown: (none)
           world position: (300.0000, 0.0000, 45.0000)
-    + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
-    + issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 2 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1575,13 +1555,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 20.0000, 70.0000)  bounds (277.5000, 17.5000, 45.0000)..(322.5000, 22.5000, 95.0000)  material (none)
 
 validation:
-  INVALID, 6 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 08: remove_prim
@@ -1600,8 +1574,6 @@ SUMMARY
     - prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02 [Xform]
     - prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset [Xform]
     - prim /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset/Box [Cube]
-    - issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
-    - issue [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -1757,11 +1729,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 20.0000, 70.0000)  bounds (277.5000, 17.5000, 45.0000)..(322.5000, 22.5000, 95.0000)  material (none)
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 09: cleanup_unused_contents
@@ -1842,8 +1810,4 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset/Back  [Cube]  at (300.0000, 20.0000, 70.0000)  bounds (277.5000, 17.5000, 45.0000)..(322.5000, 22.5000, 95.0000)  material (none)
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Chair_05/asset: Unresolved reference: ../chair/chair.usda
-  - [error] /Scene/Furniture/Table_04/asset/contents/Props/Crate_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues

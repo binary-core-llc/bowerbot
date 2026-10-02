@@ -12,6 +12,7 @@ from typing import Any
 from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
+from pxr import UsdPhysics
 
 from bowerbot import constants
 from bowerbot import schemas
@@ -60,15 +61,20 @@ def create_in_scene(
     attributes = attributes or {}
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
-
-    physics.scenes.ensure(stage, project_mpu=project_mpu, project_up_axis=project_up_axis)
     prim_path = f"{constants.SceneNamespace.PHYSICS}/{name}"
+    _refuse_taken_name(stage, prim_path, name)
+    known = physics.rules.errors(stage)
+
+    physics.scenes.ensure_default(
+        stage, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
     joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
     _set_body_rel(joint, "physics:body1", body1)
     _author_joint_attributes(joint, attributes, joint_type)
 
+    physics.rules.refuse_new_errors(stage, known, f"Creating the joint {prim_path}")
     stage.Save()
     logger.info(
         "Created %s scene-level at %s (body0=%s, body1=%s)",
@@ -91,8 +97,14 @@ def create_in_asset(
     body0: str | None,
     body1: str | None,
     attributes: dict[str, Any] | None = None,
+    *,
+    scene_stage: Usd.Stage,
 ) -> dict[str, Any]:
-    """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``."""
+    """Create a typed joint in the asset's ``phy.usda`` at ``/<default>/joints/<name>``.
+
+    Refused when *scene_stage* (the scene the asset is placed in) would then
+    have a physics error it does not have now.
+    """
     usd.naming.require_prim_name(name, "Joint name")
     attributes = attributes or {}
     _refuse_unknown_joint_properties(joint_type, attributes)
@@ -100,26 +112,29 @@ def create_in_asset(
     root_file = authoring.asset_folder.find_root_file(asset_dir)
     if root_file is None:
         raise ValueError(f"No root file in asset {asset_dir.name}")
-    composed = Usd.Stage.Open(str(root_file))
-    _validate_joint_bodies(composed, body0, body1)
-    del composed
-
-    authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
-    stage = Usd.Stage.Open(str(physics.layer.file_path(asset_dir)))
     default_prim_name = authoring.asset_folder.resolve_default_prim_name(asset_dir)
     joints_scope_path = f"/{default_prim_name}/{constants.PhysicsNamespace.JOINTS_SCOPE}"
+    prim_path = f"{joints_scope_path}/{name}"
+    composed = Usd.Stage.Open(str(root_file))
+    _validate_joint_bodies(composed, body0, body1)
+    _refuse_taken_name(composed, prim_path, name)
+    del composed
+
+    known = physics.rules.errors(scene_stage)
+    stage = physics.layer.open_for_edit(asset_dir)
     if not stage.GetPrimAtPath(joints_scope_path).IsValid():
         stage.DefinePrim(joints_scope_path, "Scope")
 
-    prim_path = f"{joints_scope_path}/{name}"
     joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 
     _set_body_rel(joint, "physics:body0", body0)
     _set_body_rel(joint, "physics:body1", body1)
     _author_joint_attributes(joint, attributes, joint_type)
 
-    stage.Save()
-    authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.PHY)
+    physics.layer.save_edit(
+        asset_dir, stage, scene_stage, known,
+        f"Creating the joint {prim_path} in asset {asset_dir.name}",
+    )
 
     logger.info(
         "Created %s asset-level at %s in %s/phy.usda",
@@ -206,14 +221,19 @@ def list_in_asset(asset_dir: Path) -> schemas.JointsSummary:
 def _validate_joint_bodies(
     stage: Usd.Stage, body0: str | None, body1: str | None,
 ) -> None:
-    """Refuse if neither body reaches a RigidBodyAPI, or targets are not Xformable."""
+    """Refuse unless a body is an enabled rigid body itself, and both are Xformable.
+
+    This is USD's own rule: a joint whose bodies only sit under a rigid body
+    is an error to its validators.
+    """
     if not body0 and not body1:
         raise ValueError(
             "Joint must reference at least one body. Both body0 and "
             "body1 are empty; the joint would have nothing to connect.",
         )
 
-    reaches_rigid_body = False
+    is_rigid_body = False
+    hints: list[str] = []
     for label, path in (("body0", body0), ("body1", body1)):
         if not path:
             continue
@@ -225,15 +245,30 @@ def _validate_joint_bodies(
                 f"Joint {label} must be a UsdGeom.Xformable; "
                 f"{path} is a {prim.GetTypeName()!r}",
             )
-        if _ancestor_has_api(prim, "PhysicsRigidBodyAPI"):
-            reaches_rigid_body = True
+        if _is_enabled_rigid_body(prim):
+            is_rigid_body = True
+        elif prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            hints.append(f"{path} is a rigid body that is switched off (physics:rigidBodyEnabled).")
+        else:
+            above = _rigid_body_above(prim)
+            if above is not None:
+                hints.append(f"{path} sits under the rigid body {above}: use {above} as the body.")
 
-    if not reaches_rigid_body:
+    if not is_rigid_body:
         raise ValueError(
-            "Joint must connect to at least one prim that reaches "
-            "PhysicsRigidBodyAPI (self or ancestor). Neither "
-            f"{body0!r} nor {body1!r} does. Apply RigidBodyAPI to one "
-            "of them first.",
+            "A joint needs at least one body that is an enabled rigid body itself "
+            "(PhysicsRigidBodyAPI on that prim, not on a prim above it). Neither "
+            f"{body0!r} nor {body1!r} is. "
+            + (" ".join(hints) or "Apply PhysicsRigidBodyAPI to one of them first."),
+        )
+
+
+def _refuse_taken_name(stage: Usd.Stage, prim_path: str, name: str) -> None:
+    """Refuse a joint name a prim already has; creating it again would rewrite that prim."""
+    if stage.GetPrimAtPath(prim_path).IsValid():
+        raise ValueError(
+            f"The name '{name}' is taken: {prim_path} already exists. "
+            "Remove it first with remove_joint, or use another name.",
         )
 
 
@@ -280,15 +315,22 @@ def _author_joint_attributes(
         )
 
 
-def _ancestor_has_api(prim: Usd.Prim, api_name: str) -> bool:
-    """Whether *prim* or any of its ancestors has *api_name* in apiSchemas."""
-    cursor = prim
+def _is_enabled_rigid_body(prim: Usd.Prim) -> bool:
+    """Whether *prim* carries ``PhysicsRigidBodyAPI`` and is not switched off."""
+    if not prim.HasAPI(UsdPhysics.RigidBodyAPI):
+        return False
+    enabled = UsdPhysics.RigidBodyAPI(prim).GetRigidBodyEnabledAttr().Get()
+    return enabled is None or bool(enabled)
+
+
+def _rigid_body_above(prim: Usd.Prim) -> Sdf.Path | None:
+    """The nearest prim above *prim* that carries ``PhysicsRigidBodyAPI``, or None."""
+    cursor = prim.GetParent()
     while cursor and cursor.IsValid() and cursor.GetPath() != Sdf.Path.absoluteRootPath:
-        applied = cursor.GetAppliedSchemas()
-        if any(s.split(":")[0] == api_name for s in applied):
-            return True
+        if cursor.HasAPI(UsdPhysics.RigidBodyAPI):
+            return cursor.GetPath()
         cursor = cursor.GetParent()
-    return False
+    return None
 
 
 def _is_supported_joint_spec(spec: Sdf.PrimSpec) -> bool:

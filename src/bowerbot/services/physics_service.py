@@ -73,7 +73,7 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
 
     result = physics.apis.apply_in_asset(
         asset_dir, asset_local_path, api_name, attributes, relationships,
-        instance_name=instance_name,
+        instance_name=instance_name, scene_stage=state.stage,
     )
     state.reload_stage()
 
@@ -81,12 +81,20 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
         "Service applied %s asset-level on %s (asset %s)",
         api_name.value, prim_path, asset_dir.name,
     )
+    # prim_path is where the API landed in the scene; the path inside the asset's
+    # own files is asset_prim_path.
+    asset_target = result["prim_path"]
+    scene_target = (
+        prim_path + asset_target[len(asset_local_path):]
+        if asset_target.startswith(asset_local_path) else prim_path
+    )
     return {
         **result,
+        "prim_path": scene_target,
         "scope": "asset",
         "asset_folder": asset_dir.name,
         "scene_prim_path": prim_path,
-        "asset_prim_path": asset_local_path,
+        "asset_prim_path": asset_target,
         "cleared_masking_opinions": physics.masking.cleared_rows(cleared),
     }
 
@@ -139,7 +147,7 @@ def remove_physics_api(state: scene_state.SceneState, params: dict[str, Any]) ->
 
     changed = physics.apis.remove_from_asset(
         asset_dir, asset_local_path, api_name,
-        instance_name=instance_name,
+        instance_name=instance_name, scene_stage=state.stage,
     )
     if changed:
         physics.layer.cleanup_if_empty(asset_dir)
@@ -171,17 +179,13 @@ def setup_physics_scene(
         params.get("gravity_direction"), "gravity_direction",
     )
 
-    scene_path = physics.scenes.ensure(
+    scene_path, resolved_magnitude, resolved_direction = physics.scenes.setup(
         state.stage,
         name=name,
         gravity_magnitude=gravity_magnitude,
         gravity_direction=gravity_direction,
         project_mpu=state.meters_per_unit,
         project_up_axis=state.up_axis.value,
-    )
-    resolved_magnitude, resolved_direction = physics.scenes.resolve_gravity(
-        gravity_magnitude, gravity_direction,
-        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
     logger.info("setup_physics_scene -> %s", scene_path)
     return {
@@ -304,15 +308,18 @@ def create_joint(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
 
     result = physics.joints.create_in_asset(
         asset_dir, joint_type, name,
-        asset_body0, asset_body1, attributes,
+        asset_body0, asset_body1, attributes, scene_stage=state.stage,
     )
     state.reload_stage()
     logger.info(
         "Service created %s asset-level (%s in %s)",
         joint_type.value, name, asset_dir.name,
     )
+    asset_joint = result["prim_path"]
     return {
         **result,
+        "prim_path": ref_prim_path + asset_joint[len(f"/{default_prim}"):],
+        "asset_prim_path": asset_joint,
         "scene_body0": body0,
         "scene_body1": body1,
     }
@@ -398,6 +405,7 @@ def remove_collision_group(
     scrubbed = (
         usd.namespace.scrub_dangling_refs(state.stage) if removed else {}
     )
+    authoring.stage.save_stage(state.stage)
     return {
         "name": name,
         "removed": removed,

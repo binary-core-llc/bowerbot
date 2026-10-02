@@ -11,6 +11,20 @@ from bowerbot import schemas
 from bowerbot.utils import usd
 
 
+def refuse_unknown_attributes(
+    light_type: schemas.LightType, attributes: dict[str, object],
+) -> None:
+    """Raise if any attribute name is not declared by the light type's schema."""
+    prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)
+    declared = set(prim_def.GetPropertyNames()) if prim_def is not None else set()
+    unknown = sorted(name for name in attributes if name not in declared)
+    if unknown:
+        raise ValueError(
+            f"Unknown {light_type.value} attribute(s) {unknown}. "
+            "Call list_light_type_properties for the valid names.",
+        )
+
+
 def list_type_properties(light_type: schemas.LightType) -> schemas.LightTypeSchemaInfo:
     """Live schema-registry view of every input the light type declares."""
     prim_def = Usd.SchemaRegistry().FindConcretePrimDefinition(light_type.value)

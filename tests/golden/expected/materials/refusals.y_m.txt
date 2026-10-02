@@ -342,30 +342,16 @@ intent: a part the table does not have
 SUMMARY
   call: create_material(prim_path="/Scene/Furniture/Table_01/asset/Nope", material_name="oak")
   current project: golden
-  said: ok: Created procedural material 'oak' and bound to /Scene/Furniture/Table_01/asset/Nope in table/mtl.usda
+  said: REFUSED: Prim not found in asset table: /Nope
 
   what changed:
-    + file assets/table/mtl.usda
-    ~ file assets/table/table.usda
-    + prim /Scene/Furniture/Table_01/asset/Nope [typeless]
-          applied APIs: MaterialBindingAPI
-          rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak
-          specifier: over
-    + prim /Scene/Furniture/Table_01/asset/mtl [Scope]
-    + prim /Scene/Furniture/Table_01/asset/mtl/oak [Material] (+2 prims inside)
-          attr outputs:mtlx:surface: (no value)
-          attr outputs:surface: (no value)
-          connect outputs:mtlx:surface: /Scene/Furniture/Table_01/asset/mtl/oak/standard_surface.outputs:out
-          connect outputs:surface: /Scene/Furniture/Table_01/asset/mtl/oak/preview_surface.outputs:surface
-    ~ validity: valid → INVALID
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
-    ⚠ /Scene/Furniture/Table_01/asset/Nope has no geometry at or under it to show the material
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -374,115 +360,20 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_folder": "table",
-    "material": "/table/mtl/oak",
-    "message": "Created procedural material 'oak' and bound to /Scene/Furniture/Table_01/asset/Nope in table/mtl.usda",
-    "prim_path": "/Scene/Furniture/Table_01/asset/Nope"
+    "error": "Prim not found in asset table: /Nope"
   }
 
 files:
     assets/table/geo.usda
-  + assets/table/mtl.usda
-  ~ assets/table/table.usda
+    assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  + assets/table/mtl.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "table"
-      )
-
-      def "table"
-      {
-          def Scope "mtl"
-          {
-              def Material "oak"
-              {
-                  token outputs:mtlx:surface.connect = </table/mtl/oak/standard_surface.outputs:out>
-                  token outputs:surface.connect = </table/mtl/oak/preview_surface.outputs:surface>
-
-                  def Shader "standard_surface"
-                  {
-                      uniform token info:id = "ND_standard_surface_surfaceshader"
-                      color3f inputs:base_color = (0.8, 0.8, 0.8)
-                      float inputs:metalness = 0
-                      float inputs:specular_roughness = 0.5
-                      token outputs:out
-                  }
-
-                  def Shader "preview_surface"
-                  {
-                      uniform token info:id = "UsdPreviewSurface"
-                      color3f inputs:diffuseColor = (0.8, 0.8, 0.8)
-                      float inputs:metallic = 0
-                      float inputs:roughness = 0.5
-                      token outputs:surface
-                  }
-              }
-          }
-
-          over "Nope" (
-              prepend apiSchemas = ["MaterialBindingAPI"]
-          )
-          {
-              rel material:binding = </table/mtl/oak>
-          }
-      }
-
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -15,4 +15,5 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      +    prepend references = @./mtl.usda@
-       )
-       {
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -53,4 +53,38 @@
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-                   }
-  +
-  +                def Scope "mtl"
-  +                {
-  +                    def Material "oak"
-  +                    {
-  +                        token outputs:mtlx:surface.connect = </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface.outputs:out>
-  +                        token outputs:surface.connect = </Scene/Furniture/Table_01/asset/mtl/oak/preview_surface.outputs:surface>
-  +
-  +                        def Shader "standard_surface"
-  +                        {
-  +                            uniform token info:id = "ND_standard_surface_surfaceshader"
-  +                            color3f inputs:base_color = (0.8, 0.8, 0.8)
-  +                            float inputs:metalness = 0
-  +                            float inputs:specular_roughness = 0.5
-  +                            token outputs:out
-  +                        }
-  +
-  +                        def Shader "preview_surface"
-  +                        {
-  +                            uniform token info:id = "UsdPreviewSurface"
-  +                            color3f inputs:diffuseColor = (0.8, 0.8, 0.8)
-  +                            float inputs:metallic = 0
-  +                            float inputs:roughness = 0.5
-  +                            token outputs:surface
-  +                        }
-  +                    }
-  +                }
-  +
-  +                over "Nope" (
-  +                    apiSchemas = ["MaterialBindingAPI"]
-  +                )
-  +                {
-  +                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/oak>
-  +                }
-               }
-           }
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
@@ -491,11 +382,9 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+  valid, no issues
 
 
 === step 03: create_material
@@ -527,7 +416,6 @@ full answer:
 
 files:
     assets/table/geo.usda
-    assets/table/mtl.usda
     assets/table/table.usda
     project.json
     scene.usda
@@ -545,11 +433,9 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+  valid, no issues
 
 
 === step 04: bind_material
@@ -581,7 +467,6 @@ full answer:
 
 files:
     assets/table/geo.usda
-    assets/table/mtl.usda
     assets/table/table.usda
     project.json
     scene.usda
@@ -599,11 +484,9 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+  valid, no issues
 
 
 === step 05: bind_material
@@ -635,7 +518,6 @@ full answer:
 
 files:
     assets/table/geo.usda
-    assets/table/mtl.usda
     assets/table/table.usda
     project.json
     scene.usda
@@ -653,11 +535,9 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+  valid, no issues
 
 
 === step 06: remove_material
@@ -666,22 +546,16 @@ intent: remove a material that was never added
 SUMMARY
   call: remove_material(prim_path="/Scene/Furniture/Table_01/asset/Top")
   current project: golden
-  said: ok: Removed material binding from /Scene/Furniture/Table_01/asset/Top
+  said: ok: /Scene/Furniture/Table_01/asset/Top has no material binding of its own to remove
 
   what changed:
-    - file assets/table/mtl.usda
-    ~ file assets/table/table.usda
-    - prim /Scene/Furniture/Table_01/asset/Nope [typeless]
-    - prim /Scene/Furniture/Table_01/asset/mtl [Scope]
-    - prim /Scene/Furniture/Table_01/asset/mtl/oak [Material] (and 2 prims inside)
-    ~ validity: INVALID → valid
-    - issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ /Scene/Furniture/Table_01/asset/Top showed no material before, yet the answer says one was removed
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -691,71 +565,22 @@ what USD printed while the tool ran:
 full answer:
   {
     "asset_folder": "table",
-    "message": "Removed material binding from /Scene/Furniture/Table_01/asset/Top",
-    "prim_path": "/Scene/Furniture/Table_01/asset/Top"
+    "message": "/Scene/Furniture/Table_01/asset/Top has no material binding of its own to remove",
+    "prim_path": "/Scene/Furniture/Table_01/asset/Top",
+    "removed": false
   }
 
 files:
     assets/table/geo.usda
-  - assets/table/mtl.usda
-  ~ assets/table/table.usda
+    assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  - assets/table/mtl.usda (removed)
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -15,5 +15,4 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      -    prepend references = @./mtl.usda@
-       )
-       {
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -53,38 +53,4 @@
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-                   }
-  -
-  -                def Scope "mtl"
-  -                {
-  -                    def Material "oak"
-  -                    {
-  -                        token outputs:mtlx:surface.connect = </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface.outputs:out>
-  -                        token outputs:surface.connect = </Scene/Furniture/Table_01/asset/mtl/oak/preview_surface.outputs:surface>
-  -
-  -                        def Shader "standard_surface"
-  -                        {
-  -                            uniform token info:id = "ND_standard_surface_surfaceshader"
-  -                            color3f inputs:base_color = (0.8, 0.8, 0.8)
-  -                            float inputs:metalness = 0
-  -                            float inputs:specular_roughness = 0.5
-  -                            token outputs:out
-  -                        }
-  -
-  -                        def Shader "preview_surface"
-  -                        {
-  -                            uniform token info:id = "UsdPreviewSurface"
-  -                            color3f inputs:diffuseColor = (0.8, 0.8, 0.8)
-  -                            float inputs:metallic = 0
-  -                            float inputs:roughness = 0.5
-  -                            token outputs:surface
-  -                        }
-  -                    }
-  -                }
-  -
-  -                over "Nope" (
-  -                    apiSchemas = ["MaterialBindingAPI"]
-  -                )
-  -                {
-  -                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/oak>
-  -                }
-               }
-           }
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
@@ -775,29 +600,16 @@ intent: a color value above 1
 SUMMARY
   call: create_material(prim_path="/Scene/Furniture/Table_01/asset/Top", material_name="red", base_color_r=2.0)
   current project: golden
-  said: ok: Created procedural material 'red' and bound to /Scene/Furniture/Table_01/asset/Top in table/mtl.usda
+  said: REFUSED: Material values go from 0 to 1; got base_color_r=2.
 
   what changed:
-    + file assets/table/mtl.usda
-    ~ file assets/table/table.usda
-    + prim /Scene/Furniture/Table_01/asset/mtl [Scope]
-    + prim /Scene/Furniture/Table_01/asset/mtl/red [Material] (+2 prims inside)
-          attr outputs:mtlx:surface: (no value)
-          attr outputs:surface: (no value)
-          connect outputs:mtlx:surface: /Scene/Furniture/Table_01/asset/mtl/red/standard_surface.outputs:out
-          connect outputs:surface: /Scene/Furniture/Table_01/asset/mtl/red/preview_surface.outputs:surface
-    ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
-    ~ /Scene/Furniture/Table_01/asset/Top  material shown: (none) → /Scene/Furniture/Table_01/asset/mtl/red
-    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/red
-    ~ validity: valid → INVALID
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
-    ⚠ accepted values outside 0-1: base_color_r=2.0
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -806,129 +618,28 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_folder": "table",
-    "material": "/table/mtl/red",
-    "message": "Created procedural material 'red' and bound to /Scene/Furniture/Table_01/asset/Top in table/mtl.usda",
-    "prim_path": "/Scene/Furniture/Table_01/asset/Top"
+    "error": "Material values go from 0 to 1; got base_color_r=2."
   }
 
 files:
     assets/table/geo.usda
-  + assets/table/mtl.usda
-  ~ assets/table/table.usda
+    assets/table/table.usda
     project.json
     scene.usda
 
 file changes:
-  + assets/table/mtl.usda (new):
-      #usda 1.0
-      (
-          defaultPrim = "table"
-      )
-
-      def "table"
-      {
-          def Scope "mtl"
-          {
-              def Material "red"
-              {
-                  token outputs:mtlx:surface.connect = </table/mtl/red/standard_surface.outputs:out>
-                  token outputs:surface.connect = </table/mtl/red/preview_surface.outputs:surface>
-
-                  def Shader "standard_surface"
-                  {
-                      uniform token info:id = "ND_standard_surface_surfaceshader"
-                      color3f inputs:base_color = (2, 0.8, 0.8)
-                      float inputs:metalness = 0
-                      float inputs:specular_roughness = 0.5
-                      token outputs:out
-                  }
-
-                  def Shader "preview_surface"
-                  {
-                      uniform token info:id = "UsdPreviewSurface"
-                      color3f inputs:diffuseColor = (2, 0.8, 0.8)
-                      float inputs:metallic = 0
-                      float inputs:roughness = 0.5
-                      token outputs:surface
-                  }
-              }
-          }
-
-          over "Top" (
-              prepend apiSchemas = ["MaterialBindingAPI"]
-          )
-          {
-              rel material:binding = </table/mtl/red>
-          }
-      }
-
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -15,4 +15,5 @@
-           kind = "component"
-           prepend payload = @./geo.usda@
-      +    prepend references = @./mtl.usda@
-       )
-       {
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -30,6 +30,9 @@
-               )
-               {
-  -                def Cube "Top"
-  +                def Cube "Top" (
-  +                    apiSchemas = ["MaterialBindingAPI"]
-  +                )
-                   {
-  +                    rel material:binding = </Scene/Furniture/Table_01/asset/mtl/red>
-                       double size = 1
-                       float3 xformOp:scale = (1.2, 0.05, 0.8)
-  @@ -53,4 +56,31 @@
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
-                   }
-  +
-  +                def Scope "mtl"
-  +                {
-  +                    def Material "red"
-  +                    {
-  +                        token outputs:mtlx:surface.connect = </Scene/Furniture/Table_01/asset/mtl/red/standard_surface.outputs:out>
-  +                        token outputs:surface.connect = </Scene/Furniture/Table_01/asset/mtl/red/preview_surface.outputs:surface>
-  +
-  +                        def Shader "standard_surface"
-  +                        {
-  +                            uniform token info:id = "ND_standard_surface_surfaceshader"
-  +                            color3f inputs:base_color = (2, 0.8, 0.8)
-  +                            float inputs:metalness = 0
-  +                            float inputs:specular_roughness = 0.5
-  +                            token outputs:out
-  +                        }
-  +
-  +                        def Shader "preview_surface"
-  +                        {
-  +                            uniform token info:id = "UsdPreviewSurface"
-  +                            color3f inputs:diffuseColor = (2, 0.8, 0.8)
-  +                            float inputs:metallic = 0
-  +                            float inputs:roughness = 0.5
-  +                            token outputs:surface
-  +                        }
-  +                    }
-  +                }
-               }
-           }
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
   /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
   /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.6000, 0.0000, -0.4000)..(0.6000, 0.7750, 0.4000)
-  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material /Scene/Furniture/Table_01/asset/mtl/red
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.7500, 0.0000)  bounds (-0.6000, 0.7250, -0.4000)..(0.6000, 0.7750, 0.4000)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-0.5500, 0.3750, 0.0000)  bounds (-0.5750, 0.0000, -0.0250)..(-0.5250, 0.7500, 0.0250)  material (none)
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (0.5500, 0.3750, 0.0000)  bounds (0.5250, 0.0000, -0.0250)..(0.5750, 0.7500, 0.0250)  material (none)
-  /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, no issues

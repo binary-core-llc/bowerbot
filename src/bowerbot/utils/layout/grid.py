@@ -22,7 +22,11 @@ def suggest(
     The grid is centered in a room of *room_size* on the two floor axes of
     up axis *up*; the up coordinate is 0. Lengths are in project units.
     """
-    if count <= 0:
+    if count < 0:
+        raise ValueError(f"count must be 0 or more, not {count}.")
+    if spacing <= 0:
+        raise ValueError(f"spacing must be greater than 0, not {spacing:g}.")
+    if count == 0:
         return []
 
     cols = math.ceil(math.sqrt(count))

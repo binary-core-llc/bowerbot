@@ -670,7 +670,9 @@ TOOLS.append(skills.Tool(
         "PhysicsDistanceJoint (constrains distance between two "
         "points).\n\n"
         "body0 and body1 reference scene prim paths. At least one "
-        "must reach PhysicsRigidBodyAPI (self or ancestor); the "
+        "must be an enabled rigid body itself: PhysicsRigidBodyAPI on "
+        "that prim, not on a prim above it (USD's own rule; a part "
+        "under a rigid body does not count, name the body). The "
         "other can be world-static (set to empty / omit to mean "
         "'attach to world'). Convention is body0=parent, body1=child "
         "for articulated chains. Both must be UsdGeom.Xformable.\n\n"
@@ -712,7 +714,7 @@ TOOLS.append(skills.Tool(
                     "Scene prim path of body0 (parent in articulated "
                     "chains). Empty/omitted means 'world'. Must be "
                     "Xformable; at least one of body0/body1 must "
-                    "reach PhysicsRigidBodyAPI."
+                    "carry PhysicsRigidBodyAPI itself."
                 ),
             },
             "body1": {

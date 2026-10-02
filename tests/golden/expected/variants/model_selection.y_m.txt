@@ -763,8 +763,7 @@ SUMMARY
     not used by the scene: assets/crate/geo.usda
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/crate/crate.usda
-    ⚠ left behind a file nothing in the scene uses: assets/crate/geo.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -842,8 +841,7 @@ SUMMARY
     not used by the scene: assets/crate/geo.usda
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/chair/chair.usda
-    ⚠ left behind a file nothing in the scene uses: assets/chair/geo.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

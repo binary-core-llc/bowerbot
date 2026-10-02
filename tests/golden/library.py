@@ -182,6 +182,19 @@ def build_library(root: Path) -> Path:
     _box(crate, "/crate/Box", (0.0, 0.25, 0.0), (0.5, 0.5, 0.5))
     crate.Save()
 
+    # Shapes USD's physics rules treat in their own way: round ones, a plane, points.
+    shapes = _stage(root / "shapes.usda")
+    _root(shapes, "shapes")
+    UsdGeom.Sphere.Define(shapes, "/shapes/Ball").GetRadiusAttr().Set(0.25)
+    pill = UsdGeom.Capsule.Define(shapes, "/shapes/Pill")
+    pill.GetRadiusAttr().Set(0.1)
+    pill.GetHeightAttr().Set(0.4)
+    UsdGeom.Xformable(pill).AddTranslateOp().Set(Gf.Vec3d(1.0, 0.0, 0.0))
+    UsdGeom.Plane.Define(shapes, "/shapes/Floor")
+    dots = UsdGeom.Points.Define(shapes, "/shapes/Dots")
+    dots.CreatePointsAttr([(0, 0, 0), (0, 1, 0)])
+    shapes.Save()
+
     ground = _stage(root / "ground.usda")
     _root(ground, "ground")
     mesh = UsdGeom.Mesh.Define(ground, "/ground/Plane")

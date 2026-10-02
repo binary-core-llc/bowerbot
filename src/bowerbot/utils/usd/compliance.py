@@ -34,7 +34,23 @@ def run_usd_compliance_checker(file_path: str | Path) -> list[schemas.Validation
     except Exception as exc:
         logger.warning("USD validation failed on %s: %s", file_path, exc)
         return []
+    return _issues(errors)
 
+
+def run_validators_on_stage(stage: Usd.Stage, keyword: str) -> list[schemas.ValidationIssue]:
+    """What USD's validators tagged *keyword* report on an open stage, unsaved edits included."""
+    try:
+        return _issues(_keyword_context(keyword).Validate(stage))
+    except Exception as exc:
+        logger.warning("USD validation (%s) failed: %s", keyword, exc)
+        return []
+
+
+# ── Helpers ──
+
+
+def _issues(errors: list[UsdValidation.ValidationError]) -> list[schemas.ValidationIssue]:
+    """USD's validation errors as issues, in an order that does not change between runs."""
     issues: list[schemas.ValidationIssue] = []
     for err in errors:
         severity = (
@@ -52,10 +68,17 @@ def run_usd_compliance_checker(file_path: str | Path) -> list[schemas.Validation
             message=f"{err.GetName()}: {err.GetMessage()}",
             prim_path=prim_path,
         ))
+    # USD runs its validators in parallel, so the order it reports in changes from run to run.
+    issues.sort(key=lambda issue: (issue.prim_path or "", issue.message))
     return issues
 
 
-# ── Helpers ──
+@functools.cache
+def _keyword_context(keyword: str) -> UsdValidation.ValidationContext:
+    """A ValidationContext with the validators tagged *keyword*, built once."""
+    registry = UsdValidation.ValidationRegistry()
+    names = [metadata.name for metadata in registry.GetValidatorMetadataForKeyword(keyword)]
+    return UsdValidation.ValidationContext(registry.GetOrLoadValidatorsByName(names))
 
 
 @functools.cache

@@ -614,13 +614,20 @@ def _render(
     if library_changed:
         flags.insert(0, "⚠ CRITICAL: the asset library changed on disk")
     flags += _answer_flags(data, capture.facts)
-    for label, before_items, after_items in (
-        ("a file nothing in the scene uses", previous.unused, capture.unused),
+    # Files the scene stops using are not flagged: the project keeps its asset
+    # copies and textures until delete_project_asset or delete_project_texture.
+    # An unbound material is flagged only after a removal: binding another one
+    # keeps the replaced material for variants, and an asset may ship a spare.
+    leftovers = [
         ("a dangling target", previous.dangling, capture.dangling),
-        ("a material nothing binds", previous.unbound_materials, capture.unbound_materials),
         ("an absolute path", previous.absolute_paths, capture.absolute_paths),
         ("a composition error", previous.composition_errors, capture.composition_errors),
-    ):
+    ]
+    if step.tool.startswith(checks.REMOVING_PREFIXES):
+        leftovers.append(
+            ("a material nothing binds", previous.unbound_materials, capture.unbound_materials),
+        )
+    for label, before_items, after_items in leftovers:
         flags += [f"⚠ left behind {label}: {item}" for item in after_items
                   if item not in before_items]
     if printed:

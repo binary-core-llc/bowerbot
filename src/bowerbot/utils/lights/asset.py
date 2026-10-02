@@ -165,6 +165,7 @@ def remove(asset_dir: Path, light_name: str) -> None:
         variants_layer = Sdf.Layer.FindOrOpen(str(variants_path))
         if variants_layer is not None:
             usd.namespace.clear_orphan_variant_overs(variants_layer, str(light_prim_path))
+            variants_layer.Save()
         authoring.asset_variants.cleanup_if_empty(asset_dir)
 
     authoring.asset_folder.remove_empty_layer(

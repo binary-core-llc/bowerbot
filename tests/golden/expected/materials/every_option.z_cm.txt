@@ -728,18 +728,15 @@ SUMMARY
     ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: /Scene/Furniture/Table_01/asset/mtl/oak → /Scene/Furniture/Table_01/asset/mtl/walnut
     ~ /Scene/Furniture/Table_02/asset/Top  material shown: /Scene/Furniture/Table_02/asset/mtl/oak → /Scene/Furniture/Table_02/asset/mtl/walnut
     ~ /Scene/Furniture/Table_02/asset/Top  rel material:binding: /Scene/Furniture/Table_02/asset/mtl/oak → /Scene/Furniture/Table_02/asset/mtl/walnut
-    ~ validity: valid → INVALID
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
+    + issue [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
+    + issue [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
 
   project state after the step:
     material nothing binds: /Scene/Furniture/Table_01/asset/mtl/oak
     material nothing binds: /Scene/Furniture/Table_02/asset/mtl/oak
 
   checks:
-    ⚠ this step made the scene invalid
-    ⚠ left behind a material nothing binds: /Scene/Furniture/Table_01/asset/mtl/oak
-    ⚠ left behind a material nothing binds: /Scene/Furniture/Table_02/asset/mtl/oak
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -901,9 +898,9 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/mtl  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
+  valid, 2 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
 
 
 === step 05: cleanup_unused_materials
@@ -1023,9 +1020,9 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/mtl  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
+  valid, 2 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
 
 
 === step 06: cleanup_unused_contents
@@ -1086,9 +1083,9 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/mtl  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
+  valid, 2 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
 
 
 === step 07: cleanup_unused_materials
@@ -1146,6 +1143,6 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/mtl  [Scope]
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.
+  valid, 2 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_02/asset/mtl/walnut/standard_surface> not found in sdrRegistry.)

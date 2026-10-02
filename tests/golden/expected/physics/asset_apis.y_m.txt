@@ -444,7 +444,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /crate does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -460,7 +460,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/crate",
+    "prim_path": "/Scene/Props/Crate_01/asset",
     "relationships_set": [],
     "requested_prim_path": "/crate",
     "scene_prim_path": "/Scene/Props/Crate_01/asset",
@@ -543,7 +543,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /crate/Box does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -559,7 +559,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/crate/Box",
+    "prim_path": "/Scene/Props/Crate_01/asset/Box",
     "relationships_set": [],
     "requested_prim_path": "/crate/Box",
     "scene_prim_path": "/Scene/Props/Crate_01/asset/Box",
@@ -642,7 +642,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ the returned prim_path /crate does not exist in the scene
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -660,7 +660,7 @@ full answer:
     "cleared_masking_opinions": [],
     "companion_api": null,
     "instance_name": null,
-    "prim_path": "/crate",
+    "prim_path": "/Scene/Props/Crate_01/asset",
     "relationships_set": [],
     "requested_prim_path": "/crate",
     "scene_prim_path": "/Scene/Props/Crate_01/asset",

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from pxr import Kind
@@ -95,7 +96,9 @@ def save_scene_snapshot(
         )
     default_name = composed_default.GetName()
 
-    flattened = UsdUtils.FlattenLayerStack(stage)
+    flattened = UsdUtils.FlattenLayerStack(
+        stage, lambda layer, path: _relative_to(scene_path.parent, layer, path),
+    )
     if flattened is None:
         raise RuntimeError(f"Failed to flatten layer stack for {scene_path}")
     if not flattened.defaultPrim:
@@ -160,6 +163,20 @@ def delete_scene_snapshot(scene_path: Path, name: str) -> Path:
 
 
 # ── Helpers ──
+
+
+def _relative_to(folder: Path, layer: Sdf.Layer, asset_path: str) -> str:
+    """*asset_path* as written in *layer*, re-expressed from *folder*.
+
+    A snapshot sits beside scene.usda, so the scene's own relative paths stay
+    as they are and the snapshot moves with the project like the scene does.
+    """
+    if not asset_path or os.path.isabs(asset_path):
+        return asset_path
+    layer_dir = Path(layer.realPath).parent
+    if layer_dir == folder:
+        return asset_path
+    return os.path.relpath(layer_dir / asset_path, folder)
 
 
 def _strip_dcc_artifacts(layer: Sdf.Layer) -> None:

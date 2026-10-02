@@ -695,8 +695,7 @@ SUMMARY
     not used by the scene: assets/table/table.usda
 
   checks:
-    ⚠ left behind a file nothing in the scene uses: assets/table/geo.usda
-    ⚠ left behind a file nothing in the scene uses: assets/table/table.usda
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

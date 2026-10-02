@@ -356,14 +356,13 @@ SUMMARY
     ~ /Scene/Furniture/Table_01/asset/Leg_L  applied APIs: (none) → MaterialBindingAPI
     ~ /Scene/Furniture/Table_01/asset/Leg_L  material shown: (none) → /Scene/Furniture/Table_01/asset/mtl/steel
     ~ /Scene/Furniture/Table_01/asset/Leg_L  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/steel
-    ~ validity: valid → INVALID
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/steel/standard_surface> not found in sdrRegistry.
+    + issue [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/steel/standard_surface> not found in sdrRegistry.)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -496,8 +495,8 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/steel/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/steel/standard_surface> not found in sdrRegistry.)
 
 
 === step 03: bind_material
@@ -523,8 +522,7 @@ SUMMARY
     ~ /Scene/Furniture/Table_01/asset/mtl/steel  attr outputs:mtlx:surface: (no value) → (none)
     ~ /Scene/Furniture/Table_01/asset/mtl/steel  connect outputs:mtlx:surface: /Scene/Furniture/Table_01/asset/mtl/steel/standard_surface.outputs:out → (none)
     ~ /Scene/Furniture/Table_01/asset/mtl/steel  connect outputs:surface: /Scene/Furniture/Table_01/asset/mtl/steel/preview_surface.outputs:surface → /Scene/Furniture/Table_01/asset/mtl/steel/PreviewSurface.outputs:surface
-    ~ validity: INVALID → valid
-    - issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/steel/standard_surface> not found in sdrRegistry.
+    - issue [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/steel/standard_surface> not found in sdrRegistry.)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -678,7 +676,8 @@ full answer:
   {
     "asset_folder": "table",
     "message": "Removed material binding from /Scene/Furniture/Table_01/asset/Leg_L",
-    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_L"
+    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_L",
+    "removed": true
   }
 
 files:
@@ -765,7 +764,8 @@ full answer:
   {
     "asset_folder": "table",
     "message": "Removed material binding from /Scene/Furniture/Table_01/asset/Leg_R",
-    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_R"
+    "prim_path": "/Scene/Furniture/Table_01/asset/Leg_R",
+    "removed": true
   }
 
 files:

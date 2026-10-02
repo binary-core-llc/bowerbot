@@ -99,23 +99,30 @@ def rewrite_refs(
 
 
 def remove_prim(stage: Usd.Stage, prim_path: str) -> bool:
-    """Remove a prim, clean any orphan variant body specs, and save on success."""
+    """Remove a prim and clean any orphan variant body specs. Not saved: the caller saves."""
     prim = stage.GetPrimAtPath(prim_path)
     if not prim.IsValid():
         msg = f"Prim not found: {prim_path}"
         raise ValueError(msg)
+    if prim == stage.GetDefaultPrim():
+        raise ValueError(
+            f"{prim_path} is the scene's root prim: everything in the scene sits under it, "
+            "so it cannot be removed. Remove the prims under it instead.",
+        )
 
     removed = stage.RemovePrim(prim_path)
     if removed:
         clear_orphan_variant_overs(stage.GetRootLayer(), prim_path)
-        stage.Save()
     return removed
 
 
 def clear_orphan_variant_overs(
     layer: Sdf.Layer, removed_prim_path: str,
 ) -> bool:
-    """Clear orphan variant-body specs at *removed_prim_path*, cascading empties."""
+    """Clear orphan variant-body specs at *removed_prim_path*, cascading empties.
+
+    Not saved: the caller saves.
+    """
     target = Sdf.Path(removed_prim_path)
     if not target.IsAbsolutePath() or target == Sdf.Path.absoluteRootPath:
         return False
@@ -146,8 +153,6 @@ def clear_orphan_variant_overs(
                 touched = True
         ancestor = ancestor.GetParentPath()
 
-    if touched:
-        layer.Save()
     return touched
 
 
@@ -169,11 +174,12 @@ def prune_empty_overrides(layer: Sdf.Layer, prim_path: str) -> None:
 
 
 def scrub_dangling_refs(stage: Usd.Stage) -> dict[str, Any]:
-    """Drop every root-layer rel target whose composed prim no longer exists."""
+    """Drop every root-layer rel target whose composed prim no longer exists.
+
+    Not saved: the caller saves.
+    """
     layer = stage.GetRootLayer()
     touched = _walk_root_layer_rels(layer, _drop_missing(stage))
-    if touched:
-        layer.Save()
     return {"rels_touched": touched}
 
 # ── Free names ──

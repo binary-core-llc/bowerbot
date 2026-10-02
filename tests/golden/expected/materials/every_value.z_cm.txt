@@ -363,14 +363,13 @@ SUMMARY
     ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
     ~ /Scene/Furniture/Table_01/asset/Top  material shown: (none) → /Scene/Furniture/Table_01/asset/mtl/glass
     ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/glass
-    ~ validity: valid → INVALID
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/glass/standard_surface> not found in sdrRegistry.
+    + issue [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/glass/standard_surface> not found in sdrRegistry.)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -507,5 +506,5 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/glass/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/glass/standard_surface> not found in sdrRegistry.)

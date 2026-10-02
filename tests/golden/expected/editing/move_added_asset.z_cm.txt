@@ -378,14 +378,12 @@ SUMMARY
           bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
           material shown: (none)
           world position: (0.0000, 0.0000, 25.0000)
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -560,8 +558,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 03: move_asset
@@ -646,8 +643,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (30.0000, 0.0000, 105.0000)  bounds (5.0000, -25.0000, 80.0000)..(55.0000, 25.0000, 130.0000)  material (none)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 04: move_asset
@@ -732,5 +728,4 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset/Box  [Cube]  at (330.0000, 0.0000, 105.0000)  bounds (305.0000, -25.0000, 80.0000)..(355.0000, 25.0000, 130.0000)  material (none)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_01/asset/contents/Props/Crate_02/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues

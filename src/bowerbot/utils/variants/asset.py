@@ -1,7 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""An asset's variants: adding one, checking its attribute overrides, cleaning up after removal."""
+"""An asset's variants: adding one, checking what it points to, cleaning up after removal."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from pathlib import Path
 
 from pxr import Sdf
 from pxr import Usd
+from pxr import UsdShade
 
 from bowerbot import constants
 from bowerbot.utils import authoring
@@ -77,6 +78,22 @@ def resolve_attribute_types_for_overrides(
     root_file = authoring.asset_folder.find_root_file(asset_dir)
     stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
     return usd.attributes.resolve_attribute_types(stage, overrides)
+
+
+def refuse_unknown_materials(asset_dir: Path, bindings: dict[str, str]) -> None:
+    """Refuse bindings to a material the asset does not have."""
+    root_file = authoring.asset_folder.find_root_file(asset_dir)
+    stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None
+    missing = sorted({
+        material_path for material_path in bindings.values()
+        if stage is None or not UsdShade.Material(stage.GetPrimAtPath(material_path))
+    })
+    if missing:
+        raise ValueError(
+            f"No material in asset {asset_dir.name} at: {', '.join(missing)}. "
+            "Create it first with create_material or bind_material; "
+            "list_materials shows the ones the asset has.",
+        )
 
 
 def refuse_unknown_attributes(

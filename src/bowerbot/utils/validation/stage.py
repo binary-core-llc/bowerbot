@@ -11,6 +11,7 @@ from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
 
+from bowerbot import constants
 from bowerbot import schemas
 from bowerbot.utils import usd
 from bowerbot.utils import validation
@@ -43,7 +44,10 @@ def validate(
     issues.extend(_check_sublayers(stage))
     issues.extend(_check_material_bindings(stage))
     issues.extend(_check_scene_asset_variants(stage))
-    issues.extend(usd.compliance.run_usd_compliance_checker(stage_path))
+    issues.extend(
+        _known_shader_note(issue)
+        for issue in usd.compliance.run_usd_compliance_checker(stage_path)
+    )
 
     is_valid = not any(i.severity == schemas.Severity.ERROR for i in issues)
     return schemas.ValidationResult(is_valid=is_valid, issues=issues)
@@ -89,22 +93,16 @@ def _check_up_axis(
 
 
 def _check_references(stage: Usd.Stage) -> list[schemas.ValidationIssue]:
-    """All external references must resolve to existing files."""
-    issues: list[schemas.ValidationIssue] = []
-    stage_dir = Path(stage.GetRootLayer().realPath).parent
-
-    for prim in stage.Traverse():
-        for asset_path in usd.references.get_prim_ref_paths(prim):
-            if Path(asset_path).exists():
-                continue
-            if (stage_dir / asset_path).exists():
-                continue
-            issues.append(schemas.ValidationIssue(
-                severity=schemas.Severity.ERROR,
-                message=f"Unresolved reference: {asset_path}",
-                prim_path=str(prim.GetPath()),
-            ))
-    return issues
+    """Every reference and payload must point to a file that exists."""
+    return [
+        schemas.ValidationIssue(
+            severity=schemas.Severity.ERROR,
+            message=f"Unresolved reference: {asset_path}",
+            prim_path=prim_path,
+        )
+        for prim_path, asset_path, target in _referenced_files(stage)
+        if not target.exists()
+    ]
 
 
 def _check_sublayers(stage: Usd.Stage) -> list[schemas.ValidationIssue]:
@@ -147,16 +145,47 @@ def _check_scene_asset_variants(stage: Usd.Stage) -> list[schemas.ValidationIssu
     """Walk referenced asset folders and validate each one's variants."""
     seen: set[Path] = set()
     issues: list[schemas.ValidationIssue] = []
-    stage_dir = Path(stage.GetRootLayer().realPath).parent
-
-    for prim in stage.Traverse():
-        for ref_path in usd.references.get_prim_ref_paths(prim):
-            resolved = (stage_dir / ref_path).resolve()
-            if not resolved.exists():
-                continue
-            asset_dir = resolved.parent
-            if asset_dir in seen:
-                continue
-            seen.add(asset_dir)
-            issues.extend(validation.variants.validate_asset(asset_dir))
+    for _prim_path, _asset_path, target in _referenced_files(stage):
+        if not target.exists() or target.parent in seen:
+            continue
+        seen.add(target.parent)
+        issues.extend(validation.variants.validate_asset(target.parent))
     return issues
+
+
+def _referenced_files(stage: Usd.Stage) -> list[tuple[str, str, Path]]:
+    """``(prim path, path as written, file it points to)`` for every reference and payload.
+
+    Each path is read from the layer that wrote it, so a link an asset makes
+    to a sibling asset (``../crate/crate.usda``) is followed from that asset.
+    """
+    found: dict[tuple[str, str], Path] = {}
+    for prim in stage.Traverse():
+        for spec in prim.GetPrimStack():
+            base = Path(spec.layer.realPath).parent
+            for asset_path in (
+                *usd.references.reference_paths(spec), *usd.references.payload_paths(spec),
+            ):
+                found.setdefault((str(prim.GetPath()), asset_path), (base / asset_path).resolve())
+    return [(prim_path, asset_path, target) for (prim_path, asset_path), target in found.items()]
+
+
+def _known_shader_note(issue: schemas.ValidationIssue) -> schemas.ValidationIssue:
+    """A shader BowerBot authors that this USD build cannot look up is a note, not an error.
+
+    USD reports the MaterialX shader of a procedural material as missing when
+    it was built without MaterialX; the scene is right, and a renderer with
+    MaterialX reads it. Any other unknown shader stays an error.
+    """
+    if not issue.message.startswith("MissingShaderIdInRegistry"):
+        return issue
+    if not any(f"'{shader}'" in issue.message for shader in constants.MaterialXShaders.ALL):
+        return issue
+    return schemas.ValidationIssue(
+        severity=schemas.Severity.WARNING,
+        message=(
+            "This USD build has no MaterialX support, so it cannot check the shader of a "
+            f"procedural material; a renderer with MaterialX reads it. ({issue.message})"
+        ),
+        prim_path=issue.prim_path,
+    )

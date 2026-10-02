@@ -415,14 +415,13 @@ SUMMARY
     ~ /Scene/Props/Lamp_01/asset/Base  applied APIs: (none) → MaterialBindingAPI
     ~ /Scene/Props/Lamp_01/asset/Base  material shown: (none) → /Scene/Props/Lamp_01/asset/mtl/red
     ~ /Scene/Props/Lamp_01/asset/Base  rel material:binding: (none) → /Scene/Props/Lamp_01/asset/mtl/red
-    ~ validity: valid → INVALID
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+    + issue [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -544,8 +543,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 03: add_asset_material_variant
@@ -657,8 +656,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 04: add_asset_material_variant
@@ -737,8 +736,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 05: add_asset_configuration_variant
@@ -853,8 +852,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 06: add_asset_configuration_variant
@@ -930,8 +929,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 07: add_asset_attribute_variant
@@ -1037,8 +1036,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 08: list_variants
@@ -1121,8 +1120,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 09: add_asset_material_variant
@@ -1175,8 +1174,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 10: remove_asset_variant
@@ -1229,8 +1228,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 11: remove_asset_variant_set
@@ -1282,8 +1281,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 12: select_asset_variant
@@ -1335,8 +1334,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 13: select_asset_variant_for_instance
@@ -1388,8 +1387,8 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)
 
 
 === step 14: remove_asset_variant_set
@@ -1487,5 +1486,5 @@ world (position, bounds min..max, material shown):
   /Scene/Props/Lamp_01/asset/mtl  [Scope]
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Props/Lamp_01/asset/mtl/red/standard_surface> not found in sdrRegistry.)

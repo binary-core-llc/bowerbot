@@ -172,7 +172,7 @@ SUMMARY
     material nothing binds: /Scene/Furniture/Shelf_01/asset/mtl/spare
 
   checks:
-    ⚠ left behind a material nothing binds: /Scene/Furniture/Shelf_01/asset/mtl/spare
+    no problems spotted by the automatic checks
 
 EVIDENCE
 

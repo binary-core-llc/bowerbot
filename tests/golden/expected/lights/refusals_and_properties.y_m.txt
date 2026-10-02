@@ -846,10 +846,55 @@ intent: an attribute the light type does not have
 SUMMARY
   call: create_light(light_type="SphereLight", light_name="Bad", attributes={"inputs:nope": 1.0})
   current project: golden
+  said: REFUSED: Unknown SphereLight attribute(s) ['inputs:nope']. Call list_light_type_properties for the valid names.
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Unknown SphereLight attribute(s) ['inputs:nope']. Call list_light_type_properties for the valid names."
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 08: create_light
+intent: a texture on a light type without a texture input
+
+SUMMARY
+  call: create_light(light_type="SphereLight", light_name="Bad", texture="<LIBRARY>/hdri/studio.hdr")
+  current project: golden
   said: ok: Created SphereLight at /Scene/Lighting/Bad
 
   what changed:
     ~ file scene.usda
+    + file textures/studio.hdr
     + prim /Scene/Lighting [typeless]
     + prim /Scene/Lighting/Bad [SphereLight]
           applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
@@ -860,7 +905,7 @@ SUMMARY
     ~ /Scene  bounds: (none) → (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
   project state after the step:
-    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+    not used by the scene: textures/studio.hdr
 
   checks:
     no problems spotted by the automatic checks
@@ -885,6 +930,7 @@ full answer:
 files:
     project.json
   ~ scene.usda
+  + textures/studio.hdr
 
 file changes:
   ~ scene.usda:
@@ -903,6 +949,8 @@ file changes:
       +    }
        }
        
+  + textures/studio.hdr (new):
+      <binary: 49 bytes, sha256:a6047f6d65ac4310>
 
 composed scene changes:
   --- composed scene (before)
@@ -924,94 +972,6 @@ composed scene changes:
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
   /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-
-validation:
-  valid, no issues
-
-
-=== step 08: create_light
-intent: a texture on a light type without a texture input
-
-SUMMARY
-  call: create_light(light_type="SphereLight", light_name="Bad", texture="<LIBRARY>/hdri/studio.hdr")
-  current project: golden
-  said: ok: Created SphereLight at /Scene/Lighting/Bad_02
-
-  what changed:
-    ~ file scene.usda
-    + file textures/studio.hdr
-    + prim /Scene/Lighting/Bad_02 [SphereLight]
-          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          attr xformOp:translate: (0, 0, 0)
-          attr xformOpOrder: ('xformOp:translate')
-          bounds: (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-          world position: (0.0000, 0.0000, 0.0000)
-
-  project state after the step:
-    not used by the scene: textures/studio.hdr
-
-  checks:
-    ⚠ left behind a file nothing in the scene uses: textures/studio.hdr
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "light_type": "SphereLight",
-    "message": "Created SphereLight at /Scene/Lighting/Bad_02",
-    "position": {
-      "x": 0.0,
-      "y": 0.0,
-      "z": 0.0
-    },
-    "prim_path": "/Scene/Lighting/Bad_02"
-  }
-
-files:
-    project.json
-  ~ scene.usda
-  + textures/studio.hdr
-
-file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -17,4 +17,10 @@
-                   uniform token[] xformOpOrder = ["xformOp:translate"]
-               }
-      +
-      +        def SphereLight "Bad_02"
-      +        {
-      +            double3 xformOp:translate = (0, 0, 0)
-      +            uniform token[] xformOpOrder = ["xformOp:translate"]
-      +        }
-           }
-       }
-  + textures/studio.hdr (new):
-      <binary: 49 bytes, sha256:a6047f6d65ac4310>
-
-composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -19,4 +19,10 @@
-               uniform token[] xformOpOrder = ["xformOp:translate"]
-           }
-  +
-  +        def SphereLight "Bad_02"
-  +        {
-  +            double3 xformOp:translate = (0, 0, 0)
-  +            uniform token[] xformOpOrder = ["xformOp:translate"]
-  +        }
-       }
-   }
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-  /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues
@@ -1058,7 +1018,6 @@ composed scene changes:
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
   /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues
@@ -1105,7 +1064,6 @@ composed scene changes:
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
   /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues
@@ -1151,7 +1109,6 @@ composed scene changes:
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
   /Scene/Lighting/Bad  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-  /Scene/Lighting/Bad_02  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues

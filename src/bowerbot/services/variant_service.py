@@ -46,6 +46,7 @@ def add_asset_material_variant(
     clear_masking = bool(params.get("clear_masking_overrides", False))
     usd.naming.validate_variant_set_name(set_name)
     usd.naming.validate_variant_name(variant_name)
+    variants.asset.refuse_unknown_materials(asset_dir, bindings)
 
     masking = authoring.opinions.find_variant_masking_opinions(
         state.stage, asset_dir, default_prim,

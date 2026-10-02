@@ -347,6 +347,62 @@ SCENARIOS = (
         ),
     ),
     model.Scenario(
+        "state/values_that_should_be_kept_or_refused",
+        "A custom gravity, then more physics in the scene: is the gravity kept? And values "
+        "that make no sense (a light input that does not exist, a negative count): refused?",
+        (
+            model.Step(
+                "setup_physics_scene",
+                {"gravity_magnitude": 1.62},
+                note="the Moon's gravity",
+            ),
+            model.Step(
+                "place_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "group": "Props",
+                    **model.at(0.0),
+                },
+                save="crate",
+            ),
+            model.Step(
+                "apply_physics_api",
+                {"prim_path": "$crate", "api_name": "PhysicsRigidBodyAPI", "scope": "scene"},
+                note="physics on a scene prim",
+            ),
+            model.Step("list_physics_scenes", note="is the gravity still 1.62?"),
+            model.Step(
+                "create_or_update_collision_group",
+                {"name": "Boxes", "includes": ["$crate"]},
+            ),
+            model.Step(
+                "create_joint",
+                {"joint_type": "PhysicsFixedJoint", "name": "Pin", "body0": "$crate"},
+            ),
+            model.Step("list_physics_scenes", note="and now?"),
+            model.Step(
+                "setup_physics_scene",
+                {"gravity_direction": [1.0, 0.0, 0.0]},
+                note="change the direction only: does the magnitude stay 1.62?",
+            ),
+            model.Step(
+                "create_light",
+                {
+                    "light_type": "SphereLight",
+                    "light_name": "Key",
+                    "attributes": {"inputs:intensity": 500, "inputs:brightnes": 2},
+                },
+                note="one input that exists and one that does not",
+            ),
+            model.Step("compute_grid_layout", {"count": -3}, note="a negative count"),
+            model.Step(
+                "compute_grid_layout", {"count": 4, "spacing": -1.0}, note="a negative spacing"
+            ),
+            model.Step("compute_grid_layout", {"count": 0}, note="nothing to lay out"),
+        ),
+    ),
+    model.Scenario(
         "state/not_an_asset",
         "Tools that work on an asset, called on a scene prim that is not one.",
         (

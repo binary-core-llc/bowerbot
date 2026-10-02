@@ -562,16 +562,16 @@ validation:
 SUMMARY
   call: select_asset_variant(prim_path="/Scene/Props/Lamp_01", variant_set="lod", variant_name="low")
   current project: golden
-  said: ok: Selected 'low' for 'lod' in lamp
+  said: REFUSED: Variant set 'lod' not found on lamp
 
   what changed:
-    ~ file assets/lamp/lamp.usda
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ no prim at or under /Scene/Props/Lamp_01 has a variant set named 'lod'
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -580,32 +580,19 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_path": "<PROJECT>/assets/lamp",
-    "message": "Selected 'low' for 'lod' in lamp",
-    "variant_name": "low",
-    "variant_set": "lod"
+    "error": "Variant set 'lod' not found on lamp"
   }
 
 files:
     assets/lamp/geo.usda
-  ~ assets/lamp/lamp.usda
+    assets/lamp/lamp.usda
     assets/lamp/maps/lamp_diffuse.png
     assets/lamp/mtl.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/lamp/lamp.usda:
-      --- assets/lamp/lamp.usda (before)
-      +++ assets/lamp/lamp.usda (after)
-      @@ -16,4 +16,7 @@
-           prepend payload = @./geo.usda@
-           prepend references = @./mtl.usda@
-      +    variants = {
-      +        string lod = "low"
-      +    }
-       )
-       {
+  (none)
 
 composed scene changes:
   (none)

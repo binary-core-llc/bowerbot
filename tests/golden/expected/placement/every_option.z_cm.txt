@@ -605,14 +605,12 @@ SUMMARY
           material shown: (none)
           world position: (300.0000, 0.0000, 102.5000)
     ~ /Scene  bounds: (-22.5000, -40.0000, 0.0000)..(360.0000, 40.0000, 95.0000) → (-22.5000, -40.0000, 0.0000)..(360.0000, 40.0000, 127.5000)
-    ~ validity: valid → INVALID
-    + issue [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -793,8 +791,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset/Box  [Cube]  at (300.0000, 0.0000, 102.5000)  bounds (265.8494, -34.1506, 77.5000)..(334.1506, 34.1506, 127.5000)  material (none)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 04: add_asset_to_asset
@@ -829,13 +826,12 @@ SUMMARY
           material shown: (none)
           world position: (20.0000, 0.0000, 25.0000)
     ~ /Scene/Furniture/Table_02/asset  bounds: (240.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 127.5000) → (-5.0000, -40.0000, 0.0000)..(360.0000, 40.0000, 127.5000)
-    + issue [error] /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset: Unresolved reference: ../unfrozen/unfrozen.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1006,9 +1002,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset/Box  [Cube]  at (20.0000, 0.0000, 25.0000)  bounds (-5.0000, -25.0000, 0.0000)..(45.0000, 25.0000, 50.0000)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset: Unresolved reference: ../unfrozen/unfrozen.usda
+  valid, no issues
 
 
 === step 05: add_asset_to_asset
@@ -1040,13 +1034,12 @@ SUMMARY
           material shown: (none)
           world position: (-20.0000, 0.0000, 0.0000)
     ~ /Scene  bounds: (-22.5000, -40.0000, 0.0000)..(360.0000, 40.0000, 127.5000) → (-45.0000, -40.0000, -25.0000)..(360.0000, 40.0000, 127.5000)
-    + issue [error] /Scene/Furniture/Table_02/asset/contents/Lighting/C_05/asset: Unresolved reference: ../rooted_mesh/rooted_mesh.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1217,10 +1210,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/contents/Lighting/C_05/asset/mesh  [Cube]  at (-20.0000, 0.0000, 0.0000)  bounds (-45.0000, -25.0000, -25.0000)..(5.0000, 25.0000, 25.0000)  material (none)
 
 validation:
-  INVALID, 3 issue(s):
-  - [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset: Unresolved reference: ../unfrozen/unfrozen.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Lighting/C_05/asset: Unresolved reference: ../rooted_mesh/rooted_mesh.usda
+  valid, no issues
 
 
 === step 06: add_asset_to_asset
@@ -1252,13 +1242,12 @@ SUMMARY
           bounds: (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)
           material shown: (none)
           world position: (0.0000, 0.0000, 25.0000)
-    + issue [error] /Scene/Furniture/Table_02/asset/contents/Products/D_06/asset: Unresolved reference: ../crate/crate.usda
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step added 1 validation error(s)
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1397,11 +1386,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_02/asset/contents/Products/D_06/asset/Box  [Cube]  at (0.0000, 0.0000, 25.0000)  bounds (-25.0000, -25.0000, 0.0000)..(25.0000, 25.0000, 50.0000)  material (none)
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset: Unresolved reference: ../unfrozen/unfrozen.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Lighting/C_05/asset: Unresolved reference: ../rooted_mesh/rooted_mesh.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Products/D_06/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 07: place_layout
@@ -1783,11 +1768,7 @@ world (position, bounds min..max, material shown):
   /Scene/Props/rooted_mesh_10/asset/mesh  [Cube]  at (900.0000, 0.0000, 0.0000)  bounds (875.0000, -25.0000, -25.0000)..(925.0000, 25.0000, 25.0000)  material (none)
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset: Unresolved reference: ../unfrozen/unfrozen.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Lighting/C_05/asset: Unresolved reference: ../rooted_mesh/rooted_mesh.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Products/D_06/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues
 
 
 === step 08: list_scene
@@ -2112,8 +2093,4 @@ world (position, bounds min..max, material shown):
   /Scene/Props/rooted_mesh_10/asset/mesh  [Cube]  at (900.0000, 0.0000, 0.0000)  bounds (875.0000, -25.0000, -25.0000)..(925.0000, 25.0000, 25.0000)  material (none)
 
 validation:
-  INVALID, 4 issue(s):
-  - [error] /Scene/Furniture/Table_02/asset/contents/Architecture/A_03/asset: Unresolved reference: ../crate/crate.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Furniture/B_04/asset: Unresolved reference: ../unfrozen/unfrozen.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Lighting/C_05/asset: Unresolved reference: ../rooted_mesh/rooted_mesh.usda
-  - [error] /Scene/Furniture/Table_02/asset/contents/Products/D_06/asset: Unresolved reference: ../crate/crate.usda
+  valid, no issues

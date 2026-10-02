@@ -947,7 +947,7 @@ SUMMARY
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ reported success, but no file changed
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1019,14 +1019,13 @@ SUMMARY
     ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
     ~ /Scene/Furniture/Table_01/asset/Top  material shown: (none) → /Scene/Furniture/Table_01/asset/mtl/oak
     ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/oak
-    ~ validity: valid → INVALID
-    + issue [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+    + issue [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -1171,8 +1170,8 @@ world (position, bounds min..max, material shown):
   /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.)
 
 
 === step 09: validate_scene
@@ -1180,7 +1179,7 @@ validation:
 SUMMARY
   call: validate_scene()
   current project: golden
-  said: ok: Found 1 error(s).
+  said: ok: Scene is valid!
 
   what changed:
     nothing
@@ -1198,16 +1197,16 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "error_count": 1,
-    "is_valid": false,
+    "error_count": 0,
+    "is_valid": true,
     "issues": [
       {
-        "message": "MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.",
+        "message": "This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.)",
         "prim": null,
-        "severity": "error"
+        "severity": "warning"
       }
     ],
-    "message": "Found 1 error(s)."
+    "message": "Scene is valid!"
   }
 
 files:
@@ -1245,8 +1244,8 @@ world (position, bounds min..max, material shown):
   /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.)
 
 
 === step 10: package_scene
@@ -1325,5 +1324,5 @@ world (position, bounds min..max, material shown):
   /Scene/Lighting/Sky  [DomeLight]  at (0.0000, 0.0000, 0.0000)
 
 validation:
-  INVALID, 1 issue(s):
-  - [error] -: MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.
+  valid, 1 issue(s):
+  - [warning] -: This USD build has no MaterialX support, so it cannot check the shader of a procedural material; a renderer with MaterialX reads it. (MissingShaderIdInRegistry: shaderId 'ND_standard_surface_surfaceshader' specified on shader prim </Scene/Furniture/Table_01/asset/mtl/oak/standard_surface> not found in sdrRegistry.)

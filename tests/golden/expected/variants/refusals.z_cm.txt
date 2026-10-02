@@ -498,24 +498,16 @@ intent: a material that does not exist
 SUMMARY
   call: add_asset_material_variant(prim_path="/Scene/Furniture/Table_01", variant_set="finish", variant_name="x", bindings={"/Scene/Furniture/Table_01/asset/Top": "/Scene/Furniture/Table_01/asset/mtl/nope"})
   current project: golden
-  said: ok: Added material variant 'x' to 'finish' in table
+  said: REFUSED: No material in asset table at: /table/mtl/nope. Create it first with create_material or bind_material; list_materials shows the ones the asset has.
 
   what changed:
-    ~ file assets/table/table.usda
-    ~ file assets/table/variants.usda
-    ~ /Scene/Furniture/Table_01/asset  variant set finish: (none) → x of x
-    ~ /Scene/Furniture/Table_01/asset/Top  applied APIs: (none) → MaterialBindingAPI
-    ~ /Scene/Furniture/Table_01/asset/Top  rel material:binding: (none) → /Scene/Furniture/Table_01/asset/mtl/nope
-    ~ validity: valid → INVALID
-    + issue [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-    + issue [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+    nothing
 
   project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    ⚠ this step made the scene invalid
-    ⚠ left behind a dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+    no problems spotted by the automatic checks
 
 EVIDENCE
 
@@ -524,137 +516,18 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "asset_path": "<PROJECT>/assets/table",
-    "bindings": {
-      "/table/Top": "/table/mtl/nope"
-    },
-    "category": "material",
-    "default_selected": false,
-    "message": "Added material variant 'x' to 'finish' in table",
-    "variant_name": "x",
-    "variant_set": "finish"
+    "error": "No material in asset table at: /table/mtl/nope. Create it first with create_material or bind_material; list_materials shows the ones the asset has."
   }
 
 files:
     assets/table/geo.usda
-  ~ assets/table/table.usda
-  ~ assets/table/variants.usda
-    project.json
-    scene.usda
-
-file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -17,4 +17,5 @@
-           prepend references = @./variants.usda@
-           variants = {
-      +        string finish = "x"
-               string legs = "x"
-           }
-  ~ assets/table/variants.usda:
-      --- assets/table/variants.usda (before)
-      +++ assets/table/variants.usda (after)
-      @@ -5,5 +5,5 @@
-       
-       over "table" (
-      -    prepend variantSets = "legs"
-      +    prepend variantSets = ["legs", "finish"]
-       )
-       {
-      @@ -18,4 +18,15 @@
-               }
-           }
-      +    variantSet "finish" = {
-      +        "x" {
-      +            over "Top" (
-      +                prepend apiSchemas = ["MaterialBindingAPI"]
-      +            )
-      +            {
-      +                custom rel material:binding = </table/mtl/nope>
-      +            }
-      +
-      +        }
-      +    }
-       }
-       
-
-composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -33,6 +33,9 @@
-                   uniform token[] xformOpOrder = ["xformOp:rotateX"]
-   
-  -                def Cube "Top"
-  +                def Cube "Top" (
-  +                    apiSchemas = ["MaterialBindingAPI"]
-  +                )
-                   {
-  +                    custom rel material:binding = </Scene/Furniture/Table_01/asset/mtl/nope>
-                       double size = 1
-                       float3 xformOp:scale = (1.2, 0.05, 0.8)
-
-world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
-  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
-  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
-  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
-  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
-
-validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
-
-
-=== step 05: select_asset_variant
-intent: a set that does not exist
-
-SUMMARY
-  call: select_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="nope", variant_name="x")
-  current project: golden
-  said: ok: Selected 'x' for 'nope' in table
-
-  what changed:
-    ~ file assets/table/table.usda
-
-  project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
-
-  checks:
-    ⚠ no prim at or under /Scene/Furniture/Table_01 has a variant set named 'nope'
-
-EVIDENCE
-
-what USD printed while the tool ran:
-  (nothing)
-
-full answer:
-  {
-    "asset_path": "<PROJECT>/assets/table",
-    "message": "Selected 'x' for 'nope' in table",
-    "variant_name": "x",
-    "variant_set": "nope"
-  }
-
-files:
-    assets/table/geo.usda
-  ~ assets/table/table.usda
+    assets/table/table.usda
     assets/table/variants.usda
     project.json
     scene.usda
 
 file changes:
-  ~ assets/table/table.usda:
-      --- assets/table/table.usda (before)
-      +++ assets/table/table.usda (after)
-      @@ -19,4 +19,5 @@
-               string finish = "x"
-               string legs = "x"
-      +        string nope = "x"
-           }
-       )
+  (none)
 
 composed scene changes:
   (none)
@@ -668,9 +541,59 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+  valid, no issues
+
+
+=== step 05: select_asset_variant
+intent: a set that does not exist
+
+SUMMARY
+  call: select_asset_variant(prim_path="/Scene/Furniture/Table_01", variant_set="nope", variant_name="x")
+  current project: golden
+  said: REFUSED: Variant set 'nope' not found on table
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Variant set 'nope' not found on table"
+  }
+
+files:
+    assets/table/geo.usda
+    assets/table/table.usda
+    assets/table/variants.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-60.0000, -40.0000, 0.0000)..(60.0000, 40.0000, 77.5000)
+  /Scene/Furniture/Table_01/asset/Top  [Cube]  at (0.0000, 0.0000, 75.0000)  bounds (-60.0000, -40.0000, 72.5000)..(60.0000, 40.0000, 77.5000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_L  [Cube]  at (-55.0000, 0.0000, 37.5000)  bounds (-57.5000, -2.5000, 0.0000)..(-52.5000, 2.5000, 75.0000)  material (none)
+  /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
+
+validation:
+  valid, no issues
 
 
 === step 06: remove_asset_variant
@@ -684,7 +607,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -725,9 +648,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+  valid, no issues
 
 
 === step 07: list_variants
@@ -741,7 +662,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -778,9 +699,7 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+  valid, no issues
 
 
 === step 08: add_asset_configuration_variant
@@ -795,7 +714,7 @@ SUMMARY
     nothing
 
   project state after the step:
-    dangling target: /Scene/Furniture/Table_01/asset/Top rel material:binding -> /Scene/Furniture/Table_01/asset/mtl/nope
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
     no problems spotted by the automatic checks
@@ -832,6 +751,4 @@ world (position, bounds min..max, material shown):
   /Scene/Furniture/Table_01/asset/Leg_R  [Cube]  at (55.0000, 0.0000, 37.5000)  bounds (52.5000, -2.5000, 0.0000)..(57.5000, 2.5000, 75.0000)  material (none)
 
 validation:
-  INVALID, 2 issue(s):
-  - [error] -: InvalidResourcePath: Direct material binding </Scene/Furniture/Table_01/asset/Top.material:binding> targets an invalid material </Scene/Furniture/Table_01/asset/mtl/nope>.
-  - [error] /Scene/Furniture/Table_01/asset/Top: Unresolved material binding: /Scene/Furniture/Table_01/asset/mtl/nope
+  valid, no issues

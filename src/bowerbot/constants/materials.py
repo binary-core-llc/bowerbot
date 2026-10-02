@@ -8,6 +8,8 @@ class MaterialXShaders:
     """MaterialX shader identifiers and naming conventions."""
 
     STANDARD_SURFACE = "ND_standard_surface_surfaceshader"
+    # Every MaterialX shader identifier BowerBot authors.
+    ALL = (STANDARD_SURFACE,)
     STANDARD_SURFACE_PRIM = "standard_surface"
     OUTPUT_QUALIFIER = "mtlx"
 

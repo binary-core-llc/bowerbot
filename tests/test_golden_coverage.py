@@ -23,7 +23,6 @@ EXPECTED = Path(__file__).parent / "golden" / "expected"
 
 # Tools no input or state can make refuse today; each is a recorded finding.
 NEVER_REFUSED = {
-    "compute_grid_layout": "accepts a negative count and spacing",
     "get_current_project": "takes no input; an unknown parameter is not refused",
     "list_projects": "takes no input; an unknown parameter is not refused",
     "list_camera_properties": "takes no input; an unknown parameter is not refused",

@@ -36,12 +36,10 @@ def list_all(stage: Usd.Stage) -> list[dict[str, Any]]:
         {
             "prim_path": str(p.GetPath()),
             "name": p.GetName(),
-            "gravity_magnitude": (
-                p.GetAttribute("physics:gravityMagnitude").Get()
-            ),
-            "gravity_direction": (
-                list(p.GetAttribute("physics:gravityDirection").Get() or [])
-            ),
+            "gravity_magnitude": _rounded(p.GetAttribute("physics:gravityMagnitude").Get() or 0.0),
+            "gravity_direction": [
+                _rounded(v) for v in p.GetAttribute("physics:gravityDirection").Get() or []
+            ],
         }
         for p in Usd.PrimRange(scope)
         if usd.prim_types.is_physics_scene(p)
@@ -74,7 +72,7 @@ def resolve_gravity(
     return float(gravity_magnitude), gravity_direction
 
 
-def ensure(
+def setup(
     stage: Usd.Stage,
     name: str = "PhysicsScene",
     gravity_magnitude: float | None = None,
@@ -82,22 +80,46 @@ def ensure(
     *,
     project_mpu: float,
     project_up_axis: str,
-) -> str:
-    """Create the physics scope and a ``UsdPhysics.Scene`` child prim."""
+) -> tuple[str, float, tuple[float, float, float]]:
+    """Create or update a physics scene; return its path and the gravity it has now.
+
+    A gravity value left out keeps what the scene already has. A new scene
+    gets Earth gravity in project units, pointing down.
+    """
     scope_path = ensure_scope(stage)
     scene_path = f"{scope_path}/{name}"
-    scene_prim = UsdPhysics.Scene.Define(stage, scene_path)
+    existing = stage.GetPrimAtPath(scene_path)
+    is_new = not (existing.IsValid() and usd.prim_types.is_physics_scene(existing))
+    scene = UsdPhysics.Scene.Define(stage, scene_path)
 
-    gravity_magnitude, gravity_direction = resolve_gravity(
-        gravity_magnitude, gravity_direction,
-        project_mpu=project_mpu, project_up_axis=project_up_axis,
+    default_magnitude, default_direction = resolve_gravity(
+        None, None, project_mpu=project_mpu, project_up_axis=project_up_axis,
     )
-    scene_prim.CreateGravityDirectionAttr(Gf.Vec3f(*gravity_direction))
-    scene_prim.CreateGravityMagnitudeAttr(gravity_magnitude)
+    if gravity_magnitude is not None or is_new:
+        scene.CreateGravityMagnitudeAttr(
+            default_magnitude if gravity_magnitude is None else float(gravity_magnitude),
+        )
+    if gravity_direction is not None or is_new:
+        scene.CreateGravityDirectionAttr(Gf.Vec3f(*(gravity_direction or default_direction)))
 
     stage.Save()
-    logger.info(
-        "Set up PhysicsScene at %s (gravity magnitude %s)",
-        scene_path, gravity_magnitude,
-    )
-    return scene_path
+    held = scene.GetGravityDirectionAttr().Get()
+    magnitude = _rounded(scene.GetGravityMagnitudeAttr().Get())
+    direction = (_rounded(held[0]), _rounded(held[1]), _rounded(held[2]))
+    logger.info("Set up PhysicsScene at %s (gravity magnitude %s)", scene_path, magnitude)
+    return scene_path, magnitude, direction
+
+
+def ensure_default(stage: Usd.Stage, *, project_mpu: float, project_up_axis: str) -> None:
+    """Make sure the scene has a physics scene; one that is already there is left as it is."""
+    if list_all(stage):
+        return
+    setup(stage, project_mpu=project_mpu, project_up_axis=project_up_axis)
+
+
+# ── Helpers ──
+
+
+def _rounded(value: float) -> float:
+    """A stored single-precision value without its float noise (1.62, not 1.620000005)."""
+    return round(float(value), 6)

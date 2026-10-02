@@ -171,17 +171,13 @@ def setup_physics_scene(
         params.get("gravity_direction"), "gravity_direction",
     )
 
-    scene_path = physics.scenes.ensure(
+    scene_path, resolved_magnitude, resolved_direction = physics.scenes.setup(
         state.stage,
         name=name,
         gravity_magnitude=gravity_magnitude,
         gravity_direction=gravity_direction,
         project_mpu=state.meters_per_unit,
         project_up_axis=state.up_axis.value,
-    )
-    resolved_magnitude, resolved_direction = physics.scenes.resolve_gravity(
-        gravity_magnitude, gravity_direction,
-        project_mpu=state.meters_per_unit, project_up_axis=state.up_axis.value,
     )
     logger.info("setup_physics_scene -> %s", scene_path)
     return {

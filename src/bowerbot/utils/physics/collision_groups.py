@@ -34,7 +34,9 @@ def create_or_update(
 ) -> dict[str, Any]:
     """Create or update a ``UsdPhysicsCollisionGroup``; auto-ensures a ``UsdPhysics.Scene``."""
     usd.naming.require_prim_name(name, "Collision group name")
-    physics.scenes.ensure(stage, project_mpu=project_mpu, project_up_axis=project_up_axis)
+    physics.scenes.ensure_default(
+        stage, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
 
     prim_path = _group_prim_path(name)
     group = UsdPhysics.CollisionGroup.Define(stage, prim_path)

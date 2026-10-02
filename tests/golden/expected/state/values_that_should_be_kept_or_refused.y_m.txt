@@ -382,7 +382,6 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Physics/PhysicsScene  attr physics:gravityMagnitude: 1.62 → 9.81
     ~ /Scene/Props/Crate_01  applied APIs: (none) → PhysicsRigidBodyAPI
 
   project state after the step:
@@ -418,13 +417,6 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -15,5 +15,5 @@
-               {
-                   vector3f physics:gravityDirection = (0, -1, 0)
-      -            float physics:gravityMagnitude = 1.62
-      +            float physics:gravityMagnitude = 9.81
-               }
-           }
       @@ -21,5 +21,7 @@
            def "Props"
            {
@@ -438,13 +430,6 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -17,5 +17,5 @@
-           {
-               vector3f physics:gravityDirection = (0, -1, 0)
-  -            float physics:gravityMagnitude = 1.62
-  +            float physics:gravityMagnitude = 9.81
-           }
-       }
   @@ -23,5 +23,7 @@
        def "Props"
        {
@@ -498,7 +483,7 @@ full answer:
           -1.0,
           0.0
         ],
-        "gravity_magnitude": 9.81000042,
+        "gravity_magnitude": 1.62,
         "name": "PhysicsScene",
         "prim_path": "/Scene/Physics/PhysicsScene"
       }
@@ -575,7 +560,7 @@ file changes:
       +++ scene.usda (after)
       @@ -16,4 +16,9 @@
                    vector3f physics:gravityDirection = (0, -1, 0)
-                   float physics:gravityMagnitude = 9.81
+                   float physics:gravityMagnitude = 1.62
       +        }
       +
       +        def PhysicsCollisionGroup "Boxes"
@@ -589,7 +574,7 @@ composed scene changes:
   +++ composed scene (after)
   @@ -18,4 +18,9 @@
                vector3f physics:gravityDirection = (0, -1, 0)
-               float physics:gravityMagnitude = 9.81
+               float physics:gravityMagnitude = 1.62
   +        }
   +
   +        def PhysicsCollisionGroup "Boxes"
@@ -724,7 +709,7 @@ full answer:
           -1.0,
           0.0
         ],
-        "gravity_magnitude": 9.81000042,
+        "gravity_magnitude": 1.62,
         "name": "PhysicsScene",
         "prim_path": "/Scene/Physics/PhysicsScene"
       }
@@ -785,7 +770,7 @@ full answer:
       0.0,
       0.0
     ],
-    "gravity_magnitude": 9.81,
+    "gravity_magnitude": 1.62,
     "prim_path": "/Scene/Physics/PhysicsScene"
   }
 
@@ -804,7 +789,7 @@ file changes:
                {
       -            vector3f physics:gravityDirection = (0, -1, 0)
       +            vector3f physics:gravityDirection = (1, 0, 0)
-                   float physics:gravityMagnitude = 9.81
+                   float physics:gravityMagnitude = 1.62
                }
 
 composed scene changes:
@@ -815,7 +800,7 @@ composed scene changes:
            {
   -            vector3f physics:gravityDirection = (0, -1, 0)
   +            vector3f physics:gravityDirection = (1, 0, 0)
-               float physics:gravityMagnitude = 9.81
+               float physics:gravityMagnitude = 1.62
            }
 
 world (position, bounds min..max, material shown):
@@ -836,19 +821,10 @@ intent: one input that exists and one that does not
 SUMMARY
   call: create_light(light_type="SphereLight", light_name="Key", attributes={"inputs:intensity": 500, "inputs:brightnes": 2})
   current project: golden
-  said: ok: Created SphereLight at /Scene/Lighting/Key
+  said: REFUSED: Unknown SphereLight attribute(s) ['inputs:brightnes']. Call list_light_type_properties for the valid names.
 
   what changed:
-    ~ file scene.usda
-    + prim /Scene/Lighting [typeless]
-    + prim /Scene/Lighting/Key [SphereLight]
-          applied APIs: LightAPI, CollectionAPI:lightLink, CollectionAPI:shadowLink
-          attr inputs:intensity: 500
-          attr xformOp:translate: (0, 0, 0)
-          attr xformOpOrder: ('xformOp:translate')
-          bounds: (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
-          world position: (0.0000, 0.0000, 0.0000)
-    ~ /Scene  bounds: (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500) → (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -863,69 +839,28 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "light_type": "SphereLight",
-    "message": "Created SphereLight at /Scene/Lighting/Key",
-    "position": {
-      "x": 0.0,
-      "y": 0.0,
-      "z": 0.0
-    },
-    "prim_path": "/Scene/Lighting/Key"
+    "error": "Unknown SphereLight attribute(s) ['inputs:brightnes']. Call list_light_type_properties for the valid names."
   }
 
 files:
     assets/crate/crate.usda
     assets/crate/geo.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -48,4 +48,14 @@
-               }
-           }
-      +
-      +    def "Lighting"
-      +    {
-      +        def SphereLight "Key"
-      +        {
-      +            float inputs:intensity = 500
-      +            double3 xformOp:translate = (0, 0, 0)
-      +            uniform token[] xformOpOrder = ["xformOp:translate"]
-      +        }
-      +    }
-       }
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -62,4 +62,14 @@
-           }
-       }
-  +
-  +    def "Lighting"
-  +    {
-  +        def SphereLight "Key"
-  +        {
-  +            float inputs:intensity = 500
-  +            double3 xformOp:translate = (0, 0, 0)
-  +            uniform token[] xformOpOrder = ["xformOp:translate"]
-  +        }
-  +    }
-   }
-   
+  (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Physics  [Scope]
   /Scene/Physics/Pin  [PhysicsFixedJoint]
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
-  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues
@@ -937,7 +872,7 @@ intent: a negative count
 SUMMARY
   call: compute_grid_layout(count=-3)
   current project: golden
-  said: ok: Computed -3 positions on the x-z floor plane, 2.0 project units apart.
+  said: REFUSED: count must be 0 or more, not -3.
 
   what changed:
     nothing
@@ -955,10 +890,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "count": -3,
-    "message": "Computed -3 positions on the x-z floor plane, 2.0 project units apart.",
-    "positions": [],
-    "spacing": 2.0
+    "error": "count must be 0 or more, not -3."
   }
 
 files:
@@ -974,13 +906,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Physics  [Scope]
   /Scene/Physics/Pin  [PhysicsFixedJoint]
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
-  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues
@@ -992,7 +923,7 @@ intent: a negative spacing
 SUMMARY
   call: compute_grid_layout(count=4, spacing=-1.0)
   current project: golden
-  said: ok: Computed 4 positions on the x-z floor plane, -1.0 project units apart.
+  said: REFUSED: spacing must be greater than 0, not -1.
 
   what changed:
     nothing
@@ -1010,27 +941,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "count": 4,
-    "message": "Computed 4 positions on the x-z floor plane, -1.0 project units apart.",
-    "positions": [
-      {
-        "x": 5.5,
-        "z": 4.5
-      },
-      {
-        "x": 4.5,
-        "z": 4.5
-      },
-      {
-        "x": 5.5,
-        "z": 3.5
-      },
-      {
-        "x": 4.5,
-        "z": 3.5
-      }
-    ],
-    "spacing": -1.0
+    "error": "spacing must be greater than 0, not -1."
   }
 
 files:
@@ -1046,13 +957,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Physics  [Scope]
   /Scene/Physics/Pin  [PhysicsFixedJoint]
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
-  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues
@@ -1101,13 +1011,12 @@ composed scene changes:
   (none)
 
 world (position, bounds min..max, material shown):
-  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Physics  [Scope]
   /Scene/Physics/Pin  [PhysicsFixedJoint]
   /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
   /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
-  /Scene/Lighting/Key  [SphereLight]  at (0.0000, 0.0000, 0.0000)  bounds (-0.5000, -0.5000, -0.5000)..(0.5000, 0.5000, 0.5000)
 
 validation:
   valid, no issues

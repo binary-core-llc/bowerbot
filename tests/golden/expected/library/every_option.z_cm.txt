@@ -335,7 +335,7 @@ intent: a negative count
 SUMMARY
   call: compute_grid_layout(count=-2)
   current project: golden
-  said: ok: Computed -2 positions on the x-y floor plane, 200.0 project units apart.
+  said: REFUSED: count must be 0 or more, not -2.
 
   what changed:
     nothing
@@ -353,10 +353,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "count": -2,
-    "message": "Computed -2 positions on the x-y floor plane, 200.0 project units apart.",
-    "positions": [],
-    "spacing": 200.0
+    "error": "count must be 0 or more, not -2."
   }
 
 files:
@@ -382,7 +379,7 @@ intent: a negative spacing
 SUMMARY
   call: compute_grid_layout(count=4, spacing=-1.0)
   current project: golden
-  said: ok: Computed 4 positions on the x-y floor plane, -1.0 project units apart.
+  said: REFUSED: spacing must be greater than 0, not -1.
 
   what changed:
     nothing
@@ -400,27 +397,7 @@ what USD printed while the tool ran:
 
 full answer:
   {
-    "count": 4,
-    "message": "Computed 4 positions on the x-y floor plane, -1.0 project units apart.",
-    "positions": [
-      {
-        "x": 500.5,
-        "y": 400.5
-      },
-      {
-        "x": 499.5,
-        "y": 400.5
-      },
-      {
-        "x": 500.5,
-        "y": 399.5
-      },
-      {
-        "x": 499.5,
-        "y": 399.5
-      }
-    ],
-    "spacing": -1.0
+    "error": "spacing must be greater than 0, not -1."
   }
 
 files:

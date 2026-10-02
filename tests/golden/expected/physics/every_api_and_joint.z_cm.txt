@@ -1169,9 +1169,6 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
-          attr physics:gravityDirection: (0, 0, -1)
-          attr physics:gravityMagnitude: 981
     + prim /Scene/Physics/Slide [PhysicsPrismaticJoint]
           attr physics:axis: 'X'
           rel physics:body0: /Scene/Props/Crate_02/asset
@@ -1214,15 +1211,9 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -71,4 +71,17 @@
+      @@ -71,4 +71,11 @@
                    float physics:gravityMagnitude = 981
                }
-      +
-      +        def PhysicsScene "PhysicsScene"
-      +        {
-      +            vector3f physics:gravityDirection = (0, 0, -1)
-      +            float physics:gravityMagnitude = 981
-      +        }
       +
       +        def PhysicsPrismaticJoint "Slide"
       +        {
@@ -1236,15 +1227,9 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -118,4 +118,17 @@
+  @@ -118,4 +118,11 @@
                float physics:gravityMagnitude = 981
            }
-  +
-  +        def PhysicsScene "PhysicsScene"
-  +        {
-  +            vector3f physics:gravityDirection = (0, 0, -1)
-  +            float physics:gravityMagnitude = 981
-  +        }
   +
   +        def PhysicsPrismaticJoint "Slide"
   +        {
@@ -1321,7 +1306,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -84,4 +84,10 @@
+      @@ -78,4 +78,10 @@
                    rel physics:body1 = </Scene/Props/Crate_03/asset>
                }
       +
@@ -1336,7 +1321,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -131,4 +131,10 @@
+  @@ -125,4 +125,10 @@
                rel physics:body1 = </Scene/Props/Crate_03/asset>
            }
   +
@@ -1418,7 +1403,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -90,4 +90,11 @@
+      @@ -84,4 +84,11 @@
                    rel physics:body1 = </Scene/Props/Crate_03/asset>
                }
       +
@@ -1434,7 +1419,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -137,4 +137,11 @@
+  @@ -131,4 +131,11 @@
                rel physics:body1 = </Scene/Props/Crate_03/asset>
            }
   +
@@ -1515,7 +1500,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -97,4 +97,10 @@
+      @@ -91,4 +91,10 @@
                    float physics:maxDistance = 2
                }
       +
@@ -1530,7 +1515,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -144,4 +144,10 @@
+  @@ -138,4 +138,10 @@
                float physics:maxDistance = 2
            }
   +
@@ -1733,7 +1718,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -98,6 +98,9 @@
+      @@ -92,6 +92,9 @@
                }
        
       -        def PhysicsRevoluteJoint "Door"
@@ -1748,7 +1733,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -145,6 +145,9 @@
+  @@ -139,6 +139,9 @@
            }
    
   -        def PhysicsRevoluteJoint "Door"
@@ -1830,7 +1815,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -99,5 +99,5 @@
+      @@ -93,5 +93,5 @@
        
                def PhysicsRevoluteJoint "Door" (
       -            prepend apiSchemas = ["PhysicsDriveAPI:angular"]
@@ -1841,7 +1826,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -146,5 +146,5 @@
+  @@ -140,5 +140,5 @@
    
            def PhysicsRevoluteJoint "Door" (
   -            apiSchemas = ["PhysicsDriveAPI:angular"]
@@ -2157,7 +2142,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -99,8 +99,7 @@
+      @@ -93,8 +93,7 @@
        
                def PhysicsRevoluteJoint "Door" (
       -            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsLimitAPI:angular"]
@@ -2171,7 +2156,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -164,8 +164,7 @@
+  @@ -158,8 +158,7 @@
    
            def PhysicsRevoluteJoint "Door" (
   -            apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsLimitAPI:angular"]
@@ -2253,7 +2238,7 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -98,7 +98,5 @@
+      @@ -92,7 +92,5 @@
                }
        
       -        def PhysicsRevoluteJoint "Door" (
@@ -2266,7 +2251,7 @@ file changes:
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -163,7 +163,5 @@
+  @@ -157,7 +157,5 @@
            }
    
   -        def PhysicsRevoluteJoint "Door" (
@@ -2513,7 +2498,9 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Physics/PhysicsScene  attr physics:gravityDirection: (0, 0, -1) → (0, 0, 0)
+    + prim /Scene/Physics/PhysicsScene [PhysicsScene]
+          attr physics:gravityDirection: (0, 0, 0)
+          attr physics:gravityMagnitude: 981
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -2551,24 +2538,32 @@ file changes:
   ~ scene.usda:
       --- scene.usda (before)
       +++ scene.usda (after)
-      @@ -74,5 +74,5 @@
-               def PhysicsScene "PhysicsScene"
-               {
-      -            vector3f physics:gravityDirection = (0, 0, -1)
-      +            vector3f physics:gravityDirection = (0, 0, 0)
-                   float physics:gravityMagnitude = 981
+      @@ -97,4 +97,10 @@
+                   rel physics:body1 = </Scene/Props/Crate_03/asset>
                }
+      +
+      +        def PhysicsScene "PhysicsScene"
+      +        {
+      +            vector3f physics:gravityDirection = (0, 0, 0)
+      +            float physics:gravityMagnitude = 981
+      +        }
+           }
+       }
 
 composed scene changes:
   --- composed scene (before)
   +++ composed scene (after)
-  @@ -138,5 +138,5 @@
-           def PhysicsScene "PhysicsScene"
-           {
-  -            vector3f physics:gravityDirection = (0, 0, -1)
-  +            vector3f physics:gravityDirection = (0, 0, 0)
-               float physics:gravityMagnitude = 981
+  @@ -161,4 +161,10 @@
+               rel physics:body1 = </Scene/Props/Crate_03/asset>
            }
+  +
+  +        def PhysicsScene "PhysicsScene"
+  +        {
+  +            vector3f physics:gravityDirection = (0, 0, 0)
+  +            float physics:gravityMagnitude = 981
+  +        }
+       }
+   }
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-500.0000, -500.0000, 0.0000)..(500.0000, 500.0000, 50.0000)

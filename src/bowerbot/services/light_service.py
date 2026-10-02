@@ -33,6 +33,7 @@ def create_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
     light_type = schemas.LightType(params["light_type"])
     safe_name = usd.naming.clean_prim_name(params["light_name"], "light name")
     attributes = dict(params.get("attributes") or {})
+    lights.schema.refuse_unknown_attributes(light_type, attributes)
     light_link_includes = params.get("light_link_includes") or []
     rotate = (
         float(params.get("rotate_x", 0.0)),

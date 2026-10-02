@@ -61,7 +61,9 @@ def create_in_scene(
     _validate_joint_bodies(stage, body0, body1)
     _refuse_unknown_joint_properties(joint_type, attributes)
 
-    physics.scenes.ensure(stage, project_mpu=project_mpu, project_up_axis=project_up_axis)
+    physics.scenes.ensure_default(
+        stage, project_mpu=project_mpu, project_up_axis=project_up_axis,
+    )
     prim_path = f"{constants.SceneNamespace.PHYSICS}/{name}"
     joint = constants.PhysicsUsd.JOINTS[joint_type].Define(stage, prim_path)
 

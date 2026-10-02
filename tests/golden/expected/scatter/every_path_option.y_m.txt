@@ -3159,7 +3159,7 @@ SUMMARY
 
   what changed:
     ~ file scene.usda
-    ~ /Scene/Scatter/Halo/crate_07  attr xformOp:rotateXYZ: (0, 180, 0) → (180, 0, 180)
+    ~ /Scene/Scatter/Halo/crate_07  attr xformOp:rotateXYZ: (0, 180, 0) → (0, -180, 0)
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
@@ -3263,7 +3263,7 @@ file changes:
                    def Xform "crate_07"
                    {
       -                float3 xformOp:rotateXYZ = (0, 180, 0)
-      +                float3 xformOp:rotateXYZ = (180, 0, 180)
+      +                float3 xformOp:rotateXYZ = (0, -180, 0)
                        float3 xformOp:scale = (1, 1, 1)
                        double3 xformOp:translate = (0, 0, -4)
 
@@ -3274,7 +3274,7 @@ composed scene changes:
                def Xform "crate_07"
                {
   -                float3 xformOp:rotateXYZ = (0, 180, 0)
-  +                float3 xformOp:rotateXYZ = (180, 0, 180)
+  +                float3 xformOp:rotateXYZ = (0, -180, 0)
                    float3 xformOp:scale = (1, 1, 1)
                    double3 xformOp:translate = (0, 0, -4)
 
@@ -3369,14 +3369,13 @@ SUMMARY
   said: ok: Dropped 4 placement(s) onto the surface below.
 
   what changed:
-    ~ file scene.usda
-    ~ /Scene/Scatter/Halo/crate_07  attr xformOp:translate: (0, 0, -4) → (0, 0, -4)
+    nothing
 
   project state after the step:
     clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
 
   checks:
-    no problems spotted by the automatic checks
+    ⚠ reported success, but no file changed
 
 EVIDENCE
 
@@ -3464,30 +3463,13 @@ files:
     assets/unfrozen/geo.usda
     assets/unfrozen/unfrozen.usda
     project.json
-  ~ scene.usda
+    scene.usda
 
 file changes:
-  ~ scene.usda:
-      --- scene.usda (before)
-      +++ scene.usda (after)
-      @@ -122,5 +122,5 @@
-                       float3 xformOp:rotateXYZ = (180, 0, 180)
-                       float3 xformOp:scale = (1, 1, 1)
-      -                double3 xformOp:translate = (0, 0, -4)
-      +                double3 xformOp:translate = (0, 0, -4)
-                       uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-       
+  (none)
 
 composed scene changes:
-  --- composed scene (before)
-  +++ composed scene (after)
-  @@ -196,5 +196,5 @@
-                   float3 xformOp:rotateXYZ = (180, 0, 180)
-                   float3 xformOp:scale = (1, 1, 1)
-  -                double3 xformOp:translate = (0, 0, -4)
-  +                double3 xformOp:translate = (0, 0, -4)
-                   uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
-   
+  (none)
 
 world (position, bounds min..max, material shown):
   /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-5.0000, -0.0250, -5.0000)..(5.0000, 0.5301, 5.0000)

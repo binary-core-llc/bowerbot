@@ -22,10 +22,7 @@ def look_at_rotation(eye: schemas.Vec3, target: schemas.Vec3, up_axis: str) -> s
     if abs(Gf.Dot(forward, up)) > constants.CameraTuning.UP_ALIGNED_DOT:
         up = _axis_vector("Y" if up_axis == "Z" else "Z")
     view = Gf.Matrix4d().SetLookAt(eye_v, target_v, up)
-    rz, ry, rx = view.GetInverse().ExtractRotation().Decompose(
-        Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis(),
-    )
-    return (rx, ry, rz)
+    return usd.transforms.rotation_to_rotate_xyz(view.GetInverse().ExtractRotation())
 
 
 def _axis_vector(up_axis: str) -> Gf.Vec3d:

@@ -65,6 +65,17 @@ def world_translation(prim: Usd.Prim) -> schemas.Vec3:
     t = world_matrix(prim).ExtractTranslation()
     return (t[0], t[1], t[2])
 
+
+def is_identity(matrix: Gf.Matrix4d, epsilon: float = 1e-5) -> bool:
+    """Return True if *matrix* is the identity matrix within *epsilon*."""
+    for i in range(4):
+        for j in range(4):
+            expected = 1.0 if i == j else 0.0
+            if abs(matrix[i, j] - expected) > epsilon:
+                return False
+    return True
+
+
 # ── Writing transforms ──
 
 
@@ -158,7 +169,7 @@ def bake_root_transforms(geometry_file: Path) -> bool:
         return False
 
     matrix = xformable.GetLocalTransformation()
-    if _matrix_is_identity(matrix):
+    if is_identity(matrix):
         return False
 
     normal_matrix = matrix.GetInverse().GetTranspose()
@@ -189,7 +200,7 @@ def root_transform_is_identity(geometry_file: Path) -> bool:
     xformable = UsdGeom.Xformable(prim)
     if not xformable:
         return True
-    return _matrix_is_identity(xformable.GetLocalTransformation())
+    return is_identity(xformable.GetLocalTransformation())
 
 # ── Rotation math ──
 
@@ -262,12 +273,16 @@ def quat_heading(q: schemas.FloatArray, up: int) -> schemas.FloatArray:
 
 def quat_to_rotate_xyz(q: schemas.FloatArray) -> list[tuple[float, float, float]]:
     """Convert ``(w, x, y, z)`` quaternions to xformOp:rotateXYZ degrees."""
-    out: list[tuple[float, float, float]] = []
-    for w, x, y, z in q.tolist():
-        rotation = Gf.Rotation(Gf.Quatd(w, Gf.Vec3d(x, y, z)))
-        rz, ry, rx = rotation.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
-        out.append(_smallest_rotate_xyz(rx, ry, rz))
-    return out
+    return [
+        rotation_to_rotate_xyz(Gf.Rotation(Gf.Quatd(w, Gf.Vec3d(x, y, z))))
+        for w, x, y, z in q.tolist()
+    ]
+
+
+def rotation_to_rotate_xyz(rotation: Gf.Rotation) -> schemas.Vec3:
+    """The xformOp:rotateXYZ degrees equal to *rotation*: the smaller of the two triples."""
+    rz, ry, rx = rotation.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
+    return _smallest_rotate_xyz(rx, ry, rz)
 
 
 def rotate_xyz_rotation(value: Any) -> Gf.Rotation:
@@ -296,16 +311,6 @@ def matrix_rotation_quat(matrix: Gf.Matrix4d) -> schemas.FloatArray:
     return np.array([rotation.GetReal(), *rotation.GetImaginary()])
 
 # ── Helpers ──
-
-
-def _matrix_is_identity(matrix: Gf.Matrix4d, epsilon: float = 1e-5) -> bool:
-    """Return True if *matrix* is the identity matrix within *epsilon*."""
-    for i in range(4):
-        for j in range(4):
-            expected = 1.0 if i == j else 0.0
-            if abs(matrix[i, j] - expected) > epsilon:
-                return False
-    return True
 
 
 def _bake_into_point_based(

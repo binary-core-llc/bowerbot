@@ -9,7 +9,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pxr import Gf
 from pxr import Sdf
 from pxr import Usd
 from pxr import UsdGeom
@@ -210,7 +209,7 @@ def _apply_inverse_transform(
         return
 
     local_xform = UsdGeom.Xformable(root).GetLocalTransformation()
-    if local_xform == Gf.Matrix4d(1.0):
+    if usd.transforms.is_identity(local_xform):
         return
 
     inverse = local_xform.GetInverse()

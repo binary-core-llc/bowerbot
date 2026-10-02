@@ -218,9 +218,7 @@ def drop_placement(
             raise ValueError(msg)
         old_rot = usd.transforms.rotate_xyz_rotation(rotate_op.Get())
         tilt_rot = Gf.Rotation(Gf.Quatd(tilt[0], Gf.Vec3d(*tilt[1:].tolist())))
-        new_rot = old_rot * tilt_rot
-        rz, ry, rx = new_rot.Decompose(Gf.Vec3d.ZAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.XAxis())
-        rotate_value = Gf.Vec3f(rx, ry, rz)
+        rotate_value = usd.transforms.rotation_to_rotate_xyz(old_rot * tilt_rot)
 
         pivot = np.asarray(usd.transforms.world_translation(prim), dtype=np.float64)
         base = usd.bounds.base_center(bmin, bmax, up)
@@ -236,9 +234,9 @@ def drop_placement(
 
     shift_local = np.asarray(to_parent.TransformDir(Gf.Vec3d(*world_shift.tolist())))
     new_local = old_local + shift_local
-    translate_op.Set(Gf.Vec3d(*new_local.tolist()))
-    if rotate_value is not None:
-        ops[UsdGeom.XformOp.TypeRotateXYZ].Set(rotate_value)
+    usd.transforms.set_xform(
+        prim, translate=(new_local[0], new_local[1], new_local[2]), rotate=rotate_value,
+    )
     return {
         "prim_path": prim_path,
         "supported": True,

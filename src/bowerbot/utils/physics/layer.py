@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Iterator
+from collections.abc import Generator
 from pathlib import Path
 
 from pxr import Usd
@@ -22,7 +22,9 @@ def file_path(asset_dir: Path) -> Path:
 
 
 @contextlib.contextmanager
-def edit(asset_dir: Path, scene_stage: Usd.Stage, doing: str) -> Iterator[Usd.Stage]:
+def edit(
+    asset_dir: Path, scene_stage: Usd.Stage, doing: str,
+) -> Generator[Usd.Stage, None, None]:
     """Open ``phy.usda`` for one edit: saved on the way out, or dropped if it is refused.
 
     The file and the asset root's reference to it are made first, while the

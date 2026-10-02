@@ -20,11 +20,7 @@ def enforce(
     clear: bool,
     confirm: bool,
 ) -> bool:
-    """Clear or refuse the scene opinions found to mask a variant; True if the stage needs a reload.
-
-    *masking* comes from ``authoring.opinions``: the finder for an asset's
-    placements, or the one for scene prims.
-    """
+    """Clear or refuse the scene opinions that mask a variant; True if a reload is needed."""
     if not masking:
         return False
     if clear:

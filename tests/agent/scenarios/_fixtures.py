@@ -48,11 +48,7 @@ def setup_scene_with_ground_and_box(project_dir: Path) -> None:
 
 
 def setup_scene_with_three_rigid_bodies(project_dir: Path) -> None:
-    """Author three Xforms with PhysicsRigidBodyAPI for iteration scenarios.
-
-    Each body has a Mesh child (not a Cube) so MeshCollisionAPI with
-    convex approximations is applicable on the geometry.
-    """
+    """Author three Xforms with PhysicsRigidBodyAPI, each with a Mesh child."""
     scene_path = _stage_path(project_dir)
     stage = Usd.Stage.Open(str(scene_path))
     for i, x in enumerate((-2.0, 0.0, 2.0)):

@@ -46,12 +46,7 @@ def add(
 def clean_after_removal(
     stage: Usd.Stage, asset_dir: Path, set_name: str, variant_name: str | None = None,
 ) -> None:
-    """Tidy up once a variant (*variant_name*) or a whole set (None) is gone from an asset.
-
-    Drops the default selection and the scene selections that pointed at what
-    was removed, puts the plain geo payload back when no set swaps it any
-    more, and deletes ``variants.usda`` when it is empty.
-    """
+    """Tidy an asset after a variant (*variant_name*) or a whole set (None) was removed."""
     remaining = None
     if variant_name is not None:
         summary = authoring.asset_variants.get_variant_summary(asset_dir)

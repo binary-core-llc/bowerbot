@@ -1,11 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Shared helpers for tests.
-
-Keeps test files terse by wrapping the ``SceneState`` + dispatcher
-wiring behind a couple of factory functions.
-"""
+"""Shared helpers for tests: a project-bound ``SceneState`` and a dispatcher call."""
 
 from __future__ import annotations
 

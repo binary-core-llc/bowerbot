@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Conceptual-question tier: agent is asked to explain, not act.
-
-State assertions are minimal — the value is in the artifact transcript.
-The only objective check is that the agent did not author anything (the
-user asked a question; mutating the stage would be wrong).
-"""
+"""Conceptual-question tier: the agent is asked to explain, and must not author anything."""
 
 from __future__ import annotations
 

@@ -3,38 +3,9 @@
 
 """Run a golden scenario through the dispatcher and write a readable snapshot per step.
 
-Each snapshot starts with a plain-language summary, then the evidence:
-
-SUMMARY
-- the call, and BowerBot's answer in one line;
-- what changed: files added, changed or removed; prims that appeared or went;
-  every composed value that changed (``old → new``): type, specifier,
-  activation, kind, instancing, applied APIs, variant selections, attribute
-  values and connections, relationship targets, world position, bounds, the
-  material a part shows; stage metadata; validity and its issues;
-- what USD printed while the tool ran;
-- the project's state: files nothing uses, dangling targets, absolute paths;
-- checks: ``⚠`` flags for anything that looks wrong (see ``checks.py``).
-
-EVIDENCE
-- the full answer; the file tree (``+`` new, ``~`` changed, ``-`` removed);
-  each file's change as a diff (a new file in full); the composed scene's
-  change as a diff of the flattened stage; every prim's world placement;
-  the validator's findings.
-
-The project is read from a fresh copy on disk after every step, so an edit
-that was never saved cannot hide. A snapshot is the same on every machine and
-every run:
-
-- temp paths and timestamps are replaced by placeholders;
-- numbers are shown to 9 decimals, and float noise below that as 0, because
-  the last digits of a computed value can differ between CPUs;
-- the size of a listed file that stores absolute paths is replaced by a note,
-  because it depends on the length of the test's temp path;
-- folders are listed in sorted order while recording, because the disk's own
-  order differs between machines. ``test_golden_output`` also records every
-  scenario with folders listed in reverse, which shows whether BowerBot's
-  output depends on that order.
+A snapshot is a summary (call, answer, what changed, project state, ``⚠`` checks) and the
+evidence behind it. Paths, timestamps and float noise are normalized, so it is the same
+on every machine.
 """
 
 from __future__ import annotations
@@ -193,12 +164,7 @@ def record(
     *,
     reverse_listings: bool = False,
 ) -> list[StepRecord]:
-    """Run *scenario* in *convention* under *workdir*; return one snapshot per step.
-
-    Unless the scenario starts with no project, step 0 is ``create_project``,
-    so the project's creation is recorded too. Folders are listed in sorted
-    order, or in reverse with *reverse_listings*.
-    """
+    """Run *scenario* in *convention* under *workdir*; return one snapshot per step."""
     with listing_order(reverse=reverse_listings):
         return _record(scenario, convention, workdir)
 
@@ -254,13 +220,7 @@ def _record(
 def _run(
     state: scene_state.SceneState, tool: str, params: dict[str, Any],
 ) -> tuple[skills.ToolResult, list[str]]:
-    """Call *tool* through the dispatcher; return its result and what USD printed meanwhile.
-
-    An exception that escapes the dispatcher is recorded as a crash, not raised.
-
-    USD writes its warnings to the process's stderr from C++, so the file
-    descriptor itself is redirected for the duration of the call.
-    """
+    """Call *tool* through the dispatcher; return its result and what USD printed meanwhile."""
     sys.stderr.flush()
     saved_fd = os.dup(2)
     with tempfile.TemporaryFile(mode="w+b") as sink:
@@ -284,11 +244,7 @@ def _run(
 def _resolve(
     value: Any, saved: dict[str, str], convention: model.Convention, *, top: bool = True,
 ) -> Any:
-    """Turn a step's params into what is sent: names filled in, points and lengths converted.
-
-    Only a top-level ``translate`` point becomes ``translate_x/y/z``; a nested
-    one (a layout transform's) stays a point, sent as ``[x, y, z]``.
-    """
+    """Turn a step's params into what is sent: names filled in, points and lengths converted."""
     if isinstance(value, dict):
         out: dict[str, Any] = {}
         for key, item in value.items():
@@ -646,10 +602,8 @@ def _render(
     if library_changed:
         flags.insert(0, "⚠ CRITICAL: the asset library changed on disk")
     flags += _answer_flags(data, capture.facts)
-    # Files the scene stops using are not flagged: the project keeps its asset
-    # copies and textures until delete_project_asset or delete_project_texture.
-    # An unbound material is flagged only after a removal: binding another one
-    # keeps the replaced material for variants, and an asset may ship a spare.
+    # Unused files are not flagged: the project keeps them until a delete tool is called.
+    # An unbound material is flagged only after a removal: a replaced one is kept for variants.
     leftovers = [
         ("a dangling target", previous.dangling, capture.dangling),
         ("an absolute path", previous.absolute_paths, capture.absolute_paths),

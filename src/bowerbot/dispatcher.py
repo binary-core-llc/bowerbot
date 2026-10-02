@@ -1,14 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tool dispatcher — aggregates tool definitions and routes calls.
-
-Every module under :mod:`bowerbot.tools` exposes a ``TOOLS`` list
-(:class:`~bowerbot.skills.base.Tool`) and a ``HANDLERS`` mapping
-``name -> callable(state, params) -> ToolResult``. The dispatcher
-collects them into a single registry so the agent can present one
-tool list to the LLM and route calls to the matching handler.
-"""
+"""Tool dispatcher: collects every tool module's definitions and routes calls to handlers."""
 
 from __future__ import annotations
 
@@ -140,12 +133,7 @@ async def execute(
 def _report_new_physics_errors(
     state: scene_state.SceneState, result: skills.ToolResult, before: set[str],
 ) -> None:
-    """Say so in the answer when a call left the scene a physics error it did not have.
-
-    The physics tools refuse such a change before saving it. This catches every
-    other way to get there (a variant, an asset that ships its own physics), so
-    no tool leaves a physics error without telling.
-    """
+    """Report in the answer any physics error a call left the scene that it did not have."""
     added = sorted((state.physics_errors() or set()) - before)
     if not added or not isinstance(result.data, dict):
         return

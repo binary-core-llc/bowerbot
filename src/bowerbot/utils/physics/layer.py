@@ -25,13 +25,7 @@ def file_path(asset_dir: Path) -> Path:
 def edit(
     asset_dir: Path, scene_stage: Usd.Stage, doing: str,
 ) -> Generator[Usd.Stage, None, None]:
-    """Open ``phy.usda`` for one edit: saved on the way out, or dropped if it is refused.
-
-    The file and the asset root's reference to it are made first, while the
-    file has no edit, so *scene_stage* shows the edit before it is saved. The
-    edit is refused when it fails, or when it gives the scene a physics error
-    it did not have; then nothing is left behind, not even an empty file.
-    """
+    """Open ``phy.usda`` for one edit: saved on exit, dropped whole if it fails or is refused."""
     known = physics.rules.errors(scene_stage)
     authoring.asset_folder.ensure_over_layer(asset_dir, constants.ASWFLayerNames.PHY)
     authoring.asset_folder.ensure_root_reference(asset_dir, constants.ASWFLayerNames.PHY)

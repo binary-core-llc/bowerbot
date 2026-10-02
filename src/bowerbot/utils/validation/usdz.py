@@ -51,13 +51,7 @@ def package(stage_path: str | Path, output_path: str | Path) -> Path:
 def validate_for_ar_quick_look(
     stage_path: str | Path,
 ) -> schemas.ValidationResult:
-    """Check the stage against Apple consumer USDZ constraints.
-
-    Targets the strict subset that renders on every Apple platform —
-    AR Quick Look on iOS (Files / Safari / iMessage), macOS Quick Look,
-    iPadOS, and visionOS RealityKit. visionOS and iOS 18+ are permissive
-    supersets but the strict rules below render everywhere.
-    """
+    """Check the stage against the strict Apple USDZ subset."""
     stage = Usd.Stage.Open(str(stage_path))
     if stage is None:
         return schemas.ValidationResult(

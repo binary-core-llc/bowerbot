@@ -52,13 +52,7 @@ class SkillRegistry:
                 )
 
     def _load_one_entry_point(self, ep: Any, settings: config.Settings) -> None:
-        """Instantiate and register a single discovered skill.
-
-        Skips with a clear log message on any of three failure modes:
-        the skill is disabled in config, the entry-point name does not
-        match the skill class's ``name`` attribute, or the skill is
-        misconfigured (``SkillConfigError``).
-        """
+        """Register one discovered skill; a disabled, misnamed or misconfigured one is skipped."""
         ep_name = ep.name
         skill_config = settings.skills.get(ep_name)
         if skill_config and not skill_config.enabled:

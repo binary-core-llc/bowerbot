@@ -1,14 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""The shapes a library asset may have, and what stops one from being used.
-
-BowerBot takes an asset from the library in one of three shapes: a geometry
-file (nothing but geometry in it), an asset folder (a root file named like the
-folder, ``geo.usda``, and the side layers BowerBot knows), or a ``.usdz``
-package, placed as it is. Anything else is refused before it is copied, so a
-project only ever holds the one layout the tools work on.
-"""
+"""The shapes a library asset may have, and what stops one from being used."""
 
 from __future__ import annotations
 
@@ -29,11 +22,7 @@ from bowerbot.utils import usd
 
 
 def asset_folder_for(file_path: Path, library_dir: Path) -> Path | None:
-    """The library's asset folder *file_path* belongs to, or None for a single file.
-
-    An asset folder sits directly in the library and holds a root file named
-    like itself. Files in any other folder are single files.
-    """
+    """The library's asset folder *file_path* belongs to, or None for a single file."""
     try:
         relative = file_path.resolve().relative_to(library_dir.resolve())
     except ValueError:

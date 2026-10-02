@@ -5,13 +5,7 @@
 
 
 class ASWFLayerNames:
-    """ASWF USD Working Group standard layer file names.
-
-    Centralized so no hardcoded strings are scattered across the
-    codebase.
-
-    Reference: https://github.com/usd-wg/assets/blob/main/docs/asset-structure-guidelines.md
-    """
+    """ASWF USD Working Group standard layer file names."""
 
     GEO = "geo.usda"
     MTL = "mtl.usda"

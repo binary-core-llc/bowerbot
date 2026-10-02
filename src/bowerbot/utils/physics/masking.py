@@ -25,11 +25,9 @@ def enforce(
     clear: bool,
     confirm: bool,
 ) -> list[tuple[str, str, str]]:
-    """Detect / clear / refuse scene.usda opinions that would mask a phy.usda write.
+    """Clear, accept or refuse scene opinions that would mask a phy.usda write.
 
-    Returns the list of opinions that were cleared (empty when none or when
-    *confirm* was used). Raises ``ValueError`` with a per-opinion breakdown
-    when masking exists and neither *clear* nor *confirm* is set.
+    Returns the opinions that were cleared.
     """
     masking = authoring.opinions.find_physics_masking_opinions(
         stage, asset_dir, asset_local_path,

@@ -89,13 +89,9 @@ def require_target(asset_dir: Path, prim_path: str) -> None:
 
 
 def unbind(asset_dir: Path, prim_path: str) -> bool:
-    """Take a prim's material binding out of the asset, then drop the materials nothing uses.
+    """Remove a prim's look binding from the asset's files, then the materials left unused.
 
-    Returns False when the prim had no binding of its own to take out.
-
-    The binding is removed from every file of the asset folder that authors
-    it: ``mtl.usda``, or a file the asset shipped with (the project's copy,
-    never the library's). Nothing empty is left behind.
+    Returns False when the prim had no binding of its own.
     """
     root_file = authoring.asset_folder.find_root_file(asset_dir)
     stage = Usd.Stage.Open(str(root_file)) if root_file is not None else None

@@ -14,22 +14,14 @@ def is_valid_prim_name(name: str) -> bool:
 
 
 def safe_prim_name(name: str) -> str:
-    """Sanitize a string for use as a USD prim name.
-
-    USD prim names only allow alphanumeric characters and
-    underscores — no hyphens, spaces, or special characters.
-    """
+    """Sanitize a string into a USD prim name: letters, digits and underscores only."""
     return "".join(
         c for c in name if c.isalnum() or c == "_"
     ).strip()
 
 
 def clean_prim_name(raw: str, what: str = "name") -> str:
-    """The prim name *raw* becomes once the characters USD refuses are dropped.
-
-    Refused when what is left is not a prim name (empty, or starting with a
-    digit). *what* names the thing in the refusal (``"asset name"``).
-    """
+    """*raw* without the characters USD refuses; refused when no prim name is left."""
     cleaned = safe_prim_name(raw)
     if not is_valid_prim_name(cleaned):
         raise ValueError(

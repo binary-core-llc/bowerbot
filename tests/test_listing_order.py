@@ -1,12 +1,7 @@
 # Copyright 2026 Binary Core LLC
 # SPDX-License-Identifier: Apache-2.0
 
-"""Answers built from folder listings don't depend on the disk's listing order.
-
-The operating system lists a folder's files in no fixed order, and the order
-differs between machines. Each test makes the same call twice, once with the
-disk's order and once with it reversed, and expects the same answer.
-"""
+"""Answers built from folder listings do not depend on the disk's listing order."""
 
 import asyncio
 import os

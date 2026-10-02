@@ -13,6 +13,7 @@ API_NAMES = (
     "PhysicsCollisionAPI",
     "PhysicsMeshCollisionAPI",
     "PhysicsArticulationRootAPI",
+    "PhysicsFilteredPairsAPI",
     "PhysicsDriveAPI",
     "PhysicsLimitAPI",
 )
@@ -281,6 +282,13 @@ SCENARIOS = (
                 note="a body that does not exist",
             ),
             model.Step("remove_joint", {"scope": "scene", "prim_path": "/Scene/Physics/Nope"}),
+            _api(
+                "$crate/asset",
+                "PhysicsCollisionAPI",
+                scope="scene",
+                relationships={"physics:simulationOwner": ["/Scene/Physics/Nope"]},
+                note="a relationship to a prim that does not exist",
+            ),
             _place("ground.usda", "Ground", 6.0, save="ground"),
             _api(
                 "$ground/asset/Plane",
@@ -374,6 +382,60 @@ SCENARIOS = (
                        note="a mesh of the asset, not a collider shape"),
             model.Step("get_physics_summary", {"prim_path": "$wagon"}),
             model.Step("validate_scene"),
+        ),
+    ),
+    model.Scenario(
+        "physics/filtered_pairs",
+        "Bodies that must not collide with each other, in an asset and across the scene.",
+        (
+            _place("wagon.usda", "Wagon", save="wagon"),
+            _api("$wagon/asset/Bed", "PhysicsRigidBodyAPI"),
+            _api("$wagon/asset/Wheel_L", "PhysicsRigidBodyAPI"),
+            _api("$wagon/asset/Wheel_R", "PhysicsRigidBodyAPI"),
+            _api(
+                "$wagon/asset/Bed",
+                "PhysicsFilteredPairsAPI",
+                relationships={
+                    "physics:filteredPairs": ["$wagon/asset/Wheel_L", "$wagon/asset/Wheel_R"],
+                },
+                note="the bed never collides with its two wheels: written in the asset",
+            ),
+            model.Step("get_physics_summary", {"prim_path": "$wagon"}),
+            _place("crate.usda", "Crate", 4.0, save="crate"),
+            _api("$crate/asset", "PhysicsRigidBodyAPI", scope="scene"),
+            _api(
+                "$crate/asset",
+                "PhysicsFilteredPairsAPI",
+                scope="scene",
+                relationships={"physics:filteredPairs": ["$wagon/asset/Bed"]},
+                note="the crate never collides with the wagon's bed: written in the scene",
+            ),
+            _api(
+                "$wagon/asset/Wheel_L",
+                "PhysicsFilteredPairsAPI",
+                scope="asset",
+                relationships={"physics:filteredPairs": ["$crate/asset"]},
+                note="from the asset, a prim outside the asset cannot be reached",
+            ),
+            _api(
+                "$wagon/asset/Wheel_L",
+                "PhysicsFilteredPairsAPI",
+                relationships={"physics:filteredPairs": ["$wagon/asset/Nope"]},
+                note="a prim that does not exist",
+            ),
+            model.Step("validate_scene"),
+            model.Step(
+                "remove_physics_api",
+                {"prim_path": "$wagon/asset/Bed", "api_name": "PhysicsFilteredPairsAPI"},
+                note="remove the filter in the asset",
+            ),
+            model.Step(
+                "remove_physics_api",
+                {"prim_path": "$crate/asset", "api_name": "PhysicsFilteredPairsAPI",
+                 "scope": "scene"},
+                note="remove the filter in the scene",
+            ),
+            model.Step("get_physics_summary", {"prim_path": "$wagon"}),
         ),
     ),
     model.Scenario(

@@ -7,7 +7,9 @@ and solver-specific extensions.
 
 ## Supported applied-API schemas
 
-Four UsdPhysics applied APIs are in scope:
+These UsdPhysics applied APIs are in scope (plus `PhysicsArticulationRootAPI`,
+`PhysicsFilteredPairsAPI`, `PhysicsDriveAPI` and `PhysicsLimitAPI`, described
+further down):
 
 - `PhysicsRigidBodyAPI` — declares a prim subtree as a rigid body.
 - `PhysicsMassAPI` — mass, density, center-of-mass overrides.
@@ -348,6 +350,46 @@ that does not exist in that scope is refused.
 Take the binding off the prim, wherever it was written. The material
 is deleted too once nothing else binds it. A prim with no binding of
 its own answers `removed: false`.
+
+## Bodies that must not collide with each other (filtered pairs)
+
+A joint only switches off collision between the two bodies it
+connects. Bodies of one rig that are NOT joined directly can still
+collide: a tractor's body and its front wheels (joined through the
+axle and the steering parts), a robot's base and its third link. If
+their colliders touch or overlap at rest, the solver pushes them apart
+on every step and the rig shakes or jumps.
+
+Switch such a pair off with `PhysicsFilteredPairsAPI`:
+
+```
+apply_physics_api(prim_path=<one body>, api_name="PhysicsFilteredPairsAPI",
+    relationships={"physics:filteredPairs": [<other body>, <other body>]})
+```
+
+- Name the bodies (the prims with `PhysicsRigidBodyAPI`), or single
+  colliders for a finer rule. One side is enough: the pair is filtered
+  both ways.
+- With `scope="asset"` (the default for a part of a placed asset) the
+  rule is written in the asset's `phy.usda` and travels with the asset:
+  use it for the parts of one rig. Every target must be a prim of the
+  same asset.
+- With `scope="scene"` it is written in `scene.usda`: use it between
+  two different placements.
+- The call sets the whole list. To add a body later, pass the full
+  list again (`get_physics_summary` shows the current one).
+- `remove_physics_api` with `PhysicsFilteredPairsAPI` removes the rule.
+
+Filtered pairs are for a few named pairs. For a rule about whole sets
+of things in a scene, use collision groups (next section).
+
+## Relationship targets
+
+A relationship target is a scene prim path. It must exist. At
+`scope="asset"` it must also be a prim of the same asset: an asset's
+file cannot reach a prim outside it, so `physics:simulationOwner`
+(which points at the scene's physics scene) is always set with
+`scope="scene"`.
 
 ## Collision groups
 

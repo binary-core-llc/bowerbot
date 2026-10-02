@@ -35,6 +35,38 @@ def resolve(stage: Usd.Stage, prim_path: str, explicit: str | None) -> str:
     return validate(explicit) if explicit else autodetect(stage, prim_path)
 
 
+def asset_relationship_targets(
+    stage: Usd.Stage, asset_dir: Path, relationships: dict[str, list[str]],
+) -> dict[str, list[str]]:
+    """*relationships* with every target as a path inside the asset.
+
+    A relationship written in an asset's file can only reach prims of that
+    asset: a target outside it would be written and then point at nothing.
+    Such a target is refused.
+    """
+    default_prim = authoring.asset_folder.resolve_default_prim_name(asset_dir)
+    inside: dict[str, list[str]] = {}
+    for name, targets in relationships.items():
+        inside[name] = []
+        for target in targets:
+            if target == f"/{default_prim}" or target.startswith(f"/{default_prim}/"):
+                inside[name].append(target)
+                continue
+            target_dir, ref_prim_path = authoring.placement.resolve_asset_dir_for_prim(
+                stage, target,
+            )
+            if target_dir != asset_dir or ref_prim_path is None:
+                raise ValueError(
+                    f"{name} -> {target}: with scope='asset' a relationship can only point "
+                    f"to a prim of the same asset ({asset_dir.name}); the asset's files "
+                    "cannot reach a prim outside it. Use scope='scene' for this.",
+                )
+            inside[name].append(
+                authoring.placement.normalize_asset_prim_path(target, ref_prim_path, default_prim),
+            )
+    return inside
+
+
 def require_asset_target(
     stage: Usd.Stage, prim_path: str, *, scene_retry: str,
 ) -> tuple[Path, str]:

@@ -143,6 +143,7 @@ def apply_in_asset(
         target_path = str(target.GetPath())
         if api_name == schemas.PhysicsApiName.ARTICULATION_ROOT:
             refuse_nested_articulation_root(composed, target_path)
+    _refuse_missing_targets(composed, relationships, f"asset {asset_dir.name}")
     del composed
 
     doing = f"Applying {api_name.value} to {target_path} in asset {asset_dir.name}"
@@ -234,6 +235,7 @@ def apply_in_scene(
     prim = stage.GetPrimAtPath(prim_path)
     if not prim or not prim.IsValid():
         raise ValueError(f"Prim not found in scene: {prim_path}")
+    _refuse_missing_targets(stage, relationships, "the scene")
     known = physics.rules.errors(stage)
     physics.scenes.ensure_default(
         stage, project_mpu=project_mpu, project_up_axis=project_up_axis,
@@ -404,6 +406,18 @@ def _refuse_unknown(
         api_name.value, provided,
         {p.name for p in schema_info.properties if p.kind == kind}, kind,
     )
+
+
+def _refuse_missing_targets(
+    stage: Usd.Stage, relationships: dict[str, list[str]], where: str,
+) -> None:
+    """Refuse a relationship target that names no prim: it would point at nothing."""
+    missing = sorted(
+        f"{name} -> {target}" for name, targets in relationships.items()
+        for target in targets if not stage.GetPrimAtPath(target).IsValid()
+    )
+    if missing:
+        raise ValueError(f"Prim not found in {where}: {', '.join(missing)}")
 
 
 def _remove_api_from_layer(

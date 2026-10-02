@@ -64,6 +64,9 @@ def apply_physics_api(state: scene_state.SceneState, params: dict[str, Any]) -> 
     asset_dir, asset_local_path = physics.scope.require_asset_target(
         state.stage, prim_path, scene_retry="author physics on this prim",
     )
+    relationships = physics.scope.asset_relationship_targets(
+        state.stage, asset_dir, relationships,
+    )
 
     cleared = physics.masking.enforce(
         state.stage, asset_dir, asset_local_path,

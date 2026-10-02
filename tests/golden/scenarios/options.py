@@ -48,6 +48,16 @@ SCENARIOS = (
                     "scope": "asset",
                     "relationships": {"physics:simulationOwner": ["/Scene/Physics/World"]},
                 },
+                note="from the asset, the scene's physics scene cannot be reached",
+            ),
+            model.Step(
+                "apply_physics_api",
+                {
+                    "prim_path": "$ground/asset/Plane",
+                    "api_name": "PhysicsCollisionAPI",
+                    "scope": "scene",
+                    "relationships": {"physics:simulationOwner": ["/Scene/Physics/World"]},
+                },
                 note="a collider on the ground mesh, owned by the World scene",
             ),
             model.Step(

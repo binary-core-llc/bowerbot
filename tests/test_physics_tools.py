@@ -1371,3 +1371,66 @@ def test_removing_the_last_physics_material_leaves_nothing_behind():
                 stage = Usd.Stage.Open(str(state.stage_path))
                 assert not stage.GetPrimAtPath("/Scene/Physics/rubber").IsValid()
                 assert stage.GetRootLayer().GetPrimAtPath(wheel) is None
+
+
+# ── filtered pairs ──
+
+
+def _filtered_pairs(scope: str) -> None:
+    """A filter authored on one body names the other body, wherever it is written."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        cart = wheel.rsplit("/", 1)[0]
+        for body in (cart, wheel):
+            made = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
+                "prim_path": body, "api_name": "PhysicsRigidBodyAPI", "scope": scope,
+            }))
+            assert made.success, made.error
+
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
+            "prim_path": cart, "api_name": "PhysicsFilteredPairsAPI", "scope": scope,
+            "relationships": {"physics:filteredPairs": [wheel]},
+        }))
+        assert r.success, r.error
+
+        # In the scene the filter points at the wheel as it is placed there.
+        stage = Usd.Stage.Open(str(state.stage_path))
+        targets = UsdPhysics.FilteredPairsAPI(stage.GetPrimAtPath(cart)).GetFilteredPairsRel()
+        assert [str(t) for t in targets.GetTargets()] == [wheel]
+        assert stage.GetPrimAtPath(wheel).HasAPI(UsdPhysics.RigidBodyAPI)
+
+        phy = state.project.assets_dir / "cart" / "phy.usda"
+        if scope == "asset":
+            # In the asset's own file it is the asset's path, so it travels with the asset.
+            assert "</cart/Wheel>" in phy.read_text()
+            assert "/Scene/" not in phy.read_text()
+
+        removed = asyncio.run(_helpers.exec_tool(state, "remove_physics_api", {
+            "prim_path": cart, "api_name": "PhysicsFilteredPairsAPI", "scope": scope,
+        }))
+        assert removed.success and removed.data["removed"] is True
+        stage = Usd.Stage.Open(str(state.stage_path))
+        assert not stage.GetPrimAtPath(cart).HasAPI(UsdPhysics.FilteredPairsAPI)
+
+
+def test_filtered_pairs_in_the_asset():
+    _filtered_pairs("asset")
+
+
+def test_filtered_pairs_in_the_scene():
+    _filtered_pairs("scene")
+
+
+def test_an_asset_relationship_cannot_point_outside_the_asset():
+    """From an asset's file a prim of the scene is out of reach: refused, nothing written."""
+    with tempfile.TemporaryDirectory() as tmp:
+        state, wheel = _cart_scene(tmp, config.UpAxis.Y, 1.0)
+        asyncio.run(_helpers.exec_tool(state, "setup_physics_scene", {}))
+        phy = state.project.assets_dir / "cart" / "phy.usda"
+        r = asyncio.run(_helpers.exec_tool(state, "apply_physics_api", {
+            "prim_path": wheel, "api_name": "PhysicsRigidBodyAPI", "scope": "asset",
+            "relationships": {"physics:simulationOwner": ["/Scene/Physics/PhysicsScene"]},
+        }))
+        assert not r.success
+        assert "scope='scene'" in r.error
+        assert not phy.exists()

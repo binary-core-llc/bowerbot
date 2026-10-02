@@ -456,6 +456,61 @@ validation:
 === step 06: list_physics_api_properties
 
 SUMMARY
+  call: list_physics_api_properties(api_name="PhysicsFilteredPairsAPI")
+  current project: golden
+  said: ok
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "api_name": "PhysicsFilteredPairsAPI",
+    "properties": [
+      {
+        "allowed_tokens": [],
+        "default": null,
+        "documentation": "Relationship to objects that should be filtered.",
+        "kind": "relationship",
+        "name": "physics:filteredPairs",
+        "type_name": null
+      }
+    ],
+    "requires_companion_api": null,
+    "target_requirement": "UsdGeom.Xformable"
+  }
+
+files:
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)
+
+validation:
+  valid, no issues
+
+
+=== step 07: list_physics_api_properties
+
+SUMMARY
   call: list_physics_api_properties(api_name="PhysicsDriveAPI")
   current project: golden
   said: REFUSED: PhysicsDriveAPI is a multi-apply API. Provide instance_name (e.g. 'angular', 'linear').
@@ -496,7 +551,7 @@ validation:
   valid, no issues
 
 
-=== step 07: list_physics_api_properties
+=== step 08: list_physics_api_properties
 
 SUMMARY
   call: list_physics_api_properties(api_name="PhysicsLimitAPI")
@@ -539,7 +594,7 @@ validation:
   valid, no issues
 
 
-=== step 08: list_joint_properties
+=== step 09: list_joint_properties
 
 SUMMARY
   call: list_joint_properties(joint_type="PhysicsRevoluteJoint")
@@ -734,7 +789,7 @@ validation:
   valid, no issues
 
 
-=== step 09: list_joint_properties
+=== step 10: list_joint_properties
 
 SUMMARY
   call: list_joint_properties(joint_type="PhysicsPrismaticJoint")
@@ -929,7 +984,7 @@ validation:
   valid, no issues
 
 
-=== step 10: list_joint_properties
+=== step 11: list_joint_properties
 
 SUMMARY
   call: list_joint_properties(joint_type="PhysicsSphericalJoint")
@@ -1124,7 +1179,7 @@ validation:
   valid, no issues
 
 
-=== step 11: list_joint_properties
+=== step 12: list_joint_properties
 
 SUMMARY
   call: list_joint_properties(joint_type="PhysicsFixedJoint")
@@ -1291,7 +1346,7 @@ validation:
   valid, no issues
 
 
-=== step 12: list_joint_properties
+=== step 13: list_joint_properties
 
 SUMMARY
   call: list_joint_properties(joint_type="PhysicsDistanceJoint")
@@ -1474,7 +1529,7 @@ validation:
   valid, no issues
 
 
-=== step 13: place_asset
+=== step 14: place_asset
 intent: place crate.usda as Crate
 
 SUMMARY
@@ -1660,7 +1715,7 @@ validation:
   valid, no issues
 
 
-=== step 14: apply_physics_api
+=== step 15: apply_physics_api
 intent: a negative mass
 
 SUMMARY
@@ -1761,7 +1816,7 @@ validation:
   valid, no issues
 
 
-=== step 15: apply_physics_api
+=== step 16: apply_physics_api
 intent: an attribute the API does not have
 
 SUMMARY
@@ -1811,7 +1866,7 @@ validation:
   valid, no issues
 
 
-=== step 16: apply_physics_api
+=== step 17: apply_physics_api
 intent: a prim that does not exist
 
 SUMMARY
@@ -1861,7 +1916,7 @@ validation:
   valid, no issues
 
 
-=== step 17: create_joint
+=== step 18: create_joint
 intent: a body that does not exist
 
 SUMMARY
@@ -1911,7 +1966,7 @@ validation:
   valid, no issues
 
 
-=== step 18: remove_joint
+=== step 19: remove_joint
 
 SUMMARY
   call: remove_joint(scope="scene", prim_path="/Scene/Physics/Nope")
@@ -1962,7 +2017,57 @@ validation:
   valid, no issues
 
 
-=== step 19: place_asset
+=== step 20: apply_physics_api
+intent: a relationship to a prim that does not exist
+
+SUMMARY
+  call: apply_physics_api(prim_path="/Scene/Props/Crate_01/asset", api_name="PhysicsCollisionAPI", scope="scene", relationships={"physics:simulationOwner": ["/Scene/Physics/Nope"]})
+  current project: golden
+  said: REFUSED: Prim not found in the scene: physics:simulationOwner -> /Scene/Physics/Nope
+
+  what changed:
+    nothing
+
+  project state after the step:
+    clean: every file used, every material bound, no dangling targets, no absolute paths, no composition errors
+
+  checks:
+    no problems spotted by the automatic checks
+
+EVIDENCE
+
+what USD printed while the tool ran:
+  (nothing)
+
+full answer:
+  {
+    "error": "Prim not found in the scene: physics:simulationOwner -> /Scene/Physics/Nope"
+  }
+
+files:
+    assets/crate/crate.usda
+    assets/crate/geo.usda
+    assets/crate/phy.usda
+    project.json
+    scene.usda
+
+file changes:
+  (none)
+
+composed scene changes:
+  (none)
+
+world (position, bounds min..max, material shown):
+  /Scene  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset  [Xform]  at (0.0000, 0.0000, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)
+  /Scene/Props/Crate_01/asset/Box  [Cube]  at (0.0000, 0.2500, 0.0000)  bounds (-0.2500, 0.0000, -0.2500)..(0.2500, 0.5000, 0.2500)  material (none)
+
+validation:
+  valid, no issues
+
+
+=== step 21: place_asset
 intent: place ground.usda as Ground
 
 SUMMARY
@@ -2149,7 +2254,7 @@ validation:
   valid, no issues
 
 
-=== step 20: apply_physics_api
+=== step 22: apply_physics_api
 intent: an approximation USD does not have (asset scope)
 
 SUMMARY
@@ -2204,7 +2309,7 @@ validation:
   valid, no issues
 
 
-=== step 21: apply_physics_api
+=== step 23: apply_physics_api
 intent: an approximation USD does not have (scene scope)
 
 SUMMARY
@@ -2259,7 +2364,7 @@ validation:
   valid, no issues
 
 
-=== step 22: set_prim_attribute
+=== step 24: set_prim_attribute
 intent: a value outside the list an attribute allows, with the general tool
 
 SUMMARY
@@ -2314,7 +2419,7 @@ validation:
   valid, no issues
 
 
-=== step 23: get_physics_summary
+=== step 25: get_physics_summary
 
 SUMMARY
   call: get_physics_summary(prim_path="/Scene/Nope")
@@ -2372,7 +2477,7 @@ validation:
   valid, no issues
 
 
-=== step 24: list_joints
+=== step 26: list_joints
 
 SUMMARY
   call: list_joints()
@@ -2426,7 +2531,7 @@ validation:
   valid, no issues
 
 
-=== step 25: list_collision_groups
+=== step 27: list_collision_groups
 
 SUMMARY
   call: list_collision_groups()

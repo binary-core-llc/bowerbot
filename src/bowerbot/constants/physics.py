@@ -18,6 +18,7 @@ class PhysicsUsd:
         schemas.PhysicsApiName.COLLISION: UsdPhysics.CollisionAPI,
         schemas.PhysicsApiName.MESH_COLLISION: UsdPhysics.MeshCollisionAPI,
         schemas.PhysicsApiName.ARTICULATION_ROOT: UsdPhysics.ArticulationRootAPI,
+        schemas.PhysicsApiName.FILTERED_PAIRS: UsdPhysics.FilteredPairsAPI,
         schemas.PhysicsApiName.DRIVE: UsdPhysics.DriveAPI,
         schemas.PhysicsApiName.LIMIT: UsdPhysics.LimitAPI,
     }
@@ -29,6 +30,7 @@ class PhysicsUsd:
         schemas.PhysicsApiName.COLLISION: UsdGeom.Gprim,
         schemas.PhysicsApiName.MESH_COLLISION: UsdGeom.Mesh,
         schemas.PhysicsApiName.ARTICULATION_ROOT: UsdGeom.Xformable,
+        schemas.PhysicsApiName.FILTERED_PAIRS: UsdGeom.Xformable,
     }
     # Geometry prim behind each collider shape.
     COLLIDER_SHAPES: dict[schemas.PhysicsColliderShape, type] = {

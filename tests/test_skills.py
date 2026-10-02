@@ -278,3 +278,47 @@ def test_registry_skips_skill_when_validate_config_raises(monkeypatch, caplog):
 
     assert registry.skill_count == 0
     assert any("missing token" in r.message for r in caplog.records)
+
+
+class _KitSkill(_StubSkill):
+    """Skill whose name is the start of another skill's name."""
+
+    name = "kit"
+
+
+class _KitIsaacSkill(_StubSkill):
+    """Skill whose name starts with another skill's name."""
+
+    name = "kit_isaac"
+
+    def get_tools(self) -> list[skills.Tool]:
+        return [
+            skills.Tool(name="info", description="Returns info.", parameters={}),
+            skills.Tool(name="drive", description="Drives.", parameters={}),
+        ]
+
+
+def test_skills_command_lists_each_skill_with_its_own_tools(monkeypatch):
+    """``bowerbot skills`` lists under a skill only the tools of that skill."""
+    from click.testing import CliRunner
+
+    from bowerbot import cli
+
+    registry = skills.SkillRegistry()
+    registry.register(_KitSkill())
+    registry.register(_KitIsaacSkill())
+    monkeypatch.setattr(cli.config, "load_settings", config.Settings)
+    monkeypatch.setattr(cli.logging_setup, "configure_logging", lambda settings: None)
+    monkeypatch.setattr(cli, "_build_registry", lambda settings: registry)
+
+    result = CliRunner().invoke(cli.main, ["skills"])
+
+    assert result.exit_code == 0, result.output
+    listing = result.output.split("Extension skills:")[1]
+    kit, kit_isaac = listing.split("- kit_isaac (")
+    assert "- kit (1 tools)" in kit
+    assert "kit__ping" in kit
+    assert "kit_isaac__" not in kit
+    assert kit_isaac.startswith("2 tools)")
+    assert "kit_isaac__info" in kit_isaac
+    assert "kit_isaac__drive" in kit_isaac

@@ -381,7 +381,7 @@ def skills_command() -> None:
         tools = [
             t["function"]["name"]
             for t in registry.get_all_tools()
-            if t["function"]["name"].startswith(name)
+            if t["function"]["name"].startswith(f"{name}__")
         ]
         console.print(f"  - {name} ({len(tools)} tools)")
         for tool_name in tools:

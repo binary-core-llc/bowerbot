@@ -15,6 +15,7 @@ from bowerbot.utils import authoring
 from bowerbot.utils import inspection
 from bowerbot.utils import layout
 from bowerbot.utils import usd
+from bowerbot.utils import variants
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,12 @@ def rename_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
 
 
 def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[str, Any]:
-    """Remove an object from the scene, scrubbing every rel that targeted it."""
+    """Remove a prim from the scene, scrubbing every rel that targeted it.
+
+    Every removal of a scene prim goes through here (lights and cameras
+    too), so each one cleans up the same way and reports the variant sets
+    the removal may have left without a purpose.
+    """
     prim_path = params["prim_path"]
 
     added = authoring.placement.parse_added_asset_path(prim_path)
@@ -119,11 +125,13 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
         state.reload_stage()
+        suspects = variants.suspect_sets.find_in_asset(parent_asset_dir)
     else:
         success = usd.namespace.remove_prim(state.stage, prim_path)
         if not success:
             msg = f"Failed to remove {prim_path}"
             raise RuntimeError(msg)
+        suspects = variants.suspect_sets.find_above(state.stage, prim_path)
 
     scrubbed = usd.namespace.scrub_dangling_refs(state.stage)
 
@@ -132,6 +140,7 @@ def remove_prim(state: scene_state.SceneState, params: dict[str, Any]) -> dict[s
     return {
         "prim_path": prim_path,
         "scrubbed_dangling_refs": scrubbed,
+        "suspect_variant_sets": suspects,
         "message": f"Removed {prim_path}",
     }
 

@@ -1085,6 +1085,9 @@ full answer:
   {
     "message": "Removed camera at /Scene/Cameras/Top",
     "prim_path": "/Scene/Cameras/Top",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    },
     "suspect_variant_sets": []
   }
 

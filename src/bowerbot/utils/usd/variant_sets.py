@@ -169,8 +169,8 @@ def remove_scene_variant(
 
     if not surviving:
         drop_variant_selection(prim_spec, set_name)
-        layer.Save()
         usd.namespace.prune_empty_overrides(layer, carrier_prim_path)
+        layer.Save()
         return True
 
     if prim_spec.variantSelections.get(set_name) == variant_name:
@@ -225,8 +225,8 @@ def remove_scene_variant_set(
         return False
     delete_variant_set(prim_spec, set_name)
     drop_variant_selection(prim_spec, set_name)
-    layer.Save()
     usd.namespace.prune_empty_overrides(layer, carrier_prim_path)
+    layer.Save()
     return True
 
 

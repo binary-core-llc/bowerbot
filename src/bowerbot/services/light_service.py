@@ -11,6 +11,7 @@ from typing import Any
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
+from bowerbot.services import stage_service
 from bowerbot.utils import authoring
 from bowerbot.utils import lights
 from bowerbot.utils import usd
@@ -218,19 +219,10 @@ def remove_light(state: scene_state.SceneState, params: dict[str, Any]) -> dict[
         }
 
     texture_file = lights.prim.get_texture(state.stage, prim_path)
-    success = usd.namespace.remove_prim(state.stage, prim_path)
-    if not success:
-        msg = f"Failed to remove light {prim_path}"
-        raise RuntimeError(msg)
-
-    authoring.stage.save_stage(state.stage)
+    removed = stage_service.remove_prim(state, {"prim_path": prim_path})
 
     logger.info("Removed scene light at %s", prim_path)
-    data: dict[str, Any] = {
-        "prim_path": prim_path,
-        "suspect_variant_sets": variants.suspect_sets.find_above(state.stage, prim_path),
-        "message": f"Removed light at {prim_path}",
-    }
+    data: dict[str, Any] = {**removed, "message": f"Removed light at {prim_path}"}
     if texture_file:
         data["texture_file"] = texture_file
     return data

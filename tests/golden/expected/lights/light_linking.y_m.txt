@@ -708,7 +708,8 @@ full answer:
           "relationship": "collection:lightLink:includes"
         }
       ]
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

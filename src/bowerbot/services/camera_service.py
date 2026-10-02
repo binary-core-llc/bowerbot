@@ -11,10 +11,10 @@ from typing import Any
 from bowerbot import constants
 from bowerbot import scene_state
 from bowerbot import schemas
+from bowerbot.services import stage_service
 from bowerbot.utils import authoring
 from bowerbot.utils import cameras
 from bowerbot.utils import usd
-from bowerbot.utils import variants
 
 logger = logging.getLogger(__name__)
 
@@ -114,16 +114,7 @@ def remove_camera(state: scene_state.SceneState, params: dict[str, Any]) -> dict
     prim_path = params["prim_path"]
     cameras.scene.require(state.stage, prim_path)
 
-    success = usd.namespace.remove_prim(state.stage, prim_path)
-    if not success:
-        msg = f"Failed to remove camera {prim_path}"
-        raise RuntimeError(msg)
-
-    authoring.stage.save_stage(state.stage)
+    removed = stage_service.remove_prim(state, {"prim_path": prim_path})
 
     logger.info("Removed camera at %s", prim_path)
-    return {
-        "prim_path": prim_path,
-        "suspect_variant_sets": variants.suspect_sets.find_above(state.stage, prim_path),
-        "message": f"Removed camera at {prim_path}",
-    }
+    return {**removed, "message": f"Removed camera at {prim_path}"}

@@ -1396,7 +1396,8 @@ full answer:
     "prim_path": "/Scene/Props/Crate_02",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

@@ -697,6 +697,9 @@ full answer:
   {
     "message": "Removed light at /Scene/Lighting/Key",
     "prim_path": "/Scene/Lighting/Key",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    },
     "suspect_variant_sets": []
   }
 
@@ -780,6 +783,9 @@ full answer:
   {
     "message": "Removed light at /Scene/Lighting/Sky",
     "prim_path": "/Scene/Lighting/Sky",
+    "scrubbed_dangling_refs": {
+      "rels_touched": []
+    },
     "suspect_variant_sets": [],
     "texture_file": "./textures/wood_diffuse.png"
   }

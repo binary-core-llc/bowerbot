@@ -1013,7 +1013,8 @@ full answer:
     "prim_path": "/Scene/Scatter/Crates",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

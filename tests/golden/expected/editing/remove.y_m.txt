@@ -784,7 +784,8 @@ full answer:
     "prim_path": "/Scene/Furniture/Chair_01",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:
@@ -975,7 +976,8 @@ full answer:
     "prim_path": "/Scene/Props",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:
@@ -1169,7 +1171,8 @@ full answer:
     "prim_path": "/Scene",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

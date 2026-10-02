@@ -1606,7 +1606,8 @@ full answer:
     "prim_path": "/Scene/Furniture/Table_01/asset/contents/Props/Crate_02",
     "scrubbed_dangling_refs": {
       "rels_touched": []
-    }
+    },
+    "suspect_variant_sets": []
   }
 
 files:

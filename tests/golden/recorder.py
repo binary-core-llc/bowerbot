@@ -116,6 +116,7 @@ class _Capture:
     unused: list[str] = field(default_factory=list)
     dangling: list[str] = field(default_factory=list)
     unbound_materials: list[str] = field(default_factory=list)
+    stale_boxes: list[str] = field(default_factory=list)
     absolute_paths: list[str] = field(default_factory=list)
 
 
@@ -349,6 +350,7 @@ def _capture(
         normalize(str(error)) for error in stage.GetCompositionErrors()
     )
     capture.dangling = _dangling(capture.facts)
+    capture.stale_boxes = _stale_scatter_boxes(stage)
     capture.unbound_materials = _unbound_materials(capture.facts, capture.files)
     capture.unused = _unused(copy)
     result = validation.stage.validate(
@@ -527,6 +529,36 @@ def _dangling(facts: dict[str, dict[str, str]]) -> list[str]:
     return sorted(found)
 
 
+def _stale_scatter_boxes(stage: Usd.Stage) -> list[str]:
+    """Scatters whose stored extent is not the one USD measures from their instances.
+
+    Renderers frame and cull with the stored box, so a stale one hides or clips instances.
+    """
+    time = Usd.TimeCode.Default()
+    stale = []
+    for prim in stage.Traverse():
+        if not prim.IsA(UsdGeom.PointInstancer):
+            continue
+        instancer = UsdGeom.PointInstancer(prim)
+        stored = instancer.GetExtentAttr().Get()
+        real = instancer.ComputeExtentAtTime(time, time)
+        if real is None:
+            continue
+        same = stored is not None and all(
+            abs(have - want) <= 1e-4 * max(1.0, abs(want))
+            for corner in range(2) for have, want in zip(stored[corner], real[corner], strict=True)
+        )
+        if not same:
+            stale.append(
+                f"{prim.GetPath()} stores {_box(stored)} but measures {_box(real)}",
+            )
+    return sorted(stale)
+
+
+def _box(extent: Any) -> str:
+    return "(none)" if extent is None else f"{_vec(extent[0])}..{_vec(extent[1])}"
+
+
 _BINDING_TARGET = re.compile(r"material:binding[\w:]*\s*=\s*\[?\s*<([^>]+)>")
 
 
@@ -621,6 +653,8 @@ def _render(
     leftovers = [
         ("a dangling target", previous.dangling, capture.dangling),
         ("an absolute path", previous.absolute_paths, capture.absolute_paths),
+        ("a scatter whose stored box is not its real one", previous.stale_boxes,
+         capture.stale_boxes),
         ("a composition error", previous.composition_errors, capture.composition_errors),
     ]
     if step.tool.startswith(checks.REMOVING_PREFIXES):
@@ -664,6 +698,7 @@ def _render(
         *(f"dangling target: {item}" for item in capture.dangling),
         *(f"material nothing binds: {item}" for item in capture.unbound_materials),
         *(f"absolute path: {item}" for item in capture.absolute_paths),
+        *(f"scatter box out of date: {item}" for item in capture.stale_boxes),
         *(f"composition error: {item}" for item in capture.composition_errors),
     ]
     lines += _indent_lines(state_lines or [

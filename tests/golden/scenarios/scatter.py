@@ -29,6 +29,61 @@ MIXED = [{"asset": "$lib/crate.usda", "weight": 3}, {"asset": "$lib/chair.usda",
 
 SCENARIOS = (
     model.Scenario(
+        "scatter/what_a_scatter_holds_changes",
+        "The model inside a scatter changes after it was scattered: its stored box must follow.",
+        (
+            _ground(),
+            model.Step(
+                "scatter_on_surface",
+                {"name": "Crates", "assets": CRATES, "surfaces": ["$ground"], "count": 5,
+                 "seed": 1},
+                save="crates",
+                note="5 crates at random",
+            ),
+            model.Step(
+                "add_scene_model_selection_variant",
+                {
+                    "prim_path": "$crates/Prototypes/crate",
+                    "variant_set": "model",
+                    "variant_name": "table",
+                    "asset_file_path": "$lib/table.usda",
+                },
+                note="the scattered model can also be a table (taller and wider)",
+            ),
+            model.Step(
+                "select_scene_variant",
+                {"prim_path": "$crates/Prototypes/crate", "variant_set": "model",
+                 "variant_name": "table"},
+                note="switch every instance to the table",
+            ),
+            model.Step(
+                "scatter_on_surface",
+                {"name": "Chairs", "assets": [{"asset": "$lib/chair.usda"}],
+                 "surfaces": ["$ground"], "count": 4, "seed": 3},
+                save="chairs",
+                note="4 chairs at random",
+            ),
+            model.Step(
+                "add_asset_to_asset",
+                {
+                    "asset_file_path": "$lib/crate.usda",
+                    "asset_name": "Crate",
+                    "parent_prim_path": "$chairs/Prototypes/chair",
+                    "group": "Props",
+                    **model.at(0.0, 1.0, 0.0),
+                },
+                note="the chair asset itself gets a crate on top: every instance is taller",
+            ),
+            model.Step(
+                "set_prim_attribute",
+                {"prim_path": "$chairs/Prototypes/chair", "attribute_name": "xformOp:scale",
+                 "value": [2, 2, 2]},
+                note="the scattered model is made twice as big",
+            ),
+            model.Step("validate_scene"),
+        ),
+    ),
+    model.Scenario(
         "scatter/random_instancer",
         "Crates scattered at random on the ground as one point instancer, then replaced.",
         (

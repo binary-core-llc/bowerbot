@@ -17,6 +17,7 @@ from bowerbot import config
 from bowerbot.utils import authoring
 from bowerbot.utils import inspection
 from bowerbot.utils import physics
+from bowerbot.utils import scatter
 
 if TYPE_CHECKING:
     from bowerbot import project_folder
@@ -107,16 +108,21 @@ class SceneState:
         return physics.rules.errors(self.stage)
 
     def note_project_writes(self) -> None:
-        """Move the project's ``updated_at`` when any of its files changed since the last check.
+        """The upkeep after a call that changed the project's files.
 
-        Called once after every tool call, so no tool has to remember to do it.
+        Scatter boxes are brought up to date, since any tool can change what a
+        scatter holds; then the project's ``updated_at`` moves. Called once
+        after every tool call, so no tool has to remember either.
         """
         if self.project is None:
             return
-        fingerprint = self._project_fingerprint()
-        if fingerprint != self.project_fingerprint:
-            self.project.save()
-            self.project_fingerprint = fingerprint
+        if self._project_fingerprint() == self.project_fingerprint:
+            return
+        if self.stage is not None and scatter.output.refresh_extents(self.stage):
+            self.stage.Save()
+            self.mark_saved()
+        self.project.save()
+        self.project_fingerprint = self._project_fingerprint()
 
     def _project_fingerprint(self) -> tuple[int, int, int]:
         """File count, newest change time and total size of the project's files."""

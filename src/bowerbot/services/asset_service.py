@@ -245,7 +245,7 @@ def add_asset_to_asset(state: scene_state.SceneState, params: dict[str, Any]) ->
     asset_name = params["asset_name"]
     safe_asset_name = usd.naming.clean_prim_name(asset_name, "asset name")
     parent_prim_path = params["parent_prim_path"]
-    group = params["group"]
+    group = usd.naming.clean_prim_name(params["group"], "group")
     tx = float(params["translate_x"])
     ty = float(params["translate_y"])
     tz = float(params["translate_z"])
@@ -350,15 +350,19 @@ def list_project_assets(state: scene_state.SceneState, params: dict[str, Any]) -
 
     query = (params.get("query") or "").lower()
 
-    results: list[dict[str, Any]] = []
-    for entry in sorted(assets_dir.iterdir()):
-        if query and query not in entry.name.lower():
-            continue
-        results.append({
+    entries = [
+        entry for entry in sorted(assets_dir.iterdir())
+        if not query or query in entry.name.lower()
+    ]
+    used_by = authoring.asset_folder.find_files_using_each(assets_dir.parent, entries)
+    results: list[dict[str, Any]] = [
+        {
             "name": entry.name,
             "type": "folder" if entry.is_dir() else "file",
-            "in_scene": bool(authoring.asset_folder.find_files_using(assets_dir.parent, entry)),
-        })
+            "in_scene": bool(used_by[entry]),
+        }
+        for entry in entries
+    ]
 
     unused = [a for a in results if not a["in_scene"]]
     return {

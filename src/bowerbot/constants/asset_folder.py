@@ -39,6 +39,8 @@ class AssetFolderRules:
 
     # File extensions of a USD layer inside an asset folder.
     USD_LAYER_EXTENSIONS: frozenset[str] = frozenset({".usd", ".usda", ".usdc"})
+    # The extension that is always text, where an asset path is written between @ signs.
+    TEXT_LAYER_EXTENSION = ".usda"
     # Side layers a library asset folder may ship, besides its root and geometry files.
     LIBRARY_SIDE_LAYERS: frozenset[str] = frozenset({
         ASWFLayerNames.MTL,

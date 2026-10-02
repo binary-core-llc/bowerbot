@@ -34,6 +34,8 @@ class ScatterTuning:
 
     # Points a circle path is drawn with.
     PATH_SEGMENTS = 256
+    # How far a scatter's stored box may be from the measured one, relative to its size.
+    EXTENT_TOLERANCE = 1e-4
     # Sampling rounds tried to reach an exact count.
     MAX_SAMPLE_ROUNDS = 24
     # Most points drawn in one sampling round.

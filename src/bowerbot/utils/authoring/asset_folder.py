@@ -501,25 +501,48 @@ def find_files_using(project_dir: Path, target: Path) -> list[str]:
     variant bodies. The match is on the whole path, never on part of a name.
     Files inside *target* itself are not looked at.
     """
-    target = target.resolve()
-    using: list[str] = []
+    return find_files_using_each(project_dir, [target])[target]
+
+
+def find_files_using_each(project_dir: Path, targets: list[Path]) -> dict[Path, list[str]]:
+    """For each of *targets*, the project USD files that point at it (see ``find_files_using``).
+
+    Every project file is read once, however many targets are asked about: a
+    big project has hundreds of assets and gigabytes of geometry.
+    """
+    resolved = {target: target.resolve() for target in targets}
+    using: dict[Path, list[str]] = {target: [] for target in targets}
     for usd_file in sorted(project_dir.rglob("*")):
         if usd_file.suffix not in constants.AssetFolderRules.USD_LAYER_EXTENSIONS:
             continue
-        if target in usd_file.resolve().parents:
+        pointed = _files_pointed_at(usd_file)
+        if not pointed:
             continue
-        layer = Sdf.Layer.FindOrOpen(str(usd_file))
-        if layer is None:
-            continue
-        if any(
-            pointed == target or target in pointed.parents
-            for pointed in usd.references.layer_file_targets(layer)
-        ):
-            using.append(str(usd_file.relative_to(project_dir)))
+        # Every folder on the way to a file it points at, so a folder target matches.
+        reached = pointed | {parent for path in pointed for parent in path.parents}
+        inside = set(usd_file.resolve().parents)
+        name = str(usd_file.relative_to(project_dir))
+        for target, where in resolved.items():
+            if where in reached and where not in inside:
+                using[target].append(name)
     return using
 
 
 # ── Helpers ──
+
+
+def _files_pointed_at(usd_file: Path) -> set[Path]:
+    """The files *usd_file* points to; a text layer with no asset path in it is not parsed.
+
+    In ``.usda`` every asset path is written between ``@`` signs, so a file
+    without one (most geometry files, and the big ones) points at nothing.
+    """
+    if usd_file.suffix == constants.AssetFolderRules.TEXT_LAYER_EXTENSION:
+        with usd_file.open("rb") as handle:
+            if not any(b"@" in chunk for chunk in iter(lambda: handle.read(1 << 20), b"")):
+                return set()
+    layer = Sdf.Layer.FindOrOpen(str(usd_file))
+    return usd.references.layer_file_targets(layer) if layer is not None else set()
 
 
 def _sibling_file(asset_path: str) -> str | None:

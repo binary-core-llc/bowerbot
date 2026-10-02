@@ -99,7 +99,10 @@ group names when placing assets:
   /Scene/Lighting, /Scene/Props
 
 The user may request custom group names instead — use whatever
-they prefer. Use `rename_prim` to reorganize after placement.
+they prefer: any name works in every tool that places (`place_asset`,
+`place_layout`, the scatter tools), and `/` nests groups
+(`Terrain`, `Crops/Block_A`, `Fencing/Posts`). Use `rename_prim` to
+reorganize after placement.
 
 CRITICAL: When reporting the scene state to the user, use
 `list_scene` to check what actually exists — do NOT assume

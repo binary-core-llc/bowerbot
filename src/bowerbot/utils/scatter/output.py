@@ -163,6 +163,35 @@ def to_local(
     )
 
 
+def refresh_extents(stage: Usd.Stage) -> list[str]:
+    """Bring the stored box of every scatter in the scene up to date; return the ones that changed.
+
+    A scatter's box depends on what its prototypes show, and other tools change
+    that: a model switch, an edit of the scattered asset, a scale. Renderers frame
+    and cull with the stored box, so it must follow. Not saved: the caller saves.
+    """
+    root_layer = stage.GetRootLayer()
+    time = Usd.TimeCode.Default()
+    tolerance = constants.ScatterTuning.EXTENT_TOLERANCE
+    refreshed: list[str] = []
+    for prim in stage.Traverse():
+        if not prim.IsA(UsdGeom.PointInstancer) or root_layer.GetPrimAtPath(prim.GetPath()) is None:
+            continue
+        instancer = UsdGeom.PointInstancer(prim)
+        real = instancer.ComputeExtentAtTime(time, time)
+        if real is None:
+            continue
+        stored = instancer.GetExtentAttr().Get()
+        same = stored is not None and all(
+            abs(have - want) <= tolerance * max(1.0, abs(want))
+            for corner in range(2) for have, want in zip(stored[corner], real[corner], strict=True)
+        )
+        if not same:
+            instancer.CreateExtentAttr(real)
+            refreshed.append(str(prim.GetPath()))
+    return refreshed
+
+
 def update_extent(instancer: UsdGeom.PointInstancer) -> None:
     """Author the instancer's extent from the instances it holds now."""
     time = Usd.TimeCode.Default()

@@ -14,6 +14,8 @@ from pxr import Usd
 from pxr import UsdGeom
 from pxr import UsdShade
 
+from bowerbot.utils import authoring
+from bowerbot.utils import usd
 from tests import _helpers
 
 
@@ -1105,3 +1107,37 @@ def test_list_project_assets_shows_name():
         assert r.success, r.error
         asset = r.data["assets"][0]
         assert "name" in asset
+
+
+def test_listing_project_assets_reads_each_file_once(monkeypatch):
+    """However many assets a project has, each of its files is read once, not once per asset."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path, state, project = _setup(tmp)
+        for name in ("table", "chair", "crate"):
+            _place(tmp_path, state, name=name)
+        unused = asyncio.run(_helpers.exec_tool(state, "remove_prim", {
+            "prim_path": "/Scene/Furniture/Crate_03",
+        }))
+        assert unused.success, unused.error
+
+        read: list[str] = []
+        real = usd.references.layer_file_targets
+
+        def counting(layer: Sdf.Layer) -> set[Path]:
+            read.append(Path(layer.realPath).name)
+            return real(layer)
+
+        monkeypatch.setattr(usd.references, "layer_file_targets", counting)
+        listed = asyncio.run(_helpers.exec_tool(state, "list_project_assets", {}))
+        assert listed.success, listed.error
+        assert {a["name"]: a["in_scene"] for a in listed.data["assets"]} == {
+            "table": True, "chair": True, "crate": False,
+        }
+        assert len(read) == len(set(read)), read
+        # A geometry file names no other file, so it is not even parsed.
+        assert "geo.usda" not in read
+
+        # One asset at a time gives the same answers.
+        for entry in sorted(project.assets_dir.iterdir()):
+            alone = authoring.asset_folder.find_files_using(project.path, entry)
+            assert bool(alone) == (entry.name != "crate"), (entry.name, alone)

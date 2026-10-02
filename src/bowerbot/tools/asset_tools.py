@@ -140,10 +140,14 @@ TOOLS: list[skills.Tool] = [
                 },
                 "group": {
                     "type": "string",
-                    "enum": [
-                        "Architecture", "Furniture", "Products", "Lighting", "Props",
-                    ],
-                    "description": "Which scene group to place the asset in.",
+                    "minLength": 1,
+                    "description": (
+                        "Scene group to place the asset in: any name, e.g. "
+                        "'Furniture', 'Terrain' or 'Barn/Loft'. Nested groups "
+                        "use '/'. Becomes a /Scene/<group> scope; it is created "
+                        "when it does not exist. Use groups to keep the scene "
+                        "readable (Architecture, Furniture, Props, Terrain...)."
+                    ),
                 },
                 "translate_x": {
                     "type": "number",
@@ -419,10 +423,11 @@ TOOLS: list[skills.Tool] = [
                 },
                 "group": {
                     "type": "string",
-                    "enum": [
-                        "Architecture", "Furniture", "Products", "Lighting", "Props",
-                    ],
-                    "description": "Logical grouping in the parent asset's contents.",
+                    "minLength": 1,
+                    "description": (
+                        "Group inside the parent asset's contents: any single "
+                        "name, e.g. 'Props' or 'Storage'."
+                    ),
                 },
                 "translate_x": {
                     "type": "number",
